@@ -2286,18 +2286,10 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
-directive @session(required: SessionRequirement!) on FIELD_DEFINITION
-
 scalar CursorKey
 scalar Datetime
 scalar Upload
 scalar EmailAddr
-
-enum SessionRequirement {
-  PRESENT
-  NONE
-  OPTIONAL
-}
 
 enum OrderDirection
   @goModel(model: "go.probo.inc/probo/pkg/page.OrderDirection") {
@@ -3149,6 +3141,45 @@ type DeleteSCIMConfigurationPayload {
 type RegenerateSCIMTokenPayload {
   scimConfiguration: SCIMConfiguration!
   token: String!
+}
+`, BuiltIn: false},
+	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
+# Include this schema in your gqlgen configuration to enable session-based access control.
+#
+# Usage in your schema.graphql:
+#   type Query {
+#     viewer: User @session(required: PRESENT)
+#     publicData: Data @session(required: OPTIONAL)
+#     signup(input: SignUpInput!): SignUpPayload @session(required: NONE)
+#   }
+
+directive @session(required: SessionRequirement!) on FIELD_DEFINITION
+
+enum SessionRequirement
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirement"
+  ) {
+  """
+  Requires an authenticated session or API key.
+  """
+  PRESENT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementPresent"
+    )
+  """
+  Forbids authenticated access (e.g., for login/signup endpoints).
+  """
+  NONE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementNone"
+    )
+  """
+  Allows both authenticated and unauthenticated access.
+  """
+  OPTIONAL
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementOptional"
+    )
 }
 `, BuiltIn: false},
 }
@@ -20616,14 +20647,34 @@ var (
 )
 
 func (ec *executionContext) unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx context.Context, v any) (session.SessionRequirement, error) {
-	var res session.SessionRequirement
-	err := res.UnmarshalGQL(v)
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx context.Context, sel ast.SelectionSet, v session.SessionRequirement) graphql.Marshaler {
-	return v
+	_ = sel
+	res := graphql.MarshalString(marshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
+
+var (
+	unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement = map[string]session.SessionRequirement{
+		"PRESENT":  session.SessionRequirementPresent,
+		"NONE":     session.SessionRequirementNone,
+		"OPTIONAL": session.SessionRequirementOptional,
+	}
+	marshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement = map[session.SessionRequirement]string{
+		session.SessionRequirementPresent:  "PRESENT",
+		session.SessionRequirementNone:     "NONE",
+		session.SessionRequirementOptional: "OPTIONAL",
+	}
+)
 
 func (ec *executionContext) unmarshalNSignInInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignInInput(ctx context.Context, v any) (types.SignInInput, error) {
 	res, err := ec.unmarshalInputSignInInput(ctx, v)

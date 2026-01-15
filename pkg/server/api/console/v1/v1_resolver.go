@@ -1675,7 +1675,7 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
-	// TODO: when admin/owner creates trust center access, we should have an invite for it instead of directly creating the identity
+	// TODO: should not create an access nor identity, but send an invitation
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		var err error

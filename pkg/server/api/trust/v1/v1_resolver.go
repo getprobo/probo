@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -84,7 +85,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return false, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
+		return false, nil
 	}
 
 	documentAccess, err := trustService.TrustCenterAccesses.LoadDocumentAccess(
@@ -143,8 +144,68 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 	return trustService.Frameworks.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
 }
 
-// SignInWithToken is the resolver for the signInWithToken field.
-func (r *mutationResolver) SignInWithToken(ctx context.Context, input types.SignInWithTokenInput) (*types.SignInWithTokenPayload, error) {
+// SendMagicLink is the resolver for the sendMagicLink field.
+func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity != nil {
+		return nil, gqlutils.AlreadyAuthenticatedf(ctx, "already authenticated")
+	}
+
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+	organization, err := r.iam.OrganizationService.GetOrganization(ctx, trustCenter.OrganizationID)
+	if err != nil {
+		var errNotFound *iam.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "organization not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	customDomain, err := r.trust.GetCustomDomainByOrganizationID(ctx, organization.ID)
+	if err != nil {
+		var errNotFound *iam.ErrOrganizationNotFound
+		if !errors.As(err, &errNotFound) {
+			r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	req := &iam.SendMagicLinkRequest{
+		Email: input.Email,
+	}
+
+	if false {
+		// if customDomain != nil {
+		baseURL, err := baseurl.Parse(fmt.Sprintf("https://%s", customDomain.Domain))
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot parse custom domain url", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		req.BaseURL = baseURL
+	} else {
+		baseURL, err := baseurl.Parse(r.baseURL.WithPath("/trust/" + trustCenter.ID.String()).MustString())
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot parse url", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		req.BaseURL = baseURL
+	}
+
+	if err := r.iam.AuthService.SendMagicLink(ctx, req); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot send magic link", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return nil, nil
+}
+
+// VerifyMagicLink is the resolver for the verifyMagicLink field.
+func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.VerifyMagicLinkInput) (*types.VerifyMagicLinkPayload, error) {
 	_, session, err := r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 	if err != nil {
 		var errInvalidToken *iam.ErrInvalidToken
@@ -156,33 +217,23 @@ func (r *mutationResolver) SignInWithToken(ctx context.Context, input types.Sign
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	// TODO cookie domain
+	// FIXME: cookie domain
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)
 	r.sessionCookie.Set(w, session)
 
-	return &types.SignInWithTokenPayload{
+	return &types.VerifyMagicLinkPayload{
 		Success: true,
 	}, nil
 }
 
 // RequestAllAccesses is the resolver for the requestAllAccesses field.
-func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.RequestAllAccessesInput) (*types.RequestAccessesPayload, error) {
+func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.RequestAccessesPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		var err error
-		identity, err = r.iam.AuthService.LoadOrCreateIdentity(
-			ctx,
-			&iam.LoadOrCreateIdentityRequest{
-				Email: input.Email,
-			},
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot load or create identity", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
+		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	access, err := trustService.TrustCenterAccesses.Request(
@@ -242,10 +293,6 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	ndaExists := true
 	hasAcceptedNDA := false
 
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
 	if trustCenter.NonDisclosureAgreementFileID == nil {
 		ndaExists = false
 	}
@@ -296,6 +343,11 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 // ExportReportPDF is the resolver for the exportReportPDF field.
 func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
+	}
+
 	trustService := r.TrustService(ctx, input.ReportID.TenantID())
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -318,18 +370,9 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		}, nil
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
-	}
-
 	ndaExists := true
 	hasAcceptedNDA := false
 
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
 	if trustCenter.NonDisclosureAgreementFileID == nil {
 		ndaExists = false
 	}
@@ -380,13 +423,12 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 
 // AcceptNonDisclosureAgreement is the resolver for the acceptNonDisclosureAgreement field.
 func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context) (*types.AcceptNonDisclosureAgreementPayload, error) {
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
-
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	httpReq := gqlutils.HTTPRequestFromContext(ctx)
 
@@ -424,17 +466,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		var err error
-		identity, err = r.iam.AuthService.LoadOrCreateIdentity(
-			ctx,
-			&iam.LoadOrCreateIdentityRequest{
-				Email: input.Email,
-			},
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot load or create identity", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
+		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	access, err := trustService.TrustCenterAccesses.Request(
@@ -483,17 +515,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		var err error
-		identity, err = r.iam.AuthService.LoadOrCreateIdentity(
-			ctx,
-			&iam.LoadOrCreateIdentityRequest{
-				Email: input.Email,
-			},
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot load or create identity", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
+		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	access, err := trustService.TrustCenterAccesses.Request(
@@ -542,17 +564,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		var err error
-		identity, err = r.iam.AuthService.LoadOrCreateIdentity(
-			ctx,
-			&iam.LoadOrCreateIdentityRequest{
-				Email: input.Email,
-			},
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot load or create identity", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
+		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	access, err := trustService.TrustCenterAccesses.Request(
@@ -584,6 +596,11 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 
 // ExportTrustCenterFile is the resolver for the exportTrustCenterFile field.
 func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
+	}
+
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
@@ -603,11 +620,6 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 		return &types.ExportTrustCenterFilePayload{
 			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
 		}, nil
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
 	ndaExists := true
@@ -782,6 +794,11 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return false, nil
+	}
+
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -794,11 +811,6 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 
 	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
 		return true, nil
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return false, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
 	reportAccess, err := trustService.TrustCenterAccesses.LoadReportAccess(ctx,
@@ -984,6 +996,11 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return false, nil
+	}
+
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -996,11 +1013,6 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 
 	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
 		return true, nil
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return false, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
 	fileAccess, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,

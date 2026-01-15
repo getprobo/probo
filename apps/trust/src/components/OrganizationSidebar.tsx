@@ -1,11 +1,31 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, IconBlock, IconLock, IconMedal } from "@probo/ui";
+import {
+  Button,
+  Card,
+  IconBlock,
+  IconLock,
+  IconMedal,
+  useToast,
+} from "@probo/ui";
 import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import { use, type PropsWithChildren } from "react";
-import { domain } from "@probo/helpers";
+import { domain, formatError } from "@probo/helpers";
 import { AuditRowAvatar } from "./AuditRow";
-import { RequestAccessDialog } from "./RequestAccessDialog";
 import { Viewer } from "/providers/Viewer";
+import { MagicLinkDialog } from "./MagicLinkDialog";
+import { graphql } from "relay-runtime";
+import { useMutation } from "react-relay";
+import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
+
+const requestAllAccessesMutation = graphql`
+  mutation OrganizationSidebar_requestAllAccessesMutation {
+    requestAllAccesses {
+      trustCenterAccess {
+        id
+      }
+    }
+  }
+`;
 
 export function OrganizationSidebar({
   trustCenter,
@@ -14,6 +34,40 @@ export function OrganizationSidebar({
 }) {
   const { __ } = useTranslate();
   const isAuthenticated = !!use(Viewer);
+  const { toast } = useToast();
+
+  const [requestAllAccesses, isRequestingAccess] =
+    useMutation<OrganizationSidebar_requestAllAccessesMutation>(
+      requestAllAccessesMutation,
+    );
+
+  const handleRequestAllAccesses = () => {
+    requestAllAccesses({
+      variables: {},
+      onCompleted: (_, errors) => {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Cannot request access"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("Access request submitted successfully."),
+          variant: "success",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: __("Error"),
+          description: error.message ?? __("Cannot request access"),
+          variant: "error",
+        });
+      },
+    });
+  };
 
   if (!trustCenter) {
     return null;
@@ -95,12 +149,22 @@ export function OrganizationSidebar({
         )}
 
         {/* Actions */}
-        {!isAuthenticated && (
-          <RequestAccessDialog>
+        {isAuthenticated ? (
+          <Button
+            disabled={isRequestingAccess}
+            variant="primary"
+            icon={IconLock}
+            className="w-full h-10"
+            onClick={handleRequestAllAccesses}
+          >
+            {__("Request access")}
+          </Button>
+        ) : (
+          <MagicLinkDialog>
             <Button variant="primary" icon={IconLock} className="w-full h-10">
               {__("Request access")}
             </Button>
-          </RequestAccessDialog>
+          </MagicLinkDialog>
         )}
         {/* <Button variant="secondary" icon={IconMail} className="w-full h-10">
           {__("Subscribe to updates")}

@@ -135,11 +135,12 @@ type ComplexityRoot struct {
 		ExportDocumentPDF            func(childComplexity int, input types.ExportDocumentPDFInput) int
 		ExportReportPDF              func(childComplexity int, input types.ExportReportPDFInput) int
 		ExportTrustCenterFile        func(childComplexity int, input types.ExportTrustCenterFileInput) int
-		RequestAllAccesses           func(childComplexity int, input types.RequestAllAccessesInput) int
+		RequestAllAccesses           func(childComplexity int) int
 		RequestDocumentAccess        func(childComplexity int, input types.RequestDocumentAccessInput) int
 		RequestReportAccess          func(childComplexity int, input types.RequestReportAccessInput) int
 		RequestTrustCenterFileAccess func(childComplexity int, input types.RequestTrustCenterFileAccessInput) int
-		SignInWithToken              func(childComplexity int, input types.SignInWithTokenInput) int
+		SendMagicLink                func(childComplexity int, input types.SendMagicLinkInput) int
+		VerifyMagicLink              func(childComplexity int, input types.VerifyMagicLinkInput) int
 	}
 
 	Organization struct {
@@ -176,7 +177,7 @@ type ComplexityRoot struct {
 		TrustCenterAccess func(childComplexity int) int
 	}
 
-	SignInWithTokenPayload struct {
+	SendMagicLinkPayload struct {
 		Success func(childComplexity int) int
 	}
 
@@ -258,6 +259,10 @@ type ComplexityRoot struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
+
+	VerifyMagicLinkPayload struct {
+		Success func(childComplexity int) int
+	}
 }
 
 type AuditResolver interface {
@@ -273,8 +278,9 @@ type FrameworkResolver interface {
 	DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error)
 }
 type MutationResolver interface {
-	SignInWithToken(ctx context.Context, input types.SignInWithTokenInput) (*types.SignInWithTokenPayload, error)
-	RequestAllAccesses(ctx context.Context, input types.RequestAllAccessesInput) (*types.RequestAccessesPayload, error)
+	SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error)
+	VerifyMagicLink(ctx context.Context, input types.VerifyMagicLinkInput) (*types.VerifyMagicLinkPayload, error)
+	RequestAllAccesses(ctx context.Context) (*types.RequestAccessesPayload, error)
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
 	ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error)
 	AcceptNonDisclosureAgreement(ctx context.Context) (*types.AcceptNonDisclosureAgreementPayload, error)
@@ -569,12 +575,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		args, err := ec.field_Mutation_requestAllAccesses_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RequestAllAccesses(childComplexity, args["input"].(types.RequestAllAccessesInput)), true
+		return e.complexity.Mutation.RequestAllAccesses(childComplexity), true
 	case "Mutation.requestDocumentAccess":
 		if e.complexity.Mutation.RequestDocumentAccess == nil {
 			break
@@ -608,17 +609,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.RequestTrustCenterFileAccess(childComplexity, args["input"].(types.RequestTrustCenterFileAccessInput)), true
-	case "Mutation.signInWithToken":
-		if e.complexity.Mutation.SignInWithToken == nil {
+	case "Mutation.sendMagicLink":
+		if e.complexity.Mutation.SendMagicLink == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_signInWithToken_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_sendMagicLink_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SignInWithToken(childComplexity, args["input"].(types.SignInWithTokenInput)), true
+		return e.complexity.Mutation.SendMagicLink(childComplexity, args["input"].(types.SendMagicLinkInput)), true
+	case "Mutation.verifyMagicLink":
+		if e.complexity.Mutation.VerifyMagicLink == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_verifyMagicLink_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.VerifyMagicLink(childComplexity, args["input"].(types.VerifyMagicLinkInput)), true
 
 	case "Organization.description":
 		if e.complexity.Organization.Description == nil {
@@ -744,12 +756,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.RequestAccessesPayload.TrustCenterAccess(childComplexity), true
 
-	case "SignInWithTokenPayload.success":
-		if e.complexity.SignInWithTokenPayload.Success == nil {
+	case "SendMagicLinkPayload.success":
+		if e.complexity.SendMagicLinkPayload.Success == nil {
 			break
 		}
 
-		return e.complexity.SignInWithTokenPayload.Success(childComplexity), true
+		return e.complexity.SendMagicLinkPayload.Success(childComplexity), true
 
 	case "TrustCenter.active":
 		if e.complexity.TrustCenter.Active == nil {
@@ -1063,6 +1075,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.VendorEdge.Node(childComplexity), true
 
+	case "VerifyMagicLinkPayload.success":
+		if e.complexity.VerifyMagicLinkPayload.Success == nil {
+			break
+		}
+
+		return e.complexity.VerifyMagicLinkPayload.Success(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -1074,11 +1093,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputExportDocumentPDFInput,
 		ec.unmarshalInputExportReportPDFInput,
 		ec.unmarshalInputExportTrustCenterFileInput,
-		ec.unmarshalInputRequestAllAccessesInput,
 		ec.unmarshalInputRequestDocumentAccessInput,
 		ec.unmarshalInputRequestReportAccessInput,
 		ec.unmarshalInputRequestTrustCenterFileAccessInput,
-		ec.unmarshalInputSignInWithTokenInput,
+		ec.unmarshalInputSendMagicLinkInput,
+		ec.unmarshalInputVerifyMagicLinkInput,
 	)
 	first := true
 
@@ -1720,17 +1739,20 @@ type TrustCenterAccess implements Node {
   updatedAt: Datetime!
 }
 
-input SignInWithTokenInput {
-  token: String!
+input SendMagicLinkInput {
+  email: EmailAddr!
 }
 
-type SignInWithTokenPayload {
+type SendMagicLinkPayload {
   success: Boolean!
 }
 
-input RequestAllAccessesInput {
-  email: EmailAddr!
-  fullName: String!
+input VerifyMagicLinkInput {
+  token: String!
+}
+
+type VerifyMagicLinkPayload {
+  success: Boolean!
 }
 
 type RequestAccessesPayload {
@@ -1747,20 +1769,14 @@ input ExportReportPDFInput {
 
 input RequestDocumentAccessInput {
   documentId: ID!
-  email: EmailAddr!
-  fullName: String!
 }
 
 input RequestReportAccessInput {
   reportId: ID!
-  email: EmailAddr!
-  fullName: String!
 }
 
 input RequestTrustCenterFileAccessInput {
   trustCenterFileId: ID!
-  email: EmailAddr!
-  fullName: String!
 }
 
 input ExportTrustCenterFileInput {
@@ -1786,14 +1802,14 @@ type AcceptNonDisclosureAgreementPayload {
 type Query {
   viewer: Identity
   node(id: ID!): Node!
-  currentTrustCenter: TrustCenter @session(required: NONE)
+  currentTrustCenter: TrustCenter
 }
 
 type Mutation {
-  signInWithToken(input: SignInWithTokenInput!): SignInWithTokenPayload!
+  sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
+  verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
 
-  requestAllAccesses(input: RequestAllAccessesInput!): RequestAccessesPayload!
-    @session(required: NONE)
+  requestAllAccesses: RequestAccessesPayload!
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
     @session(required: NONE)
@@ -1806,19 +1822,17 @@ type Mutation {
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload! @session(required: NONE)
+  ): RequestAccessesPayload!
 
-  requestReportAccess(
-    input: RequestReportAccessInput!
-  ): RequestAccessesPayload! @session(required: NONE)
+  requestReportAccess(input: RequestReportAccessInput!): RequestAccessesPayload!
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload! @session(required: NONE)
+  ): RequestAccessesPayload!
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @session(required: NONE)
+  ): ExportTrustCenterFilePayload!
 }
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
@@ -1911,17 +1925,6 @@ func (ec *executionContext) field_Mutation_exportTrustCenterFile_args(ctx contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_requestAllAccesses_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRequestAllAccessesInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAllAccessesInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_requestDocumentAccess_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1955,10 +1958,21 @@ func (ec *executionContext) field_Mutation_requestTrustCenterFileAccess_args(ctx
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_signInWithToken_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_sendMagicLink_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSignInWithTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSendMagicLinkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSendMagicLinkInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_verifyMagicLink_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNVerifyMagicLinkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVerifyMagicLinkInput)
 	if err != nil {
 		return nil, err
 	}
@@ -3112,24 +3126,24 @@ func (ec *executionContext) fieldContext_Identity_updatedAt(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_signInWithToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_sendMagicLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_signInWithToken,
+		ec.fieldContext_Mutation_sendMagicLink,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().SignInWithToken(ctx, fc.Args["input"].(types.SignInWithTokenInput))
+			return ec.resolvers.Mutation().SendMagicLink(ctx, fc.Args["input"].(types.SendMagicLinkInput))
 		},
 		nil,
-		ec.marshalNSignInWithTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenPayload,
+		ec.marshalOSendMagicLinkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSendMagicLinkPayload,
 		true,
-		true,
+		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_signInWithToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_sendMagicLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -3138,9 +3152,9 @@ func (ec *executionContext) fieldContext_Mutation_signInWithToken(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_SignInWithTokenPayload_success(ctx, field)
+				return ec.fieldContext_SendMagicLinkPayload_success(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SignInWithTokenPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SendMagicLinkPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -3150,7 +3164,52 @@ func (ec *executionContext) fieldContext_Mutation_signInWithToken(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_signInWithToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_sendMagicLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_verifyMagicLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_verifyMagicLink,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().VerifyMagicLink(ctx, fc.Args["input"].(types.VerifyMagicLinkInput))
+		},
+		nil,
+		ec.marshalOVerifyMagicLinkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVerifyMagicLinkPayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_verifyMagicLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_VerifyMagicLinkPayload_success(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VerifyMagicLinkPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_verifyMagicLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3164,35 +3223,16 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 		field,
 		ec.fieldContext_Mutation_requestAllAccesses,
 		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RequestAllAccesses(ctx, fc.Args["input"].(types.RequestAllAccessesInput))
+			return ec.resolvers.Mutation().RequestAllAccesses(ctx)
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
-				if err != nil {
-					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_requestAllAccesses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_requestAllAccesses(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -3205,17 +3245,6 @@ func (ec *executionContext) fieldContext_Mutation_requestAllAccesses(ctx context
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RequestAccessesPayload", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_requestAllAccesses_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -3407,25 +3436,7 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RequestDocumentAccess(ctx, fc.Args["input"].(types.RequestDocumentAccessInput))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
-				if err != nil {
-					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
 		true,
 		true,
@@ -3470,25 +3481,7 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RequestReportAccess(ctx, fc.Args["input"].(types.RequestReportAccessInput))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
-				if err != nil {
-					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
 		true,
 		true,
@@ -3533,25 +3526,7 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RequestTrustCenterFileAccess(ctx, fc.Args["input"].(types.RequestTrustCenterFileAccessInput))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
-				if err != nil {
-					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
 		true,
 		true,
@@ -3596,25 +3571,7 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().ExportTrustCenterFile(ctx, fc.Args["input"].(types.ExportTrustCenterFileInput))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
-				if err != nil {
-					var zeroVal *types.ExportTrustCenterFilePayload
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.ExportTrustCenterFilePayload
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalNExportTrustCenterFilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload,
 		true,
 		true,
@@ -4061,25 +4018,7 @@ func (ec *executionContext) _Query_currentTrustCenter(ctx context.Context, field
 		func(ctx context.Context) (any, error) {
 			return ec.resolvers.Query().CurrentTrustCenter(ctx)
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
-				if err != nil {
-					var zeroVal *types.TrustCenter
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.TrustCenter
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter,
 		true,
 		false,
@@ -4392,12 +4331,12 @@ func (ec *executionContext) fieldContext_RequestAccessesPayload_trustCenterAcces
 	return fc, nil
 }
 
-func (ec *executionContext) _SignInWithTokenPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.SignInWithTokenPayload) (ret graphql.Marshaler) {
+func (ec *executionContext) _SendMagicLinkPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.SendMagicLinkPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_SignInWithTokenPayload_success,
+		ec.fieldContext_SendMagicLinkPayload_success,
 		func(ctx context.Context) (any, error) {
 			return obj.Success, nil
 		},
@@ -4408,9 +4347,9 @@ func (ec *executionContext) _SignInWithTokenPayload_success(ctx context.Context,
 	)
 }
 
-func (ec *executionContext) fieldContext_SignInWithTokenPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SendMagicLinkPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SignInWithTokenPayload",
+		Object:     "SendMagicLinkPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5947,6 +5886,35 @@ func (ec *executionContext) fieldContext_VendorEdge_node(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _VerifyMagicLinkPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.VerifyMagicLinkPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VerifyMagicLinkPayload_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VerifyMagicLinkPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VerifyMagicLinkPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7474,40 +7442,6 @@ func (ec *executionContext) unmarshalInputExportTrustCenterFileInput(ctx context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputRequestAllAccessesInput(ctx context.Context, obj any) (types.RequestAllAccessesInput, error) {
-	var it types.RequestAllAccessesInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"email", "fullName"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = data
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context.Context, obj any) (types.RequestDocumentAccessInput, error) {
 	var it types.RequestDocumentAccessInput
 	asMap := map[string]any{}
@@ -7515,7 +7449,7 @@ func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"documentId", "email", "fullName"}
+	fieldsInOrder := [...]string{"documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7529,20 +7463,6 @@ func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context
 				return it, err
 			}
 			it.DocumentID = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = data
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
 		}
 	}
 
@@ -7556,7 +7476,7 @@ func (ec *executionContext) unmarshalInputRequestReportAccessInput(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"reportId", "email", "fullName"}
+	fieldsInOrder := [...]string{"reportId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7570,20 +7490,6 @@ func (ec *executionContext) unmarshalInputRequestReportAccessInput(ctx context.C
 				return it, err
 			}
 			it.ReportID = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = data
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
 		}
 	}
 
@@ -7597,7 +7503,7 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterFileId", "email", "fullName"}
+	fieldsInOrder := [...]string{"trustCenterFileId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7611,6 +7517,26 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 				return it, err
 			}
 			it.TrustCenterFileID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSendMagicLinkInput(ctx context.Context, obj any) (types.SendMagicLinkInput, error) {
+	var it types.SendMagicLinkInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"email"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
@@ -7618,21 +7544,14 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 				return it, err
 			}
 			it.Email = data
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
 		}
 	}
 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputSignInWithTokenInput(ctx context.Context, obj any) (types.SignInWithTokenInput, error) {
-	var it types.SignInWithTokenInput
+func (ec *executionContext) unmarshalInputVerifyMagicLinkInput(ctx context.Context, obj any) (types.VerifyMagicLinkInput, error) {
+	var it types.VerifyMagicLinkInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -8506,13 +8425,14 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "signInWithToken":
+		case "sendMagicLink":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_signInWithToken(ctx, field)
+				return ec._Mutation_sendMagicLink(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
+		case "verifyMagicLink":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_verifyMagicLink(ctx, field)
+			})
 		case "requestAllAccesses":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_requestAllAccesses(ctx, field)
@@ -8990,19 +8910,19 @@ func (ec *executionContext) _RequestAccessesPayload(ctx context.Context, sel ast
 	return out
 }
 
-var signInWithTokenPayloadImplementors = []string{"SignInWithTokenPayload"}
+var sendMagicLinkPayloadImplementors = []string{"SendMagicLinkPayload"}
 
-func (ec *executionContext) _SignInWithTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *types.SignInWithTokenPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, signInWithTokenPayloadImplementors)
+func (ec *executionContext) _SendMagicLinkPayload(ctx context.Context, sel ast.SelectionSet, obj *types.SendMagicLinkPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sendMagicLinkPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SignInWithTokenPayload")
+			out.Values[i] = graphql.MarshalString("SendMagicLinkPayload")
 		case "success":
-			out.Values[i] = ec._SignInWithTokenPayload_success(ctx, field, obj)
+			out.Values[i] = ec._SendMagicLinkPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -9964,6 +9884,45 @@ func (ec *executionContext) _VendorEdge(ctx context.Context, sel ast.SelectionSe
 			}
 		case "node":
 			out.Values[i] = ec._VendorEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var verifyMagicLinkPayloadImplementors = []string{"VerifyMagicLinkPayload"}
+
+func (ec *executionContext) _VerifyMagicLinkPayload(ctx context.Context, sel ast.SelectionSet, obj *types.VerifyMagicLinkPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, verifyMagicLinkPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("VerifyMagicLinkPayload")
+		case "success":
+			out.Values[i] = ec._VerifyMagicLinkPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11307,11 +11266,6 @@ func (ec *executionContext) marshalNRequestAccessesPayload2ᚖgoᚗproboᚗinc�
 	return ec._RequestAccessesPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRequestAllAccessesInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAllAccessesInput(ctx context.Context, v any) (types.RequestAllAccessesInput, error) {
-	res, err := ec.unmarshalInputRequestAllAccessesInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNRequestDocumentAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestDocumentAccessInput(ctx context.Context, v any) (types.RequestDocumentAccessInput, error) {
 	res, err := ec.unmarshalInputRequestDocumentAccessInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11324,6 +11278,11 @@ func (ec *executionContext) unmarshalNRequestReportAccessInput2goᚗproboᚗinc�
 
 func (ec *executionContext) unmarshalNRequestTrustCenterFileAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestTrustCenterFileAccessInput(ctx context.Context, v any) (types.RequestTrustCenterFileAccessInput, error) {
 	res, err := ec.unmarshalInputRequestTrustCenterFileAccessInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSendMagicLinkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSendMagicLinkInput(ctx context.Context, v any) (types.SendMagicLinkInput, error) {
+	res, err := ec.unmarshalInputSendMagicLinkInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -11356,25 +11315,6 @@ var (
 		session.SessionRequirementOptional: "OPTIONAL",
 	}
 )
-
-func (ec *executionContext) unmarshalNSignInWithTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenInput(ctx context.Context, v any) (types.SignInWithTokenInput, error) {
-	res, err := ec.unmarshalInputSignInWithTokenInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSignInWithTokenPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenPayload(ctx context.Context, sel ast.SelectionSet, v types.SignInWithTokenPayload) graphql.Marshaler {
-	return ec._SignInWithTokenPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSignInWithTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignInWithTokenPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SignInWithTokenPayload(ctx, sel, v)
-}
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
@@ -11702,6 +11642,11 @@ func (ec *executionContext) marshalNVendorEdge2ᚖgoᚗproboᚗincᚋproboᚋpkg
 		return graphql.Null
 	}
 	return ec._VendorEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNVerifyMagicLinkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVerifyMagicLinkInput(ctx context.Context, v any) (types.VerifyMagicLinkInput, error) {
+	res, err := ec.unmarshalInputVerifyMagicLinkInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -12037,6 +11982,13 @@ func (ec *executionContext) marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋs
 	return ec._Report(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOSendMagicLinkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSendMagicLinkPayload(ctx context.Context, sel ast.SelectionSet, v *types.SendMagicLinkPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SendMagicLinkPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
 	if v == nil {
 		return nil, nil
@@ -12096,6 +12048,13 @@ func (ec *executionContext) marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpk
 		return graphql.Null
 	}
 	return ec._TrustCenter(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOVerifyMagicLinkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVerifyMagicLinkPayload(ctx context.Context, sel ast.SelectionSet, v *types.VerifyMagicLinkPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._VerifyMagicLinkPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

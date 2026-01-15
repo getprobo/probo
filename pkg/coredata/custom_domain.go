@@ -194,6 +194,10 @@ LIMIT 1
 
 	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect custom domain: %w", err)
 	}
 
@@ -247,6 +251,10 @@ FOR UPDATE SKIP LOCKED
 
 	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect custom domain: %w", err)
 	}
 
@@ -300,6 +308,63 @@ LIMIT 1
 
 	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
 	if err != nil {
+		return fmt.Errorf("cannot collect custom domain: %w", err)
+	}
+
+	*cd = customDomain
+
+	return nil
+}
+
+func (cd *CustomDomain) LoadByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	encryptionKey cipher.EncryptionKey,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	domain,
+	http_challenge_token,
+	http_challenge_key_auth,
+	http_challenge_url,
+	http_order_url,
+	ssl_certificate,
+	encrypted_ssl_private_key,
+	ssl_certificate_chain,
+	ssl_status,
+	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
+	created_at,
+	updated_at
+FROM
+	custom_domains
+WHERE
+	%s
+	AND organization_id = @organization_id
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query custom domain: %w", err)
+	}
+
+	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect custom domain: %w", err)
 	}
 

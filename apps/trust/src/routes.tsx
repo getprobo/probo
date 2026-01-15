@@ -1,14 +1,6 @@
-import {
-  createBrowserRouter,
-  Navigate,
-  redirect,
-  useRouteError,
-} from "react-router";
-import { Fragment } from "react";
-import {
-  consoleEnvironment,
-  UnAuthenticatedError,
-} from "./providers/RelayProviders.tsx";
+import { createBrowserRouter, redirect, useRouteError } from "react-router";
+import { Fragment, lazy } from "react";
+import { consoleEnvironment } from "./providers/RelayProviders.tsx";
 import { loadQuery } from "react-relay";
 import { PageError } from "./components/PageError.tsx";
 import { MainLayout } from "/layouts/MainLayout";
@@ -20,7 +12,6 @@ import {
 import { OverviewPage } from "/pages/OverviewPage";
 import { DocumentsPage } from "/pages/DocumentsPage";
 import { SubprocessorsPage } from "/pages/SubprocessorsPage";
-import { AccessPage } from "./pages/AccessPage.tsx";
 import { TabSkeleton } from "./components/Skeletons/TabSkeleton.tsx";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton.tsx";
 import {
@@ -36,14 +27,20 @@ import {
 function ErrorBoundary({ error: propsError }: { error?: string }) {
   const error = useRouteError() ?? propsError;
 
-  if (error instanceof UnAuthenticatedError) {
-    return <Navigate to="/auth/login" />;
-  }
-
   return <PageError error={error?.toString()} />;
 }
 
 const routes = [
+  {
+    path: "/auth",
+    Component: lazy(() => import("./pages/auth/AuthLayout")),
+    children: [
+      {
+        path: "verify-magic-link",
+        Component: lazy(() => import("./pages/auth/VerifyMagicLinkPage.tsx")),
+      },
+    ],
+  },
   {
     path: "/",
     loader: async () => {
@@ -106,11 +103,6 @@ const routes = [
         Component: withQueryRef(SubprocessorsPage),
       },
     ],
-  },
-  {
-    path: "/access",
-    Component: AccessPage,
-    ErrorBoundary: ErrorBoundary,
   },
   // Fallback URL to the NotFound Page
   {

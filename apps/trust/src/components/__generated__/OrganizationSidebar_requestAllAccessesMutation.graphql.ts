@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b06c18474ea9953c2fb496b919b8e247>>
+ * @generated SignedSource<<e1d14b17505ed1107ac96553e3d8f922>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,17 +9,17 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type RequestAccessDialogMutation$variables = Record<PropertyKey, never>;
-export type RequestAccessDialogMutation$data = {
+export type OrganizationSidebar_requestAllAccessesMutation$variables = Record<PropertyKey, never>;
+export type OrganizationSidebar_requestAllAccessesMutation$data = {
   readonly requestAllAccesses: {
     readonly trustCenterAccess: {
       readonly id: string;
     };
   };
 };
-export type RequestAccessDialogMutation = {
-  response: RequestAccessDialogMutation$data;
-  variables: RequestAccessDialogMutation$variables;
+export type OrganizationSidebar_requestAllAccessesMutation = {
+  response: OrganizationSidebar_requestAllAccessesMutation$data;
+  variables: OrganizationSidebar_requestAllAccessesMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -59,7 +59,7 @@ return {
     "argumentDefinitions": [],
     "kind": "Fragment",
     "metadata": null,
-    "name": "RequestAccessDialogMutation",
+    "name": "OrganizationSidebar_requestAllAccessesMutation",
     "selections": (v0/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -68,20 +68,20 @@ return {
   "operation": {
     "argumentDefinitions": [],
     "kind": "Operation",
-    "name": "RequestAccessDialogMutation",
+    "name": "OrganizationSidebar_requestAllAccessesMutation",
     "selections": (v0/*: any*/)
   },
   "params": {
-    "cacheID": "b48847e88c57289efc120745c743c8f6",
+    "cacheID": "a298b2a1c2f62300ae5056743d2c2ec3",
     "id": null,
     "metadata": {},
-    "name": "RequestAccessDialogMutation",
+    "name": "OrganizationSidebar_requestAllAccessesMutation",
     "operationKind": "mutation",
-    "text": "mutation RequestAccessDialogMutation {\n  requestAllAccesses {\n    trustCenterAccess {\n      id\n    }\n  }\n}\n"
+    "text": "mutation OrganizationSidebar_requestAllAccessesMutation {\n  requestAllAccesses {\n    trustCenterAccess {\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "44c3538831968b7146fbf2c9e027a778";
+(node as any).hash = "a22225757510c4dd097e99dcd3c066a6";
 
 export default node;

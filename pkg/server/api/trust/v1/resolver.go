@@ -22,6 +22,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -51,6 +52,7 @@ type (
 		logger        *log.Logger
 		iam           *iam.Service
 		sessionCookie *authn.Cookie
+		baseURL       *baseurl.BaseURL
 	}
 )
 
@@ -77,6 +79,7 @@ func NewMux(
 	iamSvc *iam.Service,
 	trustSvc *trust.Service,
 	cookieConfig securecookie.Config,
+	baseURL *baseurl.BaseURL,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -89,6 +92,7 @@ func NewMux(
 			trust:         trustSvc,
 			logger:        logger,
 			sessionCookie: authn.NewCookie(&cookieConfig),
+			baseURL:       baseURL,
 		},
 		Directives: schema.DirectiveRoot{
 			Session: session.Directive,

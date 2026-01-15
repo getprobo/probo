@@ -149,6 +149,8 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 		}
 
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, prefix)
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/auth")
+
 		if r.URL.Path == "" {
 			r.URL.Path = "/"
 		}

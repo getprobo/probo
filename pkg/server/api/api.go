@@ -118,6 +118,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.Trust,
 			cfg.Cookie,
+			cfg.BaseURL,
 		),
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),

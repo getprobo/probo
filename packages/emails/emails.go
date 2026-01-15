@@ -38,6 +38,7 @@ const (
 	subjectFrameworkExport                   = "Your framework export is ready"
 	subjectTrustCenterAccess                 = "Trust Center Access Invitation - %s"
 	subjectTrustCenterDocumentAccessRejected = "Trust Center Document Access Rejected - %s"
+	subjectMagicLink                         = "Connect to Probo"
 )
 
 var (
@@ -57,6 +58,8 @@ var (
 	trustCenterAccessTextTemplate                 = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-access.txt.tmpl"))
 	trustCenterDocumentAccessRejectedHTMLTemplate = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/trust-center-document-access-rejected.html.tmpl"))
 	trustCenterDocumentAccessRejectedTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-document-access-rejected.txt.tmpl"))
+	magicLinkHTMLTemplate                         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/magic-link.html.tmpl"))
+	magicLinkTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/magic-link.txt.tmpl"))
 )
 
 func RenderConfirmEmail(baseURL, fullName, confirmationUrl string) (subject string, textBody string, htmlBody *string, err error) {
@@ -199,18 +202,18 @@ func RenderTrustCenterDocumentAccessRejected(
 func RenderMagicLink(baseURL, fullName, magicLinkUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName          string
-		MagicLinkUrl      string
+		MagicLinkURL      string
 		LogoURL           string
 		DurationInMinutes int
 	}{
 		FullName:          fullName,
-		MagicLinkUrl:      magicLinkUrl,
+		MagicLinkURL:      magicLinkUrl,
 		LogoURL:           baseURL + logoURLPath,
 		DurationInMinutes: int(tokenDuration.Minutes()),
 	}
 
-	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)
-	return subjectTrustCenterAccess, textBody, htmlBody, err
+	textBody, htmlBody, err = renderEmail(magicLinkTextTemplate, magicLinkHTMLTemplate, data)
+	return subjectMagicLink, textBody, htmlBody, err
 }
 
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {
