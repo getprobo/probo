@@ -1676,19 +1676,16 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
 	// TODO: should not create an access nor identity, but send an invitation
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		var err error
-		identity, err = r.iam.AuthService.LoadOrCreateIdentity(
-			ctx,
-			&iam.LoadOrCreateIdentityRequest{
-				Email: input.Email,
-			},
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot load or create identity", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
+	identity, err := r.iam.AuthService.LoadOrCreateIdentity(
+		ctx,
+		&iam.LoadOrCreateIdentityRequest{
+			Email:    input.Email,
+			FullName: input.Name,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load or create identity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	access, err := prb.TrustCenterAccesses.Create(
