@@ -87,6 +87,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	}
 	membership := findMembershipForOrg(memberships, resourceOrgID)
 
+	// Check whether the viewer is currently assuming the org of the accessed resource
 	if membership != nil && params.Session != nil {
 		if _, err := a.getActiveChildSessionForMembership(
 			ctx,
