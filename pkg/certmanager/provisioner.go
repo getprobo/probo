@@ -284,16 +284,16 @@ func (p *Provisioner) provisionDomainCertificate(
 	}
 
 	if domain.SSLStatus == coredata.CustomDomainSSLStatusPending || domain.SSLStatus == coredata.CustomDomainSSLStatusRenewing {
-		// if err := p.checkDNSConfiguration(domain.Domain); err != nil {
-		// 	p.logger.WarnCtx(
-		// 		ctx,
-		// 		"dns configuration check failed",
-		// 		log.String("domain", domain.Domain),
-		// 		log.Error(err),
-		// 	)
+		if err := p.checkDNSConfiguration(domain.Domain); err != nil {
+			p.logger.WarnCtx(
+				ctx,
+				"dns configuration check failed",
+				log.String("domain", domain.Domain),
+				log.Error(err),
+			)
 
-		// 	return err
-		// }
+			return err
+		}
 
 		p.logger.InfoCtx(ctx, "DNS configuration verified, initiating HTTP challenge for domain", log.String("domain", domain.Domain))
 
