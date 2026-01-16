@@ -10,7 +10,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import clsx from "clsx";
-import { use, useState } from "react";
+import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import type { MemberListItemFragment$key } from "/__generated__/iam/MemberListItemFragment.graphql";
@@ -18,7 +18,6 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { sprintf } from "@probo/helpers";
 import { EditMemberDialog } from "./EditMemberDialog";
-import { CurrentUser } from "/providers/CurrentUser";
 
 const fragment = graphql`
   fragment MemberListItemFragment on Membership {
@@ -62,19 +61,15 @@ export function MemberListItem(props: {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const membership = useFragment<MemberListItemFragment$key>(fragment, fKey);
-  const { role } = use(CurrentUser);
 
   const isInactive = membership.state === "INACTIVE";
-
-  // Only OWNER can edit OWNER members
-  const canEditThisRole = membership.role === "OWNER" ? role === "OWNER" : true;
 
   const [removeMembership, isRemoving] = useMutationWithToasts(
     removeMemberMutation,
     {
       successMessage: __("Member removed successfully"),
       errorMessage: __("Failed to remove member"),
-    }
+    },
   );
 
   const handleRemove = async () => {
@@ -93,9 +88,9 @@ export function MemberListItem(props: {
       {
         message: sprintf(
           __("Are you sure you want to remove %s?"),
-          membership.profile.fullName
+          membership.profile.fullName,
         ),
-      }
+      },
     );
   };
 
@@ -104,7 +99,7 @@ export function MemberListItem(props: {
       <Tr
         className={clsx(
           isRemoving && "opacity-60 pointer-events-none",
-          isInactive && "opacity-50"
+          isInactive && "opacity-50",
         )}
       >
         <Td>
@@ -129,7 +124,7 @@ export function MemberListItem(props: {
               className="flex gap-2 justify-end"
               onClick={(e) => e.stopPropagation()}
             >
-              {membership.canUpdate && canEditThisRole && (
+              {membership.canUpdate && (
                 <Button
                   variant="secondary"
                   onClick={() => setDialogOpen(true)}
@@ -141,9 +136,7 @@ export function MemberListItem(props: {
               {isRemoving ? (
                 <Spinner size={16} />
               ) : (
-                membership.canDelete &&
-                canEditThisRole &&
-                membership.source !== "SCIM" && (
+                membership.canDelete && (
                   <Button
                     variant="danger"
                     onClick={handleRemove}

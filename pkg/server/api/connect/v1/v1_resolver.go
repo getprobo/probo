@@ -950,6 +950,12 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 		return nil, err
 	}
 
+	if input.Role == coredata.MembershipRoleOwner {
+		if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner); err != nil {
+			return nil, err
+		}
+	}
+
 	membership, err := r.iam.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update membership", log.Error(err))
