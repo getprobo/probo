@@ -28,10 +28,6 @@ import (
 )
 
 type (
-	ErrRightsRequestNotFound struct {
-		Identifier string
-	}
-
 	RightsRequest struct {
 		ID             gid.GID            `db:"id"`
 		OrganizationID gid.GID            `db:"organization_id"`
@@ -49,10 +45,6 @@ type (
 	RightsRequests []*RightsRequest
 )
 
-func (e ErrRightsRequestNotFound) Error() string {
-	return fmt.Sprintf("rights request not found: %q", e.Identifier)
-}
-
 func (rr *RightsRequest) CursorKey(field RightsRequestOrderField) page.CursorKey {
 	switch field {
 	case RightsRequestOrderFieldCreatedAt:
@@ -66,6 +58,21 @@ func (rr *RightsRequest) CursorKey(field RightsRequestOrderField) page.CursorKey
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (rr *RightsRequest) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM rights_requests WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, rr.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query rights request authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (rr *RightsRequest) LoadByID(
@@ -108,7 +115,7 @@ LIMIT 1;
 	request, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[RightsRequest])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrRightsRequestNotFound{Identifier: rightsRequestID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect rights request: %w", err)

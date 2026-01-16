@@ -71,12 +71,13 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionObligationGet, ActionObligationList,
 		ActionContinualImprovementGet, ActionContinualImprovementList,
 		ActionProcessingActivityGet, ActionProcessingActivityList,
-		ActionDataProtectionImpactAssessmentGet,
+		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
 		ActionSnapshotGet, ActionSnapshotList,
 		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionSlackConnectionList,
+		ActionRightsRequestGet, ActionRightsRequestList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(

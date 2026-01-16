@@ -6481,7 +6481,7 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 
 // Permission is the resolver for the permission field.
 func (r *rightsRequestResolver) Permission(ctx context.Context, obj *types.RightsRequest, action string) (bool, error) {
-	panic(fmt.Errorf("not implemented: Permission - permission"))
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -7049,7 +7049,7 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	hasPermission, err := r.Permission(ctx, obj, probo.ActionTrustCenterGetNda)
+	hasPermission, err := r.Resolver.Permission(ctx, obj, probo.ActionTrustCenterGetNda)
 	if err != nil {
 		panic(fmt.Errorf("cannot authorize: %w", err))
 	}
