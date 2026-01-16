@@ -2,7 +2,7 @@
   "name": "@probo/i18n",
   "version": "1.0.0",
   "author": "",
-  "main": "./TranslatorProvider.tsx",
+  "main": "./index.ts",
   "devDependencies": {
     "@types/react": "^19.1.2"
   },

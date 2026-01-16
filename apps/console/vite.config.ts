@@ -39,6 +39,9 @@ export default defineConfig({
       "/permissions": fileURLToPath(
         new URL("./src/permissions", import.meta.url),
       ),
+      "/locales": fileURLToPath(
+        new URL("../../packages/i18n/locales", import.meta.url),
+      ),
     },
   },
 });
