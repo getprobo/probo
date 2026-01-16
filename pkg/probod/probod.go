@@ -779,7 +779,9 @@ func (impl *Implm) runTrustCenterServer(
 			strings.Contains(msg, "client sent an HTTP request to an HTTPS server") ||
 			strings.Contains(msg, "tls: client offered only unsupported versions") ||
 			strings.Contains(msg, "EOF") ||
-			strings.Contains(msg, " i/o timeout")
+			strings.Contains(msg, " i/o timeout") ||
+			strings.Contains(msg, "tls: first record does not look like a TLS handshake") ||
+			strings.Contains(msg, "tls: client requested unsupported application protocols")
 	}
 	httpServerLogger := l.Named("", log.SkipMatch(ignoreTLSHandshakeErrors))
 	httpsServer := httpserver.NewServer(
