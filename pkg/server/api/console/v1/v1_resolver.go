@@ -7497,7 +7497,7 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	hasPermission, err := r.Permission(ctx, obj, probo.ActionTrustCenterGetNda)
+	hasPermission, err := r.Resolver.Permission(ctx, obj, probo.ActionTrustCenterGetNda)
 	if err != nil {
 		panic(fmt.Errorf("cannot authorize: %w", err))
 	}
