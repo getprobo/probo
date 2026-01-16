@@ -75,6 +75,7 @@ const (
 	MembershipProfileEntityType                uint16 = 49
 	SCIMConfigurationEntityType                uint16 = 50
 	SCIMEventEntityType                        uint16 = 51
+	TokenEntityType                            uint16 = 52
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -181,6 +182,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &SCIMConfiguration{ID: id}, true
 	case SCIMEventEntityType:
 		return &SCIMEvent{ID: id}, true
+	case TokenEntityType:
+		return &Token{ID: id}, true
 	default:
 		return nil, false
 	}
