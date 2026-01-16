@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -773,10 +774,14 @@ func (impl *Implm) runTrustCenterServer(
 
 	handler := acmeHandler.Handle(trustRouter)
 
+	ignoreTLSHandshakeErrors := func(level log.Level, msg string, attrs []log.Attr) bool {
+		return strings.Contains(msg, "http: TLS handshake error")
+	}
+	httpServerLogger := l.Named("", log.SkipMatch(ignoreTLSHandshakeErrors))
 	httpsServer := httpserver.NewServer(
 		impl.cfg.TrustCenter.HTTPSAddr,
 		handler,
-		httpserver.WithLogger(l),
+		httpserver.WithLogger(httpServerLogger),
 		httpserver.WithRegisterer(r),
 		httpserver.WithTracerProvider(tp),
 	)
