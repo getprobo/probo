@@ -30,7 +30,6 @@ export const trustCenterAccessesPaginationFragment = graphql`
           active
           hasAcceptedNonDisclosureAgreement
           createdAt
-          lastTokenExpiresAt
           pendingRequestCount
           activeCount
           canUpdate: permission(action: "core:trust-center-access:update")
@@ -71,7 +70,6 @@ export const createTrustCenterAccessMutation = graphql`
           active
           hasAcceptedNonDisclosureAgreement
           createdAt
-          lastTokenExpiresAt
           pendingRequestCount
           activeCount
           canUpdate: permission(action: "core:trust-center-access:update")
@@ -95,7 +93,6 @@ export const updateTrustCenterAccessMutation = graphql`
         hasAcceptedNonDisclosureAgreement
         createdAt
         updatedAt
-        lastTokenExpiresAt
         pendingRequestCount
         activeCount
       }

@@ -19,7 +19,6 @@ import (
 	"embed"
 	"fmt"
 	htmltemplate "html/template"
-	"math"
 	texttemplate "text/template"
 	"time"
 )
@@ -156,21 +155,17 @@ func RenderFrameworkExport(baseURL, fullName, downloadUrl string) (subject strin
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
-func RenderTrustCenterAccess(baseURL, fullName, organizationName, accessUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
-	durationInDays := int(math.Round(tokenDuration.Hours() / 24))
-
+func RenderTrustCenterAccess(baseURL, fullName, organizationName, accessUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName         string
 		OrganizationName string
 		AccessUrl        string
 		LogoURL          string
-		DurationInDays   int
 	}{
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		AccessUrl:        accessUrl,
 		LogoURL:          baseURL + logoURLPath,
-		DurationInDays:   durationInDays,
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)

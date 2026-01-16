@@ -48,10 +48,6 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
     [deleteInvitation, connectionId],
   );
 
-  const isExpired = access.lastTokenExpiresAt
-    ? new Date(access.lastTokenExpiresAt) < new Date()
-    : false;
-
   return (
     <>
       <Tr
@@ -62,11 +58,6 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
         <Td className="font-medium">{access.name}</Td>
         <Td>{access.email}</Td>
         <Td>{formatDate(access.createdAt)}</Td>
-        <Td className={isExpired ? "text-txt-danger" : ""}>
-          {access.lastTokenExpiresAt
-            ? formatDate(access.lastTokenExpiresAt)
-            : "-"}
-        </Td>
         <Td>
           <div className="flex justify-center">
             {access.active ? (

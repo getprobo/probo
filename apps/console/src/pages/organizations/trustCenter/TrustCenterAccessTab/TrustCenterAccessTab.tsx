@@ -169,7 +169,6 @@ export default function TrustCenterAccessTab() {
                 <Th>{__("Name")}</Th>
                 <Th>{__("Email")}</Th>
                 <Th>{__("Date")}</Th>
-                <Th>{__("Expires")}</Th>
                 <Th className="text-center">{__("Active")}</Th>
                 <Th className="text-center">{__("Access")}</Th>
                 <Th className="text-center">{__("Requests")}</Th>
@@ -208,9 +207,7 @@ export default function TrustCenterAccessTab() {
           <DialogContent padded className="space-y-6">
             <div>
               <p className="text-txt-secondary text-sm mb-4">
-                {__(
-                  "Send a 30-day access token to an external person to view your trust center",
-                )}
+                {__("Give a person access to your trust center")}
               </p>
 
               <Field

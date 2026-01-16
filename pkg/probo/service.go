@@ -48,12 +48,6 @@ type ExportService interface {
 }
 
 type (
-	TrustConfig struct {
-		TokenSecret   string
-		TokenDuration time.Duration
-		TokenType     string
-	}
-
 	Service struct {
 		pg                *pg.Client
 		s3                *s3.Client
@@ -61,7 +55,6 @@ type (
 		encryptionKey     cipher.EncryptionKey
 		baseURL           string
 		tokenSecret       string
-		trustConfig       TrustConfig
 		agentConfig       agents.Config
 		html2pdfConverter *html2pdf.Converter
 		acmeService       *certmanager.ACMEService
@@ -78,7 +71,6 @@ type (
 		scope                             coredata.Scoper
 		baseURL                           string
 		tokenSecret                       string
-		trustConfig                       TrustConfig
 		agent                             *agents.Agent
 		fileManager                       *filemanager.Service
 		Frameworks                        *FrameworkService
@@ -129,7 +121,6 @@ func NewService(
 	bucket string,
 	baseURL string,
 	tokenSecret string,
-	trustConfig TrustConfig,
 	agentConfig agents.Config,
 	html2pdfConverter *html2pdf.Converter,
 	acmeService *certmanager.ACMEService,
@@ -151,7 +142,6 @@ func NewService(
 		encryptionKey:     encryptionKey,
 		baseURL:           baseURL,
 		tokenSecret:       tokenSecret,
-		trustConfig:       trustConfig,
 		agentConfig:       agentConfig,
 		html2pdfConverter: html2pdfConverter,
 		acmeService:       acmeService,
@@ -172,7 +162,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		baseURL:       s.baseURL,
 		scope:         coredata.NewScope(tenantID),
 		tokenSecret:   s.tokenSecret,
-		trustConfig:   s.trustConfig,
 		agent:         agents.NewAgent(nil, s.agentConfig),
 		fileManager:   s.fileManager,
 	}

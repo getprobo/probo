@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
@@ -35,12 +34,6 @@ import (
 )
 
 type (
-	TrustConfig struct {
-		TokenSecret   string
-		TokenDuration time.Duration
-		TokenType     string
-	}
-
 	Service struct {
 		pg                 *pg.Client
 		s3                 *s3.Client
@@ -54,7 +47,6 @@ type (
 		html2pdfConverter  *html2pdf.Converter
 		fileManager        *filemanager.Service
 		logger             *log.Logger
-		trustConfig        TrustConfig
 		slack              *slack.Service
 	}
 
@@ -65,13 +57,11 @@ type (
 		scope                 coredata.Scoper
 		proboSvc              *probo.Service
 		encryptionKey         cipher.EncryptionKey
-		tokenSecret           string
 		baseURL               string
 		iam                   *iam.Service
 		html2pdfConverter     *html2pdf.Converter
 		fileManager           *filemanager.Service
 		logger                *log.Logger
-		trustConfig           TrustConfig
 		TrustCenters          *TrustCenterService
 		Documents             *DocumentService
 		Audits                *AuditService
@@ -92,13 +82,11 @@ func NewService(
 	bucket string,
 	baseURL string,
 	encryptionKey cipher.EncryptionKey,
-	tokenSecret string,
 	slackSigningSecret string,
 	iam *iam.Service,
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
-	trustConfig TrustConfig,
 	slack *slack.Service,
 ) *Service {
 	return &Service{
@@ -106,14 +94,12 @@ func NewService(
 		s3:                 s3Client,
 		bucket:             bucket,
 		encryptionKey:      encryptionKey,
-		tokenSecret:        tokenSecret,
 		slackSigningSecret: slackSigningSecret,
 		baseURL:            baseURL,
 		iam:                iam,
 		html2pdfConverter:  html2pdfConverter,
 		fileManager:        fileManagerService,
 		logger:             logger,
-		trustConfig:        trustConfig,
 		slack:              slack,
 	}
 }
@@ -126,13 +112,11 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		scope:             coredata.NewScope(tenantID),
 		proboSvc:          s.proboSvc,
 		encryptionKey:     s.encryptionKey,
-		tokenSecret:       s.tokenSecret,
 		baseURL:           s.baseURL,
 		iam:               s.iam,
 		html2pdfConverter: s.html2pdfConverter,
 		fileManager:       s.fileManager,
 		logger:            s.logger,
-		trustConfig:       s.trustConfig,
 	}
 
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}

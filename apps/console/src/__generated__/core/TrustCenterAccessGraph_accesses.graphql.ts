@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6cbc57ab24be22cdb76257d73f3a47d5>>
+ * @generated SignedSource<<17aba6dd50ebba280c11c963a4adede3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,7 +24,6 @@ export type TrustCenterAccessGraph_accesses$data = {
         readonly email: string;
         readonly hasAcceptedNonDisclosureAgreement: boolean;
         readonly id: string;
-        readonly lastTokenExpiresAt: string | null | undefined;
         readonly name: string;
         readonly pendingRequestCount: number;
       };
@@ -218,13 +217,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "lastTokenExpiresAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "pendingRequestCount",
                   "storageKey": null
                 },
@@ -296,6 +288,6 @@ return {
 };
 })();
 
-(node as any).hash = "41517deef6af7eec916f3a4bbfc217b7";
+(node as any).hash = "7d69d885bc80ed04776bafa53157590e";
 
 export default node;

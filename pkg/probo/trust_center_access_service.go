@@ -443,8 +443,6 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Con
 	}
 
 	now := time.Now()
-	expiresAt := now.Add(s.svc.trustConfig.TokenDuration)
-	access.LastTokenExpiresAt = &expiresAt
 	access.UpdatedAt = now
 
 	if err := access.Update(ctx, tx, s.svc.scope); err != nil {
@@ -467,7 +465,6 @@ func (s TrustCenterAccessService) sendTrustCenterAccessEmail(
 		name,
 		companyName,
 		accessURL,
-		s.svc.trustConfig.TokenDuration,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot render trust center access email: %w", err)
