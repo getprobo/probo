@@ -16,6 +16,7 @@ package iam
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"time"
@@ -547,7 +548,7 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 }
 
 func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkRequest) error {
-	token, err := statelesstoken.NewToken(
+	tokenString, err := statelesstoken.NewToken(
 		s.tokenSecret,
 		TokenTypeMagicLink,
 		s.magicLinkTokenValidity,
@@ -560,18 +561,30 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 	}
 
 	magicLinkURL := req.BaseURL.
-		WithQuery("token", token).
+		WithQuery("token", tokenString).
 		MustString()
 
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
+			hashedToken := HashToken(tokenString)
+			token := &coredata.Token{
+				ID:          gid.New(gid.NilTenant, coredata.TokenEntityType),
+				HashedValue: hashedToken,
+				CreatedAt:   time.Now(),
+			}
+			if err := token.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert token: %w", err)
+			}
+
 			fullName := req.Email.Username()
 			identity := &coredata.Identity{}
 
 			err := identity.LoadByEmail(ctx, tx, req.Email)
 			if err == nil {
-				fullName = identity.FullName
+				if identity.FullName != "" {
+					fullName = identity.FullName
+				}
 			} else {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load identity: %w", err)
@@ -582,7 +595,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				s.baseURL,
 				fullName,
 				magicLinkURL,
-				s.invitationTokenValidity,
+				s.magicLinkTokenValidity,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render magic link email: %w", err)
@@ -596,8 +609,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				htmlBody,
 			)
 
-			err = magicLinkEmail.Insert(ctx, tx)
-			if err != nil {
+			if err := magicLinkEmail.Insert(ctx, tx); err != nil {
 				return fmt.Errorf("cannot insert email: %w", err)
 			}
 
@@ -606,21 +618,41 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 	)
 }
 
-func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, token string) (*coredata.Identity, *coredata.Session, error) {
+func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString string) (*coredata.Identity, *coredata.Session, error) {
 	var (
 		now      = time.Now()
 		identity = &coredata.Identity{}
 		session  = &coredata.Session{}
 	)
 
-	payload, err := statelesstoken.ValidateToken[MagicLinkData](s.tokenSecret, TokenTypeMagicLink, token)
+	payload, err := statelesstoken.ValidateToken[MagicLinkData](s.tokenSecret, TokenTypeMagicLink, tokenString)
 	if err != nil {
 		return nil, nil, NewInvalidTokenError()
 	}
 
-	err = s.pg.WithTx(
+	if err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
+			hashedValue := HashToken(tokenString)
+			token := &coredata.Token{}
+
+			if err := s.pg.WithConn(
+				ctx,
+				func(conn pg.Conn) error {
+					if err := token.LoadByHashedValueForUpdate(ctx, conn, hashedValue); err != nil {
+						if errors.Is(err, coredata.ErrResourceNotFound) {
+							return NewInvalidTokenError()
+						}
+
+						return fmt.Errorf("cannot load token by hashed value: %w", err)
+					}
+
+					return nil
+				},
+			); err != nil {
+				return fmt.Errorf("cannot load token: %w", err)
+			}
+
 			err := identity.LoadByEmail(ctx, tx, payload.Data.Email)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -646,11 +678,17 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, token string)
 				return fmt.Errorf("cannot insert session: %w", err)
 			}
 
+			if err := token.Delete(ctx, tx); err != nil {
+				return fmt.Errorf("cannot delete token: %w", err)
+			}
+
 			return nil
 		},
-	)
+	); err != nil {
+		return nil, nil, err
+	}
 
-	return identity, session, err
+	return identity, session, nil
 }
 
 func (s *AuthService) UpdateIdentity(ctx context.Context, identityID gid.GID, fullName string) (*coredata.Identity, error) {
@@ -683,4 +721,9 @@ func (s *AuthService) UpdateIdentity(ctx context.Context, identityID gid.GID, fu
 	)
 
 	return identity, err
+}
+
+func HashToken(token string) []byte {
+	hash := sha256.Sum256([]byte(token))
+	return hash[:]
 }

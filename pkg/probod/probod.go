@@ -125,7 +125,7 @@ func New() *Implm {
 				DisableSignup:                       false,
 				InvitationConfirmationTokenValidity: 3600,
 				PasswordResetTokenValidity:          3600,
-				MagicLinkTokenValidity:              3600,
+				MagicLinkTokenValidity:              900,
 				SAML: samlConfig{
 					SessionDuration:                   604800,
 					CleanupIntervalSeconds:            86400,

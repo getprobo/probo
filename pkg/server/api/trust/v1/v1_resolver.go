@@ -209,7 +209,6 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	// FIXME: cookie domain
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)
 	r.sessionCookie.Set(w, session)
 
