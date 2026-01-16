@@ -116,14 +116,11 @@ type URLBuilder struct {
 }
 
 // WithPath returns a URLBuilder with the specified path.
-// The path will be properly joined with the base URL.
+// The path will be properly joined with the base URL's path.
 func (b *BaseURL) WithPath(path string) *URLBuilder {
 	if b == nil {
 		return &URLBuilder{err: fmt.Errorf("base URL is nil")}
 	}
-
-	// Ensure path does not end with /
-	basePath := strings.TrimSuffix(b.parsed.Path, "/")
 
 	// Ensure path starts with /
 	if !strings.HasPrefix(path, "/") {
@@ -135,28 +132,9 @@ func (b *BaseURL) WithPath(path string) *URLBuilder {
 
 	return &URLBuilder{
 		base:  b,
-		path:  basePath + path,
+		path:  path,
 		query: make(url.Values),
 	}
-}
-
-// WithPath returns a URLBuilder with the specified path.
-// The path will be properly joined with the base URL.
-func (ub *URLBuilder) WithPath(path string) *URLBuilder {
-	if ub == nil {
-		return ub
-	}
-
-	// Ensure path starts with /
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
-
-	// Ensure path does not end with /
-	path = strings.TrimSuffix(path, "/")
-
-	ub.path = ub.path + path
-	return ub
 }
 
 // WithQuery adds a query parameter to the URL.
