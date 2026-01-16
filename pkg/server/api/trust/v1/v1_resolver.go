@@ -165,11 +165,7 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 	}
 
 	customDomain, err := r.trust.GetCustomDomainByOrganizationID(ctx, organization.ID)
-	if err != nil {
-		if errors.Is(err, trust.ErrCustomDomainNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "custom domain not found")
-		}
-
+	if err != nil && !errors.Is(err, trust.ErrCustomDomainNotFound) {
 		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -185,15 +181,11 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		req.BaseURL = baseURL
+		req.BaseURL = baseURL.WithPath("/verify-magic-link")
 	} else {
-		baseURL, err := baseurl.Parse(r.baseURL.WithPath("/trust/" + trustCenter.ID.String()).MustString())
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot parse url", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		req.BaseURL = baseURL
+		req.BaseURL = r.baseURL.WithPath(
+			fmt.Sprintf("/trust/%s/verify-magic-link", trustCenter.ID.String()),
+		)
 	}
 
 	if err := r.iam.AuthService.SendMagicLink(ctx, req); err != nil {

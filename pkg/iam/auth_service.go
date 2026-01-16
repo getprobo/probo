@@ -64,7 +64,7 @@ type (
 
 	SendMagicLinkRequest struct {
 		Email   mail.Addr
-		BaseURL *baseurl.BaseURL
+		BaseURL *baseurl.URLBuilder
 	}
 
 	PasswordResetData struct {
@@ -560,7 +560,6 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 	}
 
 	magicLinkURL := req.BaseURL.
-		WithPath("/verify-magic-link").
 		WithQuery("token", token).
 		MustString()
 
