@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.115.0] - 2026-01-15
+
+### Added
+
+- Add processing activity exports
+
 ## [0.114.0] - 2026-01-15
 
 ### Added
