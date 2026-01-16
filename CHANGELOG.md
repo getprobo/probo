@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Filter junk HTTP TLS server error.
+
 ## [0.115.0] - 2026-01-15
 
 ### Added
