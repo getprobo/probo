@@ -123,9 +123,23 @@ var IAMOwnerPolicy = policy.NewPolicy(
 		WithSID("full-org-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
-	// Full access to member management (scoped to own organization)
-	policy.Allow("iam:membership:*").
-		WithSID("full-membership-access").
+	// Full access to member management (scoped to own organization), except deletion on SCIM sourced memberships
+	policy.Allow(
+		ActionMembershipGet,
+		ActionMembershipList,
+		ActionMembershipUpdate,
+	).
+		WithSID("membership-owner-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+	policy.Allow(
+		ActionMembershipDelete,
+	).
+		WithSID("membership-deletion-owner-access").
+		When(policy.NotEquals("resource.source", "SCIM")),
+
+	// Can set other members OWNER
+	policy.Allow(ActionMembershipRoleSetOwner).
+		WithSID("membership-role-owner-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
 	// Full access to membership profiles (scoped to own organization)
@@ -185,10 +199,18 @@ var IAMAdminPolicy = policy.NewPolicy(
 	// Can manage memberships (scoped to own organization)
 	policy.Allow(
 		ActionMembershipGet,
-		ActionMembershipUpdate,
 	).
 		WithSID("membership-admin-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	policy.Allow(
+		ActionMembershipUpdate,
+	).
+		WithSID("membership-role-admin-access").
+		When(
+			policy.Equals("principal.organization_id", "resource.organization_id"),
+			policy.NotEquals("resource.role", "OWNER"),
+		),
 
 	// Can view membership profiles (scoped to own organization)
 	policy.Allow(ActionMembershipProfileGet).

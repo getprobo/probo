@@ -48,6 +48,9 @@ const (
 	ActionMembershipUpdate = "iam:membership:update"
 	ActionMembershipDelete = "iam:membership:delete"
 
+	// Membership role actions
+	ActionMembershipRoleSetOwner = "iam:membership-role:set-owner"
+
 	// Membership Profile actions
 	ActionMembershipProfileGet = "iam:membership-profile:get"
 

@@ -245,8 +245,10 @@ LEFT JOIN
 func (m *Membership) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
 	q := `
 SELECT
-    identity_id
-    , organization_id
+    identity_id,
+    organization_id,
+    role,
+    source
 FROM
     iam_memberships
 WHERE
@@ -256,7 +258,14 @@ LIMIT 1;
 
 	var identityID gid.GID
 	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, m.ID).Scan(&identityID, &organizationID); err != nil {
+	var role MembershipRole
+	var source MembershipSource
+	if err := conn.QueryRow(ctx, q, m.ID).Scan(
+		&identityID,
+		&organizationID,
+		&role,
+		&source,
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
@@ -266,6 +275,8 @@ LIMIT 1;
 	return map[string]string{
 		"identity_id":     identityID.String(),
 		"organization_id": organizationID.String(),
+		"role":            role.String(),
+		"source":          source.String(),
 	}, nil
 }
 
@@ -449,7 +460,7 @@ JOIN
 LEFT JOIN
     iam_membership_profiles mp ON mp.membership_id = mbr.id
 WHERE
-	%s
+    %s
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())

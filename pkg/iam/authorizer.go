@@ -112,12 +112,15 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	}
 
 	// Only set principal.organization_id if they have a role in this org
-	var principalOrgID string
+	var scopedPrincipalAttrs map[string]string
 	if membership != nil && role != "" {
-		principalOrgID = membership.OrganizationID.String()
+		scopedPrincipalAttrs = map[string]string{
+			"organization_id": membership.OrganizationID.String(),
+			"role":            membership.Role.String(),
+		}
 	}
 
-	principalAttrs, err := a.buildPrincipalAttributes(ctx, conn, params.Principal, principalOrgID)
+	principalAttrs, err := a.buildPrincipalAttributes(ctx, conn, params.Principal, scopedPrincipalAttrs)
 	if err != nil {
 		return fmt.Errorf("cannot build principal attributes: %w", err)
 	}
@@ -176,12 +179,12 @@ func (a *Authorizer) buildPrincipalAttributes(
 	ctx context.Context,
 	conn pg.Conn,
 	principalID gid.GID,
-	organizationID string,
+	defaultAttrs map[string]string,
 ) (map[string]string, error) {
 	attrs := map[string]string{
-		"id":              principalID.String(),
-		"organization_id": organizationID,
+		"id": principalID.String(),
 	}
+	maps.Copy(attrs, defaultAttrs)
 
 	if entity, ok := coredata.NewEntityFromID(principalID); ok {
 		if attributer, ok := entity.(AuthorizationAttributer); ok {
