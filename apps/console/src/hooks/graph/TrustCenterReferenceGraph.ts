@@ -1,22 +1,19 @@
-import { graphql } from 'react-relay';
-import { useLazyLoadQuery } from 'react-relay';
+import { graphql } from "react-relay";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type {
-  TrustCenterReferenceGraphQuery,
-  TrustCenterReferenceGraphQuery$data
-} from "./__generated__/TrustCenterReferenceGraphQuery.graphql";
-import type { TrustCenterReferenceGraphCreateMutation } from "./__generated__/TrustCenterReferenceGraphCreateMutation.graphql";
-import type { TrustCenterReferenceGraphUpdateMutation } from "./__generated__/TrustCenterReferenceGraphUpdateMutation.graphql";
-import type { TrustCenterReferenceGraphUpdateRankMutation } from "./__generated__/TrustCenterReferenceGraphUpdateRankMutation.graphql";
-import type { TrustCenterReferenceGraphDeleteMutation } from "./__generated__/TrustCenterReferenceGraphDeleteMutation.graphql";
+import type { TrustCenterReferenceGraphCreateMutation } from "/__generated__/core/TrustCenterReferenceGraphCreateMutation.graphql";
+import type { TrustCenterReferenceGraphUpdateMutation } from "/__generated__/core/TrustCenterReferenceGraphUpdateMutation.graphql";
+import type { TrustCenterReferenceGraphUpdateRankMutation } from "/__generated__/core/TrustCenterReferenceGraphUpdateRankMutation.graphql";
+import type { TrustCenterReferenceGraphDeleteMutation } from "/__generated__/core/TrustCenterReferenceGraphDeleteMutation.graphql";
 
 export const trustCenterReferencesQuery = graphql`
   query TrustCenterReferenceGraphQuery($trustCenterId: ID!) {
     node(id: $trustCenterId) {
+      __typename
       ... on TrustCenter {
         id
         references(first: 100, orderBy: { field: RANK, direction: ASC })
-          @connection(key: "TrustCenterReferencesSection_references") {
+          @connection(key: "TrustCenterReferencesSection_references")
+          @required(action: THROW) {
           __id
           pageInfo {
             hasNextPage
@@ -24,7 +21,7 @@ export const trustCenterReferencesQuery = graphql`
             startCursor
             endCursor
           }
-          edges {
+          edges @required(action: THROW) {
             cursor
             node {
               id
@@ -35,6 +32,12 @@ export const trustCenterReferencesQuery = graphql`
               rank
               createdAt
               updatedAt
+              canUpdate: permission(
+                action: "core:trust-center-reference:update"
+              )
+              canDelete: permission(
+                action: "core:trust-center-reference:delete"
+              )
             }
           }
         }
@@ -60,6 +63,8 @@ export const createTrustCenterReferenceMutation = graphql`
           rank
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:trust-center-reference:update")
+          canDelete: permission(action: "core:trust-center-reference:delete")
         }
       }
     }
@@ -80,6 +85,8 @@ export const updateTrustCenterReferenceMutation = graphql`
         rank
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:trust-center-reference:update")
+        canDelete: permission(action: "core:trust-center-reference:delete")
       }
     }
   }
@@ -96,23 +103,13 @@ export const deleteTrustCenterReferenceMutation = graphql`
   }
 `;
 
-export function useTrustCenterReferences(trustCenterId: string, refetchKey = 0): TrustCenterReferenceGraphQuery$data | null {
-  const data = useLazyLoadQuery<TrustCenterReferenceGraphQuery>(
-    trustCenterReferencesQuery,
-    { trustCenterId: trustCenterId || "" },
-    { fetchPolicy: 'network-only', fetchKey: refetchKey }
-  );
-
-  return trustCenterId ? data : null;
-}
-
 export function useCreateTrustCenterReferenceMutation() {
   return useMutationWithToasts<TrustCenterReferenceGraphCreateMutation>(
     createTrustCenterReferenceMutation,
     {
       successMessage: "Reference created successfully",
       errorMessage: "Failed to create reference",
-    }
+    },
   );
 }
 
@@ -122,7 +119,7 @@ export function useUpdateTrustCenterReferenceMutation() {
     {
       successMessage: "Reference updated successfully",
       errorMessage: "Failed to update reference",
-    }
+    },
   );
 }
 
@@ -145,7 +142,7 @@ export function useUpdateTrustCenterReferenceRankMutation() {
     {
       successMessage: "Order updated successfully",
       errorMessage: "Failed to update order",
-    }
+    },
   );
 }
 
@@ -155,6 +152,6 @@ export function useDeleteTrustCenterReferenceMutation() {
     {
       successMessage: "Reference deleted successfully",
       errorMessage: "Failed to delete reference",
-    }
+    },
   );
 }

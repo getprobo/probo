@@ -3,10 +3,6 @@
 package types
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"strconv"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -21,7 +17,7 @@ type Node interface {
 }
 
 type AcceptNonDisclosureAgreementInput struct {
-	TrustCenterID gid.GID `json:"trustCenterId"`
+	FullName string `json:"fullName"`
 }
 
 type AcceptNonDisclosureAgreementPayload struct {
@@ -102,6 +98,18 @@ type Framework struct {
 func (Framework) IsNode()             {}
 func (this Framework) GetID() gid.GID { return this.ID }
 
+type Identity struct {
+	ID            gid.GID   `json:"id"`
+	Email         mail.Addr `json:"email"`
+	FullName      string    `json:"fullName"`
+	EmailVerified bool      `json:"emailVerified"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (Identity) IsNode()             {}
+func (this Identity) GetID() gid.GID { return this.ID }
+
 type Mutation struct {
 }
 
@@ -142,31 +150,24 @@ type RequestAccessesPayload struct {
 	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
 }
 
-type RequestAllAccessesInput struct {
-	TrustCenterID gid.GID    `json:"trustCenterId"`
-	Email         *mail.Addr `json:"email,omitempty"`
-	Name          *string    `json:"name,omitempty"`
-}
-
 type RequestDocumentAccessInput struct {
-	TrustCenterID gid.GID    `json:"trustCenterId"`
-	DocumentID    gid.GID    `json:"documentId"`
-	Email         *mail.Addr `json:"email,omitempty"`
-	Name          *string    `json:"name,omitempty"`
+	DocumentID gid.GID `json:"documentId"`
 }
 
 type RequestReportAccessInput struct {
-	TrustCenterID gid.GID    `json:"trustCenterId"`
-	ReportID      gid.GID    `json:"reportId"`
-	Email         *mail.Addr `json:"email,omitempty"`
-	Name          *string    `json:"name,omitempty"`
+	ReportID gid.GID `json:"reportId"`
 }
 
 type RequestTrustCenterFileAccessInput struct {
-	TrustCenterID     gid.GID    `json:"trustCenterId"`
-	TrustCenterFileID gid.GID    `json:"trustCenterFileId"`
-	Email             *mail.Addr `json:"email,omitempty"`
-	Name              *string    `json:"name,omitempty"`
+	TrustCenterFileID gid.GID `json:"trustCenterFileId"`
+}
+
+type SendMagicLinkInput struct {
+	Email mail.Addr `json:"email"`
+}
+
+type SendMagicLinkPayload struct {
+	Success bool `json:"success"`
 }
 
 type TrustCenter struct {
@@ -176,7 +177,7 @@ type TrustCenter struct {
 	NdaFileName                       *string                         `json:"ndaFileName,omitempty"`
 	NdaFileURL                        *string                         `json:"ndaFileUrl,omitempty"`
 	Organization                      *Organization                   `json:"organization"`
-	IsUserAuthenticated               bool                            `json:"isUserAuthenticated"`
+	IsViewerMember                    bool                            `json:"isViewerMember"`
 	HasAcceptedNonDisclosureAgreement bool                            `json:"hasAcceptedNonDisclosureAgreement"`
 	Documents                         *DocumentConnection             `json:"documents"`
 	Audits                            *AuditConnection                `json:"audits"`
@@ -263,57 +264,10 @@ type VendorEdge struct {
 	Node   *Vendor        `json:"node"`
 }
 
-type Role string
-
-const (
-	RoleNone Role = "NONE"
-	RoleUser Role = "USER"
-)
-
-var AllRole = []Role{
-	RoleNone,
-	RoleUser,
+type VerifyMagicLinkInput struct {
+	Token string `json:"token"`
 }
 
-func (e Role) IsValid() bool {
-	switch e {
-	case RoleNone, RoleUser:
-		return true
-	}
-	return false
-}
-
-func (e Role) String() string {
-	return string(e)
-}
-
-func (e *Role) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Role(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Role", str)
-	}
-	return nil
-}
-
-func (e Role) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *Role) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e Role) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
+type VerifyMagicLinkPayload struct {
+	Success bool `json:"success"`
 }

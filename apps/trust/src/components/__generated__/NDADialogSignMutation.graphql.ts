@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<febdedca828f8b6dc384f0d4f08e02f8>>
+ * @generated SignedSource<<22d97ce5cead5a1cc6c23e89fca72cb1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type AcceptNonDisclosureAgreementInput = {
-  trustCenterId: string;
+  fullName: string;
 };
 export type NDADialogSignMutation$variables = {
   input: AcceptNonDisclosureAgreementInput;
@@ -18,7 +18,7 @@ export type NDADialogSignMutation$variables = {
 export type NDADialogSignMutation$data = {
   readonly acceptNonDisclosureAgreement: {
     readonly success: boolean;
-  };
+  } | null | undefined;
 };
 export type NDADialogSignMutation = {
   response: NDADialogSignMutation$data;

@@ -15,7 +15,6 @@
 package server
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -23,114 +22,73 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/saferedirect"
+	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
-	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
-	auth_server "go.probo.inc/probo/pkg/server/auth"
-	authz_server "go.probo.inc/probo/pkg/server/authz"
-	"go.probo.inc/probo/pkg/server/trust"
-	"go.probo.inc/probo/pkg/server/web"
+	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	trust_web "go.probo.inc/probo/pkg/server/trust"
+	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
-	trust_pkg "go.probo.inc/probo/pkg/trust"
+	"go.probo.inc/probo/pkg/trust"
 )
 
 type Config struct {
+	BaseURL           *baseurl.BaseURL
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
-	Auth              *auth.Service
-	Authz             *authz.Service
-	Trust             *trust_pkg.Service
+	IAM               *iam.Service
+	Trust             *trust.Service
 	Slack             *slack.Service
-	SAML              *auth.SAMLService
-	ConsoleAuth       api.ConsoleAuthConfig
-	TrustAuth         api.TrustAuthConfig
-	MCPConfig         api.MCPConfig
+	Cookie            securecookie.Config
+	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
-	SafeRedirect      *saferedirect.SafeRedirect
 	CustomDomainCname string
-	FileManager       *filemanager.Service
-	PGClient          *pg.Client
 	Logger            *log.Logger
 }
 
 type Server struct {
 	apiServer         *api.Server
-	webServer         *web.Server
-	trustServer       *trust.Server
-	authServer        *auth_server.Server
-	authzServer       *authz_server.Server
+	consoleWebServer  *console_web.Server
+	trustWebServer    *trust_web.Server
 	router            *chi.Mux
 	extraHeaderFields map[string]string
 	proboService      *probo.Service
+	trustService      *trust.Service
 	logger            *log.Logger
 }
 
 func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
+		BaseURL:           cfg.BaseURL,
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
-		Auth:              cfg.Auth,
-		Authz:             cfg.Authz,
+		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		Slack:             cfg.Slack,
-		SAML:              cfg.SAML,
-		ConsoleAuth:       cfg.ConsoleAuth,
-		TrustAuth:         cfg.TrustAuth,
-		MCPConfig:         cfg.MCPConfig,
+		Cookie:            cfg.Cookie,
+		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
-		SafeRedirect:      cfg.SafeRedirect,
 		CustomDomainCname: cfg.CustomDomainCname,
 		Logger:            cfg.Logger.Named("api"),
 	}
+
 	apiServer, err := api.NewServer(apiCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	webServer, err := web.NewServer()
+	consoleWebServer, err := console_web.NewServer()
 	if err != nil {
 		return nil, err
 	}
 
-	trustServer, err := trust.NewServer()
-	if err != nil {
-		return nil, err
-	}
-
-	authServer, err := auth_server.NewServer(auth_server.Config{
-		Auth:            cfg.Auth,
-		Authz:           cfg.Authz,
-		SAML:            cfg.SAML,
-		CookieName:      cfg.ConsoleAuth.CookieName,
-		CookieDomain:    cfg.ConsoleAuth.CookieDomain,
-		SessionDuration: cfg.ConsoleAuth.SessionDuration,
-		CookieSecret:    cfg.ConsoleAuth.CookieSecret,
-		CookieSecure:    cfg.ConsoleAuth.CookieSecure,
-		FileManager:     cfg.FileManager,
-		Logger:          cfg.Logger.Named("auth"),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	authzServer, err := authz_server.NewServer(authz_server.Config{
-		Auth:         cfg.Auth,
-		Authz:        cfg.Authz,
-		Logger:       cfg.Logger.Named("authz"),
-		CookieName:   cfg.ConsoleAuth.CookieName,
-		CookieSecret: cfg.ConsoleAuth.CookieSecret,
-		CookieSecure: cfg.ConsoleAuth.CookieSecure,
-	})
+	trustWebServer, err := trust_web.NewServer()
 	if err != nil {
 		return nil, err
 	}
@@ -139,13 +97,12 @@ func NewServer(cfg Config) (*Server, error) {
 
 	server := &Server{
 		apiServer:         apiServer,
-		webServer:         webServer,
-		trustServer:       trustServer,
-		authServer:        authServer,
-		authzServer:       authzServer,
+		consoleWebServer:  consoleWebServer,
+		trustWebServer:    trustWebServer,
 		router:            router,
 		extraHeaderFields: cfg.ExtraHeaderFields,
 		proboService:      cfg.Probo,
+		trustService:      cfg.Trust,
 		logger:            cfg.Logger,
 	}
 
@@ -155,17 +112,15 @@ func NewServer(cfg Config) (*Server, error) {
 }
 
 func (s *Server) setupRoutes() {
-	s.router.Mount("/api", s.apiServer)
-	s.router.Mount("/connect", s.authServer)
-	s.router.Mount("/authz", s.authzServer)
+	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
-		r.Use(s.loadTrustCenterBySlugOrID)
+		r.Use(compliancepage.NewIDMiddleware(s.trustService))
 		r.Use(s.stripTrustPrefix)
 		r.Mount("/", s.trustCenterRouter())
 	})
 
-	s.router.Mount("/", s.webServer)
+	s.router.Mount("/", s.consoleWebServer)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -181,114 +136,6 @@ func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 
 func (s *Server) handleCustomDomain404(w http.ResponseWriter, r *http.Request) {
 	httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
-}
-
-func (s *Server) loadTrustCenterBySlugOrID(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		slugOrId := chi.URLParam(r, "slugOrId")
-
-		// Try to parse as GID first
-		var trustCenter *probo.TrustCenterInfo
-		var err error
-
-		if id, parseErr := gid.ParseGID(slugOrId); parseErr == nil {
-			// It's a valid ID, load by ID
-			s.logger.InfoCtx(ctx, "loading trust center by ID",
-				log.String("id", id.String()),
-				log.String("path", r.URL.Path),
-			)
-
-			trustCenter, err = s.proboService.LoadTrustCenterByID(ctx, id)
-			if err != nil {
-				s.logger.WarnCtx(ctx, "trust center not found",
-					log.String("id", id.String()),
-					log.Error(err),
-				)
-				http.Error(w, "Trust center not found", http.StatusNotFound)
-				return
-			}
-
-			s.logger.InfoCtx(ctx, "trust center loaded by ID",
-				log.String("id", id.String()),
-				log.String("trust_center_id", trustCenter.ID.String()),
-				log.String("organization_id", trustCenter.OrganizationID.String()),
-			)
-		} else {
-			// Not a valid ID, treat as slug
-			s.logger.InfoCtx(ctx, "loading trust center by slug",
-				log.String("slug", slugOrId),
-				log.String("path", r.URL.Path),
-			)
-
-			trustCenter, err = s.proboService.LoadTrustCenterBySlug(ctx, slugOrId)
-			if err != nil {
-				s.logger.WarnCtx(ctx, "trust center not found",
-					log.String("slug", slugOrId),
-					log.Error(err),
-				)
-				http.Error(w, "Trust center not found", http.StatusNotFound)
-				return
-			}
-
-			s.logger.InfoCtx(ctx, "trust center loaded by slug",
-				log.String("slug", slugOrId),
-				log.String("trust_center_id", trustCenter.ID.String()),
-				log.String("organization_id", trustCenter.OrganizationID.String()),
-			)
-		}
-
-		ctx = s.addTrustCenterToContext(ctx, trustCenter.ID.TenantID(), trustCenter.OrganizationID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func (s *Server) loadTrustCenterByDomain(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// For HTTP requests, use r.Host; for HTTPS requests, use r.TLS.ServerName
-		var domain string
-		if r.TLS != nil && r.TLS.ServerName != "" {
-			domain = r.TLS.ServerName
-		} else {
-			domain = r.Host
-		}
-
-		if domain == "" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		s.logger.InfoCtx(ctx, "loading organization by custom domain",
-			log.String("domain", domain),
-			log.String("path", r.URL.Path),
-		)
-
-		organizationID, err := s.proboService.LoadOrganizationByDomain(ctx, domain)
-		if err != nil {
-			s.logger.WarnCtx(ctx, "organization not found for domain",
-				log.String("domain", domain),
-				log.Error(err),
-			)
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		s.logger.InfoCtx(ctx, "organization loaded",
-			log.String("domain", domain),
-			log.String("organization_id", organizationID.String()),
-		)
-
-		ctx = s.addTrustCenterToContext(ctx, organizationID.TenantID(), organizationID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func (s *Server) addTrustCenterToContext(ctx context.Context, tenantID, organizationID interface{}) context.Context {
-	ctx = context.WithValue(ctx, trust_v1.CustomDomainTenantIDKey, tenantID)
-	ctx = context.WithValue(ctx, trust_v1.CustomDomainOrganizationIDKey, organizationID)
-	return ctx
 }
 
 func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
@@ -313,8 +160,8 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 func (s *Server) trustCenterRouter() chi.Router {
 	r := chi.NewRouter()
 
-	r.Mount("/api/trust/v1", s.apiServer.TrustAPIHandler())
-	r.Handle("/*", s.trustServer)
+	r.Mount("/api/trust/v1", s.apiServer.CompliancePageHandler())
+	r.Handle("/*", s.trustWebServer)
 
 	return r
 }
@@ -322,6 +169,7 @@ func (s *Server) trustCenterRouter() chi.Router {
 func (s *Server) TrustCenterHandler() http.Handler {
 	r := chi.NewRouter()
 
+	r.Use(compliancepage.NewSNIMiddleware(s.trustService))
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000; preload")
@@ -330,7 +178,6 @@ func (s *Server) TrustCenterHandler() http.Handler {
 		})
 	})
 
-	r.Use(s.loadTrustCenterByDomain)
 	r.NotFound(s.handleCustomDomain404)
 
 	r.Mount("/", s.trustCenterRouter())

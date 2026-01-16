@@ -23,16 +23,18 @@ import {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateAuditDialog } from "./dialogs/CreateAuditDialog";
 import { useDeleteAudit, auditsQuery } from "../../../hooks/graph/AuditGraph";
-import type { AuditGraphListQuery } from "/hooks/graph/__generated__/AuditGraphListQuery.graphql";
+import type { AuditGraphListQuery } from "/__generated__/core/AuditGraphListQuery.graphql";
 import type { NodeOf } from "/types";
-import { getAuditStateLabel, getAuditStateVariant, formatDate } from "@probo/helpers";
+import {
+  getAuditStateLabel,
+  getAuditStateVariant,
+  formatDate,
+} from "@probo/helpers";
 import type {
   AuditsPageFragment$data,
   AuditsPageFragment$key,
-} from "./__generated__/AuditsPageFragment.graphql";
+} from "/__generated__/core/AuditsPageFragment.graphql";
 import { SortableTable } from "/components/SortableTable";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use } from "react";
 
 const paginatedAuditsFragment = graphql`
   fragment AuditsPageFragment on Organization
@@ -68,6 +70,8 @@ const paginatedAuditsFragment = graphql`
             name
           }
           createdAt
+          canUpdate: permission(action: "core:audit:update")
+          canDelete: permission(action: "core:audit:delete")
         }
       }
     }
@@ -83,35 +87,35 @@ type Props = {
 export default function AuditsPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
 
   const data = usePreloadedQuery(auditsQuery, props.queryRef);
   const pagination = usePaginationFragment(
     paginatedAuditsFragment,
-    data.node as AuditsPageFragment$key
+    data.node as AuditsPageFragment$key,
   );
   const audits = pagination.data.audits?.edges?.map((edge) => edge.node) ?? [];
   const connectionId = pagination.data.audits.__id;
 
   usePageTitle(__("Audits"));
 
-  const hasAnyAction = isAuthorized("Audit", "updateAudit") ||
-    isAuthorized("Audit", "deleteAudit");
+  const hasAnyAction = audits.some(
+    (audit) => audit.canDelete || audit.canUpdate,
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={__("Audits")}
         description={__(
-          "Manage your organization's compliance audits and their progress."
+          "Manage your organization's compliance audits and their progress.",
         )}
       >
-        {isAuthorized("Organization", "createAudit") && (
+        {data.node.canCreateAudit && (
           <CreateAuditDialog
             connection={connectionId}
             organizationId={organizationId}
           >
-          <Button icon={IconPlusLarge}>{__("Add audit")}</Button>
+            <Button icon={IconPlusLarge}>{__("Add audit")}</Button>
           </CreateAuditDialog>
         )}
       </PageHeader>
@@ -154,7 +158,6 @@ function AuditRow({
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const deleteAudit = useDeleteAudit(entry, connectionId);
-  const { isAuthorized } = use(PermissionsContext);
 
   return (
     <Tr to={`/organizations/${organizationId}/audits/${entry.id}`}>
@@ -179,7 +182,7 @@ function AuditRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("Audit", "deleteAudit") && (
+            {entry.canDelete && (
               <DropdownItem
                 onClick={deleteAudit}
                 variant="danger"

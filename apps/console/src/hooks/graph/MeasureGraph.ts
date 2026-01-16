@@ -1,13 +1,17 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "../useMutationWithToasts";
-import type { MeasureGraphDeleteMutation } from "./__generated__/MeasureGraphDeleteMutation.graphql";
+import type { MeasureGraphDeleteMutation } from "/__generated__/core/MeasureGraphDeleteMutation.graphql";
 
 export const measuresQuery = graphql`
   query MeasureGraphListQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) {
-      id
-      ...MeasuresPageFragment
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        id
+        canCreateMeasure: permission(action: "core:measure:create")
+        ...MeasuresPageFragment
+      }
     }
   }
 `;
@@ -33,7 +37,7 @@ export function useDeleteMeasureMutation() {
     {
       successMessage: __("Measure deleted successfully."),
       errorMessage: __("Failed to delete measure"),
-    }
+    },
   );
 }
 
@@ -46,6 +50,9 @@ export const measureNodeQuery = graphql`
         description
         state
         category
+        canUpdate: permission(action: "core:measure:update")
+        canDelete: permission(action: "core:measure:delete")
+        canListTasks: permission(action: "core:task:list")
         evidencesInfos: evidences(first: 0) {
           totalCount
         }

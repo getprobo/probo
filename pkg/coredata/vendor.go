@@ -63,23 +63,7 @@ type (
 	VendorSnapshotter interface {
 		InsertVendorSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
-
-	ErrVendorNotFound struct {
-		Identifier string
-	}
-
-	ErrVendorAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrVendorNotFound) Error() string {
-	return fmt.Sprintf("vendor not found: %q", e.Identifier)
-}
-
-func (e ErrVendorAlreadyExists) Error() string {
-	return e.message
-}
 
 func (v Vendor) CursorKey(orderBy VendorOrderField) page.CursorKey {
 	switch orderBy {
@@ -92,6 +76,20 @@ func (v Vendor) CursorKey(orderBy VendorOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM vendors WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, v.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query vendor authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (v *Vendor) LoadByID(
@@ -151,7 +149,7 @@ LIMIT 1;
 	vendor, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Vendor])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrVendorNotFound{Identifier: vendorID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect vendor: %w", err)

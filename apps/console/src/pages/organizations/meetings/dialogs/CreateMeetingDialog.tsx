@@ -13,7 +13,7 @@ import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import type { CreateMeetingDialogCreateMutation } from "./__generated__/CreateMeetingDialogCreateMutation.graphql";
+import type { CreateMeetingDialogCreateMutation } from "/__generated__/core/CreateMeetingDialogCreateMutation.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PeopleMultiSelectField } from "/components/form/PeopleMultiSelectField";
 import { formatDatetime } from "@probo/helpers";
@@ -34,6 +34,7 @@ const createMeetingMutation = graphql`
             id
             fullName
           }
+          canDelete: permission(action: "core:meeting:delete")
         }
       }
     }
@@ -59,7 +60,7 @@ export function CreateMeetingDialog({ children, connectionId }: Props) {
     useMutation<CreateMeetingDialogCreateMutation>(createMeetingMutation);
   const { handleSubmit, register, control } = useFormWithSchema(
     meetingSchema,
-    {}
+    {},
   );
 
   const onSubmit = handleSubmit((data) => {

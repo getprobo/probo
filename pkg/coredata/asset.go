@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -43,23 +43,7 @@ type (
 	}
 
 	Assets []*Asset
-
-	ErrAssetNotFound struct {
-		Identifier string
-	}
-
-	ErrAssetAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrAssetNotFound) Error() string {
-	return fmt.Sprintf("asset not found: %q", e.Identifier)
-}
-
-func (e ErrAssetAlreadyExists) Error() string {
-	return e.message
-}
 
 func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 	switch field {
@@ -70,6 +54,21 @@ func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (a *Asset) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM assets WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, a.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query asset authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (a *Asset) LoadByID(
@@ -112,7 +111,7 @@ LIMIT 1;
 	asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrAssetNotFound{Identifier: assetID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect asset: %w", err)
@@ -162,7 +161,7 @@ LIMIT 1;
 	asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrAssetNotFound{Identifier: a.OwnerID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect asset: %w", err)

@@ -52,23 +52,7 @@ type (
 	}
 
 	CustomDomains []*CustomDomain
-
-	ErrCustomDomainNotFound struct {
-		Identifier string
-	}
-
-	ErrCustomDomainAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrCustomDomainNotFound) Error() string {
-	return fmt.Sprintf("custom domain not found: %q", e.Identifier)
-}
-
-func (e ErrCustomDomainAlreadyExists) Error() string {
-	return e.message
-}
 
 func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 	now := time.Now()
@@ -79,6 +63,21 @@ func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (cd *CustomDomain) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM custom_domains WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, cd.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query custom domain authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (cd *CustomDomain) CursorKey(field CustomDomainOrderField) page.CursorKey {
@@ -195,6 +194,10 @@ LIMIT 1
 
 	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect custom domain: %w", err)
 	}
 
@@ -248,6 +251,10 @@ FOR UPDATE SKIP LOCKED
 
 	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect custom domain: %w", err)
 	}
 
@@ -301,6 +308,67 @@ LIMIT 1
 
 	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect custom domain: %w", err)
+	}
+
+	*cd = customDomain
+
+	return nil
+}
+
+func (cd *CustomDomain) LoadByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	encryptionKey cipher.EncryptionKey,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	domain,
+	http_challenge_token,
+	http_challenge_key_auth,
+	http_challenge_url,
+	http_order_url,
+	ssl_certificate,
+	encrypted_ssl_private_key,
+	ssl_certificate_chain,
+	ssl_status,
+	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
+	created_at,
+	updated_at
+FROM
+	custom_domains
+WHERE
+	%s
+	AND organization_id = @organization_id
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query custom domain: %w", err)
+	}
+
+	customDomain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CustomDomain])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect custom domain: %w", err)
 	}
 
@@ -385,9 +453,7 @@ INSERT INTO custom_domains (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "custom_domains_domain_key" {
-				return &ErrCustomDomainAlreadyExists{
-					message: fmt.Sprintf("custom domain with domain %q already exists", cd.Domain),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert custom domain: %w", err)

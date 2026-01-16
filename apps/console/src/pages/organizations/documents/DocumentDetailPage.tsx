@@ -4,9 +4,8 @@ import {
   loadQuery,
   useFragment,
   usePreloadedQuery,
-  useLazyLoadQuery,
 } from "react-relay";
-import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
+import type { DocumentGraphNodeQuery } from "/__generated__/core/DocumentGraphNodeQuery.graphql";
 import {
   documentNodeQuery,
   useDeleteDocumentMutation,
@@ -16,10 +15,9 @@ import { usePageTitle } from "@probo/hooks";
 import type {
   DocumentDetailPageDocumentFragment$data,
   DocumentDetailPageDocumentFragment$key,
-} from "./__generated__/DocumentDetailPageDocumentFragment.graphql";
-import type { DocumentDetailPageExportPDFMutation } from "./__generated__/DocumentDetailPageExportPDFMutation.graphql";
-import type { DocumentDetailPageUpdateMutation } from "./__generated__/DocumentDetailPageUpdateMutation.graphql";
-import type { DocumentDetailPageUserEmailQuery } from "./__generated__/DocumentDetailPageUserEmailQuery.graphql";
+} from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentDetailPageExportPDFMutation } from "/__generated__/core/DocumentDetailPageExportPDFMutation.graphql";
+import type { DocumentDetailPageUpdateMutation } from "/__generated__/core/DocumentDetailPageUpdateMutation.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -76,7 +74,7 @@ import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
 import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { CurrentUser } from "/providers/CurrentUser";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
@@ -92,6 +90,9 @@ const documentFragment = graphql`
       id
       fullName
     }
+    canUpdate: permission(action: "core:document:update")
+    canDelete: permission(action: "core:document:delete")
+    canPublish: permission(action: "core:document-version:publish")
     ...DocumentControlsTabFragment
     controlsInfo: controls(first: 0) {
       totalCount
@@ -111,6 +112,9 @@ const documentFragment = graphql`
             id
             fullName
           }
+          canDeleteDraft: permission(
+            action: "core:document-version:delete-draft"
+          )
           ...DocumentSignaturesTab_version
           signatures(first: 1000)
             @connection(key: "DocumentDetailPage_signatures", filters: []) {
@@ -178,27 +182,16 @@ const documentUpdateSchema = z.object({
   classification: z.enum(documentClassifications),
 });
 
-const UserEmailQuery = graphql`
-  query DocumentDetailPageUserEmailQuery {
-    viewer {
-      user {
-        email
-      }
-    }
-  }
-`;
-
 export default function DocumentDetailPage(props: Props) {
   const { versionId } = useParams<{ versionId?: string }>();
   const node = usePreloadedQuery(documentNodeQuery, props.queryRef).node;
   const document = useFragment<DocumentDetailPageDocumentFragment$key>(
     documentFragment,
-    node
+    node,
   );
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const { isAuthorized } = use(PermissionsContext);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingOwner, setIsEditingOwner] = useState(false);
@@ -216,7 +209,7 @@ export default function DocumentDetailPage(props: Props) {
     {
       successMessage: __("Document published successfully."),
       errorMessage: __("Failed to publish document"),
-    }
+    },
   );
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
   const [deleteDraftDocumentVersion, isDeletingDraft] =
@@ -227,18 +220,18 @@ export default function DocumentDetailPage(props: Props) {
       {
         successMessage: __("PDF download started."),
         errorMessage: __("Failed to generate PDF"),
-      }
+      },
     );
 
-  const userEmailData = useLazyLoadQuery<DocumentDetailPageUserEmailQuery>(UserEmailQuery, {});
-  const defaultEmail = userEmailData.viewer.user.email;
-  const [updateDocument, isUpdatingDocument] = useMutationWithToasts<DocumentDetailPageUpdateMutation>(
-    updateDocumentMutation,
-    {
-      successMessage: __("Document updated successfully."),
-      errorMessage: __("Failed to update document"),
-    }
-  );
+  const { email: defaultEmail } = use(CurrentUser);
+  const [updateDocument, isUpdatingDocument] =
+    useMutationWithToasts<DocumentDetailPageUpdateMutation>(
+      updateDocumentMutation,
+      {
+        successMessage: __("Document updated successfully."),
+        errorMessage: __("Failed to update document"),
+      },
+    );
   const versionConnectionId = document.versions.__id;
 
   const { register, control, handleSubmit, reset } = useFormWithSchema(
@@ -250,7 +243,7 @@ export default function DocumentDetailPage(props: Props) {
         documentType: document.documentType,
         classification: currentVersion.classification,
       },
-    }
+    },
   );
 
   usePageTitle(document.title);
@@ -299,7 +292,7 @@ export default function DocumentDetailPage(props: Props) {
           props.queryRef.environment,
           documentNodeQuery,
           props.queryRef.variables,
-          { fetchPolicy: "network-only" }
+          { fetchPolicy: "network-only" },
         );
       },
     });
@@ -321,7 +314,7 @@ export default function DocumentDetailPage(props: Props) {
           props.queryRef.environment,
           documentNodeQuery,
           props.queryRef.variables,
-          { fetchPolicy: "network-only" }
+          { fetchPolicy: "network-only" },
         );
       },
     });
@@ -355,11 +348,11 @@ export default function DocumentDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the document "%s". This action cannot be undone.'
+            'This will permanently delete the document "%s". This action cannot be undone.',
           ),
-          document.title
+          document.title,
         ),
-      }
+      },
     );
   };
 
@@ -377,7 +370,7 @@ export default function DocumentDetailPage(props: Props) {
                 props.queryRef.environment,
                 documentNodeQuery,
                 props.queryRef.variables,
-                { fetchPolicy: "network-only" }
+                { fetchPolicy: "network-only" },
               );
 
               resolve();
@@ -388,12 +381,12 @@ export default function DocumentDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the draft version %s of "%s". This action cannot be undone.'
+            'This will permanently delete the draft version %s of "%s". This action cannot be undone.',
           ),
           currentVersion.version,
-          document.title
+          document.title,
         ),
-      }
+      },
     );
   };
 
@@ -461,7 +454,7 @@ export default function DocumentDetailPage(props: Props) {
             ]}
           />
           <div className="flex gap-2">
-            {isDraft && isAuthorized("Document", "publishDocumentVersion") && (
+            {isDraft && document.canPublish && (
               <Button
                 onClick={handlePublish}
                 icon={IconCheckmark1}
@@ -491,7 +484,7 @@ export default function DocumentDetailPage(props: Props) {
             </Dropdown>
 
             <ActionDropdown variant="secondary">
-              {isAuthorized("Document", "updateDocument") && (
+              {document.canUpdate && (
                 <DropdownItem
                   onClick={() => updateDialogRef.current?.open()}
                   icon={IconPencil}
@@ -499,15 +492,17 @@ export default function DocumentDetailPage(props: Props) {
                   {isDraft ? __("Edit draft document") : __("Create new draft")}
                 </DropdownItem>
               )}
-              {isDraft && versions.length > 1 && isAuthorized("Document", "deleteDraftDocumentVersion") && (
-                <DropdownItem
-                  onClick={handleDeleteDraft}
-                  icon={IconTrashCan}
-                  disabled={isDeletingDraft}
-                >
-                  {__("Delete draft document")}
-                </DropdownItem>
-              )}
+              {isDraft &&
+                versions.length > 1 &&
+                currentVersion.canDeleteDraft && (
+                  <DropdownItem
+                    onClick={handleDeleteDraft}
+                    icon={IconTrashCan}
+                    disabled={isDeletingDraft}
+                  >
+                    {__("Delete draft document")}
+                  </DropdownItem>
+                )}
               <DropdownItem
                 onClick={() => pdfDownloadDialogRef.current?.open()}
                 icon={IconArrowDown}
@@ -515,7 +510,7 @@ export default function DocumentDetailPage(props: Props) {
               >
                 {__("Download PDF")}
               </DropdownItem>
-              {isAuthorized("Document", "deleteDocument") && (
+              {document.canDelete && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}
@@ -565,7 +560,7 @@ export default function DocumentDetailPage(props: Props) {
             ) : (
               <div className="flex items-center gap-2">
                 <span>{document.title}</span>
-                {isAuthorized("Document", "updateDocument") && (
+                {document.canUpdate && (
                   <Button
                     variant="quaternary"
                     icon={IconPencil}
@@ -616,7 +611,10 @@ export default function DocumentDetailPage(props: Props) {
               />
             </EditablePropertyContent>
           ) : (
-            <ReadOnlyPropertyContent onEdit={() => setIsEditingOwner(true)} canEdit={isAuthorized("Document", "updateDocument")}>
+            <ReadOnlyPropertyContent
+              onEdit={() => setIsEditingOwner(true)}
+              canEdit={document.canUpdate}
+            >
               <Badge variant="highlight" size="md" className="gap-2">
                 <Avatar name={currentVersion.owner?.fullName ?? ""} />
                 {currentVersion.owner?.fullName}
@@ -643,7 +641,10 @@ export default function DocumentDetailPage(props: Props) {
               </ControlledField>
             </EditablePropertyContent>
           ) : (
-            <ReadOnlyPropertyContent onEdit={() => setIsEditingType(true)} canEdit={isAuthorized("Document", "updateDocument")}>
+            <ReadOnlyPropertyContent
+              onEdit={() => setIsEditingType(true)}
+              canEdit={document.canUpdate}
+            >
               <div className="text-sm text-txt-secondary">
                 {getDocumentTypeLabel(__, document.documentType)}
               </div>
@@ -671,10 +672,13 @@ export default function DocumentDetailPage(props: Props) {
           ) : (
             <ReadOnlyPropertyContent
               onEdit={() => setIsEditingClassification(true)}
-              canEdit={isAuthorized("Document", "updateDocument")}
+              canEdit={document.canUpdate}
             >
               <div className="text-sm text-txt-secondary">
-                {getDocumentClassificationLabel(__, currentVersion.classification)}
+                {getDocumentClassificationLabel(
+                  __,
+                  currentVersion.classification,
+                )}
               </div>
             </ReadOnlyPropertyContent>
           )}
@@ -749,7 +753,9 @@ function ReadOnlyPropertyContent({
   return (
     <div className="flex items-center justify-between gap-3">
       {children}
-      {canEdit && <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />}
+      {canEdit && (
+        <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />
+      )}
     </div>
   );
 }
@@ -779,8 +785,8 @@ function VersionItem({
       <div className="flex gap-3 w-full overflow-hidden">
         <div
           className={clsx(
-            "flex-shrink-0 flex items-center justify-center size-10",
-            active && "bg-active rounded"
+            "shrink-0 flex items-center justify-center size-10",
+            active && "bg-active rounded",
           )}
         >
           <div className="text-base text-txt-primary whitespace-nowrap font-bold text-center">

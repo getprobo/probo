@@ -12,13 +12,6 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
-directive @mustBeAuthenticated(role: Role = NONE) on FIELD_DEFINITION | OBJECT
-
-enum Role {
-  NONE
-  USER
-}
-
 scalar CursorKey
 scalar Datetime
 scalar EmailAddr
@@ -32,6 +25,15 @@ type PageInfo {
   hasPreviousPage: Boolean!
   startCursor: CursorKey
   endCursor: CursorKey
+}
+
+type Identity implements Node {
+  id: ID!
+  email: EmailAddr!
+  fullName: String!
+  emailVerified: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
 }
 
 type Organization implements Node {
@@ -488,7 +490,7 @@ type TrustCenter implements Node {
   ndaFileName: String
   ndaFileUrl: String @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
-  isUserAuthenticated: Boolean! @goField(forceResolver: true)
+  isViewerMember: Boolean! @goField(forceResolver: true)
   hasAcceptedNonDisclosureAgreement: Boolean! @goField(forceResolver: true)
 
   documents(
@@ -535,10 +537,20 @@ type TrustCenterAccess implements Node {
   updatedAt: Datetime!
 }
 
-input RequestAllAccessesInput {
-  trustCenterId: ID!
-  email: EmailAddr
-  name: String
+input SendMagicLinkInput {
+  email: EmailAddr!
+}
+
+type SendMagicLinkPayload {
+  success: Boolean!
+}
+
+input VerifyMagicLinkInput {
+  token: String!
+}
+
+type VerifyMagicLinkPayload {
+  success: Boolean!
 }
 
 type RequestAccessesPayload {
@@ -553,29 +565,16 @@ input ExportReportPDFInput {
   reportId: ID!
 }
 
-input AcceptNonDisclosureAgreementInput {
-  trustCenterId: ID!
-}
-
 input RequestDocumentAccessInput {
-  trustCenterId: ID!
   documentId: ID!
-  email: EmailAddr
-  name: String
 }
 
 input RequestReportAccessInput {
-  trustCenterId: ID!
   reportId: ID!
-  email: EmailAddr
-  name: String
 }
 
 input RequestTrustCenterFileAccessInput {
-  trustCenterId: ID!
   trustCenterFileId: ID!
-  email: EmailAddr
-  name: String
 }
 
 input ExportTrustCenterFileInput {
@@ -594,43 +593,51 @@ type ExportTrustCenterFilePayload {
   data: String!
 }
 
+input AcceptNonDisclosureAgreementInput {
+  fullName: String!
+}
+
 type AcceptNonDisclosureAgreementPayload {
   success: Boolean!
 }
 
 type Query {
+  viewer: Identity
   node(id: ID!): Node!
-  trustCenterBySlug(slug: String!): TrustCenter @mustBeAuthenticated(role: NONE)
-  currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
+  currentTrustCenter: TrustCenter
 }
 
 type Mutation {
-  requestAllAccesses(input: RequestAllAccessesInput!): RequestAccessesPayload!
-    @mustBeAuthenticated(role: NONE)
+  sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
+    @session(required: OPTIONAL)
+  verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
+    @session(required: OPTIONAL)
+
+  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT)
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @mustBeAuthenticated(role: NONE)
+    @session(required: OPTIONAL)
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @mustBeAuthenticated(role: NONE)
-
-  acceptNonDisclosureAgreement(
-    input: AcceptNonDisclosureAgreementInput!
-  ): AcceptNonDisclosureAgreementPayload! @mustBeAuthenticated(role: USER)
-
-  requestDocumentAccess(
-    input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
-
-  requestReportAccess(
-    input: RequestReportAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
-
-  requestTrustCenterFileAccess(
-    input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+    @session(required: OPTIONAL)
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @mustBeAuthenticated(role: NONE)
+  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL)
+
+  acceptNonDisclosureAgreement(
+    input: AcceptNonDisclosureAgreementInput!
+  ): AcceptNonDisclosureAgreementPayload @session(required: PRESENT)
+
+  requestDocumentAccess(
+    input: RequestDocumentAccessInput!
+  ): RequestAccessesPayload! @session(required: PRESENT)
+
+  requestReportAccess(
+    input: RequestReportAccessInput!
+  ): RequestAccessesPayload! @session(required: PRESENT)
+
+  requestTrustCenterFileAccess(
+    input: RequestTrustCenterFileAccessInput!
+  ): RequestAccessesPayload! @session(required: PRESENT)
 }

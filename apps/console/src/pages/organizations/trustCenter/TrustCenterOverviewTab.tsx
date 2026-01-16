@@ -9,28 +9,28 @@ import {
   IconTrashCan,
 } from "@probo/ui";
 import { useOutletContext } from "react-router";
-import { useUpdateTrustCenterMutation, useUploadTrustCenterNDAMutation, useDeleteTrustCenterNDAMutation } from "/hooks/graph/TrustCenterGraph";
-import type { TrustCenterGraphQuery$data } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
-import { use, useState } from "react";
+import {
+  useUpdateTrustCenterMutation,
+  useUploadTrustCenterNDAMutation,
+  useDeleteTrustCenterNDAMutation,
+} from "/hooks/graph/TrustCenterGraph";
+import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import { useState } from "react";
 import { SlackConnections } from "../../../components/organizations/SlackConnection";
-import { PermissionsContext } from "/providers/PermissionsContext";
-
-type ContextType = {
-  organization: TrustCenterGraphQuery$data["organization"];
-};
 
 export default function TrustCenterOverviewTab() {
   const { __ } = useTranslate();
   const { toast } = useToast();
-  const { organization } = useOutletContext<ContextType>();
-  const { isAuthorized } = use(PermissionsContext);
+  const { organization } = useOutletContext<TrustCenterGraphQuery$data>();
 
   const [updateTrustCenter, isUpdating] = useUpdateTrustCenterMutation();
   const [uploadNDA, isUploadingNDA] = useUploadTrustCenterNDAMutation();
   const [deleteNDA, isDeletingNDA] = useDeleteTrustCenterNDAMutation();
-  const [isActive, setIsActive] = useState(organization.trustCenter?.active || false);
+  const [isActive, setIsActive] = useState(
+    organization.trustCenter?.active || false,
+  );
 
-  const canUpdateTrustCenter = isAuthorized("TrustCenter", "updateTrustCenter");
+  const canUpdateTrustCenter = organization.trustCenter?.canUpdate;
 
   const handleToggleActive = async (active: boolean) => {
     if (!organization.trustCenter?.id) {
@@ -126,7 +126,9 @@ export default function TrustCenterOverviewTab() {
             <div className="space-y-1">
               <h3 className="font-medium">{__("Activate Trust Center")}</h3>
               <p className="text-sm text-txt-tertiary">
-                {__("Make your trust center publicly accessible to build customer confidence")}
+                {__(
+                  "Make your trust center publicly accessible to build customer confidence",
+                )}
               </p>
             </div>
             <Checkbox
@@ -157,7 +159,9 @@ export default function TrustCenterOverviewTab() {
                 </div>
                 <Button
                   variant="secondary"
-                  onClick={() => window.open(trustCenterUrl, '_blank', 'noopener,noreferrer')}
+                  onClick={() =>
+                    window.open(trustCenterUrl, "_blank", "noopener,noreferrer")
+                  }
                 >
                   {__("View")}
                 </Button>
@@ -171,90 +175,110 @@ export default function TrustCenterOverviewTab() {
                 {__("Trust Center is Inactive")}
               </h4>
               <p className="text-sm text-txt-tertiary mt-1">
-                {__("Your trust center is currently not accessible to the public. Enable it to start sharing your compliance status.")}
+                {__(
+                  "Your trust center is currently not accessible to the public. Enable it to start sharing your compliance status.",
+                )}
               </p>
             </div>
           )}
         </Card>
       </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">{__("Non-Disclosure Agreement")}</h2>
-          {(isUploadingNDA || isDeletingNDA) && <Spinner />}
-        </div>
-        <Card padded className="space-y-4">
-          <div className="space-y-2">
-            {!organization.trustCenter?.ndaFileName ?  (
-              <p className="text-sm text-txt-tertiary">
-                {__("Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center")}
-              </p>
-            ) : (<></>)}
-            {organization.trustCenter?.ndaFileName ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">
-                        {organization.trustCenter.ndaFileName || __("Non-Disclosure Agreement")}
+      {organization.trustCenter?.canGetNDA && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium">
+              {__("Non-Disclosure Agreement")}
+            </h2>
+            {(isUploadingNDA || isDeletingNDA) && <Spinner />}
+          </div>
+          <Card padded className="space-y-4">
+            <div className="space-y-2">
+              {!organization.trustCenter?.ndaFileName &&
+              organization.trustCenter.canUploadNDA ? (
+                <p className="text-sm text-txt-tertiary">
+                  {__(
+                    "Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center",
+                  )}
+                </p>
+              ) : (
+                <></>
+              )}
+              {organization.trustCenter?.ndaFileName ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">
+                          {organization.trustCenter.ndaFileName ||
+                            __("Non-Disclosure Agreement")}
+                        </p>
+                      </div>
+                      <p className="text-xs text-txt-tertiary">
+                        {__(
+                          "Visitors will need to accept this NDA before accessing your trust center",
+                        )}
                       </p>
                     </div>
-                    <p className="text-xs text-txt-tertiary">
-                      {__("Visitors will need to accept this NDA before accessing your trust center")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => {
-                        if (organization.trustCenter?.ndaFileUrl) {
-                          window.open(organization.trustCenter.ndaFileUrl, '_blank');
-                        }
-                      }}
-                    >
-                      {__("Download PDF")}
-                    </Button>
-                    {canUpdateTrustCenter && (
+                    <div className="flex items-center gap-2">
                       <Button
-                        variant="quaternary"
-                        icon={IconTrashCan}
-                        onClick={handleNDADelete}
-                        disabled={isDeletingNDA}
-                      />
-                    )}
+                        type="button"
+                        variant="secondary"
+                        onClick={() => {
+                          if (organization.trustCenter?.ndaFileUrl) {
+                            window.open(
+                              organization.trustCenter.ndaFileUrl,
+                              "_blank",
+                            );
+                          }
+                        }}
+                      >
+                        {__("Download PDF")}
+                      </Button>
+                      {organization.trustCenter?.canDeleteNDA && (
+                        <Button
+                          variant="quaternary"
+                          icon={IconTrashCan}
+                          onClick={handleNDADelete}
+                          disabled={isDeletingNDA}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <>
-                {canUpdateTrustCenter ? (
-                  <Dropzone
-                    description={__("Upload PDF files up to 10MB")}
-                    isUploading={isUploadingNDA}
-                    onDrop={handleNDAUpload}
-                    accept={{
-                      "application/pdf": [".pdf"],
-                    }}
-                    maxSize={10}
-                  />
-                ) : (
-                  <p className="text-sm text-txt-tertiary">
-                    {__("No NDA file uploaded")}
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-        </Card>
-      </div>
+              ) : (
+                <>
+                  {canUpdateTrustCenter ? (
+                    <Dropzone
+                      description={__("Upload PDF files up to 10MB")}
+                      isUploading={isUploadingNDA}
+                      onDrop={handleNDAUpload}
+                      accept={{
+                        "application/pdf": [".pdf"],
+                      }}
+                      maxSize={10}
+                    />
+                  ) : (
+                    <p className="text-sm text-txt-tertiary">
+                      {__("No NDA file uploaded")}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
 
       <div className="space-y-4">
         <h2 className="text-base font-medium">{__("Integrations")}</h2>
         <Card padded>
           <SlackConnections
+            canUpdate={!!organization.trustCenter?.canUpdate}
             organizationId={organization.id!}
-            slackConnections={organization.slackConnections?.edges?.map((edge) => edge.node) ?? []}
+            slackConnections={
+              organization.slackConnections?.edges?.map((edge) => edge.node) ??
+              []
+            }
           />
         </Card>
       </div>

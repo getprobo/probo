@@ -1,12 +1,15 @@
-import { Button, Card, Logo, Spinner } from "@probo/ui";
+import { Button, Card, Field, Logo, Spinner } from "@probo/ui";
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { useEffect } from "react";
+import { use, useEffect } from "react";
 import { PDFPreview } from "./PDFPreview";
 import { useWindowSize } from "usehooks-ts";
 import clsx from "clsx";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
+import z from "zod";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { Viewer } from "/providers/Viewer";
 
 const signMutation = graphql`
   mutation NDADialogSignMutation($input: AcceptNonDisclosureAgreementInput!) {
@@ -16,16 +19,18 @@ const signMutation = graphql`
   }
 `;
 
+const schema = z.object({
+  fullName: z.string(),
+});
+
 export function NDADialog({
-  name,
+  organizationName,
   url,
   fileName,
-  trustCenterId,
 }: {
-  name: string;
+  organizationName: string;
   url?: string | null;
   fileName?: string | null;
-  trustCenterId: string;
 }) {
   const { __ } = useTranslate();
   useEffect(() => {
@@ -37,21 +42,33 @@ export function NDADialog({
   const { width } = useWindowSize();
   const isMobile = width < 1100;
   const isDesktop = !isMobile;
+  const viewer = use(Viewer);
+
+  const {
+    handleSubmit: handleSubmitWrapper,
+    register,
+    formState,
+  } = useFormWithSchema(schema, {
+    defaultValues: {
+      fullName: viewer?.fullName,
+    },
+  });
+
   const [commitSigning, isSigning] = useMutationWithToasts(signMutation, {
     onSuccess: () => {
       window.location.reload();
     },
   });
 
-  const handleSign = () => {
+  const handleSubmit = handleSubmitWrapper(({ fullName }) => {
     commitSigning({
       variables: {
         input: {
-          trustCenterId,
+          fullName,
         },
       },
     });
-  };
+  });
 
   return (
     <div className="fixed inset-0 bg-level-2 z-100 flex flex-col lg:h-screen">
@@ -68,7 +85,7 @@ export function NDADialog({
               __(
                 "Access to %s Trust Center documents requires signing a Non-Disclosure Agreement (NDA). Please review the agreement below. Once signed, you’ll receive immediate access to the requested documents.",
               ),
-              name,
+              organizationName,
             )}
           </p>
           {isMobile && url && (
@@ -81,14 +98,25 @@ export function NDADialog({
               </Button>
             </Card>
           )}
-          <Button
-            onClick={handleSign}
-            className="h-10 w-full my-8"
-            disabled={isSigning}
-            icon={isSigning ? Spinner : undefined}
-          >
-            {__("Review & Sign")}
-          </Button>
+          <form onSubmit={handleSubmit}>
+            <div className="mt-4">
+              <Field
+                required
+                label={__("Full name")}
+                placeholder="John Doe"
+                {...register("fullName")}
+                type="text"
+              />
+              <Button
+                type="submit"
+                className="h-10 w-full my-8"
+                disabled={formState.isSubmitting || !formState.isValid}
+                icon={isSigning ? Spinner : undefined}
+              >
+                {__("Review & Sign")}
+              </Button>
+            </div>
+          </form>
           <p className="text-xs text-txt-secondary">
             {__(
               "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@probo.com.",

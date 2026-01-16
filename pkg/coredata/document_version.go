@@ -46,30 +46,21 @@ type (
 	}
 
 	DocumentVersions []*DocumentVersion
-
-	ErrDocumentVersionNotFound struct {
-		Identifier string
-	}
-
-	ErrDocumentVersionAlreadyExists struct {
-		message string
-	}
-
-	ErrDocumentVersionNoChanges struct {
-		Message string
-	}
 )
 
-func (e ErrDocumentVersionNotFound) Error() string {
-	return fmt.Sprintf("document version not found: %q", e.Identifier)
-}
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM document_versions WHERE id = $1 LIMIT 1;`
 
-func (e ErrDocumentVersionAlreadyExists) Error() string {
-	return e.message
-}
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query document version authorization attributes: %w", err)
+	}
 
-func (e ErrDocumentVersionNoChanges) Error() string {
-	return e.Message
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (p *DocumentVersions) LoadByDocumentID(
@@ -245,15 +236,8 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				if pgErr.ConstraintName == "document_versions_document_id_version_number_key" {
-					return &ErrDocumentVersionAlreadyExists{
-						message: fmt.Sprintf("document version with document_id %s and version_number %d already exists", p.DocumentID, p.VersionNumber),
-					}
-				}
-				if pgErr.ConstraintName == "document_one_draft_version_idx" {
-					return &ErrDocumentVersionAlreadyExists{
-						message: fmt.Sprintf("document %s already has a draft version", p.DocumentID),
-					}
+				if pgErr.ConstraintName == "document_versions_document_id_version_number_key" || pgErr.ConstraintName == "document_one_draft_version_idx" {
+					return ErrResourceAlreadyExists
 				}
 			}
 		}

@@ -44,15 +44,7 @@ type (
 	}
 
 	VendorContacts []*VendorContact
-
-	ErrVendorContactNotFound struct {
-		Identifier string
-	}
 )
-
-func (e ErrVendorContactNotFound) Error() string {
-	return fmt.Sprintf("vendor contact not found: %s", e.Identifier)
-}
 
 func (vc VendorContact) CursorKey(orderBy VendorContactOrderField) page.CursorKey {
 	switch orderBy {
@@ -65,6 +57,20 @@ func (vc VendorContact) CursorKey(orderBy VendorContactOrderField) page.CursorKe
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (vc *VendorContact) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM vendor_contacts WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, vc.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query vendor contact authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (vc *VendorContact) LoadByID(
@@ -108,7 +114,7 @@ LIMIT 1;
 	vendorContact, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[VendorContact])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrVendorContactNotFound{Identifier: vendorContactID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect vendor contact: %w", err)

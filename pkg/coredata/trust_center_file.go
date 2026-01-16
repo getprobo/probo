@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -51,6 +52,20 @@ func (t TrustCenterFile) CursorKey(orderBy TrustCenterFileOrderField) page.Curso
 		return page.NewCursorKey(t.ID, t.UpdatedAt)
 	}
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (t *TrustCenterFile) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM trust_center_files WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, t.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query trust center file authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (t *TrustCenterFile) LoadByID(
@@ -275,6 +290,7 @@ func (t *TrustCenterFiles) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[TrustCenterFileOrderField],
+	filter *TrustCenterFileFilter,
 ) error {
 	q := `
 SELECT
@@ -292,12 +308,14 @@ WHERE
     %s
     AND organization_id = @organization_id
     AND %s
+    AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

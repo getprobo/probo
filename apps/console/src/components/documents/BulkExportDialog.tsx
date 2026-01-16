@@ -37,7 +37,7 @@ type Props = {
   children: ReactNode;
   onExport: (options: BulkExportFormData) => void;
   isLoading?: boolean;
-  defaultEmail?: string;
+  defaultEmail: string;
   selectedCount: number;
 };
 
@@ -47,7 +47,7 @@ export type BulkExportDialogRef = {
 };
 
 export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
-  ({ children, onExport, isLoading = false, defaultEmail = "", selectedCount }, ref) => {
+  ({ children, onExport, isLoading = false, defaultEmail, selectedCount }, ref) => {
     const { __ } = useTranslate();
     const dialogRef = useDialogRef();
 

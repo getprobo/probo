@@ -19,7 +19,6 @@ import (
 	"embed"
 	"fmt"
 	htmltemplate "html/template"
-	"math"
 	texttemplate "text/template"
 	"time"
 )
@@ -38,6 +37,7 @@ const (
 	subjectFrameworkExport                   = "Your framework export is ready"
 	subjectTrustCenterAccess                 = "Trust Center Access Invitation - %s"
 	subjectTrustCenterDocumentAccessRejected = "Trust Center Document Access Rejected - %s"
+	subjectMagicLink                         = "Connect to Probo"
 )
 
 var (
@@ -57,6 +57,8 @@ var (
 	trustCenterAccessTextTemplate                 = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-access.txt.tmpl"))
 	trustCenterDocumentAccessRejectedHTMLTemplate = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/trust-center-document-access-rejected.html.tmpl"))
 	trustCenterDocumentAccessRejectedTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-document-access-rejected.txt.tmpl"))
+	magicLinkHTMLTemplate                         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/magic-link.html.tmpl"))
+	magicLinkTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/magic-link.txt.tmpl"))
 )
 
 func RenderConfirmEmail(baseURL, fullName, confirmationUrl string) (subject string, textBody string, htmlBody *string, err error) {
@@ -153,21 +155,17 @@ func RenderFrameworkExport(baseURL, fullName, downloadUrl string) (subject strin
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
-func RenderTrustCenterAccess(baseURL, fullName, organizationName, accessUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
-	durationInDays := int(math.Round(tokenDuration.Hours() / 24))
-
+func RenderTrustCenterAccess(baseURL, fullName, organizationName, accessUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName         string
 		OrganizationName string
 		AccessUrl        string
 		LogoURL          string
-		DurationInDays   int
 	}{
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		AccessUrl:        accessUrl,
 		LogoURL:          baseURL + logoURLPath,
-		DurationInDays:   durationInDays,
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)
@@ -194,6 +192,23 @@ func RenderTrustCenterDocumentAccessRejected(
 
 	textBody, htmlBody, err = renderEmail(trustCenterDocumentAccessRejectedTextTemplate, trustCenterDocumentAccessRejectedHTMLTemplate, data)
 	return fmt.Sprintf(subjectTrustCenterDocumentAccessRejected, organizationName), textBody, htmlBody, err
+}
+
+func RenderMagicLink(baseURL, fullName, magicLinkUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
+	data := struct {
+		FullName          string
+		MagicLinkURL      string
+		LogoURL           string
+		DurationInMinutes int
+	}{
+		FullName:          fullName,
+		MagicLinkURL:      magicLinkUrl,
+		LogoURL:           baseURL + logoURLPath,
+		DurationInMinutes: int(tokenDuration.Minutes()),
+	}
+
+	textBody, htmlBody, err = renderEmail(magicLinkTextTemplate, magicLinkHTMLTemplate, data)
+	return subjectMagicLink, textBody, htmlBody, err
 }
 
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {

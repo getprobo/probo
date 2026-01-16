@@ -5,12 +5,14 @@ import { useTranslate } from "@probo/i18n";
 import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-export const NonconformitiesConnectionKey = "NonconformitiesPage_nonconformities";
+export const NonconformitiesConnectionKey =
+  "NonconformitiesPage_nonconformities";
 
 export const nonconformitiesQuery = graphql`
   query NonconformityGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
+        canCreateNonconformity: permission(action: "core:nonconformity:create")
         ...NonconformitiesPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
@@ -48,6 +50,8 @@ export const nonconformityNodeQuery = graphql`
         }
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:nonconformity:update")
+        canDelete: permission(action: "core:nonconformity:delete")
       }
     }
   }
@@ -79,6 +83,8 @@ export const createNonconformityMutation = graphql`
             fullName
           }
           createdAt
+          canUpdate: permission(action: "core:nonconformity:update")
+          canDelete: permission(action: "core:nonconformity:delete")
         }
       }
     }
@@ -128,7 +134,7 @@ export const deleteNonconformityMutation = graphql`
 
 export const useDeleteNonconformity = (
   nonconformity: { id: string; referenceId: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteNonconformityMutation, {
@@ -151,11 +157,11 @@ export const useDeleteNonconformity = (
       {
         message: sprintf(
           __(
-            "This will permanently delete the nonconformity %s. This action cannot be undone."
+            "This will permanently delete the nonconformity %s. This action cannot be undone.",
           ),
-          nonconformity.referenceId
+          nonconformity.referenceId,
         ),
-      }
+      },
     );
   };
 };
@@ -178,16 +184,22 @@ export const useCreateNonconformity = (connectionId: string) => {
     effectivenessCheck?: string;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create nonconformity: organization is required"));
+      return alert(
+        __("Failed to create nonconformity: organization is required"),
+      );
     }
     if (!input.referenceId) {
-      return alert(__("Failed to create nonconformity: reference ID is required"));
+      return alert(
+        __("Failed to create nonconformity: reference ID is required"),
+      );
     }
     if (!input.ownerId) {
       return alert(__("Failed to create nonconformity: owner is required"));
     }
     if (!input.rootCause) {
-      return alert(__("Failed to create nonconformity: root cause is required"));
+      return alert(
+        __("Failed to create nonconformity: root cause is required"),
+      );
     }
 
     return promisifyMutation(mutate)({

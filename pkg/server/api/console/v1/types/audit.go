@@ -52,9 +52,22 @@ func NewAuditConnection(
 	}
 }
 
+func NewAuditEdge(a *coredata.Audit, orderField coredata.AuditOrderField) *AuditEdge {
+	return &AuditEdge{
+		Node:   NewAudit(a),
+		Cursor: a.CursorKey(orderField),
+	}
+}
+
 func NewAudit(a *coredata.Audit) *Audit {
-	return &Audit{
-		ID:                    a.ID,
+	node := &Audit{
+		ID: a.ID,
+		Organization: &Organization{
+			ID: a.OrganizationID,
+		},
+		Framework: &Framework{
+			ID: a.FrameworkID,
+		},
 		ValidFrom:             a.ValidFrom,
 		ValidUntil:            a.ValidUntil,
 		State:                 a.State,
@@ -63,11 +76,12 @@ func NewAudit(a *coredata.Audit) *Audit {
 		CreatedAt:             a.CreatedAt,
 		UpdatedAt:             a.UpdatedAt,
 	}
-}
 
-func NewAuditEdge(a *coredata.Audit, orderField coredata.AuditOrderField) *AuditEdge {
-	return &AuditEdge{
-		Node:   NewAudit(a),
-		Cursor: a.CursorKey(orderField),
+	if a.ReportID != nil {
+		node.Report = &Report{
+			ID: *a.ReportID,
+		}
 	}
+
+	return node
 }

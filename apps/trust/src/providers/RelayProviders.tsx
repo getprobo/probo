@@ -8,6 +8,7 @@ import {
 import { GraphQLError } from "graphql";
 import type { PropsWithChildren } from "react";
 import { RelayEnvironmentProvider } from "react-relay";
+import { getPathPrefix } from "/utils/pathPrefix";
 
 export class UnAuthenticatedError extends Error {
   constructor() {
@@ -35,11 +36,11 @@ export class InternalServerError extends Error {
   }
 }
 
-export function buildEndpoint(path: string): string {
-  const host = import.meta.env.VITE_API_URL;
+export function buildEndpoint(): string {
+  let host = import.meta.env.VITE_API_URL;
 
   if (!host) {
-    return path;
+    host = window.location.origin;
   }
 
   const formattedHost =
@@ -49,9 +50,15 @@ export function buildEndpoint(path: string): string {
 
   const url = new URL(formattedHost);
 
-  if (path) {
-    url.pathname = path.startsWith("/") ? path : `/${path}`;
+  const prefix = getPathPrefix();
+  let path: string;
+  if (prefix) {
+    path = `${prefix}/api/trust/v1/graphql`;
+  } else {
+    path = `/api/trust/v1/graphql`;
   }
+
+  url.pathname = path;
 
   return url.toString();
 }
@@ -119,13 +126,7 @@ const fetchRelay: FetchFunction = async (
     });
   }
 
-  // Use relative API path to ensure it goes through the same routing context
-  // For /trust/slug/overview, this resolves to /trust/slug/api/trust/v1/graphql
-  // For custom domains at /overview, this resolves to /api/trust/v1/graphql
-  const response = await fetch(
-    buildEndpoint("./api/trust/v1/graphql"),
-    requestInit,
-  );
+  const response = await fetch(buildEndpoint(), requestInit);
 
   if (response.status === 500) {
     throw new InternalServerError();
@@ -144,8 +145,8 @@ const fetchRelay: FetchFunction = async (
     if (invalidError) {
       throw new InvalidError(
         invalidError.message,
-        invalidError.extensions.field as string ?? "",
-        invalidError.extensions.cause as string ?? "",
+        (invalidError.extensions.field as string) ?? "",
+        (invalidError.extensions.cause as string) ?? "",
       );
     }
 
@@ -161,7 +162,8 @@ const store = new Store(source, {
   gcReleaseBufferSize: 20,
 });
 
-export const relayEnvironment = new Environment({
+export const consoleEnvironment = new Environment({
+  configName: "trust",
   network: Network.create(fetchRelay),
   store,
 });
@@ -171,7 +173,7 @@ export const relayEnvironment = new Environment({
  */
 export function RelayProvider({ children }: PropsWithChildren) {
   return (
-    <RelayEnvironmentProvider environment={relayEnvironment}>
+    <RelayEnvironmentProvider environment={consoleEnvironment}>
       {children}
     </RelayEnvironmentProvider>
   );

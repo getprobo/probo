@@ -57,23 +57,7 @@ type (
 	RiskSnapshotter interface {
 		InsertRiskSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
-
-	ErrRiskNotFound struct {
-		Identifier string
-	}
-
-	ErrRiskAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrRiskNotFound) Error() string {
-	return fmt.Sprintf("risk not found: %q", e.Identifier)
-}
-
-func (e ErrRiskAlreadyExists) Error() string {
-	return e.message
-}
 
 func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	switch orderBy {
@@ -94,6 +78,20 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM risks WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, r.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query risk authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (r *Risks) CountByMeasureID(
@@ -392,7 +390,7 @@ LIMIT 1;
 	risk, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Risk])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrRiskNotFound{Identifier: riskID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect risk: %w", err)

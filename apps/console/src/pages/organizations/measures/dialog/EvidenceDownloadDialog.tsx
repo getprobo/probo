@@ -2,7 +2,7 @@ import { Breadcrumb, Dialog, DialogContent, Spinner } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { Suspense, useEffect } from "react";
 import { useLazyLoadQuery } from "react-relay";
-import type { EvidenceGraphFileQuery } from "/hooks/graph/__generated__/EvidenceGraphFileQuery.graphql";
+import type { EvidenceGraphFileQuery } from "/__generated__/core/EvidenceGraphFileQuery.graphql";
 import { evidenceFileQuery } from "/hooks/graph/EvidenceGraph";
 import { downloadFile } from "@probo/helpers";
 
@@ -50,7 +50,10 @@ function DownloadLink({ evidenceId, onClose }: Props) {
   const evidence = data.node;
 
   useEffect(() => {
-    downloadFile(evidence.file?.downloadUrl, evidence.file?.fileName ?? "evidence");
+    downloadFile(
+      evidence.file?.downloadUrl,
+      evidence.file?.fileName ?? "evidence",
+    );
     onClose();
   }, [evidence.file?.downloadUrl, evidence.file?.fileName, onClose]);
 

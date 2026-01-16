@@ -1,5 +1,5 @@
 import { GraphQLCell } from "/components/table/GraphQLCell.tsx";
-import type { PeopleGraphQuery } from "/hooks/graph/__generated__/PeopleGraphQuery.graphql.ts";
+import type { PeopleGraphQuery } from "/__generated__/core/PeopleGraphQuery.graphql.ts";
 import { peopleQuery } from "/hooks/graph/PeopleGraph.ts";
 import { Avatar } from "@probo/ui";
 

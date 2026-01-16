@@ -16,13 +16,13 @@ import { getAuditStateVariant } from "@probo/helpers";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import type { LinkedAuditsDialogQuery } from "./__generated__/LinkedAuditsDialogQuery.graphql";
+import type { LinkedAuditsDialogQuery } from "/__generated__/core/LinkedAuditsDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
 import type {
   LinkedAuditsDialogFragment$data,
   LinkedAuditsDialogFragment$key,
-} from "./__generated__/LinkedAuditsDialogFragment.graphql";
+} from "/__generated__/core/LinkedAuditsDialogFragment.graphql";
 
 const auditsQuery = graphql`
   query LinkedAuditsDialogQuery($organizationId: ID!) {
@@ -53,17 +53,17 @@ const auditsFragment = graphql`
       orderBy: $order
     ) @connection(key: "LinkedAuditsDialogQuery_audits") {
       edges {
-                 node {
-           id
-           name
-           state
-           validFrom
-           validUntil
-           framework {
-             id
-             name
-           }
-         }
+        node {
+          id
+          name
+          state
+          validFrom
+          validUntil
+          framework {
+            id
+            name
+          }
+        }
       }
     }
   }
@@ -99,18 +99,21 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
   });
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
     auditsFragment,
-    query.organization as LinkedAuditsDialogFragment$key
+    query.organization as LinkedAuditsDialogFragment$key,
   );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const audits = useMemo(() => data.audits?.edges?.map((edge) => edge.node) ?? [], [data.audits]);
+  const audits = useMemo(
+    () => data.audits?.edges?.map((edge) => edge.node) ?? [],
+    [data.audits],
+  );
   const linkedIds = useMemo(() => {
     return new Set(props.linkedAudits?.map((a) => a.id) ?? []);
   }, [props.linkedAudits]);
 
   const filteredAudits = useMemo(() => {
     return audits.filter((audit) =>
-      (audit.name || "").toLowerCase().includes(search.toLowerCase())
+      (audit.name || "").toLowerCase().includes(search.toLowerCase()),
     );
   }, [audits, search]);
 
@@ -168,13 +171,9 @@ function AuditRow(props: RowProps) {
       onClick={() => onClick(props.audit.id)}
     >
       <div className="flex flex-col items-start gap-1">
-        <div className="font-medium">
-          {props.audit.framework?.name}
-        </div>
+        <div className="font-medium">{props.audit.framework?.name}</div>
         {props.audit.name && (
-          <div className="text-sm text-txt-secondary">
-            {props.audit.name}
-          </div>
+          <div className="text-sm text-txt-secondary">{props.audit.name}</div>
         )}
       </div>
       <Badge color={getAuditStateVariant(props.audit.state)}>

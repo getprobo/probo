@@ -13,6 +13,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d
 	github.com/chromedp/chromedp v0.14.2
 	github.com/crewjam/saml v0.5.1
+	github.com/elimity-com/scim v0.0.0-20240320110924-172bf2aee9c8
 	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-chi/cors v1.2.2
 	github.com/jackc/pgx/v5 v5.8.0
@@ -22,6 +23,7 @@ require (
 	github.com/pdfcpu/pdfcpu v0.11.1
 	github.com/pires/go-proxyproto v0.8.1
 	github.com/prometheus/client_golang v1.23.2
+	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/stretchr/testify v1.11.1
 	github.com/vektah/gqlparser/v2 v2.5.31
 	github.com/xuri/excelize/v2 v2.10.0
@@ -57,6 +59,8 @@ require (
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/di-wu/parser v0.2.2 // indirect
+	github.com/di-wu/xsd-datetime v1.0.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e // indirect
 	github.com/go-logr/logr v1.4.3 // indirect

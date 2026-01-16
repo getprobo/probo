@@ -1,6 +1,6 @@
 import { graphql } from "relay-runtime";
 import type { AuditRowFragment$key } from "./__generated__/AuditRowFragment.graphql";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import {
   Breadcrumb,
   Button,
@@ -12,14 +12,27 @@ import {
   IconMedal,
   Spinner,
   Table,
+  useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
-import { downloadFile } from "@probo/helpers";
-import { type PropsWithChildren, useState } from "react";
+import { downloadFile, formatError } from "@probo/helpers";
+import { type PropsWithChildren, use, useState } from "react";
 import { useLocation } from "react-router";
-import { RequestAccessDialog } from "/components/RequestAccessDialog.tsx";
+import { Viewer } from "/providers/Viewer";
+import { MagicLinkDialog } from "./MagicLinkDialog";
+import type { AuditRow_requestAccessMutation } from "./__generated__/AuditRow_requestAccessMutation.graphql";
+
+const requestAccessMutation = graphql`
+  mutation AuditRow_requestAccessMutation($input: RequestReportAccessInput!) {
+    requestReportAccess(input: $input) {
+      trustCenterAccess {
+        id
+      }
+    }
+  }
+`;
 
 const downloadMutation = graphql`
   mutation AuditRowDownloadMutation($input: ExportReportPDFInput!) {
@@ -47,10 +60,53 @@ const auditRowFragment = graphql`
 `;
 
 export function AuditRow(props: { audit: AuditRowFragment$key }) {
-  const audit = useFragment(auditRowFragment, props.audit);
   const { __ } = useTranslate();
+  const viewer = use(Viewer);
+  const { toast } = useToast();
+
+  const audit = useFragment(auditRowFragment, props.audit);
+  const [hasRequested, setHasRequested] = useState(
+    audit.report?.hasUserRequestedAccess,
+  );
+
+  const [requestAccess, isRequestingAccess] =
+    useMutation<AuditRow_requestAccessMutation>(requestAccessMutation);
   const [commitDownload, downloading] =
     useMutationWithToasts<AuditRowDownloadMutation>(downloadMutation);
+
+  const handleRequestAccess = () => {
+    requestAccess({
+      variables: {
+        input: {
+          reportId: audit.report?.id ?? "",
+        },
+      },
+      onCompleted: (_, errors) => {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Cannot request access"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        setHasRequested(true);
+        toast({
+          title: __("Success"),
+          description: __("Access request submitted successfully."),
+          variant: "success",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: __("Error"),
+          description: error.message ?? __("Cannot request access"),
+          variant: "error",
+        });
+      },
+    });
+  };
+
   const handleDownload = () => {
     if (!audit.report?.id) {
       return;
@@ -67,16 +123,13 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
     });
   };
 
-  const [hasRequested, setHasRequested] = useState(
-    audit.report?.hasUserRequestedAccess
-  );
   return (
     <div className="text-sm border border-border-solid -mt-px flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.framework.name}
       </div>
-      {audit.report && audit.report.isUserAuthorized && (
+      {audit.report && audit.report.isUserAuthorized ? (
         <Button
           className="w-full md:w-max"
           variant="secondary"
@@ -86,21 +139,26 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
         >
           {__("Download")}
         </Button>
-      )}
-      {audit.report && !audit.report.isUserAuthorized && (
-        <RequestAccessDialog
-          reportId={audit.report.id}
-          onSuccess={() => setHasRequested(true)}
+      ) : viewer ? (
+        <Button
+          disabled={hasRequested || isRequestingAccess}
+          className="w-full md:w-max"
+          variant="secondary"
+          icon={IconLock}
+          onClick={handleRequestAccess}
         >
+          {hasRequested ? __("Access requested") : __("Request access")}
+        </Button>
+      ) : (
+        <MagicLinkDialog>
           <Button
-            disabled={hasRequested}
             className="w-full md:w-max"
             variant="secondary"
             icon={IconLock}
           >
             {hasRequested ? __("Access requested") : __("Request access")}
           </Button>
-        </RequestAccessDialog>
+        </MagicLinkDialog>
       )}
     </div>
   );
@@ -134,7 +192,7 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
 }
 
 function AuditDialog(
-  props: PropsWithChildren<{ audit: AuditRowFragment$key; logo?: string }>
+  props: PropsWithChildren<{ audit: AuditRowFragment$key; logo?: string }>,
 ) {
   const audit = useFragment(auditRowFragment, props.audit);
   const location = useLocation();

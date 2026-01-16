@@ -1,0 +1,2 @@
+ALTER TABLE iam_memberships ADD COLUMN source TEXT NOT NULL DEFAULT 'MANUAL';
+ALTER TABLE iam_memberships ALTER COLUMN source DROP DEFAULT;

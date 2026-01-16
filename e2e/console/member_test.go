@@ -36,12 +36,11 @@ func TestMember_UpdateMembership(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					memberships(first: 10) {
+					members(first: 10) {
 						edges {
 							node {
 								id
 								role
-								userID
 							}
 						}
 					}
@@ -52,26 +51,25 @@ func TestMember_UpdateMembership(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			Memberships struct {
+			Members struct {
 				Edges []struct {
 					Node struct {
-						ID     string `json:"id"`
-						Role   string `json:"role"`
-						UserID string `json:"userID"`
+						ID   string `json:"id"`
+						Role string `json:"role"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"memberships"`
+			} `json:"members"`
 		} `json:"node"`
 	}
 
-	err := owner.Execute(query, map[string]any{
+	err := owner.ExecuteConnect(query, map[string]any{
 		"id": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
 
 	// Find the admin member
 	var adminMemberID string
-	for _, edge := range result.Node.Memberships.Edges {
+	for _, edge := range result.Node.Members.Edges {
 		if edge.Node.Role == "ADMIN" {
 			adminMemberID = edge.Node.ID
 			break
@@ -100,10 +98,10 @@ func TestMember_UpdateMembership(t *testing.T) {
 		} `json:"updateMembership"`
 	}
 
-	err = owner.Execute(mutation, map[string]any{
+	err = owner.ExecuteConnect(mutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"memberId":       adminMemberID,
+			"membershipId":   adminMemberID,
 			"role":           "VIEWER",
 		},
 	}, &mutationResult)
@@ -125,7 +123,7 @@ func TestMember_RemoveMember(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					memberships(first: 50) {
+					members(first: 50) {
 						edges {
 							node {
 								id
@@ -140,25 +138,25 @@ func TestMember_RemoveMember(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			Memberships struct {
+			Members struct {
 				Edges []struct {
 					Node struct {
 						ID   string `json:"id"`
 						Role string `json:"role"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"memberships"`
+			} `json:"members"`
 		} `json:"node"`
 	}
 
-	err := owner.Execute(query, map[string]any{
+	err := owner.ExecuteConnect(query, map[string]any{
 		"id": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
 
 	// Find a viewer member to remove
 	var memberID string
-	for _, edge := range result.Node.Memberships.Edges {
+	for _, edge := range result.Node.Members.Edges {
 		if edge.Node.Role == "VIEWER" {
 			memberID = edge.Node.ID
 			break
@@ -170,26 +168,26 @@ func TestMember_RemoveMember(t *testing.T) {
 	mutation := `
 		mutation($input: RemoveMemberInput!) {
 			removeMember(input: $input) {
-				deletedMemberId
+				deletedMembershipId
 			}
 		}
 	`
 
 	var mutationResult struct {
 		RemoveMember struct {
-			DeletedMemberID string `json:"deletedMemberId"`
+			DeletedMembershipID string `json:"deletedMembershipId"`
 		} `json:"removeMember"`
 	}
 
-	err = owner.Execute(mutation, map[string]any{
+	err = owner.ExecuteConnect(mutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"memberId":       memberID,
+			"membershipId":   memberID,
 		},
 	}, &mutationResult)
 	require.NoError(t, err)
 
-	assert.Equal(t, memberID, mutationResult.RemoveMember.DeletedMemberID)
+	assert.Equal(t, memberID, mutationResult.RemoveMember.DeletedMembershipID)
 }
 
 func TestInvitation_Delete(t *testing.T) {
@@ -198,8 +196,8 @@ func TestInvitation_Delete(t *testing.T) {
 
 	// Create an invitation
 	inviteMutation := `
-		mutation($input: InviteUserInput!) {
-			inviteUser(input: $input) {
+		mutation($input: InviteMemberInput!) {
+			inviteMember(input: $input) {
 				invitationEdge {
 					node {
 						id
@@ -212,7 +210,7 @@ func TestInvitation_Delete(t *testing.T) {
 	`
 
 	var inviteResult struct {
-		InviteUser struct {
+		InviteMember struct {
 			InvitationEdge struct {
 				Node struct {
 					ID     string `json:"id"`
@@ -220,21 +218,20 @@ func TestInvitation_Delete(t *testing.T) {
 					Status string `json:"status"`
 				} `json:"node"`
 			} `json:"invitationEdge"`
-		} `json:"inviteUser"`
+		} `json:"inviteMember"`
 	}
 
-	err := owner.Execute(inviteMutation, map[string]any{
+	err := owner.ExecuteConnect(inviteMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"email":          fmt.Sprintf("invite.delete.%d@example.com", time.Now().UnixNano()),
 			"fullName":       "Test User",
 			"role":           "VIEWER",
-			"createPeople":   false,
 		},
 	}, &inviteResult)
 	require.NoError(t, err)
 
-	invitationID := inviteResult.InviteUser.InvitationEdge.Node.ID
+	invitationID := inviteResult.InviteMember.InvitationEdge.Node.ID
 	assert.NotEmpty(t, invitationID)
 
 	// Delete the invitation
@@ -252,9 +249,10 @@ func TestInvitation_Delete(t *testing.T) {
 		} `json:"deleteInvitation"`
 	}
 
-	err = owner.Execute(deleteMutation, map[string]any{
+	err = owner.ExecuteConnect(deleteMutation, map[string]any{
 		"input": map[string]any{
-			"invitationId": invitationID,
+			"organizationId": owner.GetOrganizationID().String(),
+			"invitationId":   invitationID,
 		},
 	}, &deleteResult)
 	require.NoError(t, err)
@@ -274,13 +272,11 @@ func TestMember_List(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					memberships(first: 10) {
+					members(first: 10) {
 						edges {
 							node {
 								id
 								role
-								userID
-								emailAddress
 							}
 						}
 						totalCount
@@ -292,24 +288,22 @@ func TestMember_List(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			Memberships struct {
+			Members struct {
 				Edges []struct {
 					Node struct {
-						ID           string `json:"id"`
-						Role         string `json:"role"`
-						UserID       string `json:"userID"`
-						EmailAddress string `json:"emailAddress"`
+						ID   string `json:"id"`
+						Role string `json:"role"`
 					} `json:"node"`
 				} `json:"edges"`
 				TotalCount int `json:"totalCount"`
-			} `json:"memberships"`
+			} `json:"members"`
 		} `json:"node"`
 	}
 
-	err := owner.Execute(query, map[string]any{
+	err := owner.ExecuteConnect(query, map[string]any{
 		"id": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
 
-	assert.GreaterOrEqual(t, result.Node.Memberships.TotalCount, 3, "Should have at least 3 members")
+	assert.GreaterOrEqual(t, result.Node.Members.TotalCount, 3, "Should have at least 3 members")
 }

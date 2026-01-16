@@ -11,6 +11,7 @@ export const snapshotsQuery = graphql`
   query SnapshotGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
+        canCreateSnapshot: permission(action: "core:snapshot:create")
         ...SnapshotsPageFragment
       }
     }
@@ -67,7 +68,7 @@ export const deleteSnapshotMutation = graphql`
 
 export const useDeleteSnapshot = (
   snapshot: { id: string; name: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteSnapshotMutation, {
@@ -90,11 +91,11 @@ export const useDeleteSnapshot = (
       {
         message: sprintf(
           __(
-            "This will permanently delete the snapshot %s. This action cannot be undone."
+            "This will permanently delete the snapshot %s. This action cannot be undone.",
           ),
-          snapshot.name
+          snapshot.name,
         ),
-      }
+      },
     );
   };
 };

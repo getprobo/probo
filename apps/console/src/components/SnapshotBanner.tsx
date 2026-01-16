@@ -2,8 +2,13 @@ import { IconClock } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useLazyLoadQuery, graphql } from "react-relay";
 import { useLocation } from "react-router";
-import type { SnapshotBannerQuery } from "./__generated__/SnapshotBannerQuery.graphql";
-import { getSnapshotTypeUrlPath, getSnapshotTypeLabel, sprintf, formatDate } from "@probo/helpers";
+import type { SnapshotBannerQuery } from "/__generated__/core/SnapshotBannerQuery.graphql";
+import {
+  getSnapshotTypeUrlPath,
+  getSnapshotTypeLabel,
+  sprintf,
+  formatDate,
+} from "@probo/helpers";
 
 const snapshotQuery = graphql`
   query SnapshotBannerQuery($snapshotId: ID!) {
@@ -31,14 +36,19 @@ export function SnapshotBanner({ snapshotId }: Props) {
   const { __ } = useTranslate();
   const location = useLocation();
 
-  const data = useLazyLoadQuery<SnapshotBannerQuery>(snapshotQuery, { snapshotId });
+  const data = useLazyLoadQuery<SnapshotBannerQuery>(snapshotQuery, {
+    snapshotId,
+  });
   const snapshot = data.node;
 
   if (!snapshot) {
     return null;
   }
 
-  if (snapshot.type && !isSnapshotTypeValidForUrl(snapshot.type, location.pathname)) {
+  if (
+    snapshot.type &&
+    !isSnapshotTypeValidForUrl(snapshot.type, location.pathname)
+  ) {
     throw new Error("PAGE_NOT_FOUND");
   }
 
@@ -47,13 +57,15 @@ export function SnapshotBanner({ snapshotId }: Props) {
       <IconClock className="text-warning-600 flex-shrink-0" size={20} />
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium text-warning-800">{__("Snapshot")} {snapshot.name}</span>
+          <span className="font-medium text-warning-800">
+            {__("Snapshot")} {snapshot.name}
+          </span>
         </div>
         <p className="text-sm text-warning-700">
           {sprintf(
             __("You are viewing a %s snapshot from %s"),
             getSnapshotTypeLabel(__, snapshot.type).toLocaleLowerCase(),
-            formatDate(snapshot.createdAt)
+            formatDate(snapshot.createdAt),
           )}
         </p>
       </div>

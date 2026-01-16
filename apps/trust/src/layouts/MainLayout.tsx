@@ -6,8 +6,8 @@ import { useTranslate } from "@probo/i18n";
 import { OrganizationSidebar } from "/components/OrganizationSidebar";
 import { Outlet } from "react-router";
 import { NDADialog } from "/components/NDADialog";
-import { AuthProvider } from "/providers/AuthProvider";
 import { TrustCenterProvider } from "/providers/TrustCenterProvider";
+import { Viewer } from "/providers/Viewer";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphCurrentQuery>;
@@ -22,16 +22,15 @@ export function MainLayout(props: Props) {
     return null;
   }
   const showNDADialog =
-    trustCenter.isUserAuthenticated &&
+    trustCenter.isViewerMember &&
     !trustCenter.hasAcceptedNonDisclosureAgreement &&
     trustCenter.ndaFileUrl;
   return (
-    <AuthProvider isAuthenticated={trustCenter.isUserAuthenticated}>
+    <Viewer value={data.viewer}>
       <TrustCenterProvider trustCenter={trustCenter}>
         {showNDADialog && (
           <NDADialog
-            name={trustCenter.organization.name}
-            trustCenterId={trustCenter.id}
+            organizationName={trustCenter.organization.name}
             url={trustCenter.ndaFileUrl}
             fileName={trustCenter.ndaFileName}
           />
@@ -41,12 +40,8 @@ export function MainLayout(props: Props) {
           <main>
             <Tabs className="mb-8">
               <TabLink to="/overview">{__("Overview")}</TabLink>
-              <TabLink to="/documents">
-                {__("Documents")}
-              </TabLink>
-              <TabLink to="/subprocessors">
-                {__("Subprocessors")}
-              </TabLink>
+              <TabLink to="/documents">{__("Documents")}</TabLink>
+              <TabLink to="/subprocessors">{__("Subprocessors")}</TabLink>
             </Tabs>
             <Outlet context={{ trustCenter }} />
           </main>
@@ -59,6 +54,6 @@ export function MainLayout(props: Props) {
           {__("Powered by")} <Logo withPicto className="h-6" />
         </a>
       </TrustCenterProvider>
-    </AuthProvider>
+    </Viewer>
   );
 }

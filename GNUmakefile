@@ -145,7 +145,10 @@ docker-build:
 	$(DOCKER_BUILD) --tag $(DOCKER_IMAGE_NAME):$(DOCKER_TAG_NAME) --file Dockerfile .
 
 .PHONY: bin/probod
-bin/probod: pkg/server/api/console/v1/schema/schema.go \
+bin/probod: pkg/server/api/connect/v1/schema/schema.go \
+	pkg/server/api/connect/v1/types/types.go \
+	pkg/server/api/connect/v1/v1_resolver.go \
+	pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/console/v1/types/types.go \
 	pkg/server/api/console/v1/v1_resolver.go \
 	pkg/server/api/trust/v1/schema/schema.go \
@@ -213,6 +216,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf sbom-docker.json sbom.json
 	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.html coverage-combined.out coverage-combined.html
 	$(RM) -rf coverage/
+	$(RM) -rf compose/keycloak/certs/cert.pem compose/keycloak/certs/private-key.pem compose/keycloak/probo-realm.json
 
 .PHONY: stack-up
 stack-up: compose/pebble/certs/rootCA.pem compose/keycloak/probo-realm.json ## Start the docker stack as a deamon

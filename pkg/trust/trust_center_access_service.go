@@ -25,26 +25,24 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
 	TrustCenterAccessService struct {
 		svc    *TenantService
-		auth   *auth.Service
+		iamSvc *iam.Service
 		logger *log.Logger
 	}
 
 	TrustCenterAccessRequest struct {
 		TrustCenterID      gid.GID
 		Email              mail.Addr
-		Name               *string
+		FullName           string
 		DocumentIDs        []gid.GID
 		ReportIDs          []gid.GID
 		TrustCenterFileIDs []gid.GID
@@ -63,26 +61,6 @@ func (tcar *TrustCenterAccessRequest) Validate() error {
 	return v.Error()
 }
 
-func (s TrustCenterAccessService) ValidateToken(
-	ctx context.Context,
-	trustCenterID gid.GID,
-	email mail.Addr,
-) error {
-	return s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		access := &coredata.TrustCenterAccess{}
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
-		if err != nil {
-			return fmt.Errorf("cannot load trust center access: %w", err)
-		}
-
-		if !access.Active {
-			return fmt.Errorf("trust center access is not active")
-		}
-
-		return nil
-	})
-}
-
 func (s TrustCenterAccessService) Request(
 	ctx context.Context,
 	req *TrustCenterAccessRequest,
@@ -91,151 +69,151 @@ func (s TrustCenterAccessService) Request(
 		return nil, fmt.Errorf("invalid request arguments: %w", err)
 	}
 
-	now := time.Now()
+	var (
+		now         = time.Now()
+		access      *coredata.TrustCenterAccess
+		trustCenter *coredata.TrustCenter
+	)
 
-	var access *coredata.TrustCenterAccess
-	var trustCenter *coredata.TrustCenter
-
-	err := s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
-		var organizationID gid.GID
-		trustCenter = &coredata.TrustCenter{}
-		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
-			return fmt.Errorf("cannot load trust center: %w", err)
-		}
-		organizationID = trustCenter.OrganizationID
-
-		documentIDs := req.DocumentIDs
-		if req.DocumentIDs == nil {
-			var allDocuments coredata.Documents
-			filter := coredata.NewDocumentTrustCenterFilter()
-
-			if err := allDocuments.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, filter); err != nil {
-				return fmt.Errorf("cannot list documents: %w", err)
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			trustCenter = &coredata.TrustCenter{}
+			if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			for _, doc := range allDocuments {
-				documentIDs = append(documentIDs, doc.ID)
-			}
-		}
+			// TODO: load document to ensure they are requestable
 
-		reportIDs := req.ReportIDs
-		if req.ReportIDs == nil {
-			var allAudits coredata.Audits
-			auditFilter := coredata.NewAuditTrustCenterFilter()
+			organizationID := trustCenter.OrganizationID
 
-			if err := allAudits.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, auditFilter); err != nil {
-				return fmt.Errorf("cannot list audits: %w", err)
-			}
+			documentIDs := req.DocumentIDs
+			if req.DocumentIDs == nil {
+				var allDocuments coredata.Documents
+				filter := coredata.NewDocumentTrustCenterFilter()
 
-			for _, audit := range allAudits {
-				if audit.ReportID != nil {
-					reportIDs = append(reportIDs, *audit.ReportID)
+				if err := allDocuments.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, filter); err != nil {
+					return fmt.Errorf("cannot list documents: %w", err)
+				}
+
+				for _, doc := range allDocuments {
+					documentIDs = append(documentIDs, doc.ID)
 				}
 			}
-		}
 
-		trustCenterFileIDs := req.TrustCenterFileIDs
-		if req.TrustCenterFileIDs == nil {
-			var allTrustCenterFiles coredata.TrustCenterFiles
-			filter := coredata.NewTrustCenterFileFilter(
-				coredata.WithTrustCenterFileVisibilities(coredata.TrustCenterVisibilityPrivate, coredata.TrustCenterVisibilityNone),
-			)
+			reportIDs := req.ReportIDs
+			if req.ReportIDs == nil {
+				var allAudits coredata.Audits
+				auditFilter := coredata.NewAuditTrustCenterFilter()
 
-			if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, filter); err != nil {
-				return fmt.Errorf("cannot list trust center files: %w", err)
+				if err := allAudits.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, auditFilter); err != nil {
+					return fmt.Errorf("cannot list audits: %w", err)
+				}
+
+				for _, audit := range allAudits {
+					if audit.ReportID != nil {
+						reportIDs = append(reportIDs, *audit.ReportID)
+					}
+				}
 			}
 
-			for _, file := range allTrustCenterFiles {
-				trustCenterFileIDs = append(trustCenterFileIDs, file.ID)
-			}
-		}
+			trustCenterFileIDs := req.TrustCenterFileIDs
+			if req.TrustCenterFileIDs == nil {
+				var allTrustCenterFiles coredata.TrustCenterFiles
+				filter := coredata.NewTrustCenterFileFilter(
+					coredata.WithTrustCenterFileVisibilities(coredata.TrustCenterVisibilityPrivate, coredata.TrustCenterVisibilityNone),
+				)
 
-		existingAccess := &coredata.TrustCenterAccess{}
-		err := existingAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, req.TrustCenterID, req.Email)
+				if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, filter); err != nil {
+					return fmt.Errorf("cannot list trust center files: %w", err)
+				}
 
-		if err == nil {
-			access = existingAccess
-		} else {
-			var notFoundErr *coredata.ErrTrustCenterAccessNotFound
-			if !errors.As(err, &notFoundErr) {
-				return fmt.Errorf("cannot load trust center access: %w", err)
-			}
-
-			if req.Name == nil || *req.Name == "" {
-				return fmt.Errorf("name is required for new access requests")
+				for _, file := range allTrustCenterFiles {
+					trustCenterFileIDs = append(trustCenterFileIDs, file.ID)
+				}
 			}
 
-			access = &coredata.TrustCenterAccess{
-				ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-				OrganizationID:                    organizationID,
-				TenantID:                          s.svc.scope.GetTenantID(),
-				TrustCenterID:                     req.TrustCenterID,
-				Email:                             req.Email,
-				Name:                              *req.Name,
-				Active:                            false,
-				HasAcceptedNonDisclosureAgreement: false,
-				CreatedAt:                         now,
-				UpdatedAt:                         now,
+			existingAccess := &coredata.TrustCenterAccess{}
+			err := existingAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, req.TrustCenterID, req.Email)
+			if err == nil {
+				access = existingAccess
+			} else {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load trust center access: %w", err)
+				}
+
+				access = &coredata.TrustCenterAccess{
+					ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+					OrganizationID:                    organizationID,
+					TenantID:                          s.svc.scope.GetTenantID(),
+					TrustCenterID:                     req.TrustCenterID,
+					Email:                             req.Email,
+					Name:                              req.FullName,
+					Active:                            false,
+					HasAcceptedNonDisclosureAgreement: false,
+					CreatedAt:                         now,
+					UpdatedAt:                         now,
+				}
+
+				if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert trust center access: %w", err)
+				}
 			}
 
-			if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert trust center access: %w", err)
+			var existingAccesses coredata.TrustCenterDocumentAccesses
+			if err := existingAccesses.LoadAllByTrustCenterAccessID(ctx, tx, s.svc.scope, access.ID); err != nil {
+				return fmt.Errorf("cannot load existing access records: %w", err)
 			}
-		}
 
-		var existingAccesses coredata.TrustCenterDocumentAccesses
-		if err := existingAccesses.LoadAllByTrustCenterAccessID(ctx, tx, s.svc.scope, access.ID); err != nil {
-			return fmt.Errorf("cannot load existing access records: %w", err)
-		}
+			existingDocumentIDs, existingReportIDs, existingTrustCenterFileIDs := extractExistingIDs(existingAccesses)
+			newDocumentIDs := filterExistingIDs(documentIDs, existingDocumentIDs)
+			newReportIDs := filterExistingIDs(reportIDs, existingReportIDs)
+			newTrustCenterFileIDs := filterExistingIDs(trustCenterFileIDs, existingTrustCenterFileIDs)
 
-		existingDocumentIDs, existingReportIDs, existingTrustCenterFileIDs := extractExistingIDs(existingAccesses)
-		newDocumentIDs := filterExistingIDs(documentIDs, existingDocumentIDs)
-		newReportIDs := filterExistingIDs(reportIDs, existingReportIDs)
-		newTrustCenterFileIDs := filterExistingIDs(trustCenterFileIDs, existingTrustCenterFileIDs)
+			var accesses coredata.TrustCenterDocumentAccesses
 
-		var accesses coredata.TrustCenterDocumentAccesses
+			if err := accesses.BulkInsertDocumentAccesses(
+				ctx,
+				tx,
+				s.svc.scope,
+				access.ID,
+				access.OrganizationID,
+				newDocumentIDs,
+				coredata.TrustCenterDocumentAccessStatusRequested,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
+			}
 
-		if err := accesses.BulkInsertDocumentAccesses(
-			ctx,
-			tx,
-			s.svc.scope,
-			access.ID,
-			access.OrganizationID,
-			newDocumentIDs,
-			coredata.TrustCenterDocumentAccessStatusRequested,
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
-		}
+			if err := accesses.BulkInsertReportAccesses(
+				ctx,
+				tx,
+				s.svc.scope,
+				access.ID,
+				access.OrganizationID,
+				newReportIDs,
+				coredata.TrustCenterDocumentAccessStatusRequested,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
+			}
 
-		if err := accesses.BulkInsertReportAccesses(
-			ctx,
-			tx,
-			s.svc.scope,
-			access.ID,
-			access.OrganizationID,
-			newReportIDs,
-			coredata.TrustCenterDocumentAccessStatusRequested,
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
-		}
+			if err := accesses.BulkInsertTrustCenterFileAccesses(
+				ctx,
+				tx,
+				s.svc.scope,
+				access.ID,
+				access.OrganizationID,
+				newTrustCenterFileIDs,
+				coredata.TrustCenterDocumentAccessStatusRequested,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
+			}
 
-		if err := accesses.BulkInsertTrustCenterFileAccesses(
-			ctx,
-			tx,
-			s.svc.scope,
-			access.ID,
-			access.OrganizationID,
-			newTrustCenterFileIDs,
-			coredata.TrustCenterDocumentAccessStatusRequested,
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
-		}
-
-		return nil
-	})
+			return nil
+		},
+	)
 
 	if err != nil {
 		return nil, err
@@ -266,22 +244,28 @@ func (s TrustCenterAccessService) HasAcceptedNonDisclosureAgreement(ctx context.
 	return access.HasAcceptedNonDisclosureAgreement, nil
 }
 
-func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email mail.Addr) error {
+type AcceptNDARequest struct {
+	TrustCenterID gid.GID
+	Email         mail.Addr
+	IPAddr        string
+}
+
+func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Context, req *AcceptNDARequest) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
 		access := &coredata.TrustCenterAccess{}
-		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, email); err != nil {
+		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, req.TrustCenterID, req.Email); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
 		trustCenter := &coredata.TrustCenter{}
-		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, trustCenterID); err != nil {
+		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
 		acceptationLogs, err := json.Marshal(map[string]string{
-			"email":     email.String(),
+			"email":     req.Email.String(),
 			"timestamp": time.Now().Format(time.RFC3339),
-			"ip":        ctx.Value(coredata.ContextKeyIPAddress).(string),
+			"ip":        req.IPAddr,
 		})
 		if err != nil {
 			return fmt.Errorf("cannot marshal non disclosure agreement acceptation logs: %w", err)
@@ -459,28 +443,14 @@ func (s *TrustCenterAccessService) GrantByIDs(
 }
 
 func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess) error {
-	accessToken, err := statelesstoken.NewToken(
-		s.svc.trustConfig.TokenSecret,
-		s.svc.trustConfig.TokenType,
-		s.svc.trustConfig.TokenDuration,
-		probo.TrustCenterAccessData{
-			TrustCenterID: access.TrustCenterID,
-			Email:         access.Email,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("cannot generate access token: %w", err)
-	}
-
 	trustCenter := &coredata.TrustCenter{}
-	err = trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID)
-	if err != nil {
+
+	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID); err != nil {
 		return fmt.Errorf("cannot load trust center: %w", err)
 	}
 
 	organization := &coredata.Organization{}
-	err = organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID)
-	if err != nil {
+	if err := organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
@@ -491,7 +461,7 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 
 	hostname := baseURLParsed.Host
 	scheme := baseURLParsed.Scheme
-	path := "/trust/" + trustCenter.Slug + "/access"
+	path := "/trust/" + trustCenter.Slug
 
 	if organization.CustomDomainID != nil {
 		customDomain, err := s.svc.Organizations.GetOrganizationCustomDomain(ctx, organization.ID)
@@ -505,21 +475,16 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 
 		hostname = customDomain.Domain
 		scheme = "https"
-		path = "/access"
+		path = ""
 	}
 
 	accessURL := url.URL{
 		Scheme: scheme,
 		Host:   hostname,
 		Path:   path,
-		RawQuery: url.Values{
-			"token": []string{accessToken},
-		}.Encode(),
 	}
 
 	now := time.Now()
-	expiresAt := now.Add(s.svc.trustConfig.TokenDuration)
-	access.LastTokenExpiresAt = &expiresAt
 	access.UpdatedAt = now
 
 	if err := access.Update(ctx, tx, s.svc.scope); err != nil {
@@ -542,7 +507,6 @@ func (s *TrustCenterAccessService) sendTrustCenterAccessEmail(
 		name,
 		companyName,
 		accessURL,
-		s.svc.trustConfig.TokenDuration,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot render trust center access email: %w", err)

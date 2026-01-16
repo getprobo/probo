@@ -27,20 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type ErrDataProtectionImpactAssessmentNotFound struct {
-	Identifier string
-}
-
-func (e ErrDataProtectionImpactAssessmentNotFound) Error() string {
-	return fmt.Sprintf("data protection impact assessment not found: %q", e.Identifier)
-}
-
-type ErrNoDataProtectionImpactAssessmentsFound struct{}
-
-func (e ErrNoDataProtectionImpactAssessmentsFound) Error() string {
-	return "no data protection impact assessments found"
-}
-
 type (
 	DataProtectionImpactAssessment struct {
 		ID                          gid.GID                                     `db:"id"`
@@ -67,6 +53,21 @@ func (dpia *DataProtectionImpactAssessment) CursorKey(field DataProtectionImpact
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (dpia *DataProtectionImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM processing_activity_data_protection_impact_assessments WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, dpia.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query data protection impact assessment authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (dpias *DataProtectionImpactAssessments) CountByOrganizationID(
@@ -248,8 +249,9 @@ LIMIT 1;
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DataProtectionImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDataProtectionImpactAssessmentNotFound{Identifier: dpiaID.String()}
+			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect data protection impact assessment: %w", err)
 	}
 
@@ -299,8 +301,9 @@ LIMIT 1;
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DataProtectionImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDataProtectionImpactAssessmentNotFound{Identifier: processingActivityID.String()}
+			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect data protection impact assessment: %w", err)
 	}
 

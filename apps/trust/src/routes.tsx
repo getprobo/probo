@@ -1,14 +1,6 @@
-import {
-  createBrowserRouter,
-  Navigate,
-  redirect,
-  useRouteError,
-} from "react-router";
-import { Fragment } from "react";
-import {
-  relayEnvironment,
-  UnAuthenticatedError,
-} from "./providers/RelayProviders.tsx";
+import { createBrowserRouter, redirect, useRouteError } from "react-router";
+import { Fragment, lazy } from "react";
+import { consoleEnvironment } from "./providers/RelayProviders.tsx";
 import { loadQuery } from "react-relay";
 import { PageError } from "./components/PageError.tsx";
 import { MainLayout } from "/layouts/MainLayout";
@@ -20,10 +12,14 @@ import {
 import { OverviewPage } from "/pages/OverviewPage";
 import { DocumentsPage } from "/pages/DocumentsPage";
 import { SubprocessorsPage } from "/pages/SubprocessorsPage";
-import { AccessPage } from "./pages/AccessPage.tsx";
 import { TabSkeleton } from "./components/Skeletons/TabSkeleton.tsx";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton.tsx";
-import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute } from "@probo/routes";
+import {
+  loaderFromQueryLoader,
+  routeFromAppRoute,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
 
 /**
  * Top level error boundary
@@ -31,14 +27,14 @@ import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute }
 function ErrorBoundary({ error: propsError }: { error?: string }) {
   const error = useRouteError() ?? propsError;
 
-  if (error instanceof UnAuthenticatedError) {
-    return <Navigate to="/auth/login" />;
-  }
-
   return <PageError error={error?.toString()} />;
 }
 
 const routes = [
+  {
+    path: "/verify-magic-link",
+    Component: lazy(() => import("./pages/auth/VerifyMagicLinkPage.tsx")),
+  },
   {
     path: "/",
     loader: async () => {
@@ -50,7 +46,9 @@ const routes = [
   // Custom domain routes (subdomain-based)
   {
     path: "/overview",
-    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    loader: loaderFromQueryLoader(() =>
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+    ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
@@ -64,14 +62,18 @@ const routes = [
   },
   {
     path: "/documents",
-    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    loader: loaderFromQueryLoader(() =>
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+    ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustDocumentsQuery, {})),
+        loader: loaderFromQueryLoader(() =>
+          loadQuery(consoleEnvironment, currentTrustDocumentsQuery, {}),
+        ),
         Fallback: TabSkeleton,
         Component: withQueryRef(DocumentsPage),
       },
@@ -79,23 +81,22 @@ const routes = [
   },
   {
     path: "/subprocessors",
-    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    loader: loaderFromQueryLoader(() =>
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+    ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustVendorsQuery, {})),
+        loader: loaderFromQueryLoader(() =>
+          loadQuery(consoleEnvironment, currentTrustVendorsQuery, {}),
+        ),
         Fallback: TabSkeleton,
         Component: withQueryRef(SubprocessorsPage),
       },
     ],
-  },
-  {
-    path: "/access",
-    Component: AccessPage,
-    ErrorBoundary: ErrorBoundary,
   },
   // Fallback URL to the NotFound Page
   {

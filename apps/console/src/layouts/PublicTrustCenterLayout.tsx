@@ -1,7 +1,6 @@
 import { Outlet } from "react-router";
 import { Logo, Button, IconArrowBoxLeft, useToast } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { buildEndpoint } from "/providers/RelayProviders";
 import type { ReactNode } from "react";
 
 type Props = {
@@ -11,18 +10,23 @@ type Props = {
   isAuthenticated?: boolean;
 };
 
-export function PublicTrustCenterLayout({ organizationName, organizationLogo, children, isAuthenticated }: Props) {
+export function PublicTrustCenterLayout({
+  organizationName,
+  organizationLogo,
+  children,
+  isAuthenticated,
+}: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
 
-    const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
-      const response = await fetch(buildEndpoint('/api/trust/v1/auth/logout'), {
-        method: 'DELETE',
+      const response = await fetch("/api/trust/v1/auth/logout", {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {

@@ -11,7 +11,6 @@ import {
   sprintf,
   getTrustCenterUrl,
 } from "@probo/helpers";
-import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import { Card, IconChevronRight } from "@probo/ui";
 import { AuditRow } from "/components/AuditRow";
@@ -22,6 +21,7 @@ import { TrustCenterFileRow } from "/components/TrustCenterFileRow";
 import { VendorRow } from "/components/VendorRow";
 import { RowHeader } from "/components/RowHeader.tsx";
 import { Rows } from "/components/Rows.tsx";
+import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 const overviewFragment = graphql`
   fragment OverviewPageFragment on TrustCenter {
@@ -68,7 +68,7 @@ const overviewFragment = graphql`
 export function OverviewPage() {
   const { trustCenter } = useOutletContext<{
     trustCenter: OverviewPageFragment$key &
-      TrustGraphQuery$data["trustCenterBySlug"];
+      TrustGraphCurrentQuery$data["currentTrustCenter"];
   }>();
   const fragment = useFragment(overviewFragment, trustCenter);
   return (
@@ -100,18 +100,18 @@ function Documents({
   documents: OverviewPageFragment$data["documents"]["edges"];
   files: OverviewPageFragment$data["trustCenterFiles"]["edges"];
   audits: NonNullable<
-    TrustGraphQuery$data["trustCenterBySlug"]
+    TrustGraphCurrentQuery$data["currentTrustCenter"]
   >["audits"]["edges"];
   url: string;
 }) {
   const { __ } = useTranslate();
   const documentsPerType = groupBy(
     documents.map((edge) => edge.node),
-    (node) => documentTypeLabel(node.documentType, __)
+    (node) => documentTypeLabel(node.documentType, __),
   );
   const filesPerCategory = groupBy(
     files.map((edge) => edge.node),
-    (node) => node.category
+    (node) => node.category,
   );
   const hasAudits = audits.length > 0;
   const hasDocuments = hasAudits || documents.length > 0 || files.length > 0;
@@ -185,7 +185,7 @@ function Subprocessors({
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          organizationName
+          organizationName,
         )}
       </p>
       <Rows className="mb-8 *:py-5">

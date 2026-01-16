@@ -24,8 +24,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/agents"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -33,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -49,12 +48,6 @@ type ExportService interface {
 }
 
 type (
-	TrustConfig struct {
-		TokenSecret   string
-		TokenDuration time.Duration
-		TokenType     string
-	}
-
 	Service struct {
 		pg                *pg.Client
 		s3                *s3.Client
@@ -62,13 +55,10 @@ type (
 		encryptionKey     cipher.EncryptionKey
 		baseURL           string
 		tokenSecret       string
-		trustConfig       TrustConfig
 		agentConfig       agents.Config
 		html2pdfConverter *html2pdf.Converter
 		acmeService       *certmanager.ACMEService
 		fileManager       *filemanager.Service
-		auth              *auth.Service
-		authz             *authz.Service
 		logger            *log.Logger
 		slack             *slack.Service
 	}
@@ -81,7 +71,6 @@ type (
 		scope                             coredata.Scoper
 		baseURL                           string
 		tokenSecret                       string
-		trustConfig                       TrustConfig
 		agent                             *agents.Agent
 		fileManager                       *filemanager.Service
 		Frameworks                        *FrameworkService
@@ -131,19 +120,19 @@ func NewService(
 	bucket string,
 	baseURL string,
 	tokenSecret string,
-	trustConfig TrustConfig,
 	agentConfig agents.Config,
 	html2pdfConverter *html2pdf.Converter,
 	acmeService *certmanager.ACMEService,
 	fileManagerService *filemanager.Service,
-	authService *auth.Service,
-	authzService *authz.Service,
 	logger *log.Logger,
 	slackService *slack.Service,
+	iamService *iam.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
 	}
+
+	iamService.Authorizer.RegisterPolicySet(ProboPolicySet())
 
 	svc := &Service{
 		pg:                pgClient,
@@ -152,13 +141,10 @@ func NewService(
 		encryptionKey:     encryptionKey,
 		baseURL:           baseURL,
 		tokenSecret:       tokenSecret,
-		trustConfig:       trustConfig,
 		agentConfig:       agentConfig,
 		html2pdfConverter: html2pdfConverter,
 		acmeService:       acmeService,
 		fileManager:       fileManagerService,
-		auth:              authService,
-		authz:             authzService,
 		logger:            logger,
 		slack:             slackService,
 	}
@@ -175,7 +161,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		baseURL:       s.baseURL,
 		scope:         coredata.NewScope(tenantID),
 		tokenSecret:   s.tokenSecret,
-		trustConfig:   s.trustConfig,
 		agent:         agents.NewAgent(nil, s.agentConfig),
 		fileManager:   s.fileManager,
 	}
@@ -418,52 +403,4 @@ func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (
 	)
 
 	return organizationID, err
-}
-
-type TrustCenterInfo struct {
-	ID             gid.GID
-	OrganizationID gid.GID
-}
-
-func (s *Service) LoadTrustCenterBySlug(ctx context.Context, slug string) (*TrustCenterInfo, error) {
-	var info TrustCenterInfo
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			var trustCenter coredata.TrustCenter
-			if err := trustCenter.LoadBySlug(ctx, conn, slug); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
-			}
-
-			info.ID = trustCenter.ID
-			info.OrganizationID = trustCenter.OrganizationID
-
-			return nil
-		},
-	)
-
-	return &info, err
-}
-
-func (s *Service) LoadTrustCenterByID(ctx context.Context, id gid.GID) (*TrustCenterInfo, error) {
-	var info TrustCenterInfo
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			scope := coredata.NewScope(id.TenantID())
-			var trustCenter coredata.TrustCenter
-			if err := trustCenter.LoadByID(ctx, conn, scope, id); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
-			}
-
-			info.ID = trustCenter.ID
-			info.OrganizationID = trustCenter.OrganizationID
-
-			return nil
-		},
-	)
-
-	return &info, err
 }

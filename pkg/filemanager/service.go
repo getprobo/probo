@@ -101,15 +101,19 @@ func (s *Service) PutFile(
 			Body:        content,
 			ContentType: &file.MimeType,
 			Metadata:    metadata,
-		})
+		},
+	)
 	if err != nil {
 		return 0, fmt.Errorf("cannot upload file to S3: %w", err)
 	}
 
-	headOutput, err := s.s3Client.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: &file.BucketName,
-		Key:    &file.FileKey,
-	})
+	headOutput, err := s.s3Client.HeadObject(
+		ctx,
+		&s3.HeadObjectInput{
+			Bucket: &file.BucketName,
+			Key:    &file.FileKey,
+		},
+	)
 	if err != nil {
 		return 0, fmt.Errorf("cannot get object metadata: %w", err)
 	}

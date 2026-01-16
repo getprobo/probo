@@ -1,53 +1,61 @@
 import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { coreEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { vendorNodeQuery, vendorsQuery } from "/hooks/graph/VendorGraph";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
-import type { VendorGraphListQuery } from "/hooks/graph/__generated__/VendorGraphListQuery.graphql";
-import type { VendorGraphNodeQuery } from "/hooks/graph/__generated__/VendorGraphNodeQuery.graphql";
+import {
+  loaderFromQueryLoader,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
+import type { VendorGraphListQuery } from "/__generated__/core/VendorGraphListQuery.graphql";
+import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 
 export const vendorRoutes = [
   {
     path: "vendors",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<VendorGraphListQuery>(relayEnvironment, vendorsQuery, {
+      loadQuery<VendorGraphListQuery>(coreEnvironment, vendorsQuery, {
         organizationId: organizationId!,
-        snapshotId: null
+        snapshotId: null,
       }),
     ),
-    Component: withQueryRef(lazy(() => import("/pages/organizations/vendors/VendorsPage"))),
+    Component: withQueryRef(
+      lazy(() => import("/pages/organizations/vendors/VendorsPage")),
+    ),
   },
   {
     path: "snapshots/:snapshotId/vendors",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<VendorGraphListQuery>(relayEnvironment, vendorsQuery, {
+      loadQuery<VendorGraphListQuery>(coreEnvironment, vendorsQuery, {
         organizationId: organizationId!,
-        snapshotId
+        snapshotId,
       }),
     ),
-    Component: withQueryRef(lazy(() => import("/pages/organizations/vendors/VendorsPage"))),
+    Component: withQueryRef(
+      lazy(() => import("/pages/organizations/vendors/VendorsPage")),
+    ),
   },
   {
     path: "vendors/:vendorId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
-      loadQuery<VendorGraphNodeQuery>(relayEnvironment, vendorNodeQuery, {
+      loadQuery<VendorGraphNodeQuery>(coreEnvironment, vendorNodeQuery, {
         vendorId: vendorId!,
       }),
     ),
-    Component: withQueryRef(lazy(
-      () => import("../pages/organizations/vendors/VendorDetailPage")
-    )),
+    Component: withQueryRef(
+      lazy(() => import("../pages/organizations/vendors/VendorDetailPage")),
+    ),
     children: [
       {
         path: "overview",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("../pages/organizations/vendors/tabs/VendorOverviewTab")
+          () => import("../pages/organizations/vendors/tabs/VendorOverviewTab"),
         ),
       },
       {
@@ -55,9 +63,7 @@ export const vendorRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import(
-              "../pages/organizations/vendors/tabs/VendorCertificationsTab"
-            )
+            import("../pages/organizations/vendors/tabs/VendorCertificationsTab"),
         ),
       },
       {
@@ -65,7 +71,7 @@ export const vendorRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("../pages/organizations/vendors/tabs/VendorComplianceTab")
+            import("../pages/organizations/vendors/tabs/VendorComplianceTab"),
         ),
       },
       {
@@ -73,25 +79,21 @@ export const vendorRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import(
-              "../pages/organizations/vendors/tabs/VendorRiskAssessmentTab"
-            )
+            import("../pages/organizations/vendors/tabs/VendorRiskAssessmentTab"),
         ),
       },
       {
         path: "contacts",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () =>
-            import("../pages/organizations/vendors/tabs/VendorContactsTab")
+          () => import("../pages/organizations/vendors/tabs/VendorContactsTab"),
         ),
       },
       {
         path: "services",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () =>
-            import("../pages/organizations/vendors/tabs/VendorServicesTab")
+          () => import("../pages/organizations/vendors/tabs/VendorServicesTab"),
         ),
       },
     ],
@@ -100,19 +102,19 @@ export const vendorRoutes = [
     path: "snapshots/:snapshotId/vendors/:vendorId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
-      loadQuery<VendorGraphNodeQuery>(relayEnvironment, vendorNodeQuery, {
+      loadQuery<VendorGraphNodeQuery>(coreEnvironment, vendorNodeQuery, {
         vendorId: vendorId!,
       }),
     ),
-    Component: withQueryRef(lazy(
-      () => import("../pages/organizations/vendors/VendorDetailPage")
-    )),
+    Component: withQueryRef(
+      lazy(() => import("../pages/organizations/vendors/VendorDetailPage")),
+    ),
     children: [
       {
         path: "overview",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("../pages/organizations/vendors/tabs/VendorOverviewTab")
+          () => import("../pages/organizations/vendors/tabs/VendorOverviewTab"),
         ),
       },
       {
@@ -120,9 +122,7 @@ export const vendorRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import(
-              "../pages/organizations/vendors/tabs/VendorCertificationsTab"
-            )
+            import("../pages/organizations/vendors/tabs/VendorCertificationsTab"),
         ),
       },
       {
@@ -130,7 +130,7 @@ export const vendorRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("../pages/organizations/vendors/tabs/VendorComplianceTab")
+            import("../pages/organizations/vendors/tabs/VendorComplianceTab"),
         ),
       },
       {
@@ -138,25 +138,21 @@ export const vendorRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import(
-              "../pages/organizations/vendors/tabs/VendorRiskAssessmentTab"
-            )
+            import("../pages/organizations/vendors/tabs/VendorRiskAssessmentTab"),
         ),
       },
       {
         path: "contacts",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () =>
-            import("../pages/organizations/vendors/tabs/VendorContactsTab")
+          () => import("../pages/organizations/vendors/tabs/VendorContactsTab"),
         ),
       },
       {
         path: "services",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () =>
-            import("../pages/organizations/vendors/tabs/VendorServicesTab")
+          () => import("../pages/organizations/vendors/tabs/VendorServicesTab"),
         ),
       },
     ],

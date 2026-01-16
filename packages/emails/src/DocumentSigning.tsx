@@ -4,7 +4,7 @@ import EmailLayout, { bodyText, button, buttonContainer, footerText } from './co
 
 export const DocumentSigning = () => {
   return (
-    <EmailLayout subject={'Action Required – Please review and sign {{.OrganizationName}} compliance documents'} organizationName={'{{.OrganizationName}}'}>
+    <EmailLayout subject={'Action Required – Please review and sign {{.OrganizationName}} compliance documents'}>
       <Text style={bodyText}>
         You're receiving this message because your company, <strong>{'{{.OrganizationName}}'}</strong>, has shared a new compliance document that requires your review and signature.
       </Text>

@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -43,23 +43,7 @@ type (
 	}
 
 	Audits []*Audit
-
-	ErrAuditNotFound struct {
-		Identifier string
-	}
-
-	ErrAuditAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrAuditNotFound) Error() string {
-	return fmt.Sprintf("audit not found: %q", e.Identifier)
-}
-
-func (e ErrAuditAlreadyExists) Error() string {
-	return e.message
-}
 
 func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 	switch field {
@@ -74,6 +58,21 @@ func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (a *Audit) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM audits WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, a.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query audit authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (a *Audit) LoadByID(
@@ -116,7 +115,7 @@ LIMIT 1;
 	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrAuditNotFound{Identifier: auditID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect audit: %w", err)
@@ -530,7 +529,7 @@ LIMIT 1;
 	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrAuditNotFound{Identifier: reportID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect audit: %w", err)

@@ -1,5 +1,5 @@
 import { graphql } from "relay-runtime";
-import type { PeopleGraphQuery } from "./__generated__/PeopleGraphQuery.graphql";
+import type { PeopleGraphQuery } from "/__generated__/core/PeopleGraphQuery.graphql";
 import {
   useLazyLoadQuery,
   useMutation,
@@ -8,10 +8,10 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useMemo } from "react";
-import type { PeopleGraphPaginatedQuery } from "./__generated__/PeopleGraphPaginatedQuery.graphql";
-import type { PeopleGraphPaginatedFragment$key } from "./__generated__/PeopleGraphPaginatedFragment.graphql";
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
+import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
 import { useConfirm, useToast } from "@probo/ui";
-import type { PeopleGraphDeleteMutation } from "./__generated__/PeopleGraphDeleteMutation.graphql";
+import type { PeopleGraphDeleteMutation } from "/__generated__/core/PeopleGraphDeleteMutation.graphql";
 import {
   promisifyMutation,
   sprintf,
@@ -65,8 +65,8 @@ export function usePeople(
 export const paginatedPeopleQuery = graphql`
   query PeopleGraphPaginatedQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
+      id
       ... on Organization {
-        id
         ...PeopleGraphPaginatedFragment
       }
     }
@@ -87,6 +87,7 @@ export const paginatedPeopleFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
+    canCreatePeople: permission(action: "core:people:create")
     peoples(
       first: $first
       after: $after
@@ -106,6 +107,8 @@ export const paginatedPeopleFragment = graphql`
           additionalEmailAddresses
           contractStartDate
           contractEndDate
+          canDelete: permission(action: "core:people:delete")
+          canUpdate: permission(action: "core:people:update")
         }
       }
     }
@@ -197,6 +200,8 @@ export const peopleNodeQuery = graphql`
         additionalEmailAddresses
         contractStartDate
         contractEndDate
+        canUpdate: permission(action: "core:people:update")
+        canDelete: permission(action: "core:people:delete")
       }
     }
   }

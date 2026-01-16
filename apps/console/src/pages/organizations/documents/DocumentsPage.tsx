@@ -26,12 +26,11 @@ import {
   useFragment,
   usePaginationFragment,
   usePreloadedQuery,
-  useLazyLoadQuery,
   type PreloadedQuery,
 } from "react-relay";
 import { use, useRef } from "react";
 import { graphql } from "relay-runtime";
-import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
+import type { DocumentGraphListQuery } from "/__generated__/core/DocumentGraphListQuery.graphql";
 import {
   documentsQuery,
   useDeleteDocumentMutation,
@@ -39,7 +38,7 @@ import {
   useBulkDeleteDocumentsMutation,
   useBulkExportDocumentsMutation,
 } from "/hooks/graph/DocumentGraph";
-import type { DocumentsPageListFragment$key } from "./__generated__/DocumentsPageListFragment.graphql";
+import type { DocumentsPageListFragment$key } from "/__generated__/core/DocumentsPageListFragment.graphql";
 import { useList, usePageTitle } from "@probo/hooks";
 import {
   sprintf,
@@ -48,7 +47,7 @@ import {
   formatDate,
 } from "@probo/helpers";
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
-import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPageRowFragment.graphql";
+import type { DocumentsPageRowFragment$key } from "/__generated__/core/DocumentsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
 import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog.tsx";
@@ -56,8 +55,7 @@ import {
   BulkExportDialog,
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
-import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { CurrentUser } from "/providers/CurrentUser.tsx";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -83,6 +81,14 @@ const documentsFragment = graphql`
       edges {
         node {
           id
+          canUpdate: permission(action: "core:document:update")
+          canDelete: permission(action: "core:document:delete")
+          canSendSigningNotifications: permission(
+            action: "core:document:send-signing-notifications"
+          )
+          canRequestSignatures: permission(
+            action: "core:document-version:request-signature"
+          )
           ...DocumentsPageRowFragment
         }
       }
@@ -94,33 +100,18 @@ type Props = {
   queryRef: PreloadedQuery<DocumentGraphListQuery>;
 };
 
-const UserEmailQuery = graphql`
-  query DocumentsPageUserEmailQuery {
-    viewer {
-      user {
-        email
-      }
-    }
-  }
-`;
-
 export default function DocumentsPage(props: Props) {
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
 
   const organization = usePreloadedQuery(
     documentsQuery,
-    props.queryRef
+    props.queryRef,
   ).organization;
 
-  const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(
-    UserEmailQuery,
-    {}
-  );
-  const defaultEmail = userEmailData.viewer.user.email;
+  const { email: defaultEmail } = use(CurrentUser)
   const pagination = usePaginationFragment(
     documentsFragment,
-    organization as DocumentsPageListFragment$key
+    organization as DocumentsPageListFragment$key,
   );
 
   const documents = pagination.data.documents.edges
@@ -137,8 +128,15 @@ export default function DocumentsPage(props: Props) {
 
   usePageTitle(__("Documents"));
 
-  const hasAnyAction = isAuthorized("Document", "updateDocument") ||
-    isAuthorized("Document", "deleteDocument");
+  const canDeleteAny = documents.some(({ canDelete }) => canDelete);
+  const canUpdateAny = documents.some(({ canUpdate }) => canUpdate);
+  const canSendAnySignatureNotifications = documents.some(
+    ({ canSendSigningNotifications }) => canSendSigningNotifications,
+  );
+  const canRequestAnySignatures = documents.some(
+    ({ canRequestSignatures }) => canRequestSignatures,
+  );
+  const hasAnyAction = canDeleteAny || canUpdateAny;
 
   const handleSendSigningNotifications = () => {
     sendSigningNotifications({
@@ -162,12 +160,12 @@ export default function DocumentsPage(props: Props) {
       {
         message: sprintf(
           __(
-            "This will permanently delete %s document%s. This action cannot be undone."
+            "This will permanently delete %s document%s. This action cannot be undone.",
           ),
           documentCount,
-          documentCount > 1 ? "s" : ""
+          documentCount > 1 ? "s" : "",
         ),
-      }
+      },
     );
   };
 
@@ -198,7 +196,7 @@ export default function DocumentsPage(props: Props) {
         description={__("Manage your organization's documents")}
       >
         <div className="flex gap-2">
-          {isAuthorized("Document", "sendSigningNotifications") && (
+          {canSendAnySignatureNotifications && (
             <Button
               icon={IconBell2}
               variant="secondary"
@@ -207,10 +205,12 @@ export default function DocumentsPage(props: Props) {
               {__("Send signing notifications")}
             </Button>
           )}
-          {isAuthorized("Organization", "createDocument") && (
+          {organization.canCreateDocument && (
             <CreateDocumentDialog
               connection={connectionId}
-              trigger={<Button icon={IconPlusLarge}>{__("New document")}</Button>}
+              trigger={
+                <Button icon={IconPlusLarge}>{__("New document")}</Button>
+              }
             />
           )}
         </div>
@@ -258,7 +258,7 @@ export default function DocumentsPage(props: Props) {
                       </button>
                     </div>
                     <div className="flex gap-2 items-center">
-                      {isAuthorized("Document", "updateDocument") && (
+                      {canUpdateAny && (
                         <PublishDocumentsDialog
                           documentIds={selection}
                           onSave={clear}
@@ -271,7 +271,7 @@ export default function DocumentsPage(props: Props) {
                           </Button>
                         </PublishDocumentsDialog>
                       )}
-                      {isAuthorized("Document", "bulkRequestSignatures") && (
+                      {canRequestAnySignatures && (
                         <SignatureDocumentsDialog
                           documentIds={selection}
                           onSave={clear}
@@ -300,7 +300,7 @@ export default function DocumentsPage(props: Props) {
                           {__("Export")}
                         </Button>
                       </BulkExportDialog>
-                      {isAuthorized("Document", "deleteDocument") && (
+                      {canDeleteAny && (
                         <Button
                           variant="danger"
                           icon={IconTrashCan}
@@ -354,6 +354,7 @@ const rowFragment = graphql`
     documentType
     classification
     updatedAt
+    canDelete: permission(action: "core:document:delete")
     owner {
       id
       fullName
@@ -392,10 +393,9 @@ function DocumentRow({
   onCheck: () => void;
   hasAnyAction: boolean;
 }) {
-  const { isAuthorized } = use(PermissionsContext);
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
-    documentKey
+    documentKey,
   );
   const lastVersion = document.versions.edges?.[0]?.node;
 
@@ -413,7 +413,7 @@ function DocumentRow({
     lastVersion.signatures?.edges?.map((edge) => edge?.node)?.filter(Boolean) ??
     [];
   const signedCount = signatures.filter(
-    (signature) => signature.state === "SIGNED"
+    (signature) => signature.state === "SIGNED",
   ).length;
 
   const handleDelete = () => {
@@ -427,11 +427,11 @@ function DocumentRow({
       {
         message: sprintf(
           __(
-            'This will permanently delete the document "%s". This action cannot be undone.'
+            'This will permanently delete the document "%s". This action cannot be undone.',
           ),
-          document.title
+          document.title,
         ),
-      }
+      },
     );
   };
 
@@ -468,7 +468,7 @@ function DocumentRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end w-18">
           <ActionDropdown>
-            {isAuthorized("Document", "deleteDocument") && (
+            {document.canDelete && (
               <DropdownItem
                 variant="danger"
                 icon={IconTrashCan}

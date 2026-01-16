@@ -46,23 +46,7 @@ type (
 	}
 
 	Tasks []*Task
-
-	ErrTaskNotFound struct {
-		Identifier string
-	}
-
-	ErrTaskAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrTaskNotFound) Error() string {
-	return fmt.Sprintf("task not found: %q", e.Identifier)
-}
-
-func (e ErrTaskAlreadyExists) Error() string {
-	return e.message
-}
 
 func (c Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	switch orderBy {
@@ -71,6 +55,20 @@ func (c Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (t *Task) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM tasks WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, t.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query task authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (c *Task) LoadByID(
@@ -114,7 +112,7 @@ LIMIT 1;
 	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTaskNotFound{Identifier: taskID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect tasks: %w", err)
@@ -185,9 +183,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "tasks_reference_id_unique" {
-				return &ErrTaskAlreadyExists{
-					message: fmt.Sprintf("task with measure_id %s and reference_id %q already exists", c.MeasureID, c.ReferenceID),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert task: %w", err)

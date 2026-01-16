@@ -1,0 +1,869 @@
+directive @goField(
+  forceResolver: Boolean
+  name: String
+  omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @goModel(
+  model: String
+  models: [String!]
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+
+directive @goEnum(value: String) on ENUM_VALUE
+
+scalar CursorKey
+scalar Datetime
+scalar Upload
+scalar EmailAddr
+
+enum OrderDirection
+  @goModel(model: "go.probo.inc/probo/pkg/page.OrderDirection") {
+  ASC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionAsc")
+  DESC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionDesc")
+}
+
+enum SessionOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SessionOrderField") {
+  CREATED_AT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SessionOrderFieldCreatedAt")
+  EXPIRED_AT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SessionOrderFieldExpiredAt")
+  UPDATED_AT
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SessionOrderFieldUpdatedAt")
+}
+
+input SessionOrder {
+  direction: OrderDirection!
+  field: SessionOrderField!
+}
+
+interface Node {
+  id: ID!
+}
+
+type Query {
+  node(id: ID!): Node @session(required: PRESENT)
+  viewer: Identity @session(required: PRESENT)
+  ssoLoginURL(email: EmailAddr!): String
+    @goField(forceResolver: true)
+    @session(required: NONE)
+}
+
+type Mutation {
+  signIn(input: SignInInput!): SignInPayload @session(required: OPTIONAL)
+  signUp(input: SignUpInput!): SignUpPayload @session(required: NONE)
+  signOut: SignOutPayload @session(required: PRESENT)
+  signUpFromInvitation(
+    input: SignUpFromInvitationInput!
+  ): SignUpFromInvitationPayload @session(required: NONE)
+  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
+    @session(required: NONE)
+  resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
+    @session(required: NONE)
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload
+    @session(required: OPTIONAL)
+  changePassword(input: ChangePasswordInput!): ChangePasswordPayload
+    @session(required: PRESENT)
+  changeEmail(input: ChangeEmailInput!): ChangeEmailPayload
+    @session(required: PRESENT)
+  assumeOrganizationSession(
+    input: AssumeOrganizationSessionInput!
+  ): AssumeOrganizationSessionPayload @session(required: PRESENT)
+
+  revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
+    @session(required: PRESENT)
+  revokeAllSessions: RevokeAllSessionsPayload @session(required: PRESENT)
+
+  createPersonalAPIKey(
+    input: CreatePersonalAPIKeyInput!
+  ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
+  revokePersonalAPIKey(
+    input: RevokePersonalAPIKeyInput!
+  ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
+
+  createOrganization(
+    input: CreateOrganizationInput!
+  ): CreateOrganizationPayload @session(required: PRESENT)
+  updateOrganization(
+    input: UpdateOrganizationInput!
+  ): UpdateOrganizationPayload @session(required: PRESENT)
+  deleteOrganization(
+    input: DeleteOrganizationInput!
+  ): DeleteOrganizationPayload @session(required: PRESENT)
+  deleteOrganizationHorizontalLogo(
+    input: DeleteOrganizationHorizontalLogoInput!
+  ): DeleteOrganizationHorizontalLogoPayload @session(required: PRESENT)
+
+  inviteMember(input: InviteMemberInput!): InviteMemberPayload
+    @session(required: PRESENT)
+  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
+    @session(required: PRESENT)
+  updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
+  removeMember(input: RemoveMemberInput!): RemoveMemberPayload
+    @session(required: PRESENT)
+
+  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload
+    @session(required: PRESENT)
+
+  createSAMLConfiguration(
+    input: CreateSAMLConfigurationInput!
+  ): CreateSAMLConfigurationPayload @session(required: PRESENT)
+  updateSAMLConfiguration(
+    input: UpdateSAMLConfigurationInput!
+  ): UpdateSAMLConfigurationPayload @session(required: PRESENT)
+  deleteSAMLConfiguration(
+    input: DeleteSAMLConfigurationInput!
+  ): DeleteSAMLConfigurationPayload @session(required: PRESENT)
+
+  createSCIMConfiguration(
+    input: CreateSCIMConfigurationInput!
+  ): CreateSCIMConfigurationPayload @session(required: PRESENT)
+  deleteSCIMConfiguration(
+    input: DeleteSCIMConfigurationInput!
+  ): DeleteSCIMConfigurationPayload @session(required: PRESENT)
+  regenerateSCIMToken(
+    input: RegenerateSCIMTokenInput!
+  ): RegenerateSCIMTokenPayload @session(required: PRESENT)
+}
+
+type Identity implements Node {
+  id: ID!
+  email: EmailAddr!
+  fullName: String!
+  emailVerified: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  memberships(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: MembershipOrder
+  ): MembershipConnection @goField(forceResolver: true)
+
+  pendingInvitations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: InvitationOrder
+  ): InvitationConnection @goField(forceResolver: true)
+
+  sessions(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SessionOrder
+  ): SessionConnection @goField(forceResolver: true)
+
+  personalAPIKeys(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): PersonalAPIKeyConnection @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type MembershipProfile implements Node {
+  id: ID!
+  fullName: String!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type Organization implements Node {
+  id: ID!
+  name: String!
+  logoUrl: String @goField(forceResolver: true)
+  horizontalLogoUrl: String @goField(forceResolver: true)
+  email: String
+  description: String
+  websiteUrl: String
+  headquarterAddress: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  members(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: MembershipOrder
+  ): MembershipConnection @goField(forceResolver: true)
+
+  invitations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    status: InvitationStatus
+    orderBy: InvitationOrder
+  ): InvitationConnection @goField(forceResolver: true)
+
+  samlConfigurations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): SAMLConfigurationConnection @goField(forceResolver: true)
+
+  scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
+
+  viewerMembership: Membership @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+enum MembershipRole
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
+  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
+  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  EMPLOYEE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
+  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
+  AUDITOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
+}
+
+enum MembershipSource
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipSource") {
+  MANUAL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceManual")
+  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSAML")
+  SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSCIM")
+}
+
+enum MembershipState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateInactive")
+}
+
+type Membership implements Node {
+  id: ID!
+  createdAt: Datetime!
+  identity: Identity @goField(forceResolver: true)
+  profile: MembershipProfile @goField(forceResolver: true)
+  organization: Organization @goField(forceResolver: true)
+  role: MembershipRole!
+  source: MembershipSource!
+  state: MembershipState!
+
+  lastSession: Session @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type Invitation implements Node {
+  id: ID!
+  email: EmailAddr!
+  fullName: String!
+  role: MembershipRole!
+  expiresAt: Datetime!
+  acceptedAt: Datetime
+  createdAt: Datetime!
+  status: InvitationStatus!
+  organization: Organization @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type Session implements Node {
+  id: ID!
+  identity: Identity @goField(forceResolver: true)
+  ipAddress: String!
+  userAgent: String!
+  updatedAt: Datetime!
+  createdAt: Datetime!
+  expiresAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type PersonalAPIKey implements Node {
+  id: ID!
+  name: String!
+  expiresAt: Datetime!
+  lastUsedAt: Datetime
+  createdAt: Datetime!
+
+  token: String @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type SAMLConfiguration implements Node {
+  id: ID!
+  emailDomain: String!
+  enforcementPolicy: SAMLEnforcementPolicy!
+  domainVerifiedAt: Datetime
+  domainVerificationToken: String
+  idpEntityId: String!
+  idpSsoUrl: String!
+  idpCertificate: String!
+  autoSignupEnabled: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  testLoginUrl: String! @goField(forceResolver: true)
+  attributeMappings: SAMLAttributeMappings!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type SAMLAttributeMappings {
+  email: String!
+  firstName: String!
+  lastName: String!
+  role: String!
+}
+
+type SCIMConfiguration implements Node {
+  id: ID!
+  endpointUrl: String! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  organization: Organization @goField(forceResolver: true)
+
+  events(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SCIMEventOrder
+  ): SCIMEventConnection @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type SCIMEvent implements Node {
+  id: ID!
+  method: String!
+  path: String!
+  statusCode: Int!
+  requestBody: String
+  responseBody: String
+  errorMessage: String
+  membership: Membership @goField(forceResolver: true)
+  ipAddress: String!
+  createdAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+enum InvitationStatus
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
+  PENDING
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusPending")
+  ACCEPTED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusAccepted")
+  EXPIRED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
+}
+
+enum SAMLEnforcementPolicy
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicy") {
+  OFF @goEnum(value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOff")
+  OPTIONAL
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOptional"
+    )
+  REQUIRED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
+    )
+}
+
+enum ReauthenticationReason {
+  SESSION_EXPIRED
+  SENSITIVE_ACTION
+  POLICY_REQUIREMENT
+}
+
+enum MembershipOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
+    )
+  EMAIL_ADDRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
+    )
+  ROLE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
+    )
+}
+
+input MembershipOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.MembershipOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: MembershipOrderField!
+}
+
+type MembershipConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.MembershipConnection"
+  ) {
+  edges: [MembershipEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type MembershipEdge {
+  node: Membership!
+  cursor: CursorKey!
+}
+
+enum InvitationOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldFullName"
+    )
+  EMAIL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
+  ROLE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole")
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
+    )
+  EXPIRES_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
+    )
+  ACCEPTED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
+    )
+}
+
+input InvitationOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: InvitationOrderField!
+}
+
+type InvitationConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationConnection"
+  ) {
+  edges: [InvitationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type InvitationEdge {
+  node: Invitation!
+  cursor: CursorKey!
+}
+
+type SessionConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SessionConnection"
+  ) {
+  edges: [SessionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type SessionEdge {
+  node: Session!
+  cursor: CursorKey!
+}
+
+type PersonalAPIKeyConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.PersonalAPIKeyConnection"
+  ) {
+  edges: [PersonalAPIKeyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type PersonalAPIKeyEdge {
+  node: PersonalAPIKey!
+  cursor: CursorKey!
+}
+
+type SAMLConfigurationConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SAMLConfigurationConnection"
+  ) {
+  edges: [SAMLConfigurationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type SAMLConfigurationEdge {
+  node: SAMLConfiguration!
+  cursor: CursorKey!
+}
+
+enum SCIMEventOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMEventOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SCIMEventOrderFieldCreatedAt"
+    )
+}
+
+input SCIMEventOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SCIMEventOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: SCIMEventOrderField!
+}
+
+type SCIMEventConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SCIMEventConnection"
+  ) {
+  edges: [SCIMEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type SCIMEventEdge {
+  node: SCIMEvent!
+  cursor: CursorKey!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: CursorKey
+  endCursor: CursorKey
+}
+
+input SignInInput {
+  email: EmailAddr!
+  password: String!
+}
+
+input SignUpInput {
+  email: EmailAddr!
+  password: String!
+  fullName: String!
+}
+
+input SignUpFromInvitationInput {
+  token: String!
+  password: String!
+  fullName: String!
+}
+
+input ForgotPasswordInput {
+  email: EmailAddr!
+}
+
+input ResetPasswordInput {
+  token: String!
+  password: String!
+}
+
+input VerifyEmailInput {
+  token: String!
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
+input ChangeEmailInput {
+  newEmail: EmailAddr!
+  password: String!
+}
+
+input AssumeOrganizationSessionInput {
+  organizationId: ID!
+}
+
+input RevokeSessionInput {
+  sessionId: ID!
+}
+
+input CreatePersonalAPIKeyInput {
+  name: String!
+  expiresAt: Datetime!
+}
+
+input RevokePersonalAPIKeyInput {
+  personalAPIKeyId: ID!
+}
+
+input CreateOrganizationInput {
+  name: String!
+  logoFile: Upload
+  horizontalLogoFile: Upload
+}
+
+input UpdateOrganizationInput {
+  organizationId: ID!
+  name: String
+  logoFile: Upload
+  horizontalLogoFile: Upload
+  description: String @goField(omittable: true)
+  websiteUrl: String @goField(omittable: true)
+  email: String @goField(omittable: true)
+  headquarterAddress: String @goField(omittable: true)
+}
+
+input DeleteOrganizationInput {
+  organizationId: ID!
+}
+
+input DeleteOrganizationHorizontalLogoInput {
+  organizationId: ID!
+}
+
+input InviteMemberInput {
+  organizationId: ID!
+  email: EmailAddr!
+  fullName: String!
+  role: MembershipRole!
+}
+
+input UpdateMembershipInput {
+  organizationId: ID!
+  membershipId: ID!
+  role: MembershipRole!
+}
+
+input RemoveMemberInput {
+  organizationId: ID!
+  membershipId: ID!
+}
+
+input AcceptInvitationInput {
+  invitationId: ID!
+}
+
+input DeleteInvitationInput {
+  organizationId: ID!
+  invitationId: ID!
+}
+
+input CreateSAMLConfigurationInput {
+  organizationId: ID!
+  emailDomain: String!
+  idpEntityId: String!
+  idpSsoUrl: String!
+  idpCertificate: String!
+  autoSignupEnabled: Boolean!
+  attributeMappings: SAMLAttributeMappingsInput
+}
+
+input SAMLAttributeMappingsInput {
+  email: String
+  firstName: String
+  lastName: String
+  role: String
+}
+
+input UpdateSAMLConfigurationInput {
+  organizationId: ID!
+  samlConfigurationId: ID!
+  idpEntityId: String
+  idpSsoUrl: String
+  idpCertificate: String
+  autoSignupEnabled: Boolean
+  enforcementPolicy: SAMLEnforcementPolicy!
+  attributeMappings: SAMLAttributeMappingsInput
+}
+
+input DeleteSAMLConfigurationInput {
+  organizationId: ID!
+  samlConfigurationId: ID!
+}
+
+type SignInPayload {
+  identity: Identity
+  session: Session
+}
+
+type SignUpPayload {
+  identity: Identity
+}
+
+type SignOutPayload {
+  success: Boolean!
+}
+
+type SignUpFromInvitationPayload {
+  identity: Identity
+}
+
+type ForgotPasswordPayload {
+  success: Boolean!
+}
+
+type ResetPasswordPayload {
+  success: Boolean!
+}
+
+type VerifyEmailPayload {
+  success: Boolean!
+}
+
+type ChangePasswordPayload {
+  success: Boolean!
+}
+
+type ChangeEmailPayload {
+  success: Boolean!
+}
+
+union AssumeOrganizationSessionResult =
+  | OrganizationSessionCreated
+  | PasswordRequired
+  | SAMLAuthenticationRequired
+
+type OrganizationSessionCreated {
+  session: Session!
+  membership: Membership!
+}
+
+type PasswordRequired {
+  reason: ReauthenticationReason!
+}
+
+type SAMLAuthenticationRequired {
+  reason: ReauthenticationReason!
+  redirectUrl: String!
+}
+
+type AssumeOrganizationSessionPayload {
+  result: AssumeOrganizationSessionResult!
+}
+
+type RevokeSessionPayload {
+  success: Boolean!
+}
+
+type RevokeAllSessionsPayload {
+  revokedCount: Int!
+}
+
+type CreatePersonalAPIKeyPayload {
+  personalAPIKeyEdge: PersonalAPIKeyEdge!
+  token: String!
+}
+
+type RevokePersonalAPIKeyPayload {
+  personalAPIKeyId: ID!
+}
+
+type CreateOrganizationPayload {
+  organization: Organization
+  membershipEdge: MembershipEdge!
+}
+
+type UpdateOrganizationPayload {
+  organization: Organization
+}
+
+type DeleteOrganizationPayload {
+  deletedOrganizationId: ID!
+}
+
+type DeleteOrganizationHorizontalLogoPayload {
+  organization: Organization!
+}
+
+type InviteMemberPayload {
+  invitationEdge: InvitationEdge!
+}
+
+type UpdateMembershipPayload {
+  membership: Membership!
+}
+
+type RemoveMemberPayload {
+  deletedMembershipId: ID!
+}
+
+type AcceptInvitationPayload {
+  membershipEdge: MembershipEdge!
+  invitation: Invitation!
+}
+
+type DeleteInvitationPayload {
+  deletedInvitationId: ID!
+}
+
+type CreateSAMLConfigurationPayload {
+  samlConfigurationEdge: SAMLConfigurationEdge!
+}
+
+type UpdateSAMLConfigurationPayload {
+  samlConfiguration: SAMLConfiguration
+}
+
+type DeleteSAMLConfigurationPayload {
+  deletedSamlConfigurationId: ID!
+}
+
+input CreateSCIMConfigurationInput {
+  organizationId: ID!
+}
+
+input DeleteSCIMConfigurationInput {
+  organizationId: ID!
+  scimConfigurationId: ID!
+}
+
+input RegenerateSCIMTokenInput {
+  organizationId: ID!
+  scimConfigurationId: ID!
+}
+
+type CreateSCIMConfigurationPayload {
+  scimConfiguration: SCIMConfiguration!
+  token: String!
+}
+
+type DeleteSCIMConfigurationPayload {
+  deletedScimConfigurationId: ID!
+}
+
+type RegenerateSCIMTokenPayload {
+  scimConfiguration: SCIMConfiguration!
+  token: String!
+}

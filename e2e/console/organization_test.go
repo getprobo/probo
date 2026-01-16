@@ -53,7 +53,7 @@ func TestOrganization_Update(t *testing.T) {
 			} `json:"updateOrganization"`
 		}
 
-		err := owner.Execute(query, map[string]any{
+		err := owner.ExecuteConnect(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"name":           newName,
@@ -90,7 +90,7 @@ func TestOrganization_Update(t *testing.T) {
 			} `json:"updateOrganization"`
 		}
 
-		err := owner.Execute(query, map[string]any{
+		err := owner.ExecuteConnect(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"websiteUrl":     "https://example.com",
@@ -124,7 +124,7 @@ func TestOrganization_Update(t *testing.T) {
 			} `json:"updateOrganization"`
 		}
 
-		err := owner.Execute(query, map[string]any{
+		err := owner.ExecuteConnect(query, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
 				"headquarterAddress": "123 Main St, Suite 100, San Francisco, CA 94102",
@@ -187,9 +187,6 @@ func TestOrganization_Get(t *testing.T) {
 					websiteUrl
 					email
 					headquarterAddress
-					context {
-						summary
-					}
 				}
 			}
 		}
@@ -203,13 +200,10 @@ func TestOrganization_Get(t *testing.T) {
 			WebsiteUrl         string `json:"websiteUrl"`
 			Email              string `json:"email"`
 			HeadquarterAddress string `json:"headquarterAddress"`
-			Context            struct {
-				Summary string `json:"summary"`
-			} `json:"context"`
 		} `json:"node"`
 	}
 
-	err := owner.Execute(query, map[string]any{
+	err := owner.ExecuteConnect(query, map[string]any{
 		"id": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)

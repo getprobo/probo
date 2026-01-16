@@ -1,0 +1,40 @@
+schema:
+  - "schema.graphql"
+  - "../../../gqlutils/directives/session/schema.graphql"
+
+exec:
+  filename: "schema/schema.go"
+  package: "schema"
+
+model:
+  filename: "types/types.go"
+  package: "types"
+
+resolver:
+  layout: "follow-schema"
+  dir: "."
+  package: "connect_v1"
+  filename_template: "v1_resolver.go"
+
+autobind: []
+call_argument_directives_with_null: true
+
+directives:
+  mustBeAuthorized:
+    skip_runtime: false
+  session:
+    skip_runtime: false
+
+models:
+  ID:
+    model:
+      - "go.probo.inc/probo/pkg/server/gqlutils/types/gid.GIDScalar"
+  Datetime:
+    model:
+      - "github.com/99designs/gqlgen/graphql.Time"
+  CursorKey:
+    model:
+      - "go.probo.inc/probo/pkg/server/gqlutils/types/cursor.CursorKeyScalar"
+  EmailAddr:
+    model:
+      - "go.probo.inc/probo/pkg/server/gqlutils/types/mail.AddrScalar"

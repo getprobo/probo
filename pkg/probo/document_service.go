@@ -41,6 +41,12 @@ type (
 		expectedState coredata.DocumentVersionSignatureState
 	}
 
+	ErrDocumentVersionNoChanges struct {
+	}
+
+	ErrDocumentVersionSignatureAlreadySigned struct {
+	}
+
 	CreateDocumentRequest struct {
 		OrganizationID        gid.GID
 		Title                 string
@@ -142,6 +148,14 @@ var (
 func (e ErrSignatureNotCancellable) Error() string {
 	return fmt.Sprintf("cannot cancel signature request: signature is in state %v, expected %v",
 		e.currentState, e.expectedState)
+}
+
+func (e ErrDocumentVersionNoChanges) Error() string {
+	return "no changes detected"
+}
+
+func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
+	return "document version signature already signed"
 }
 
 func (s *DocumentService) Get(
@@ -343,9 +357,7 @@ func (s *DocumentService) publishVersionInTx(
 		if publishedVersion.Content == documentVersion.Content &&
 			publishedVersion.Title == documentVersion.Title &&
 			publishedVersion.OwnerID == documentVersion.OwnerID {
-			return nil, nil, &coredata.ErrDocumentVersionNoChanges{
-				Message: "no changes detected",
-			}
+			return nil, nil, &ErrDocumentVersionNoChanges{}
 		}
 	}
 
@@ -661,7 +673,7 @@ func (s *DocumentService) signDocumentVersionInTx(
 	}
 
 	if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
-		return nil, &coredata.ErrDocumentVersionSignatureAlreadySigned{}
+		return nil, &ErrDocumentVersionSignatureAlreadySigned{}
 	}
 
 	documentVersionSignature.State = coredata.DocumentVersionSignatureStateSigned

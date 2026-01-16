@@ -27,7 +27,11 @@ import {
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateRightsRequestDialog } from "./dialogs/CreateRightsRequestDialog";
-import { deleteRightsRequestMutation, RightsRequestsConnectionKey, rightsRequestsQuery } from "../../../hooks/graph/RightsRequestGraph";
+import {
+  deleteRightsRequestMutation,
+  RightsRequestsConnectionKey,
+  rightsRequestsQuery,
+} from "../../../hooks/graph/RightsRequestGraph";
 import {
   sprintf,
   promisifyMutation,
@@ -40,10 +44,8 @@ import type { NodeOf } from "/types";
 import type {
   RightsRequestsPageFragment$key,
   RightsRequestsPageFragment$data,
-} from "./__generated__/RightsRequestsPageFragment.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import type { RightsRequestGraphListQuery } from "/hooks/graph/__generated__/RightsRequestGraphListQuery.graphql";
+} from "/__generated__/core/RightsRequestsPageFragment.graphql";
+import type { RightsRequestGraphListQuery } from "/__generated__/core/RightsRequestGraphListQuery.graphql";
 
 interface RightsRequestsPageProps {
   queryRef: PreloadedQuery<RightsRequestGraphListQuery>;
@@ -57,10 +59,7 @@ const rightsRequestsPageFragment = graphql`
     after: { type: "CursorKey" }
   ) {
     id
-    rightsRequests(
-      first: $first
-      after: $after
-    )
+    rightsRequests(first: $first, after: $after)
       @connection(key: "RightsRequestsPage_rightsRequests") {
       __id
       totalCount
@@ -76,6 +75,8 @@ const rightsRequestsPageFragment = graphql`
           actionTaken
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:rights-request:update")
+          canDelete: permission(action: "core:rights-request:delete")
         }
       }
       pageInfo {
@@ -86,50 +87,46 @@ const rightsRequestsPageFragment = graphql`
   }
 `;
 
-export default function RightsRequestsPage({ queryRef }: RightsRequestsPageProps) {
+export default function RightsRequestsPage({
+  queryRef,
+}: RightsRequestsPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Rights Requests"));
 
-  const organization = usePreloadedQuery(
+  const organization = usePreloadedQuery<RightsRequestGraphListQuery>(
     rightsRequestsQuery,
-    queryRef
+    queryRef,
   );
 
-  const {
-    data,
-    loadNext,
-    hasNext,
-    isLoadingNext,
-  } = usePaginationFragment<
+  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
     RightsRequestGraphListQuery,
     RightsRequestsPageFragment$key
   >(rightsRequestsPageFragment, organization.node);
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    RightsRequestsConnectionKey
+    RightsRequestsConnectionKey,
   );
   const requests = data?.rightsRequests?.edges?.map((edge) => edge.node) ?? [];
 
-  const hasAnyAction = (
-    isAuthorized("RightsRequest", "updateRightsRequest") ||
-    isAuthorized("RightsRequest", "deleteRightsRequest")
-  );
+  const hasAnyAction =
+    requests.some(({ canUpdate }) => canUpdate) ||
+    requests.some(({ canDelete }) => canDelete);
 
   return (
     <div className="space-y-6">
-      <PageHeader title={__("Rights Requests")} description={__("Manage data subject rights requests.")}>
-        {isAuthorized("Organization", "createRightsRequest") && (
+      <PageHeader
+        title={__("Rights Requests")}
+        description={__("Manage data subject rights requests.")}
+      >
+        {organization.node.canCreateRightsRequest && (
           <CreateRightsRequestDialog
             organizationId={organizationId}
             connectionId={connectionId}
           >
-            <Button icon={IconPlusLarge}>
-              {__("Add rights request")}
-            </Button>
+            <Button icon={IconPlusLarge}>{__("Add rights request")}</Button>
           </CreateRightsRequestDialog>
         )}
       </PageHeader>
@@ -192,7 +189,9 @@ function RequestRow({
   connectionId,
   hasAnyAction,
 }: {
-  request: NodeOf<NonNullable<RightsRequestsPageFragment$data['rightsRequests']>>;
+  request: NodeOf<
+    NonNullable<RightsRequestsPageFragment$data["rightsRequests"]>
+  >;
   connectionId: string;
   hasAnyAction: boolean;
 }) {
@@ -200,7 +199,6 @@ function RequestRow({
   const { __ } = useTranslate();
   const [deleteRequest] = useMutation(deleteRightsRequestMutation);
   const confirm = useConfirm();
-  const { isAuthorized } = use(PermissionsContext);
 
   const handleDelete = () => {
     confirm(
@@ -216,20 +214,21 @@ function RequestRow({
       {
         message: sprintf(
           __(
-            "This will permanently delete the rights request. This action cannot be undone."
-          )
+            "This will permanently delete the rights request. This action cannot be undone.",
+          ),
         ),
-      }
+      },
     );
   };
-
 
   const detailsUrl = `/organizations/${organizationId}/rights-requests/${request.id}`;
 
   return (
     <Tr to={detailsUrl}>
       <Td>
-        <Badge variant="neutral">{getRightsRequestTypeLabel(__, request.requestType)}</Badge>
+        <Badge variant="neutral">
+          {getRightsRequestTypeLabel(__, request.requestType)}
+        </Badge>
       </Td>
       <Td>
         <Badge variant={getRightsRequestStateVariant(request.requestState)}>
@@ -250,7 +249,7 @@ function RequestRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("RightsRequest", "deleteRightsRequest") && (
+            {request.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"

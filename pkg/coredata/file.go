@@ -42,22 +42,21 @@ type (
 	}
 
 	Files []*File
-
-	ErrFileNotFound struct {
-		Identifier string
-	}
-
-	ErrFileAlreadyExists struct {
-		message string
-	}
 )
 
-func (e ErrFileNotFound) Error() string {
-	return fmt.Sprintf("file not found: %q", e.Identifier)
-}
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (f *File) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM files WHERE id = $1 LIMIT 1;`
 
-func (e ErrFileAlreadyExists) Error() string {
-	return e.message
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, f.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query file authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (f *File) LoadByID(
@@ -100,7 +99,7 @@ LIMIT 1;
 	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[File])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrFileNotFound{Identifier: fileID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect file: %w", err)
@@ -165,9 +164,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "files_file_key_key" {
-				return &ErrFileAlreadyExists{
-					message: fmt.Sprintf("file with file_key %q already exists", f.FileKey),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert file: %w", err)

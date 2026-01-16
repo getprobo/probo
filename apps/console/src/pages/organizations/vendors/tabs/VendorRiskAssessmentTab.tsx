@@ -1,6 +1,6 @@
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { VendorRiskAssessmentTabFragment$key } from "./__generated__/VendorRiskAssessmentTabFragment.graphql";
+import type { VendorRiskAssessmentTabFragment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -17,12 +17,13 @@ import {
 } from "@probo/ui";
 import { formatDate } from "@probo/helpers";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import type { VendorRiskAssessmentTabFragment_assessment$key } from "./__generated__/VendorRiskAssessmentTabFragment_assessment.graphql";
+import type { VendorRiskAssessmentTabFragment_assessment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment_assessment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { CreateRiskAssessmentDialog } from "../dialogs/CreateRiskAssessmentDialog";
 import clsx from "clsx";
-import { use, useState } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { useState, type ComponentProps } from "react";
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { VendorRiskAssessmentTabQuery } from "/__generated__/core/VendorRiskAssessmentTabQuery.graphql";
 
 const riskAssessmentsFragment = graphql`
   fragment VendorRiskAssessmentTabFragment on Vendor
@@ -71,19 +72,17 @@ const riskAssessmentFragment = graphql`
 
 export default function VendorRiskAssessmentTab() {
   const { vendor } = useOutletContext<{
-    vendor: VendorRiskAssessmentTabFragment$key & { name: string; id: string };
+    vendor: VendorGraphNodeQuery$data["node"];
   }>();
-  const [data, refetch] = useRefetchableFragment(
-    riskAssessmentsFragment,
-    vendor
-  );
+  const [data, refetch] = useRefetchableFragment<
+    VendorRiskAssessmentTabQuery,
+    VendorRiskAssessmentTabFragment$key
+  >(riskAssessmentsFragment, vendor);
   const assessments = data.riskAssessments.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const { isAuthorized } = use(PermissionsContext);
-  const canCreateRiskAssessment = isAuthorized("Vendor", "createVendorRiskAssessment");
 
   usePageTitle(vendor.name + " - " + __("Risk Assessments"));
 
@@ -91,7 +90,7 @@ export default function VendorRiskAssessmentTab() {
     return (
       <div className="text-center text-sm py-6 text-txt-secondary flex flex-col items-center gap-2">
         {__("No risk assessments found")}
-        {!isSnapshotMode && canCreateRiskAssessment && (
+        {!isSnapshotMode && vendor.canCreateRiskAssessment && (
           <CreateRiskAssessmentDialog
             vendorId={vendor.id}
             connection={data.riskAssessments.__id}
@@ -109,7 +108,9 @@ export default function VendorRiskAssessmentTab() {
     <div className="space-y-6 relative">
       <div className="flex justify-end"></div>
       <div className="overflow-x-auto">
-        <SortableTable refetch={refetch}>
+        <SortableTable
+          refetch={refetch as ComponentProps<typeof SortableTable>["refetch"]}
+        >
           <Thead>
             <Tr>
               <SortableTh field="CREATED_AT">{__("Created At")}</SortableTh>
@@ -119,7 +120,7 @@ export default function VendorRiskAssessmentTab() {
             </Tr>
           </Thead>
           <Tbody>
-            {!isSnapshotMode && canCreateRiskAssessment && (
+            {!isSnapshotMode && vendor.canCreateRiskAssessment && (
               <CreateRiskAssessmentDialog
                 vendorId={vendor.id}
                 connection={data.riskAssessments.__id}
@@ -136,7 +137,7 @@ export default function VendorRiskAssessmentTab() {
                 isExpanded={expanded === assessment.id}
                 onClick={() =>
                   setExpanded((prev) =>
-                    prev === assessment.id ? null : assessment.id
+                    prev === assessment.id ? null : assessment.id,
                   )
                 }
               />
@@ -159,7 +160,7 @@ function AssessmentRow(props: AssessmentRowProps) {
   const assessment =
     useFragment<VendorRiskAssessmentTabFragment_assessment$key>(
       riskAssessmentFragment,
-      props.assessmentKey
+      props.assessmentKey,
     );
   const { relativeDateFormat } = useTranslate();
   const isExpired = new Date(assessment.expiresAt) < new Date();
@@ -170,7 +171,7 @@ function AssessmentRow(props: AssessmentRowProps) {
         className={clsx(
           isExpired && "opacity-50",
           "cursor-pointer",
-          props.isExpanded && "border-none"
+          props.isExpanded && "border-none",
         )}
         onClick={() => props.onClick(assessment.id)}
       >

@@ -1,32 +1,10 @@
 package types
 
 import (
-	"time"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
-
-type Control struct {
-	ID                     gid.GID                `json:"id"`
-	OrganizationID         gid.GID                `json:"-"`
-	SectionTitle           string                 `json:"sectionTitle"`
-	Name                   string                 `json:"name"`
-	Description            *string                `json:"description,omitempty"`
-	Status                 coredata.ControlStatus `json:"status"`
-	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
-	Framework              *Framework             `json:"framework"`
-	Measures               *MeasureConnection     `json:"measures"`
-	Documents              *DocumentConnection    `json:"documents"`
-	Audits                 *AuditConnection       `json:"audits"`
-	Snapshots              *SnapshotConnection    `json:"snapshots"`
-	CreatedAt              time.Time              `json:"createdAt"`
-	UpdatedAt              time.Time              `json:"updatedAt"`
-}
-
-func (Control) IsNode()          {}
-func (c Control) GetID() gid.GID { return c.ID }
 
 type (
 	ControlOrderBy OrderBy[coredata.ControlOrderField]
@@ -63,10 +41,22 @@ func NewControlConnection(
 	}
 }
 
+func NewControlEdge(control *coredata.Control, orderField coredata.ControlOrderField) *ControlEdge {
+	return &ControlEdge{
+		Node:   NewControl(control),
+		Cursor: control.CursorKey(orderField),
+	}
+}
+
 func NewControl(control *coredata.Control) *Control {
 	return &Control{
-		ID:                     control.ID,
-		OrganizationID:         control.OrganizationID,
+		ID: control.ID,
+		Organization: &Organization{
+			ID: control.OrganizationID,
+		},
+		Framework: &Framework{
+			ID: control.FrameworkID,
+		},
 		SectionTitle:           control.SectionTitle,
 		Name:                   control.Name,
 		Description:            control.Description,
@@ -74,12 +64,5 @@ func NewControl(control *coredata.Control) *Control {
 		ExclusionJustification: control.ExclusionJustification,
 		CreatedAt:              control.CreatedAt,
 		UpdatedAt:              control.UpdatedAt,
-	}
-}
-
-func NewControlEdge(control *coredata.Control, orderField coredata.ControlOrderField) *ControlEdge {
-	return &ControlEdge{
-		Node:   NewControl(control),
-		Cursor: control.CursorKey(orderField),
 	}
 }

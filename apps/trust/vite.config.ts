@@ -23,7 +23,7 @@ export default defineConfig({
     alias: {
       "/type": fileURLToPath(new URL("./src/type.ts", import.meta.url)),
       "/components": fileURLToPath(
-        new URL("./src/components", import.meta.url)
+        new URL("./src/components", import.meta.url),
       ),
       "/queries": fileURLToPath(new URL("./src/queries", import.meta.url)),
       "/helpers": fileURLToPath(new URL("./src/helpers", import.meta.url)),
@@ -32,6 +32,7 @@ export default defineConfig({
       "/pages": fileURLToPath(new URL("./src/pages", import.meta.url)),
       "/routes": fileURLToPath(new URL("./src/routes", import.meta.url)),
       "/providers": fileURLToPath(new URL("./src/providers", import.meta.url)),
+      "/utils": fileURLToPath(new URL("./src/utils", import.meta.url)),
     },
   },
 });
