@@ -272,7 +272,7 @@ func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership)
 
 // Organization is the resolver for the organization field.
 func (r *membershipResolver) Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSession(nil)); err != nil {
+	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -293,7 +293,7 @@ func (r *membershipResolver) Organization(ctx context.Context, obj *types.Member
 
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSession(nil)); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -1157,7 +1157,7 @@ func (r *mutationResolver) RegenerateSCIMToken(ctx context.Context, input types.
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSession(nil)); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -1310,7 +1310,7 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 
 // ViewerMembership is the resolver for the viewerMembership field.
 func (r *organizationResolver) ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSession(nil)); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 

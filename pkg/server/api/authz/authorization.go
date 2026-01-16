@@ -36,9 +36,11 @@ func WithAttr(key, value string) AuthorizeFuncOption {
 	}
 }
 
-func WithSession(sessionID *gid.GID) AuthorizeFuncOption {
+// Use this option when it makes no sense to check whether the viewer is assuming the org of the accessed resource
+// Example: on the viewer memberships page, we're accessing several organization names, but the viewer isn't assuming one yet.
+func WithSkipAssumptionCheck() AuthorizeFuncOption {
 	return func(params *iam.AuthorizeParams) {
-		params.Session = sessionID
+		params.Session = nil
 	}
 }
 
