@@ -1,36 +1,38 @@
 {
-  "name": "probo",
-  "description": "Probo monorepo containing applications and shared packages",
-  "engines": {
-    "node": "v24.4.0"
-  },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check": "turbo run check",
-    "relay": "turbo run relay"
-  },
-  "devDependencies": {
-    "turbo": "^2.5.3"
-  },
-  "graphql": {
-    "schema": "./pkg/server/api/console/v1/schema.graphql"
-  },
-  "overrides": {
-    "form-data": "^4.0.4"
-  },
-  "license": "MIT",
-  "packageManager": "npm@11.1.0",
-  "volta": {
-    "node": "24.4.0"
-  },
-  "dependencies": {
-    "react-dom": "^19.2.1"
-  }
+    "name": "probo",
+    "description": "Probo monorepo containing applications and shared packages",
+    "engines": {
+        "node": "v24.4.0"
+    },
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "turbo run build",
+        "dev": "turbo run dev",
+        "lint": "turbo run lint",
+        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+        "check": "turbo run check",
+        "relay": "turbo run relay"
+    },
+    "devDependencies": {
+        "prettier": "^3.5.3",
+        "turbo": "^2.5.3"
+    },
+    "prettier": "@probo/prettier",
+    "graphql": {
+        "schema": "./pkg/server/api/console/v1/schema.graphql"
+    },
+    "overrides": {
+        "form-data": "^4.0.4"
+    },
+    "license": "MIT",
+    "packageManager": "npm@11.1.0",
+    "volta": {
+        "node": "24.4.0"
+    },
+    "dependencies": {
+        "react-dom": "^19.2.1"
+    }
 }
