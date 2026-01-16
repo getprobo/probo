@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -267,4 +268,30 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 	}
 
 	return customDomain, err
+}
+
+func (s *Service) GetMembershipByCompliancePageIDAndEmail(ctx context.Context, compliancePageID gid.GID, email mail.Addr) (*coredata.TrustCenterAccess, error) {
+	membership := &coredata.TrustCenterAccess{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return membership.LoadByTrustCenterIDAndEmail(
+				ctx,
+				conn,
+				coredata.NewScopeFromObjectID(compliancePageID),
+				compliancePageID,
+				email,
+			)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, ErrMembershipNotFound
+		}
+
+		return nil, err
+	}
+
+	return membership, nil
 }
