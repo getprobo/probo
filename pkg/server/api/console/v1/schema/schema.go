@@ -1415,7 +1415,6 @@ type ComplexityRoot struct {
 		Email                             func(childComplexity int) int
 		HasAcceptedNonDisclosureAgreement func(childComplexity int) int
 		ID                                func(childComplexity int) int
-		LastTokenExpiresAt                func(childComplexity int) int
 		Name                              func(childComplexity int) int
 		PendingRequestCount               func(childComplexity int) int
 		Permission                        func(childComplexity int, action string) int
@@ -8115,12 +8114,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterAccess.ID(childComplexity), true
-	case "TrustCenterAccess.lastTokenExpiresAt":
-		if e.complexity.TrustCenterAccess.LastTokenExpiresAt == nil {
-			break
-		}
-
-		return e.complexity.TrustCenterAccess.LastTokenExpiresAt(childComplexity), true
 	case "TrustCenterAccess.name":
 		if e.complexity.TrustCenterAccess.Name == nil {
 			break
@@ -12103,7 +12096,6 @@ type TrustCenterAccess implements Node {
   hasAcceptedNonDisclosureAgreement: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
-  lastTokenExpiresAt: Datetime
   pendingRequestCount: Int! @goField(forceResolver: true)
   activeCount: Int! @goField(forceResolver: true)
 
@@ -47715,35 +47707,6 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_updatedAt(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterAccess_lastTokenExpiresAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt,
-		func(ctx context.Context) (any, error) {
-			return obj.LastTokenExpiresAt, nil
-		},
-		nil,
-		ec.marshalODatetime2ᚖtimeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterAccess_lastTokenExpiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _TrustCenterAccess_pendingRequestCount(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -48033,8 +47996,6 @@ func (ec *executionContext) fieldContext_TrustCenterAccessEdge_node(_ context.Co
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
-			case "lastTokenExpiresAt":
-				return ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt(ctx, field)
 			case "pendingRequestCount":
 				return ec.fieldContext_TrustCenterAccess_pendingRequestCount(ctx, field)
 			case "activeCount":
@@ -50770,8 +50731,6 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterAccessPayload_trustCen
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
-			case "lastTokenExpiresAt":
-				return ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt(ctx, field)
 			case "pendingRequestCount":
 				return ec.fieldContext_TrustCenterAccess_pendingRequestCount(ctx, field)
 			case "activeCount":
@@ -79734,8 +79693,6 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "lastTokenExpiresAt":
-			out.Values[i] = ec._TrustCenterAccess_lastTokenExpiresAt(ctx, field, obj)
 		case "pendingRequestCount":
 			field := field
 

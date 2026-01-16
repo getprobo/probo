@@ -2379,7 +2379,6 @@ type TrustCenterAccess implements Node {
   hasAcceptedNonDisclosureAgreement: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
-  lastTokenExpiresAt: Datetime
   pendingRequestCount: Int! @goField(forceResolver: true)
   activeCount: Int! @goField(forceResolver: true)
 

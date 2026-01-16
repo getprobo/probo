@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7a9c0c1a8292affc2ed9584fca098c64>>
+ * @generated SignedSource<<a65c1699d7cf70edf7084ad4f3eaf603>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -32,7 +32,6 @@ export type TrustCenterAccessGraphCreateMutation$data = {
         readonly email: string;
         readonly hasAcceptedNonDisclosureAgreement: boolean;
         readonly id: string;
-        readonly lastTokenExpiresAt: string | null | undefined;
         readonly name: string;
         readonly pendingRequestCount: number;
       };
@@ -125,13 +124,6 @@ v3 = {
           "args": null,
           "kind": "ScalarField",
           "name": "createdAt",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "lastTokenExpiresAt",
           "storageKey": null
         },
         {
@@ -246,16 +238,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b080e2a38e706bea45f06507675582a4",
+    "cacheID": "6afb34eabf677345a8b94479a62b101d",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphCreateMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        lastTokenExpiresAt\n        pendingRequestCount\n        activeCount\n        canUpdate: permission(action: \"core:trust-center-access:update\")\n        canDelete: permission(action: \"core:trust-center-access:delete\")\n      }\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphCreateMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        pendingRequestCount\n        activeCount\n        canUpdate: permission(action: \"core:trust-center-access:update\")\n        canDelete: permission(action: \"core:trust-center-access:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c33af388ca0957f16ee36e06339d61d3";
+(node as any).hash = "71ca86286860103cdce4720d26a52f21";
 
 export default node;

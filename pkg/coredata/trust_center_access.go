@@ -44,7 +44,6 @@ type (
 		NDAFileID                                 *gid.GID        `db:"nda_file_id"`
 		CreatedAt                                 time.Time       `db:"created_at"`
 		UpdatedAt                                 time.Time       `db:"updated_at"`
-		LastTokenExpiresAt                        *time.Time      `db:"last_token_expires_at"`
 	}
 
 	TrustCenterAccesses []*TrustCenterAccess
@@ -92,8 +91,7 @@ SELECT
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
 	created_at,
-	updated_at,
-	last_token_expires_at
+	updated_at
 FROM
 	trust_center_accesses
 WHERE
@@ -146,8 +144,7 @@ SELECT
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
 	created_at,
-	updated_at,
-	last_token_expires_at
+	updated_at
 FROM
 	trust_center_accesses
 WHERE
@@ -254,8 +251,7 @@ UPDATE trust_center_accesses SET
 	updated_at = @updated_at,
 	has_accepted_non_disclosure_agreement = @has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata = @has_accepted_non_disclosure_agreement_metadata,
-	nda_file_id = @nda_file_id,
-	last_token_expires_at = @last_token_expires_at
+	nda_file_id = @nda_file_id
 WHERE
 	%s
 	AND id = @id
@@ -270,8 +266,7 @@ WHERE
 		"updated_at":                            tca.UpdatedAt,
 		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
 		"has_accepted_non_disclosure_agreement_metadata": tca.HasAcceptedNonDisclosureAgreementMetadata,
-		"nda_file_id":           tca.NDAFileID,
-		"last_token_expires_at": tca.LastTokenExpiresAt,
+		"nda_file_id": tca.NDAFileID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -330,8 +325,7 @@ SELECT
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
 	created_at,
-	updated_at,
-	last_token_expires_at
+	updated_at
 FROM
 	trust_center_accesses
 WHERE

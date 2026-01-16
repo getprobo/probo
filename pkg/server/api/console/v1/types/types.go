@@ -1728,7 +1728,6 @@ type TrustCenterAccess struct {
 	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
 	CreatedAt                         time.Time                            `json:"createdAt"`
 	UpdatedAt                         time.Time                            `json:"updatedAt"`
-	LastTokenExpiresAt                *time.Time                           `json:"lastTokenExpiresAt,omitempty"`
 	PendingRequestCount               int                                  `json:"pendingRequestCount"`
 	ActiveCount                       int                                  `json:"activeCount"`
 	AvailableDocumentAccesses         *TrustCenterDocumentAccessConnection `json:"availableDocumentAccesses"`

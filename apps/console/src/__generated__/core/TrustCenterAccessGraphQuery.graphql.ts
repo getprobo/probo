@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4f1a16e8b28a887285c9bc578e201f75>>
+ * @generated SignedSource<<4daa20d8f82a95b0d405c37e5bac0280>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -255,13 +255,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "lastTokenExpiresAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "pendingRequestCount",
                             "storageKey": null
                           },
@@ -341,12 +334,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a8ee8e139d510095436df64e84d7a5ba",
+    "cacheID": "605b209b5d31e97773f696a76b752bd5",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n  $count: Int!\n  $cursor: CursorKey\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      ...TrustCenterAccessGraph_accesses\n    }\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        lastTokenExpiresAt\n        pendingRequestCount\n        activeCount\n        canUpdate: permission(action: \"core:trust-center-access:update\")\n        canDelete: permission(action: \"core:trust-center-access:delete\")\n        __typename\n      }\n    }\n  }\n  id\n}\n"
+    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n  $count: Int!\n  $cursor: CursorKey\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      ...TrustCenterAccessGraph_accesses\n    }\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        pendingRequestCount\n        activeCount\n        canUpdate: permission(action: \"core:trust-center-access:update\")\n        canDelete: permission(action: \"core:trust-center-access:delete\")\n        __typename\n      }\n    }\n  }\n  id\n}\n"
   }
 };
 })();

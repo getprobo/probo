@@ -73,7 +73,6 @@ type (
 		Pg            pgConfig             `json:"pg"`
 		Api           apiConfig            `json:"api"`
 		Auth          authConfig           `json:"auth"`
-		TrustAuth     trustAuthConfig      `json:"trust-auth"`
 		TrustCenter   trustCenterConfig    `json:"trust-center"`
 		AWS           awsConfig            `json:"aws"`
 		Notifications notificationsConfig  `json:"notifications"`
@@ -132,16 +131,6 @@ func New() *Implm {
 					DomainVerificationIntervalSeconds: 60,
 					DomainVerificationResolverAddr:    "8.8.8.8:53",
 				},
-			},
-			TrustAuth: trustAuthConfig{
-				CookieName:        "TCT",
-				CookieDomain:      "localhost",
-				CookieDuration:    24,
-				TokenDuration:     720,
-				ReportURLDuration: 15,
-				TokenSecret:       "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes",
-				Scope:             "trust_center_readonly",
-				TokenType:         "trust_center_access",
 			},
 			TrustCenter: trustCenterConfig{
 				HTTPAddr:  ":80",
@@ -220,12 +209,6 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot get cookie secret bytes: %w", err)
 	}
 
-	_, err = impl.cfg.TrustAuth.GetTokenSecretBytes()
-	if err != nil {
-		rootSpan.RecordError(err)
-		return fmt.Errorf("cannot get trust auth token secret bytes: %w", err)
-	}
-
 	awsConfig := awsconfig.NewConfig(
 		l,
 		httpclient.DefaultPooledClient(
@@ -272,12 +255,6 @@ func (impl *Implm) Run(
 		OpenAIAPIKey: impl.cfg.OpenAI.APIKey,
 		Temperature:  impl.cfg.OpenAI.Temperature,
 		ModelName:    impl.cfg.OpenAI.ModelName,
-	}
-
-	trustConfig := probo.TrustConfig{
-		TokenSecret:   impl.cfg.TrustAuth.TokenSecret,
-		TokenDuration: time.Duration(impl.cfg.TrustAuth.TokenDuration) * time.Hour,
-		TokenType:     impl.cfg.TrustAuth.TokenType,
 	}
 
 	agent := agents.NewAgent(l.Named("agent"), agentConfig)
@@ -383,7 +360,6 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		impl.cfg.BaseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
-		trustConfig,
 		agentConfig,
 		html2pdfConverter,
 		acmeService,
@@ -402,17 +378,11 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		impl.cfg.BaseURL.String(),
 		impl.cfg.EncryptionKey,
-		impl.cfg.TrustAuth.TokenSecret,
 		impl.cfg.GetSlackSigningSecret(),
 		iamService,
 		html2pdfConverter,
 		fileManagerService,
 		l,
-		trust.TrustConfig{
-			TokenSecret:   impl.cfg.TrustAuth.TokenSecret,
-			TokenDuration: time.Duration(impl.cfg.TrustAuth.TokenDuration) * time.Hour,
-			TokenType:     impl.cfg.TrustAuth.TokenType,
-		},
 		slackService,
 	)
 

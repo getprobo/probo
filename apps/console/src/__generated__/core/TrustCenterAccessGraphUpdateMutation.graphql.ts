@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9f1d003a890186ec86cfd58e7eb3bf28>>
+ * @generated SignedSource<<d0efc00be7fc303cb2c45ae11fe587c7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -34,7 +34,6 @@ export type TrustCenterAccessGraphUpdateMutation$data = {
       readonly email: string;
       readonly hasAcceptedNonDisclosureAgreement: boolean;
       readonly id: string;
-      readonly lastTokenExpiresAt: string | null | undefined;
       readonly name: string;
       readonly pendingRequestCount: number;
       readonly updatedAt: string;
@@ -130,13 +129,6 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "lastTokenExpiresAt",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
             "name": "pendingRequestCount",
             "storageKey": null
           },
@@ -172,16 +164,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "8b330240bc19bbebb3244a49dc0a6db0",
+    "cacheID": "1367c160aa881878e5eed860509e7610",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      lastTokenExpiresAt\n      pendingRequestCount\n      activeCount\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      pendingRequestCount\n      activeCount\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f78b4d25b0977a14269491db951a1d9d";
+(node as any).hash = "7e5d2ce261f3e877ef54e5acfbd00bde";
 
 export default node;
