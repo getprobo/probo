@@ -796,11 +796,6 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return false, nil
-	}
-
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -813,6 +808,11 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 
 	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
 		return true, nil
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return false, nil
 	}
 
 	reportAccess, err := trustService.TrustCenterAccesses.LoadReportAccess(ctx,
@@ -1004,11 +1004,6 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return false, nil
-	}
-
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -1021,6 +1016,11 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 
 	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
 		return true, nil
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return false, nil
 	}
 
 	fileAccess, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
