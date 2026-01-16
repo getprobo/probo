@@ -129,7 +129,27 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.framework.name}
       </div>
-      {!viewer && (
+      {audit.report && audit.report.isUserAuthorized ? (
+        <Button
+          className="w-full md:w-max"
+          variant="secondary"
+          disabled={downloading}
+          icon={downloading ? Spinner : IconArrowInbox}
+          onClick={handleDownload}
+        >
+          {__("Download")}
+        </Button>
+      ) : viewer ? (
+        <Button
+          disabled={hasRequested || isRequestingAccess}
+          className="w-full md:w-max"
+          variant="secondary"
+          icon={IconLock}
+          onClick={handleRequestAccess}
+        >
+          {hasRequested ? __("Access requested") : __("Request access")}
+        </Button>
+      ) : (
         <MagicLinkDialog>
           <Button
             className="w-full md:w-max"
@@ -140,29 +160,6 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
           </Button>
         </MagicLinkDialog>
       )}
-      {viewer &&
-        audit.report &&
-        (audit.report.isUserAuthorized ? (
-          <Button
-            className="w-full md:w-max"
-            variant="secondary"
-            disabled={downloading}
-            icon={downloading ? Spinner : IconArrowInbox}
-            onClick={handleDownload}
-          >
-            {__("Download")}
-          </Button>
-        ) : (
-          <Button
-            disabled={hasRequested || isRequestingAccess}
-            className="w-full md:w-max"
-            variant="secondary"
-            icon={IconLock}
-            onClick={handleRequestAccess}
-          >
-            {hasRequested ? __("Access requested") : __("Request access")}
-          </Button>
-        ))}
     </div>
   );
 }

@@ -114,7 +114,27 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
         <IconPageTextLine size={16} className=" flex-none text-txt-tertiary" />
         {document.title}
       </div>
-      {!viewer && (
+      {document.isUserAuthorized ? (
+        <Button
+          className="w-full md:w-max"
+          variant="secondary"
+          disabled={downloading}
+          icon={downloading ? Spinner : IconArrowInbox}
+          onClick={handleDownload}
+        >
+          {__("Download")}
+        </Button>
+      ) : viewer ? (
+        <Button
+          disabled={hasRequested || isRequestingAccess}
+          className="w-full md:w-max"
+          variant="secondary"
+          icon={IconLock}
+          onClick={handleRequestAccess}
+        >
+          {hasRequested ? __("Access requested") : __("Request access")}
+        </Button>
+      ) : (
         <MagicLinkDialog>
           <Button
             className="w-full md:w-max"
@@ -125,28 +145,6 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
           </Button>
         </MagicLinkDialog>
       )}
-      {viewer &&
-        (document.isUserAuthorized ? (
-          <Button
-            className="w-full md:w-max"
-            variant="secondary"
-            disabled={downloading}
-            icon={downloading ? Spinner : IconArrowInbox}
-            onClick={handleDownload}
-          >
-            {__("Download")}
-          </Button>
-        ) : (
-          <Button
-            disabled={hasRequested || isRequestingAccess}
-            className="w-full md:w-max"
-            variant="secondary"
-            icon={IconLock}
-            onClick={handleRequestAccess}
-          >
-            {hasRequested ? __("Access requested") : __("Request access")}
-          </Button>
-        ))}
     </div>
   );
 }
