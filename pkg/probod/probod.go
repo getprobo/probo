@@ -775,7 +775,11 @@ func (impl *Implm) runTrustCenterServer(
 	handler := acmeHandler.Handle(trustRouter)
 
 	ignoreTLSHandshakeErrors := func(level log.Level, msg string, attrs []log.Attr) bool {
-		return strings.Contains(msg, "http: TLS handshake error")
+		return strings.Contains(msg, "tls: no certificates configured") ||
+			strings.Contains(msg, "client sent an HTTP request to an HTTPS server") ||
+			strings.Contains(msg, "tls: client offered only unsupported versions") ||
+			strings.Contains(msg, "EOF") ||
+			strings.Contains(msg, " i/o timeout")
 	}
 	httpServerLogger := l.Named("", log.SkipMatch(ignoreTLSHandshakeErrors))
 	httpsServer := httpserver.NewServer(
