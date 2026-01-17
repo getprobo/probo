@@ -7201,11 +7201,6 @@ func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.Sta
 	return types.NewPeople(people), nil
 }
 
-// Permission is the resolver for the permission field.
-func (r *stateOfApplicabilityResolver) Permission(ctx context.Context, obj *types.StateOfApplicability, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
 // Controls is the resolver for the controls field.
 func (r *stateOfApplicabilityResolver) Controls(ctx context.Context, obj *types.StateOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
@@ -7273,6 +7268,11 @@ func (r *stateOfApplicabilityResolver) AvailableControls(ctx context.Context, ob
 	}
 
 	return result, nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *stateOfApplicabilityResolver) Permission(ctx context.Context, obj *types.StateOfApplicability, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.

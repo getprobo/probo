@@ -1752,11 +1752,11 @@ type StateOfApplicability struct {
 	SnapshotID        *gid.GID                                `json:"snapshotId,omitempty"`
 	Organization      *Organization                           `json:"organization,omitempty"`
 	Owner             *People                                 `json:"owner"`
-	Permission        bool                                    `json:"permission"`
-	Controls          *ControlConnection                      `json:"controls"`
-	AvailableControls []*AvailableStateOfApplicabilityControl `json:"availableControls"`
 	CreatedAt         time.Time                               `json:"createdAt"`
 	UpdatedAt         time.Time                               `json:"updatedAt"`
+	Controls          *ControlConnection                      `json:"controls"`
+	AvailableControls []*AvailableStateOfApplicabilityControl `json:"availableControls"`
+	Permission        bool                                    `json:"permission"`
 }
 
 func (StateOfApplicability) IsNode()             {}

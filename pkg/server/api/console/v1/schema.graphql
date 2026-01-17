@@ -2222,8 +2222,8 @@ type StateOfApplicability implements Node {
     snapshotId: ID
     organization: Organization @goField(forceResolver: true)
     owner: People! @goField(forceResolver: true)
-
-    permission(action: String!): Boolean! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
 
     controls(
         first: Int
@@ -2233,10 +2233,11 @@ type StateOfApplicability implements Node {
         orderBy: ControlOrder
         filter: ControlFilter
     ): ControlConnection! @goField(forceResolver: true)
+
     availableControls: [AvailableStateOfApplicabilityControl!]!
         @goField(forceResolver: true)
-    createdAt: Datetime!
-    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Risk implements Node {

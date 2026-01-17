@@ -2333,9 +2333,10 @@ type SnapshotConnectionResolver interface {
 type StateOfApplicabilityResolver interface {
 	Organization(ctx context.Context, obj *types.StateOfApplicability) (*types.Organization, error)
 	Owner(ctx context.Context, obj *types.StateOfApplicability) (*types.People, error)
-	Permission(ctx context.Context, obj *types.StateOfApplicability, action string) (bool, error)
+
 	Controls(ctx context.Context, obj *types.StateOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
 	AvailableControls(ctx context.Context, obj *types.StateOfApplicability) ([]*types.AvailableStateOfApplicabilityControl, error)
+	Permission(ctx context.Context, obj *types.StateOfApplicability, action string) (bool, error)
 }
 type StateOfApplicabilityConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.StateOfApplicabilityConnection) (int, error)
@@ -12564,8 +12565,8 @@ type StateOfApplicability implements Node {
     snapshotId: ID
     organization: Organization @goField(forceResolver: true)
     owner: People! @goField(forceResolver: true)
-
-    permission(action: String!): Boolean! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
 
     controls(
         first: Int
@@ -12575,10 +12576,11 @@ type StateOfApplicability implements Node {
         orderBy: ControlOrder
         filter: ControlFilter
     ): ControlConnection! @goField(forceResolver: true)
+
     availableControls: [AvailableStateOfApplicabilityControl!]!
         @goField(forceResolver: true)
-    createdAt: Datetime!
-    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Risk implements Node {
@@ -48542,43 +48544,60 @@ func (ec *executionContext) fieldContext_StateOfApplicability_owner(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _StateOfApplicability_permission(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+func (ec *executionContext) _StateOfApplicability_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_StateOfApplicability_permission,
+		ec.fieldContext_StateOfApplicability_createdAt,
 		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.StateOfApplicability().Permission(ctx, obj, fc.Args["action"].(string))
+			return obj.CreatedAt, nil
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalNDatetime2timeᚐTime,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_StateOfApplicability_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_StateOfApplicability_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "StateOfApplicability",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type Datetime does not have child fields")
 		},
 	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_StateOfApplicability_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -48689,60 +48708,43 @@ func (ec *executionContext) fieldContext_StateOfApplicability_availableControls(
 	return fc, nil
 }
 
-func (ec *executionContext) _StateOfApplicability_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+func (ec *executionContext) _StateOfApplicability_permission(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_StateOfApplicability_createdAt,
+		ec.fieldContext_StateOfApplicability_permission,
 		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.StateOfApplicability().Permission(ctx, obj, fc.Args["action"].(string))
 		},
 		nil,
-		ec.marshalNDatetime2timeᚐTime,
+		ec.marshalNBoolean2bool,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_StateOfApplicability_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_StateOfApplicability_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "StateOfApplicability",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StateOfApplicability_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StateOfApplicability_updatedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.UpdatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_StateOfApplicability_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StateOfApplicability",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_StateOfApplicability_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -48973,16 +48975,16 @@ func (ec *executionContext) fieldContext_StateOfApplicabilityControl_stateOfAppl
 				return ec.fieldContext_StateOfApplicability_organization(ctx, field)
 			case "owner":
 				return ec.fieldContext_StateOfApplicability_owner(ctx, field)
-			case "permission":
-				return ec.fieldContext_StateOfApplicability_permission(ctx, field)
-			case "controls":
-				return ec.fieldContext_StateOfApplicability_controls(ctx, field)
-			case "availableControls":
-				return ec.fieldContext_StateOfApplicability_availableControls(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_StateOfApplicability_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_StateOfApplicability_updatedAt(ctx, field)
+			case "controls":
+				return ec.fieldContext_StateOfApplicability_controls(ctx, field)
+			case "availableControls":
+				return ec.fieldContext_StateOfApplicability_availableControls(ctx, field)
+			case "permission":
+				return ec.fieldContext_StateOfApplicability_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicability", field.Name)
 		},
@@ -49288,16 +49290,16 @@ func (ec *executionContext) fieldContext_StateOfApplicabilityEdge_node(_ context
 				return ec.fieldContext_StateOfApplicability_organization(ctx, field)
 			case "owner":
 				return ec.fieldContext_StateOfApplicability_owner(ctx, field)
-			case "permission":
-				return ec.fieldContext_StateOfApplicability_permission(ctx, field)
-			case "controls":
-				return ec.fieldContext_StateOfApplicability_controls(ctx, field)
-			case "availableControls":
-				return ec.fieldContext_StateOfApplicability_availableControls(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_StateOfApplicability_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_StateOfApplicability_updatedAt(ctx, field)
+			case "controls":
+				return ec.fieldContext_StateOfApplicability_controls(ctx, field)
+			case "availableControls":
+				return ec.fieldContext_StateOfApplicability_availableControls(ctx, field)
+			case "permission":
+				return ec.fieldContext_StateOfApplicability_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicability", field.Name)
 		},
@@ -54253,16 +54255,16 @@ func (ec *executionContext) fieldContext_UpdateStateOfApplicabilityPayload_state
 				return ec.fieldContext_StateOfApplicability_organization(ctx, field)
 			case "owner":
 				return ec.fieldContext_StateOfApplicability_owner(ctx, field)
-			case "permission":
-				return ec.fieldContext_StateOfApplicability_permission(ctx, field)
-			case "controls":
-				return ec.fieldContext_StateOfApplicability_controls(ctx, field)
-			case "availableControls":
-				return ec.fieldContext_StateOfApplicability_availableControls(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_StateOfApplicability_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_StateOfApplicability_updatedAt(ctx, field)
+			case "controls":
+				return ec.fieldContext_StateOfApplicability_controls(ctx, field)
+			case "availableControls":
+				return ec.fieldContext_StateOfApplicability_availableControls(ctx, field)
+			case "permission":
+				return ec.fieldContext_StateOfApplicability_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicability", field.Name)
 		},
@@ -83525,42 +83527,16 @@ func (ec *executionContext) _StateOfApplicability(ctx context.Context, sel ast.S
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "permission":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._StateOfApplicability_permission(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+		case "createdAt":
+			out.Values[i] = ec._StateOfApplicability_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
+		case "updatedAt":
+			out.Values[i] = ec._StateOfApplicability_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "controls":
 			field := field
 
@@ -83633,16 +83609,42 @@ func (ec *executionContext) _StateOfApplicability(ctx context.Context, sel ast.S
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "createdAt":
-			out.Values[i] = ec._StateOfApplicability_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StateOfApplicability_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
-		case "updatedAt":
-			out.Values[i] = ec._StateOfApplicability_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
 			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
