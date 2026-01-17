@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d0252e79888e84b37fc216198d60dd5b>>
+ * @generated SignedSource<<1e93345ca5370e4fdf20719ac86b8078>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -96,12 +96,12 @@ const node: ReaderFragment = {
         {
           "kind": "Literal",
           "name": "action",
-          "value": "core:state-of-applicability:control-mapping:create"
+          "value": "core:state-of-applicability-control-mapping:create"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:create\")"
+      "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:create\")"
     },
     {
       "alias": "canDeleteStateOfApplicabilityControlMapping",
@@ -109,12 +109,12 @@ const node: ReaderFragment = {
         {
           "kind": "Literal",
           "name": "action",
-          "value": "core:state-of-applicability:control-mapping:delete"
+          "value": "core:state-of-applicability-control-mapping:delete"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:delete\")"
+      "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:delete\")"
     },
     {
       "alias": null,
@@ -223,6 +223,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "70183a65cc3c55a9ffddb4c2824bf5a7";
+(node as any).hash = "37dd1660caf4dea39bb697b99a8bf511";
 
 export default node;

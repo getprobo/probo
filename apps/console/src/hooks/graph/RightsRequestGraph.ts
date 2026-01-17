@@ -54,6 +54,8 @@ export const createRightsRequestMutation = graphql`
       rightsRequestEdge @prependEdge(connections: $connections) {
         node {
           id
+          canDelete: permission(action: "core:rights-request:delete")
+          canUpdate: permission(action: "core:rights-request:update")
           requestType
           requestState
           dataSubject

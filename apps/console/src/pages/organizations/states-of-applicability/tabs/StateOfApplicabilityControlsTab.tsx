@@ -37,10 +37,10 @@ export const controlsFragment = graphql`
         }
 
         canCreateStateOfApplicabilityControlMapping: permission(
-            action: "core:state-of-applicability:control-mapping:create"
+            action: "core:state-of-applicability-control-mapping:create"
         )
         canDeleteStateOfApplicabilityControlMapping: permission(
-            action: "core:state-of-applicability:control-mapping:delete"
+            action: "core:state-of-applicability-control-mapping:delete"
         )
 
         availableControls {

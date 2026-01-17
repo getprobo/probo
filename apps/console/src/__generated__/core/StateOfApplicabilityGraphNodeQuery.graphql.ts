@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<74ef0d7b05d90eaaac07851cfb57409f>>
+ * @generated SignedSource<<f3564b51cac1482be5c6c4443a9030cf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -260,12 +260,12 @@ return {
                   {
                     "kind": "Literal",
                     "name": "action",
-                    "value": "core:state-of-applicability:control-mapping:create"
+                    "value": "core:state-of-applicability-control-mapping:create"
                   }
                 ],
                 "kind": "ScalarField",
                 "name": "permission",
-                "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:create\")"
+                "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:create\")"
               },
               {
                 "alias": "canDeleteStateOfApplicabilityControlMapping",
@@ -273,12 +273,12 @@ return {
                   {
                     "kind": "Literal",
                     "name": "action",
-                    "value": "core:state-of-applicability:control-mapping:delete"
+                    "value": "core:state-of-applicability-control-mapping:delete"
                   }
                 ],
                 "kind": "ScalarField",
                 "name": "permission",
-                "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:delete\")"
+                "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:delete\")"
               },
               {
                 "alias": null,
@@ -386,12 +386,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dfdfadde088e82025aaa6c9c290f96b6",
+    "cacheID": "6189c0ca41e3327629d744a658cbe6f1",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityGraphNodeQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityGraphNodeQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...StateOfApplicabilityControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  canCreateStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability:control-mapping:create\")\n  canDeleteStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability:control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
+    "text": "query StateOfApplicabilityGraphNodeQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...StateOfApplicabilityControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  canCreateStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability-control-mapping:create\")\n  canDeleteStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability-control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
   }
 };
 })();

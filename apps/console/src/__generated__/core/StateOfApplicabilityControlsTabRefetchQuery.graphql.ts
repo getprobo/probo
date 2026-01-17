@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e559b5ed1fa680ba3fa253c258d92315>>
+ * @generated SignedSource<<82aac43cc256062befe9f2126eb20c4e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -126,12 +126,12 @@ return {
                   {
                     "kind": "Literal",
                     "name": "action",
-                    "value": "core:state-of-applicability:control-mapping:create"
+                    "value": "core:state-of-applicability-control-mapping:create"
                   }
                 ],
                 "kind": "ScalarField",
                 "name": "permission",
-                "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:create\")"
+                "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:create\")"
               },
               {
                 "alias": "canDeleteStateOfApplicabilityControlMapping",
@@ -139,12 +139,12 @@ return {
                   {
                     "kind": "Literal",
                     "name": "action",
-                    "value": "core:state-of-applicability:control-mapping:delete"
+                    "value": "core:state-of-applicability-control-mapping:delete"
                   }
                 ],
                 "kind": "ScalarField",
                 "name": "permission",
-                "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:delete\")"
+                "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:delete\")"
               },
               {
                 "alias": null,
@@ -258,16 +258,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7faadf001782b3aae9b9af0ce5ffa7a5",
+    "cacheID": "fd5b512b7274ba6a3047960c796c82bf",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityControlsTabRefetchQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityControlsTabRefetchQuery(\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StateOfApplicabilityControlsTabFragment\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  canCreateStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability:control-mapping:create\")\n  canDeleteStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability:control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
+    "text": "query StateOfApplicabilityControlsTabRefetchQuery(\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StateOfApplicabilityControlsTabFragment\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  canCreateStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability-control-mapping:create\")\n  canDeleteStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability-control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "70183a65cc3c55a9ffddb4c2824bf5a7";
+(node as any).hash = "37dd1660caf4dea39bb697b99a8bf511";
 
 export default node;

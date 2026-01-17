@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<77e3b75def25c670d0c069140d111507>>
+ * @generated SignedSource<<909c79c6abb5022e54ee451e7e6292be>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -30,6 +30,8 @@ export type RightsRequestGraphCreateMutation$data = {
     readonly rightsRequestEdge: {
       readonly node: {
         readonly actionTaken: string | null | undefined;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly contact: string | null | undefined;
         readonly createdAt: string;
         readonly dataSubject: string | null | undefined;
@@ -87,6 +89,32 @@ v3 = {
           "kind": "ScalarField",
           "name": "id",
           "storageKey": null
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:rights-request:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:rights-request:delete\")"
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:rights-request:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:rights-request:update\")"
         },
         {
           "alias": null,
@@ -216,16 +244,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2642d9a5f58aa90190df6ccf73e6e06f",
+    "cacheID": "be9d2829a9ca6909ab3b4d23c15eb7bc",
     "id": null,
     "metadata": {},
     "name": "RightsRequestGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation RightsRequestGraphCreateMutation(\n  $input: CreateRightsRequestInput!\n) {\n  createRightsRequest(input: $input) {\n    rightsRequestEdge {\n      node {\n        id\n        requestType\n        requestState\n        dataSubject\n        contact\n        details\n        deadline\n        actionTaken\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation RightsRequestGraphCreateMutation(\n  $input: CreateRightsRequestInput!\n) {\n  createRightsRequest(input: $input) {\n    rightsRequestEdge {\n      node {\n        id\n        canDelete: permission(action: \"core:rights-request:delete\")\n        canUpdate: permission(action: \"core:rights-request:update\")\n        requestType\n        requestState\n        dataSubject\n        contact\n        details\n        deadline\n        actionTaken\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "98fa74d3219cf56655e74441af4dc01d";
+(node as any).hash = "707197faed79239f374134145ccd1639";
 
 export default node;
