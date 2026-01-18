@@ -23,39 +23,37 @@ import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
 import { LinkedAuditsCard } from "/components/audits/LinkedAuditsCard";
 import { LinkedObligationsCard } from "/components/obligations/LinkedObligationsCard";
 import { LinkedSnapshotsCard } from "/components/snapshots/LinkedSnapshotsCard";
-import { LinkedStatesOfApplicabilityCard } from "/components/states-of-applicability/LinkedStatesOfApplicabilityCard";
+import { ControlApplicabilityStatementsCard } from "/pages/organizations/states-of-applicability/_components/ControlApplicabilityStatementsCard";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { promisifyMutation } from "@probo/helpers";
 import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
 import type { FrameworkDetailPageFragment$data } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
 
-const attachStateOfApplicabilityMutation = graphql`
-    mutation FrameworkControlPageAttachStateOfApplicabilityMutation(
-        $input: CreateStateOfApplicabilityControlMappingInput!
+const attachStateOfApplicabilityControlMutation = graphql`
+    mutation FrameworkControlPageAttachStateOfApplicabilityControlMutation(
+        $input: CreateApplicabilityStatementInput!
         $connections: [ID!]!
     ) {
-        createStateOfApplicabilityControlMapping(input: $input) {
+        createApplicabilityStatement(input: $input) {
             stateOfApplicabilityControlEdge
                 @prependEdge(connections: $connections) {
                 node {
                     id
-                    ...LinkedStatesOfApplicabilityCardFragment
+                    ...ControlApplicabilityStatementsCardFragment
                 }
             }
         }
     }
 `;
 
-const detachStateOfApplicabilityMutation = graphql`
-    mutation FrameworkControlPageDetachStateOfApplicabilityMutation(
-        $input: DeleteStateOfApplicabilityControlMappingInput!
+const detachStateOfApplicabilityControlMutation = graphql`
+    mutation FrameworkControlPageDetachStateOfApplicabilityControlMutation(
+        $input: DeleteApplicabilityStatementInput!
         $connections: [ID!]!
     ) {
-        deleteStateOfApplicabilityControlMapping(input: $input) {
-            deletedStateOfApplicabilityId
-            deletedControlId
-            deletedStateOfApplicabilityControlId
+        deleteApplicabilityStatement(input: $input) {
+            deletedApplicabilityStatementId
                 @deleteEdge(connections: $connections)
         }
     }
@@ -247,10 +245,14 @@ export default function FrameworkControlPage({ queryRef }: Props) {
     );
     const [deleteControl] = useMutation(deleteControlMutation);
 
-    const [attachStateOfApplicability, isAttachingStateOfApplicability] =
-        useMutation(attachStateOfApplicabilityMutation);
-    const [detachStateOfApplicability, isDetachingStateOfApplicability] =
-        useMutation(detachStateOfApplicabilityMutation);
+    const [
+        attachStateOfApplicabilityControl,
+        isAttachingStateOfApplicabilityControl,
+    ] = useMutation(attachStateOfApplicabilityControlMutation);
+    const [
+        detachStateOfApplicabilityControl,
+        isDetachingStateOfApplicabilityControl,
+    ] = useMutation(detachStateOfApplicabilityControlMutation);
     const [attachObligation, isAttachingObligation] = useMutation(
         attachObligationMutation,
     );
@@ -394,7 +396,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             <div className={control.status === "EXCLUDED" ? "opacity-60" : ""}>
                 <div className="text-base mb-4">{control.name}</div>
                 <div className="mb-4">
-                    <LinkedStatesOfApplicabilityCard
+                    <ControlApplicabilityStatementsCard
                         variant="card"
                         statesOfApplicability={
                             control.stateOfApplicabilityControls?.edges.map(
@@ -406,16 +408,16 @@ export default function FrameworkControlPage({ queryRef }: Props) {
                             control.stateOfApplicabilityControls?.__id ?? ""
                         }
                         onAttach={withErrorHandling(
-                            attachStateOfApplicability,
+                            attachStateOfApplicabilityControl,
                             __("Failed to link state of applicability"),
                         )}
                         onDetach={withErrorHandling(
-                            detachStateOfApplicability,
+                            detachStateOfApplicabilityControl,
                             __("Failed to unlink state of applicability"),
                         )}
                         disabled={
-                            isAttachingStateOfApplicability ||
-                            isDetachingStateOfApplicability
+                            isAttachingStateOfApplicabilityControl ||
+                            isDetachingStateOfApplicabilityControl
                         }
                         readOnly={statesOfApplicabilityReadOnly}
                     />

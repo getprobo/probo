@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5ae034f36b2af0e4f8f708c6e4e1cec1>>
+ * @generated SignedSource<<50cd52d641383a190d37f3e430cbe3f7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,171 +10,119 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type OrderDirection = "ASC" | "DESC";
-export type StateOfApplicabilityOrderField = "CREATED_AT" | "NAME";
-export type StateOfApplicabilityFilter = {
-  snapshotId?: string | null | undefined;
+export type StatesOfApplicabilityPageQuery$variables = {
+  organizationId: string;
 };
-export type StateOfApplicabilityOrder = {
-  direction: OrderDirection;
-  field: StateOfApplicabilityOrderField;
-};
-export type StateOfApplicabilityListQuery$variables = {
-  after?: string | null | undefined;
-  before?: string | null | undefined;
-  filter?: StateOfApplicabilityFilter | null | undefined;
-  first?: number | null | undefined;
-  id: string;
-  last?: number | null | undefined;
-  order?: StateOfApplicabilityOrder | null | undefined;
-};
-export type StateOfApplicabilityListQuery$data = {
-  readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityGraphPaginatedFragment">;
+export type StatesOfApplicabilityPageQuery$data = {
+  readonly organization: {
+    readonly __typename: "Organization";
+    readonly canCreateStateOfApplicability: boolean;
+    readonly id: string;
+    readonly " $fragmentSpreads": FragmentRefs<"StatesOfApplicabilityPageFragment">;
+  } | {
+    // This will never be '%other', but we need some
+    // value in case none of the concrete values match.
+    readonly __typename: "%other";
   };
 };
-export type StateOfApplicabilityListQuery = {
-  response: StateOfApplicabilityListQuery$data;
-  variables: StateOfApplicabilityListQuery$variables;
+export type StatesOfApplicabilityPageQuery = {
+  response: StatesOfApplicabilityPageQuery$data;
+  variables: StatesOfApplicabilityPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "after"
-},
-v1 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "before"
-},
-v2 = {
-  "defaultValue": {
-    "snapshotId": null
-  },
-  "kind": "LocalArgument",
-  "name": "filter"
-},
-v3 = {
-  "defaultValue": 50,
-  "kind": "LocalArgument",
-  "name": "first"
-},
-v4 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "id"
-},
-v5 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "last"
-},
-v6 = {
-  "defaultValue": {
-    "direction": "DESC",
-    "field": "CREATED_AT"
-  },
-  "kind": "LocalArgument",
-  "name": "order"
-},
-v7 = [
+var v0 = [
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "organizationId"
+  }
+],
+v1 = [
   {
     "kind": "Variable",
     "name": "id",
-    "variableName": "id"
+    "variableName": "organizationId"
   }
 ],
-v8 = {
-  "kind": "Variable",
-  "name": "after",
-  "variableName": "after"
-},
-v9 = {
-  "kind": "Variable",
-  "name": "before",
-  "variableName": "before"
-},
-v10 = {
-  "kind": "Variable",
-  "name": "filter",
-  "variableName": "filter"
-},
-v11 = {
-  "kind": "Variable",
-  "name": "first",
-  "variableName": "first"
-},
-v12 = {
-  "kind": "Variable",
-  "name": "last",
-  "variableName": "last"
-},
-v13 = {
+v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v14 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v15 = [
-  (v8/*: any*/),
-  (v9/*: any*/),
-  (v10/*: any*/),
-  (v11/*: any*/),
-  (v12/*: any*/),
+v4 = {
+  "alias": "canCreateStateOfApplicability",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:state-of-applicability:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:state-of-applicability:create\")"
+},
+v5 = [
   {
-    "kind": "Variable",
+    "kind": "Literal",
+    "name": "filter",
+    "value": {
+      "snapshotId": null
+    }
+  },
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 50
+  },
+  {
+    "kind": "Literal",
     "name": "orderBy",
-    "variableName": "order"
+    "value": {
+      "direction": "DESC",
+      "field": "CREATED_AT"
+    }
   }
 ];
 return {
   "fragment": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/),
-      (v2/*: any*/),
-      (v3/*: any*/),
-      (v4/*: any*/),
-      (v5/*: any*/),
-      (v6/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "StateOfApplicabilityListQuery",
+    "name": "StatesOfApplicabilityPageQuery",
     "selections": [
       {
-        "alias": null,
-        "args": (v7/*: any*/),
+        "alias": "organization",
+        "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
+          (v2/*: any*/),
           {
-            "args": [
-              (v8/*: any*/),
-              (v9/*: any*/),
-              (v10/*: any*/),
-              (v11/*: any*/),
-              (v12/*: any*/),
+            "kind": "InlineFragment",
+            "selections": [
+              (v3/*: any*/),
+              (v4/*: any*/),
               {
-                "kind": "Variable",
-                "name": "order",
-                "variableName": "order"
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "StatesOfApplicabilityPageFragment"
               }
             ],
-            "kind": "FragmentSpread",
-            "name": "StateOfApplicabilityGraphPaginatedFragment"
+            "type": "Organization",
+            "abstractKey": null
           }
         ],
         "storageKey": null
@@ -185,34 +133,27 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/),
-      (v2/*: any*/),
-      (v3/*: any*/),
-      (v5/*: any*/),
-      (v6/*: any*/),
-      (v4/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "StateOfApplicabilityListQuery",
+    "name": "StatesOfApplicabilityPageQuery",
     "selections": [
       {
-        "alias": null,
-        "args": (v7/*: any*/),
+        "alias": "organization",
+        "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v13/*: any*/),
-          (v14/*: any*/),
+          (v2/*: any*/),
+          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v4/*: any*/),
               {
                 "alias": null,
-                "args": (v15/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "StateOfApplicabilityConnection",
                 "kind": "LinkedField",
                 "name": "statesOfApplicability",
@@ -234,7 +175,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v14/*: any*/),
+                          (v3/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -246,42 +187,8 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "sourceId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "snapshotId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "createdAt",
                             "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": "canDelete",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:state-of-applicability:delete"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
                           },
                           {
                             "alias": "applicabilityStatementsInfo",
@@ -307,7 +214,20 @@ return {
                             ],
                             "storageKey": "applicabilityStatements(first:0)"
                           },
-                          (v13/*: any*/)
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:state-of-applicability:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
+                          },
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -373,17 +293,17 @@ return {
                     ]
                   }
                 ],
-                "storageKey": null
+                "storageKey": "statesOfApplicability(filter:{\"snapshotId\":null},first:50,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
               },
               {
                 "alias": null,
-                "args": (v15/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
                   "orderBy",
                   "filter"
                 ],
                 "handle": "connection",
-                "key": "StateOfApplicabilityGraphPaginatedQuery_statesOfApplicability",
+                "key": "StatesOfApplicabilityPage_statesOfApplicability",
                 "kind": "LinkedHandle",
                 "name": "statesOfApplicability"
               }
@@ -397,16 +317,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e86532930605561fd46f5d24ae1f7234",
+    "cacheID": "ba258706565308bd0be8b9f0fb192fb3",
     "id": null,
     "metadata": {},
-    "name": "StateOfApplicabilityListQuery",
+    "name": "StatesOfApplicabilityPageQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: StateOfApplicabilityFilter = {snapshotId: null}\n  $first: Int = 50\n  $last: Int = null\n  $order: StateOfApplicabilityOrder = {direction: DESC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StateOfApplicabilityGraphPaginatedFragment_4cFWzS\n    id\n  }\n}\n\nfragment StateOfApplicabilityGraphPaginatedFragment_4cFWzS on Organization {\n  statesOfApplicability(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        name\n        sourceId\n        snapshotId\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:state-of-applicability:delete\")\n        applicabilityStatementsInfo: applicabilityStatements(first: 0) {\n          totalCount\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query StatesOfApplicabilityPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateStateOfApplicability: permission(action: \"core:state-of-applicability:create\")\n      ...StatesOfApplicabilityPageFragment\n    }\n    id\n  }\n}\n\nfragment StatesOfApplicabilityPageFragment on Organization {\n  statesOfApplicability(first: 50, orderBy: {direction: DESC, field: CREATED_AT}, filter: {snapshotId: null}) {\n    edges {\n      node {\n        id\n        ...StatesOfApplicabilityPageRowFragment\n        canDelete: permission(action: \"core:state-of-applicability:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment StatesOfApplicabilityPageRowFragment on StateOfApplicability {\n  id\n  name\n  createdAt\n  applicabilityStatementsInfo: applicabilityStatements(first: 0) {\n    totalCount\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d2cf23560141fb6b34b82dcb2116b4ed";
+(node as any).hash = "10fd3ffd276b002b98c3b9aa437ccbed";
 
 export default node;

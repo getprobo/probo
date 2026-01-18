@@ -444,10 +444,10 @@ WHERE soac.snapshot_id IS NULL
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"snapshot_id":     snapshotID,
-		"organization_id": organizationID,
-		"state_of_applicability_control_entity_type": StateOfApplicabilityControlEntityType,
+		"tenant_id":                           scope.GetTenantID(),
+		"snapshot_id":                         snapshotID,
+		"organization_id":                     organizationID,
+		"applicability_statement_entity_type": ApplicabilityStatementEntityType,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

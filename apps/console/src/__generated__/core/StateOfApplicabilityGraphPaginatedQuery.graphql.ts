@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a1b6d40084a5ddfad764dd1f6fa32607>>
+ * @generated SignedSource<<d5ac91eb2016808a73f8b4ac5f824711>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -225,7 +225,7 @@ return {
                             "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
                           },
                           {
-                            "alias": "controlsInfo",
+                            "alias": "applicabilityStatementsInfo",
                             "args": [
                               {
                                 "kind": "Literal",
@@ -233,9 +233,9 @@ return {
                                 "value": 0
                               }
                             ],
-                            "concreteType": "ControlConnection",
+                            "concreteType": "ApplicabilityStatementConnection",
                             "kind": "LinkedField",
-                            "name": "controls",
+                            "name": "applicabilityStatements",
                             "plural": false,
                             "selections": [
                               {
@@ -246,7 +246,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "controls(first:0)"
+                            "storageKey": "applicabilityStatements(first:0)"
                           },
                           (v2/*: any*/)
                         ],
@@ -338,12 +338,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3d53dfeb5366c889e790a88116dd3a4a",
+    "cacheID": "924c3ac3cbec24451635e9251f6841aa",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityGraphPaginatedQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityGraphPaginatedQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateStateOfApplicability: permission(action: \"core:state-of-applicability:create\")\n      ...StateOfApplicabilityGraphPaginatedFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityGraphPaginatedFragment on Organization {\n  statesOfApplicability(first: 50, orderBy: {direction: DESC, field: CREATED_AT}, filter: {snapshotId: null}) {\n    edges {\n      node {\n        id\n        name\n        sourceId\n        snapshotId\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:state-of-applicability:delete\")\n        controlsInfo: controls(first: 0) {\n          totalCount\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query StateOfApplicabilityGraphPaginatedQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateStateOfApplicability: permission(action: \"core:state-of-applicability:create\")\n      ...StateOfApplicabilityGraphPaginatedFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityGraphPaginatedFragment on Organization {\n  statesOfApplicability(first: 50, orderBy: {direction: DESC, field: CREATED_AT}, filter: {snapshotId: null}) {\n    edges {\n      node {\n        id\n        name\n        sourceId\n        snapshotId\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:state-of-applicability:delete\")\n        applicabilityStatementsInfo: applicabilityStatements(first: 0) {\n          totalCount\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

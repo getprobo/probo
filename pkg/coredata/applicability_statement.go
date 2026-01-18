@@ -29,7 +29,7 @@ import (
 )
 
 type (
-	StateOfApplicabilityControl struct {
+	ApplicabilityStatement struct {
 		ID                     gid.GID   `db:"id"`
 		StateOfApplicabilityID gid.GID   `db:"state_of_applicability_id"`
 		ControlID              gid.GID   `db:"control_id"`
@@ -41,28 +41,29 @@ type (
 		UpdatedAt              time.Time `db:"updated_at"`
 	}
 
-	StateOfApplicabilityControls []*StateOfApplicabilityControl
+	ApplicabilityStatements []*ApplicabilityStatement
 
 	AvailableStateOfApplicabilityControl struct {
-		ControlID              gid.GID  `db:"control_id"`
-		SectionTitle           string   `db:"section_title"`
-		Name                   string   `db:"name"`
-		FrameworkID            gid.GID  `db:"framework_id"`
-		FrameworkName          string   `db:"framework_name"`
-		OrganizationID         gid.GID  `db:"organization_id"`
-		StateOfApplicabilityID *gid.GID `db:"state_of_applicability_id"`
-		Applicability          *bool    `db:"applicability"`
-		Justification          *string  `db:"justification"`
-		BestPractice           bool     `db:"best_practice"`
-		Regulatory             bool     `db:"regulatory"`
-		Contractual            bool     `db:"contractual"`
-		RiskAssessment         bool     `db:"risk_assessment"`
+		ControlID                gid.GID  `db:"control_id"`
+		SectionTitle             string   `db:"section_title"`
+		Name                     string   `db:"name"`
+		FrameworkID              gid.GID  `db:"framework_id"`
+		FrameworkName            string   `db:"framework_name"`
+		OrganizationID           gid.GID  `db:"organization_id"`
+		ApplicabilityStatementID *gid.GID `db:"applicability_statement_id"`
+		StateOfApplicabilityID   *gid.GID `db:"state_of_applicability_id"`
+		Applicability            *bool    `db:"applicability"`
+		Justification            *string  `db:"justification"`
+		BestPractice             bool     `db:"best_practice"`
+		Regulatory               bool     `db:"regulatory"`
+		Contractual              bool     `db:"contractual"`
+		RiskAssessment           bool     `db:"risk_assessment"`
 	}
 
 	AvailableStateOfApplicabilityControls []*AvailableStateOfApplicabilityControl
 )
 
-func (s StateOfApplicabilityControl) CursorKey(orderBy StateOfApplicabilityOrderField) page.CursorKey {
+func (s ApplicabilityStatement) CursorKey(orderBy StateOfApplicabilityOrderField) page.CursorKey {
 	switch orderBy {
 	case StateOfApplicabilityOrderFieldName:
 		return page.NewCursorKey(s.ID, s.StateOfApplicabilityID)
@@ -73,7 +74,7 @@ func (s StateOfApplicabilityControl) CursorKey(orderBy StateOfApplicabilityOrder
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *StateOfApplicabilityControl) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
 	q := `SELECT organization_id FROM states_of_applicability_controls WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
@@ -87,7 +88,53 @@ func (s *StateOfApplicabilityControl) AuthorizationAttributes(ctx context.Contex
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (sac *StateOfApplicabilityControl) LoadByStateOfApplicabilityIDAndControlID(
+func (sac *ApplicabilityStatement) LoadByID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	state_of_applicability_id,
+	control_id,
+	organization_id,
+	snapshot_id,
+	applicability,
+	justification,
+	created_at,
+	updated_at
+FROM
+	states_of_applicability_controls
+WHERE
+	%s
+	AND id = @id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": id}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query states_of_applicability_controls: %w", err)
+	}
+
+	statement, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ApplicabilityStatement])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect applicability statement: %w", err)
+	}
+
+	*sac = statement
+	return nil
+}
+
+func (sac *ApplicabilityStatement) LoadByStateOfApplicabilityIDAndControlID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -133,7 +180,7 @@ LIMIT 1;
 		return fmt.Errorf("cannot query states_of_applicability_controls: %w", err)
 	}
 
-	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[StateOfApplicabilityControl])
+	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ApplicabilityStatement])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
@@ -145,7 +192,7 @@ LIMIT 1;
 	return nil
 }
 
-func (sac *StateOfApplicabilityControl) Insert(
+func (sac *ApplicabilityStatement) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -206,7 +253,7 @@ VALUES (
 	return nil
 }
 
-func (sac *StateOfApplicabilityControl) Update(
+func (sac *ApplicabilityStatement) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -218,119 +265,51 @@ SET
     justification = @justification,
     updated_at = @updated_at
 WHERE %s
-    AND state_of_applicability_id = @state_of_applicability_id
-    AND control_id = @control_id
+    AND id = @id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"state_of_applicability_id": sac.StateOfApplicabilityID,
-		"control_id":                sac.ControlID,
-		"applicability":             sac.Applicability,
-		"justification":             sac.Justification,
-		"updated_at":                sac.UpdatedAt,
+		"id":            sac.ID,
+		"applicability": sac.Applicability,
+		"justification": sac.Justification,
+		"updated_at":    sac.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update state_of_applicability_control: %w", err)
+		return fmt.Errorf("cannot update applicability statement: %w", err)
 	}
 
 	return nil
 }
 
-func (sac *StateOfApplicabilityControl) Upsert(
+func (sac *ApplicabilityStatement) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO
-    states_of_applicability_controls (
-        id,
-        state_of_applicability_id,
-        control_id,
-        organization_id,
-        tenant_id,
-        snapshot_id,
-        applicability,
-        justification,
-        created_at,
-        updated_at
-    )
-VALUES (
-    @id,
-    @state_of_applicability_id,
-    @control_id,
-    @organization_id,
-    @tenant_id,
-    @snapshot_id,
-    @applicability,
-    @justification,
-    @created_at,
-    @updated_at
-)
-ON CONFLICT (state_of_applicability_id, control_id) DO UPDATE SET
-    applicability = EXCLUDED.applicability,
-    justification = EXCLUDED.justification,
-    updated_at = EXCLUDED.updated_at
-`
-
-	args := pgx.StrictNamedArgs{
-		"id":                        sac.ID,
-		"state_of_applicability_id": sac.StateOfApplicabilityID,
-		"control_id":                sac.ControlID,
-		"organization_id":           sac.OrganizationID,
-		"tenant_id":                 scope.GetTenantID(),
-		"snapshot_id":               sac.SnapshotID,
-		"applicability":             sac.Applicability,
-		"justification":             sac.Justification,
-		"created_at":                sac.CreatedAt,
-		"updated_at":                sac.UpdatedAt,
-	}
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot upsert state_of_applicability_control: %w", err)
-	}
-
-	return nil
-}
-
-func (sac *StateOfApplicabilityControl) Delete(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-) error {
-	q := `
-WITH current_soa AS (
-	SELECT id
-	FROM states_of_applicability
-	WHERE %s
-		AND id = @state_of_applicability_id
-		AND snapshot_id IS NULL
-)
 DELETE FROM states_of_applicability_controls
-WHERE state_of_applicability_id IN (SELECT id FROM current_soa)
-	AND control_id = @control_id;
+WHERE %s
+	AND id = @id;
 `
-
-	args := pgx.StrictNamedArgs{
-		"state_of_applicability_id": sac.StateOfApplicabilityID,
-		"control_id":                sac.ControlID,
-	}
-	maps.Copy(args, scope.SQLArguments())
 	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": sac.ID}
+	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
 }
 
-func (sacs *StateOfApplicabilityControls) LoadByStateOfApplicabilityID(
+func (sacs *ApplicabilityStatements) LoadByStateOfApplicabilityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	stateOfApplicabilityID gid.GID,
+	cursor *page.Cursor[StateOfApplicabilityOrderField],
 ) error {
 	q := `
 SELECT
@@ -348,21 +327,22 @@ FROM
 WHERE
     %s
     AND state_of_applicability_id = @state_of_applicability_id
-ORDER BY created_at ASC
+    AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"state_of_applicability_id": stateOfApplicabilityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query states_of_applicability_controls: %w", err)
 	}
 
-	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[StateOfApplicabilityControl])
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ApplicabilityStatement])
 	if err != nil {
 		return fmt.Errorf("cannot collect states_of_applicability_controls: %w", err)
 	}
@@ -371,7 +351,7 @@ ORDER BY created_at ASC
 	return nil
 }
 
-func (sacs *StateOfApplicabilityControls) LoadByControlID(
+func (sacs *ApplicabilityStatements) LoadByControlID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -425,7 +405,7 @@ WHERE %s
 		return fmt.Errorf("cannot query state_of_applicability_controls: %w", err)
 	}
 
-	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[StateOfApplicabilityControl])
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ApplicabilityStatement])
 	if err != nil {
 		return fmt.Errorf("cannot collect state_of_applicability_controls: %w", err)
 	}
@@ -434,7 +414,7 @@ WHERE %s
 	return nil
 }
 
-func (sacs *StateOfApplicabilityControls) CountByControlID(
+func (sacs *ApplicabilityStatements) CountByControlID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -462,6 +442,37 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{"control_id": controlID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (sacs *ApplicabilityStatements) CountByStateOfApplicabilityID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	stateOfApplicabilityID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	states_of_applicability_controls
+WHERE
+	%s
+	AND state_of_applicability_id = @state_of_applicability_id;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"state_of_applicability_id": stateOfApplicabilityID}
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -518,6 +529,7 @@ all_controls AS (
 ),
 existing_links AS (
     SELECT
+        soac.id AS applicability_statement_id,
         soac.control_id,
         soac.state_of_applicability_id,
         soac.applicability,
@@ -560,6 +572,7 @@ SELECT
     ac.framework_id,
     ac.organization_id,
     ac.framework_name,
+    el.applicability_statement_id,
     el.state_of_applicability_id,
     el.applicability,
     el.justification,

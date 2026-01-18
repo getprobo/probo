@@ -64,7 +64,7 @@ export const paginatedStateOfApplicabilityFragment = graphql`
 
           canDelete: permission(action: "core:state-of-applicability:delete")
 
-          controlsInfo: controls(first: 0) {
+          applicabilityStatementsInfo: applicabilityStatements(first: 0) {
             totalCount
           }
         }
@@ -211,32 +211,9 @@ export const stateOfApplicabilityNodeQuery = graphql`
           id
           fullName
         }
-        ...StateOfApplicabilityControlsTabFragment
+        ...ApplicabilityStatementsTabFragment
       }
     }
   }
 `;
 
-export const stateOfApplicabilityForEditQuery = graphql`
-  query StateOfApplicabilityGraphForEditQuery($stateOfApplicabilityId: ID!) {
-    node(id: $stateOfApplicabilityId) {
-      ... on StateOfApplicability {
-        id
-        name
-        controls(first: 1000, orderBy: { field: SECTION_TITLE, direction: ASC }) {
-          edges {
-            node {
-              id
-              sectionTitle
-              name
-              framework {
-                id
-                name
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;

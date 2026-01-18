@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a49fb511ab396ea46b199b2ae08edfff>>
+ * @generated SignedSource<<5b52efc505336a4fbc11188384da953c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,10 +9,10 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type LinkedStatesOfApplicabilityDialogQuery$variables = {
+export type SelectStateOfApplicabilityDialogQuery$variables = {
   organizationId: string;
 };
-export type LinkedStatesOfApplicabilityDialogQuery$data = {
+export type SelectStateOfApplicabilityDialogQuery$data = {
   readonly organization: {
     readonly statesOfApplicability?: {
       readonly edges: ReadonlyArray<{
@@ -24,9 +24,9 @@ export type LinkedStatesOfApplicabilityDialogQuery$data = {
     };
   };
 };
-export type LinkedStatesOfApplicabilityDialogQuery = {
-  response: LinkedStatesOfApplicabilityDialogQuery$data;
-  variables: LinkedStatesOfApplicabilityDialogQuery$variables;
+export type SelectStateOfApplicabilityDialogQuery = {
+  response: SelectStateOfApplicabilityDialogQuery$data;
+  variables: SelectStateOfApplicabilityDialogQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -110,7 +110,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "LinkedStatesOfApplicabilityDialogQuery",
+    "name": "SelectStateOfApplicabilityDialogQuery",
     "selections": [
       {
         "alias": "organization",
@@ -132,7 +132,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "LinkedStatesOfApplicabilityDialogQuery",
+    "name": "SelectStateOfApplicabilityDialogQuery",
     "selections": [
       {
         "alias": "organization",
@@ -157,16 +157,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b36c3216f309865885892fce0d52eac9",
+    "cacheID": "d6006d0b86e88279ba061140f98be6e4",
     "id": null,
     "metadata": {},
-    "name": "LinkedStatesOfApplicabilityDialogQuery",
+    "name": "SelectStateOfApplicabilityDialogQuery",
     "operationKind": "query",
-    "text": "query LinkedStatesOfApplicabilityDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      statesOfApplicability(first: 100) {\n        edges {\n          node {\n            id\n            name\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query SelectStateOfApplicabilityDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      statesOfApplicability(first: 100) {\n        edges {\n          node {\n            id\n            name\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a6ed2cd0171d834480319779e11fce99";
+(node as any).hash = "292bbc7d84fd12a1cd2664b498651c11";
 
 export default node;

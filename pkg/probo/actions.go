@@ -312,6 +312,13 @@ const (
 	ActionStateOfApplicabilityDelete = "core:state-of-applicability:delete"
 	ActionStateOfApplicabilityExport = "core:state-of-applicability:export"
 
+	ActionApplicabilityStatementList   = "core:applicability-statement:list"
+	ActionApplicabilityStatementGet    = "core:applicability-statement:get"
+	ActionApplicabilityStatementCreate = "core:applicability-statement:create"
+	ActionApplicabilityStatementUpdate = "core:applicability-statement:update"
+	ActionApplicabilityStatementDelete = "core:applicability-statement:delete"
+
+	// FIXME: delete those actions
 	ActionStateOfApplicabilityControlMappingList   = "core:state-of-applicability-control-mapping:list"
 	ActionStateOfApplicabilityControlMappingCreate = "core:state-of-applicability-control-mapping:create"
 	ActionStateOfApplicabilityControlMappingDelete = "core:state-of-applicability-control-mapping:delete"

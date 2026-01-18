@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<feca91fd2418eba0f5714a2c76346d08>>
+ * @generated SignedSource<<d7bdd863ff08408724ca63ab5bf78393>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,13 +9,14 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type LinkControlDialogQuery$variables = {
+export type ManageApplicabilityStatementsDialogQuery$variables = {
   stateOfApplicabilityId: string;
 };
-export type LinkControlDialogQuery$data = {
+export type ManageApplicabilityStatementsDialogQuery$data = {
   readonly node: {
     readonly availableControls?: ReadonlyArray<{
       readonly applicability: boolean | null | undefined;
+      readonly applicabilityStatementId: string | null | undefined;
       readonly controlId: string;
       readonly frameworkId: string;
       readonly frameworkName: string;
@@ -28,9 +29,9 @@ export type LinkControlDialogQuery$data = {
     readonly id?: string;
   };
 };
-export type LinkControlDialogQuery = {
-  response: LinkControlDialogQuery$data;
-  variables: LinkControlDialogQuery$variables;
+export type ManageApplicabilityStatementsDialogQuery = {
+  response: ManageApplicabilityStatementsDialogQuery$data;
+  variables: ManageApplicabilityStatementsDialogQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -109,6 +110,13 @@ v3 = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
+      "name": "applicabilityStatementId",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
       "name": "stateOfApplicabilityId",
       "storageKey": null
     },
@@ -134,7 +142,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "LinkControlDialogQuery",
+    "name": "ManageApplicabilityStatementsDialogQuery",
     "selections": [
       {
         "alias": null,
@@ -164,7 +172,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "LinkControlDialogQuery",
+    "name": "ManageApplicabilityStatementsDialogQuery",
     "selections": [
       {
         "alias": null,
@@ -196,16 +204,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a0d70e15a1236fe0e8626e685ea16a15",
+    "cacheID": "3b03ae91880789d9a804d121f350ce7b",
     "id": null,
     "metadata": {},
-    "name": "LinkControlDialogQuery",
+    "name": "ManageApplicabilityStatementsDialogQuery",
     "operationKind": "query",
-    "text": "query LinkControlDialogQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      availableControls {\n        controlId\n        sectionTitle\n        name\n        frameworkId\n        frameworkName\n        organizationId\n        stateOfApplicabilityId\n        applicability\n        justification\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query ManageApplicabilityStatementsDialogQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      availableControls {\n        controlId\n        sectionTitle\n        name\n        frameworkId\n        frameworkName\n        organizationId\n        applicabilityStatementId\n        stateOfApplicabilityId\n        applicability\n        justification\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "26daf3c064517bdbbf025da7ce5fc30f";
+(node as any).hash = "6eb3e0290f45063035657534b9040f12";
 
 export default node;

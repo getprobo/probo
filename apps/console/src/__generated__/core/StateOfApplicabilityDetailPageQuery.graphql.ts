@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<73d4bda4834c8cb518ef8cde6700ef45>>
+ * @generated SignedSource<<9ab8e12646865ccf6ab2508cf97c112f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,10 +10,10 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type StateOfApplicabilityGraphNodeQuery$variables = {
+export type StateOfApplicabilityDetailPageQuery$variables = {
   stateOfApplicabilityId: string;
 };
-export type StateOfApplicabilityGraphNodeQuery$data = {
+export type StateOfApplicabilityDetailPageQuery$data = {
   readonly node: {
     readonly canDelete?: boolean;
     readonly canUpdate?: boolean;
@@ -33,9 +33,9 @@ export type StateOfApplicabilityGraphNodeQuery$data = {
     readonly " $fragmentSpreads": FragmentRefs<"ApplicabilityStatementsTabFragment">;
   };
 };
-export type StateOfApplicabilityGraphNodeQuery = {
-  response: StateOfApplicabilityGraphNodeQuery$data;
-  variables: StateOfApplicabilityGraphNodeQuery$variables;
+export type StateOfApplicabilityDetailPageQuery = {
+  response: StateOfApplicabilityDetailPageQuery$data;
+  variables: StateOfApplicabilityDetailPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -157,7 +157,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "StateOfApplicabilityGraphNodeQuery",
+    "name": "StateOfApplicabilityDetailPageQuery",
     "selections": [
       {
         "alias": null,
@@ -200,7 +200,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "StateOfApplicabilityGraphNodeQuery",
+    "name": "StateOfApplicabilityDetailPageQuery",
     "selections": [
       {
         "alias": null,
@@ -393,16 +393,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4d7db9c857dbc3e40ff525a62886db11",
+    "cacheID": "b38befb13cc27178377beed02dfc40fb",
     "id": null,
     "metadata": {},
-    "name": "StateOfApplicabilityGraphNodeQuery",
+    "name": "StateOfApplicabilityDetailPageQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityGraphNodeQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...ApplicabilityStatementsTabFragment\n    }\n    id\n  }\n}\n\nfragment ApplicabilityStatementsTabFragment on StateOfApplicability {\n  id\n  applicabilityStatementsInfo: applicabilityStatements(first: 0) {\n    totalCount\n  }\n  canCreateApplicabilityStatement: permission(action: \"core:state-of-applicability-control-mapping:create\")\n  canDeleteApplicabilityStatement: permission(action: \"core:state-of-applicability-control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    applicabilityStatementId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
+    "text": "query StateOfApplicabilityDetailPageQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...ApplicabilityStatementsTabFragment\n    }\n    id\n  }\n}\n\nfragment ApplicabilityStatementsTabFragment on StateOfApplicability {\n  id\n  applicabilityStatementsInfo: applicabilityStatements(first: 0) {\n    totalCount\n  }\n  canCreateApplicabilityStatement: permission(action: \"core:state-of-applicability-control-mapping:create\")\n  canDeleteApplicabilityStatement: permission(action: \"core:state-of-applicability-control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    applicabilityStatementId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7a710c260712cd98b9f2c5084e2fe980";
+(node as any).hash = "374062c7d42817b4418ca5d08a7b7de5";
 
 export default node;

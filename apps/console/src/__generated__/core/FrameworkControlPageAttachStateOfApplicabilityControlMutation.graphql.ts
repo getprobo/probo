@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6798ad28a0faeedef40b1b0a89f7563e>>
+ * @generated SignedSource<<9426f39407442c22140c6cfdf6798b60>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,29 +10,29 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type CreateStateOfApplicabilityControlMappingInput = {
+export type CreateApplicabilityStatementInput = {
   applicability: boolean;
   controlId: string;
   justification?: string | null | undefined;
   stateOfApplicabilityId: string;
 };
-export type FrameworkControlPageAttachStateOfApplicabilityMutation$variables = {
+export type FrameworkControlPageAttachStateOfApplicabilityControlMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: CreateStateOfApplicabilityControlMappingInput;
+  input: CreateApplicabilityStatementInput;
 };
-export type FrameworkControlPageAttachStateOfApplicabilityMutation$data = {
-  readonly createStateOfApplicabilityControlMapping: {
+export type FrameworkControlPageAttachStateOfApplicabilityControlMutation$data = {
+  readonly createApplicabilityStatement: {
     readonly stateOfApplicabilityControlEdge: {
       readonly node: {
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"LinkedStatesOfApplicabilityCardFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"ControlApplicabilityStatementsCardFragment">;
       };
     };
   };
 };
-export type FrameworkControlPageAttachStateOfApplicabilityMutation = {
-  response: FrameworkControlPageAttachStateOfApplicabilityMutation$data;
-  variables: FrameworkControlPageAttachStateOfApplicabilityMutation$variables;
+export type FrameworkControlPageAttachStateOfApplicabilityControlMutation = {
+  response: FrameworkControlPageAttachStateOfApplicabilityControlMutation$data;
+  variables: FrameworkControlPageAttachStateOfApplicabilityControlMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -68,14 +68,14 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "FrameworkControlPageAttachStateOfApplicabilityMutation",
+    "name": "FrameworkControlPageAttachStateOfApplicabilityControlMutation",
     "selections": [
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "CreateStateOfApplicabilityControlMappingPayload",
+        "concreteType": "CreateApplicabilityStatementPayload",
         "kind": "LinkedField",
-        "name": "createStateOfApplicabilityControlMapping",
+        "name": "createApplicabilityStatement",
         "plural": false,
         "selections": [
           {
@@ -98,7 +98,7 @@ return {
                   {
                     "args": null,
                     "kind": "FragmentSpread",
-                    "name": "LinkedStatesOfApplicabilityCardFragment"
+                    "name": "ControlApplicabilityStatementsCardFragment"
                   }
                 ],
                 "storageKey": null
@@ -120,14 +120,14 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "FrameworkControlPageAttachStateOfApplicabilityMutation",
+    "name": "FrameworkControlPageAttachStateOfApplicabilityControlMutation",
     "selections": [
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "CreateStateOfApplicabilityControlMappingPayload",
+        "concreteType": "CreateApplicabilityStatementPayload",
         "kind": "LinkedField",
-        "name": "createStateOfApplicabilityControlMapping",
+        "name": "createApplicabilityStatement",
         "plural": false,
         "selections": [
           {
@@ -222,16 +222,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "205bc4f133e268c943ef9df9881350f0",
+    "cacheID": "d5c7e62957daff31a06479103915f0ae",
     "id": null,
     "metadata": {},
-    "name": "FrameworkControlPageAttachStateOfApplicabilityMutation",
+    "name": "FrameworkControlPageAttachStateOfApplicabilityControlMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkControlPageAttachStateOfApplicabilityMutation(\n  $input: CreateStateOfApplicabilityControlMappingInput!\n) {\n  createStateOfApplicabilityControlMapping(input: $input) {\n    stateOfApplicabilityControlEdge {\n      node {\n        id\n        ...LinkedStatesOfApplicabilityCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedStatesOfApplicabilityCardFragment on StateOfApplicabilityControl {\n  id\n  stateOfApplicabilityId\n  controlId\n  stateOfApplicability {\n    id\n    name\n  }\n  applicability\n  justification\n}\n"
+    "text": "mutation FrameworkControlPageAttachStateOfApplicabilityControlMutation(\n  $input: CreateApplicabilityStatementInput!\n) {\n  createApplicabilityStatement(input: $input) {\n    stateOfApplicabilityControlEdge {\n      node {\n        id\n        ...ControlApplicabilityStatementsCardFragment\n      }\n    }\n  }\n}\n\nfragment ControlApplicabilityStatementsCardFragment on StateOfApplicabilityControl {\n  id\n  stateOfApplicabilityId\n  controlId\n  stateOfApplicability {\n    id\n    name\n  }\n  applicability\n  justification\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8da7bd1e22eb2eaf857a4e97cea47e90";
+(node as any).hash = "ef32d913dccd88dfc539367de5a80e27";
 
 export default node;

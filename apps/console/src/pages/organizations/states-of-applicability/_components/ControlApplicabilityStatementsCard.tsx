@@ -15,16 +15,16 @@ import {
     Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedStatesOfApplicabilityCardFragment$key } from "/__generated__/core/LinkedStatesOfApplicabilityCardFragment.graphql";
+import type { ControlApplicabilityStatementsCardFragment$key } from "/__generated__/core/ControlApplicabilityStatementsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState, useEffect } from "react";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { LinkedStatesOfApplicabilityDialog } from "./LinkedStatesOfApplicabilityDialog";
+import { SelectStateOfApplicabilityDialog } from "./SelectStateOfApplicabilityDialog";
 import clsx from "clsx";
 
-const linkedStateOfApplicabilityFragment = graphql`
-    fragment LinkedStatesOfApplicabilityCardFragment on StateOfApplicabilityControl {
+const controlApplicabilityStatementsCardFragment = graphql`
+    fragment ControlApplicabilityStatementsCardFragment on StateOfApplicabilityControl {
         id
         stateOfApplicabilityId
         controlId
@@ -51,15 +51,14 @@ type AttachMutation<Params> = (p: {
 type DetachMutation = (p: {
     variables: {
         input: {
-            stateOfApplicabilityId: string;
-            controlId: string;
+            applicabilityStatementId: string;
         };
         connections: string[];
     };
 }) => void;
 
 type Props<Params> = {
-    statesOfApplicability: readonly (LinkedStatesOfApplicabilityCardFragment$key & {
+    statesOfApplicability: readonly (ControlApplicabilityStatementsCardFragment$key & {
         id: string;
     })[];
     params: Params;
@@ -71,7 +70,7 @@ type Props<Params> = {
     readOnly?: boolean;
 };
 
-export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
+export function ControlApplicabilityStatementsCard<Params>(props: Props<Params>) {
     const { __ } = useTranslate();
 
     const [limit, setLimit] = useState<number | null>(
@@ -79,7 +78,7 @@ export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
     );
 
     const [linkedInfo, setLinkedInfo] = useState<
-        { stateOfApplicabilityId: string; controlId: string }[]
+        { applicabilityStatementId: string; stateOfApplicabilityId: string }[]
     >([]);
 
     const statesOfApplicability = useMemo(() => {
@@ -112,12 +111,11 @@ export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
         });
     };
 
-    const onDetach = (stateOfApplicabilityId: string, controlId: string) => {
+    const onDetach = (applicabilityStatementId: string) => {
         props.onDetach({
             variables: {
                 input: {
-                    stateOfApplicabilityId,
-                    controlId,
+                    applicabilityStatementId,
                 },
                 connections: [props.connectionId],
             },
@@ -131,14 +129,13 @@ export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
             {props.statesOfApplicability.map((soa, idx) => (
                 <LinkedInfoExtractor
                     key={idx}
-                    fragment={soa}
+                    fKey={soa}
                     onExtracted={(info) => {
                         setLinkedInfo((prev) => {
                             const exists = prev.some(
                                 (p) =>
-                                    p.stateOfApplicabilityId ===
-                                        info.stateOfApplicabilityId &&
-                                    p.controlId === info.controlId,
+                                    p.applicabilityStatementId ===
+                                    info.applicabilityStatementId,
                             );
                             return exists ? prev : [...prev, info];
                         });
@@ -151,7 +148,7 @@ export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
                         {__("States of Applicability")}
                     </div>
                     {!props.readOnly && (
-                        <LinkedStatesOfApplicabilityDialog
+                        <SelectStateOfApplicabilityDialog
                             connectionId={props.connectionId}
                             disabled={props.disabled}
                             linkedStatesOfApplicability={linkedData}
@@ -161,7 +158,7 @@ export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
                             <Button variant="tertiary" icon={IconPlusLarge}>
                                 {__("Link state of applicability")}
                             </Button>
-                        </LinkedStatesOfApplicabilityDialog>
+                        </SelectStateOfApplicabilityDialog>
                     )}
                 </div>
             )}
@@ -186,15 +183,15 @@ export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
                         </Tr>
                     )}
                     {statesOfApplicability.map((soa) => (
-                        <StateOfApplicabilityRow
+                        <ApplicabilityStatementRow
                             key={soa.id}
-                            stateOfApplicability={soa}
+                            fKey={soa}
                             onClick={onDetach}
                             readOnly={props.readOnly}
                         />
                     ))}
                     {variant === "table" && !props.readOnly && (
-                        <LinkedStatesOfApplicabilityDialog
+                        <SelectStateOfApplicabilityDialog
                             connectionId={props.connectionId}
                             disabled={props.disabled}
                             linkedStatesOfApplicability={linkedData}
@@ -204,7 +201,7 @@ export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
                             <TrButton colspan={4} icon={IconPlusLarge}>
                                 {__("Link state of applicability")}
                             </TrButton>
-                        </LinkedStatesOfApplicabilityDialog>
+                        </SelectStateOfApplicabilityDialog>
                     )}
                 </Tbody>
             </Table>
@@ -224,65 +221,64 @@ export function LinkedStatesOfApplicabilityCard<Params>(props: Props<Params>) {
     );
 }
 
-function LinkedInfoExtractor(props: {
-    fragment: LinkedStatesOfApplicabilityCardFragment$key;
+function LinkedInfoExtractor({
+    fKey,
+    onExtracted,
+}: {
+    fKey: ControlApplicabilityStatementsCardFragment$key;
     onExtracted: (info: {
+        applicabilityStatementId: string;
         stateOfApplicabilityId: string;
-        controlId: string;
     }) => void;
 }) {
-    const data = useFragment(
-        linkedStateOfApplicabilityFragment,
-        props.fragment,
-    );
+    const data = useFragment(controlApplicabilityStatementsCardFragment, fKey);
 
     useEffect(() => {
-        props.onExtracted({
+        onExtracted({
+            applicabilityStatementId: data.id,
             stateOfApplicabilityId: data.stateOfApplicabilityId,
-            controlId: data.controlId,
         });
-    }, [data.stateOfApplicabilityId, data.controlId, props.onExtracted]);
+    }, [data.id, data.stateOfApplicabilityId, onExtracted]);
 
     return null;
 }
 
-function StateOfApplicabilityRow(props: {
-    stateOfApplicability: LinkedStatesOfApplicabilityCardFragment$key & {
+function ApplicabilityStatementRow({
+    fKey,
+    onClick,
+    readOnly,
+}: {
+    fKey: ControlApplicabilityStatementsCardFragment$key & {
         id: string;
     };
-    onClick: (stateOfApplicabilityId: string, controlId: string) => void;
+    onClick: (applicabilityStatementId: string) => void;
     readOnly?: boolean;
 }) {
-    const soa = useFragment(
-        linkedStateOfApplicabilityFragment,
-        props.stateOfApplicability,
+    const statement = useFragment(
+        controlApplicabilityStatementsCardFragment,
+        fKey,
     );
     const organizationId = useOrganizationId();
     const { __ } = useTranslate();
 
     return (
         <Tr
-            to={`/organizations/${organizationId}/states-of-applicability/${soa.stateOfApplicabilityId}`}
+            to={`/organizations/${organizationId}/states-of-applicability/${statement.stateOfApplicabilityId}`}
         >
-            <Td>{soa.stateOfApplicability.name}</Td>
+            <Td>{statement.stateOfApplicability.name}</Td>
             <Td>
-                <Badge variant={soa.applicability ? "success" : "danger"}>
-                    {soa.applicability
+                <Badge variant={statement.applicability ? "success" : "danger"}>
+                    {statement.applicability
                         ? __("Applicable")
                         : __("Not Applicable")}
                 </Badge>
             </Td>
-            <Td>{soa.justification || "-"}</Td>
-            {!props.readOnly && (
+            <Td>{statement.justification || "-"}</Td>
+            {!readOnly && (
                 <Td noLink width={50} className="text-end">
                     <Button
                         variant="secondary"
-                        onClick={() =>
-                            props.onClick(
-                                soa.stateOfApplicabilityId,
-                                soa.controlId,
-                            )
-                        }
+                        onClick={() => onClick(statement.id)}
                         icon={IconTrashCan}
                     >
                         {__("Unlink")}
@@ -292,3 +288,4 @@ function StateOfApplicabilityRow(props: {
         </Tr>
     );
 }
+

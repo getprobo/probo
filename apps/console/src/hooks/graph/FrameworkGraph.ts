@@ -147,7 +147,7 @@ export const frameworkControlNodeQuery = graphql`
           edges {
             node {
               id
-              ...LinkedStatesOfApplicabilityCardFragment
+              ...ControlApplicabilityStatementsCardFragment
             }
           }
         }

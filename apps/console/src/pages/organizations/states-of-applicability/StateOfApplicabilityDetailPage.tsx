@@ -21,23 +21,51 @@ import {
     type PreloadedQuery,
     usePreloadedQuery,
 } from "react-relay";
-import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
-import type { StateOfApplicabilityDetailPageExportMutation } from "/__generated__/core/StateOfApplicabilityDetailPageExportMutation.graphql";
-import {
-    StateOfApplicabilityConnectionKey,
-    stateOfApplicabilityNodeQuery,
-    useDeleteStateOfApplicability,
-    updateStateOfApplicabilityMutation,
-} from "/hooks/graph/StateOfApplicabilityGraph";
 import { useState, Suspense } from "react";
 import { usePageTitle } from "@probo/hooks";
 import { formatDate, validateSnapshotConsistency } from "@probo/helpers";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
-import StateOfApplicabilityControlsTab from "./tabs/StateOfApplicabilityControlsTab";
+import ApplicabilityStatementsTab from "./_components/ApplicabilityStatementsTab";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import {
+    useDeleteStateOfApplicability,
+    StateOfApplicabilityConnectionKey,
+} from "./_components/useDeleteStateOfApplicability";
+import type { StateOfApplicabilityDetailPageQuery } from "/__generated__/core/StateOfApplicabilityDetailPageQuery.graphql";
+import type { StateOfApplicabilityDetailPageExportMutation } from "/__generated__/core/StateOfApplicabilityDetailPageExportMutation.graphql";
+import type { StateOfApplicabilityDetailPageUpdateMutation } from "/__generated__/core/StateOfApplicabilityDetailPageUpdateMutation.graphql";
+
+export const stateOfApplicabilityDetailPageQuery = graphql`
+    query StateOfApplicabilityDetailPageQuery($stateOfApplicabilityId: ID!) {
+        node(id: $stateOfApplicabilityId) {
+            ... on StateOfApplicability {
+                id
+                name
+                sourceId
+                snapshotId
+                createdAt
+                updatedAt
+                canUpdate: permission(
+                    action: "core:state-of-applicability:update"
+                )
+                canDelete: permission(
+                    action: "core:state-of-applicability:delete"
+                )
+                organization {
+                    id
+                }
+                owner {
+                    id
+                    fullName
+                }
+                ...ApplicabilityStatementsTabFragment
+            }
+        }
+    }
+`;
 
 const exportStateOfApplicabilityPDFMutation = graphql`
     mutation StateOfApplicabilityDetailPageExportMutation(
@@ -49,8 +77,26 @@ const exportStateOfApplicabilityPDFMutation = graphql`
     }
 `;
 
+const updateStateOfApplicabilityMutation = graphql`
+    mutation StateOfApplicabilityDetailPageUpdateMutation(
+        $input: UpdateStateOfApplicabilityInput!
+    ) {
+        updateStateOfApplicability(input: $input) {
+            stateOfApplicability {
+                id
+                name
+                updatedAt
+                owner {
+                    id
+                    fullName
+                }
+            }
+        }
+    }
+`;
+
 type Props = {
-    queryRef: PreloadedQuery<StateOfApplicabilityGraphNodeQuery>;
+    queryRef: PreloadedQuery<StateOfApplicabilityDetailPageQuery>;
 };
 
 export default function StateOfApplicabilityDetailPage(props: Props) {
@@ -60,7 +106,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
     }>();
     const organizationId = useOrganizationId();
     const data = usePreloadedQuery(
-        stateOfApplicabilityNodeQuery,
+        stateOfApplicabilityDetailPageQuery,
         props.queryRef,
     );
     const stateOfApplicability = data.node;
@@ -82,7 +128,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
     );
 
     const deleteStateOfApplicability = useDeleteStateOfApplicability(
-        stateOfApplicability,
+        { id: stateOfApplicability.id!, name: stateOfApplicability.name! },
         connectionId,
         () =>
             navigate(
@@ -94,13 +140,16 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingOwner, setIsEditingOwner] = useState(false);
-    const [updateStateOfApplicability, isUpdating] = useMutationWithToasts(
-        updateStateOfApplicabilityMutation,
-        {
-            successMessage: __("State of Applicability updated successfully."),
-            errorMessage: __("Failed to update State of Applicability"),
-        },
-    );
+    const [updateStateOfApplicability, isUpdating] =
+        useMutationWithToasts<StateOfApplicabilityDetailPageUpdateMutation>(
+            updateStateOfApplicabilityMutation,
+            {
+                successMessage: __(
+                    "State of Applicability updated successfully.",
+                ),
+                errorMessage: __("Failed to update State of Applicability"),
+            },
+        );
 
     const canUpdate = !isSnapshotMode && stateOfApplicability.canUpdate;
     const canDelete = !isSnapshotMode && stateOfApplicability.canDelete;
@@ -377,14 +426,10 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
                 {stateOfApplicability.id && (
                     <div className="space-y-4">
                         <h2 className="text-base font-medium">
-                            {__("Controls")}
+                            {__("Applicability Statements")}
                         </h2>
-                        <StateOfApplicabilityControlsTab
-                            stateOfApplicability={
-                                stateOfApplicability as typeof stateOfApplicability & {
-                                    id: string;
-                                }
-                            }
+                        <ApplicabilityStatementsTab
+                            fKey={stateOfApplicability}
                             isSnapshotMode={isSnapshotMode}
                         />
                     </div>

@@ -295,78 +295,190 @@ func (s StateOfApplicabilityService) ListAvailableControls(
 	return availableControls, nil
 }
 
-func (s StateOfApplicabilityService) LinkControl(
+type (
+	CreateApplicabilityStatementRequest struct {
+		StateOfApplicabilityID gid.GID
+		ControlID              gid.GID
+		Applicability          bool
+		Justification          *string
+	}
+
+	UpdateApplicabilityStatementRequest struct {
+		ApplicabilityStatementID gid.GID
+		Applicability            bool
+		Justification            *string
+	}
+)
+
+func (casr *CreateApplicabilityStatementRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(casr.StateOfApplicabilityID, "state_of_applicability_id", validator.Required(), validator.GID(coredata.StateOfApplicabilityEntityType))
+	v.Check(casr.ControlID, "control_id", validator.Required(), validator.GID(coredata.ControlEntityType))
+
+	return v.Error()
+}
+
+func (uasr *UpdateApplicabilityStatementRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uasr.ApplicabilityStatementID, "applicability_statement_id", validator.Required(), validator.GID(coredata.ApplicabilityStatementEntityType))
+
+	return v.Error()
+}
+
+func (s StateOfApplicabilityService) CreateApplicabilityStatement(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
-	controlID gid.GID,
-	applicability bool,
-	justification *string,
-) (*coredata.StateOfApplicabilityControl, error) {
-	stateOfApplicability := &coredata.StateOfApplicability{}
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID)
-	})
+	req CreateApplicabilityStatementRequest,
+) (*coredata.ApplicabilityStatement, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var (
+		now       = time.Now()
+		statement = &coredata.ApplicabilityStatement{}
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			stateOfApplicability := &coredata.StateOfApplicability{}
+			if err := stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, req.StateOfApplicabilityID); err != nil {
+				return fmt.Errorf("cannot load state of applicability: %w", err)
+			}
+
+			statement = &coredata.ApplicabilityStatement{
+				ID:                     gid.New(s.svc.scope.GetTenantID(), coredata.ApplicabilityStatementEntityType),
+				StateOfApplicabilityID: req.StateOfApplicabilityID,
+				ControlID:              req.ControlID,
+				OrganizationID:         stateOfApplicability.OrganizationID,
+				Applicability:          req.Applicability,
+				Justification:          req.Justification,
+				CreatedAt:              now,
+				UpdatedAt:              now,
+			}
+
+			if err := statement.Insert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert applicability statement: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load state of applicability: %w", err)
 	}
 
-	now := time.Now()
-	control := &coredata.StateOfApplicabilityControl{
-		ID:                     gid.New(s.svc.scope.GetTenantID(), coredata.StateOfApplicabilityControlEntityType),
-		StateOfApplicabilityID: stateOfApplicabilityID,
-		ControlID:              controlID,
-		OrganizationID:         stateOfApplicability.OrganizationID,
-		Applicability:          applicability,
-		Justification:          justification,
-		CreatedAt:              now,
-		UpdatedAt:              now,
+	return statement, nil
+}
+
+func (s StateOfApplicabilityService) UpdateApplicabilityStatement(
+	ctx context.Context,
+	req UpdateApplicabilityStatementRequest,
+) (*coredata.ApplicabilityStatement, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	err = s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
-		return control.Upsert(ctx, conn, s.svc.scope)
-	})
+	statement := &coredata.ApplicabilityStatement{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := statement.LoadByID(ctx, conn, s.svc.scope, req.ApplicabilityStatementID); err != nil {
+				return fmt.Errorf("cannot load applicability statement: %w", err)
+			}
+
+			statement.Applicability = req.Applicability
+			statement.Justification = req.Justification
+			statement.UpdatedAt = time.Now()
+
+			return statement.Update(ctx, conn, s.svc.scope)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return control, nil
+	return statement, nil
 }
 
-func (s StateOfApplicabilityService) DeleteControlLink(
+func (s StateOfApplicabilityService) DeleteApplicabilityStatement(
+	ctx context.Context,
+	applicabilityStatementID gid.GID,
+) error {
+	statement := &coredata.ApplicabilityStatement{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := statement.LoadByID(ctx, conn, s.svc.scope, applicabilityStatementID); err != nil {
+				return fmt.Errorf("cannot load applicability statement: %w", err)
+			}
+
+			if err := statement.Delete(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot delete applicability statement: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s StateOfApplicabilityService) ListApplicabilityStatements(
 	ctx context.Context,
 	stateOfApplicabilityID gid.GID,
-	controlID gid.GID,
-) (gid.GID, error) {
-	control := &coredata.StateOfApplicabilityControl{}
-
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
-		if err := control.LoadByStateOfApplicabilityIDAndControlID(ctx, conn, s.svc.scope, stateOfApplicabilityID, controlID); err != nil {
-			return err
-		}
-		return control.Delete(ctx, conn, s.svc.scope)
-	})
-	if err != nil {
-		return gid.GID{}, err
-	}
-
-	return control.ID, nil
-}
-
-func (s StateOfApplicabilityService) ListControlLinks(
-	ctx context.Context,
-	controlID gid.GID,
 	cursor *page.Cursor[coredata.StateOfApplicabilityOrderField],
-) (*page.Page[*coredata.StateOfApplicabilityControl, coredata.StateOfApplicabilityOrderField], error) {
-	var controls coredata.StateOfApplicabilityControls
+) (*page.Page[*coredata.ApplicabilityStatement, coredata.StateOfApplicabilityOrderField], error) {
+	var applicabilityStatements coredata.ApplicabilityStatements
 
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return controls.LoadByControlID(ctx, conn, s.svc.scope, controlID, cursor)
-	})
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := applicabilityStatements.LoadByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, cursor); err != nil {
+				return fmt.Errorf("cannot load applicability statements: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return page.NewPage(controls, cursor), nil
+	return page.NewPage(applicabilityStatements, cursor), nil
+}
+
+func (s StateOfApplicabilityService) CountApplicabilityStatements(
+	ctx context.Context,
+	stateOfApplicabilityID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			applicabilityStatements := &coredata.ApplicabilityStatements{}
+			count, err = applicabilityStatements.CountByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID)
+			if err != nil {
+				return fmt.Errorf("cannot count applicability statements: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (s StateOfApplicabilityService) ExportPDF(

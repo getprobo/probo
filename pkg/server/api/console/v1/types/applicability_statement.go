@@ -21,32 +21,29 @@ import (
 )
 
 type (
-	StateOfApplicabilityControlConnection struct {
+	ApplicabilityStatementOrderBy OrderBy[coredata.StateOfApplicabilityOrderField]
+
+	ApplicabilityStatementConnection struct {
 		TotalCount int
-		Edges      []*StateOfApplicabilityControlEdge
+		Edges      []*ApplicabilityStatementEdge
 		PageInfo   PageInfo
 
 		Resolver any
 		ParentID gid.GID
 	}
-
-	StateOfApplicabilityControlEdge struct {
-		Cursor page.CursorKey
-		Node   *StateOfApplicabilityControl
-	}
 )
 
-func NewStateOfApplicabilityControlConnection(
+func NewApplicabilityStatementConnection(
 	p *page.Page[*coredata.ApplicabilityStatement, coredata.StateOfApplicabilityOrderField],
 	parentType any,
 	parentID gid.GID,
-) *StateOfApplicabilityControlConnection {
-	edges := make([]*StateOfApplicabilityControlEdge, len(p.Data))
+) *ApplicabilityStatementConnection {
+	edges := make([]*ApplicabilityStatementEdge, len(p.Data))
 	for i, statement := range p.Data {
-		edges[i] = NewStateOfApplicabilityControlEdge(statement, p.Cursor.OrderBy.Field)
+		edges[i] = NewApplicabilityStatementEdge(statement, p.Cursor.OrderBy.Field)
 	}
 
-	return &StateOfApplicabilityControlConnection{
+	return &ApplicabilityStatementConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -55,25 +52,28 @@ func NewStateOfApplicabilityControlConnection(
 	}
 }
 
-func NewStateOfApplicabilityControlEdge(
+func NewApplicabilityStatementEdge(
 	statement *coredata.ApplicabilityStatement,
 	orderBy coredata.StateOfApplicabilityOrderField,
-) *StateOfApplicabilityControlEdge {
-	return &StateOfApplicabilityControlEdge{
+) *ApplicabilityStatementEdge {
+	return &ApplicabilityStatementEdge{
 		Cursor: statement.CursorKey(orderBy),
-		Node:   NewStateOfApplicabilityControl(statement),
+		Node:   NewApplicabilityStatement(statement),
 	}
 }
 
-func NewStateOfApplicabilityControl(statement *coredata.ApplicabilityStatement) *StateOfApplicabilityControl {
-	return &StateOfApplicabilityControl{
-		ID:                     statement.ID,
-		StateOfApplicabilityID: statement.StateOfApplicabilityID,
+func NewApplicabilityStatement(statement *coredata.ApplicabilityStatement) *ApplicabilityStatement {
+	return &ApplicabilityStatement{
+		ID: statement.ID,
 		StateOfApplicability: &StateOfApplicability{
 			ID: statement.StateOfApplicabilityID,
 		},
-		ControlID:     statement.ControlID,
+		Control: &Control{
+			ID: statement.ControlID,
+		},
 		Applicability: statement.Applicability,
 		Justification: statement.Justification,
+		CreatedAt:     statement.CreatedAt,
+		UpdatedAt:     statement.UpdatedAt,
 	}
 }

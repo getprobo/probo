@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1e93345ca5370e4fdf20719ac86b8078>>
+ * @generated SignedSource<<cfb8a499e31ed5f75438beec971aee78>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,9 +10,13 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type StateOfApplicabilityControlsTabFragment$data = {
+export type ApplicabilityStatementsTabFragment$data = {
+  readonly applicabilityStatementsInfo: {
+    readonly totalCount: number;
+  };
   readonly availableControls: ReadonlyArray<{
     readonly applicability: boolean | null | undefined;
+    readonly applicabilityStatementId: string | null | undefined;
     readonly bestPractice: boolean;
     readonly contractual: boolean;
     readonly controlId: string;
@@ -26,20 +30,17 @@ export type StateOfApplicabilityControlsTabFragment$data = {
     readonly sectionTitle: string;
     readonly stateOfApplicabilityId: string | null | undefined;
   }>;
-  readonly canCreateStateOfApplicabilityControlMapping: boolean;
-  readonly canDeleteStateOfApplicabilityControlMapping: boolean;
-  readonly controlsInfo: {
-    readonly totalCount: number;
-  };
+  readonly canCreateApplicabilityStatement: boolean;
+  readonly canDeleteApplicabilityStatement: boolean;
   readonly id: string;
-  readonly " $fragmentType": "StateOfApplicabilityControlsTabFragment";
+  readonly " $fragmentType": "ApplicabilityStatementsTabFragment";
 };
-export type StateOfApplicabilityControlsTabFragment$key = {
-  readonly " $data"?: StateOfApplicabilityControlsTabFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityControlsTabFragment">;
+export type ApplicabilityStatementsTabFragment$key = {
+  readonly " $data"?: ApplicabilityStatementsTabFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"ApplicabilityStatementsTabFragment">;
 };
 
-import StateOfApplicabilityControlsTabRefetchQuery_graphql from './StateOfApplicabilityControlsTabRefetchQuery.graphql';
+import ApplicabilityStatementsTabRefetchQuery_graphql from './ApplicabilityStatementsTabRefetchQuery.graphql';
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
@@ -50,14 +51,14 @@ const node: ReaderFragment = {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": StateOfApplicabilityControlsTabRefetchQuery_graphql,
+      "operation": ApplicabilityStatementsTabRefetchQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "StateOfApplicabilityControlsTabFragment",
+  "name": "ApplicabilityStatementsTabFragment",
   "selections": [
     {
       "alias": null,
@@ -67,7 +68,7 @@ const node: ReaderFragment = {
       "storageKey": null
     },
     {
-      "alias": "controlsInfo",
+      "alias": "applicabilityStatementsInfo",
       "args": [
         {
           "kind": "Literal",
@@ -75,9 +76,9 @@ const node: ReaderFragment = {
           "value": 0
         }
       ],
-      "concreteType": "ControlConnection",
+      "concreteType": "ApplicabilityStatementConnection",
       "kind": "LinkedField",
-      "name": "controls",
+      "name": "applicabilityStatements",
       "plural": false,
       "selections": [
         {
@@ -88,10 +89,10 @@ const node: ReaderFragment = {
           "storageKey": null
         }
       ],
-      "storageKey": "controls(first:0)"
+      "storageKey": "applicabilityStatements(first:0)"
     },
     {
-      "alias": "canCreateStateOfApplicabilityControlMapping",
+      "alias": "canCreateApplicabilityStatement",
       "args": [
         {
           "kind": "Literal",
@@ -104,7 +105,7 @@ const node: ReaderFragment = {
       "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:create\")"
     },
     {
-      "alias": "canDeleteStateOfApplicabilityControlMapping",
+      "alias": "canDeleteApplicabilityStatement",
       "args": [
         {
           "kind": "Literal",
@@ -170,6 +171,13 @@ const node: ReaderFragment = {
           "alias": null,
           "args": null,
           "kind": "ScalarField",
+          "name": "applicabilityStatementId",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
           "name": "stateOfApplicabilityId",
           "storageKey": null
         },
@@ -223,6 +231,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "37dd1660caf4dea39bb697b99a8bf511";
+(node as any).hash = "8183adc2185e14fe2962c58058bef8ed";
 
 export default node;

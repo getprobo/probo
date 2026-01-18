@@ -14,10 +14,28 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { createStateOfApplicabilityMutation } from "/hooks/graph/StateOfApplicabilityGraph";
-import type { StateOfApplicabilityGraphCreateMutation } from "/__generated__/core/StateOfApplicabilityGraphCreateMutation.graphql";
+import { graphql } from "react-relay";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { Suspense } from "react";
+import type { CreateStateOfApplicabilityDialogMutation } from "/__generated__/core/CreateStateOfApplicabilityDialogMutation.graphql";
+
+const createStateOfApplicabilityMutation = graphql`
+    mutation CreateStateOfApplicabilityDialogMutation(
+        $input: CreateStateOfApplicabilityInput!
+        $connections: [ID!]!
+    ) {
+        createStateOfApplicability(input: $input) {
+            stateOfApplicabilityEdge @prependEdge(connections: $connections) {
+                node {
+                    id
+                    name
+                    createdAt
+                    updatedAt
+                }
+            }
+        }
+    }
+`;
 
 type Props = {
     children: ReactNode;
@@ -48,7 +66,7 @@ export function CreateStateOfApplicabilityDialog({
     const ref = useDialogRef();
 
     const [mutate, isMutating] =
-        useMutationWithToasts<StateOfApplicabilityGraphCreateMutation>(
+        useMutationWithToasts<CreateStateOfApplicabilityDialogMutation>(
             createStateOfApplicabilityMutation,
             {
                 successMessage: __(

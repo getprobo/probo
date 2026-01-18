@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fa19c3e1b91d31188625e48b8b6db7e9>>
+ * @generated SignedSource<<20a01d29fd42966dee5ab7756cbfac74>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type LinkedStatesOfApplicabilityCardFragment$data = {
+export type ControlApplicabilityStatementsCardFragment$data = {
   readonly applicability: boolean;
   readonly controlId: string;
   readonly id: string;
@@ -20,11 +20,11 @@ export type LinkedStatesOfApplicabilityCardFragment$data = {
     readonly name: string;
   };
   readonly stateOfApplicabilityId: string;
-  readonly " $fragmentType": "LinkedStatesOfApplicabilityCardFragment";
+  readonly " $fragmentType": "ControlApplicabilityStatementsCardFragment";
 };
-export type LinkedStatesOfApplicabilityCardFragment$key = {
-  readonly " $data"?: LinkedStatesOfApplicabilityCardFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"LinkedStatesOfApplicabilityCardFragment">;
+export type ControlApplicabilityStatementsCardFragment$key = {
+  readonly " $data"?: ControlApplicabilityStatementsCardFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"ControlApplicabilityStatementsCardFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -39,7 +39,7 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "LinkedStatesOfApplicabilityCardFragment",
+  "name": "ControlApplicabilityStatementsCardFragment",
   "selections": [
     (v0/*: any*/),
     {
@@ -95,6 +95,6 @@ return {
 };
 })();
 
-(node as any).hash = "b9a9922b27f277a769025f11b0829bdc";
+(node as any).hash = "7ba72656cb5ec463a5b853b851d8ad7b";
 
 export default node;

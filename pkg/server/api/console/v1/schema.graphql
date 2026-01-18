@@ -2225,17 +2225,53 @@ type StateOfApplicability implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
 
-    controls(
+    applicabilityStatements(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: ControlOrder
-        filter: ControlFilter
-    ): ControlConnection! @goField(forceResolver: true)
+        orderBy: StateOfApplicabilityOrder
+        filter: StateOfApplicabilityFilter
+    ): ApplicabilityStatementConnection! @goField(forceResolver: true)
+
+    # FIXME: delete this relation
+    # controls(
+    #     first: Int
+    #     after: CursorKey
+    #     last: Int
+    #     before: CursorKey
+    #     orderBy: ControlOrder
+    #     filter: ControlFilter
+    # ): ControlConnection! @goField(forceResolver: true)
 
     availableControls: [AvailableStateOfApplicabilityControl!]!
         @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ApplicabilityStatementConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ApplicabilityStatementConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ApplicabilityStatementEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ApplicabilityStatementEdge {
+    cursor: CursorKey!
+    node: ApplicabilityStatement!
+}
+
+type ApplicabilityStatement implements Node {
+    id: ID!
+    stateOfApplicability: StateOfApplicability! @goField(forceResolver: true)
+    control: Control! @goField(forceResolver: true)
+    applicability: Boolean!
+    justification: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -3124,12 +3160,15 @@ type Mutation {
     deleteControlDocumentMapping(
         input: DeleteControlDocumentMappingInput!
     ): DeleteControlDocumentMappingPayload!
-    createStateOfApplicabilityControlMapping(
-        input: CreateStateOfApplicabilityControlMappingInput!
-    ): CreateStateOfApplicabilityControlMappingPayload!
-    deleteStateOfApplicabilityControlMapping(
-        input: DeleteStateOfApplicabilityControlMappingInput!
-    ): DeleteStateOfApplicabilityControlMappingPayload!
+    createApplicabilityStatement(
+        input: CreateApplicabilityStatementInput!
+    ): CreateApplicabilityStatementPayload!
+    updateApplicabilityStatement(
+        input: UpdateApplicabilityStatementInput!
+    ): UpdateApplicabilityStatementPayload!
+    deleteApplicabilityStatement(
+        input: DeleteApplicabilityStatementInput!
+    ): DeleteApplicabilityStatementPayload!
     createControlAuditMapping(
         input: CreateControlAuditMappingInput!
     ): CreateControlAuditMappingPayload!
@@ -3678,16 +3717,21 @@ input DeleteControlDocumentMappingInput {
     documentId: ID!
 }
 
-input CreateStateOfApplicabilityControlMappingInput {
+input CreateApplicabilityStatementInput {
     stateOfApplicabilityId: ID!
     controlId: ID!
     applicability: Boolean!
     justification: String
 }
 
-input DeleteStateOfApplicabilityControlMappingInput {
-    stateOfApplicabilityId: ID!
-    controlId: ID!
+input UpdateApplicabilityStatementInput {
+    applicabilityStatementId: ID!
+    applicability: Boolean!
+    justification: String
+}
+
+input DeleteApplicabilityStatementInput {
+    applicabilityStatementId: ID!
 }
 
 input CreateControlAuditMappingInput {
@@ -3929,6 +3973,7 @@ type AvailableStateOfApplicabilityControl {
     frameworkId: ID!
     frameworkName: String!
     organizationId: ID!
+    applicabilityStatementId: ID
     stateOfApplicabilityId: ID
     applicability: Boolean
     justification: String
@@ -4466,14 +4511,16 @@ type DeleteControlDocumentMappingPayload {
     deletedDocumentId: ID!
 }
 
-type CreateStateOfApplicabilityControlMappingPayload {
+type CreateApplicabilityStatementPayload {
     stateOfApplicabilityControlEdge: StateOfApplicabilityControlEdge!
 }
 
-type DeleteStateOfApplicabilityControlMappingPayload {
-    deletedStateOfApplicabilityId: ID!
-    deletedControlId: ID!
-    deletedStateOfApplicabilityControlId: ID!
+type UpdateApplicabilityStatementPayload {
+    stateOfApplicabilityControlEdge: StateOfApplicabilityControlEdge!
+}
+
+type DeleteApplicabilityStatementPayload {
+    deletedApplicabilityStatementId: ID!
 }
 
 type CreateControlAuditMappingPayload {
