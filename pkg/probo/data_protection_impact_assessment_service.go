@@ -318,7 +318,7 @@ func (s *DataProtectionImpactAssessmentService) ExportPDF(
 			}
 
 			if len(assessments) == 0 {
-				return coredata.ErrResourceNotFound
+				return fmt.Errorf("no data protection impact assessments found: %w", coredata.ErrResourceNotFound)
 			}
 
 			organization := &coredata.Organization{}

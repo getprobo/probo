@@ -93,6 +93,12 @@ var ViewerPolicy = policy.NewPolicy(
 	policy.Allow(
 		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
+
+	policy.Allow(
+		ActionProcessingActivityExport,
+		ActionDataProtectionImpactAssessmentExport,
+		ActionTransferImpactAssessmentExport,
+	).WithSID("processing-activity-export").When(organizationCondition),
 ).WithDescription("Read-only probo access for organization viewers")
 
 // AuditorPolicy defines permissions for auditor role.
