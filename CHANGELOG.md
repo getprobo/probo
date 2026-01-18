@@ -4,9 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### BREAKING CHANGES
+
+- API keys generated with previous versions are no longer compatible.
+
+### Added
+
+- Add SCIM provisioning support.
+- Add magic link authentication.
+- Add membership disable state.
+- Add ABAC policy.
+
 ### Changed
 
-- Filter junk HTTP TLS server error.
+- Filter junk HTTP TLS server errors.
+- Change API token format.
+- Add session support to compliance page.
+
+### Fixed
+
+- Fix overly strict obligation validation.
 
 ## [0.115.0] - 2026-01-15
 
@@ -308,7 +325,6 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fix 5xx on vendor snapshot.
-
 
 ## [0.91.0] - 2025-11-24
 
@@ -1584,14 +1600,14 @@ Fix typo `mesure` instead of `measure`
 ### Added
 
 - New "Risk assessments" tab for vendors that allows you to:
-  - View all risk assessments for a vendor in one place
-  - Create new risk assessments with data sensitivity and business impact ratings
-  - Track assessment expiration dates
+    - View all risk assessments for a vendor in one place
+    - Create new risk assessments with data sensitivity and business impact ratings
+    - Track assessment expiration dates
 - Automatic people record creation when accepting invitations
 - New vendors in the built-in lists
 - Introduced a connector framework enabling integration with external
   services:
-  - Add OAuth2 connector implementation
+    - Add OAuth2 connector implementation
 
 ### Changed
 
@@ -1655,8 +1671,8 @@ Fix typo `mesure` instead of `measure`
 ### Changed
 
 - Improved vendor detail page with organized sections
-  - Split information into logical sections (Basic Information, Ownership, Risk & Service, Documentation)
-  - Better visual organization of vendor information
+    - Split information into logical sections (Basic Information, Ownership, Risk & Service, Documentation)
+    - Better visual organization of vendor information
 
 ## [0.8.0] - 2025-04-12
 
@@ -1670,9 +1686,9 @@ Fix typo `mesure` instead of `measure`
 ### Added
 
 - Enhanced risk management with inherent and residual risk assessment capabilities
-  - Added new fields to track both inherent and residual likelihood/impact values
-  - Introduced risk severity calculation as the product of likelihood and impact
-  - Added visual risk matrix to view risk distribution by severity
+    - Added new fields to track both inherent and residual likelihood/impact values
+    - Introduced risk severity calculation as the product of likelihood and impact
+    - Added visual risk matrix to view risk distribution by severity
 - New risk-policy mapping functionality allowing risks to be linked to policies
 - New risk-control mapping functionality enabling risks to be linked to controls
 - Added edit functionality for risks with a new edit page
@@ -1701,11 +1717,11 @@ Fix typo `mesure` instead of `measure`
 - New vendor data management system with comprehensive vendor information
 - Pre-populated vendor database with 12 common SaaS vendors and their certifications
 - Vendor details page with extended fields for improved vendor management:
-  - Legal name and headquarters address
-  - Website URL
-  - Certification tracking with tag-based interface
-  - Links to important vendor documents (SLA, DPA, security pages)
-  - Support for multiple compliance certifications per vendor
+    - Legal name and headquarters address
+    - Website URL
+    - Certification tracking with tag-based interface
+    - Links to important vendor documents (SLA, DPA, security pages)
+    - Support for multiple compliance certifications per vendor
 
 ### Fixed
 
@@ -1743,9 +1759,9 @@ Fix typo `mesure` instead of `measure`
 ### BREAKING CHANGES
 
 - **BREAKING:** Renamed GraphQL mutations for control-mitigation mappings:
-  - `createControlMapping` → `createControlMitigationMapping`
-  - `deleteControlMapping` → `deleteControlMitigationMapping`
-  - Input and payload types have been updated accordingly
+    - `createControlMapping` → `createControlMitigationMapping`
+    - `deleteControlMapping` → `deleteControlMitigationMapping`
+    - Input and payload types have been updated accordingly
 
 ### Added
 
@@ -1753,20 +1769,20 @@ Fix typo `mesure` instead of `measure`
 - Add mitigation tasks import.
 - Add auto-scroll to opened category.
 - Added support for mapping controls to policies:
-  - New GraphQL mutations `createControlPolicyMapping` and `deleteControlPolicyMapping`
-  - Controls can now be associated with both mitigations and policies
-  - New bidirectional relationships:
-    - Control objects now expose a `policies` field to list associated policies
-    - Policy objects now expose a `controls` field to list associated controls
+    - New GraphQL mutations `createControlPolicyMapping` and `deleteControlPolicyMapping`
+    - Controls can now be associated with both mitigations and policies
+    - New bidirectional relationships:
+        - Control objects now expose a `policies` field to list associated policies
+        - Policy objects now expose a `controls` field to list associated controls
 - Added vendor compliance reports:
-  - New GraphQL types `VendorComplianceReport` and related connection types
-  - New GraphQL mutations `uploadVendorComplianceReport` and `deleteVendorComplianceReport`
-  - New `complianceReports` field on the Vendor type
-  - Support for uploading, viewing, and managing vendor compliance documentation
+    - New GraphQL types `VendorComplianceReport` and related connection types
+    - New GraphQL mutations `uploadVendorComplianceReport` and `deleteVendorComplianceReport`
+    - New `complianceReports` field on the Vendor type
+    - Support for uploading, viewing, and managing vendor compliance documentation
 - Added pre-configured frameworks:
-  - Added ISO/IEC 27001:2022 and SOC 2 framework templates
-  - Improved framework import interface with dropdown menu for template selection
-  - Support for one-click import of standard compliance frameworks
+    - Added ISO/IEC 27001:2022 and SOC 2 framework templates
+    - Improved framework import interface with dropdown menu for template selection
+    - Support for one-click import of standard compliance frameworks
 
 ### Changed
 
