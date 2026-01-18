@@ -246,15 +246,7 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 
 // Profile is the resolver for the profile field.
 func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error) {
-	if err := r.authorize(ctx, obj.Profile.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyIDSelected(ctx) {
-		return &types.MembershipProfile{
-			ID: obj.Profile.ID,
-		}, nil
-	}
+	// TODO: PorfileID must leave on membership to allow perform the ACL lookup first and load after.
 
 	profile, err := r.iam.AccountService.GetProfileForMembership(ctx, obj.ID)
 	if err != nil {
@@ -265,6 +257,10 @@ func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership)
 
 		r.logger.ErrorCtx(ctx, "cannot get profile for membership", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	if err := r.authorize(ctx, profile.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
 	}
 
 	return types.NewMembershipProfile(profile), nil
