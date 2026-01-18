@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.1] - 2026-01-18
+
+### Fixed
+
+- 5xx on profile loading.
+
 ## [0.116.0] - 2026-01-18
 
 ### BREAKING CHANGES
