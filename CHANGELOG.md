@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.0] - 2026-01-18
+
 ### BREAKING CHANGES
 
 - API keys generated with previous versions are no longer compatible.
