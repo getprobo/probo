@@ -404,7 +404,7 @@ func (s *ProcessingActivityService) ExportPDF(
 			}
 
 			if len(processingActivities) == 0 {
-				return &coredata.ErrNoProcessingActivitiesFound{}
+				return coredata.ErrResourceNotFound
 			}
 
 			organization := &coredata.Organization{}

@@ -27,12 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type ErrNoProcessingActivitiesFound struct{}
-
-func (e ErrNoProcessingActivitiesFound) Error() string {
-	return "no processing activities found"
-}
-
 type (
 	ProcessingActivity struct {
 		ID                                   gid.GID                                          `db:"id"`
