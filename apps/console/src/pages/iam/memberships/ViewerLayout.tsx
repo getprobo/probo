@@ -1,6 +1,6 @@
 import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
-import { CenteredLayout, Layout, Skeleton } from "@probo/ui";
+import { Layout, Skeleton } from "@probo/ui";
 import type { ViewerLayoutQuery } from "/__generated__/iam/ViewerLayoutQuery.graphql";
 import { Suspense } from "react";
 import { ViewerDropdown } from "./_components/ViewerDropdown";
@@ -34,9 +34,7 @@ export function ViewerLayout(props: {
         </div>
       }
     >
-      <CenteredLayout>
-        <Outlet />
-      </CenteredLayout>
+      <Outlet />
     </Layout>
   );
 }

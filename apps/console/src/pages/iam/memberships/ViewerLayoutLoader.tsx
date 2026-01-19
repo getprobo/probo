@@ -1,9 +1,9 @@
 import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
-import { CenteredLayoutSkeleton } from "@probo/ui";
 import type { ViewerLayoutQuery } from "/__generated__/iam/ViewerLayoutQuery.graphql";
 import { ViewerLayout, viewerLayoutQuery } from "./ViewerLayout";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+import { ViewerLayoutLoading } from "./ViewerLayoutLoading";
 
 function ViewerLayoutLoader() {
   const [queryRef, loadQuery] =
@@ -14,11 +14,11 @@ function ViewerLayoutLoader() {
   }, [loadQuery]);
 
   if (!queryRef) {
-    return <CenteredLayoutSkeleton />;
+    return <ViewerLayoutLoading />;
   }
 
   return (
-    <Suspense fallback={<CenteredLayoutSkeleton />}>
+    <Suspense fallback={<ViewerLayoutLoading />}>
       <ViewerLayout queryRef={queryRef} />
     </Suspense>
   );

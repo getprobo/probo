@@ -107,16 +107,14 @@ export function MembershipsPage(props: {
                   {__("Your organizations")}
                 </h2>
               )}
-              {memberships.length > 3 && (
-                <div className="w-full">
-                  <Input
-                    icon={IconMagnifyingGlass}
-                    placeholder={__("Search organizations...")}
-                    value={search}
-                    onValueChange={setSearch}
-                  />
-                </div>
-              )}
+              <div className="w-full">
+                <Input
+                  icon={IconMagnifyingGlass}
+                  placeholder={__("Search organizations...")}
+                  value={search}
+                  onValueChange={setSearch}
+                />
+              </div>
               {memberships.length === 0 ? (
                 <div className="text-center text-txt-secondary py-4">
                   {__("No organizations found")}

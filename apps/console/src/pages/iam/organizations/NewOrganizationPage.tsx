@@ -1,8 +1,15 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Field, PageHeader, useToast } from "@probo/ui";
+import {
+  Button,
+  Card,
+  Field,
+  IconChevronLeft,
+  PageHeader,
+  useToast,
+} from "@probo/ui";
 import { graphql, useMutation } from "react-relay";
 import type { FormEventHandler } from "react";
-import { useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { formatError } from "@probo/helpers";
 import type { NewOrganizationPageMutation } from "/__generated__/iam/NewOrganizationPageMutation.graphql";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
@@ -19,6 +26,7 @@ const createOrganizationMutation = graphql`
 `;
 
 function NewOrganizationPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { __ } = useTranslate();
@@ -75,6 +83,13 @@ function NewOrganizationPage() {
 
   return (
     <div className="space-y-6">
+      <Link
+        to={location.state?.from ?? "/"}
+        className="mb-4 inline-flex gap-2 items-center"
+      >
+        <IconChevronLeft size={16} />
+        {__("Back")}
+      </Link>
       <PageHeader
         title={__("Create Organization")}
         description={__(

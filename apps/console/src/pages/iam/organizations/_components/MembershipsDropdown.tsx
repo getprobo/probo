@@ -15,7 +15,7 @@ import {
 import { Suspense, useCallback, useState } from "react";
 import { useTranslate } from "@probo/i18n";
 import type { MembershipsDropdownMenuQuery } from "/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import type { MembershipsDropdown_organizationFragment$key } from "/__generated__/iam/MembershipsDropdown_organizationFragment.graphql";
 import type { MembershipsDropdown_viewerFragment$key } from "/__generated__/iam/MembershipsDropdown_viewerFragment.graphql";
 import {
@@ -42,6 +42,7 @@ export function MembershipsDropdown(props: {
 }) {
   const { organizationFKey, viewerFKey } = props;
 
+  const location = useLocation();
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
 
@@ -119,7 +120,7 @@ export function MembershipsDropdown(props: {
           </DropdownItem>
         )}
         <DropdownItem asChild>
-          <Link to="/organizations/new">
+          <Link to="/organizations/new" state={{ from: location.pathname }}>
             <IconPlusLarge size={16} />
             {__("Add organization")}
           </Link>

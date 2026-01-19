@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 
 - Missing console react-pdf dependency in package.json
 - On sign out, clear cookie along with the existing session expiration
+- Remove conditional rendering of org search input on console
+- Fix organizations page layout vertical alignment
 
 ## [0.116.1] - 2026-01-18
 

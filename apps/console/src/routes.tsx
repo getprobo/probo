@@ -4,7 +4,6 @@ import {
   redirect,
   useRouteError,
 } from "react-router";
-import { CenteredLayoutSkeleton } from "@probo/ui";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
@@ -36,6 +35,8 @@ import {
 } from "@probo/relay";
 import { CurrentUser } from "./providers/CurrentUser.tsx";
 import { use } from "react";
+import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading.tsx";
+import { CenteredLayout } from "@probo/ui";
 
 /**
  * Top level error boundary
@@ -104,7 +105,7 @@ const routes = [
   {
     path: "/",
     Component: lazy(() => import("./pages/iam/memberships/ViewerLayoutLoader")),
-    Fallback: CenteredLayoutSkeleton,
+    Fallback: ViewerLayoutLoading,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
@@ -114,18 +115,27 @@ const routes = [
         ),
       },
       {
-        path: "organizations/new",
-        Component: lazy(
-          () => import("./pages/iam/organizations/NewOrganizationPage"),
-        ),
-      },
-      {
-        path: "documents/signing-requests",
-        Component: lazy(() => import("./pages/DocumentSigningRequestsPage")),
-      },
-      {
-        path: "me/api-keys",
-        Component: lazy(() => import("./pages/iam/apiKeys/APIKeysPageLoader")),
+        Component: CenteredLayout,
+        children: [
+          {
+            path: "organizations/new",
+            Component: lazy(
+              () => import("./pages/iam/organizations/NewOrganizationPage"),
+            ),
+          },
+          {
+            path: "documents/signing-requests",
+            Component: lazy(
+              () => import("./pages/DocumentSigningRequestsPage"),
+            ),
+          },
+          {
+            path: "me/api-keys",
+            Component: lazy(
+              () => import("./pages/iam/apiKeys/APIKeysPageLoader"),
+            ),
+          },
+        ],
       },
     ],
   },
