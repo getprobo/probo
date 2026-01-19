@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d0098f8499fc70b98d7264cb756b2c6b>>
+ * @generated SignedSource<<81b275e4cf4b88d7d9e797f5ae20a163>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -67,7 +67,7 @@ return {
     {
       "defaultValue": {
         "direction": "ASC",
-        "field": "CREATED_AT"
+        "field": "FULL_NAME"
       },
       "kind": "LocalArgument",
       "name": "order"
@@ -239,6 +239,6 @@ return {
 };
 })();
 
-(node as any).hash = "763331f25e735e2645b0c6949ecad362";
+(node as any).hash = "c1af7d267ca5d53454869cc8fbf4420c";
 
 export default node;

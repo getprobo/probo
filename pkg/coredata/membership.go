@@ -450,8 +450,6 @@ WITH mbr AS (
         identity_id = @identity_id
         AND state = 'ACTIVE'
         AND %s
-    ORDER BY
-        created_at DESC
 )
 SELECT
     mbr.id,
@@ -508,47 +506,45 @@ func (m *Memberships) LoadByOrganizationID(
 	filter *MembershipFilter,
 ) error {
 	query := `
-WITH membership_with_profile AS (
+WITH m AS (
     SELECT
-        m.id,
-        m.identity_id,
-        m.organization_id,
-        m.role,
-        m.source,
-        m.state,
-        COALESCE(mp.full_name, i.full_name, '') AS full_name,
-        i.email_address,
-        o.name as organization_name,
-        m.created_at,
-        m.updated_at
+        id,
+        identity_id,
+        organization_id,
+        role,
+        source,
+        state,
+        created_at,
+        updated_at
     FROM
-        iam_memberships m
-    JOIN
-        identities i ON m.identity_id = i.id
-    JOIN
-        organizations o ON mbr.organization_id = o.id
-    LEFT JOIN
-        iam_membership_profiles mp ON mp.membership_id = m.id
+        iam_memberships
     WHERE
-        m.organization_id = @organization_id
-        AND m.%s
+        organization_id = @organization_id
         AND %s
 )
 SELECT
-    id,
-    identity_id,
-    organization_id,
-    role,
-    source,
-    state,
-    full_name,
-    email_address,
-    created_at,
-    updated_at
+    m.id,
+    m.identity_id,
+    m.organization_id,
+    m.role,
+    m.source,
+    m.state,
+    COALESCE(mp.full_name, i.full_name, '') as full_name,
+    o.name as organization_name,
+    i.email_address,
+    m.created_at,
+    m.updated_at
 FROM
-    membership_with_profile
+    m
+JOIN
+    identities i ON m.identity_id = i.id
+JOIN
+    organizations o ON m.organization_id = o.id
+LEFT JOIN
+    iam_membership_profiles mp ON mp.membership_id = m.id
 WHERE
     %s
+    AND %s
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())

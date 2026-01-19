@@ -16,14 +16,14 @@ export const membersPageQuery = graphql`
       ... on Organization {
         canInviteUser: permission(action: "iam:invitation:create")
         ...MemberListFragment
-          @arguments(first: 20, order: { direction: ASC, field: CREATED_AT })
-        members(first: 20, orderBy: { direction: ASC, field: CREATED_AT })
+          @arguments(first: 20, order: { direction: ASC, field: FULL_NAME })
+        members(first: 20, orderBy: { direction: ASC, field: FULL_NAME })
           @required(action: THROW) {
           totalCount
         }
         ...InvitationListFragment
-          @arguments(first: 20, order: { direction: ASC, field: CREATED_AT })
-        invitations(first: 20, orderBy: { direction: ASC, field: CREATED_AT })
+          @arguments(first: 20, order: { direction: DESC, field: CREATED_AT })
+        invitations(first: 20, orderBy: { direction: DESC, field: CREATED_AT })
           @required(action: THROW) {
           totalCount
           ...MembersPage_invitationsTotalCountFragment

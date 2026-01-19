@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ccb5c8952aaa41ddee0df7e7e3abb2b0>>
+ * @generated SignedSource<<6205161c89403b10363ea54bbb10ccea>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -63,7 +63,7 @@ v4 = {
 v5 = {
   "defaultValue": {
     "direction": "ASC",
-    "field": "CREATED_AT"
+    "field": "FULL_NAME"
   },
   "kind": "LocalArgument",
   "name": "order"
@@ -403,16 +403,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bb44371bed2eb3032b52ea5bbb3109c1",
+    "cacheID": "8089993871afc0b3d2c0defd9182c31a",
     "id": null,
     "metadata": {},
     "name": "MemberListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  source\n  state\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n"
+    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  source\n  state\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "763331f25e735e2645b0c6949ecad362";
+(node as any).hash = "c1af7d267ca5d53454869cc8fbf4420c";
 
 export default node;

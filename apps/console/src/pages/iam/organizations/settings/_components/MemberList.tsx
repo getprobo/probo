@@ -14,7 +14,7 @@ const fragment = graphql`
     first: { type: "Int", defaultValue: 20 }
     order: {
       type: "MembershipOrder"
-      defaultValue: { direction: ASC, field: CREATED_AT }
+      defaultValue: { direction: ASC, field: FULL_NAME }
     }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
