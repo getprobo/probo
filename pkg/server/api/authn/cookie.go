@@ -34,8 +34,8 @@ func (c *Cookie) Set(w http.ResponseWriter, session *coredata.Session) {
 	)
 }
 
-func (c *Cookie) Clear(w http.ResponseWriter, session *coredata.Session) {
-	securecookie.Clear(w, c.sessionCookieConfig(time.Until(session.ExpiredAt)))
+func (c *Cookie) Clear(w http.ResponseWriter) {
+	securecookie.Clear(w, c.sessionCookieConfig(-1*time.Second))
 }
 
 func NewCookie(config *securecookie.Config) *Cookie {

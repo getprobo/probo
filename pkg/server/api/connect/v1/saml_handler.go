@@ -16,14 +16,19 @@ import (
 )
 
 type SAMLHandler struct {
-	iam          *iam.Service
-	cookieConfig securecookie.Config
-	baseURL      *baseurl.BaseURL
-	logger       *log.Logger
+	iam           *iam.Service
+	sessionCookie *authn.Cookie
+	baseURL       *baseurl.BaseURL
+	logger        *log.Logger
 }
 
 func NewSAMLHandler(iam *iam.Service, cookieConfig securecookie.Config, baseURL *baseurl.BaseURL, logger *log.Logger) *SAMLHandler {
-	return &SAMLHandler{iam: iam, cookieConfig: cookieConfig, baseURL: baseURL, logger: logger}
+	return &SAMLHandler{
+		iam:           iam,
+		sessionCookie: authn.NewCookie(&cookieConfig),
+		baseURL:       baseURL,
+		logger:        logger,
+	}
 }
 
 func (h *SAMLHandler) renderInternalServerError(w http.ResponseWriter, r *http.Request) {
@@ -98,11 +103,8 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := securecookie.Set(w, h.cookieConfig, rootSession.ID.String()); err != nil {
-		h.logger.ErrorCtx(ctx, "cannot set cookie", log.Error(err))
-		h.renderInternalServerError(w, r)
-		return
-	}
+	h.sessionCookie.Set(w, rootSession)
+
 	redirectURL := h.baseURL.WithPath("/organizations/" + membership.OrganizationID.String()).MustString()
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }

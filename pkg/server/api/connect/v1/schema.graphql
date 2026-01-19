@@ -46,7 +46,7 @@ type Query {
   viewer: Identity @session(required: PRESENT)
   ssoLoginURL(email: EmailAddr!): String
     @goField(forceResolver: true)
-    @session(required: NONE)
+    @session(required: OPTIONAL)
 }
 
 type Mutation {

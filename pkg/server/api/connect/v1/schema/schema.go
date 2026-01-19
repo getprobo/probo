@@ -2321,7 +2321,7 @@ type Query {
   viewer: Identity @session(required: PRESENT)
   ssoLoginURL(email: EmailAddr!): String
     @goField(forceResolver: true)
-    @session(required: NONE)
+    @session(required: OPTIONAL)
 }
 
 type Mutation {
@@ -9540,7 +9540,7 @@ func (ec *executionContext) _Query_ssoLoginURL(ctx context.Context, field graphq
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "OPTIONAL")
 				if err != nil {
 					var zeroVal *string
 					return zeroVal, err

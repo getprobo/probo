@@ -427,7 +427,7 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 	}
 
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	r.sessionCookie.Clear(w, session)
+	r.sessionCookie.Clear(w)
 
 	return &types.SignOutPayload{Success: true}, nil
 }
