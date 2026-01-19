@@ -843,7 +843,7 @@ func (s AccountService) GetProfileForMembership(ctx context.Context, membershipI
 			membership := &coredata.Membership{}
 			err := membership.LoadByID(ctx, conn, scope, membershipID)
 			if err != nil {
-				if err == coredata.ErrResourceNotFound {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return NewMembershipNotFoundError(membershipID)
 				}
 
@@ -852,11 +852,11 @@ func (s AccountService) GetProfileForMembership(ctx context.Context, membershipI
 
 			err = profile.LoadByMembershipID(ctx, conn, scope, membershipID)
 			if err != nil {
-				if err == coredata.ErrResourceNotFound {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return NewProfileNotFoundError(membershipID)
 				}
 
-				return fmt.Errorf("cannot load identity profile: %w", err)
+				return fmt.Errorf("cannot load membership profile: %w", err)
 			}
 
 			return nil

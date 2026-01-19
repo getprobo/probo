@@ -246,21 +246,19 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 
 // Profile is the resolver for the profile field.
 func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error) {
-	// TODO: PorfileID must leave on membership to allow perform the ACL lookup first and load after.
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
+	}
 
 	profile, err := r.iam.AccountService.GetProfileForMembership(ctx, obj.ID)
 	if err != nil {
 		var errProfileNotFound *iam.ErrProfileNotFound
 		if errors.As(err, &errProfileNotFound) {
-			return nil, nil
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get profile for membership", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
-	}
-
-	if err := r.authorize(ctx, profile.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
 	}
 
 	return types.NewMembershipProfile(profile), nil

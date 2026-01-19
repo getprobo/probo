@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Membership Profile authz done from membership in membershipResolver (it's a 1:1 association)
+
 ## [0.116.1] - 2026-01-18
 
 ### Fixed
