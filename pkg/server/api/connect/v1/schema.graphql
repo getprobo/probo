@@ -412,6 +412,10 @@ enum MembershipOrderField
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
     )
+  ORGANIZATION_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldOrganizationName"
+    )
   EMAIL_ADDRESS
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"

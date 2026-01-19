@@ -31,16 +31,17 @@ import (
 
 type (
 	Membership struct {
-		ID             gid.GID          `db:"id"`
-		IdentityID     gid.GID          `db:"identity_id"`
-		OrganizationID gid.GID          `db:"organization_id"`
-		Role           MembershipRole   `db:"role"`
-		Source         MembershipSource `db:"source"`
-		State          MembershipState  `db:"state"`
-		FullName       string           `db:"full_name"`
-		EmailAddress   mail.Addr        `db:"email_address"`
-		CreatedAt      time.Time        `db:"created_at"`
-		UpdatedAt      time.Time        `db:"updated_at"`
+		ID               gid.GID          `db:"id"`
+		IdentityID       gid.GID          `db:"identity_id"`
+		OrganizationID   gid.GID          `db:"organization_id"`
+		Role             MembershipRole   `db:"role"`
+		Source           MembershipSource `db:"source"`
+		State            MembershipState  `db:"state"`
+		FullName         string           `db:"full_name"`
+		EmailAddress     mail.Addr        `db:"email_address"`
+		OrganizationName string           `db:"organization_name"`
+		CreatedAt        time.Time        `db:"created_at"`
+		UpdatedAt        time.Time        `db:"updated_at"`
 	}
 
 	Memberships []*Membership
@@ -48,6 +49,8 @@ type (
 
 func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 	switch orderBy {
+	case MembershipOrderFieldOrganizationName:
+		return page.NewCursorKey(m.ID, m.OrganizationName)
 	case MembershipOrderFieldFullName:
 		return page.NewCursorKey(m.ID, m.FullName)
 	case MembershipOrderFieldEmailAddress:
@@ -88,11 +91,13 @@ SELECT
     mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
+    o.name AS organization_name,
     mbr.created_at,
     mbr.updated_at
 FROM
     mbr
 JOIN identities i ON mbr.identity_id = i.id
+JOIN organizations o ON mbr.organization_id = o.id
 LEFT JOIN iam_membership_profiles mp ON mp.membership_id = mbr.id
 `
 
@@ -207,12 +212,15 @@ SELECT
     mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
+    o.name as organization_name,
     mbr.created_at,
     mbr.updated_at
 FROM
     mbr
 JOIN
     identities i ON mbr.identity_id = i.id
+JOIN
+    organizations o ON mbr.organization_id = o.id
 LEFT JOIN
     iam_membership_profiles mp ON mp.membership_id = mbr.id
 `
@@ -314,12 +322,15 @@ SELECT
     mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
+    o.name as organization_name,
     mbr.created_at,
     mbr.updated_at
 FROM
     mbr
 JOIN
     identities i ON mbr.identity_id = i.id
+JOIN
+    organizations o ON mbr.organization_id = o.id
 LEFT JOIN
     iam_membership_profiles mp ON mp.membership_id = mbr.id
 `
@@ -451,12 +462,15 @@ SELECT
     mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
+    o.name as organization_name,
     mbr.created_at,
     mbr.updated_at
 FROM
     mbr
 JOIN
     identities i ON mbr.identity_id = i.id
+JOIN
+    organizations o ON mbr.organization_id = o.id
 LEFT JOIN
     iam_membership_profiles mp ON mp.membership_id = mbr.id
 WHERE
@@ -504,12 +518,15 @@ WITH membership_with_profile AS (
         m.state,
         COALESCE(mp.full_name, i.full_name, '') AS full_name,
         i.email_address,
+        o.name as organization_name,
         m.created_at,
         m.updated_at
     FROM
         iam_memberships m
     JOIN
         identities i ON m.identity_id = i.id
+    JOIN
+        organizations o ON mbr.organization_id = o.id
     LEFT JOIN
         iam_membership_profiles mp ON mp.membership_id = m.id
     WHERE
@@ -632,6 +649,7 @@ SELECT
     state,
     '' as full_name,
     NULL as email_address,
+    '' as organization_name,
     created_at,
     updated_at
 FROM

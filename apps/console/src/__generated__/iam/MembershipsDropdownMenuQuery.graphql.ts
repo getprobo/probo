@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b51fba8f2d50c85b2eeb51c658d82e17>>
+ * @generated SignedSource<<a7fb3832b9c9d3830ceff389237da093>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -42,8 +42,8 @@ var v0 = [
     "kind": "Literal",
     "name": "orderBy",
     "value": {
-      "direction": "DESC",
-      "field": "CREATED_AT"
+      "direction": "ASC",
+      "field": "ORGANIZATION_NAME"
     }
   }
 ],
@@ -141,7 +141,7 @@ return {
                     "action": "THROW"
                   }
                 ],
-                "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
               },
               "action": "THROW"
             }
@@ -239,7 +239,7 @@ return {
                 "storageKey": null
               }
             ],
-            "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+            "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
           },
           (v1/*: any*/)
         ],
@@ -248,16 +248,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "edb71632c35f1f8aefa1bb426c81a985",
+    "cacheID": "9295fb9d95666f4b397645e143b7e774",
     "id": null,
     "metadata": {},
     "name": "MembershipsDropdownMenuQuery",
     "operationKind": "query",
-    "text": "query MembershipsDropdownMenuQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            id\n          }\n          ...MembershipsDropdownMenuItemFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    logoUrl\n    name\n  }\n}\n"
+    "text": "query MembershipsDropdownMenuQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            id\n          }\n          ...MembershipsDropdownMenuItemFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    logoUrl\n    name\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "aa787b33a7cb3046d30fd638f4850621";
+(node as any).hash = "cd47570a10588c0e1c68240817141fd8";
 
 export default node;

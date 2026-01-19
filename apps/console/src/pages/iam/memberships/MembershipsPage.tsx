@@ -16,7 +16,10 @@ import { usePageTitle } from "@probo/hooks";
 export const membershipsPageQuery = graphql`
   query MembershipsPageQuery {
     viewer @required(action: THROW) {
-      memberships(first: 1000, orderBy: { direction: DESC, field: CREATED_AT })
+      memberships(
+        first: 1000
+        orderBy: { direction: ASC, field: ORGANIZATION_NAME }
+      )
         @connection(key: "MembershipsPage_memberships")
         @required(action: THROW) {
         __id

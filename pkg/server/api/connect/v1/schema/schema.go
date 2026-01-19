@@ -2687,6 +2687,10 @@ enum MembershipOrderField
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
     )
+  ORGANIZATION_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldOrganizationName"
+    )
   EMAIL_ADDRESS
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
@@ -20088,16 +20092,18 @@ func (ec *executionContext) marshalNMembershipOrderField2goᚗproboᚗincᚋprob
 
 var (
 	unmarshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField = map[string]coredata.MembershipOrderField{
-		"FULL_NAME":     coredata.MembershipOrderFieldFullName,
-		"EMAIL_ADDRESS": coredata.MembershipOrderFieldEmailAddress,
-		"ROLE":          coredata.MembershipOrderFieldRole,
-		"CREATED_AT":    coredata.MembershipOrderFieldCreatedAt,
+		"FULL_NAME":         coredata.MembershipOrderFieldFullName,
+		"ORGANIZATION_NAME": coredata.MembershipOrderFieldOrganizationName,
+		"EMAIL_ADDRESS":     coredata.MembershipOrderFieldEmailAddress,
+		"ROLE":              coredata.MembershipOrderFieldRole,
+		"CREATED_AT":        coredata.MembershipOrderFieldCreatedAt,
 	}
 	marshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField = map[coredata.MembershipOrderField]string{
-		coredata.MembershipOrderFieldFullName:     "FULL_NAME",
-		coredata.MembershipOrderFieldEmailAddress: "EMAIL_ADDRESS",
-		coredata.MembershipOrderFieldRole:         "ROLE",
-		coredata.MembershipOrderFieldCreatedAt:    "CREATED_AT",
+		coredata.MembershipOrderFieldFullName:         "FULL_NAME",
+		coredata.MembershipOrderFieldOrganizationName: "ORGANIZATION_NAME",
+		coredata.MembershipOrderFieldEmailAddress:     "EMAIL_ADDRESS",
+		coredata.MembershipOrderFieldRole:             "ROLE",
+		coredata.MembershipOrderFieldCreatedAt:        "CREATED_AT",
 	}
 )
 

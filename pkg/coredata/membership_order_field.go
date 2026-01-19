@@ -19,14 +19,17 @@ type (
 )
 
 const (
-	MembershipOrderFieldFullName     MembershipOrderField = "FULL_NAME"
-	MembershipOrderFieldEmailAddress MembershipOrderField = "EMAIL_ADDRESS"
-	MembershipOrderFieldRole         MembershipOrderField = "ROLE"
-	MembershipOrderFieldCreatedAt    MembershipOrderField = "CREATED_AT"
+	MembershipOrderFieldOrganizationName MembershipOrderField = "ORGANIZATION_NAME"
+	MembershipOrderFieldFullName         MembershipOrderField = "FULL_NAME"
+	MembershipOrderFieldEmailAddress     MembershipOrderField = "EMAIL_ADDRESS"
+	MembershipOrderFieldRole             MembershipOrderField = "ROLE"
+	MembershipOrderFieldCreatedAt        MembershipOrderField = "CREATED_AT"
 )
 
 func (p MembershipOrderField) Column() string {
 	switch p {
+	case MembershipOrderFieldOrganizationName:
+		return "organization_name"
 	case MembershipOrderFieldFullName:
 		return "full_name"
 	case MembershipOrderFieldEmailAddress:

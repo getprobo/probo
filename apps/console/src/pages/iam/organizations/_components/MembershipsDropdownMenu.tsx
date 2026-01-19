@@ -6,8 +6,10 @@ import { MembershipsDropdownMenuItem } from "./MembershipsDropdownMenuItem";
 export const membershipsDropdownMenuQuery = graphql`
   query MembershipsDropdownMenuQuery {
     viewer @required(action: THROW) {
-      memberships(first: 1000, orderBy: { direction: DESC, field: CREATED_AT })
-        @required(action: THROW) {
+      memberships(
+        first: 1000
+        orderBy: { direction: ASC, field: ORGANIZATION_NAME }
+      ) @required(action: THROW) {
         edges @required(action: THROW) {
           node @required(action: THROW) {
             id
