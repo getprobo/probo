@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Membership Profile authz done from membership in membershipResolver (it's a 1:1 association)
 - Match keycloak URL ports with default base URL one for local dev
+- Drop the authentication dialog in favor of a dedicated auth page for compliance page
 
 ### Fixed
 
