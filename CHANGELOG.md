@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Missing console react-pdf dependency in package.json
+- On sign out, clear cookie along with the existing session expiration
 
 ## [0.116.1] - 2026-01-18
 
