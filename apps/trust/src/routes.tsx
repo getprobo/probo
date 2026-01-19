@@ -32,6 +32,10 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
 
 const routes = [
   {
+    path: "/connect",
+    Component: lazy(() => import("./pages/auth/ConnectPageLoader.tsx")),
+  },
+  {
     path: "/verify-magic-link",
     Component: lazy(() => import("./pages/auth/VerifyMagicLinkPage.tsx")),
   },

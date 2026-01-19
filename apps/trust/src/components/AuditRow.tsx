@@ -21,7 +21,6 @@ import { downloadFile, formatError } from "@probo/helpers";
 import { type PropsWithChildren, use, useState } from "react";
 import { useLocation } from "react-router";
 import { Viewer } from "/providers/Viewer";
-import { MagicLinkDialog } from "./MagicLinkDialog";
 import type { AuditRow_requestAccessMutation } from "./__generated__/AuditRow_requestAccessMutation.graphql";
 
 const requestAccessMutation = graphql`
@@ -150,15 +149,14 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
           {hasRequested ? __("Access requested") : __("Request access")}
         </Button>
       ) : (
-        <MagicLinkDialog>
-          <Button
-            className="w-full md:w-max"
-            variant="secondary"
-            icon={IconLock}
-          >
-            {hasRequested ? __("Access requested") : __("Request access")}
-          </Button>
-        </MagicLinkDialog>
+        <Button
+          className="w-full md:w-max"
+          variant="secondary"
+          icon={IconLock}
+          to="/connect"
+        >
+          {hasRequested ? __("Access requested") : __("Request access")}
+        </Button>
       )}
     </div>
   );

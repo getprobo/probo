@@ -11,7 +11,6 @@ import { use, type PropsWithChildren } from "react";
 import { domain, formatError } from "@probo/helpers";
 import { AuditRowAvatar } from "./AuditRow";
 import { Viewer } from "/providers/Viewer";
-import { MagicLinkDialog } from "./MagicLinkDialog";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
@@ -160,15 +159,15 @@ export function OrganizationSidebar({
             {__("Request access")}
           </Button>
         ) : (
-          <MagicLinkDialog>
-            <Button variant="primary" icon={IconLock} className="w-full h-10">
-              {__("Request access")}
-            </Button>
-          </MagicLinkDialog>
+          <Button
+            variant="primary"
+            icon={IconLock}
+            className="w-full h-10"
+            to="/connect"
+          >
+            {__("Request access")}
+          </Button>
         )}
-        {/* <Button variant="secondary" icon={IconMail} className="w-full h-10">
-          {__("Subscribe to updates")}
-        </Button>*/}
       </div>
     </Card>
   );

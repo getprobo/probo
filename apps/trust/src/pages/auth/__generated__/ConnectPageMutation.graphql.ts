@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1d6509148442dad28e2af20068216f49>>
+ * @generated SignedSource<<bcbab3713eaca3141e6dfb8f54a54e7d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,17 +12,17 @@ import { ConcreteRequest } from 'relay-runtime';
 export type SendMagicLinkInput = {
   email: any;
 };
-export type MagicLinkDialogMutation$variables = {
+export type ConnectPageMutation$variables = {
   input: SendMagicLinkInput;
 };
-export type MagicLinkDialogMutation$data = {
+export type ConnectPageMutation$data = {
   readonly sendMagicLink: {
     readonly success: boolean;
   } | null | undefined;
 };
-export type MagicLinkDialogMutation = {
-  response: MagicLinkDialogMutation$data;
-  variables: MagicLinkDialogMutation$variables;
+export type ConnectPageMutation = {
+  response: ConnectPageMutation$data;
+  variables: ConnectPageMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -64,7 +64,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "MagicLinkDialogMutation",
+    "name": "ConnectPageMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -73,20 +73,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "MagicLinkDialogMutation",
+    "name": "ConnectPageMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "d0e02db0cec956d7a21f5ad5a5a69d61",
+    "cacheID": "95987f897611118fa771a2e54cb43b66",
     "id": null,
     "metadata": {},
-    "name": "MagicLinkDialogMutation",
+    "name": "ConnectPageMutation",
     "operationKind": "mutation",
-    "text": "mutation MagicLinkDialogMutation(\n  $input: SendMagicLinkInput!\n) {\n  sendMagicLink(input: $input) {\n    success\n  }\n}\n"
+    "text": "mutation ConnectPageMutation(\n  $input: SendMagicLinkInput!\n) {\n  sendMagicLink(input: $input) {\n    success\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c1ee1fe3ef7c232fcb43b5cf8e56c2de";
+(node as any).hash = "4680fea978582bb020b4613737c14d9a";
 
 export default node;

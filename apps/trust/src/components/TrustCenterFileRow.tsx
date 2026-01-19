@@ -15,7 +15,6 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { downloadFile, formatError } from "@probo/helpers";
 import { use, useState } from "react";
 import { Viewer } from "/providers/Viewer";
-import { MagicLinkDialog } from "./MagicLinkDialog";
 import type { TrustCenterFileRow_requestAccessMutation } from "./__generated__/TrustCenterFileRow_requestAccessMutation.graphql";
 
 const requestAccessMutation = graphql`
@@ -139,15 +138,14 @@ export function TrustCenterFileRow(props: {
           {hasRequested ? __("Access requested") : __("Request access")}
         </Button>
       ) : (
-        <MagicLinkDialog>
-          <Button
-            className="w-full md:w-max"
-            variant="secondary"
-            icon={IconLock}
-          >
-            {hasRequested ? __("Access requested") : __("Request access")}
-          </Button>
-        </MagicLinkDialog>
+        <Button
+          className="w-full md:w-max"
+          variant="secondary"
+          icon={IconLock}
+          to="/connect"
+        >
+          {hasRequested ? __("Access requested") : __("Request access")}
+        </Button>
       )}
     </div>
   );

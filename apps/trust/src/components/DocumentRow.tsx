@@ -14,7 +14,6 @@ import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDow
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { downloadFile, formatError } from "@probo/helpers";
 import { use, useState } from "react";
-import { MagicLinkDialog } from "./MagicLinkDialog";
 import { Viewer } from "/providers/Viewer";
 import type { DocumentRow_requestAccessMutation } from "./__generated__/DocumentRow_requestAccessMutation.graphql";
 
@@ -135,15 +134,14 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
           {hasRequested ? __("Access requested") : __("Request access")}
         </Button>
       ) : (
-        <MagicLinkDialog>
-          <Button
-            className="w-full md:w-max"
-            variant="secondary"
-            icon={IconLock}
-          >
-            {hasRequested ? __("Access requested") : __("Request access")}
-          </Button>
-        </MagicLinkDialog>
+        <Button
+          className="w-full md:w-max"
+          variant="secondary"
+          icon={IconLock}
+          to="/connect"
+        >
+          {hasRequested ? __("Access requested") : __("Request access")}
+        </Button>
       )}
     </div>
   );
