@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Membership Profile authz done from membership in membershipResolver (it's a 1:1 association)
+- Match keycloak URL ports with default base URL one for local dev
 
 ### Fixed
 
