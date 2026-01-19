@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.4] - 2026-01-19
+
+### Changed
+
+- Clean child sessions in IAM memberships migration
+
 ## [0.116.3] - 2026-01-19
 
 ### Fixed

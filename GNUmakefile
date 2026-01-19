@@ -19,7 +19,7 @@ DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
 
 DOCKER_COMPOSE=	$(DOCKER) compose -f compose.yaml $(DOCKER_COMPOSE_FLAGS)
 
-VERSION=	0.116.3
+VERSION=	0.116.4
 LDFLAGS=	-ldflags "-X 'main.version=$(VERSION)' -X 'main.env=prod'"
 GCFLAGS=	-gcflags="-e"
 
