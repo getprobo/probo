@@ -29,7 +29,7 @@ require (
 	github.com/xuri/excelize/v2 v2.10.0
 	github.com/yuin/goldmark v1.7.13
 	go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712
-	go.gearno.de/kit v0.0.0-20260116154805-6b6194bc4d9b
+	go.gearno.de/kit v0.0.0-20260119152143-cbebe9788baa
 	go.gearno.de/x/ref v0.0.0-20240502200927-d74926fcb14c
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
