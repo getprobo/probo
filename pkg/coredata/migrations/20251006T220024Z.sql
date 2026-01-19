@@ -34,7 +34,7 @@ CREATE TABLE authz_invitations (
 INSERT INTO authz_memberships (tenant_id, id, user_id, organization_id, role, created_at, updated_at)
 SELECT
     organizations.tenant_id,
-    generate_gid(decode_base64_unpadded(organizations.tenant_id), 38) as id,
+    generate_gid(decode_base64_unpadded(organizations.tenant_id), 39) as id,
     users_organizations.user_id,
     users_organizations.organization_id,
     'MEMBER'::authz_role as role,  -- Default role for existing memberships

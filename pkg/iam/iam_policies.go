@@ -135,7 +135,10 @@ var IAMOwnerPolicy = policy.NewPolicy(
 		ActionMembershipDelete,
 	).
 		WithSID("membership-deletion-owner-access").
-		When(policy.NotEquals("resource.source", "SCIM")),
+		When(
+			policy.Equals("principal.organization_id", "resource.organization_id"),
+			policy.NotEquals("resource.source", "SCIM"),
+		),
 
 	// Can set other members OWNER
 	policy.Allow(ActionMembershipRoleSetOwner).
