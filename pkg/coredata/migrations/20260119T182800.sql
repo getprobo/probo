@@ -50,13 +50,24 @@ updated_profiles AS (
         old_to_new m
     WHERE
         mp.membership_id = m.old_id RETURNING id
+),
+deleted_memberships AS (
+    DELETE FROM
+        iam_memberships
+    WHERE
+        id IN (
+            SELECT
+                old_id
+            FROM
+                old_to_new
+        ) RETURNING id
 )
 DELETE FROM
-    iam_memberships
+    iam_sessions
 WHERE
-    id IN (
+    membership_id IN (
         SELECT
             old_id
         FROM
             old_to_new
-    ) RETURNING id;
+    );
