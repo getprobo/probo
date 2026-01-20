@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.6] - 2026-01-20
+
+### Fixed
+
+- n8n http request options URL
+
 ## [0.116.5] - 2026-01-20
 
 ### Fixed
