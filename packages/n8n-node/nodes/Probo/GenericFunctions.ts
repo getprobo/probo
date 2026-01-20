@@ -21,7 +21,7 @@ export async function proboApiRequest(
 	const options: IHttpRequestOptions = {
 		method: 'POST',
 		baseURL: `${credentials.server}`,
-		url: '/api/console/v1/query',
+		url: '/api/console/v1/graphql',
 		headers: {
 			Authorization: `Bearer ${credentials.apiKey}`,
 			'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export async function proboApiRequest(
 		const response = await this.helpers.httpRequest(options);
 
 		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
-			const errorMessages = response.errors.map((err: IDataObject) => 
+			const errorMessages = response.errors.map((err: IDataObject) =>
 				err.message || JSON.stringify(err)
 			).join('; ');
 			throw new NodeApiError(this.getNode(), {
@@ -45,7 +45,7 @@ export async function proboApiRequest(
 				httpCode: '200',
 			} as JsonObject);
 		}
-		
+
 		return response;
 	} catch (error) {
 		throw new NodeApiError(this.getNode(), error as JsonObject);
