@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.8] - 2026-01-20
+
+### Changed
+
+- Revert revert console graphql endpoint
+
 ## [0.116.7] - 2026-01-20
 
 ### Fixed
