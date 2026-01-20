@@ -1,13 +1,12 @@
 {
-    "name": "@probo/react-lazy",
-    "version": "1.0.0",
-    "description": "Enhanced React lazy loading with retries and error handling",
-    "private": true,
-    "type": "module",
-    "main": "src/index.ts",
-    "scripts": {},
-    "prettier": "@probo/prettier",
-    "peerDependencies": {
-        "react": ">18.0.0"
-    }
+  "name": "@probo/react-lazy",
+  "version": "1.0.0",
+  "description": "Enhanced React lazy loading with retries and error handling",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {},
+  "peerDependencies": {
+    "react": ">18.0.0"
+  }
 }

@@ -9,7 +9,6 @@ MKDIR ?=	mkdir -p
 NPM ?=	npm
 NPX ?=	npx
 OPENSSL ?=	openssl
-PRETTIER ?=	$(NPX) prettier
 SED ?= sed
 SYFT ?=	syft
 TAIL ?= tail

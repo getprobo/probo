@@ -12,15 +12,12 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check": "turbo run check",
     "relay": "turbo run relay"
   },
   "devDependencies": {
-    "prettier": "^3.5.3",
     "turbo": "^2.5.3"
   },
-  "prettier": "@probo/prettier",
   "graphql": {
     "schema": "./pkg/server/api/console/v1/schema.graphql"
   },

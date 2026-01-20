@@ -32,7 +32,6 @@
   },
   "devDependencies": {
     "@probo/eslint-config": "1.0.0",
-    "@probo/prettier": "1.0.0",
     "@tailwindcss/vite": "^4.1.7",
     "@types/node": "^22.15.21",
     "@types/react": "^19.1.2",
@@ -43,13 +42,11 @@
     "babel-plugin-relay": "^19.0.0",
     "eslint": "^9.25.0",
     "graphql": "^16.11.0",
-    "prettier": "^3.5.3",
     "relay-compiler": "^19.0.0",
     "tailwindcss": "^4.1.7",
     "typescript": "~5.8.3",
     "vite": "^6.4.1"
   },
-  "prettier": "@probo/prettier",
   "volta": {
     "node": "24.4.0"
   }
