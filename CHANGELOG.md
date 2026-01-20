@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.5] - 2026-01-20
+
+### Fixed
+
+- Console invitationResolver.Organization authorize check
+
 ## [0.116.4] - 2026-01-19
 
 ### Changed
