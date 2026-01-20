@@ -2,7 +2,7 @@ import {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
-    Icon,
+	Icon,
 	INodeProperties,
 } from 'n8n-workflow';
 
@@ -11,12 +11,12 @@ export class ProboApi implements ICredentialType {
 
 	displayName = 'Probo API';
 
-    icon: Icon = { light: 'file:../icons/probo-light.svg', dark: 'file:../icons/probo.svg' };
+	icon: Icon = { light: 'file:../icons/probo-light.svg', dark: 'file:../icons/probo.svg' };
 
 	documentationUrl = 'https://www.getprobo.com/docs';
 
-    properties: INodeProperties[] = [
-        {
+	properties: INodeProperties[] = [
+		{
 			displayName: 'Probo Server',
 			name: 'server',
 			type: 'string',
@@ -30,9 +30,9 @@ export class ProboApi implements ICredentialType {
 			typeOptions: { password: true },
 			default: '',
 		},
-    ];
+	];
 
-    authenticate: IAuthenticateGeneric = {
+	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
 			headers: {
@@ -44,7 +44,7 @@ export class ProboApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: '={{$credentials?.server}}',
-			url: '/api/console/v1/query',
+			url: '/api/console/v1/graphql',
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
