@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.7] - 2026-01-20
+
+### Fixed
+
+- n8n app calls by reverting console graphql endpoint
+
 ## [0.116.6] - 2026-01-20
 
 ### Fixed
