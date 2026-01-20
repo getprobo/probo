@@ -71,7 +71,7 @@ func NewMux(
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, customDomainCname, logger)
 
-	r.Handle("/graphql", graphqlHandler)
+	r.Handle("/query", graphqlHandler)
 
 	r.Get(
 		"/documents/signing-requests",

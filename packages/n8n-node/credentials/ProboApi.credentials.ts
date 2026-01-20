@@ -44,7 +44,7 @@ export class ProboApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: '={{$credentials?.server}}',
-			url: '/api/console/v1/graphql',
+			url: '/api/console/v1/query',
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

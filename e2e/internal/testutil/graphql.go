@@ -113,7 +113,7 @@ func (c *Client) doWithEndpoint(endpoint string, query string, variables map[str
 }
 
 func (c *Client) Do(query string, variables map[string]any) (*GraphQLResponse, error) {
-	return c.doWithEndpoint("/api/console/v1/graphql", query, variables)
+	return c.doWithEndpoint("/api/console/v1/query", query, variables)
 }
 
 func (c *Client) DoConnect(query string, variables map[string]any) (*GraphQLResponse, error) {
@@ -249,7 +249,7 @@ func (c *Client) executeMultipart(query string, variables map[string]any, files 
 	}
 
 	// Create request
-	req, err := http.NewRequest("POST", c.baseURL+"/api/console/v1/graphql", &buf)
+	req, err := http.NewRequest("POST", c.baseURL+"/api/console/v1/query", &buf)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
 	}

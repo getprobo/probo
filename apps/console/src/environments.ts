@@ -3,7 +3,7 @@ import { makeFetchQuery } from "@probo/relay";
 
 export const coreEnvironment = new Environment({
   configName: "core",
-  network: Network.create(makeFetchQuery("/api/console/v1/graphql")),
+  network: Network.create(makeFetchQuery("/api/console/v1/query")),
   store: new Store(new RecordSource(), {
     queryCacheExpirationTime: 1 * 60 * 1000,
     gcReleaseBufferSize: 20,

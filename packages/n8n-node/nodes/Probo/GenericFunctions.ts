@@ -21,7 +21,7 @@ export async function proboApiRequest(
 	const options: IHttpRequestOptions = {
 		method: 'POST',
 		baseURL: `${credentials.server}`,
-		url: '/api/console/v1/graphql',
+		url: '/api/console/v1/query',
 		headers: {
 			Authorization: `Bearer ${credentials.apiKey}`,
 			'Content-Type': 'application/json',
