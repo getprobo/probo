@@ -395,9 +395,12 @@ WITH soac_ctrl AS (
 		states_of_applicability_controls soac
 	INNER JOIN
 		states_of_applicability soa ON soac.state_of_applicability_id = soa.id
+	INNER JOIN
+		controls c ON soac.control_id = c.id
 	WHERE
 		soac.control_id = @control_id
 		AND soa.snapshot_id IS NULL
+		AND soa.organization_id = c.organization_id
 )
 SELECT
 	id,
@@ -448,8 +451,14 @@ WITH soac_ctrl AS (
 		soac.tenant_id
 	FROM
 		states_of_applicability_controls soac
+	INNER JOIN
+		states_of_applicability soa ON soac.state_of_applicability_id = soa.id
+	INNER JOIN
+		controls c ON soac.control_id = c.id
 	WHERE
 		soac.control_id = @control_id
+		AND soa.snapshot_id IS NULL
+		AND soa.organization_id = c.organization_id
 )
 SELECT
 	COUNT(id)
