@@ -17,6 +17,7 @@ package gqlutils
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -87,9 +88,9 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		defer span.End()
 
 		span.SetAttributes(
-			attribute.String("graphql.operation_name", requestContext.OperationName),
+			attribute.String("graphql.operation_name", strings.ToValidUTF8(requestContext.OperationName, "\uFFFD")),
 			attribute.String("graphql.operation_type", string(requestContext.Operation.Operation)),
-			attribute.String("graphql.query", requestContext.RawQuery),
+			attribute.String("graphql.query", strings.ToValidUTF8(requestContext.RawQuery, "\uFFFD")),
 		)
 	}
 
