@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1e93345ca5370e4fdf20719ac86b8078>>
+ * @generated SignedSource<<6a0d32b2293db5f05fee4b79e61db4b6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,27 +11,39 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type StateOfApplicabilityControlsTabFragment$data = {
-  readonly availableControls: ReadonlyArray<{
-    readonly applicability: boolean | null | undefined;
-    readonly bestPractice: boolean;
-    readonly contractual: boolean;
-    readonly controlId: string;
-    readonly frameworkId: string;
-    readonly frameworkName: string;
-    readonly justification: string | null | undefined;
-    readonly name: string;
-    readonly organizationId: string;
-    readonly regulatory: boolean;
-    readonly riskAssessment: boolean;
-    readonly sectionTitle: string;
-    readonly stateOfApplicabilityId: string | null | undefined;
-  }>;
-  readonly canCreateStateOfApplicabilityControlMapping: boolean;
-  readonly canDeleteStateOfApplicabilityControlMapping: boolean;
-  readonly controlsInfo: {
-    readonly totalCount: number;
+  readonly applicabilityStatements: {
+    readonly __id: string;
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly applicability: boolean;
+        readonly control: {
+          readonly bestPractice: boolean;
+          readonly contractual: boolean;
+          readonly framework: {
+            readonly id: string;
+            readonly name: string;
+          };
+          readonly id: string;
+          readonly name: string;
+          readonly organization: {
+            readonly id: string;
+          } | null | undefined;
+          readonly regulatory: boolean;
+          readonly riskAssessment: boolean;
+          readonly sectionTitle: string;
+        };
+        readonly id: string;
+        readonly justification: string;
+      };
+    }>;
   };
+  readonly canCreateApplicabilityStatement: boolean;
+  readonly canDeleteApplicabilityStatement: boolean;
+  readonly canUpdateApplicabilityStatement: boolean;
   readonly id: string;
+  readonly organization: {
+    readonly id: string;
+  } | null | undefined;
   readonly " $fragmentType": "StateOfApplicabilityControlsTabFragment";
 };
 export type StateOfApplicabilityControlsTabFragment$key = {
@@ -39,190 +51,267 @@ export type StateOfApplicabilityControlsTabFragment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityControlsTabFragment">;
 };
 
-import StateOfApplicabilityControlsTabRefetchQuery_graphql from './StateOfApplicabilityControlsTabRefetchQuery.graphql';
-
-const node: ReaderFragment = {
+const node: ReaderFragment = (function(){
+var v0 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v1 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "Organization",
+  "kind": "LinkedField",
+  "name": "organization",
+  "plural": false,
+  "selections": [
+    (v0/*: any*/)
+  ],
+  "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+};
+return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": {
-    "refetch": {
-      "connection": null,
-      "fragmentPathInResult": [
-        "node"
-      ],
-      "operation": StateOfApplicabilityControlsTabRefetchQuery_graphql,
-      "identifierInfo": {
-        "identifierField": "id",
-        "identifierQueryVariableName": "id"
+    "connection": [
+      {
+        "count": null,
+        "cursor": null,
+        "direction": "forward",
+        "path": [
+          "applicabilityStatements"
+        ]
       }
-    }
+    ]
   },
   "name": "StateOfApplicabilityControlsTabFragment",
   "selections": [
+    (v0/*: any*/),
+    (v1/*: any*/),
     {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "id",
-      "storageKey": null
-    },
-    {
-      "alias": "controlsInfo",
+      "alias": "canCreateApplicabilityStatement",
       "args": [
         {
           "kind": "Literal",
-          "name": "first",
-          "value": 0
+          "name": "action",
+          "value": "core:applicability-statement:create"
         }
       ],
-      "concreteType": "ControlConnection",
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:applicability-statement:create\")"
+    },
+    {
+      "alias": "canUpdateApplicabilityStatement",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:applicability-statement:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:applicability-statement:update\")"
+    },
+    {
+      "alias": "canDeleteApplicabilityStatement",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:applicability-statement:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:applicability-statement:delete\")"
+    },
+    {
+      "alias": "applicabilityStatements",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "orderBy",
+          "value": {
+            "direction": "ASC",
+            "field": "CREATED_AT"
+          }
+        }
+      ],
+      "concreteType": "ApplicabilityStatementConnection",
       "kind": "LinkedField",
-      "name": "controls",
+      "name": "__StateOfApplicabilityControlsTab_applicabilityStatements_connection",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
+          "concreteType": "ApplicabilityStatementEdge",
+          "kind": "LinkedField",
+          "name": "edges",
+          "plural": true,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "ApplicabilityStatement",
+              "kind": "LinkedField",
+              "name": "node",
+              "plural": false,
+              "selections": [
+                (v0/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "applicability",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "justification",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "Control",
+                  "kind": "LinkedField",
+                  "name": "control",
+                  "plural": false,
+                  "selections": [
+                    (v0/*: any*/),
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "sectionTitle",
+                      "storageKey": null
+                    },
+                    (v2/*: any*/),
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "bestPractice",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "regulatory",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "contractual",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "riskAssessment",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
+                      "concreteType": "Framework",
+                      "kind": "LinkedField",
+                      "name": "framework",
+                      "plural": false,
+                      "selections": [
+                        (v0/*: any*/),
+                        (v2/*: any*/)
+                      ],
+                      "storageKey": null
+                    },
+                    (v1/*: any*/)
+                  ],
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "__typename",
+                  "storageKey": null
+                }
+              ],
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "cursor",
+              "storageKey": null
+            }
+          ],
           "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "PageInfo",
+          "kind": "LinkedField",
+          "name": "pageInfo",
+          "plural": false,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "endCursor",
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "hasNextPage",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        },
+        {
+          "kind": "ClientExtension",
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "__id",
+              "storageKey": null
+            }
+          ]
         }
       ],
-      "storageKey": "controls(first:0)"
-    },
-    {
-      "alias": "canCreateStateOfApplicabilityControlMapping",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "core:state-of-applicability-control-mapping:create"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:create\")"
-    },
-    {
-      "alias": "canDeleteStateOfApplicabilityControlMapping",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "core:state-of-applicability-control-mapping:delete"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"core:state-of-applicability-control-mapping:delete\")"
-    },
-    {
-      "alias": null,
-      "args": null,
-      "concreteType": "AvailableStateOfApplicabilityControl",
-      "kind": "LinkedField",
-      "name": "availableControls",
-      "plural": true,
-      "selections": [
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "controlId",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "sectionTitle",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "name",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "frameworkId",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "frameworkName",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "organizationId",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "stateOfApplicabilityId",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "applicability",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "justification",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "bestPractice",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "regulatory",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "contractual",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "riskAssessment",
-          "storageKey": null
-        }
-      ],
-      "storageKey": null
+      "storageKey": "__StateOfApplicabilityControlsTab_applicabilityStatements_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
     }
   ],
   "type": "StateOfApplicability",
   "abstractKey": null
 };
+})();
 
-(node as any).hash = "37dd1660caf4dea39bb697b99a8bf511";
+(node as any).hash = "b5a28520cb7a702b208cbfad2c904a99";
 
 export default node;

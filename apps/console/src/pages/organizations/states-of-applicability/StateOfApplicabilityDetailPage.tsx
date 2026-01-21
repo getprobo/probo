@@ -1,4 +1,4 @@
-import { formatDate, validateSnapshotConsistency } from "@probo/helpers";
+import { formatDate, formatError, type GraphQLError, promisifyMutation, sprintf, validateSnapshotConsistency } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -14,34 +14,59 @@ import {
   IconTrashCan,
   Input,
   PageHeader,
+  useConfirm,
+  useToast,
 } from "@probo/ui";
 import { Suspense, useState } from "react";
 import {
   ConnectionHandler,
   graphql,
   type PreloadedQuery,
+  useMutation,
   usePreloadedQuery,
 } from "react-relay";
 import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
 
+import type { StateOfApplicabilityDetailPageDeleteMutation } from "#/__generated__/core/StateOfApplicabilityDetailPageDeleteMutation.graphql";
 import type { StateOfApplicabilityDetailPageExportMutation } from "#/__generated__/core/StateOfApplicabilityDetailPageExportMutation.graphql";
-import type { StateOfApplicabilityGraphNodeQuery } from "#/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
+import type { StateOfApplicabilityDetailPageQuery } from "#/__generated__/core/StateOfApplicabilityDetailPageQuery.graphql";
+import type { StateOfApplicabilityDetailPageUpdateMutation } from "#/__generated__/core/StateOfApplicabilityDetailPageUpdateMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
-import {
-  StateOfApplicabilityConnectionKey,
-  stateOfApplicabilityNodeQuery,
-  updateStateOfApplicabilityMutation,
-  useDeleteStateOfApplicability,
-} from "#/hooks/graph/StateOfApplicabilityGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import StateOfApplicabilityControlsTab from "./tabs/StateOfApplicabilityControlsTab";
 
-const exportStateOfApplicabilityPDFMutation = graphql`
+export const stateOfApplicabilityDetailPageQuery = graphql`
+    query StateOfApplicabilityDetailPageQuery($stateOfApplicabilityId: ID!) {
+        node(id: $stateOfApplicabilityId) {
+            ... on StateOfApplicability {
+                id
+                name
+                sourceId
+                snapshotId
+                createdAt
+                updatedAt
+                canUpdate: permission(action: "core:state-of-applicability:update")
+                canDelete: permission(action: "core:state-of-applicability:delete")
+                canExport: permission(action: "core:state-of-applicability:export")
+                organization {
+                    id
+                }
+                owner {
+                    id
+                    fullName
+                }
+                ...StateOfApplicabilityControlsTabFragment
+            }
+        }
+    }
+`;
+
+const exportMutation = graphql`
     mutation StateOfApplicabilityDetailPageExportMutation(
         $input: ExportStateOfApplicabilityPDFInput!
     ) {
@@ -51,8 +76,42 @@ const exportStateOfApplicabilityPDFMutation = graphql`
     }
 `;
 
+const updateMutation = graphql`
+    mutation StateOfApplicabilityDetailPageUpdateMutation(
+        $input: UpdateStateOfApplicabilityInput!
+    ) {
+        updateStateOfApplicability(input: $input) {
+            stateOfApplicability {
+                id
+                name
+                sourceId
+                snapshotId
+                createdAt
+                updatedAt
+                owner {
+                    id
+                    fullName
+                }
+            }
+        }
+    }
+`;
+
+const deleteMutation = graphql`
+    mutation StateOfApplicabilityDetailPageDeleteMutation(
+        $input: DeleteStateOfApplicabilityInput!
+        $connections: [ID!]!
+    ) {
+        deleteStateOfApplicability(input: $input) {
+            deletedStateOfApplicabilityId @deleteEdge(connections: $connections)
+        }
+    }
+`;
+
+const StateOfApplicabilityConnectionKey = "StatesOfApplicabilityPage_statesOfApplicability";
+
 type Props = {
-  queryRef: PreloadedQuery<StateOfApplicabilityGraphNodeQuery>;
+  queryRef: PreloadedQuery<StateOfApplicabilityDetailPageQuery>;
 };
 
 export default function StateOfApplicabilityDetailPage(props: Props) {
@@ -61,14 +120,13 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
     snapshotId?: string;
   }>();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(
-    stateOfApplicabilityNodeQuery,
-    props.queryRef,
-  );
+  const data = usePreloadedQuery(stateOfApplicabilityDetailPageQuery, props.queryRef);
   const stateOfApplicability = data.node;
   const { __ } = useTranslate();
   const navigate = useNavigate();
   const isSnapshotMode = Boolean(snapshotId);
+  const confirm = useConfirm();
+  const { toast } = useToast();
 
   if (!stateOfApplicabilityId || !stateOfApplicability) {
     throw new Error(
@@ -81,23 +139,55 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     StateOfApplicabilityConnectionKey,
+    { filter: { snapshotId: snapshotId ?? null } },
   );
 
-  const deleteStateOfApplicability = useDeleteStateOfApplicability(
-    stateOfApplicability,
-    connectionId,
-    () =>
-      void navigate(
-        `/organizations/${organizationId}/states-of-applicability`,
-      ),
-  );
+  const [deleteStateOfApplicability] = useMutation<StateOfApplicabilityDetailPageDeleteMutation>(deleteMutation);
+
+  const handleDelete = () => {
+    if (!stateOfApplicability.id || !stateOfApplicability.name) {
+      return alert(__("Failed to delete state of applicability: missing id or name"));
+    }
+    confirm(
+      () =>
+        promisifyMutation(deleteStateOfApplicability)({
+          variables: {
+            input: {
+              stateOfApplicabilityId: stateOfApplicability.id!,
+            },
+            connections: [connectionId],
+          },
+        })
+          .then(() => {
+            void navigate(`/organizations/${organizationId}/states-of-applicability`);
+          })
+          .catch((error) => {
+            toast({
+              title: __("Error"),
+              description: formatError(
+                __("Failed to delete state of applicability"),
+                error as GraphQLError,
+              ),
+              variant: "error",
+            });
+          }),
+      {
+        message: sprintf(
+          __(
+            "This will permanently delete \"%s\". This action cannot be undone.",
+          ),
+          stateOfApplicability.name,
+        ),
+      },
+    );
+  };
 
   usePageTitle(stateOfApplicability.name || __("State of Applicability"));
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingOwner, setIsEditingOwner] = useState(false);
-  const [updateStateOfApplicability, isUpdating] = useMutationWithToasts(
-    updateStateOfApplicabilityMutation,
+  const [updateStateOfApplicability, isUpdating] = useMutationWithToasts<StateOfApplicabilityDetailPageUpdateMutation>(
+    updateMutation,
     {
       successMessage: __("State of Applicability updated successfully."),
       errorMessage: __("Failed to update State of Applicability"),
@@ -109,7 +199,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
 
   const [exportStateOfApplicabilityPDF, isExporting]
     = useMutationWithToasts<StateOfApplicabilityDetailPageExportMutation>(
-      exportStateOfApplicabilityPDFMutation,
+      exportMutation,
       {
         successMessage: __(
           "State of Applicability exported successfully.",
@@ -298,7 +388,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
             <DropdownItem
               variant="danger"
               icon={IconTrashCan}
-              onClick={() => void deleteStateOfApplicability()}
+              onClick={handleDelete}
             >
               {__("Delete")}
             </DropdownItem>
@@ -384,7 +474,7 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
         {stateOfApplicability.id && (
           <div className="space-y-4">
             <h2 className="text-base font-medium">
-              {__("Controls")}
+              {__("Statements")}
             </h2>
             <StateOfApplicabilityControlsTab
               stateOfApplicability={

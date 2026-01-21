@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eb7a62904f0c39bab4289b137c4b8e9b>>
+ * @generated SignedSource<<00cfb3ae1f26e5b5ab343724f00292b0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,10 @@ export type UpdateStateOfApplicabilityInput = {
   name?: string | null | undefined;
   ownerId?: string | null | undefined;
 };
-export type StateOfApplicabilityGraphUpdateMutation$variables = {
+export type StateOfApplicabilityDetailPageUpdateMutation$variables = {
   input: UpdateStateOfApplicabilityInput;
 };
-export type StateOfApplicabilityGraphUpdateMutation$data = {
+export type StateOfApplicabilityDetailPageUpdateMutation$data = {
   readonly updateStateOfApplicability: {
     readonly stateOfApplicability: {
       readonly createdAt: string;
@@ -33,9 +33,9 @@ export type StateOfApplicabilityGraphUpdateMutation$data = {
     };
   };
 };
-export type StateOfApplicabilityGraphUpdateMutation = {
-  response: StateOfApplicabilityGraphUpdateMutation$data;
-  variables: StateOfApplicabilityGraphUpdateMutation$variables;
+export type StateOfApplicabilityDetailPageUpdateMutation = {
+  response: StateOfApplicabilityDetailPageUpdateMutation$data;
+  variables: StateOfApplicabilityDetailPageUpdateMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -143,7 +143,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "StateOfApplicabilityGraphUpdateMutation",
+    "name": "StateOfApplicabilityDetailPageUpdateMutation",
     "selections": (v2/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -152,20 +152,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "StateOfApplicabilityGraphUpdateMutation",
+    "name": "StateOfApplicabilityDetailPageUpdateMutation",
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "609bd562b84162f2807ee89b3c3273aa",
+    "cacheID": "0236ac567b08f60ca0773d91fb1b2155",
     "id": null,
     "metadata": {},
-    "name": "StateOfApplicabilityGraphUpdateMutation",
+    "name": "StateOfApplicabilityDetailPageUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation StateOfApplicabilityGraphUpdateMutation(\n  $input: UpdateStateOfApplicabilityInput!\n) {\n  updateStateOfApplicability(input: $input) {\n    stateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
+    "text": "mutation StateOfApplicabilityDetailPageUpdateMutation(\n  $input: UpdateStateOfApplicabilityInput!\n) {\n  updateStateOfApplicability(input: $input) {\n    stateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e8810210629ef7fad113616c06f141ee";
+(node as any).hash = "0213db8aa925819738cea45aa8603d6d";
 
 export default node;

@@ -129,12 +129,6 @@ export const frameworkControlNodeQuery = graphql`
         canDeleteSnapshotMapping: permission(
           action: "core:control:delete-snapshot-mapping"
         )
-        canCreateStateOfApplicabilityMapping: permission(
-          action: "core:control:state-of-applicability-control-mapping:create"
-        )
-        canDeleteStateOfApplicabilityMapping: permission(
-          action: "core:control:state-of-applicability-control-mapping:delete"
-        )
         canCreateObligationMapping: permission(
           action: "core:control:obligation-control-mapping:create"
         )
@@ -142,16 +136,6 @@ export const frameworkControlNodeQuery = graphql`
           action: "core:control:obligation-control-mapping:delete"
         )
         ...FrameworkControlDialogFragment
-        stateOfApplicabilityControls(first: 100)
-          @connection(key: "FrameworkGraphControl_stateOfApplicabilityControls") {
-          __id
-          edges {
-            node {
-              id
-              ...LinkedStatesOfApplicabilityCardFragment
-            }
-          }
-        }
         measures(first: 100)
           @connection(key: "FrameworkGraphControl_measures") {
           __id

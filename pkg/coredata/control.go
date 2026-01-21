@@ -720,6 +720,54 @@ LIMIT 1;
 	return nil
 }
 
+func (c *Controls) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	controlIDs []gid.GID,
+) error {
+	if len(controlIDs) == 0 {
+		*c = Controls{}
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    section_title,
+    framework_id,
+    organization_id,
+    name,
+    description,
+    status,
+    exclusion_justification,
+    best_practice,
+    created_at,
+    updated_at
+FROM
+    controls
+WHERE
+    %s
+    AND id = ANY(@control_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"control_ids": controlIDs}
+	maps.Copy(args, scope.SQLArguments())
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query controls: %w", err)
+	}
+
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Control])
+	if err != nil {
+		return fmt.Errorf("cannot collect controls: %w", err)
+	}
+
+	*c = controls
+	return nil
+}
+
 func (c Control) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -1098,7 +1146,7 @@ WITH ctrl AS (
 	FROM
 		controls c
 	INNER JOIN
-		states_of_applicability_controls soac ON c.id = soac.control_id
+		applicability_statements soac ON c.id = soac.control_id
 	WHERE
 		soac.state_of_applicability_id = @state_of_applicability_id
 )
@@ -1123,75 +1171,4 @@ WHERE %s
 	}
 
 	return count, nil
-}
-
-func (c *Controls) LoadByStateOfApplicabilityID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	stateOfApplicabilityID gid.GID,
-	cursor *page.Cursor[ControlOrderField],
-	filter *ControlFilter,
-) error {
-	q := `
-WITH ctrl AS (
-	SELECT
-		c.id,
-		c.section_title,
-		c.framework_id,
-		c.organization_id,
-		c.tenant_id,
-		c.name,
-		c.description,
-		c.status,
-		c.exclusion_justification,
-		c.best_practice,
-		c.created_at,
-		c.updated_at,
-		c.search_vector
-	FROM
-		controls c
-	INNER JOIN
-		states_of_applicability_controls soac ON c.id = soac.control_id
-	WHERE
-		soac.state_of_applicability_id = @state_of_applicability_id
-)
-SELECT
-	id,
-	section_title,
-	framework_id,
-	organization_id,
-	name,
-	description,
-	status,
-	exclusion_justification,
-	best_practice,
-	created_at,
-	updated_at
-FROM
-	ctrl
-WHERE %s
-	AND %s
-	AND %s
-`
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.NamedArgs{"state_of_applicability_id": stateOfApplicabilityID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query controls: %w", err)
-	}
-
-	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Control])
-	if err != nil {
-		return fmt.Errorf("cannot collect controls: %w", err)
-	}
-
-	*c = controls
-
-	return nil
 }

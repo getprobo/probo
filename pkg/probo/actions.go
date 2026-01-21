@@ -312,9 +312,11 @@ const (
 	ActionStateOfApplicabilityDelete = "core:state-of-applicability:delete"
 	ActionStateOfApplicabilityExport = "core:state-of-applicability:export"
 
-	ActionStateOfApplicabilityControlMappingList   = "core:state-of-applicability-control-mapping:list"
-	ActionStateOfApplicabilityControlMappingCreate = "core:state-of-applicability-control-mapping:create"
-	ActionStateOfApplicabilityControlMappingDelete = "core:state-of-applicability-control-mapping:delete"
+	ActionApplicabilityStatementGet    = "core:applicability-statement:get"
+	ActionApplicabilityStatementList   = "core:applicability-statement:list"
+	ActionApplicabilityStatementCreate = "core:applicability-statement:create"
+	ActionApplicabilityStatementUpdate = "core:applicability-statement:update"
+	ActionApplicabilityStatementDelete = "core:applicability-statement:delete"
 
 	ActionControlObligationMappingList   = "core:control-obligation-mapping:list"
 	ActionControlObligationMappingCreate = "core:control-obligation-mapping:create"

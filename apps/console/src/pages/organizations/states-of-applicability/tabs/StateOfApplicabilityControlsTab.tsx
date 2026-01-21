@@ -14,63 +14,76 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
-import { Suspense, useMemo, useRef } from "react";
-import { graphql, useRefetchableFragment } from "react-relay";
+import { Suspense, useRef } from "react";
+import { graphql, useFragment } from "react-relay";
 
 import type { StateOfApplicabilityControlsTabFragment$key } from "#/__generated__/core/StateOfApplicabilityControlsTabFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
+  AddApplicabilityStatementDialog,
+  type AddApplicabilityStatementDialogRef,
+} from "../dialogs/AddApplicabilityStatementDialog";
+import {
   EditControlDialog,
   type EditControlDialogRef,
 } from "../dialogs/EditControlDialog";
-import {
-  LinkControlDialog,
-  type LinkControlDialogRef,
-} from "../dialogs/LinkControlDialog";
 
 export const controlsFragment = graphql`
-    fragment StateOfApplicabilityControlsTabFragment on StateOfApplicability
-    @refetchable(queryName: "StateOfApplicabilityControlsTabRefetchQuery") {
+    fragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {
         id
-        controlsInfo: controls(first: 0) {
-            totalCount
+        organization {
+            id
         }
 
-        canCreateStateOfApplicabilityControlMapping: permission(
-            action: "core:state-of-applicability-control-mapping:create"
+        canCreateApplicabilityStatement: permission(
+            action: "core:applicability-statement:create"
         )
-        canDeleteStateOfApplicabilityControlMapping: permission(
-            action: "core:state-of-applicability-control-mapping:delete"
+        canUpdateApplicabilityStatement: permission(
+            action: "core:applicability-statement:update"
+        )
+        canDeleteApplicabilityStatement: permission(
+            action: "core:applicability-statement:delete"
         )
 
-        availableControls {
-            controlId
-            sectionTitle
-            name
-            frameworkId
-            frameworkName
-            organizationId
-            stateOfApplicabilityId
-            applicability
-            justification
-            bestPractice
-            regulatory
-            contractual
-            riskAssessment
+        applicabilityStatements(first: 1000, orderBy: { direction: ASC, field: CREATED_AT })
+            @connection(key: "StateOfApplicabilityControlsTab_applicabilityStatements") {
+            __id
+            edges {
+                node {
+                    id
+                    applicability
+                    justification
+                    control {
+                        id
+                        sectionTitle
+                        name
+                        bestPractice
+                        regulatory
+                        contractual
+                        riskAssessment
+                        framework {
+                            id
+                            name
+                        }
+                        organization {
+                            id
+                        }
+                    }
+                }
+            }
         }
     }
 `;
 
-const unlinkControlMutation = graphql`
-    mutation StateOfApplicabilityControlsTabUnlinkMutation(
-        $input: DeleteStateOfApplicabilityControlMappingInput!
+const deleteApplicabilityStatementMutation = graphql`
+    mutation StateOfApplicabilityControlsTabDeleteMutation(
+        $input: DeleteApplicabilityStatementInput!
+        $connections: [ID!]!
     ) {
-        deleteStateOfApplicabilityControlMapping(input: $input) {
-            deletedStateOfApplicabilityId
-            deletedControlId
-            deletedStateOfApplicabilityControlId
+        deleteApplicabilityStatement(input: $input) {
+            deletedApplicabilityStatementId @deleteEdge(connections: $connections)
         }
     }
 `;
@@ -85,43 +98,51 @@ export default function StateOfApplicabilityControlsTab({
   isSnapshotMode?: boolean;
 }) {
   const { __ } = useTranslate();
-  const [data, refetch] = useRefetchableFragment(
-    controlsFragment,
-    stateOfApplicability,
-  );
+  const data = useFragment(controlsFragment, stateOfApplicability);
   const organizationId = useOrganizationId();
-  const manageDialogRef = useRef<LinkControlDialogRef>(null);
+  const addStatementDialogRef = useRef<AddApplicabilityStatementDialogRef>(null);
   const editDialogRef = useRef<EditControlDialogRef>(null);
 
-  const linkedControls = useMemo(
-    () =>
-      (data.availableControls || []).filter(
-        c => c.stateOfApplicabilityId !== null,
-      ),
-    [data.availableControls],
-  );
+  const connectionId = data.applicabilityStatements?.__id;
 
-  const [unlinkControl, isUnlinking] = useMutationWithToasts(
-    unlinkControlMutation,
+  const linkedControls = (data.applicabilityStatements?.edges || []).map(edge => ({
+    applicabilityStatementId: edge.node.id,
+    controlId: edge.node.control.id,
+    sectionTitle: edge.node.control.sectionTitle,
+    name: edge.node.control.name,
+    frameworkId: edge.node.control.framework.id,
+    frameworkName: edge.node.control.framework.name,
+    organizationId: edge.node.control.organization?.id,
+    applicability: edge.node.applicability,
+    justification: edge.node.justification,
+    bestPractice: edge.node.control.bestPractice,
+    regulatory: edge.node.control.regulatory,
+    contractual: edge.node.control.contractual,
+    riskAssessment: edge.node.control.riskAssessment,
+  }));
+
+  const [deleteApplicabilityStatement, isDeleting] = useMutationWithToasts(
+    deleteApplicabilityStatementMutation,
     {
-      successMessage: __("Control removed successfully."),
-      errorMessage: __("Failed to remove control"),
+      successMessage: __("Statement removed successfully."),
+      errorMessage: __("Failed to remove statement"),
     },
   );
 
-  const canLink
-    = !isSnapshotMode && data.canCreateStateOfApplicabilityControlMapping;
-  const canUnlink
-    = !isSnapshotMode && data.canDeleteStateOfApplicabilityControlMapping;
+  const canCreate
+    = !isSnapshotMode && data.canCreateApplicabilityStatement;
+  const canUpdate
+    = !isSnapshotMode && data.canUpdateApplicabilityStatement;
+  const canDelete
+    = !isSnapshotMode && data.canDeleteApplicabilityStatement;
 
-  const handleOpenManageDialog = () => {
-    manageDialogRef.current?.open(data.id, () => {
-      refetch({}, { fetchPolicy: "store-and-network" });
-    });
+  const handleOpenAddStatementDialog = () => {
+    if (!data.organization || !connectionId) return;
+    addStatementDialogRef.current?.open(data.id, data.organization.id, connectionId);
   };
 
   const handleOpenEditDialog = (control: {
-    controlId: string;
+    applicabilityStatementId: string;
     sectionTitle: string;
     name: string;
     frameworkName: string;
@@ -129,8 +150,7 @@ export default function StateOfApplicabilityControlsTab({
     justification: string | null;
   }) => {
     editDialogRef.current?.open({
-      stateOfApplicabilityId: data.id,
-      controlId: control.controlId,
+      applicabilityStatementId: control.applicabilityStatementId,
       sectionTitle: control.sectionTitle,
       name: control.name,
       frameworkName: control.frameworkName,
@@ -139,16 +159,14 @@ export default function StateOfApplicabilityControlsTab({
     });
   };
 
-  const handleUnlink = async (controlId: string) => {
-    await unlinkControl({
+  const handleDelete = async (applicabilityStatementId: string) => {
+    if (!connectionId) return;
+    await deleteApplicabilityStatement({
       variables: {
         input: {
-          stateOfApplicabilityId: data.id,
-          controlId,
+          applicabilityStatementId,
         },
-      },
-      onSuccess: () => {
-        refetch({}, { fetchPolicy: "network-only" });
+        connections: [connectionId],
       },
     });
   };
@@ -156,13 +174,13 @@ export default function StateOfApplicabilityControlsTab({
   return (
     <>
       <div className="space-y-4">
-        {canLink && (
+        {canCreate && (
           <div className="flex justify-end">
             <Button
               icon={IconPlusLarge}
-              onClick={handleOpenManageDialog}
+              onClick={handleOpenAddStatementDialog}
             >
-              {__("Add Controls")}
+              {__("Create Statement")}
             </Button>
           </div>
         )}
@@ -188,7 +206,7 @@ export default function StateOfApplicabilityControlsTab({
               <Th className="w-36 text-center">
                 {__("Risk Assessment")}
               </Th>
-              {(canLink || canUnlink) && (
+              {(canUpdate || canDelete) && (
                 <Th className="w-12"></Th>
               )}
             </Tr>
@@ -197,7 +215,7 @@ export default function StateOfApplicabilityControlsTab({
             {linkedControls.length === 0 && (
               <Tr>
                 <Td
-                  colSpan={canLink || canUnlink ? 9 : 8}
+                  colSpan={canUpdate || canDelete ? 9 : 8}
                   className="text-center text-txt-secondary py-12"
                 >
                   {__("No controls linked")}
@@ -319,10 +337,10 @@ export default function StateOfApplicabilityControlsTab({
                     </Badge>
                   </div>
                 </Td>
-                {(canLink || canUnlink) && (
+                {(canUpdate || canDelete) && (
                   <Td noLink className="text-end">
                     <ActionDropdown>
-                      {canLink && (
+                      {canUpdate && control.applicabilityStatementId && (
                         <DropdownItem
                           icon={IconPencil}
                           onClick={(e) => {
@@ -331,15 +349,22 @@ export default function StateOfApplicabilityControlsTab({
                             if (
                               typeof control.applicability
                               === "boolean"
+                              && control.applicabilityStatementId
                             ) {
                               handleOpenEditDialog(
                                 {
-                                  controlId: control.controlId,
-                                  sectionTitle: control.sectionTitle,
+                                  applicabilityStatementId:
+                                                                        control.applicabilityStatementId,
+                                  sectionTitle:
+                                                                        control.sectionTitle,
                                   name: control.name,
-                                  frameworkName: control.frameworkName,
-                                  applicability: control.applicability,
-                                  justification: control.justification ?? null,
+                                  frameworkName:
+                                                                        control.frameworkName,
+                                  applicability:
+                                                                        control.applicability,
+                                  justification:
+                                                                        control.justification
+                                                                        ?? null,
                                 },
                               );
                             }
@@ -348,16 +373,20 @@ export default function StateOfApplicabilityControlsTab({
                           {__("Edit")}
                         </DropdownItem>
                       )}
-                      {canUnlink && (
+                      {canDelete && control.applicabilityStatementId && (
                         <DropdownItem
                           icon={IconTrashCan}
                           variant="danger"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            void handleUnlink(control.controlId);
+                            if (control.applicabilityStatementId) {
+                              void handleDelete(
+                                control.applicabilityStatementId,
+                              );
+                            }
                           }}
-                          disabled={isUnlinking}
+                          disabled={isDeleting}
                         >
                           {__("Remove")}
                         </DropdownItem>
@@ -372,13 +401,8 @@ export default function StateOfApplicabilityControlsTab({
       </div>
 
       <Suspense fallback={null}>
-        <LinkControlDialog ref={manageDialogRef} />
-        <EditControlDialog
-          ref={editDialogRef}
-          onSuccess={() => {
-            refetch({}, { fetchPolicy: "network-only" });
-          }}
-        />
+        <AddApplicabilityStatementDialog ref={addStatementDialogRef} />
+        <EditControlDialog ref={editDialogRef} />
       </Suspense>
     </>
   );

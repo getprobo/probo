@@ -241,6 +241,53 @@ LIMIT 1;
 	return nil
 }
 
+func (f *Frameworks) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	frameworkIDs []gid.GID,
+) error {
+	if len(frameworkIDs) == 0 {
+		*f = Frameworks{}
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    reference_id,
+    name,
+    description,
+    light_logo_file_id,
+    dark_logo_file_id,
+    created_at,
+    updated_at
+FROM
+    frameworks
+WHERE
+    %s
+    AND id = ANY(@framework_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"framework_ids": frameworkIDs}
+	maps.Copy(args, scope.SQLArguments())
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query frameworks: %w", err)
+	}
+
+	frameworks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Framework])
+	if err != nil {
+		return fmt.Errorf("cannot collect frameworks: %w", err)
+	}
+
+	*f = frameworks
+	return nil
+}
+
 func (f Framework) Insert(
 	ctx context.Context,
 	conn pg.Conn,

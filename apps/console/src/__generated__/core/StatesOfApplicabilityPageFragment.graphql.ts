@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3472918fdff6205597f39a6310f2ee08>>
+ * @generated SignedSource<<d1798d7a1c00385a597093970a92e778>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,33 +10,25 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type StateOfApplicabilityGraphPaginatedFragment$data = {
+export type StatesOfApplicabilityPageFragment$data = {
   readonly id: string;
   readonly statesOfApplicability: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly canDelete: boolean;
-        readonly controlsInfo: {
-          readonly totalCount: number;
-        };
-        readonly createdAt: string;
         readonly id: string;
-        readonly name: string;
-        readonly snapshotId: string | null | undefined;
-        readonly sourceId: string | null | undefined;
-        readonly updatedAt: string;
+        readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityRowFragment">;
       };
     }>;
   };
-  readonly " $fragmentType": "StateOfApplicabilityGraphPaginatedFragment";
+  readonly " $fragmentType": "StatesOfApplicabilityPageFragment";
 };
-export type StateOfApplicabilityGraphPaginatedFragment$key = {
-  readonly " $data"?: StateOfApplicabilityGraphPaginatedFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityGraphPaginatedFragment">;
+export type StatesOfApplicabilityPageFragment$key = {
+  readonly " $data"?: StatesOfApplicabilityPageFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"StatesOfApplicabilityPageFragment">;
 };
 
-import StateOfApplicabilityListQuery_graphql from './StateOfApplicabilityListQuery.graphql';
+import StatesOfApplicabilityPagePaginationQuery_graphql from './StatesOfApplicabilityPagePaginationQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
@@ -112,14 +104,14 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": StateOfApplicabilityListQuery_graphql,
+      "operation": StatesOfApplicabilityPagePaginationQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "StateOfApplicabilityGraphPaginatedFragment",
+  "name": "StatesOfApplicabilityPageFragment",
   "selections": [
     {
       "alias": "statesOfApplicability",
@@ -128,16 +120,11 @@ return {
           "kind": "Variable",
           "name": "filter",
           "variableName": "filter"
-        },
-        {
-          "kind": "Variable",
-          "name": "orderBy",
-          "variableName": "order"
         }
       ],
       "concreteType": "StateOfApplicabilityConnection",
       "kind": "LinkedField",
-      "name": "__StateOfApplicabilityGraphPaginatedQuery_statesOfApplicability_connection",
+      "name": "__StatesOfApplicabilityPage_statesOfApplicability_connection",
       "plural": false,
       "selections": [
         {
@@ -158,76 +145,9 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
-                  "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "name",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "sourceId",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "snapshotId",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "updatedAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": "canDelete",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "action",
-                      "value": "core:state-of-applicability:delete"
-                    }
-                  ],
-                  "kind": "ScalarField",
-                  "name": "permission",
-                  "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
-                },
-                {
-                  "alias": "controlsInfo",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "first",
-                      "value": 0
-                    }
-                  ],
-                  "concreteType": "ControlConnection",
-                  "kind": "LinkedField",
-                  "name": "controls",
-                  "plural": false,
-                  "selections": [
-                    {
-                      "alias": null,
-                      "args": null,
-                      "kind": "ScalarField",
-                      "name": "totalCount",
-                      "storageKey": null
-                    }
-                  ],
-                  "storageKey": "controls(first:0)"
+                  "kind": "FragmentSpread",
+                  "name": "StateOfApplicabilityRowFragment"
                 },
                 {
                   "alias": null,
@@ -310,6 +230,6 @@ return {
 };
 })();
 
-(node as any).hash = "82cf2a5ce701c34a41f8166371dd75c3";
+(node as any).hash = "30ea5e415eca53b251933d1ce086a9b7";
 
 export default node;

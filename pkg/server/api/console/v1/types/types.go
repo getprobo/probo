@@ -17,6 +17,31 @@ type Node interface {
 	GetID() gid.GID
 }
 
+type ApplicabilityStatement struct {
+	ID                   gid.GID               `json:"id"`
+	StateOfApplicability *StateOfApplicability `json:"stateOfApplicability"`
+	Control              *Control              `json:"control"`
+	Applicability        bool                  `json:"applicability"`
+	Justification        string                `json:"justification"`
+	CreatedAt            time.Time             `json:"createdAt"`
+	UpdatedAt            time.Time             `json:"updatedAt"`
+	Permission           bool                  `json:"permission"`
+}
+
+func (ApplicabilityStatement) IsNode()             {}
+func (this ApplicabilityStatement) GetID() gid.GID { return this.ID }
+
+type ApplicabilityStatementEdge struct {
+	Cursor page.CursorKey          `json:"cursor"`
+	Node   *ApplicabilityStatement `json:"node"`
+}
+
+type ApplicabilityStatementInput struct {
+	ControlID     gid.GID `json:"controlId"`
+	Applicability bool    `json:"applicability"`
+	Justification *string `json:"justification,omitempty"`
+}
+
 type AssessVendorInput struct {
 	ID         gid.GID `json:"id"`
 	WebsiteURL string  `json:"websiteUrl"`
@@ -76,22 +101,6 @@ func (this Audit) GetID() gid.GID { return this.ID }
 type AuditEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Audit         `json:"node"`
-}
-
-type AvailableStateOfApplicabilityControl struct {
-	ControlID              gid.GID  `json:"controlId"`
-	SectionTitle           string   `json:"sectionTitle"`
-	Name                   string   `json:"name"`
-	FrameworkID            gid.GID  `json:"frameworkId"`
-	FrameworkName          string   `json:"frameworkName"`
-	OrganizationID         gid.GID  `json:"organizationId"`
-	StateOfApplicabilityID *gid.GID `json:"stateOfApplicabilityId,omitempty"`
-	Applicability          *bool    `json:"applicability,omitempty"`
-	Justification          *string  `json:"justification,omitempty"`
-	BestPractice           bool     `json:"bestPractice"`
-	Regulatory             bool     `json:"regulatory"`
-	Contractual            bool     `json:"contractual"`
-	RiskAssessment         bool     `json:"riskAssessment"`
 }
 
 type BulkDeleteDocumentsInput struct {
@@ -170,24 +179,26 @@ type ContinualImprovementFilter struct {
 }
 
 type Control struct {
-	ID                           gid.GID                                `json:"id"`
-	Organization                 *Organization                          `json:"organization,omitempty"`
-	SectionTitle                 string                                 `json:"sectionTitle"`
-	Name                         string                                 `json:"name"`
-	Description                  *string                                `json:"description,omitempty"`
-	Status                       coredata.ControlStatus                 `json:"status"`
-	ExclusionJustification       *string                                `json:"exclusionJustification,omitempty"`
-	BestPractice                 bool                                   `json:"bestPractice"`
-	Framework                    *Framework                             `json:"framework"`
-	Measures                     *MeasureConnection                     `json:"measures"`
-	Documents                    *DocumentConnection                    `json:"documents"`
-	Audits                       *AuditConnection                       `json:"audits"`
-	Obligations                  *ObligationConnection                  `json:"obligations"`
-	Snapshots                    *SnapshotConnection                    `json:"snapshots"`
-	StateOfApplicabilityControls *StateOfApplicabilityControlConnection `json:"stateOfApplicabilityControls"`
-	CreatedAt                    time.Time                              `json:"createdAt"`
-	UpdatedAt                    time.Time                              `json:"updatedAt"`
-	Permission                   bool                                   `json:"permission"`
+	ID                     gid.GID                `json:"id"`
+	Organization           *Organization          `json:"organization,omitempty"`
+	SectionTitle           string                 `json:"sectionTitle"`
+	Name                   string                 `json:"name"`
+	Description            *string                `json:"description,omitempty"`
+	Status                 coredata.ControlStatus `json:"status"`
+	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
+	BestPractice           bool                   `json:"bestPractice"`
+	Regulatory             bool                   `json:"regulatory"`
+	Contractual            bool                   `json:"contractual"`
+	RiskAssessment         bool                   `json:"riskAssessment"`
+	Framework              *Framework             `json:"framework"`
+	Measures               *MeasureConnection     `json:"measures"`
+	Documents              *DocumentConnection    `json:"documents"`
+	Audits                 *AuditConnection       `json:"audits"`
+	Obligations            *ObligationConnection  `json:"obligations"`
+	Snapshots              *SnapshotConnection    `json:"snapshots"`
+	CreatedAt              time.Time              `json:"createdAt"`
+	UpdatedAt              time.Time              `json:"updatedAt"`
+	Permission             bool                   `json:"permission"`
 }
 
 func (Control) IsNode()             {}
@@ -200,6 +211,17 @@ type ControlEdge struct {
 
 type ControlFilter struct {
 	Query *string `json:"query,omitempty"`
+}
+
+type CreateApplicabilityStatementInput struct {
+	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
+	ControlID              gid.GID `json:"controlId"`
+	Applicability          bool    `json:"applicability"`
+	Justification          *string `json:"justification,omitempty"`
+}
+
+type CreateApplicabilityStatementPayload struct {
+	ApplicabilityStatementEdge *ApplicabilityStatementEdge `json:"applicabilityStatementEdge"`
 }
 
 type CreateAssetInput struct {
@@ -552,17 +574,6 @@ type CreateSnapshotPayload struct {
 	SnapshotEdge *SnapshotEdge `json:"snapshotEdge"`
 }
 
-type CreateStateOfApplicabilityControlMappingInput struct {
-	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
-	ControlID              gid.GID `json:"controlId"`
-	Applicability          bool    `json:"applicability"`
-	Justification          *string `json:"justification,omitempty"`
-}
-
-type CreateStateOfApplicabilityControlMappingPayload struct {
-	StateOfApplicabilityControlEdge *StateOfApplicabilityControlEdge `json:"stateOfApplicabilityControlEdge"`
-}
-
 type CreateStateOfApplicabilityInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Name           string  `json:"name"`
@@ -754,6 +765,14 @@ type DatumEdge struct {
 
 type DatumFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
+type DeleteApplicabilityStatementInput struct {
+	ApplicabilityStatementID gid.GID `json:"applicabilityStatementId"`
+}
+
+type DeleteApplicabilityStatementPayload struct {
+	DeletedApplicabilityStatementID gid.GID `json:"deletedApplicabilityStatementId"`
 }
 
 type DeleteAssetInput struct {
@@ -1002,17 +1021,6 @@ type DeleteSnapshotInput struct {
 
 type DeleteSnapshotPayload struct {
 	DeletedSnapshotID gid.GID `json:"deletedSnapshotId"`
-}
-
-type DeleteStateOfApplicabilityControlMappingInput struct {
-	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
-	ControlID              gid.GID `json:"controlId"`
-}
-
-type DeleteStateOfApplicabilityControlMappingPayload struct {
-	DeletedStateOfApplicabilityID        gid.GID `json:"deletedStateOfApplicabilityId"`
-	DeletedControlID                     gid.GID `json:"deletedControlId"`
-	DeletedStateOfApplicabilityControlID gid.GID `json:"deletedStateOfApplicabilityControlId"`
 }
 
 type DeleteStateOfApplicabilityInput struct {
@@ -1746,36 +1754,20 @@ type SnapshotEdge struct {
 }
 
 type StateOfApplicability struct {
-	ID                gid.GID                                 `json:"id"`
-	Name              string                                  `json:"name"`
-	SourceID          *gid.GID                                `json:"sourceId,omitempty"`
-	SnapshotID        *gid.GID                                `json:"snapshotId,omitempty"`
-	Organization      *Organization                           `json:"organization,omitempty"`
-	Owner             *People                                 `json:"owner"`
-	CreatedAt         time.Time                               `json:"createdAt"`
-	UpdatedAt         time.Time                               `json:"updatedAt"`
-	Controls          *ControlConnection                      `json:"controls"`
-	AvailableControls []*AvailableStateOfApplicabilityControl `json:"availableControls"`
-	Permission        bool                                    `json:"permission"`
+	ID                      gid.GID                           `json:"id"`
+	Name                    string                            `json:"name"`
+	SourceID                *gid.GID                          `json:"sourceId,omitempty"`
+	SnapshotID              *gid.GID                          `json:"snapshotId,omitempty"`
+	Organization            *Organization                     `json:"organization,omitempty"`
+	Owner                   *People                           `json:"owner"`
+	CreatedAt               time.Time                         `json:"createdAt"`
+	UpdatedAt               time.Time                         `json:"updatedAt"`
+	ApplicabilityStatements *ApplicabilityStatementConnection `json:"applicabilityStatements"`
+	Permission              bool                              `json:"permission"`
 }
 
 func (StateOfApplicability) IsNode()             {}
 func (this StateOfApplicability) GetID() gid.GID { return this.ID }
-
-type StateOfApplicabilityControl struct {
-	ID                     gid.GID               `json:"id"`
-	StateOfApplicabilityID gid.GID               `json:"stateOfApplicabilityId"`
-	ControlID              gid.GID               `json:"controlId"`
-	StateOfApplicability   *StateOfApplicability `json:"stateOfApplicability"`
-	Applicability          bool                  `json:"applicability"`
-	Justification          *string               `json:"justification,omitempty"`
-}
-
-type StateOfApplicabilityControlInput struct {
-	ControlID     gid.GID `json:"controlId"`
-	Applicability bool    `json:"applicability"`
-	Justification *string `json:"justification,omitempty"`
-}
 
 type StateOfApplicabilityEdge struct {
 	Cursor page.CursorKey        `json:"cursor"`
@@ -1938,6 +1930,16 @@ func (this TrustCenterReference) GetID() gid.GID { return this.ID }
 type TrustCenterReferenceEdge struct {
 	Cursor page.CursorKey        `json:"cursor"`
 	Node   *TrustCenterReference `json:"node"`
+}
+
+type UpdateApplicabilityStatementInput struct {
+	ApplicabilityStatementID gid.GID `json:"applicabilityStatementId"`
+	Applicability            bool    `json:"applicability"`
+	Justification            *string `json:"justification,omitempty"`
+}
+
+type UpdateApplicabilityStatementPayload struct {
+	ApplicabilityStatement *ApplicabilityStatement `json:"applicabilityStatement"`
 }
 
 type UpdateAssetInput struct {

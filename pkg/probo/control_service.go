@@ -827,36 +827,6 @@ func (s ControlService) CountForStateOfApplicabilityID(
 	return count, nil
 }
 
-func (s ControlService) ListForStateOfApplicabilityID(
-	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
-	cursor *page.Cursor[coredata.ControlOrderField],
-	filter *coredata.ControlFilter,
-) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
-	var controls coredata.Controls
-	stateOfApplicability := &coredata.StateOfApplicability{}
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			if err := stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID); err != nil {
-				return fmt.Errorf("cannot load state of applicability: %w", err)
-			}
-			if err := controls.LoadByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, cursor, filter); err != nil {
-				return fmt.Errorf("cannot load controls: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage([]*coredata.Control(controls), cursor), nil
-}
-
 func (s ControlService) Create(
 	ctx context.Context,
 	req CreateControlRequest,
@@ -932,39 +902,42 @@ func (s ControlService) Update(
 
 	control := &coredata.Control{ID: req.ID}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
-		if err := control.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
-			return fmt.Errorf("cannot load control: %w", err)
-		}
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := control.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load control: %w", err)
+			}
 
-		if req.Name != nil {
-			control.Name = *req.Name
-		}
+			if req.Name != nil {
+				control.Name = *req.Name
+			}
 
-		if req.Description != nil {
-			control.Description = *req.Description
-		}
+			if req.Description != nil {
+				control.Description = *req.Description
+			}
 
-		if req.SectionTitle != nil {
-			control.SectionTitle = *req.SectionTitle
-		}
+			if req.SectionTitle != nil {
+				control.SectionTitle = *req.SectionTitle
+			}
 
-		if req.Status != nil {
-			control.Status = *req.Status
-		}
+			if req.Status != nil {
+				control.Status = *req.Status
+			}
 
-		if req.ExclusionJustification != nil {
-			control.ExclusionJustification = req.ExclusionJustification
-		}
+			if req.ExclusionJustification != nil {
+				control.ExclusionJustification = req.ExclusionJustification
+			}
 
-		if req.BestPractice != nil {
-			control.BestPractice = *req.BestPractice
-		}
+			if req.BestPractice != nil {
+				control.BestPractice = *req.BestPractice
+			}
 
-		control.UpdatedAt = time.Now()
+			control.UpdatedAt = time.Now()
 
-		return control.Update(ctx, conn, s.svc.scope)
-	})
+			return control.Update(ctx, conn, s.svc.scope)
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot update control: %w", err)
 	}
@@ -984,4 +957,76 @@ func (s ControlService) Delete(
 			return control.Delete(ctx, conn, s.svc.scope)
 		},
 	)
+}
+
+func (s ControlService) HasRegulatoryObligation(
+	ctx context.Context,
+	controlID gid.GID,
+) (bool, error) {
+	var hasRegulatory bool
+
+	obligationType := coredata.ObligationTypeLegal
+	filter := coredata.NewControlObligationFilter(&obligationType)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var controlObligations coredata.ControlObligations
+			count, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, controlID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count regulatory obligations: %w", err)
+			}
+			hasRegulatory = count > 0
+			return nil
+		},
+	)
+
+	return hasRegulatory, err
+}
+
+func (s ControlService) HasContractualObligation(
+	ctx context.Context,
+	controlID gid.GID,
+) (bool, error) {
+	var hasContractual bool
+
+	obligationType := coredata.ObligationTypeContractual
+	filter := coredata.NewControlObligationFilter(&obligationType)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var controlObligations coredata.ControlObligations
+			count, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, controlID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count contractual obligations: %w", err)
+			}
+			hasContractual = count > 0
+			return nil
+		},
+	)
+
+	return hasContractual, err
+}
+
+func (s ControlService) HasRiskAssessment(
+	ctx context.Context,
+	controlID gid.GID,
+) (bool, error) {
+	var hasRisk bool
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var controlsWithRisk coredata.ControlsWithRisk
+			if err := controlsWithRisk.LoadByControlIDs(ctx, conn, s.svc.scope, []gid.GID{controlID}); err != nil {
+				return fmt.Errorf("cannot load controls with risk: %w", err)
+			}
+
+			hasRisk = len(controlsWithRisk) > 0
+			return nil
+		},
+	)
+
+	return hasRisk, err
 }

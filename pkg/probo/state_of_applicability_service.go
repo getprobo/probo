@@ -272,17 +272,18 @@ func (s StateOfApplicabilityService) Delete(
 	return nil
 }
 
-func (s StateOfApplicabilityService) ListAvailableControls(
+func (s StateOfApplicabilityService) ListApplicabilityStatements(
 	ctx context.Context,
 	stateOfApplicabilityID gid.GID,
-) ([]*coredata.AvailableStateOfApplicabilityControl, error) {
-	var availableControls coredata.AvailableStateOfApplicabilityControls
+	cursor *page.Cursor[coredata.ApplicabilityStatementOrderField],
+) (*page.Page[*coredata.ApplicabilityStatement, coredata.ApplicabilityStatementOrderField], error) {
+	var statements coredata.ApplicabilityStatements
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := availableControls.LoadAvailableByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID); err != nil {
-				return fmt.Errorf("cannot load available controls: %w", err)
+			if err := statements.LoadByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, cursor); err != nil {
+				return fmt.Errorf("cannot load applicability statements: %w", err)
 			}
 			return nil
 		},
@@ -292,72 +293,128 @@ func (s StateOfApplicabilityService) ListAvailableControls(
 		return nil, err
 	}
 
-	return availableControls, nil
+	return page.NewPage(statements, cursor), nil
 }
 
-func (s StateOfApplicabilityService) LinkControl(
+func (s StateOfApplicabilityService) CountApplicabilityStatements(
+	ctx context.Context,
+	stateOfApplicabilityID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			statements := &coredata.ApplicabilityStatements{}
+			count, err = statements.CountByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID)
+			if err != nil {
+				return fmt.Errorf("cannot count applicability statements: %w", err)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s StateOfApplicabilityService) CreateApplicabilityStatement(
 	ctx context.Context,
 	stateOfApplicabilityID gid.GID,
 	controlID gid.GID,
 	applicability bool,
 	justification *string,
-) (*coredata.StateOfApplicabilityControl, error) {
-	stateOfApplicability := &coredata.StateOfApplicability{}
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot load state of applicability: %w", err)
-	}
+) (*coredata.ApplicabilityStatement, error) {
+	var (
+		stateOfApplicability   = &coredata.StateOfApplicability{}
+		applicabilityStatement = &coredata.ApplicabilityStatement{}
+		now                    = time.Now()
+	)
 
-	now := time.Now()
-	control := &coredata.StateOfApplicabilityControl{
-		ID:                     gid.New(s.svc.scope.GetTenantID(), coredata.StateOfApplicabilityControlEntityType),
-		StateOfApplicabilityID: stateOfApplicabilityID,
-		ControlID:              controlID,
-		OrganizationID:         stateOfApplicability.OrganizationID,
-		Applicability:          applicability,
-		Justification:          justification,
-		CreatedAt:              now,
-		UpdatedAt:              now,
-	}
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID); err != nil {
+				return fmt.Errorf("cannot load state of applicability: %w", err)
+			}
 
-	err = s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
-		return control.Upsert(ctx, conn, s.svc.scope)
-	})
+			applicabilityStatement = &coredata.ApplicabilityStatement{
+				ID:                     gid.New(s.svc.scope.GetTenantID(), coredata.ApplicabilityStatementEntityType),
+				StateOfApplicabilityID: stateOfApplicabilityID,
+				ControlID:              controlID,
+				OrganizationID:         stateOfApplicability.OrganizationID,
+				Applicability:          applicability,
+				Justification:          justification,
+				CreatedAt:              now,
+				UpdatedAt:              now,
+			}
+
+			if err := applicabilityStatement.Insert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert applicability statement: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return control, nil
+	return applicabilityStatement, nil
 }
 
-func (s StateOfApplicabilityService) DeleteControlLink(
+func (s StateOfApplicabilityService) UpdateApplicabilityStatement(
 	ctx context.Context,
-	stateOfApplicabilityID gid.GID,
-	controlID gid.GID,
-) (gid.GID, error) {
-	control := &coredata.StateOfApplicabilityControl{}
+	applicabilityStatementID gid.GID,
+	applicability bool,
+	justification *string,
+) (*coredata.ApplicabilityStatement, error) {
+	applicabilityStatement := &coredata.ApplicabilityStatement{}
 
-	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
-		if err := control.LoadByStateOfApplicabilityIDAndControlID(ctx, conn, s.svc.scope, stateOfApplicabilityID, controlID); err != nil {
-			return err
-		}
-		return control.Delete(ctx, conn, s.svc.scope)
-	})
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := applicabilityStatement.LoadByID(ctx, conn, s.svc.scope, applicabilityStatementID); err != nil {
+				return err
+			}
+
+			applicabilityStatement.Applicability = applicability
+			applicabilityStatement.Justification = justification
+			applicabilityStatement.UpdatedAt = time.Now()
+
+			return applicabilityStatement.UpdateByID(ctx, conn, s.svc.scope)
+		},
+	)
 	if err != nil {
-		return gid.GID{}, err
+		return nil, err
 	}
 
-	return control.ID, nil
+	return applicabilityStatement, nil
+}
+
+func (s StateOfApplicabilityService) DeleteApplicabilityStatement(
+	ctx context.Context,
+	applicabilityStatementID gid.GID,
+) error {
+	applicabilityStatement := &coredata.ApplicabilityStatement{}
+
+	return s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			return applicabilityStatement.DeleteByID(ctx, conn, s.svc.scope, applicabilityStatementID)
+		},
+	)
 }
 
 func (s StateOfApplicabilityService) ListControlLinks(
 	ctx context.Context,
 	controlID gid.GID,
-	cursor *page.Cursor[coredata.StateOfApplicabilityOrderField],
-) (*page.Page[*coredata.StateOfApplicabilityControl, coredata.StateOfApplicabilityOrderField], error) {
-	var controls coredata.StateOfApplicabilityControls
+	cursor *page.Cursor[coredata.ApplicabilityStatementOrderField],
+) (*page.Page[*coredata.ApplicabilityStatement, coredata.ApplicabilityStatementOrderField], error) {
+	var controls coredata.ApplicabilityStatements
 
 	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
 		return controls.LoadByControlID(ctx, conn, s.svc.scope, controlID, cursor)
@@ -393,66 +450,83 @@ func (s StateOfApplicabilityService) ExportPDF(
 				return fmt.Errorf("cannot load owner: %w", err)
 			}
 
-			var availableControls coredata.AvailableStateOfApplicabilityControls
-			if err := availableControls.LoadAvailableByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID); err != nil {
-				return fmt.Errorf("cannot load available controls: %w", err)
+			// Load applicability statements
+			var applicabilityStatements coredata.ApplicabilityStatements
+			cursor := page.NewCursor(
+				10000,
+				nil,
+				page.Head,
+				page.OrderBy[coredata.ApplicabilityStatementOrderField]{
+					Field:     coredata.ApplicabilityStatementOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+			)
+			if err := applicabilityStatements.LoadByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, cursor); err != nil {
+				return fmt.Errorf("cannot load applicability statements: %w", err)
 			}
 
-			linkedControls := make([]*coredata.AvailableStateOfApplicabilityControl, 0)
-			for _, ctrl := range availableControls {
-				if ctrl.StateOfApplicabilityID != nil {
-					linkedControls = append(linkedControls, ctrl)
+			if len(applicabilityStatements) == 0 {
+				// No linked controls, skip loading additional data
+				documentData = docgen.StateOfApplicabilityData{
+					Title:            stateOfApplicability.Name,
+					OrganizationName: organization.Name,
+					CreatedAt:        stateOfApplicability.CreatedAt,
+					TotalControls:    0,
+					FrameworkGroups:  []docgen.FrameworkControlGroup{},
 				}
-			}
-
-			obligationsByControl := make(map[gid.GID][]coredata.ObligationType)
-			if len(linkedControls) > 0 {
-				controlIDs := make([]gid.GID, len(linkedControls))
-				for i, ctrl := range linkedControls {
-					controlIDs[i] = ctrl.ControlID
-				}
-
-				var controlObligationTypes coredata.ControlObligationTypes
-				if err := controlObligationTypes.LoadTypesByControlIDs(ctx, conn, s.svc.scope, controlIDs); err != nil {
-					return fmt.Errorf("cannot load control obligations: %w", err)
-				}
-
-				for _, cot := range controlObligationTypes {
-					obligationsByControl[cot.ControlID] = append(obligationsByControl[cot.ControlID], cot.Type)
-				}
-			}
-
-			controlsWithRisks := make(map[gid.GID]bool)
-			if len(linkedControls) > 0 {
-				controlIDs := make([]gid.GID, len(linkedControls))
-				for i, ctrl := range linkedControls {
-					controlIDs[i] = ctrl.ControlID
-				}
-
-				var controlsWithRisk coredata.ControlsWithRisk
-				if err := controlsWithRisk.LoadByControlIDs(ctx, conn, s.svc.scope, controlIDs); err != nil {
-					return fmt.Errorf("cannot load controls with risks: %w", err)
-				}
-
-				for _, cwr := range controlsWithRisk {
-					controlsWithRisks[cwr.ControlID] = true
-				}
+				return nil
 			}
 
 			frameworkControlsMap := make(map[string][]docgen.ControlData)
 			frameworkOrder := []string{}
 
-			for _, ctrl := range linkedControls {
-				if _, exists := frameworkControlsMap[ctrl.FrameworkName]; !exists {
-					frameworkOrder = append(frameworkOrder, ctrl.FrameworkName)
-					frameworkControlsMap[ctrl.FrameworkName] = []docgen.ControlData{}
+			for _, stmt := range applicabilityStatements {
+				// Load control
+				control := &coredata.Control{}
+				if err := control.LoadByID(ctx, conn, s.svc.scope, stmt.ControlID); err != nil {
+					return fmt.Errorf("cannot load control: %w", err)
+				}
+
+				// Load framework
+				framework := &coredata.Framework{}
+				if err := framework.LoadByID(ctx, conn, s.svc.scope, control.FrameworkID); err != nil {
+					return fmt.Errorf("cannot load framework: %w", err)
+				}
+
+				// Count legal obligations
+				var controlObligations coredata.ControlObligations
+				legalType := coredata.ObligationTypeLegal
+				legalFilter := coredata.NewControlObligationFilter(&legalType)
+				legalCount, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, stmt.ControlID, legalFilter)
+				if err != nil {
+					return fmt.Errorf("cannot count legal obligations: %w", err)
+				}
+
+				// Count contractual obligations
+				contractualType := coredata.ObligationTypeContractual
+				contractualFilter := coredata.NewControlObligationFilter(&contractualType)
+				contractualCount, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, stmt.ControlID, contractualFilter)
+				if err != nil {
+					return fmt.Errorf("cannot count contractual obligations: %w", err)
+				}
+
+				// Check if control has risk
+				var controlsWithRisk coredata.ControlsWithRisk
+				if err := controlsWithRisk.LoadByControlIDs(ctx, conn, s.svc.scope, []gid.GID{stmt.ControlID}); err != nil {
+					return fmt.Errorf("cannot load controls with risks: %w", err)
+				}
+				hasRisk := len(controlsWithRisk) > 0
+
+				if _, exists := frameworkControlsMap[framework.Name]; !exists {
+					frameworkOrder = append(frameworkOrder, framework.Name)
+					frameworkControlsMap[framework.Name] = []docgen.ControlData{}
 				}
 
 				var regulatory *bool
 				var contractual *bool
 				var riskAssessment *bool
 
-				if ctrl.Applicability != nil && *ctrl.Applicability {
+				if stmt.Applicability {
 					falseVal := false
 					trueVal := true
 
@@ -460,30 +534,28 @@ func (s StateOfApplicabilityService) ExportPDF(
 					contractual = &falseVal
 					riskAssessment = &falseVal
 
-					obligations := obligationsByControl[ctrl.ControlID]
-					for _, obligationType := range obligations {
-						if obligationType == coredata.ObligationTypeLegal {
-							regulatory = &trueVal
-						}
-						if obligationType == coredata.ObligationTypeContractual {
-							contractual = &trueVal
-						}
+					if legalCount > 0 {
+						regulatory = &trueVal
 					}
-
-					if controlsWithRisks[ctrl.ControlID] {
+					if contractualCount > 0 {
+						contractual = &trueVal
+					}
+					if hasRisk {
 						riskAssessment = &trueVal
 					}
 				}
 
-				frameworkControlsMap[ctrl.FrameworkName] = append(
-					frameworkControlsMap[ctrl.FrameworkName],
+				applicability := stmt.Applicability
+
+				frameworkControlsMap[framework.Name] = append(
+					frameworkControlsMap[framework.Name],
 					docgen.ControlData{
-						FrameworkName:  ctrl.FrameworkName,
-						SectionTitle:   ctrl.SectionTitle,
-						Name:           ctrl.Name,
-						Applicability:  ctrl.Applicability,
-						Justification:  ctrl.Justification,
-						BestPractice:   ctrl.BestPractice,
+						FrameworkName:  framework.Name,
+						SectionTitle:   control.SectionTitle,
+						Name:           control.Name,
+						Applicability:  &applicability,
+						Justification:  stmt.Justification,
+						BestPractice:   control.BestPractice,
 						Regulatory:     regulatory,
 						Contractual:    contractual,
 						RiskAssessment: riskAssessment,
@@ -543,7 +615,7 @@ func (s StateOfApplicabilityService) ExportPDF(
 				Title:                       stateOfApplicability.Name,
 				OrganizationName:            organization.Name,
 				CreatedAt:                   stateOfApplicability.CreatedAt,
-				TotalControls:               len(linkedControls),
+				TotalControls:               len(applicabilityStatements),
 				FrameworkGroups:             frameworkGroups,
 				CompanyHorizontalLogoBase64: horizontalLogoBase64,
 				Version:                     version,

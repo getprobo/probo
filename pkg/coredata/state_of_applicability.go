@@ -414,7 +414,7 @@ snapshot_soa AS (
     FROM states_of_applicability
     WHERE snapshot_id = @snapshot_id
 )
-INSERT INTO states_of_applicability_controls (
+INSERT INTO applicability_statements (
     id,
     state_of_applicability_id,
     control_id,
@@ -427,7 +427,7 @@ INSERT INTO states_of_applicability_controls (
     updated_at
 )
 SELECT
-    generate_gid(decode_base64_unpadded(@tenant_id), @state_of_applicability_control_entity_type),
+    generate_gid(decode_base64_unpadded(@tenant_id), @applicability_statement_entity_type),
     snapshot_soa.id,
     soac.control_id,
     soac.organization_id,
@@ -437,7 +437,7 @@ SELECT
     soac.justification,
     soac.created_at,
     soac.updated_at
-FROM states_of_applicability_controls soac
+FROM applicability_statements soac
 INNER JOIN source_soa
     ON soac.state_of_applicability_id = source_soa.id
 INNER JOIN snapshot_soa
@@ -448,10 +448,10 @@ WHERE soac.snapshot_id IS NULL
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"snapshot_id":     snapshotID,
-		"organization_id": organizationID,
-		"state_of_applicability_control_entity_type": StateOfApplicabilityControlEntityType,
+		"tenant_id":                           scope.GetTenantID(),
+		"snapshot_id":                         snapshotID,
+		"organization_id":                     organizationID,
+		"applicability_statement_entity_type": ApplicabilityStatementEntityType,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

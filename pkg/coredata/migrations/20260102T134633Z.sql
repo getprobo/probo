@@ -109,20 +109,24 @@ WHERE NOT EXISTS (
     SELECT 1
     FROM states_of_applicability soa
     WHERE soa.name = f.name
+    AND soa.tenant_id = f.tenant_id
     AND soa.snapshot_id IS NULL
 )
 AND EXISTS (
     SELECT 1 FROM peoples WHERE tenant_id = f.tenant_id
 )
+-- We only use exclude with ISO 27001 FIXME
 AND EXISTS (
     SELECT 1
     FROM controls c
     WHERE c.framework_id = f.id
+    AND c.tenant_id = f.tenant_id
     AND (
         c.status = 'EXCLUDED'
         OR (c.exclusion_justification IS NOT NULL AND c.exclusion_justification != '')
     )
-);
+)
+AND organization_id = 'e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg';
 
 INSERT INTO states_of_applicability_controls (
     id,
@@ -151,11 +155,23 @@ SELECT
     NOW() as created_at,
     NOW() as updated_at
 FROM frameworks f
-JOIN states_of_applicability soa ON soa.name = f.name AND soa.snapshot_id IS NULL
+JOIN states_of_applicability soa ON soa.name = f.name AND soa.snapshot_id IS NULL AND soa.tenant_id = f.tenant_id
 JOIN controls c ON c.framework_id = f.id
 WHERE NOT EXISTS (
     SELECT 1
     FROM states_of_applicability_controls soac
     WHERE soac.state_of_applicability_id = soa.id
     AND soac.control_id = c.id
-);
+)
+AND f.id = 'e5IaD7ibAAEAAQAAAZsNt6Js2dJrgpJG'
+AND f.organization_id = 'e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg';
+
+
+
+WITH todelete AS (
+SELECT soac.id
+FROM states_of_applicability soa
+JOIN states_of_applicability_controls soac ON soac.state_of_applicability_id = soa.id
+WHERE soa.tenant_id != soac.tenant_id
+) 
+DELETE FROM states_of_applicability_controls WHERE id IN (SELECT id FROM todelete)

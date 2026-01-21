@@ -167,19 +167,13 @@ WHERE
 	return nil
 }
 
-type ControlObligationType struct {
-	ControlID gid.GID        `db:"control_id"`
-	Type      ObligationType `db:"type"`
-}
-
-type ControlObligationTypes []*ControlObligationType
-
-func (cots *ControlObligationTypes) LoadTypesByControlIDs(
+func (cos *ControlObligations) CountByControlID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	controlIDs []gid.GID,
-) error {
+	controlID gid.GID,
+	filter *ControlObligationFilter,
+) (int, error) {
 	q := `
 WITH control_obls AS (
 	SELECT
@@ -191,31 +185,27 @@ WITH control_obls AS (
 	INNER JOIN
 		obligations o ON co.obligation_id = o.id
 	WHERE
-		co.control_id = ANY(@control_ids)
+		co.control_id = @control_id
 )
-SELECT DISTINCT
-	control_id,
-	type
+SELECT
+	COUNT(*)
 FROM
 	control_obls
-WHERE
-	%s
+WHERE %s
+	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"control_ids": controlIDs}
+	args := pgx.StrictNamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query control obligations: %w", err)
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count control obligations: %w", err)
 	}
 
-	controlObligationTypes, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ControlObligationType])
-	if err != nil {
-		return fmt.Errorf("cannot collect control obligations: %w", err)
-	}
-
-	*cots = controlObligationTypes
-	return nil
+	return count, nil
 }

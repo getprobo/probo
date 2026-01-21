@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8bdd74dfae1b656006a07b2f89fe525d>>
+ * @generated SignedSource<<be08976a189938be59196a67454e0a60>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type StateOfApplicabilityOrder = {
   direction: OrderDirection;
   field: StateOfApplicabilityOrderField;
 };
-export type StateOfApplicabilityListQuery$variables = {
+export type StatesOfApplicabilityPagePaginationQuery$variables = {
   after?: string | null | undefined;
   before?: string | null | undefined;
   filter?: StateOfApplicabilityFilter | null | undefined;
@@ -28,14 +28,14 @@ export type StateOfApplicabilityListQuery$variables = {
   last?: number | null | undefined;
   order?: StateOfApplicabilityOrder | null | undefined;
 };
-export type StateOfApplicabilityListQuery$data = {
+export type StatesOfApplicabilityPagePaginationQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityGraphPaginatedFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"StatesOfApplicabilityPageFragment">;
   };
 };
-export type StateOfApplicabilityListQuery = {
-  response: StateOfApplicabilityListQuery$data;
-  variables: StateOfApplicabilityListQuery$variables;
+export type StatesOfApplicabilityPagePaginationQuery = {
+  response: StatesOfApplicabilityPagePaginationQuery$data;
+  variables: StatesOfApplicabilityPagePaginationQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -150,7 +150,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "StateOfApplicabilityListQuery",
+    "name": "StatesOfApplicabilityPagePaginationQuery",
     "selections": [
       {
         "alias": null,
@@ -174,7 +174,7 @@ return {
               }
             ],
             "kind": "FragmentSpread",
-            "name": "StateOfApplicabilityGraphPaginatedFragment"
+            "name": "StatesOfApplicabilityPageFragment"
           }
         ],
         "storageKey": null
@@ -195,7 +195,7 @@ return {
       (v4/*: any*/)
     ],
     "kind": "Operation",
-    "name": "StateOfApplicabilityListQuery",
+    "name": "StatesOfApplicabilityPagePaginationQuery",
     "selections": [
       {
         "alias": null,
@@ -246,28 +246,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "sourceId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "snapshotId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -284,17 +263,11 @@ return {
                             "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
                           },
                           {
-                            "alias": "controlsInfo",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "first",
-                                "value": 0
-                              }
-                            ],
-                            "concreteType": "ControlConnection",
+                            "alias": "statementsInfo",
+                            "args": null,
+                            "concreteType": "ApplicabilityStatementConnection",
                             "kind": "LinkedField",
-                            "name": "controls",
+                            "name": "applicabilityStatements",
                             "plural": false,
                             "selections": [
                               {
@@ -305,7 +278,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "controls(first:0)"
+                            "storageKey": null
                           },
                           (v13/*: any*/)
                         ],
@@ -379,11 +352,10 @@ return {
                 "alias": null,
                 "args": (v15/*: any*/),
                 "filters": [
-                  "orderBy",
                   "filter"
                 ],
                 "handle": "connection",
-                "key": "StateOfApplicabilityGraphPaginatedQuery_statesOfApplicability",
+                "key": "StatesOfApplicabilityPage_statesOfApplicability",
                 "kind": "LinkedHandle",
                 "name": "statesOfApplicability"
               }
@@ -397,16 +369,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "68d8b8bc491e464ea692b6d37952bcbf",
+    "cacheID": "812dcba28ad3fb441e49e281a199fd62",
     "id": null,
     "metadata": {},
-    "name": "StateOfApplicabilityListQuery",
+    "name": "StatesOfApplicabilityPagePaginationQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: StateOfApplicabilityFilter = {snapshotId: null}\n  $first: Int = 50\n  $last: Int = null\n  $order: StateOfApplicabilityOrder = {direction: DESC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StateOfApplicabilityGraphPaginatedFragment_4cFWzS\n    id\n  }\n}\n\nfragment StateOfApplicabilityGraphPaginatedFragment_4cFWzS on Organization {\n  statesOfApplicability(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        name\n        sourceId\n        snapshotId\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:state-of-applicability:delete\")\n        controlsInfo: controls(first: 0) {\n          totalCount\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query StatesOfApplicabilityPagePaginationQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: StateOfApplicabilityFilter = {snapshotId: null}\n  $first: Int = 50\n  $last: Int = null\n  $order: StateOfApplicabilityOrder = {direction: DESC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StatesOfApplicabilityPageFragment_4cFWzS\n    id\n  }\n}\n\nfragment StateOfApplicabilityRowFragment on StateOfApplicability {\n  id\n  name\n  createdAt\n  canDelete: permission(action: \"core:state-of-applicability:delete\")\n  statementsInfo: applicabilityStatements {\n    totalCount\n  }\n}\n\nfragment StatesOfApplicabilityPageFragment_4cFWzS on Organization {\n  statesOfApplicability(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...StateOfApplicabilityRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "82cf2a5ce701c34a41f8166371dd75c3";
+(node as any).hash = "30ea5e415eca53b251933d1ce086a9b7";
 
 export default node;

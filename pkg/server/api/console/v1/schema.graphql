@@ -599,6 +599,14 @@ enum DocumentVersionOrderField
         )
 }
 
+enum ApplicabilityStatementOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderFieldCreatedAt"
+        )
+}
+
 enum CountryCode
     @goModel(model: "go.probo.inc/probo/pkg/coredata.CountryCode") {
     AD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAD")
@@ -1475,6 +1483,14 @@ input SnapshotOrder
     field: SnapshotOrderField!
 }
 
+input ApplicabilityStatementOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ApplicabilityStatementOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ApplicabilityStatementOrderField!
+}
+
 input DocumentVersionFilter {
     status: DocumentStatus
 }
@@ -1992,6 +2008,9 @@ type Control implements Node {
     status: ControlStatus!
     exclusionJustification: String
     bestPractice: Boolean!
+    regulatory: Boolean! @goField(forceResolver: true)
+    contractual: Boolean! @goField(forceResolver: true)
+    riskAssessment: Boolean! @goField(forceResolver: true)
 
     framework: Framework! @goField(forceResolver: true)
 
@@ -2037,14 +2056,6 @@ type Control implements Node {
         before: CursorKey
         orderBy: SnapshotOrder
     ): SnapshotConnection! @goField(forceResolver: true)
-
-    stateOfApplicabilityControls(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: StateOfApplicabilityOrder
-    ): StateOfApplicabilityControlConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -2225,17 +2236,39 @@ type StateOfApplicability implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
 
-    controls(
+    applicabilityStatements(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: ControlOrder
-        filter: ControlFilter
-    ): ControlConnection! @goField(forceResolver: true)
+        orderBy: ApplicabilityStatementOrder
+    ): ApplicabilityStatementConnection! @goField(forceResolver: true)
 
-    availableControls: [AvailableStateOfApplicabilityControl!]!
-        @goField(forceResolver: true)
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ApplicabilityStatementConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ApplicabilityStatementConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ApplicabilityStatementEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ApplicabilityStatementEdge {
+    cursor: CursorKey!
+    node: ApplicabilityStatement!
+}
+
+type ApplicabilityStatement implements Node {
+    id: ID!
+    stateOfApplicability: StateOfApplicability! @goField(forceResolver: true)
+    control: Control! @goField(forceResolver: true)
+    applicability: Boolean!
+    justification: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -2801,6 +2834,7 @@ type StateOfApplicabilityEdge {
     node: StateOfApplicability!
 }
 
+
 type RiskConnection
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskConnection"
@@ -3124,12 +3158,15 @@ type Mutation {
     deleteControlDocumentMapping(
         input: DeleteControlDocumentMappingInput!
     ): DeleteControlDocumentMappingPayload!
-    createStateOfApplicabilityControlMapping(
-        input: CreateStateOfApplicabilityControlMappingInput!
-    ): CreateStateOfApplicabilityControlMappingPayload!
-    deleteStateOfApplicabilityControlMapping(
-        input: DeleteStateOfApplicabilityControlMappingInput!
-    ): DeleteStateOfApplicabilityControlMappingPayload!
+    createApplicabilityStatement(
+        input: CreateApplicabilityStatementInput!
+    ): CreateApplicabilityStatementPayload!
+    updateApplicabilityStatement(
+        input: UpdateApplicabilityStatementInput!
+    ): UpdateApplicabilityStatementPayload!
+    deleteApplicabilityStatement(
+        input: DeleteApplicabilityStatementInput!
+    ): DeleteApplicabilityStatementPayload!
     createControlAuditMapping(
         input: CreateControlAuditMappingInput!
     ): CreateControlAuditMappingPayload!
@@ -3678,16 +3715,21 @@ input DeleteControlDocumentMappingInput {
     documentId: ID!
 }
 
-input CreateStateOfApplicabilityControlMappingInput {
+input CreateApplicabilityStatementInput {
     stateOfApplicabilityId: ID!
     controlId: ID!
     applicability: Boolean!
     justification: String
 }
 
-input DeleteStateOfApplicabilityControlMappingInput {
-    stateOfApplicabilityId: ID!
-    controlId: ID!
+input UpdateApplicabilityStatementInput {
+    applicabilityStatementId: ID!
+    applicability: Boolean!
+    justification: String
+}
+
+input DeleteApplicabilityStatementInput {
+    applicabilityStatementId: ID!
 }
 
 input CreateControlAuditMappingInput {
@@ -3916,56 +3958,14 @@ input UpdateStateOfApplicabilityInput {
     ownerId: ID
 }
 
-input StateOfApplicabilityControlInput {
+input ApplicabilityStatementInput {
     controlId: ID!
     applicability: Boolean!
     justification: String
-}
-
-type AvailableStateOfApplicabilityControl {
-    controlId: ID!
-    sectionTitle: String!
-    name: String!
-    frameworkId: ID!
-    frameworkName: String!
-    organizationId: ID!
-    stateOfApplicabilityId: ID
-    applicability: Boolean
-    justification: String
-    bestPractice: Boolean!
-    regulatory: Boolean!
-    contractual: Boolean!
-    riskAssessment: Boolean!
 }
 
 input DeleteStateOfApplicabilityInput {
     stateOfApplicabilityId: ID!
-}
-
-type StateOfApplicabilityControl {
-    id: ID!
-    stateOfApplicabilityId: ID!
-    controlId: ID!
-    stateOfApplicability: StateOfApplicability! @goField(forceResolver: true)
-    applicability: Boolean!
-    justification: String
-}
-
-type StateOfApplicabilityControlConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityControlConnection"
-    ) {
-    totalCount: Int!
-    edges: [StateOfApplicabilityControlEdge!]!
-    pageInfo: PageInfo!
-}
-
-type StateOfApplicabilityControlEdge
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityControlEdge"
-    ) {
-    cursor: CursorKey!
-    node: StateOfApplicabilityControl!
 }
 
 input ExportStateOfApplicabilityPDFInput {
@@ -4466,14 +4466,16 @@ type DeleteControlDocumentMappingPayload {
     deletedDocumentId: ID!
 }
 
-type CreateStateOfApplicabilityControlMappingPayload {
-    stateOfApplicabilityControlEdge: StateOfApplicabilityControlEdge!
+type CreateApplicabilityStatementPayload {
+    applicabilityStatementEdge: ApplicabilityStatementEdge!
 }
 
-type DeleteStateOfApplicabilityControlMappingPayload {
-    deletedStateOfApplicabilityId: ID!
-    deletedControlId: ID!
-    deletedStateOfApplicabilityControlId: ID!
+type UpdateApplicabilityStatementPayload {
+    applicabilityStatement: ApplicabilityStatement!
+}
+
+type DeleteApplicabilityStatementPayload {
+    deletedApplicabilityStatementId: ID!
 }
 
 type CreateControlAuditMappingPayload {

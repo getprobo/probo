@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<deb6f38f36dc011d0fc4fc060303a57a>>
+ * @generated SignedSource<<56cf69173dcd665f19c4273ab108f383>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,18 +12,18 @@ import { ConcreteRequest } from 'relay-runtime';
 export type DeleteStateOfApplicabilityInput = {
   stateOfApplicabilityId: string;
 };
-export type StateOfApplicabilityGraphDeleteMutation$variables = {
+export type StateOfApplicabilityDetailPageDeleteMutation$variables = {
   connections: ReadonlyArray<string>;
   input: DeleteStateOfApplicabilityInput;
 };
-export type StateOfApplicabilityGraphDeleteMutation$data = {
+export type StateOfApplicabilityDetailPageDeleteMutation$data = {
   readonly deleteStateOfApplicability: {
     readonly deletedStateOfApplicabilityId: string;
   };
 };
-export type StateOfApplicabilityGraphDeleteMutation = {
-  response: StateOfApplicabilityGraphDeleteMutation$data;
-  variables: StateOfApplicabilityGraphDeleteMutation$variables;
+export type StateOfApplicabilityDetailPageDeleteMutation = {
+  response: StateOfApplicabilityDetailPageDeleteMutation$data;
+  variables: StateOfApplicabilityDetailPageDeleteMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -59,7 +59,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "StateOfApplicabilityGraphDeleteMutation",
+    "name": "StateOfApplicabilityDetailPageDeleteMutation",
     "selections": [
       {
         "alias": null,
@@ -84,7 +84,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "StateOfApplicabilityGraphDeleteMutation",
+    "name": "StateOfApplicabilityDetailPageDeleteMutation",
     "selections": [
       {
         "alias": null,
@@ -117,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "197a2ed2b48d43372e16deae6e9b98c2",
+    "cacheID": "13f5a325289c902aca142880e1f30648",
     "id": null,
     "metadata": {},
-    "name": "StateOfApplicabilityGraphDeleteMutation",
+    "name": "StateOfApplicabilityDetailPageDeleteMutation",
     "operationKind": "mutation",
-    "text": "mutation StateOfApplicabilityGraphDeleteMutation(\n  $input: DeleteStateOfApplicabilityInput!\n) {\n  deleteStateOfApplicability(input: $input) {\n    deletedStateOfApplicabilityId\n  }\n}\n"
+    "text": "mutation StateOfApplicabilityDetailPageDeleteMutation(\n  $input: DeleteStateOfApplicabilityInput!\n) {\n  deleteStateOfApplicability(input: $input) {\n    deletedStateOfApplicabilityId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "92ec928d4ad0fe7ff4ae78ad9f1f329a";
+(node as any).hash = "b511cc3d55c6ebb1517687f706026333";
 
 export default node;

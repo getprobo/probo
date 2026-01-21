@@ -15,7 +15,7 @@ import {
   Tr,
   TrButton,
 } from "@probo/ui";
-import { clsx } from "clsx";
+import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -26,13 +26,14 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { LinkedStatesOfApplicabilityDialog } from "./LinkedStatesOfApplicabilityDialog";
 
 const linkedStateOfApplicabilityFragment = graphql`
-    fragment LinkedStatesOfApplicabilityCardFragment on StateOfApplicabilityControl {
+    fragment LinkedStatesOfApplicabilityCardFragment on ApplicabilityStatement {
         id
-        stateOfApplicabilityId
-        controlId
         stateOfApplicability {
             id
             name
+        }
+        control {
+            id
         }
         applicability
         justification
@@ -233,7 +234,8 @@ function LinkedInfoExtractor(props: {
     controlId: string;
   }) => void;
 }) {
-  const { fragment, onExtracted } = props;
+  const { onExtracted, fragment } = props;
+
   const data = useFragment(
     linkedStateOfApplicabilityFragment,
     fragment,
@@ -241,10 +243,10 @@ function LinkedInfoExtractor(props: {
 
   useEffect(() => {
     onExtracted({
-      stateOfApplicabilityId: data.stateOfApplicabilityId,
-      controlId: data.controlId,
+      stateOfApplicabilityId: data.stateOfApplicability.id,
+      controlId: data.control.id,
     });
-  }, [data.stateOfApplicabilityId, data.controlId, onExtracted]);
+  }, [data.stateOfApplicability.id, data.control.id, onExtracted]);
 
   return null;
 }
@@ -265,7 +267,7 @@ function StateOfApplicabilityRow(props: {
 
   return (
     <Tr
-      to={`/organizations/${organizationId}/states-of-applicability/${soa.stateOfApplicabilityId}`}
+      to={`/organizations/${organizationId}/states-of-applicability/${soa.stateOfApplicability.id}`}
     >
       <Td>{soa.stateOfApplicability.name}</Td>
       <Td>
@@ -282,8 +284,8 @@ function StateOfApplicabilityRow(props: {
             variant="secondary"
             onClick={() =>
               props.onClick(
-                soa.stateOfApplicabilityId,
-                soa.controlId,
+                soa.stateOfApplicability.id,
+                soa.control.id,
               )}
             icon={IconTrashCan}
           >

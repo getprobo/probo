@@ -26,187 +26,155 @@ import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard"
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
 import { LinkedObligationsCard } from "#/components/obligations/LinkedObligationsCard";
 import { LinkedSnapshotsCard } from "#/components/snapshots/LinkedSnapshotsCard";
-import { LinkedStatesOfApplicabilityCard } from "#/components/states-of-applicability/LinkedStatesOfApplicabilityCard";
 import { frameworkControlNodeQuery } from "#/hooks/graph/FrameworkGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 
-const attachStateOfApplicabilityMutation = graphql`
-    mutation FrameworkControlPageAttachStateOfApplicabilityMutation(
-        $input: CreateStateOfApplicabilityControlMappingInput!
-        $connections: [ID!]!
-    ) {
-        createStateOfApplicabilityControlMapping(input: $input) {
-            stateOfApplicabilityControlEdge
-                @prependEdge(connections: $connections) {
-                node {
-                    id
-                    ...LinkedStatesOfApplicabilityCardFragment
-                }
-            }
-        }
-    }
-`;
-
-const detachStateOfApplicabilityMutation = graphql`
-    mutation FrameworkControlPageDetachStateOfApplicabilityMutation(
-        $input: DeleteStateOfApplicabilityControlMappingInput!
-        $connections: [ID!]!
-    ) {
-        deleteStateOfApplicabilityControlMapping(input: $input) {
-            deletedStateOfApplicabilityId
-            deletedControlId
-            deletedStateOfApplicabilityControlId
-                @deleteEdge(connections: $connections)
-        }
-    }
-`;
-
 const attachMeasureMutation = graphql`
-    mutation FrameworkControlPageAttachMutation(
-        $input: CreateControlMeasureMappingInput!
-        $connections: [ID!]!
-    ) {
-        createControlMeasureMapping(input: $input) {
-            measureEdge @prependEdge(connections: $connections) {
-                node {
-                    id
-                    ...LinkedMeasuresCardFragment
-                }
-            }
-        }
-    }
+  mutation FrameworkControlPageAttachMutation(
+      $input: CreateControlMeasureMappingInput!
+      $connections: [ID!]!
+  ) {
+      createControlMeasureMapping(input: $input) {
+          measureEdge @prependEdge(connections: $connections) {
+              node {
+                  id
+                  ...LinkedMeasuresCardFragment
+              }
+          }
+      }
+  }
 `;
 
 const detachMeasureMutation = graphql`
-    mutation FrameworkControlPageDetachMutation(
-        $input: DeleteControlMeasureMappingInput!
-        $connections: [ID!]!
-    ) {
-        deleteControlMeasureMapping(input: $input) {
-            deletedMeasureId @deleteEdge(connections: $connections)
-        }
-    }
+  mutation FrameworkControlPageDetachMutation(
+      $input: DeleteControlMeasureMappingInput!
+      $connections: [ID!]!
+  ) {
+      deleteControlMeasureMapping(input: $input) {
+          deletedMeasureId @deleteEdge(connections: $connections)
+      }
+  }
 `;
 
 const attachDocumentMutation = graphql`
-    mutation FrameworkControlPageAttachDocumentMutation(
-        $input: CreateControlDocumentMappingInput!
-        $connections: [ID!]!
-    ) {
-        createControlDocumentMapping(input: $input) {
-            documentEdge @prependEdge(connections: $connections) {
-                node {
-                    id
-                    ...LinkedDocumentsCardFragment
-                }
-            }
-        }
-    }
+  mutation FrameworkControlPageAttachDocumentMutation(
+      $input: CreateControlDocumentMappingInput!
+      $connections: [ID!]!
+  ) {
+      createControlDocumentMapping(input: $input) {
+          documentEdge @prependEdge(connections: $connections) {
+              node {
+                  id
+                  ...LinkedDocumentsCardFragment
+              }
+          }
+      }
+  }
 `;
 
 const detachDocumentMutation = graphql`
-    mutation FrameworkControlPageDetachDocumentMutation(
-        $input: DeleteControlDocumentMappingInput!
-        $connections: [ID!]!
-    ) {
-        deleteControlDocumentMapping(input: $input) {
-            deletedDocumentId @deleteEdge(connections: $connections)
-        }
-    }
+  mutation FrameworkControlPageDetachDocumentMutation(
+      $input: DeleteControlDocumentMappingInput!
+      $connections: [ID!]!
+  ) {
+      deleteControlDocumentMapping(input: $input) {
+          deletedDocumentId @deleteEdge(connections: $connections)
+      }
+  }
 `;
 
 const attachAuditMutation = graphql`
-    mutation FrameworkControlPageAttachAuditMutation(
-        $input: CreateControlAuditMappingInput!
-        $connections: [ID!]!
-    ) {
-        createControlAuditMapping(input: $input) {
-            auditEdge @prependEdge(connections: $connections) {
-                node {
-                    id
-                    ...LinkedAuditsCardFragment
-                }
-            }
-        }
-    }
+  mutation FrameworkControlPageAttachAuditMutation(
+      $input: CreateControlAuditMappingInput!
+      $connections: [ID!]!
+  ) {
+      createControlAuditMapping(input: $input) {
+          auditEdge @prependEdge(connections: $connections) {
+              node {
+                  id
+                  ...LinkedAuditsCardFragment
+              }
+          }
+      }
+  }
 `;
 
 const detachAuditMutation = graphql`
-    mutation FrameworkControlPageDetachAuditMutation(
-        $input: DeleteControlAuditMappingInput!
-        $connections: [ID!]!
-    ) {
-        deleteControlAuditMapping(input: $input) {
-            deletedAuditId @deleteEdge(connections: $connections)
-        }
-    }
+  mutation FrameworkControlPageDetachAuditMutation(
+      $input: DeleteControlAuditMappingInput!
+      $connections: [ID!]!
+  ) {
+      deleteControlAuditMapping(input: $input) {
+          deletedAuditId @deleteEdge(connections: $connections)
+      }
+  }
 `;
 
 const attachObligationMutation = graphql`
-    mutation FrameworkControlPageAttachObligationMutation(
-        $input: CreateControlObligationMappingInput!
-        $connections: [ID!]!
-    ) {
-        createControlObligationMapping(input: $input) {
-            obligationEdge @prependEdge(connections: $connections) {
-                node {
-                    id
-                    ...LinkedObligationsCardFragment
-                }
-            }
-        }
-    }
+  mutation FrameworkControlPageAttachObligationMutation(
+      $input: CreateControlObligationMappingInput!
+      $connections: [ID!]!
+  ) {
+      createControlObligationMapping(input: $input) {
+          obligationEdge @prependEdge(connections: $connections) {
+              node {
+                  id
+                  ...LinkedObligationsCardFragment
+              }
+          }
+      }
+  }
 `;
 
 const detachObligationMutation = graphql`
-    mutation FrameworkControlPageDetachObligationMutation(
-        $input: DeleteControlObligationMappingInput!
-        $connections: [ID!]!
-    ) {
-        deleteControlObligationMapping(input: $input) {
-            deletedObligationId @deleteEdge(connections: $connections)
-        }
-    }
+  mutation FrameworkControlPageDetachObligationMutation(
+      $input: DeleteControlObligationMappingInput!
+      $connections: [ID!]!
+  ) {
+      deleteControlObligationMapping(input: $input) {
+          deletedObligationId @deleteEdge(connections: $connections)
+      }
+  }
 `;
 
 const attachSnapshotMutation = graphql`
-    mutation FrameworkControlPageAttachSnapshotMutation(
-        $input: CreateControlSnapshotMappingInput!
-        $connections: [ID!]!
-    ) {
-        createControlSnapshotMapping(input: $input) {
-            snapshotEdge @prependEdge(connections: $connections) {
-                node {
-                    id
-                    ...LinkedSnapshotsCardFragment
-                }
-            }
-        }
-    }
+  mutation FrameworkControlPageAttachSnapshotMutation(
+      $input: CreateControlSnapshotMappingInput!
+      $connections: [ID!]!
+  ) {
+      createControlSnapshotMapping(input: $input) {
+          snapshotEdge @prependEdge(connections: $connections) {
+              node {
+                  id
+                  ...LinkedSnapshotsCardFragment
+              }
+          }
+      }
+  }
 `;
 
 const detachSnapshotMutation = graphql`
-    mutation FrameworkControlPageDetachSnapshotMutation(
-        $input: DeleteControlSnapshotMappingInput!
-        $connections: [ID!]!
-    ) {
-        deleteControlSnapshotMapping(input: $input) {
-            deletedSnapshotId @deleteEdge(connections: $connections)
-        }
-    }
+  mutation FrameworkControlPageDetachSnapshotMutation(
+      $input: DeleteControlSnapshotMappingInput!
+      $connections: [ID!]!
+  ) {
+      deleteControlSnapshotMapping(input: $input) {
+          deletedSnapshotId @deleteEdge(connections: $connections)
+      }
+  }
 `;
 
 const deleteControlMutation = graphql`
-    mutation FrameworkControlPageDeleteControlMutation(
-        $input: DeleteControlInput!
-        $connections: [ID!]!
-    ) {
-        deleteControl(input: $input) {
-            deletedControlId @deleteEdge(connections: $connections)
-        }
-    }
+  mutation FrameworkControlPageDeleteControlMutation(
+      $input: DeleteControlInput!
+      $connections: [ID!]!
+  ) {
+      deleteControl(input: $input) {
+          deletedControlId @deleteEdge(connections: $connections)
+      }
+  }
 `;
 
 type Props = {
@@ -214,8 +182,8 @@ type Props = {
 };
 
 /**
- * Display the control detail on the right panel
- */
+* Display the control detail on the right panel
+*/
 export default function FrameworkControlPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -249,23 +217,12 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   );
   const [deleteControl] = useMutation(deleteControlMutation);
 
-  const [attachStateOfApplicability, isAttachingStateOfApplicability]
-    = useMutation(attachStateOfApplicabilityMutation);
-  const [detachStateOfApplicability, isDetachingStateOfApplicability]
-    = useMutation(detachStateOfApplicabilityMutation);
   const [attachObligation, isAttachingObligation] = useMutation(
     attachObligationMutation,
   );
   const [detachObligation, isDetachingObligation] = useMutation(
     detachObligationMutation,
   );
-
-  const canLinkStateOfApplicability
-    = control.canCreateStateOfApplicabilityMapping;
-  const canUnlinkStateOfApplicability
-    = control.canDeleteStateOfApplicabilityMapping;
-  const statesOfApplicabilityReadOnly
-    = !canLinkStateOfApplicability && !canUnlinkStateOfApplicability;
 
   const canLinkMeasure = control.canCreateMeasureMapping;
   const canUnlinkMeasure = control.canDeleteMeasureMapping;
@@ -396,33 +353,6 @@ export default function FrameworkControlPage({ queryRef }: Props) {
       )}
       <div className={control.status === "EXCLUDED" ? "opacity-60" : ""}>
         <div className="text-base mb-4">{control.name}</div>
-        <div className="mb-4">
-          <LinkedStatesOfApplicabilityCard
-            variant="card"
-            statesOfApplicability={
-              control.stateOfApplicabilityControls?.edges.map(
-                edge => edge.node,
-              ) ?? []
-            }
-            params={{ controlId: control.id }}
-            connectionId={
-              control.stateOfApplicabilityControls?.__id ?? ""
-            }
-            onAttach={withErrorHandling(
-              attachStateOfApplicability,
-              __("Failed to link state of applicability"),
-            )}
-            onDetach={withErrorHandling(
-              detachStateOfApplicability,
-              __("Failed to unlink state of applicability"),
-            )}
-            disabled={
-              isAttachingStateOfApplicability
-              || isDetachingStateOfApplicability
-            }
-            readOnly={statesOfApplicabilityReadOnly}
-          />
-        </div>
         <div className="mb-4">
           <LinkedMeasuresCard
             variant="card"

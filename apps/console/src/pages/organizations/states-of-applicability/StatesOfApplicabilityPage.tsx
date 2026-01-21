@@ -1,54 +1,83 @@
-import { formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
-  ActionDropdown,
   Button,
   Card,
-  DropdownItem,
   IconPlusLarge,
-  IconTrashCan,
   PageHeader,
   Table,
   Tbody,
-  Td,
   Th,
   Thead,
   Tr,
 } from "@probo/ui";
 import { useEffect } from "react";
 import {
+  graphql,
   type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 import { useParams } from "react-router";
 
-import type {
-  StateOfApplicabilityGraphPaginatedFragment$data,
-  StateOfApplicabilityGraphPaginatedFragment$key,
-} from "#/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "#/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
-import type { StateOfApplicabilityListQuery } from "#/__generated__/core/StateOfApplicabilityListQuery.graphql";
+import type { StatesOfApplicabilityPageFragment$key } from "#/__generated__/core/StatesOfApplicabilityPageFragment.graphql";
+import type { StatesOfApplicabilityPagePaginationQuery } from "#/__generated__/core/StatesOfApplicabilityPagePaginationQuery.graphql";
+import type { StatesOfApplicabilityPageQuery } from "#/__generated__/core/StatesOfApplicabilityPageQuery.graphql";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
-import {
-  paginatedStateOfApplicabilityFragment,
-  paginatedStateOfApplicabilityQuery,
-  useDeleteStateOfApplicability,
-} from "#/hooks/graph/StateOfApplicabilityGraph";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-import type { NodeOf } from "#/types";
 
+import { StateOfApplicabilityRow } from "./_components/StateOfApplicabilityRow";
 import { CreateStateOfApplicabilityDialog } from "./dialogs/CreateStateOfApplicabilityDialog";
 
-type StateOfApplicability = NodeOf<
-  StateOfApplicabilityGraphPaginatedFragment$data["statesOfApplicability"]
->;
+export const statesOfApplicabilityPageQuery = graphql`
+  query StatesOfApplicabilityPageQuery($organizationId: ID!) {
+      organization: node(id: $organizationId) {
+          __typename
+          ... on Organization {
+              id
+              canCreateStateOfApplicability: permission(action: "core:state-of-applicability:create")
+              ...StatesOfApplicabilityPageFragment
+          }
+      }
+  }
+`;
+
+const paginatedFragment = graphql`
+  fragment StatesOfApplicabilityPageFragment on Organization
+  @refetchable(queryName: "StatesOfApplicabilityPagePaginationQuery")
+  @argumentDefinitions(
+      first: { type: "Int", defaultValue: 50 }
+      order: {
+          type: "StateOfApplicabilityOrder"
+          defaultValue: { direction: DESC, field: CREATED_AT }
+      }
+      after: { type: "CursorKey", defaultValue: null }
+      before: { type: "CursorKey", defaultValue: null }
+      last: { type: "Int", defaultValue: null }
+      filter: { type: "StateOfApplicabilityFilter", defaultValue: { snapshotId: null } }
+  ) {
+      statesOfApplicability(
+          first: $first
+          after: $after
+          last: $last
+          before: $before
+          orderBy: $order
+          filter: $filter
+      ) @connection(key: "StatesOfApplicabilityPage_statesOfApplicability", filters: ["filter"]) {
+          __id
+          edges {
+              node {
+                  id
+                  ...StateOfApplicabilityRowFragment
+              }
+          }
+      }
+  }
+`;
 
 export default function StatesOfApplicabilityPage({
   queryRef,
 }: {
-  queryRef: PreloadedQuery<StateOfApplicabilityGraphPaginatedQuery>;
+  queryRef: PreloadedQuery<StatesOfApplicabilityPageQuery>;
 }) {
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
@@ -56,11 +85,7 @@ export default function StatesOfApplicabilityPage({
 
   usePageTitle(__("States of Applicability"));
 
-  const { organization }
-    = usePreloadedQuery<StateOfApplicabilityGraphPaginatedQuery>(
-      paginatedStateOfApplicabilityQuery,
-      queryRef,
-    );
+  const { organization } = usePreloadedQuery(statesOfApplicabilityPageQuery, queryRef);
 
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
@@ -73,11 +98,10 @@ export default function StatesOfApplicabilityPage({
     refetch,
     isLoadingNext,
   } = usePaginationFragment<
-    StateOfApplicabilityListQuery,
-    StateOfApplicabilityGraphPaginatedFragment$key
-  >(paginatedStateOfApplicabilityFragment, organization);
+    StatesOfApplicabilityPagePaginationQuery,
+    StatesOfApplicabilityPageFragment$key
+  >(paginatedFragment, organization);
 
-  // Refetch with snapshot filter when in snapshot mode
   useEffect(() => {
     if (snapshotId) {
       refetch(
@@ -86,12 +110,6 @@ export default function StatesOfApplicabilityPage({
       );
     }
   }, [snapshotId, refetch]);
-
-  const hasAnyAction
-    = !isSnapshotMode
-      && statesOfApplicability.edges
-        .map(edge => edge.node)
-        .some(({ canDelete }) => canDelete);
 
   return (
     <div className="space-y-6">
@@ -123,16 +141,14 @@ export default function StatesOfApplicabilityPage({
                     <Th>{__("Name")}</Th>
                     <Th>{__("Created at")}</Th>
                     <Th>{__("Controls")}</Th>
-                    {hasAnyAction && <Th>{__("Actions")}</Th>}
                   </Tr>
                 </Thead>
                 <Tbody>
                   {statesOfApplicability.edges.map(edge => (
                     <StateOfApplicabilityRow
                       key={edge.node.id}
-                      stateOfApplicability={edge.node}
+                      fKey={edge.node}
                       connectionId={statesOfApplicability.__id}
-                      hasAnyAction={hasAnyAction}
                     />
                   ))}
                 </Tbody>
@@ -168,58 +184,5 @@ export default function StatesOfApplicabilityPage({
             </Card>
           )}
     </div>
-  );
-}
-
-function StateOfApplicabilityRow({
-  stateOfApplicability,
-  connectionId,
-  hasAnyAction,
-}: {
-  stateOfApplicability: StateOfApplicability;
-  connectionId: string;
-  hasAnyAction: boolean;
-}) {
-  const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const deleteStateOfApplicability = useDeleteStateOfApplicability(
-    stateOfApplicability,
-    connectionId,
-  );
-
-  const detailUrl = snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/states-of-applicability/${stateOfApplicability.id}`
-    : `/organizations/${organizationId}/states-of-applicability/${stateOfApplicability.id}`;
-
-  return (
-    <Tr to={detailUrl}>
-      <Td>{stateOfApplicability.name}</Td>
-      <Td>
-        <time dateTime={stateOfApplicability.createdAt}>
-          {formatDate(stateOfApplicability.createdAt)}
-        </time>
-      </Td>
-      <Td>{stateOfApplicability.controlsInfo?.totalCount ?? 0}</Td>
-      {hasAnyAction && (
-        <Td noLink width={50} className="text-end">
-          <ActionDropdown>
-            {stateOfApplicability.canDelete && (
-              <DropdownItem
-                icon={IconTrashCan}
-                variant="danger"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  deleteStateOfApplicability();
-                }}
-              >
-                {__("Delete")}
-              </DropdownItem>
-            )}
-          </ActionDropdown>
-        </Td>
-      )}
-    </Tr>
   );
 }

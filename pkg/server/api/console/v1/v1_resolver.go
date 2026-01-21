@@ -26,6 +26,63 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
+// StateOfApplicability is the resolver for the stateOfApplicability field.
+func (r *applicabilityStatementResolver) StateOfApplicability(ctx context.Context, obj *types.ApplicabilityStatement) (*types.StateOfApplicability, error) {
+	if err := r.authorize(ctx, obj.StateOfApplicability.ID, probo.ActionStateOfApplicabilityGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.StateOfApplicability.ID.TenantID())
+
+	soa, err := prb.StatesOfApplicability.Get(ctx, obj.StateOfApplicability.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get state of applicability: %w", err))
+	}
+
+	return types.NewStateOfApplicability(soa), nil
+}
+
+// Control is the resolver for the control field.
+func (r *applicabilityStatementResolver) Control(ctx context.Context, obj *types.ApplicabilityStatement) (*types.Control, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	control, err := prb.Controls.Get(ctx, obj.Control.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get control: %w", err))
+	}
+
+	return types.NewControl(control), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *applicabilityStatementResolver) Permission(ctx context.Context, obj *types.ApplicabilityStatement, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Context, obj *types.ApplicabilityStatementConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionApplicabilityStatementList); err != nil {
+		return 0, err
+	}
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *stateOfApplicabilityResolver:
+		count, err := prb.StatesOfApplicability.CountApplicabilityStatements(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count applicability statements: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("not implemented: TotalCount for parent type %T", obj.Resolver))
+}
+
 // Owner is the resolver for the owner field.
 func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.People, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
@@ -359,6 +416,42 @@ func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) 
 	return types.NewOrganization(organization), nil
 }
 
+// Regulatory is the resolver for the regulatory field.
+func (r *controlResolver) Regulatory(ctx context.Context, obj *types.Control) (bool, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	hasRegulatory, err := prb.Controls.HasRegulatoryObligation(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot check regulatory obligation: %w", err))
+	}
+
+	return hasRegulatory, nil
+}
+
+// Contractual is the resolver for the contractual field.
+func (r *controlResolver) Contractual(ctx context.Context, obj *types.Control) (bool, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	hasContractual, err := prb.Controls.HasContractualObligation(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot check contractual obligation: %w", err))
+	}
+
+	return hasContractual, nil
+}
+
+// RiskAssessment is the resolver for the riskAssessment field.
+func (r *controlResolver) RiskAssessment(ctx context.Context, obj *types.Control) (bool, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	hasRisk, err := prb.Controls.HasRiskAssessment(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot check risk assessment: %w", err))
+	}
+
+	return hasRisk, nil
+}
+
 // Framework is the resolver for the framework field.
 func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*types.Framework, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
@@ -540,35 +633,6 @@ func (r *controlResolver) Snapshots(ctx context.Context, obj *types.Control, fir
 	}
 
 	return types.NewSnapshotConnection(page, r, obj.ID), nil
-}
-
-// StateOfApplicabilityControls is the resolver for the stateOfApplicabilityControls field.
-func (r *controlResolver) StateOfApplicabilityControls(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StateOfApplicabilityOrderBy) (*types.StateOfApplicabilityControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionStateOfApplicabilityList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.StateOfApplicabilityOrderField]{
-		Field:     coredata.StateOfApplicabilityOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.StateOfApplicabilityOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := prb.StatesOfApplicability.ListControlLinks(ctx, obj.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list state of applicability controls: %w", err))
-	}
-
-	return types.NewStateOfApplicabilityControlConnection(p, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -2730,41 +2794,57 @@ func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, inp
 	}, nil
 }
 
-// CreateStateOfApplicabilityControlMapping is the resolver for the createStateOfApplicabilityControlMapping field.
-func (r *mutationResolver) CreateStateOfApplicabilityControlMapping(ctx context.Context, input types.CreateStateOfApplicabilityControlMappingInput) (*types.CreateStateOfApplicabilityControlMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionStateOfApplicabilityControlMappingCreate); err != nil {
+// CreateApplicabilityStatement is the resolver for the createApplicabilityStatement field.
+func (r *mutationResolver) CreateApplicabilityStatement(ctx context.Context, input types.CreateApplicabilityStatementInput) (*types.CreateApplicabilityStatementPayload, error) {
+	if err := r.authorize(ctx, input.ControlID, probo.ActionApplicabilityStatementCreate); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
 
-	control, err := prb.StatesOfApplicability.LinkControl(ctx, input.StateOfApplicabilityID, input.ControlID, input.Applicability, input.Justification)
+	applicabilityStatement, err := prb.StatesOfApplicability.CreateApplicabilityStatement(ctx, input.StateOfApplicabilityID, input.ControlID, input.Applicability, input.Justification)
 	if err != nil {
-		panic(fmt.Errorf("cannot create state of applicability control mapping: %w", err))
+		panic(fmt.Errorf("cannot create applicability statement: %w", err))
 	}
 
-	return &types.CreateStateOfApplicabilityControlMappingPayload{
-		StateOfApplicabilityControlEdge: types.NewStateOfApplicabilityControlEdge(control, coredata.StateOfApplicabilityOrderFieldCreatedAt),
+	return &types.CreateApplicabilityStatementPayload{
+		ApplicabilityStatementEdge: types.NewApplicabilityStatementEdge(applicabilityStatement, coredata.ApplicabilityStatementOrderFieldCreatedAt),
 	}, nil
 }
 
-// DeleteStateOfApplicabilityControlMapping is the resolver for the deleteStateOfApplicabilityControlMapping field.
-func (r *mutationResolver) DeleteStateOfApplicabilityControlMapping(ctx context.Context, input types.DeleteStateOfApplicabilityControlMappingInput) (*types.DeleteStateOfApplicabilityControlMappingPayload, error) {
-	if err := r.authorize(ctx, input.StateOfApplicabilityID, probo.ActionStateOfApplicabilityControlMappingDelete); err != nil {
+// UpdateApplicabilityStatement is the resolver for the updateApplicabilityStatement field.
+func (r *mutationResolver) UpdateApplicabilityStatement(ctx context.Context, input types.UpdateApplicabilityStatementInput) (*types.UpdateApplicabilityStatementPayload, error) {
+	if err := r.authorize(ctx, input.ApplicabilityStatementID, probo.ActionApplicabilityStatementUpdate); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
+	prb := r.ProboService(ctx, input.ApplicabilityStatementID.TenantID())
 
-	deletedID, err := prb.StatesOfApplicability.DeleteControlLink(ctx, input.StateOfApplicabilityID, input.ControlID)
+	applicabilityStatement, err := prb.StatesOfApplicability.UpdateApplicabilityStatement(ctx, input.ApplicabilityStatementID, input.Applicability, input.Justification)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete state of applicability control mapping: %w", err))
+		panic(fmt.Errorf("cannot update applicability statement: %w", err))
 	}
 
-	return &types.DeleteStateOfApplicabilityControlMappingPayload{
-		DeletedStateOfApplicabilityID:        input.StateOfApplicabilityID,
-		DeletedControlID:                     input.ControlID,
-		DeletedStateOfApplicabilityControlID: deletedID,
+	return &types.UpdateApplicabilityStatementPayload{
+		ApplicabilityStatement: types.NewApplicabilityStatement(applicabilityStatement),
+	}, nil
+}
+
+// DeleteApplicabilityStatement is the resolver for the deleteApplicabilityStatement field.
+func (r *mutationResolver) DeleteApplicabilityStatement(ctx context.Context, input types.DeleteApplicabilityStatementInput) (*types.DeleteApplicabilityStatementPayload, error) {
+	if err := r.authorize(ctx, input.ApplicabilityStatementID, probo.ActionApplicabilityStatementDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ApplicabilityStatementID.TenantID())
+
+	err := prb.StatesOfApplicability.DeleteApplicabilityStatement(ctx, input.ApplicabilityStatementID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete applicability statement: %w", err))
+	}
+
+	return &types.DeleteApplicabilityStatementPayload{
+		DeletedApplicabilityStatementID: input.ApplicabilityStatementID,
 	}, nil
 }
 
@@ -7201,73 +7281,33 @@ func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.Sta
 	return types.NewPeople(people), nil
 }
 
-// Controls is the resolver for the controls field.
-func (r *stateOfApplicabilityResolver) Controls(ctx context.Context, obj *types.StateOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+// ApplicabilityStatements is the resolver for the applicabilityStatements field.
+func (r *stateOfApplicabilityResolver) ApplicabilityStatements(ctx context.Context, obj *types.StateOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ApplicabilityStatementOrderBy) (*types.ApplicabilityStatementConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionApplicabilityStatementList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
-		Field:     coredata.ControlOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
+	pageOrderBy := page.OrderBy[coredata.ApplicabilityStatementOrderField]{
+		Field:     coredata.ApplicabilityStatementOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
-			Field:     orderBy.Field,
+		pageOrderBy = page.OrderBy[coredata.ApplicabilityStatementOrderField]{
+			Field:     coredata.ApplicabilityStatementOrderField(orderBy.Field),
 			Direction: orderBy.Direction,
 		}
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var controlFilter = coredata.NewControlFilter(nil)
-	if filter != nil {
-		controlFilter = coredata.NewControlFilter(filter.Query)
-	}
-
-	page, err := prb.Controls.ListForStateOfApplicabilityID(ctx, obj.ID, cursor, controlFilter)
+	p, err := prb.StatesOfApplicability.ListApplicabilityStatements(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list state of applicability controls: %w", err))
+		panic(fmt.Errorf("cannot list applicability statements: %w", err))
 	}
 
-	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
-}
-
-// AvailableControls is the resolver for the availableControls field.
-func (r *stateOfApplicabilityResolver) AvailableControls(ctx context.Context, obj *types.StateOfApplicability) ([]*types.AvailableStateOfApplicabilityControl, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	availableControls, err := prb.StatesOfApplicability.ListAvailableControls(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot list available controls: %w", err))
-	}
-
-	result := make([]*types.AvailableStateOfApplicabilityControl, 0, len(availableControls))
-	for _, ac := range availableControls {
-		result = append(result, &types.AvailableStateOfApplicabilityControl{
-			ControlID:              ac.ControlID,
-			SectionTitle:           ac.SectionTitle,
-			Name:                   ac.Name,
-			FrameworkID:            ac.FrameworkID,
-			FrameworkName:          ac.FrameworkName,
-			OrganizationID:         ac.OrganizationID,
-			StateOfApplicabilityID: ac.StateOfApplicabilityID,
-			Applicability:          ac.Applicability,
-			Justification:          ac.Justification,
-			BestPractice:           ac.BestPractice,
-			Regulatory:             ac.Regulatory,
-			Contractual:            ac.Contractual,
-			RiskAssessment:         ac.RiskAssessment,
-		})
-	}
-
-	return result, nil
+	return types.NewApplicabilityStatementConnection(p, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -7289,22 +7329,6 @@ func (r *stateOfApplicabilityConnectionResolver) TotalCount(ctx context.Context,
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
-}
-
-// StateOfApplicability is the resolver for the stateOfApplicability field.
-func (r *stateOfApplicabilityControlResolver) StateOfApplicability(ctx context.Context, obj *types.StateOfApplicabilityControl) (*types.StateOfApplicability, error) {
-	if err := r.authorize(ctx, obj.StateOfApplicabilityID, probo.ActionStateOfApplicabilityGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.StateOfApplicabilityID.TenantID())
-
-	soa, err := prb.StatesOfApplicability.Get(ctx, obj.StateOfApplicabilityID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get state of applicability: %w", err))
-	}
-
-	return types.NewStateOfApplicability(soa), nil
 }
 
 // AssignedTo is the resolver for the assignedTo field.
@@ -8420,6 +8444,16 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 	}, nil
 }
 
+// ApplicabilityStatement returns schema.ApplicabilityStatementResolver implementation.
+func (r *Resolver) ApplicabilityStatement() schema.ApplicabilityStatementResolver {
+	return &applicabilityStatementResolver{r}
+}
+
+// ApplicabilityStatementConnection returns schema.ApplicabilityStatementConnectionResolver implementation.
+func (r *Resolver) ApplicabilityStatementConnection() schema.ApplicabilityStatementConnectionResolver {
+	return &applicabilityStatementConnectionResolver{r}
+}
+
 // Asset returns schema.AssetResolver implementation.
 func (r *Resolver) Asset() schema.AssetResolver { return &assetResolver{r} }
 
@@ -8611,11 +8645,6 @@ func (r *Resolver) StateOfApplicabilityConnection() schema.StateOfApplicabilityC
 	return &stateOfApplicabilityConnectionResolver{r}
 }
 
-// StateOfApplicabilityControl returns schema.StateOfApplicabilityControlResolver implementation.
-func (r *Resolver) StateOfApplicabilityControl() schema.StateOfApplicabilityControlResolver {
-	return &stateOfApplicabilityControlResolver{r}
-}
-
 // Task returns schema.TaskResolver implementation.
 func (r *Resolver) Task() schema.TaskResolver { return &taskResolver{r} }
 
@@ -8707,6 +8736,8 @@ func (r *Resolver) VendorService() schema.VendorServiceResolver { return &vendor
 // Viewer returns schema.ViewerResolver implementation.
 func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 
+type applicabilityStatementResolver struct{ *Resolver }
+type applicabilityStatementConnectionResolver struct{ *Resolver }
 type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
 type auditResolver struct{ *Resolver }
@@ -8754,7 +8785,6 @@ type snapshotResolver struct{ *Resolver }
 type snapshotConnectionResolver struct{ *Resolver }
 type stateOfApplicabilityResolver struct{ *Resolver }
 type stateOfApplicabilityConnectionResolver struct{ *Resolver }
-type stateOfApplicabilityControlResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type taskConnectionResolver struct{ *Resolver }
 type transferImpactAssessmentResolver struct{ *Resolver }

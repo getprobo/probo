@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fa19c3e1b91d31188625e48b8b6db7e9>>
+ * @generated SignedSource<<ab309c7bbc8e33d319f6edafe017e0e9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,14 +12,15 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type LinkedStatesOfApplicabilityCardFragment$data = {
   readonly applicability: boolean;
-  readonly controlId: string;
+  readonly control: {
+    readonly id: string;
+  };
   readonly id: string;
-  readonly justification: string | null | undefined;
+  readonly justification: string;
   readonly stateOfApplicability: {
     readonly id: string;
     readonly name: string;
   };
-  readonly stateOfApplicabilityId: string;
   readonly " $fragmentType": "LinkedStatesOfApplicabilityCardFragment";
 };
 export type LinkedStatesOfApplicabilityCardFragment$key = {
@@ -45,20 +46,6 @@ return {
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
-      "name": "stateOfApplicabilityId",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "controlId",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
       "concreteType": "StateOfApplicability",
       "kind": "LinkedField",
       "name": "stateOfApplicability",
@@ -78,6 +65,18 @@ return {
     {
       "alias": null,
       "args": null,
+      "concreteType": "Control",
+      "kind": "LinkedField",
+      "name": "control",
+      "plural": false,
+      "selections": [
+        (v0/*: any*/)
+      ],
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
       "kind": "ScalarField",
       "name": "applicability",
       "storageKey": null
@@ -90,11 +89,11 @@ return {
       "storageKey": null
     }
   ],
-  "type": "StateOfApplicabilityControl",
+  "type": "ApplicabilityStatement",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "b9a9922b27f277a769025f11b0829bdc";
+(node as any).hash = "92dc33d1e220b3433508e55cb05ea39a";
 
 export default node;

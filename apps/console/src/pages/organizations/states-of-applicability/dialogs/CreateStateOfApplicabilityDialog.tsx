@@ -10,15 +10,37 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
+import { graphql } from "react-relay";
 import { useNavigate } from "react-router";
-import { z } from "zod";
+import z from "zod";
 
-import type { StateOfApplicabilityGraphCreateMutation } from "#/__generated__/core/StateOfApplicabilityGraphCreateMutation.graphql";
+import type { CreateStateOfApplicabilityDialogMutation } from "#/__generated__/core/CreateStateOfApplicabilityDialogMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { createStateOfApplicabilityMutation } from "#/hooks/graph/StateOfApplicabilityGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+const createMutation = graphql`
+    mutation CreateStateOfApplicabilityDialogMutation(
+        $input: CreateStateOfApplicabilityInput!
+        $connections: [ID!]!
+    ) {
+        createStateOfApplicability(input: $input) {
+            stateOfApplicabilityEdge @prependEdge(connections: $connections) {
+                node {
+                    id
+                    name
+                    sourceId
+                    snapshotId
+                    createdAt
+                    updatedAt
+                    canDelete: permission(action: "core:state-of-applicability:delete")
+                    ...StateOfApplicabilityRowFragment
+                }
+            }
+        }
+    }
+`;
 
 type Props = {
   children: ReactNode;
@@ -48,9 +70,9 @@ export function CreateStateOfApplicabilityDialog({
   );
   const ref = useDialogRef();
 
-  const [mutate, isMutating]
-    = useMutationWithToasts<StateOfApplicabilityGraphCreateMutation>(
-      createStateOfApplicabilityMutation,
+  const [createStateOfApplicability, isCreating]
+    = useMutationWithToasts<CreateStateOfApplicabilityDialogMutation>(
+      createMutation,
       {
         successMessage: __(
           "State of applicability created successfully.",
@@ -60,7 +82,7 @@ export function CreateStateOfApplicabilityDialog({
     );
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
-    await mutate({
+    await createStateOfApplicability({
       variables: {
         input: {
           name: data.name,
@@ -114,7 +136,7 @@ export function CreateStateOfApplicabilityDialog({
           </Field>
         </DialogContent>
         <DialogFooter>
-          <Button disabled={isMutating} type="submit">
+          <Button disabled={isCreating} type="submit">
             {__("Create")}
           </Button>
         </DialogFooter>

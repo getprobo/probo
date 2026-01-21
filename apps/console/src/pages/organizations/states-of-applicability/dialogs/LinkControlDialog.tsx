@@ -23,20 +23,39 @@ import { graphql, useLazyLoadQuery } from "react-relay";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const linkControlQuery = graphql`
-  query LinkControlDialogQuery($stateOfApplicabilityId: ID!) {
-    node(id: $stateOfApplicabilityId) {
+  query LinkControlDialogQuery($stateOfApplicabilityId: ID!, $organizationId: ID!) {
+    stateOfApplicability: node(id: $stateOfApplicabilityId) {
       ... on StateOfApplicability {
         id
-        availableControls {
-          controlId
-          sectionTitle
-          name
-          frameworkId
-          frameworkName
-          organizationId
-          stateOfApplicabilityId
-          applicability
-          justification
+        applicabilityStatements(first: 10000) {
+          edges {
+            node {
+              id
+              applicability
+              justification
+              control {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+    organization: node(id: $organizationId) {
+      ... on Organization {
+        id
+        controls(first: 10000, orderBy: { direction: ASC, field: CREATED_AT }) {
+          edges {
+            node {
+              id
+              sectionTitle
+              name
+              framework {
+                id
+                name
+              }
+            }
+          }
         }
       }
     }
@@ -44,14 +63,16 @@ const linkControlQuery = graphql`
 `;
 
 const linkControlMutation = graphql`
-  mutation LinkControlDialogLinkMutation($input: CreateStateOfApplicabilityControlMappingInput!) {
-    createStateOfApplicabilityControlMapping(input: $input) {
-      stateOfApplicabilityControlEdge {
+  mutation LinkControlDialogLinkMutation($input: CreateApplicabilityStatementInput!) {
+    createApplicabilityStatement(input: $input) {
+      applicabilityStatementEdge {
         node {
-          stateOfApplicabilityId
-          controlId
+          id
           applicability
           justification
+          control {
+            id
+          }
         }
       }
     }
@@ -59,17 +80,15 @@ const linkControlMutation = graphql`
 `;
 
 const unlinkControlMutation = graphql`
-  mutation LinkControlDialogUnlinkMutation($input: DeleteStateOfApplicabilityControlMappingInput!) {
-    deleteStateOfApplicabilityControlMapping(input: $input) {
-      deletedStateOfApplicabilityId
-      deletedControlId
-      deletedStateOfApplicabilityControlId
+  mutation LinkControlDialogUnlinkMutation($input: DeleteApplicabilityStatementInput!) {
+    deleteApplicabilityStatement(input: $input) {
+      deletedApplicabilityStatementId
     }
   }
 `;
 
 export type LinkControlDialogRef = {
-  open: (stateOfApplicabilityId: string, onUpdate?: () => void) => void;
+  open: (stateOfApplicabilityId: string, organizationId: string, onUpdate?: () => void) => void;
 };
 
 type Control = {
@@ -78,8 +97,7 @@ type Control = {
   name: string;
   frameworkId: string;
   frameworkName: string;
-  organizationId: string;
-  stateOfApplicabilityId: string | null;
+  applicabilityStatementId: string | null;
   applicability: boolean | null;
   justification: string | null;
 };
@@ -119,11 +137,11 @@ function ControlRow({
     setSelectedState(newState);
 
     if (newState === "not-linked") {
+      if (!control.applicabilityStatementId) return;
       await unlinkMutate({
         variables: {
           input: {
-            stateOfApplicabilityId,
-            controlId: control.controlId,
+            applicabilityStatementId: control.applicabilityStatementId,
           },
         },
         onSuccess: () => {
@@ -227,9 +245,11 @@ function ControlRow({
 
 function LinkControlDialogContent({
   stateOfApplicabilityId,
+  organizationId,
   onUpdate,
 }: {
   stateOfApplicabilityId: string;
+  organizationId: string;
   onUpdate?: () => void;
 }) {
   const { __ } = useTranslate();
@@ -237,25 +257,80 @@ function LinkControlDialogContent({
   const [collapsedFrameworks, setCollapsedFrameworks] = useState<Set<string>>(new Set());
   const data = useLazyLoadQuery(
     linkControlQuery,
-    { stateOfApplicabilityId },
+    { stateOfApplicabilityId, organizationId },
     { fetchPolicy: "store-or-network" },
   ) as {
-    node: {
-      availableControls?: Control[];
+    stateOfApplicability: {
+      id: string;
+      applicabilityStatements?: {
+        edges: Array<{
+          node: {
+            id: string;
+            applicability: boolean;
+            justification: string | null;
+            control: { id: string };
+          };
+        }>;
+      };
+    } | null;
+    organization: {
+      id: string;
+      controls?: {
+        edges: Array<{
+          node: {
+            id: string;
+            sectionTitle: string;
+            name: string;
+            framework: {
+              id: string;
+              name: string;
+            };
+          };
+        }>;
+      };
     } | null;
   };
 
+  // Build a map of control ID -> applicability statement
+  const applicabilityMap = useMemo(() => {
+    const map = new Map<string, { id: string; applicability: boolean; justification: string | null }>();
+    data.stateOfApplicability?.applicabilityStatements?.edges.forEach((edge) => {
+      map.set(edge.node.control.id, {
+        id: edge.node.id,
+        applicability: edge.node.applicability,
+        justification: edge.node.justification,
+      });
+    });
+    return map;
+  }, [data.stateOfApplicability?.applicabilityStatements]);
+
+  // Merge controls with applicability info
+  const allControls = useMemo(() => {
+    return (data.organization?.controls?.edges || []).map((edge) => {
+      const applicability = applicabilityMap.get(edge.node.id);
+      return {
+        controlId: edge.node.id,
+        sectionTitle: edge.node.sectionTitle,
+        name: edge.node.name,
+        frameworkId: edge.node.framework.id,
+        frameworkName: edge.node.framework.name,
+        applicabilityStatementId: applicability?.id ?? null,
+        applicability: applicability?.applicability ?? null,
+        justification: applicability?.justification ?? null,
+      } as Control;
+    });
+  }, [data.organization?.controls, applicabilityMap]);
+
   const filteredControls = useMemo(() => {
-    const controls = data.node?.availableControls || [];
-    if (!search) return controls;
+    if (!search) return allControls;
     const lowerSearch = search.toLowerCase();
-    return controls.filter(
+    return allControls.filter(
       c =>
         c.name.toLowerCase().includes(lowerSearch)
         || c.sectionTitle.toLowerCase().includes(lowerSearch)
         || c.frameworkName.toLowerCase().includes(lowerSearch),
     );
-  }, [data.node?.availableControls, search]);
+  }, [allControls, search]);
 
   const groupedControls = useMemo(() => {
     const groups: Record<string, Record<string, Control[]>> = {};
@@ -321,7 +396,7 @@ function LinkControlDialogContent({
                               key={control.controlId}
                               control={control}
                               stateOfApplicabilityId={stateOfApplicabilityId}
-                              isLinked={control.stateOfApplicabilityId !== null}
+                              isLinked={control.applicabilityStatementId !== null}
                               onUpdate={onUpdate}
                             />
                           ))}
@@ -342,11 +417,13 @@ export const LinkControlDialog = forwardRef<LinkControlDialogRef>((_props, ref) 
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
   const [stateOfApplicabilityId, setStateOfApplicabilityId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [onUpdateCallback, setOnUpdateCallback] = useState<(() => void) | undefined>(undefined);
 
   useImperativeHandle(ref, () => ({
-    open: (soaId: string, callback?: () => void) => {
+    open: (soaId: string, orgId: string, callback?: () => void) => {
       setStateOfApplicabilityId(soaId);
+      setOrganizationId(orgId);
       setOnUpdateCallback(() => callback);
       dialogRef.current?.open();
     },
@@ -354,6 +431,7 @@ export const LinkControlDialog = forwardRef<LinkControlDialogRef>((_props, ref) 
 
   const handleClose = () => {
     setStateOfApplicabilityId(null);
+    setOrganizationId(null);
     setOnUpdateCallback(undefined);
   };
 
@@ -368,7 +446,7 @@ export const LinkControlDialog = forwardRef<LinkControlDialogRef>((_props, ref) 
       )}
       onClose={handleClose}
     >
-      {stateOfApplicabilityId
+      {stateOfApplicabilityId && organizationId
         ? (
             <Suspense
               fallback={(
@@ -379,6 +457,7 @@ export const LinkControlDialog = forwardRef<LinkControlDialogRef>((_props, ref) 
             >
               <LinkControlDialogContent
                 stateOfApplicabilityId={stateOfApplicabilityId}
+                organizationId={organizationId}
                 onUpdate={onUpdateCallback}
               />
             </Suspense>
