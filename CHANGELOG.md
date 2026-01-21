@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.9] - 2026-01-21
+
+### Fixed
+
+- Document signing authentication is still done with token
+- SOA permissions handling + tenant scoping
+
 ## [0.116.8] - 2026-01-20
 
 ### Changed
