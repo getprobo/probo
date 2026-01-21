@@ -65,13 +65,116 @@ func NewMux(
 
 	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
 
-	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-	r.Use(authn.NewIdentityPresenceMiddleware())
-
 	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, customDomainCname, logger)
 
-	r.Handle("/graphql", graphqlHandler)
+	r.Group(func(r chi.Router) {
+		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
+		r.Use(authn.NewIdentityPresenceMiddleware())
+
+		r.Handle("/graphql", graphqlHandler)
+
+		r.Get("/connectors/initiate", func(w http.ResponseWriter, r *http.Request) {
+			provider := r.URL.Query().Get("provider")
+			if provider != "SLACK" {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
+				return
+			}
+
+			organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
+			if err != nil {
+				panic(fmt.Errorf("cannot parse organization id: %w", err))
+			}
+
+			apiKey := authn.APIKeyFromContext(r.Context())
+			if apiKey != nil {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
+				return
+			}
+
+			identity := authn.IdentityFromContext(r.Context())
+			if identity == nil {
+				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+				return
+			}
+			session := authn.SessionFromContext(r.Context())
+			if session == nil {
+				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+				return
+			}
+
+			if err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
+				Principal: identity.ID,
+				Resource:  organizationID,
+				Session:   &session.ID,
+				Action:    probo.ActionConnectorInitiate,
+			}); err != nil {
+				httpserver.RenderError(w, http.StatusForbidden, err)
+				return
+			}
+
+			redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, r)
+			if err != nil {
+				panic(fmt.Errorf("cannot initiate connector: %w", err))
+			}
+
+			// Allow external redirects for Slack OAuth only for now
+			slackSafeRedirect := &saferedirect.SafeRedirect{AllowedHost: "slack.com"}
+			slackSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
+		})
+
+		r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
+			provider := r.URL.Query().Get("provider")
+			if provider == "" {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing provider parameter"))
+				return
+			}
+
+			var connectorProvider coredata.ConnectorProvider
+			switch provider {
+			case "SLACK":
+				connectorProvider = coredata.ConnectorProviderSlack
+			default:
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
+				return
+			}
+
+			stateToken := r.URL.Query().Get("state")
+			if stateToken == "" {
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
+				return
+			}
+
+			connection, organizationID, err := connectorRegistry.Complete(r.Context(), provider, r)
+			if err != nil {
+				panic(fmt.Errorf("cannot complete connector: %w", err))
+			}
+
+			continueURL := r.URL.Query().Get("continue")
+
+			svc := proboSvc.WithTenant(organizationID.TenantID())
+
+			_, err = svc.Connectors.Create(
+				r.Context(),
+				probo.CreateConnectorRequest{
+					OrganizationID: *organizationID,
+					Provider:       connectorProvider,
+					Protocol:       coredata.ConnectorProtocol(connection.Type()),
+					Connection:     connection,
+				},
+			)
+			if err != nil {
+				panic(fmt.Errorf("cannot create or update connector: %w", err))
+			}
+
+			if continueURL != "" {
+				safeRedirect.Redirect(w, r, continueURL, "/", http.StatusSeeOther)
+			} else {
+				redirectURL := baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
+				safeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
+			}
+		})
+	})
 
 	r.Get(
 		"/documents/signing-requests",
@@ -191,107 +294,6 @@ func NewMux(
 			w.WriteHeader(http.StatusOK)
 		},
 	)
-
-	r.Get("/connectors/initiate", func(w http.ResponseWriter, r *http.Request) {
-		provider := r.URL.Query().Get("provider")
-		if provider != "SLACK" {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
-			return
-		}
-
-		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
-		if err != nil {
-			panic(fmt.Errorf("cannot parse organization id: %w", err))
-		}
-
-		apiKey := authn.APIKeyFromContext(r.Context())
-		if apiKey != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
-			return
-		}
-
-		identity := authn.IdentityFromContext(r.Context())
-		if identity == nil {
-			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
-			return
-		}
-		session := authn.SessionFromContext(r.Context())
-		if session == nil {
-			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
-			return
-		}
-
-		if err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
-			Principal: identity.ID,
-			Resource:  organizationID,
-			Session:   &session.ID,
-			Action:    probo.ActionConnectorInitiate,
-		}); err != nil {
-			httpserver.RenderError(w, http.StatusForbidden, err)
-			return
-		}
-
-		redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, r)
-		if err != nil {
-			panic(fmt.Errorf("cannot initiate connector: %w", err))
-		}
-
-		// Allow external redirects for Slack OAuth only for now
-		slackSafeRedirect := &saferedirect.SafeRedirect{AllowedHost: "slack.com"}
-		slackSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
-	})
-
-	r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
-		provider := r.URL.Query().Get("provider")
-		if provider == "" {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing provider parameter"))
-			return
-		}
-
-		var connectorProvider coredata.ConnectorProvider
-		switch provider {
-		case "SLACK":
-			connectorProvider = coredata.ConnectorProviderSlack
-		default:
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
-			return
-		}
-
-		stateToken := r.URL.Query().Get("state")
-		if stateToken == "" {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
-			return
-		}
-
-		connection, organizationID, err := connectorRegistry.Complete(r.Context(), provider, r)
-		if err != nil {
-			panic(fmt.Errorf("cannot complete connector: %w", err))
-		}
-
-		continueURL := r.URL.Query().Get("continue")
-
-		svc := proboSvc.WithTenant(organizationID.TenantID())
-
-		_, err = svc.Connectors.Create(
-			r.Context(),
-			probo.CreateConnectorRequest{
-				OrganizationID: *organizationID,
-				Provider:       connectorProvider,
-				Protocol:       coredata.ConnectorProtocol(connection.Type()),
-				Connection:     connection,
-			},
-		)
-		if err != nil {
-			panic(fmt.Errorf("cannot create or update connector: %w", err))
-		}
-
-		if continueURL != "" {
-			safeRedirect.Redirect(w, r, continueURL, "/", http.StatusSeeOther)
-		} else {
-			redirectURL := baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
-			safeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
-		}
-	})
 
 	return r
 }

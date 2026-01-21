@@ -104,29 +104,16 @@ const routes = [
   },
   {
     path: "/",
-    Component: lazy(() => import("./pages/iam/memberships/ViewerLayoutLoader")),
-    Fallback: ViewerLayoutLoading,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
-        index: true,
-        Component: lazy(
-          () => import("./pages/iam/memberships/MembershipsPageLoader"),
-        ),
-      },
-      {
-        Component: CenteredLayout,
+        Component: lazy(() => import("./pages/iam/memberships/ViewerLayoutLoader")),
+        Fallback: ViewerLayoutLoading,
         children: [
           {
-            path: "organizations/new",
+            index: true,
             Component: lazy(
-              () => import("./pages/iam/organizations/NewOrganizationPage"),
-            ),
-          },
-          {
-            path: "documents/signing-requests",
-            Component: lazy(
-              () => import("./pages/DocumentSigningRequestsPage"),
+              () => import("./pages/iam/memberships/MembershipsPageLoader"),
             ),
           },
           {
@@ -135,9 +122,27 @@ const routes = [
               () => import("./pages/iam/apiKeys/APIKeysPageLoader"),
             ),
           },
-        ],
+          {
+            Component: CenteredLayout,
+            children: [
+              {
+                path: "organizations/new",
+                Component: lazy(
+                  () => import("./pages/iam/organizations/NewOrganizationPage"),
+                ),
+              },
+            ],
+          },
+        ]
       },
     ],
+  },
+  {
+    path: "documents/signing-requests",
+    ErrorBoundary: ErrorBoundary,
+    Component: lazy(
+      () => import("./pages/DocumentSigningRequestsPage"),
+    ),
   },
   {
     path: "/organizations/:organizationId/employee",
