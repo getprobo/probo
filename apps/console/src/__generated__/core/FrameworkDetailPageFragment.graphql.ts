@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7f57391fcdf09c326854f1cc2e0008c2>>
+ * @generated SignedSource<<3db987ede3a3aa1dfa570e76a00ef224>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type FrameworkDetailPageFragment$data = {
   readonly canCreateControl: boolean;
   readonly canDelete: boolean;
   readonly canExport: boolean;
+  readonly canGenerateSOA: boolean;
   readonly canUpdate: boolean;
   readonly controls: {
     readonly __id: string;
@@ -141,6 +142,19 @@ return {
       "storageKey": "permission(action:\"core:control:create\")"
     },
     {
+      "alias": "canGenerateSOA",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:framework:generate-state-of-applicability"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:framework:generate-state-of-applicability\")"
+    },
+    {
       "alias": null,
       "args": null,
       "concreteType": "Organization",
@@ -247,6 +261,6 @@ return {
 };
 })();
 
-(node as any).hash = "c88994d5f1872bfe21cfe65e1911b76a";
+(node as any).hash = "a3eb8b9d80c69d7faa83eae88e3b986b";
 
 export default node;

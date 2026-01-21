@@ -264,7 +264,8 @@ SET
     name = @name,
     owner_id = @owner_id,
     updated_at = @updated_at
-WHERE %s
+WHERE
+    %s
     AND id = @state_of_applicability_id
 `
 
@@ -303,7 +304,8 @@ func (s *StateOfApplicability) Delete(
 ) error {
 	q := `
 DELETE FROM states_of_applicability
-WHERE %s
+WHERE
+    %s
     AND id = @state_of_applicability_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -346,31 +348,32 @@ func (soas StatesOfApplicability) insertStateOfApplicabilitySnapshots(
 ) error {
 	query := `
 INSERT INTO states_of_applicability (
-	id,
-	tenant_id,
-	organization_id,
-	name,
-	source_id,
-	snapshot_id,
-	owner_id,
-	created_at,
-	updated_at
+    id,
+    tenant_id,
+    organization_id,
+    name,
+    source_id,
+    snapshot_id,
+    owner_id,
+    created_at,
+    updated_at
 )
 SELECT
-	generate_gid(decode_base64_unpadded(@tenant_id), @state_of_applicability_entity_type),
-	@tenant_id,
-	soa.organization_id,
-	soa.name,
-	soa.id,
-	@snapshot_id,
-	soa.owner_id,
-	soa.created_at,
-	soa.updated_at
+    generate_gid(decode_base64_unpadded(@tenant_id), @state_of_applicability_entity_type),
+    @tenant_id,
+    soa.organization_id,
+    soa.name,
+    soa.id,
+    @snapshot_id,
+    soa.owner_id,
+    soa.created_at,
+    soa.updated_at
 FROM states_of_applicability soa
-WHERE %s
-	AND soa.organization_id = @organization_id
-	AND soa.snapshot_id IS NULL
-	`
+WHERE
+    %s
+    AND soa.organization_id = @organization_id
+    AND soa.snapshot_id IS NULL
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -399,47 +402,48 @@ func (soas StatesOfApplicability) insertStateOfApplicabilityControlSnapshots(
 ) error {
 	query := `
 WITH source_soa AS (
-	SELECT id, organization_id
-	FROM states_of_applicability
-	WHERE %s
-		AND organization_id = @organization_id
-		AND snapshot_id IS NULL
+    SELECT id, organization_id
+    FROM states_of_applicability
+    WHERE
+        %s
+        AND organization_id = @organization_id
+        AND snapshot_id IS NULL
 ),
 snapshot_soa AS (
-	SELECT id, source_id
-	FROM states_of_applicability
-	WHERE snapshot_id = @snapshot_id
+    SELECT id, source_id
+    FROM states_of_applicability
+    WHERE snapshot_id = @snapshot_id
 )
 INSERT INTO states_of_applicability_controls (
-	id,
-	state_of_applicability_id,
-	control_id,
-	organization_id,
-	tenant_id,
-	snapshot_id,
-	applicability,
-	justification,
-	created_at,
-	updated_at
+    id,
+    state_of_applicability_id,
+    control_id,
+    organization_id,
+    tenant_id,
+    snapshot_id,
+    applicability,
+    justification,
+    created_at,
+    updated_at
 )
 SELECT
-	generate_gid(decode_base64_unpadded(@tenant_id), @state_of_applicability_control_entity_type),
-	snapshot_soa.id,
-	soac.control_id,
-	soac.organization_id,
-	@tenant_id,
-	@snapshot_id,
-	soac.applicability,
-	soac.justification,
-	soac.created_at,
-	soac.updated_at
+    generate_gid(decode_base64_unpadded(@tenant_id), @state_of_applicability_control_entity_type),
+    snapshot_soa.id,
+    soac.control_id,
+    soac.organization_id,
+    @tenant_id,
+    @snapshot_id,
+    soac.applicability,
+    soac.justification,
+    soac.created_at,
+    soac.updated_at
 FROM states_of_applicability_controls soac
 INNER JOIN source_soa
-	ON soac.state_of_applicability_id = source_soa.id
+    ON soac.state_of_applicability_id = source_soa.id
 INNER JOIN snapshot_soa
-	ON snapshot_soa.source_id = source_soa.id
+    ON snapshot_soa.source_id = source_soa.id
 WHERE soac.snapshot_id IS NULL
-	`
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 

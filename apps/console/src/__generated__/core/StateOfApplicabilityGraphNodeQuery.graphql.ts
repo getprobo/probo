@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f3564b51cac1482be5c6c4443a9030cf>>
+ * @generated SignedSource<<4c350f48aeb8f51c9716aed4eeadc735>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type StateOfApplicabilityGraphNodeQuery$variables = {
 export type StateOfApplicabilityGraphNodeQuery$data = {
   readonly node: {
     readonly canDelete?: boolean;
+    readonly canExport?: boolean;
     readonly canUpdate?: boolean;
     readonly createdAt?: string;
     readonly id?: string;
@@ -122,6 +123,19 @@ v9 = {
   "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
 },
 v10 = {
+  "alias": "canExport",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:state-of-applicability:export"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:state-of-applicability:export\")"
+},
+v11 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -133,7 +147,7 @@ v10 = {
   ],
   "storageKey": null
 },
-v11 = {
+v12 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -180,6 +194,7 @@ return {
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
+              (v12/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -230,6 +245,7 @@ return {
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
+              (v12/*: any*/),
               {
                 "alias": "controlsInfo",
                 "args": [
@@ -386,16 +402,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6189c0ca41e3327629d744a658cbe6f1",
+    "cacheID": "529e47a135ba24716b749998d1181d9a",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityGraphNodeQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityGraphNodeQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...StateOfApplicabilityControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  canCreateStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability-control-mapping:create\")\n  canDeleteStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability-control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
+    "text": "query StateOfApplicabilityGraphNodeQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      canExport: permission(action: \"core:state-of-applicability:export\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...StateOfApplicabilityControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  canCreateStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability-control-mapping:create\")\n  canDeleteStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability-control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1a1f3480b9c66597d146c48ed1b00bd1";
+(node as any).hash = "5ea300f4dd399cafd7985072c2013dbe";
 
 export default node;

@@ -31,9 +31,9 @@ const fragment = graphql`
     fragment SidebarFragment on Organization {
         canListMeetings: permission(action: "core:meeting:list")
         canListTasks: permission(action: "core:task:list")
-        canListMeasures: permission(action: "core:measures:list")
+        canListMeasures: permission(action: "core:measure:list")
         canListRisks: permission(action: "core:risk:list")
-        canListFrameworks: permission(action: "core:frameworks:list")
+        canListFrameworks: permission(action: "core:framework:list")
         canListPeople: permission(action: "core:people:list")
         canListVendors: permission(action: "core:vendor:list")
         canListDocuments: permission(action: "core:document:list")

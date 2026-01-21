@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c1333ad749a9c6aaf8f6f671bc578c04>>
+ * @generated SignedSource<<63f008ba2b41fba49ba0c3145874aa72>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -76,12 +76,12 @@ const node: ReaderFragment = {
         {
           "kind": "Literal",
           "name": "action",
-          "value": "core:measures:list"
+          "value": "core:measure:list"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"core:measures:list\")"
+      "storageKey": "permission(action:\"core:measure:list\")"
     },
     {
       "alias": "canListRisks",
@@ -102,12 +102,12 @@ const node: ReaderFragment = {
         {
           "kind": "Literal",
           "name": "action",
-          "value": "core:frameworks:list"
+          "value": "core:framework:list"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"core:frameworks:list\")"
+      "storageKey": "permission(action:\"core:framework:list\")"
     },
     {
       "alias": "canListPeople",
@@ -309,6 +309,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "3a7071a1d9ed4ffc115f5bc22e283a50";
+(node as any).hash = "6d640139997b2c7561699c1efb668650";
 
 export default node;

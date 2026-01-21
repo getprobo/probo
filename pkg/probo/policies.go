@@ -78,6 +78,8 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionSlackConnectionList,
 		ActionRightsRequestGet, ActionRightsRequestList,
+		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
+		ActionStateOfApplicabilityControlMappingList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(

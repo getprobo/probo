@@ -43,6 +43,7 @@ const frameworkDetailFragment = graphql`
         canUpdate: permission(action: "core:framework:update")
         canDelete: permission(action: "core:framework:delete")
         canCreateControl: permission(action: "core:control:create")
+        canGenerateSOA: permission(action: "core:framework:generate-state-of-applicability")
         organization {
             name
         }
@@ -151,6 +152,8 @@ export default function FrameworkDetailPage(props: Props) {
         );
     }
 
+    const hasAnyAction = framework.canExport || framework.canDelete || framework.canGenerateSOA
+
     return (
         <div className="space-y-6">
             <PageHeader
@@ -171,53 +174,59 @@ export default function FrameworkDetailPage(props: Props) {
                         </Button>
                     </FrameworkFormDialog>
                 )}
-                <ActionDropdown variant="secondary">
-                    <DropdownItem
-                        variant="primary"
-                        onClick={() => {
-                            generateFrameworkStateOfApplicability({
-                                variables: { frameworkId: framework.id },
-                                onCompleted: (data) => {
-                                    if (
-                                        data
-                                            .generateFrameworkStateOfApplicability
-                                            ?.data
-                                    ) {
-                                        const link =
-                                            window.document.createElement("a");
-                                        link.href =
-                                            data.generateFrameworkStateOfApplicability.data;
-                                        link.download = `${framework.organization.name}-${framework.name}-SOA.xlsx`;
-                                        window.document.body.appendChild(link);
-                                        link.click();
-                                        window.document.body.removeChild(link);
-                                    }
-                                },
-                            });
-                        }}
-                    >
-                        {__("Download SOA")}
-                    </DropdownItem>
-                    <DropdownItem
-                        variant="primary"
-                        onClick={() => {
-                            exportFramework({
-                                variables: { frameworkId: framework.id },
-                            });
-                        }}
-                    >
-                        {__("Export Framework")}
-                    </DropdownItem>
-                    {framework.canDelete && (
-                        <DropdownItem
-                            icon={IconTrashCan}
-                            variant="danger"
-                            onClick={onDelete}
-                        >
-                            {__("Delete")}
-                        </DropdownItem>
-                    )}
-                </ActionDropdown>
+                {hasAnyAction && (
+                    <ActionDropdown variant="secondary">
+                        {framework.canGenerateSOA &&
+                            <DropdownItem
+                                variant="primary"
+                                onClick={() => {
+                                    generateFrameworkStateOfApplicability({
+                                        variables: { frameworkId: framework.id },
+                                        onCompleted: (data) => {
+                                            if (
+                                                data
+                                                    .generateFrameworkStateOfApplicability
+                                                    ?.data
+                                            ) {
+                                                const link =
+                                                    window.document.createElement("a");
+                                                link.href =
+                                                    data.generateFrameworkStateOfApplicability.data;
+                                                link.download = `${framework.organization.name}-${framework.name}-SOA.xlsx`;
+                                                window.document.body.appendChild(link);
+                                                link.click();
+                                                window.document.body.removeChild(link);
+                                            }
+                                        },
+                                    });
+                                }}
+                            >
+                                {__("Download SOA")}
+                            </DropdownItem>
+                        }
+                        {framework.canExport &&
+                            <DropdownItem
+                                variant="primary"
+                                onClick={() => {
+                                    exportFramework({
+                                        variables: { frameworkId: framework.id },
+                                    });
+                                }}
+                            >
+                                {__("Export Framework")}
+                            </DropdownItem>
+                        }
+                        {framework.canDelete && (
+                            <DropdownItem
+                                icon={IconTrashCan}
+                                variant="danger"
+                                onClick={onDelete}
+                            >
+                                {__("Delete")}
+                            </DropdownItem>
+                        )}
+                    </ActionDropdown>
+                )}
             </PageHeader>
             <div className="text-lg font-semibold">
                 {__("Requirement categories")}

@@ -279,14 +279,16 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
                     )
                 }
             >
-                <Button
-                    variant="secondary"
-                    icon={IconArrowDown}
-                    onClick={handleExport}
-                    disabled={isExporting}
-                >
-                    {__("Export")}
-                </Button>
+                {stateOfApplicability.canExport && (
+                    <Button
+                        variant="secondary"
+                        icon={IconArrowDown}
+                        onClick={handleExport}
+                        disabled={isExporting}
+                    >
+                        {__("Export")}
+                    </Button>
+                )}
                 {canDelete && (
                     <ActionDropdown variant="secondary">
                         <DropdownItem

@@ -96,28 +96,29 @@ func (sac *StateOfApplicabilityControl) LoadByStateOfApplicabilityIDAndControlID
 ) error {
 	q := `
 WITH current_soa AS (
-	SELECT id
-	FROM states_of_applicability
-	WHERE %s
-		AND id = @state_of_applicability_id
-		AND snapshot_id IS NULL
+    SELECT id
+    FROM states_of_applicability
+    WHERE
+        %s
+        AND id = @state_of_applicability_id
+        AND snapshot_id IS NULL
 )
 SELECT
-	soac.id,
-	soac.state_of_applicability_id,
-	soac.control_id,
-	soac.organization_id,
-	soac.snapshot_id,
-	soac.applicability,
-	soac.justification,
-	soac.created_at,
-	soac.updated_at
+    soac.id,
+    soac.state_of_applicability_id,
+    soac.control_id,
+    soac.organization_id,
+    soac.snapshot_id,
+    soac.applicability,
+    soac.justification,
+    soac.created_at,
+    soac.updated_at
 FROM
-	states_of_applicability_controls soac
+    states_of_applicability_controls soac
 INNER JOIN
-	current_soa ON soac.state_of_applicability_id = current_soa.id
+    current_soa ON soac.state_of_applicability_id = current_soa.id
 WHERE
-	soac.control_id = @control_id
+    soac.control_id = @control_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -217,7 +218,8 @@ SET
     applicability = @applicability,
     justification = @justification,
     updated_at = @updated_at
-WHERE %s
+WHERE
+    %s
     AND state_of_applicability_id = @state_of_applicability_id
     AND control_id = @control_id
 `
@@ -304,15 +306,16 @@ func (sac *StateOfApplicabilityControl) Delete(
 ) error {
 	q := `
 WITH current_soa AS (
-	SELECT id
-	FROM states_of_applicability
-	WHERE %s
-		AND id = @state_of_applicability_id
-		AND snapshot_id IS NULL
+    SELECT id
+    FROM states_of_applicability
+    WHERE
+        %s
+        AND id = @state_of_applicability_id
+        AND snapshot_id IS NULL
 )
 DELETE FROM states_of_applicability_controls
 WHERE state_of_applicability_id IN (SELECT id FROM current_soa)
-	AND control_id = @control_id;
+    AND control_id = @control_id;
 `
 
 	args := pgx.StrictNamedArgs{
@@ -380,39 +383,41 @@ func (sacs *StateOfApplicabilityControls) LoadByControlID(
 ) error {
 	q := `
 WITH soac_ctrl AS (
-	SELECT
-		soac.id,
-		soac.state_of_applicability_id,
-		soac.control_id,
-		soac.organization_id,
-		soac.snapshot_id,
-		soac.applicability,
-		soac.justification,
-		soac.created_at,
-		soac.updated_at,
-		soac.tenant_id
-	FROM
-		states_of_applicability_controls soac
-	INNER JOIN
-		states_of_applicability soa ON soac.state_of_applicability_id = soa.id
-	WHERE
-		soac.control_id = @control_id
-		AND soa.snapshot_id IS NULL
+    SELECT
+        soac.id,
+        soac.state_of_applicability_id,
+        soac.control_id,
+        soac.organization_id,
+        soac.snapshot_id,
+        soac.applicability,
+        soac.justification,
+        soac.created_at,
+        soac.updated_at,
+        soac.tenant_id
+    FROM
+        states_of_applicability_controls soac
+    INNER JOIN
+        states_of_applicability soa ON soac.state_of_applicability_id = soa.id
+    WHERE
+        soac.%[1]s
+        AND soac.control_id = @control_id
+        AND soa.snapshot_id IS NULL
 )
 SELECT
-	id,
-	state_of_applicability_id,
-	control_id,
-	organization_id,
-	snapshot_id,
-	applicability,
-	justification,
-	created_at,
-	updated_at
+    id,
+    state_of_applicability_id,
+    control_id,
+    organization_id,
+    snapshot_id,
+    applicability,
+    justification,
+    created_at,
+    updated_at
 FROM
-	soac_ctrl
-WHERE %s
-	AND %s
+    soac_ctrl
+WHERE
+    %[1]s
+    AND %[2]s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
@@ -442,21 +447,25 @@ func (sacs *StateOfApplicabilityControls) CountByControlID(
 ) (int, error) {
 	q := `
 WITH soac_ctrl AS (
-	SELECT
-		soac.id,
-		soac.organization_id,
-		soac.tenant_id
-	FROM
-		states_of_applicability_controls soac
-	WHERE
-		soac.control_id = @control_id
+    SELECT
+        soac.id,
+        soac.organization_id,
+        soac.tenant_id
+    FROM
+        states_of_applicability_controls soac
+    INNER JOIN
+        states_of_applicability soa ON soac.state_of_applicability_id = soa.id
+    WHERE
+        soac.%[1]s
+        AND soac.control_id = @control_id
+        AND soa.snapshot_id IS NULL
 )
 SELECT
-	COUNT(id)
+    COUNT(id)
 FROM
-	soac_ctrl
+    soac_ctrl
 WHERE
-	%s;
+    %[1]s;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -499,7 +508,8 @@ filtered_controls AS (
         c.tenant_id,
         c.best_practice
     FROM controls c
-    WHERE %s
+    WHERE
+        %s
 ),
 all_controls AS (
     SELECT
