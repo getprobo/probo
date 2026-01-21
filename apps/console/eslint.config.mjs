@@ -1,6 +1,17 @@
-import { browser } from "@probo/eslint-config";
+import { defineConfig } from "eslint/config";
+import { configs } from "@probo/eslint-config";
 
-export default [
-    { ignores: ["dist", "eslint.config.mjs", "*.config.{js,mjs,ts}"] },
-    ...browser(["./tsconfig.app.json", "./tsconfig.node.json"], import.meta.dirname),
-];
+export default defineConfig([
+  ...configs.base,
+  ...configs.ts,
+  ...configs.react,
+  configs.languageOptions.browser,
+  ...configs.stylistic,
+  {
+    languageOptions: {
+      parserOptions: {
+        tsConfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+]);
