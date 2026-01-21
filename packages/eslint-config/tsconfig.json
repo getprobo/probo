@@ -1,9 +1,10 @@
 {
-  "complierOptions": {
+  "compilerOptions": {
     "lib": ["ES2023"],
+    "allowJs": true,
     "skipLibCheck": true,
-    "module": "ESNext",
-    "moduleResolution": "nodenext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "moduleDetection": "force",
     "verbatimModuleSyntax": true,
     "noEmit": true,
@@ -14,5 +15,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["./*.ts"]
+  "include": ["src/**/*.ts", "eslint.config.js"]
 }

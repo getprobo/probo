@@ -1,4 +1,5 @@
 import stylistic from "@stylistic/eslint-plugin";
+import { type Linter } from "eslint";
 
 export const stylisticConfigs = [
   stylistic.configs.customize({
@@ -20,5 +21,5 @@ export const stylisticConfigs = [
         { code: 120, ignoreUrls: true, ignoreStrings: true },
       ],
     },
-  },
+  } satisfies Linter.Config,
 ];

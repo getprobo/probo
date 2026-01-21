@@ -3,22 +3,24 @@
   "version": "1.0.0",
   "private": true,
   "description": "Shared ESLint configuration for Probo monorepo",
-  "main": "eslint.config.mjs",
+  "main": "./src/index.ts",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "lint": "eslint src"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@eslint/js": "^9.39.2",
     "@stylistic/eslint-plugin": "^5.7.0",
-    "eslint": "^9.39.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.0.0",
     "typescript-eslint": "^8.53.1"
   },
   "devDependencies": {
+    "eslint": "^9.39.2",
     "typescript": "^5.8.3"
   }
 }
