@@ -1,3 +1,4 @@
+import type { Linter } from "eslint";
 import * as globals from "globals";
 
 export const browserLanguageOptionsConfig = {
@@ -16,7 +17,7 @@ export const browserLanguageOptionsConfig = {
       },
     },
   },
-};
+} satisfies Pick<Linter.Config, "languageOptions">;
 
 export const nodeLanguageOptionsConfig = {
   languageOptions: {
@@ -34,4 +35,4 @@ export const nodeLanguageOptionsConfig = {
       },
     },
   },
-};
+} satisfies Pick<Linter.Config, "languageOptions">;

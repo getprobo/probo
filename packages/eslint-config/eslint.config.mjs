@@ -1,9 +1,9 @@
 import { defineConfig } from "eslint/config";
 
-import { baseConfigs } from "./src/baseConfigs.ts";
-import { tsConfigs } from "./src/tsConfigs.ts";
-import { nodeLanguageOptionsConfig } from "./src/languageOptionsConfigs.ts";
-import { stylisticConfigs } from "./src/stylisticConfigs.ts";
+import { baseConfigs } from "#baseConfigs";
+import { tsConfigs } from "#tsConfigs";
+import { nodeLanguageOptionsConfig } from "#languageOptionsConfigs";
+import { stylisticConfigs } from "#stylisticConfigs";
 
 export default defineConfig([
   ...baseConfigs,

@@ -5,6 +5,7 @@
     "skipLibCheck": true,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
     "moduleDetection": "force",
     "verbatimModuleSyntax": true,
     "noEmit": true,
@@ -15,5 +16,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/**/*.ts", "eslint.config.js"]
+  "include": ["src/**/*.ts", "eslint.config.mjs"]
 }

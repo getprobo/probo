@@ -5,6 +5,17 @@
   "description": "Shared ESLint configuration for Probo monorepo",
   "main": "./src/index.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    }
+  },
+  "imports": {
+    "#baseConfigs": "./src/baseConfigs.ts",
+    "#tsConfigs": "./src/tsConfigs.ts",
+    "#languageOptionsConfigs": "./src/languageOptionsConfigs.ts",
+    "#stylisticConfigs": "./src/stylisticConfigs.ts"
+  },
   "scripts": {
     "lint": "eslint src"
   },
