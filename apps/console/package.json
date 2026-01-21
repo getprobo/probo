@@ -50,7 +50,6 @@
     "@vitejs/plugin-react": "^4.4.1",
     "babel-plugin-relay": "^19.0.0",
     "eslint": "^9.25.0",
-    "globals": "^16.0.0",
     "graphql": "^16.11.0",
     "relay-compiler": "^19.0.0",
     "tailwindcss": "^4.1.7",
