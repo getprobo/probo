@@ -1,0 +1,18 @@
+{
+  "complierOptions": {
+    "lib": ["ES2023"],
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "nodenext",
+    "moduleDetection": "force",
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["./*.ts"]
+}
