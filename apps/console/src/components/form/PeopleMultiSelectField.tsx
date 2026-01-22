@@ -1,7 +1,7 @@
 import { useTranslate } from "@probo/i18n";
 import { Avatar, Badge, Button, Field, IconCrossLargeX, Option, Select } from "@probo/ui";
 import { type ComponentProps, Suspense, useState } from "react";
-import { type Control, Controller, type FieldValues, Path } from "react-hook-form";
+import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 

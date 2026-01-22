@@ -2,7 +2,7 @@ import { faviconUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Avatar, Badge, Button, Field, IconCrossLargeX, Option, Select } from "@probo/ui";
 import { type ComponentProps, Suspense, useState } from "react";
-import { type Control, Controller, type FieldValues, Path } from "react-hook-form";
+import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 
 import { useVendors } from "/hooks/graph/VendorGraph.ts";
 
