@@ -1,9 +1,7 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import {
-  ForbiddenError,
   UnAuthenticatedError,
-  UnauthorizedError,
 } from "@probo/relay";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { CenteredLayout } from "@probo/ui";
@@ -42,22 +40,14 @@ import { vendorRoutes } from "./routes/vendorRoutes";
 /**
  * Top level error boundary
  */
-function ErrorBoundary({ error: propsError }: { error?: string }) {
-  const error = useRouteError() ?? propsError;
+function ErrorBoundary() {
+  const error = useRouteError();
 
   if (error instanceof UnAuthenticatedError) {
     return <Navigate to="/auth/login" />;
   }
 
-  if (error instanceof UnauthorizedError) {
-    return <PageError error="UNAUTHORIZED" />;
-  }
-
-  if (error instanceof ForbiddenError) {
-    return <PageError error="FORBIDDEN" />;
-  }
-
-  return <PageError error={error instanceof Error ? error.message : ""} />;
+  return <PageError error={error instanceof Error ? error : new Error("unkown error")} />;
 }
 
 const routes = [

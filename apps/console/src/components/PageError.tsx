@@ -14,7 +14,7 @@ const classNames = {
 
 type Props = {
   resetErrorBoundary?: () => void;
-  error?: string;
+  error?: Error;
 };
 
 export function PageError({ resetErrorBoundary, error: propsError }: Props) {

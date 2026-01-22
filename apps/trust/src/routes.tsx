@@ -26,10 +26,10 @@ import { consoleEnvironment } from "./providers/RelayProviders.tsx";
 /**
  * Top level error boundary
  */
-function ErrorBoundary({ error: propsError }: { error?: string }) {
-  const error = useRouteError() ?? propsError;
+function ErrorBoundary() {
+  const error = useRouteError();
 
-  return <PageError error={error instanceof Error ? error.message : ""} />;
+  return <PageError error={error instanceof Error ? error : new Error("unkown error")} />;
 }
 
 const routes = [
