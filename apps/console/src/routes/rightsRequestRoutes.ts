@@ -41,7 +41,7 @@ export const rightsRequestRoutes = [
         coreEnvironment,
         rightsRequestNodeQuery,
         {
-          rightsRequestId: requestId!,
+          rightsRequestId: requestId,
         },
       ),
     ),

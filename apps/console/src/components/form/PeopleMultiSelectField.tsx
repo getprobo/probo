@@ -44,7 +44,7 @@ export function PeopleMultiSelectField<T extends FieldValues = FieldValues>({
 }
 
 function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
-  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled" | "selectedPeople">
+  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled" | "selectedPeople">,
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control, selectedPeople = [] } = props;
@@ -52,7 +52,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
   const [isOpen, setIsOpen] = useState(false);
 
   const allPeople = [...people];
-  selectedPeople.forEach(selectedPerson => {
+  selectedPeople.forEach((selectedPerson) => {
     if (!allPeople.find(p => p.id === selectedPerson.id)) {
       allPeople.push({
         id: selectedPerson.id,
@@ -99,7 +99,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                   open={isOpen}
                   onOpenChange={setIsOpen}
                 >
-                  {availablePeople.map((person) => (
+                  {availablePeople.map(person => (
                     <Option key={person.id} value={person.id} className="flex gap-2">
                       <Avatar
                         name={person.fullName}
@@ -120,7 +120,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
 
               {selectedPeople.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedPeople.map((person) => (
+                  {selectedPeople.map(person => (
                     <Badge key={person.id} variant="neutral" className="flex items-center gap-2">
                       <Avatar
                         name={person.fullName}
@@ -153,4 +153,3 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
     </>
   );
 }
-

@@ -103,9 +103,9 @@ export default function MeasuresPage(props: Props) {
     organization,
   );
   const connectionId = data.measures.__id;
-  const measures = data.measures.edges.map((edge) => edge.node);
+  const measures = data.measures.edges.map(edge => edge.node);
   const measuresPerCategory = useMemo(() => {
-    return groupBy(measures, (measure) => measure.category);
+    return groupBy(measures, measure => measure.category);
   }, [measures]);
   const [importMeasures] = useMutationWithToasts<MeasuresPageImportMutation>(
     importMeasuresMutation,
@@ -122,7 +122,7 @@ export default function MeasuresPage(props: Props) {
     if (!file) {
       return;
     }
-    importMeasures({
+    void importMeasures({
       variables: {
         input: {
           organizationId: organization.id,
@@ -168,7 +168,7 @@ export default function MeasuresPage(props: Props) {
       <MeasureImplementation measures={measures} className="my-10" />
       {objectKeys(measuresPerCategory)
         .sort((a, b) => a.localeCompare(b))
-        .map((category) => (
+        .map(category => (
           <Category
             key={category}
             category={category}
@@ -199,7 +199,7 @@ function Category(props: CategoryProps) {
   const isExpanded = categoryId === params.categoryId;
   const ExpandComponent = isExpanded ? IconChevronUp : IconChevronDown;
   const completedMeasures = props.measures.filter(
-    (m) => m.state === "IMPLEMENTED",
+    m => m.state === "IMPLEMENTED",
   );
 
   return (
@@ -211,9 +211,13 @@ function Category(props: CategoryProps) {
         <h2 className="text-base font-medium">{props.category}</h2>
         <div className="flex items-center gap-3 text-sm text-txt-secondary">
           <span>
-            {__("Completion")}:{" "}
+            {__("Completion")}
+            :
+            {" "}
             <span className="text-txt-primary font-medium">
-              {completedMeasures.length}/{props.measures.length}
+              {completedMeasures.length}
+              /
+              {props.measures.length}
             </span>
           </span>
           <span className="text-border-low">|</span>
@@ -233,7 +237,7 @@ function Category(props: CategoryProps) {
               </Tr>
             </Thead>
             <Tbody>
-              {measures.map((measure) => (
+              {measures.map(measure => (
                 <MeasureRow
                   key={measure.id}
                   measure={measure}
@@ -275,7 +279,7 @@ function MeasureRow(props: MeasureRowProps) {
     confirm(
       () =>
         new Promise<void>((resolve) => {
-          deleteMeasure({
+          void deleteMeasure({
             variables: {
               input: { measureId: props.measure.id },
               connections: [props.connectionId],
@@ -286,7 +290,7 @@ function MeasureRow(props: MeasureRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the measure "%s". This action cannot be undone.',
+            "This will permanently delete the measure \"%s\". This action cannot be undone.",
           ),
           props.measure.name,
         ),

@@ -56,7 +56,7 @@ export default function RiskObligationsTab() {
     risk,
   );
   const connectionId = data.obligations.__id;
-  const obligations = data.obligations?.edges?.map((edge) => edge.node) ?? [];
+  const obligations = data.obligations?.edges?.map(edge => edge.node) ?? [];
 
   const canLinkObligation = risk.canCreateObligationMapping;
   const canUnlinkObligation = risk.canDeleteObligationMapping;

@@ -21,7 +21,7 @@ import type {
   TrustCenterFilesCardFragment$data,
 } from "/__generated__/core/TrustCenterFilesCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { formatDate } from "@probo/helpers";
 
@@ -46,7 +46,7 @@ type Mutation<Params> = (p: {
       trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC";
     } & Params;
   };
-}) => void;
+}) => Promise<void>;
 
 type Props<Params> = {
   files: TrustCenterFilesCardFragment$key[];
@@ -66,11 +66,11 @@ export function TrustCenterFilesCard<Params>(props: Props<Params>) {
   }, [props.files, limit]);
   const showMoreButton = limit !== null && props.files.length > limit;
 
-  const onChangeVisibility = (
+  const onChangeVisibility = async (
     fileId: string,
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
   ) => {
-    props.onChangeVisibility({
+    await props.onChangeVisibility({
       variables: {
         input: {
           id: fileId,
@@ -133,7 +133,7 @@ function FileRowWrapper(props: {
   onChangeVisibility: (
     fileId: string,
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
-  ) => void;
+  ) => Promise<void>;
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
@@ -157,34 +157,24 @@ function FileRow(props: {
   onChangeVisibility: (
     fileId: string,
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
-  ) => void;
+  ) => Promise<void>;
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
   canUpdate: boolean;
 }) {
-  const { file, onChangeVisibility, onEdit, onDelete, disabled, canUpdate } =
-    props;
+  const { file, onChangeVisibility, onEdit, onDelete, disabled, canUpdate }
+    = props;
   const { __ } = useTranslate();
-  const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
 
   const handleValueChange = useCallback(
-    (value: string) => {
+    async (value: string) => {
       const stringValue = typeof value === "string" ? value : "";
       const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
-      setOptimisticValue(typedValue);
-      onChangeVisibility(file.id, typedValue);
+      await onChangeVisibility(file.id, typedValue);
     },
     [file.id, onChangeVisibility],
   );
-
-  useEffect(() => {
-    if (optimisticValue && file.trustCenterVisibility === optimisticValue) {
-      setOptimisticValue(null);
-    }
-  }, [file.trustCenterVisibility, optimisticValue]);
-
-  const currentValue = optimisticValue || file.trustCenterVisibility;
 
   const visibilityOptions = getTrustCenterVisibilityOptions(__);
 
@@ -198,12 +188,12 @@ function FileRow(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={currentValue}
-          onValueChange={handleValueChange}
+          value={file.trustCenterVisibility}
+          onValueChange={value => void handleValueChange(value)}
           disabled={disabled || !canUpdate}
           className="w-[105px]"
         >
-          {visibilityOptions.map((option) => (
+          {visibilityOptions.map(option => (
             <Option key={option.value} value={option.value}>
               <div className="flex items-center justify-between w-full">
                 <Badge variant={option.variant}>{option.label}</Badge>
@@ -218,8 +208,7 @@ function FileRow(props: {
             variant="secondary"
             icon={IconArrowLink}
             onClick={() =>
-              window.open(file.fileUrl, "_blank", "noopener,noreferrer")
-            }
+              window.open(file.fileUrl, "_blank", "noopener,noreferrer")}
             title={__("Download")}
           />
           {file.canUpdate && (
@@ -231,8 +220,7 @@ function FileRow(props: {
                   id: file.id,
                   name: file.name,
                   category: file.category,
-                })
-              }
+                })}
               disabled={disabled}
               title={__("Edit")}
             />

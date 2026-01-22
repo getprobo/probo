@@ -55,8 +55,8 @@ export default function FrameworksPage(props: Props) {
   usePageTitle(__("Frameworks"));
   const data = usePreloadedQuery(frameworksQuery, props.queryRef);
   const connectionId = data.organization.frameworks!.__id;
-  const frameworks =
-    data.organization.frameworks?.edges.map((edge) => edge.node) ?? [];
+  const frameworks
+    = data.organization.frameworks?.edges.map(edge => edge.node) ?? [];
   const [commitImport, isImporting] = useMutationWithToasts(
     importFrameworkMutation,
     {
@@ -78,7 +78,7 @@ export default function FrameworksPage(props: Props) {
     try {
       setUploading(true);
       const fileName = `${name}.json`;
-      const json = await fetch(`/data/frameworks/${fileName}`).then((res) =>
+      const json = await fetch(`/data/frameworks/${fileName}`).then(res =>
         res.text(),
       );
       const file = new File([json], fileName, {
@@ -111,7 +111,7 @@ export default function FrameworksPage(props: Props) {
     if (!file) {
       return;
     }
-    importFile(file).finally(() => {
+    void importFile(file).finally(() => {
       input.value = "";
     });
   };
@@ -144,7 +144,7 @@ export default function FrameworksPage(props: Props) {
               {__("Import")}
             </FileButton>
             <FrameworkSelector
-              onSelect={importNamedFramework}
+              onSelect={name => void importNamedFramework(name)}
               disabled={isLoading}
             />
           </>
@@ -152,7 +152,7 @@ export default function FrameworksPage(props: Props) {
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {frameworks.map((framework) => (
+        {frameworks.map(framework => (
           <FrameworkCard
             organizationId={data.organization.id!}
             connectionId={connectionId}

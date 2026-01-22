@@ -46,8 +46,8 @@ export function PersonalAPIKeyRow(props: {
   const key = useFragment(personalAPIKeyRowFragment, fKey);
   const expired = new Date(key.expiresAt) < now;
 
-  const [revokeCommit, isRevoking] =
-    useMutation<PersonalAPIKeyRow_revokeMutation>(revokeMutation);
+  const [revokeCommit, isRevoking]
+    = useMutation<PersonalAPIKeyRow_revokeMutation>(revokeMutation);
 
   const handleRevoke = () => {
     confirm(
@@ -64,11 +64,11 @@ export function PersonalAPIKeyRow(props: {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to revoke API key."),
-                    errors as GraphQLError[]
+                    errors as GraphQLError[],
                   ),
                   variant: "error",
                 });
-                reject(errors);
+                reject(new Error(errors[0]?.message ?? __("Failed to revoke API key.")));
                 return;
               }
               toast({
@@ -83,7 +83,7 @@ export function PersonalAPIKeyRow(props: {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to revoke API key."),
-                  error
+                  error,
                 ),
                 variant: "error",
               });
@@ -95,11 +95,11 @@ export function PersonalAPIKeyRow(props: {
       {
         title: __("Revoke API Key"),
         message: __(
-          `Are you sure you want to revoke the API key "${key.name}"? This action cannot be undone.`
+          `Are you sure you want to revoke the API key "${key.name}"? This action cannot be undone.`,
         ),
         label: __("Revoke"),
         variant: "danger",
-      }
+      },
     );
   };
 

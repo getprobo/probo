@@ -107,8 +107,8 @@ function DocumentSignatureContent({
   const isDesktop = !isMobile;
   const organizationId = useOrganizationId();
 
-  const documentData =
-    useFragment<EmployeeDocumentSignaturePageDocumentFragment$key>(
+  const documentData
+    = useFragment<EmployeeDocumentSignaturePageDocumentFragment$key>(
       documentFragment,
       fKey,
     );
@@ -119,25 +119,25 @@ function DocumentSignatureContent({
     string | undefined
   >(() => versions[0]?.id);
 
-  const selectedVersion = versions.find((v) => v?.id === selectedVersionId);
+  const selectedVersion = versions.find(v => v?.id === selectedVersionId);
 
   usePageTitle(__("Sign Document"));
   const { toast } = useToast();
 
-  const [signDocument, isSigning] =
-    useMutation<EmployeeDocumentSignaturePageSignMutation>(
+  const [signDocument, isSigning]
+    = useMutation<EmployeeDocumentSignaturePageSignMutation>(
       signDocumentMutation,
     );
 
-  const [exportSignableVersionDocumentPDF] =
-    useMutation<EmployeeDocumentSignaturePageExportSignablePDFMutation>(
+  const [exportSignableVersionDocumentPDF]
+    = useMutation<EmployeeDocumentSignaturePageExportSignablePDFMutation>(
       exportSignableVersionDocumentPDFMutation,
     );
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const pdfUrlRef = useRef<string | null>(null);
 
-  const handleSign = async (versionId: string) => {
+  const handleSign = (versionId: string) => {
     signDocument({
       variables: {
         input: {
@@ -157,7 +157,7 @@ function DocumentSignatureContent({
           description: __("Document signed successfully"),
           variant: "success",
         });
-        navigate(`/organizations/${organizationId}/employee`);
+        void navigate(`/organizations/${organizationId}/employee`);
       },
       onError: (error) => {
         toast({
@@ -247,16 +247,17 @@ function DocumentSignatureContent({
           </p>
 
           <div className="min-h-[60px]">
-            {selectedVersion ? (
-              <VersionActions
-                fKey={selectedVersion}
-                isSigning={isSigning}
-                onSign={handleSign}
-                onBack={() =>
-                  navigate(`/organizations/${organizationId}/employee`)
-                }
-              />
-            ) : null}
+            {selectedVersion
+              ? (
+                  <VersionActions
+                    fKey={selectedVersion}
+                    isSigning={isSigning}
+                    onSign={handleSign}
+                    onBack={() =>
+                      void navigate(`/organizations/${organizationId}/employee`)}
+                  />
+                )
+              : null}
           </div>
         </div>
 

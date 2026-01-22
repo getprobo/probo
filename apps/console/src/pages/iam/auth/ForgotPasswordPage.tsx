@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
     sendInstructionsMutation,
   );
 
-  const onSubmit = handleSubmit(async ({ email }) => {
+  const onSubmit = handleSubmit(({ email }) => {
     sendInstructions({
       variables: {
         input: { email },
@@ -74,82 +74,87 @@ export default function ForgotPasswordPage() {
     });
   });
 
-  return instructionsSent ? (
-    <div className="space-y-6 w-full max-w-md mx-auto">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{__("Check your email")}</h1>
-        <p className="text-txt-tertiary">
-          {__("We've sent password reset instructions to your email address")}
-        </p>
-      </div>
+  return instructionsSent
+    ? (
+        <div className="space-y-6 w-full max-w-md mx-auto">
+          <div className="space-y-2 text-center">
+            <h1 className="text-3xl font-bold">{__("Check your email")}</h1>
+            <p className="text-txt-tertiary">
+              {__("We've sent password reset instructions to your email address")}
+            </p>
+          </div>
 
-      <div className="text-center">
-        <p className="text-sm text-txt-tertiary">
-          {__("Didn't receive the email?")}{" "}
-          <button
-            onClick={() => setInstructionsSent(false)}
-            className="underline text-txt-primary hover:text-txt-secondary"
-          >
-            {__("Try again")}
-          </button>
-        </p>
-      </div>
+          <div className="text-center">
+            <p className="text-sm text-txt-tertiary">
+              {__("Didn't receive the email?")}
+              {" "}
+              <button
+                onClick={() => setInstructionsSent(false)}
+                className="underline text-txt-primary hover:text-txt-secondary"
+              >
+                {__("Try again")}
+              </button>
+            </p>
+          </div>
 
-      <div className="text-center">
-        <p className="text-sm text-txt-tertiary">
-          {__("Remember your password?")}{" "}
-          <Link
-            to="/auth/login"
-            className="underline text-txt-primary hover:text-txt-secondary"
-          >
-            {__("Back to login")}
-          </Link>
-        </p>
-      </div>
-    </div>
-  ) : (
-    <div className="space-y-6 w-full max-w-md mx-auto">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">{__("Forgot Password")}</h1>
-        <p className="text-txt-tertiary">
-          {__(
-            "Enter your email address and we'll send you instructions to reset your password",
-          )}
-        </p>
-      </div>
+          <div className="text-center">
+            <p className="text-sm text-txt-tertiary">
+              {__("Remember your password?")}
+              {" "}
+              <Link
+                to="/auth/login"
+                className="underline text-txt-primary hover:text-txt-secondary"
+              >
+                {__("Back to login")}
+              </Link>
+            </p>
+          </div>
+        </div>
+      )
+    : (
+        <div className="space-y-6 w-full max-w-md mx-auto">
+          <div className="space-y-2 text-center">
+            <h1 className="text-3xl font-bold">{__("Forgot Password")}</h1>
+            <p className="text-txt-tertiary">
+              {__(
+                "Enter your email address and we'll send you instructions to reset your password",
+              )}
+            </p>
+          </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <Field
-          label={__("Email")}
-          type="email"
-          placeholder={__("name@example.com")}
-          {...register("email")}
-          required
-          error={formState.errors.email?.message}
-        />
+          <form onSubmit={e => void onSubmit(e)} className="space-y-4">
+            <Field
+              label={__("Email")}
+              type="email"
+              placeholder={__("name@example.com")}
+              {...register("email")}
+              required
+              error={formState.errors.email?.message}
+            />
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={formState.isSubmitting}
-        >
-          {formState.isSubmitting
-            ? __("Sending instructions...")
-            : __("Send reset instructions")}
-        </Button>
-      </form>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={formState.isSubmitting}
+            >
+              {formState.isSubmitting
+                ? __("Sending instructions...")
+                : __("Send reset instructions")}
+            </Button>
+          </form>
 
-      <div className="text-center">
-        <p className="text-sm text-txt-tertiary">
-          {__("Remember your password?")}{" "}
-          <Link
-            to="/auth/login"
-            className="underline text-txt-primary hover:text-txt-secondary"
-          >
-            {__("Back to login")}
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
+          <div className="text-center">
+            <p className="text-sm text-txt-tertiary">
+              {__("Remember your password?")}
+              {" "}
+              <Link
+                to="/auth/login"
+                className="underline text-txt-primary hover:text-txt-secondary"
+              >
+                {__("Back to login")}
+              </Link>
+            </p>
+          </div>
+        </div>
+      );
 }

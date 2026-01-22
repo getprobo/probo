@@ -34,14 +34,14 @@ export function PersonalAPIKeyTokenAction(props: {
               title: __("Error"),
               description: formatError(
                 __("Failed to load API key token."),
-                error
+                error,
               ),
               variant: "error",
             });
             dialogRef.current?.close();
           }
         },
-      }
+      },
     );
   };
 

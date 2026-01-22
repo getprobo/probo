@@ -135,7 +135,7 @@ export const useDeleteAudit = (
         await mutate({
           variables: {
             input: {
-              auditId: audit.id!,
+              auditId: audit.id,
             },
             connections: [connectionId],
           },

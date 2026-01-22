@@ -68,7 +68,7 @@ export default function DocumentControlsTab() {
     document: DocumentControlsTabFragment$key;
   }>();
   const [data, refetch] = useRefetchableFragment(controlsFragment, document);
-  const controls = data.controls.edges.map((edge) => edge.node);
+  const controls = data.controls.edges.map(edge => edge.node);
   const incrementOptions = {
     id: data.id,
     node: "controls(first:0)",

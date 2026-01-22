@@ -8,11 +8,11 @@ import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenter
 export default function TrustCenterDocumentsTab() {
   const { __ } = useTranslate();
   const { organization } = useOutletContext<TrustCenterGraphQuery$data>();
-  const [updateDocumentVisibility, isUpdatingDocuments] =
-    useUpdateDocumentVisibilityMutation();
+  const [updateDocumentVisibility, isUpdatingDocuments]
+    = useUpdateDocumentVisibilityMutation();
 
-  const documents =
-    organization.documents?.edges?.map((edge) => edge.node) || [];
+  const documents
+    = organization.documents?.edges?.map(edge => edge.node) || [];
 
   return (
     <div className="space-y-4">

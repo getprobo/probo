@@ -47,8 +47,8 @@ import type {
 } from "/__generated__/core/NonconformitiesPageFragment.graphql";
 import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
 
-type Nonconformity =
-  NonconformitiesPageFragment$data["nonconformities"]["edges"][number]["node"];
+type Nonconformity
+  = NonconformitiesPageFragment$data["nonconformities"]["edges"][number]["node"];
 
 interface NonconformitiesPageProps {
   queryRef: PreloadedQuery<NonconformityGraphListQuery>;
@@ -138,12 +138,12 @@ export default function NonconformitiesPage({
     NonconformitiesConnectionKey,
     { filter: { snapshotId: snapshotId || null } },
   );
-  const nonconformities: Nonconformity[] =
-    nonconformitiesData?.nonconformities?.edges?.map((edge) => edge.node) ?? [];
+  const nonconformities: Nonconformity[]
+    = nonconformitiesData?.nonconformities?.edges?.map(edge => edge.node) ?? [];
 
-  const hasAnyAction =
-    !isSnapshotMode &&
-    nonconformities.some(({ canDelete, canUpdate }) => canDelete || canUpdate);
+  const hasAnyAction
+    = !isSnapshotMode
+      && nonconformities.some(({ canDelete, canUpdate }) => canDelete || canUpdate);
 
   return (
     <div className="space-y-6">
@@ -162,58 +162,60 @@ export default function NonconformitiesPage({
         )}
       </PageHeader>
 
-      {nonconformities.length === 0 ? (
-        <Card padded>
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No nonconformities yet")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__("Create your first nonconformity to get started.")}
-            </p>
-          </div>
-        </Card>
-      ) : (
-        <Card>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{__("Reference ID")}</Th>
-                <Th>{__("Description")}</Th>
-                <Th>{__("Status")}</Th>
-                <Th>{__("Audit")}</Th>
-                <Th>{__("Owner")}</Th>
-                <Th>{__("Due Date")}</Th>
-                {hasAnyAction && <Th>{__("Actions")}</Th>}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {nonconformities.map((nonconformity) => (
-                <NonconformityRow
-                  key={nonconformity.id}
-                  nonconformity={nonconformity}
-                  connectionId={connectionId}
-                  isSnapshotMode={isSnapshotMode}
-                  snapshotId={snapshotId}
-                  hasAnyAction={hasAnyAction}
-                />
-              ))}
-            </Tbody>
-          </Table>
+      {nonconformities.length === 0
+        ? (
+            <Card padded>
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">
+                  {__("No nonconformities yet")}
+                </h3>
+                <p className="text-txt-tertiary mb-4">
+                  {__("Create your first nonconformity to get started.")}
+                </p>
+              </div>
+            </Card>
+          )
+        : (
+            <Card>
+              <Table>
+                <Thead>
+                  <Tr>
+                    <Th>{__("Reference ID")}</Th>
+                    <Th>{__("Description")}</Th>
+                    <Th>{__("Status")}</Th>
+                    <Th>{__("Audit")}</Th>
+                    <Th>{__("Owner")}</Th>
+                    <Th>{__("Due Date")}</Th>
+                    {hasAnyAction && <Th>{__("Actions")}</Th>}
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {nonconformities.map(nonconformity => (
+                    <NonconformityRow
+                      key={nonconformity.id}
+                      nonconformity={nonconformity}
+                      connectionId={connectionId}
+                      isSnapshotMode={isSnapshotMode}
+                      snapshotId={snapshotId}
+                      hasAnyAction={hasAnyAction}
+                    />
+                  ))}
+                </Tbody>
+              </Table>
 
-          {hasNext && (
-            <div className="p-4 border-t">
-              <Button
-                variant="secondary"
-                onClick={() => loadNext(10)}
-                disabled={!hasNext}
-              >
-                {__("Load more")}
-              </Button>
-            </div>
+              {hasNext && (
+                <div className="p-4 border-t">
+                  <Button
+                    variant="secondary"
+                    onClick={() => loadNext(10)}
+                    disabled={!hasNext}
+                  >
+                    {__("Load more")}
+                  </Button>
+                </div>
+              )}
+            </Card>
           )}
-        </Card>
-      )}
     </div>
   );
 }
@@ -283,25 +285,31 @@ function NonconformityRow({
         </Badge>
       </Td>
       <Td>
-        {nonconformity.audit ? (
-          nonconformity.audit.name ? (
-            `${nonconformity.audit.framework?.name} - ${nonconformity.audit.name}`
-          ) : (
-            nonconformity.audit.framework?.name
-          )
-        ) : (
-          <span className="text-txt-tertiary">{__("No audit")}</span>
-        )}
+        {nonconformity.audit
+          ? (
+              nonconformity.audit.name
+                ? (
+                    `${nonconformity.audit.framework?.name} - ${nonconformity.audit.name}`
+                  )
+                : (
+                    nonconformity.audit.framework?.name
+                  )
+            )
+          : (
+              <span className="text-txt-tertiary">{__("No audit")}</span>
+            )}
       </Td>
       <Td>{nonconformity.owner.fullName}</Td>
       <Td>
-        {nonconformity.dueDate ? (
-          <time dateTime={nonconformity.dueDate}>
-            {formatDate(nonconformity.dueDate)}
-          </time>
-        ) : (
-          <span className="text-txt-tertiary">{__("No due date")}</span>
-        )}
+        {nonconformity.dueDate
+          ? (
+              <time dateTime={nonconformity.dueDate}>
+                {formatDate(nonconformity.dueDate)}
+              </time>
+            )
+          : (
+              <span className="text-txt-tertiary">{__("No due date")}</span>
+            )}
       </Td>
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">

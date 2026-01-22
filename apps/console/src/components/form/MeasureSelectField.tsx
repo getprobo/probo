@@ -4,7 +4,10 @@ import { useTranslate } from "@probo/i18n";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { usePaginatedMeasures } from "/hooks/graph/usePaginatedMeasures";
 
-type Props<TFieldValues extends FieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>> = {
+type Props<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+> = {
   organizationId: string;
   control: Control<TFieldValues>;
   name: TName;
@@ -39,7 +42,7 @@ export function MeasureSelectField<TFieldValues extends FieldValues = FieldValue
 }
 
 function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
-  props: Pick<Props<TFieldValues>, "organizationId" | "control" | "name" | "disabled" | "optional">
+  props: Pick<Props<TFieldValues>, "organizationId" | "control" | "name" | "disabled" | "optional">,
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control, disabled, optional } = props;
@@ -49,16 +52,16 @@ function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
     return (
       data?.measures.edges
         ?.filter(
-          (edge) =>
-            edge.node.name.toLowerCase().includes(search.toLowerCase()) ||
-            edge.node.description?.toLowerCase().includes(search.toLowerCase())
+          edge =>
+            edge.node.name.toLowerCase().includes(search.toLowerCase())
+            || edge.node.description?.toLowerCase().includes(search.toLowerCase()),
         )
-        .map((edge) => edge.node) ?? []
+        .map(edge => edge.node) ?? []
     );
   }, [data?.measures.edges, search]);
 
   const allMeasures = useMemo(() => {
-    return data?.measures.edges?.map((edge) => edge.node) ?? [];
+    return data?.measures.edges?.map(edge => edge.node) ?? [];
   }, [data?.measures.edges]);
 
   return (
@@ -67,7 +70,7 @@ function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
         control={control}
         name={name}
         render={({ field }) => {
-          const selectedMeasure = field.value ? allMeasures?.find((m) => m.id === field.value) : null;
+          const selectedMeasure = field.value ? allMeasures?.find(m => m.id === field.value) : null;
 
           return (
             <Combobox
@@ -87,7 +90,7 @@ function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
                   {__("None")}
                 </ComboboxItem>
               )}
-              {measures?.map((m) => (
+              {measures?.map(m => (
                 <ComboboxItem
                   key={m.id}
                   onClick={() => {

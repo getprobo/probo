@@ -1,7 +1,7 @@
-export type NodeOf<T> =
-  NonNullable<T> extends
-    | { readonly edges: ReadonlyArray<{ readonly node: infer U }> }
-    | undefined
+export type NodeOf<T>
+  = NonNullable<T> extends
+  | { readonly edges: ReadonlyArray<{ readonly node: infer U }> }
+  | undefined
     ? U
     : never;
 

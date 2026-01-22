@@ -15,7 +15,7 @@ import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import {
   useCreateTrustCenterReferenceMutation,
-  useUpdateTrustCenterReferenceMutation
+  useUpdateTrustCenterReferenceMutation,
 } from "/hooks/graph/TrustCenterReferenceGraph";
 
 const referenceSchema = z.object({
@@ -44,7 +44,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
   function TrustCenterReferenceDialog({ children }, ref) {
     const { __ } = useTranslate();
     const dialogRef = useDialogRef();
-    const [mode, setMode] = useState<'create' | 'edit'>('create');
+    const [mode, setMode] = useState<"create" | "edit">("create");
     const [trustCenterId, setTrustCenterId] = useState<string>("");
     const [connectionId, setConnectionId] = useState<string>("");
     const [editReference, setEditReference] = useState<Reference | null>(null);
@@ -61,12 +61,12 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
           description: "",
           websiteUrl: "",
         },
-      }
+      },
     );
 
     useImperativeHandle(ref, () => ({
       openCreate: (tId: string, cId: string) => {
-        setMode('create');
+        setMode("create");
         setTrustCenterId(tId);
         setConnectionId(cId);
         setEditReference(null);
@@ -79,7 +79,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
         dialogRef.current?.open();
       },
       openEdit: (reference: Reference) => {
-        setMode('edit');
+        setMode("edit");
         setEditReference(reference);
         setUploadedFile(null);
         reset({
@@ -99,8 +99,8 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
       }
     };
 
-    const onSubmit = handleSubmit(async (data: ReferenceFormData) => {
-      if (mode === 'create') {
+    const onSubmit = async (data: ReferenceFormData) => {
+      if (mode === "create") {
         if (!uploadedFile) {
           return;
         }
@@ -161,7 +161,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
           },
         });
       }
-    });
+    };
 
     const handleClose = () => {
       reset();
@@ -169,12 +169,12 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
     };
 
     const isSubmitting = isCreating || isUpdating;
-    const title = mode === 'create' ? __("Add Reference") : __("Edit Reference");
+    const title = mode === "create" ? __("Add Reference") : __("Edit Reference");
 
     return (
       <>
         {children && (
-          <span onClick={() => mode === 'create' && dialogRef.current?.open()}>
+          <span onClick={() => mode === "create" && dialogRef.current?.open()}>
             {children}
           </span>
         )}
@@ -185,7 +185,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
           className="max-w-2xl"
           onClose={handleClose}
         >
-          <form onSubmit={onSubmit}>
+          <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
             <DialogContent padded className="space-y-6">
               <Field
                 {...register("name")}
@@ -213,7 +213,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
                 placeholder={__("https://example.com")}
               />
 
-              {mode === 'edit' && (
+              {mode === "edit" && (
                 <Field
                   {...register("rank", { valueAsNumber: true })}
                   label={__("Rank")}
@@ -239,18 +239,21 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
                 />
                 {uploadedFile && (
                   <div className="mt-2 p-3 bg-tertiary-subtle rounded-lg">
-                    <p className="text-sm font-medium">{__("Selected file")}:</p>
+                    <p className="text-sm font-medium">
+                      {__("Selected file")}
+                      :
+                    </p>
                     <p className="text-sm text-txt-secondary">{uploadedFile.name}</p>
                   </div>
                 )}
-                {mode === 'edit' && !uploadedFile && (
+                {mode === "edit" && !uploadedFile && (
                   <div className="mt-2 p-3 bg-tertiary-subtle rounded-lg">
                     <p className="text-sm text-txt-secondary">
                       {__("Current logo will be kept if no new file is uploaded")}
                     </p>
                   </div>
                 )}
-                {mode === 'create' && !uploadedFile && (
+                {mode === "create" && !uploadedFile && (
                   <div className="mt-2 p-3 bg-warning-subtle rounded-lg">
                     <p className="text-sm">
                       {__("Logo is required for new references")}
@@ -263,15 +266,15 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
             <DialogFooter>
               <Button
                 type="submit"
-                disabled={isSubmitting || (mode === 'create' && !uploadedFile)}
+                disabled={isSubmitting || (mode === "create" && !uploadedFile)}
                 icon={isSubmitting ? Spinner : undefined}
               >
-                {mode === 'create' ? __("Add Reference") : __("Update Reference")}
+                {mode === "create" ? __("Add Reference") : __("Update Reference")}
               </Button>
             </DialogFooter>
           </form>
         </Dialog>
       </>
     );
-  }
+  },
 );

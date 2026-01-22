@@ -58,13 +58,13 @@ export default function RisksPage(props: Props) {
         order: {
           direction: order.direction as "ASC" | "DESC",
           field: order.field as
-            | "NAME"
-            | "CATEGORY"
-            | "TREATMENT"
-            | "INHERENT_RISK_SCORE"
-            | "RESIDUAL_RISK_SCORE"
-            | "OWNER_FULL_NAME"
-            | "CREATED_AT",
+          | "NAME"
+          | "CATEGORY"
+          | "TREATMENT"
+          | "INHERENT_RISK_SCORE"
+          | "RESIDUAL_RISK_SCORE"
+          | "OWNER_FULL_NAME"
+          | "CREATED_AT",
         },
       },
       { fetchPolicy: "network-only" },
@@ -73,9 +73,9 @@ export default function RisksPage(props: Props) {
 
   usePageTitle(__("Risks"));
 
-  const hasAnyAction =
-    !isSnapshotMode &&
-    risks.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
+  const hasAnyAction
+    = !isSnapshotMode
+      && risks.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -126,7 +126,7 @@ export default function RisksPage(props: Props) {
           </Tr>
         </Thead>
         <Tbody>
-          {risks?.map((risk) => (
+          {risks?.map(risk => (
             <RiskRow
               risk={risk}
               key={risk.id}
@@ -159,7 +159,7 @@ function RiskRow(props: RowProps) {
     confirm(
       () =>
         new Promise<void>((resolve) => {
-          deleteRisk({
+          void deleteRisk({
             variables: {
               input: { riskId: risk.id },
               connections: [connectionId],
@@ -170,7 +170,7 @@ function RiskRow(props: RowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the risk "%s". This action cannot be undone.',
+            "This will permanently delete the risk \"%s\". This action cannot be undone.",
           ),
           risk.name,
         ),
@@ -179,8 +179,8 @@ function RiskRow(props: RowProps) {
   };
   const formDialogRef = useDialogRef();
 
-  const riskUrl =
-    isSnapshotMode && snapshotId
+  const riskUrl
+    = isSnapshotMode && snapshotId
       ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${risk.id}/overview`
       : `/organizations/${organizationId}/risks/${risk.id}/overview`;
 

@@ -17,5 +17,5 @@ createRoot(document.getElementById("root")!).render(
     <TranslatorProvider>
       <App />
     </TranslatorProvider>
-  </QueryClientProvider>
+  </QueryClientProvider>,
 );

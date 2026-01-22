@@ -72,11 +72,11 @@ export function MembershipCard(props: MembershipCardProps) {
     fKey,
   );
   const isAuthenticated = !!lastSession;
-  const isExpired =
-    lastSession && parseDate(lastSession.expiresAt) < new Date();
+  const isExpired
+    = lastSession && parseDate(lastSession.expiresAt) < new Date();
 
-  const [assumeOrganizationSession] =
-    useMutation<MembershipCard_assumeMutation>(
+  const [assumeOrganizationSession]
+    = useMutation<MembershipCard_assumeMutation>(
       assumeOrganizationSessionMutation,
     );
 
@@ -96,13 +96,13 @@ export function MembershipCard(props: MembershipCardProps) {
 
         switch (result.__typename) {
           case "PasswordRequired":
-            navigate("auth/login");
+            void navigate("auth/login");
             break;
           case "SAMLAuthenticationRequired":
             window.location.href = result.redirectUrl;
             break;
           default:
-            navigate(`/organizations/${organization.id}`);
+            void navigate(`/organizations/${organization.id}`);
         }
       },
     });
@@ -148,15 +148,17 @@ export function MembershipCard(props: MembershipCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {isAuthenticated ? (
-            <Link to={`/organizations/${organization.id}`}>
-              <Button variant="secondary">{__("Start")}</Button>
-            </Link>
-          ) : (
-            <Button onClick={handleAssumeOrganizationSession}>
-              {__("Login")}
-            </Button>
-          )}
+          {isAuthenticated
+            ? (
+                <Link to={`/organizations/${organization.id}`}>
+                  <Button variant="secondary">{__("Start")}</Button>
+                </Link>
+              )
+            : (
+                <Button onClick={handleAssumeOrganizationSession}>
+                  {__("Login")}
+                </Button>
+              )}
         </div>
       </div>
     </Card>

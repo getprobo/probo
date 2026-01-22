@@ -64,11 +64,11 @@ export default function DatumDetailsPage(props: Props) {
     }),
   );
 
-  const vendors = datumEntry?.vendors?.edges.map((edge) => edge.node) ?? [];
-  const vendorIds = vendors.map((vendor) => vendor.id);
+  const vendors = datumEntry?.vendors?.edges.map(edge => edge.node) ?? [];
+  const vendorIds = vendors.map(vendor => vendor.id);
 
-  const { control, formState, handleSubmit, register, reset } =
-    useFormWithSchema(updateDatumSchema, {
+  const { control, formState, handleSubmit, register, reset }
+    = useFormWithSchema(updateDatumSchema, {
       defaultValues: {
         name: datumEntry?.name || "",
         dataClassification: datumEntry?.dataClassification || "PUBLIC",
@@ -136,7 +136,7 @@ export default function DatumDetailsPage(props: Props) {
         )}
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-6 max-w-2xl">
+      <form onSubmit={e => void onSubmit(e)} className="space-y-6 max-w-2xl">
         <Field
           label={__("Name")}
           {...register("name")}

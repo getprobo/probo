@@ -74,7 +74,7 @@ export default function MeasureControlsTab() {
   }>();
   const [data, refetch] = useRefetchableFragment(controlsFragment, measure);
   const connectionId = data.controls.__id;
-  const controls = data.controls?.edges?.map((edge) => edge.node) ?? [];
+  const controls = data.controls?.edges?.map(edge => edge.node) ?? [];
 
   const canLinkControl = controls.some(
     ({ canCreateMeasureMapping }) => canCreateMeasureMapping,

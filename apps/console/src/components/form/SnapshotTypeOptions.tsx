@@ -7,7 +7,7 @@ export function SnapshotTypeOptions() {
 
   return (
     <>
-      {snapshotTypes.map((type) => (
+      {snapshotTypes.map(type => (
         <Option key={type} value={type}>
           {getSnapshotTypeLabel(__, type)}
         </Option>

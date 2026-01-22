@@ -15,7 +15,7 @@ export function useMutateField<Input extends Record<string, unknown>>(
   const [mutate, isUpdating] = useMutation(mutation);
 
   return {
-    update<T extends keyof Input>(id: string, fieldName: T, value: Input[T]) {
+    update: <T extends keyof Input>(id: string, fieldName: T, value: Input[T]) => {
       if (!id) {
         return;
       }

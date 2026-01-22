@@ -62,7 +62,8 @@ export function SAMLDomainVerifyDialog(props: {
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              <strong>{__("Note:")}</strong>{" "}
+              <strong>{__("Note:")}</strong>
+              {" "}
               {__(
                 "DNS changes may take up to 48 hours to propagate, but typically complete within a few minutes.",
               )}

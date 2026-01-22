@@ -55,20 +55,20 @@ export function CreateServiceDialog({
         name: "",
         description: "",
       },
-    }
+    },
   );
   const [createService, isLoading] = useMutationWithToasts(
     createServiceMutation,
     {
       successMessage: __("Service created successfully."),
       errorMessage: __("Failed to create service"),
-    }
+    },
   );
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     const cleanData = cleanFormData(data);
 
-    createService({
+    await createService({
       variables: {
         input: {
           vendorId,
@@ -81,7 +81,7 @@ export function CreateServiceDialog({
         reset();
       },
     });
-  });
+  };
 
   const dialogRef = useDialogRef();
 
@@ -94,7 +94,7 @@ export function CreateServiceDialog({
         <Breadcrumb items={[__("Services"), __("New Service")]} />
       }
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
             label={__("Name")}

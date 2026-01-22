@@ -49,8 +49,8 @@ export function GeneralSettingsPage(props: {
     throw new Error("Relay node is not an organization");
   }
 
-  const [deleteOrganization, isDeletingOrganization] =
-    useMutationWithToasts<GeneralSettingsPage_deleteMutation>(
+  const [deleteOrganization, isDeletingOrganization]
+    = useMutationWithToasts<GeneralSettingsPage_deleteMutation>(
       deleteOrganizationMutation,
       {
         successMessage: __("Organization deleted successfully."),
@@ -67,7 +67,7 @@ export function GeneralSettingsPage(props: {
         connections: [],
       },
       onSuccess: () => {
-        navigate("/", { replace: true });
+        void navigate("/", { replace: true });
       },
     });
   };
@@ -87,7 +87,8 @@ export function GeneralSettingsPage(props: {
                 {__("Delete Organization")}
               </h3>
               <p className="text-sm text-txt-tertiary">
-                {__("Permanently delete this organization and all its data.")}{" "}
+                {__("Permanently delete this organization and all its data.")}
+                {" "}
                 <span className="text-red-600 font-medium">
                   {__("This action cannot be undone.")}
                 </span>
@@ -95,7 +96,7 @@ export function GeneralSettingsPage(props: {
             </div>
             <DeleteOrganizationDialog
               organizationName={organization.name}
-              onConfirm={handleDeleteOrganization}
+              onConfirm={() => void handleDeleteOrganization()}
               isDeleting={isDeletingOrganization}
             >
               <Button

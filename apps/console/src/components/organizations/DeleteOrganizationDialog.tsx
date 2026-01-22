@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,14 +32,9 @@ export function DeleteOrganizationDialog({
   const handleConfirm = () => {
     if (inputValue === organizationName) {
       onConfirm();
-    }
-  };
-
-  useEffect(() => {
-    if (!isDeleting) {
       setInputValue("");
     }
-  }, [isDeleting]);
+  };
 
   return (
     <Dialog
@@ -52,7 +47,7 @@ export function DeleteOrganizationDialog({
         <p className="text-txt-secondary text-sm">
           {sprintf(
             __("This will permanently delete the organization %s and all its data."),
-            organizationName
+            organizationName,
           )}
         </p>
 
@@ -62,12 +57,12 @@ export function DeleteOrganizationDialog({
 
         <Field
           label={sprintf(
-            __('To confirm deletion, type "%s" below:'),
-            organizationName
+            __("To confirm deletion, type \"%s\" below:"),
+            organizationName,
           )}
           type="text"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={e => setInputValue(e.target.value)}
           placeholder={organizationName}
           disabled={isDeleting}
           autoComplete="off"

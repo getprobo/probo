@@ -63,7 +63,7 @@ export const continualImprovementRoutes = [
         coreEnvironment,
         continualImprovementNodeQuery,
         {
-          continualImprovementId: improvementId!,
+          continualImprovementId: improvementId,
         },
       ),
     ),
@@ -82,7 +82,7 @@ export const continualImprovementRoutes = [
         coreEnvironment,
         continualImprovementNodeQuery,
         {
-          continualImprovementId: improvementId!,
+          continualImprovementId: improvementId,
         },
       ),
     ),

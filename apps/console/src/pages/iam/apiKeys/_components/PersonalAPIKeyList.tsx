@@ -107,25 +107,25 @@ export function PersonalAPIKeyList(props: {
 
   const connectionID = ConnectionHandler.getConnectionID(
     viewer.id,
-    "PersonalAPIKeyListFragment_personalAPIKeys"
+    "PersonalAPIKeyListFragment_personalAPIKeys",
   );
 
-  const { formState, handleSubmit, register, control, reset } =
-    useFormWithSchema(createSchema, {
+  const { formState, handleSubmit, register, control, reset }
+    = useFormWithSchema(createSchema, {
       defaultValues: {
         name: new Date().toISOString().split("T")[0],
         expiresIn: "1month",
       },
     });
 
-  const [createCommit, isCreating] =
-    useMutation<PersonalAPIKeyListCreateMutation>(createMutation);
+  const [createCommit, isCreating]
+    = useMutation<PersonalAPIKeyListCreateMutation>(createMutation);
 
   const handleCreate = (data: CreateFormData) => {
     const expiresAt = computeExpiresAt(data.expiresIn);
     const connectionID = ConnectionHandler.getConnectionID(
       viewer.id,
-      "PersonalAPIKeyListFragment_personalAPIKeys"
+      "PersonalAPIKeyListFragment_personalAPIKeys",
     );
 
     createCommit({
@@ -170,25 +170,27 @@ export function PersonalAPIKeyList(props: {
           </Button>
         </div>
 
-        {viewer.personalAPIKeys.edges.length === 0 ? (
-          <Card padded>
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {__("No API keys")}
-              </h3>
-              <p className="text-gray-600 mb-6">
-                {__("Create an API key to authenticate programmatic access.")}
-              </p>
-            </div>
-          </Card>
-        ) : (
-          <Card padded>
-            <PersonalAPIKeysTable
-              edges={viewer.personalAPIKeys.edges}
-              connectionId={connectionID}
-            />
-          </Card>
-        )}
+        {viewer.personalAPIKeys.edges.length === 0
+          ? (
+              <Card padded>
+                <div className="text-center py-12">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {__("No API keys")}
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    {__("Create an API key to authenticate programmatic access.")}
+                  </p>
+                </div>
+              </Card>
+            )
+          : (
+              <Card padded>
+                <PersonalAPIKeysTable
+                  edges={viewer.personalAPIKeys.edges}
+                  connectionId={connectionID}
+                />
+              </Card>
+            )}
       </div>
 
       <Dialog
@@ -196,7 +198,7 @@ export function PersonalAPIKeyList(props: {
         title={<Breadcrumb items={[__("API Keys"), __("Create")]} />}
         onClose={() => reset()}
       >
-        <form onSubmit={handleSubmit(handleCreate)}>
+        <form onSubmit={e => void handleSubmit(handleCreate)(e)}>
           <DialogContent padded className="space-y-5">
             <Field error={formState.errors.name?.message}>
               <Label>{__("Name")}</Label>

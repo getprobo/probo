@@ -104,7 +104,7 @@ export default function DataPage(props: Props) {
     data,
   );
 
-  const dataEntries = pagination.data.data.edges.map((edge) => edge.node);
+  const dataEntries = pagination.data.data.edges.map(edge => edge.node);
   const connectionId = pagination.data.data.__id;
 
   const refetch = ({
@@ -123,9 +123,9 @@ export default function DataPage(props: Props) {
 
   usePageTitle(__("Data"));
 
-  const hasAnyAction =
-    !isSnapshotMode &&
-    dataEntries.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
+  const hasAnyAction
+    = !isSnapshotMode
+      && dataEntries.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -159,7 +159,7 @@ export default function DataPage(props: Props) {
           </Tr>
         </Thead>
         <Tbody>
-          {dataEntries.map((entry) => (
+          {dataEntries.map(entry => (
             <DataRow
               key={entry.id}
               entry={entry}
@@ -188,7 +188,7 @@ function DataRow({
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const deleteDatum = useDeleteDatum(entry, connectionId);
-  const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
+  const vendors = entry.vendors?.edges.map(edge => edge.node) ?? [];
   const detailUrl = snapshotId
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/data/${entry.id}`
     : `/organizations/${organizationId}/data/${entry.id}`;
@@ -201,31 +201,34 @@ function DataRow({
       </Td>
       <Td>{entry.owner?.fullName ?? __("Unassigned")}</Td>
       <Td>
-        {vendors.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {vendors.slice(0, 3).map((vendor) => (
-              <Badge
-                key={vendor.id}
-                variant="neutral"
-                className="flex items-center gap-1"
-              >
-                <Avatar
-                  name={vendor.name}
-                  src={faviconUrl(vendor.websiteUrl)}
-                  size="s"
-                />
-                <span className="text-xs">{vendor.name}</span>
-              </Badge>
-            ))}
-            {vendors.length > 3 && (
-              <Badge variant="neutral" className="text-xs">
-                +{vendors.length - 3}
-              </Badge>
+        {vendors.length > 0
+          ? (
+              <div className="flex flex-wrap gap-1">
+                {vendors.slice(0, 3).map(vendor => (
+                  <Badge
+                    key={vendor.id}
+                    variant="neutral"
+                    className="flex items-center gap-1"
+                  >
+                    <Avatar
+                      name={vendor.name}
+                      src={faviconUrl(vendor.websiteUrl)}
+                      size="s"
+                    />
+                    <span className="text-xs">{vendor.name}</span>
+                  </Badge>
+                ))}
+                {vendors.length > 3 && (
+                  <Badge variant="neutral" className="text-xs">
+                    +
+                    {vendors.length - 3}
+                  </Badge>
+                )}
+              </div>
+            )
+          : (
+              <span className="text-txt-secondary text-sm">{__("None")}</span>
             )}
-          </div>
-        ) : (
-          <span className="text-txt-secondary text-sm">{__("None")}</span>
-        )}
       </Td>
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">

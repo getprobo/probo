@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge, Input, IconCrossLargeX } from "@probo/ui";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { getCountryName, getCountryOptions, countries, type CountryCode } from "@probo/helpers";
@@ -35,16 +35,16 @@ type CountriesFieldInputProps = {
 
 function CountriesFieldInput(props: CountriesFieldInputProps) {
   const { __ } = useTranslate();
-  const animateBadge = useRef(false);
+  const [animateBadge, setAnimateBadge] = useState(false);
 
   const addCountry = (code: string) => {
-    animateBadge.current = true;
+    setAnimateBadge(true);
     props.onValueChange([...props.value, code]);
   };
 
   const removeCountry = (code: string) => {
-    animateBadge.current = true;
-    props.onValueChange(props.value.filter((v) => v !== code));
+    setAnimateBadge(true);
+    props.onValueChange(props.value.filter(v => v !== code));
   };
 
   return (
@@ -52,7 +52,7 @@ function CountriesFieldInput(props: CountriesFieldInputProps) {
       {props.value.length > 0 && (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
-            {props.value.map((countryCode) => (
+            {props.value.map(countryCode => (
               <Badge asChild size="md" key={countryCode}>
                 <button
                   onClick={() => removeCountry(countryCode)}
@@ -61,8 +61,8 @@ function CountriesFieldInput(props: CountriesFieldInputProps) {
                   className={clsx(
                     "hover:bg-subtle-hover cursor-pointer",
                     props.disabled && "opacity-50 cursor-not-allowed",
-                    animateBadge.current &&
-                      "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent"
+                    animateBadge
+                    && "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent",
                   )}
                 >
                   {getCountryName(__, countryCode as CountryCode)}
@@ -78,7 +78,7 @@ function CountriesFieldInput(props: CountriesFieldInputProps) {
       {!props.disabled && (
         <CountryInput
           availableCountries={countries.filter(
-            (c: CountryCode) => !props.value.includes(c)
+            (c: CountryCode) => !props.value.includes(c),
           )}
           onAdd={addCountry}
         />
@@ -108,7 +108,7 @@ function CountryInput({ availableCountries, onAdd }: CountryInputProps) {
   const filteredCountries = countryOptions
     .filter((option: { value: string; label: string }) => availableCountries.includes(option.value as CountryCode))
     .filter((option: { value: string; label: string }) =>
-      option.label.toLowerCase().includes(search.toLowerCase())
+      option.label.toLowerCase().includes(search.toLowerCase()),
     );
 
   const handleCountryClick = (value: string) => {
@@ -123,7 +123,7 @@ function CountryInput({ availableCountries, onAdd }: CountryInputProps) {
           <Input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             onFocus={() => setIsOpen(true)}
             placeholder={__("Search and add countries...")}
             className="w-full pr-8"

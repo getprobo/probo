@@ -40,29 +40,31 @@ export function DomainSettingsPage(props: {
   return (
     <div className="space-y-4">
       <h2 className="text-base font-medium">{__("Custom Domain")}</h2>
-      {organization.customDomain ? (
-        <DomainCard fKey={organization.customDomain} />
-      ) : (
-        <Card padded>
-          <div className="text-center py-8">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No custom domain configured")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__(
-                "Add your own domain to make your trust center more professional",
-              )}
-            </p>
-            <div className="flex justify-center">
-              {organization.canCreateCustomDomain && (
-                <NewDomainDialog>
-                  <Button icon={IconPlusLarge}>{__("Add Domain")}</Button>
-                </NewDomainDialog>
-              )}
-            </div>
-          </div>
-        </Card>
-      )}
+      {organization.customDomain
+        ? (
+            <DomainCard fKey={organization.customDomain} />
+          )
+        : (
+            <Card padded>
+              <div className="text-center py-8">
+                <h3 className="text-lg font-semibold mb-2">
+                  {__("No custom domain configured")}
+                </h3>
+                <p className="text-txt-tertiary mb-4">
+                  {__(
+                    "Add your own domain to make your trust center more professional",
+                  )}
+                </p>
+                <div className="flex justify-center">
+                  {organization.canCreateCustomDomain && (
+                    <NewDomainDialog>
+                      <Button icon={IconPlusLarge}>{__("Add Domain")}</Button>
+                    </NewDomainDialog>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
     </div>
   );
 }

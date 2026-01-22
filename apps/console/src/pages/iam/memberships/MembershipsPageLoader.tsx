@@ -6,8 +6,8 @@ import { MembershipsPage, membershipsPageQuery } from "./MembershipsPage";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
 function MembershipsPageLoader() {
-  const [queryRef, loadQuery] =
-    useQueryLoader<MembershipsPageQuery>(membershipsPageQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<MembershipsPageQuery>(membershipsPageQuery);
 
   useEffect(() => {
     loadQuery({});

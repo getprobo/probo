@@ -23,8 +23,8 @@ type Props = {
 
 export function EvidencePreviewDialog({
   evidenceId,
-  onClose,
   filename,
+  onClose,
 }: Props) {
   const { __ } = useTranslate();
   const ref = useDialogRef();
@@ -74,9 +74,9 @@ function EvidencePreviewContent({
   ).node;
   const { __ } = useTranslate();
   const { toast } = useToast();
-  const isUriFile =
-    evidence.file?.mimeType === "text/uri-list" ||
-    evidence.file?.mimeType === "text/uri";
+  const isUriFile
+    = evidence.file?.mimeType === "text/uri-list"
+      || evidence.file?.mimeType === "text/uri";
   useEffect(() => {
     if (!isUriFile) {
       return;
@@ -89,14 +89,22 @@ function EvidencePreviewContent({
         window.open(url, "_blank");
       })
       .catch((e) => {
-        if (e.name === "AbortError") {
-          return;
+        if (e instanceof Error) {
+          if (e.name === "AbortError") {
+            return;
+          }
+          toast({
+            title: __("Error"),
+            description: e.message ?? __("Failed to extract URL from URI file"),
+            variant: "error",
+          });
+        } else {
+          toast({
+            title: __("Error"),
+            description: __("Failed to extract URL from URI file"),
+            variant: "error",
+          });
         }
-        toast({
-          title: __("Error"),
-          description: e.message ?? __("Failed to extract URL from URI file"),
-          variant: "error",
-        });
       })
       .finally(onClose);
     return () => {
@@ -140,12 +148,12 @@ function EvidencePreviewContent({
     <div className="flex flex-col items-center gap-2 justify-center">
       <IconWarning size={20} />
       <p className="text-txt-secondary text-center">
-        {__("Preview not available for this file type") +
-          " " +
-          evidence.file.mimeType}
+        {__("Preview not available for this file type")
+          + " "
+          + evidence.file.mimeType}
       </p>
       <Button asChild variant="secondary" icon={IconArrowInbox}>
-        <a href={evidence.file.downloadUrl} target="_blank">
+        <a href={evidence.file.downloadUrl} target="_blank" rel="noreferrer">
           {__("Download File")}
         </a>
       </Button>

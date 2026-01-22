@@ -145,7 +145,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
               </Td>
             </Tr>
           )}
-          {documents.map((document) => (
+          {documents.map(document => (
             <DocumentRow
               key={document.id}
               document={document}

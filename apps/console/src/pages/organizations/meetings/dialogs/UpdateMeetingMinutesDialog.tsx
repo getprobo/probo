@@ -49,8 +49,8 @@ export const UpdateMeetingMinutesDialog = forwardRef<
     },
   }));
 
-  const onSubmit = handleSubmit((data) => {
-    updateMeeting({
+  const onSubmit = async (data: z.infer<typeof minutesSchema>) => {
+    await updateMeeting({
       variables: {
         input: {
           meetingId: meeting.id,
@@ -61,14 +61,14 @@ export const UpdateMeetingMinutesDialog = forwardRef<
         dialogRef.current?.close();
       },
     });
-  });
+  };
 
   return (
     <Dialog
       ref={dialogRef}
       title={<Breadcrumb items={[__("Meetings"), __("Edit minutes")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent>
           <Textarea
             id="minutes"

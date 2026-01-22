@@ -16,7 +16,7 @@ import {
   certifications,
   objectEntries,
 } from "@probo/helpers";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import clsx from "clsx";
 import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 
@@ -35,7 +35,9 @@ export default function VendorCertificationsTab() {
   return (
     <form
       className="space-y-4"
-      onSubmit={!isSnapshotMode && vendor.canUpdate ? handleSubmit : undefined}
+      onSubmit={!isSnapshotMode && vendor.canUpdate
+        ? e => void handleSubmit(e)
+        : undefined}
     >
       <Card padded>
         <Controller
@@ -71,26 +73,26 @@ type CertificationsProps = {
 function Certifications(props: CertificationsProps) {
   const categorizedCertifications = Object.values(certifications).flat();
   const { __ } = useTranslate();
-  const animateBadge = useRef(false);
+  const [animateBadge, setAnimateBadge] = useState(false);
   const categories = objectEntries(certifications)
     .map(
       ([key, value]) =>
-        [key, value.filter((c) => props.value.includes(c))] as const,
+        [key, value.filter(c => props.value.includes(c))] as const,
     )
     .filter(([, certifications]) => certifications.length > 0);
   categories.push([
     "custom",
-    props.value.filter((c) => !categorizedCertifications.includes(c)),
+    props.value.filter(c => !categorizedCertifications.includes(c)),
   ]);
 
   const addCertificate = (name: string) => {
-    animateBadge.current = true;
+    setAnimateBadge(true);
     props.onValueChange([...props.value, name]);
   };
 
   const removeCertificate = (name: string) => {
-    animateBadge.current = true;
-    props.onValueChange(props.value.filter((v) => v !== name));
+    setAnimateBadge(true);
+    props.onValueChange(props.value.filter(v => v !== name));
   };
 
   return (
@@ -101,26 +103,28 @@ function Certifications(props: CertificationsProps) {
             {certificationCategoryLabel(__, key)}
           </div>
           <div className="flex flex-wrap gap-2">
-            {certifications.map((certification) => (
+            {certifications.map(certification => (
               <Badge asChild size="md" key={certification}>
-                {props.readOnly ? (
-                  <span>{certification}</span>
-                ) : (
-                  <button
-                    onClick={() => removeCertificate(certification)}
-                    type="button"
-                    className={clsx(
-                      "hover:bg-subtle-hover cursor-pointer",
-                      animateBadge.current &&
-                        "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent",
+                {props.readOnly
+                  ? (
+                      <span>{certification}</span>
+                    )
+                  : (
+                      <button
+                        onClick={() => removeCertificate(certification)}
+                        type="button"
+                        className={clsx(
+                          "hover:bg-subtle-hover cursor-pointer",
+                          animateBadge
+                          && "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent",
+                        )}
+                      >
+                        {certification}
+                        <div className="w-0 overflow-hidden group-hover:w-4 duration-200">
+                          <IconCrossLargeX size={12} />
+                        </div>
+                      </button>
                     )}
-                  >
-                    {certification}
-                    <div className="w-0 overflow-hidden group-hover:w-4 duration-200">
-                      <IconCrossLargeX size={12} />
-                    </div>
-                  </button>
-                )}
               </Badge>
             ))}
           </div>
@@ -129,7 +133,7 @@ function Certifications(props: CertificationsProps) {
       {!props.readOnly && (
         <CertificationInput
           certifications={categorizedCertifications.filter(
-            (c) => !props.value.includes(c),
+            c => !props.value.includes(c),
           )}
           onAdd={addCertificate}
         />
@@ -151,7 +155,7 @@ function CertificationInput({
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const isCustom = !certifications.includes(search.trim());
-  const filteredCertifications = certifications.filter((c) =>
+  const filteredCertifications = certifications.filter(c =>
     c.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -164,7 +168,7 @@ function CertificationInput({
         onSearch={setSearch}
         placeholder={__("Add a new certification")}
       >
-        {filteredCertifications.map((certification) => (
+        {filteredCertifications.map(certification => (
           <ComboboxItem key={certification} value={certification}>
             {certification}
           </ComboboxItem>
@@ -172,7 +176,10 @@ function CertificationInput({
         {isCustom && search.trim().length >= 2 && (
           <ComboboxItem value={search.trim()}>
             <IconPlusLarge size={20} />
-            {__("Add a custom certification")} : {search}
+            {__("Add a custom certification")}
+            {" "}
+            :
+            {search}
           </ComboboxItem>
         )}
       </Combobox>

@@ -7,8 +7,8 @@ import type { MembersPageQuery } from "/__generated__/iam/MembersPageQuery.graph
 
 function MembersPageLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] =
-    useQueryLoader<MembersPageQuery>(membersPageQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<MembersPageQuery>(membersPageQuery);
 
   useEffect(() => {
     loadQuery({

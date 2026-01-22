@@ -60,11 +60,13 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
         <Td>{formatDate(access.createdAt)}</Td>
         <Td>
           <div className="flex justify-center">
-            {access.active ? (
-              <IconCheckmark1 size={16} className="text-txt-success" />
-            ) : (
-              <IconCrossLargeX size={16} className="text-txt-danger" />
-            )}
+            {access.active
+              ? (
+                  <IconCheckmark1 size={16} className="text-txt-success" />
+                )
+              : (
+                  <IconCrossLargeX size={16} className="text-txt-danger" />
+                )}
           </div>
         </Td>
         <Td className="text-center">{access.activeCount}</Td>
@@ -81,7 +83,7 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
         <Td noLink width={160} className="text-end">
           <div
             className="flex gap-2 justify-end"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             {access.canUpdate && (
               <Button
@@ -93,7 +95,7 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
             {access.canDelete && (
               <Button
                 variant="danger"
-                onClick={() => handleDelete(access.id)}
+                onClick={() => void handleDelete(access.id)}
                 disabled={isDeleting}
                 icon={IconTrashCan}
               />

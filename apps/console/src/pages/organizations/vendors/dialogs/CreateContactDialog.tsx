@@ -86,10 +86,10 @@ export function CreateContactDialog({
     },
   );
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     const cleanData = cleanFormData(data);
 
-    createContact({
+    await createContact({
       variables: {
         input: {
           vendorId,
@@ -102,7 +102,7 @@ export function CreateContactDialog({
         reset();
       },
     });
-  });
+  };
 
   const dialogRef = useDialogRef();
 
@@ -113,7 +113,7 @@ export function CreateContactDialog({
       trigger={children}
       title={<Breadcrumb items={[__("Contacts"), __("New Contact")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
             label={__("Name")}

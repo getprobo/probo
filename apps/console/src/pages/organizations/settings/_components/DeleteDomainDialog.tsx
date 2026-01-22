@@ -35,8 +35,8 @@ export function DeleteDomainDialog(props: DeleteDomainDialogProps) {
   const dialogRef = useDialogRef();
   const [inputValue, setInputValue] = useState("");
 
-  const [deleteCustomDomain, isDeleting] =
-    useMutationWithToasts<DeleteDomainDialogMutation>(
+  const [deleteCustomDomain, isDeleting]
+    = useMutationWithToasts<DeleteDomainDialogMutation>(
       deleteCustomDomainMutation,
       {
         successMessage: __("Domain deleted successfully"),
@@ -84,10 +84,10 @@ export function DeleteDomainDialog(props: DeleteDomainDialogProps) {
         </p>
 
         <Field
-          label={sprintf(__('To confirm deletion, type "%s" below:'), domain)}
+          label={sprintf(__("To confirm deletion, type \"%s\" below:"), domain)}
           type="text"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={e => setInputValue(e.target.value)}
           placeholder={domain}
           disabled={isDeleting}
           autoComplete="off"
@@ -98,7 +98,7 @@ export function DeleteDomainDialog(props: DeleteDomainDialogProps) {
         <Button
           variant="danger"
           icon={IconTrashCan}
-          onClick={handleDeleteDomain}
+          onClick={() => void handleDeleteDomain()}
           disabled={isDeleting}
         >
           {isDeleting ? __("Deleting...") : __("Delete Domain")}

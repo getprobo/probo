@@ -37,8 +37,8 @@ export default function PeopleRoleTab() {
     },
   );
 
-  const onSubmit = handleSubmit((data) => {
-    mutate({
+  const onSubmit = handleSubmit(async (data) => {
+    await mutate({
       variables: {
         input: {
           id: people.id!,
@@ -58,7 +58,7 @@ export default function PeopleRoleTab() {
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={e => void onSubmit(e)} className="space-y-4">
       <Card padded className="space-y-4">
         <ControlledField
           control={control}
@@ -67,7 +67,7 @@ export default function PeopleRoleTab() {
           label={__("Role")}
           disabled={!people.canUpdate}
         >
-          {getRoles(__).map((role) => (
+          {getRoles(__).map(role => (
             <Option key={role.value} value={role.value}>
               {role.label}
             </Option>

@@ -98,7 +98,7 @@ export function CreateProcessingActivityDialog({
     },
   });
 
-  const onSubmit = handleSubmit(async (formData: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     try {
       await createProcessingActivity({
         organizationId,
@@ -139,7 +139,7 @@ export function CreateProcessingActivityDialog({
         variant: "error",
       });
     }
-  });
+  };
 
   return (
     <Dialog
@@ -148,7 +148,7 @@ export function CreateProcessingActivityDialog({
       title={<Breadcrumb items={[__("Processing Activities"), __("Create Processing Activity")]} />}
       className="max-w-4xl"
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -206,7 +206,11 @@ export function CreateProcessingActivityDialog({
               />
 
               <div>
-                <Label htmlFor="specialOrCriminalData">{__("Special or Criminal Data")} *</Label>
+                <Label htmlFor="specialOrCriminalData">
+                  {__("Special or Criminal Data")}
+                  {" "}
+                  *
+                </Label>
                 <Controller
                   control={control}
                   name="specialOrCriminalData"
@@ -235,7 +239,11 @@ export function CreateProcessingActivityDialog({
               />
 
               <div>
-                <Label htmlFor="lawfulBasis">{__("Lawful Basis")} *</Label>
+                <Label htmlFor="lawfulBasis">
+                  {__("Lawful Basis")}
+                  {" "}
+                  *
+                </Label>
                 <Controller
                   control={control}
                   name="lawfulBasis"
@@ -353,7 +361,11 @@ export function CreateProcessingActivityDialog({
               </div>
 
               <div>
-                <Label htmlFor="dataProtectionImpactAssessmentNeeded">{__("Data Protection Impact Assessment")} *</Label>
+                <Label htmlFor="dataProtectionImpactAssessmentNeeded">
+                  {__("Data Protection Impact Assessment")}
+                  {" "}
+                  *
+                </Label>
                 <Controller
                   control={control}
                   name="dataProtectionImpactAssessmentNeeded"
@@ -375,7 +387,11 @@ export function CreateProcessingActivityDialog({
               </div>
 
               <div>
-                <Label htmlFor="transferImpactAssessmentNeeded">{__("Transfer Impact Assessment")} *</Label>
+                <Label htmlFor="transferImpactAssessmentNeeded">
+                  {__("Transfer Impact Assessment")}
+                  {" "}
+                  *
+                </Label>
                 <Controller
                   control={control}
                   name="transferImpactAssessmentNeeded"

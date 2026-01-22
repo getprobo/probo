@@ -56,14 +56,14 @@ export default function VendorsPage(props: Props) {
     data.node as VendorGraphPaginatedFragment$key,
   );
 
-  const vendors = pagination.data.vendors?.edges.map((edge) => edge.node);
+  const vendors = pagination.data.vendors?.edges.map(edge => edge.node);
   const connectionId = pagination.data.vendors.__id;
 
   usePageTitle(__("Vendors"));
 
-  const hasAnyAction =
-    !isSnapshotMode &&
-    vendors.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
+  const hasAnyAction
+    = !isSnapshotMode
+      && vendors.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -94,7 +94,7 @@ export default function VendorsPage(props: Props) {
           </Tr>
         </Thead>
         <Tbody>
-          {vendors?.map((vendor) => (
+          {vendors?.map(vendor => (
             <VendorRow
               key={vendor.id}
               vendor={vendor}
@@ -126,8 +126,8 @@ function VendorRow({
   const latestAssessment = vendor.riskAssessments?.edges[0]?.node;
   const deleteVendor = useDeleteVendor(vendor, connectionId);
 
-  const vendorUrl =
-    isSnapshotMode && snapshotId
+  const vendorUrl
+    = isSnapshotMode && snapshotId
       ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors/${vendor.id}/overview`
       : `/organizations/${organizationId}/vendors/${vendor.id}/overview`;
 

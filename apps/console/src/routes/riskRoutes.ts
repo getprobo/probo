@@ -21,7 +21,7 @@ export const riskRoutes = [
     Fallback: RisksPageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<RiskGraphListQuery>(coreEnvironment, risksQuery, {
-        organizationId: organizationId!,
+        organizationId: organizationId,
         snapshotId: null,
       }),
     ),
@@ -34,8 +34,8 @@ export const riskRoutes = [
     Fallback: RisksPageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
       loadQuery<RiskGraphListQuery>(coreEnvironment, risksQuery, {
-        organizationId: organizationId!,
-        snapshotId: snapshotId!,
+        organizationId: organizationId,
+        snapshotId: snapshotId,
       }),
     ),
     Component: withQueryRef(
@@ -47,7 +47,7 @@ export const riskRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ riskId }) =>
       loadQuery<RiskGraphNodeQuery>(coreEnvironment, riskNodeQuery, {
-        riskId: riskId!,
+        riskId: riskId,
       }),
     ),
     Component: withQueryRef(
@@ -57,6 +57,7 @@ export const riskRoutes = [
       {
         path: "",
         loader: () => {
+          // eslint-disable-next-line
           throw redirect("overview");
         },
         Component: Fragment,
@@ -104,7 +105,7 @@ export const riskRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ riskId }) =>
       loadQuery<RiskGraphNodeQuery>(coreEnvironment, riskNodeQuery, {
-        riskId: riskId!,
+        riskId: riskId,
       }),
     ),
     Component: withQueryRef(
@@ -114,6 +115,7 @@ export const riskRoutes = [
       {
         path: "",
         loader: () => {
+          // eslint-disable-next-line
           throw redirect("overview");
         },
         Component: Fragment,

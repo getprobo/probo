@@ -67,7 +67,7 @@ export default function SignUpPage() {
           description: __("Account created successfully"),
           variant: "success",
         });
-        navigate("/", { replace: true });
+        void navigate("/", { replace: true });
       },
       onError: (e) => {
         toast({
@@ -88,7 +88,7 @@ export default function SignUpPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <Field
           label={__("Full Name")}
           type="text"
@@ -125,7 +125,8 @@ export default function SignUpPage() {
 
       <div className="text-center">
         <p className="text-sm text-txt-tertiary">
-          {__("Already have an account?")}{" "}
+          {__("Already have an account?")}
+          {" "}
           <Link
             to="/auth/login"
             className="underline text-txt-primary hover:text-txt-secondary"

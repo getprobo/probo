@@ -54,8 +54,8 @@ export function CreateRiskAssessmentDialog({
 }: Props) {
   const { __ } = useTranslate();
 
-  const { register, handleSubmit, formState, reset, control } =
-    useFormWithSchema(schema, {
+  const { register, handleSubmit, formState, reset, control }
+    = useFormWithSchema(schema, {
       defaultValues: {
         dataSensitivity: "LOW",
         businessImpact: "LOW",
@@ -66,13 +66,13 @@ export function CreateRiskAssessmentDialog({
     {
       successMessage: __("Risk Assessment created successfully."),
       errorMessage: __("Failed to create Risk Assessment"),
-    }
+    },
   );
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     const nextYear = new Date();
     nextYear.setFullYear(nextYear.getFullYear() + 1);
-    createRiskAssessment({
+    await createRiskAssessment({
       variables: {
         input: {
           ...data,
@@ -80,14 +80,14 @@ export function CreateRiskAssessmentDialog({
           vendorId,
           expiresAt: nextYear.toISOString(),
         },
-        connections: [connection!],
+        connections: [connection],
       },
       onSuccess: () => {
         dialogRef.current?.close();
         reset();
       },
     });
-  });
+  };
 
   const dialogRef = useDialogRef();
 
@@ -96,13 +96,13 @@ export function CreateRiskAssessmentDialog({
       className="max-w-lg"
       ref={dialogRef}
       trigger={children}
-      title={
+      title={(
         <Breadcrumb
           items={[__("Risk Assessments"), __("New Risk Assessment")]}
         />
-      }
+      )}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <ControlledField
             label={__("Data Sensitivity")}
@@ -126,7 +126,7 @@ export function CreateRiskAssessmentDialog({
             type="textarea"
             error={formState.errors.notes?.message}
             help={__(
-              "Add any context or details about this risk assessment that might be helpful for future reference."
+              "Add any context or details about this risk assessment that might be helpful for future reference.",
             )}
           />
         </DialogContent>

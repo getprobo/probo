@@ -71,8 +71,8 @@ export function SAMLConfigurationList(props: {
     samlConfigurations: { edges: samlConfigurations },
   } = useFragment<SAMLConfigurationListFragment$key>(fragment, fKey);
 
-  const [deleteSAMLConfiguration] =
-    useMutationWithToasts<SAMLConfigurationList_deleteMutation>(
+  const [deleteSAMLConfiguration]
+    = useMutationWithToasts<SAMLConfigurationList_deleteMutation>(
       deleteMutation,
       {
         successMessage: "SAML configuration deleted successfully.",
@@ -85,7 +85,7 @@ export function SAMLConfigurationList(props: {
   ) => {
     confirm(
       async () => {
-        deleteSAMLConfiguration({
+        await deleteSAMLConfiguration({
           variables: {
             input: {
               organizationId,
@@ -103,9 +103,9 @@ export function SAMLConfigurationList(props: {
       {
         title: __("Delete SAML Configuration"),
         message: __(
-          "Are you sure you want to delete the SAML configuration for " +
-            config.emailDomain +
-            "? This action cannot be undone.",
+          "Are you sure you want to delete the SAML configuration for "
+          + config.emailDomain
+          + "? This action cannot be undone.",
         ),
         label: __("Delete"),
         variant: "danger",
@@ -181,60 +181,63 @@ export function SAMLConfigurationList(props: {
             </Td>
             <Td>{config.enforcementPolicy}</Td>
             <Td>
-              {config.domainVerifiedAt && config.enforcementPolicy !== "OFF" ? (
-                <button
-                  onClick={() => copy(config.testLoginUrl)}
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  {isCopied ? __("Copied!") : __("Copy URL")}
-                </button>
-              ) : (
-                <span className="text-gray-400">—</span>
-              )}
+              {config.domainVerifiedAt && config.enforcementPolicy !== "OFF"
+                ? (
+                    <button
+                      onClick={() => copy(config.testLoginUrl)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      {isCopied ? __("Copied!") : __("Copy URL")}
+                    </button>
+                  )
+                : (
+                    <span className="text-gray-400">—</span>
+                  )}
             </Td>
             <Td width={180} className="text-end">
               <div className="flex gap-2 justify-end">
-                {config.domainVerifiedAt ? (
-                  <>
-                    {config.canUpdate && (
-                      <Button
-                        variant="secondary"
-                        onClick={() => onEdit(config.id)}
-                      >
-                        {__("Edit")}
-                      </Button>
+                {config.domainVerifiedAt
+                  ? (
+                      <>
+                        {config.canUpdate && (
+                          <Button
+                            variant="secondary"
+                            onClick={() => onEdit(config.id)}
+                          >
+                            {__("Edit")}
+                          </Button>
+                        )}
+                        {config.canDelete && (
+                          <Button
+                            variant="danger"
+                            onClick={() => handleDelete(config)}
+                          >
+                            {__("Delete")}
+                          </Button>
+                        )}
+                      </>
+                    )
+                  : (
+                      <>
+                        {config.canUpdate && !!config.domainVerificationToken && (
+                          <Button
+                            variant="primary"
+                            onClick={() =>
+                              onVerifyDomain(config.domainVerificationToken!)}
+                          >
+                            {__("Verify Domain")}
+                          </Button>
+                        )}
+                        {config.canDelete && (
+                          <Button
+                            variant="danger"
+                            onClick={() => handleDelete(config)}
+                          >
+                            {__("Delete")}
+                          </Button>
+                        )}
+                      </>
                     )}
-                    {config.canDelete && (
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDelete(config)}
-                      >
-                        {__("Delete")}
-                      </Button>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {config.canUpdate && !!config.domainVerificationToken && (
-                      <Button
-                        variant="primary"
-                        onClick={() =>
-                          onVerifyDomain(config.domainVerificationToken!)
-                        }
-                      >
-                        {__("Verify Domain")}
-                      </Button>
-                    )}
-                    {config.canDelete && (
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDelete(config)}
-                      >
-                        {__("Delete")}
-                      </Button>
-                    )}
-                  </>
-                )}
               </div>
             </Td>
           </Tr>

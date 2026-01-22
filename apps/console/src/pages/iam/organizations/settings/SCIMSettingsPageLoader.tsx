@@ -8,7 +8,7 @@ import type { SCIMSettingsPageQuery } from "/__generated__/iam/SCIMSettingsPageQ
 function SCIMSettingsPageLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<SCIMSettingsPageQuery>(
-    scimSettingsPageQuery
+    scimSettingsPageQuery,
   );
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<098714fcfe212fae40bdad19b10f8a00>>
+ * @generated SignedSource<<d78dfc5b8db81e410f3f606fb91cd137>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,6 +20,7 @@ export type NewDomainDialogMutation$variables = {
 export type NewDomainDialogMutation$data = {
   readonly createCustomDomain: {
     readonly customDomain: {
+      readonly canDelete: boolean;
       readonly createdAt: string;
       readonly dnsRecords: ReadonlyArray<{
         readonly name: string;
@@ -159,6 +160,19 @@ v1 = [
             "kind": "ScalarField",
             "name": "sslExpiresAt",
             "storageKey": null
+          },
+          {
+            "alias": "canDelete",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "action",
+                "value": "core:custom-domain:delete"
+              }
+            ],
+            "kind": "ScalarField",
+            "name": "permission",
+            "storageKey": "permission(action:\"core:custom-domain:delete\")"
           }
         ],
         "storageKey": null
@@ -185,16 +199,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "b8aa27fe9ab3442dea9b96a70966524b",
+    "cacheID": "39d421d36a6418d0ee687d43b9d7a7ee",
     "id": null,
     "metadata": {},
     "name": "NewDomainDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation NewDomainDialogMutation(\n  $input: CreateCustomDomainInput!\n) {\n  createCustomDomain(input: $input) {\n    customDomain {\n      id\n      domain\n      sslStatus\n      dnsRecords {\n        type\n        name\n        value\n        ttl\n        purpose\n      }\n      createdAt\n      updatedAt\n      sslExpiresAt\n    }\n  }\n}\n"
+    "text": "mutation NewDomainDialogMutation(\n  $input: CreateCustomDomainInput!\n) {\n  createCustomDomain(input: $input) {\n    customDomain {\n      id\n      domain\n      sslStatus\n      dnsRecords {\n        type\n        name\n        value\n        ttl\n        purpose\n      }\n      createdAt\n      updatedAt\n      sslExpiresAt\n      canDelete: permission(action: \"core:custom-domain:delete\")\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f49cd22c5d6656e662fad5afab6fc344";
+(node as any).hash = "37ef764ab4f78a6898f06d00374347ee";
 
 export default node;

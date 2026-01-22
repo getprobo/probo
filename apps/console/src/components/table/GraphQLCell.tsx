@@ -79,7 +79,8 @@ export function GraphQLCell<Q extends OperationType, T extends NonNullable<unkno
             value={value}
             itemRenderer={props.itemRenderer}
           />
-        </div>{" "}
+        </div>
+        {" "}
         {props.multiple && (
           <Command.Input
             className={classNames.input()}
@@ -88,11 +89,11 @@ export function GraphQLCell<Q extends OperationType, T extends NonNullable<unkno
         )}
         <Command.List>
           <Suspense
-            fallback={
+            fallback={(
               <div className="py-2 px-3 flex items-center justify-center">
                 <Spinner />
               </div>
-            }
+            )}
           >
             <ItemList
               {...props}
@@ -121,8 +122,8 @@ function ItemList<Q extends OperationType, T>(
   return (
     <>
       {items
-        .filter((item) => !props.usedKeys.has(getKey(item) ?? ""))
-        .map((item) => (
+        .filter(item => !props.usedKeys.has(getKey(item) ?? ""))
+        .map(item => (
           <Command.Item
             key={getKey(item)}
             className={props.className}

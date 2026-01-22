@@ -100,13 +100,13 @@ export default function MeasureDetailPage(props: Props) {
     confirm(
       () =>
         new Promise<void>((resolve) => {
-          deleteMeasure({
+          void deleteMeasure({
             variables: {
               input: { measureId },
               connections: [connectionId],
             },
             onSuccess() {
-              navigate(`/organizations/${organizationId}/measures`);
+              void navigate(`/organizations/${organizationId}/measures`);
               resolve();
             },
           });
@@ -114,7 +114,7 @@ export default function MeasureDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the measure "%s". This action cannot be undone.',
+            "This will permanently delete the measure \"%s\". This action cannot be undone.",
           ),
           measure.name,
         ),
@@ -123,7 +123,7 @@ export default function MeasureDetailPage(props: Props) {
   };
 
   const onStateChange = (state: string) => {
-    updateMeasure({
+    void updateMeasure({
       variables: {
         input: {
           id: measureId,
@@ -166,13 +166,13 @@ export default function MeasureDetailPage(props: Props) {
             </MeasureFormDialog>
             <Select
               disabled={isUpdating}
-              onValueChange={onStateChange}
+              onValueChange={state => void onStateChange(state)}
               name="state"
               placeholder={__("Select state")}
               className="rounded-full"
               value={measure.state}
             >
-              {measureStates.map((state) => (
+              {measureStates.map(state => (
                 <Option key={state} value={state}>
                   {getMeasureStateLabel(__, state)}
                 </Option>

@@ -118,15 +118,17 @@ export function MembershipsPage(props: {
                   onValueChange={setSearch}
                 />
               </div>
-              {memberships.length === 0 ? (
-                <div className="text-center text-txt-secondary py-4">
-                  {__("No organizations found")}
-                </div>
-              ) : (
-                memberships.map(({ node }) => (
-                  <MembershipCard key={node.id} fKey={node} />
-                ))
-              )}
+              {memberships.length === 0
+                ? (
+                    <div className="text-center text-txt-secondary py-4">
+                      {__("No organizations found")}
+                    </div>
+                  )
+                : (
+                    memberships.map(({ node }) => (
+                      <MembershipCard key={node.id} fKey={node} />
+                    ))
+                  )}
             </div>
           )}
           <Card padded>

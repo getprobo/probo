@@ -104,7 +104,7 @@ export default function VendorComplianceTab() {
     VendorComplianceTabFragment$key
   >(complianceReportsFragment, vendor);
   const connectionId = data.complianceReports.__id;
-  const reports = data.complianceReports.edges.map((edge) => edge.node);
+  const reports = data.complianceReports.edges.map(edge => edge.node);
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
@@ -160,7 +160,7 @@ export default function VendorComplianceTab() {
           </Tr>
         </Thead>
         <Tbody>
-          {reports.map((report) => (
+          {reports.map(report => (
             <ReportRow
               key={report.id}
               reportKey={report}
@@ -206,7 +206,7 @@ function ReportRow(props: ReportRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the report "%s". This action cannot be undone.',
+            "This will permanently delete the report \"%s\". This action cannot be undone.",
           ),
           report.reportName,
         ),

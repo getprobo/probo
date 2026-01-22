@@ -72,7 +72,7 @@ export function MemberListItem(props: {
     },
   );
 
-  const handleRemove = async () => {
+  const handleRemove = () => {
     confirm(
       () => {
         return removeMembership({
@@ -122,7 +122,7 @@ export function MemberListItem(props: {
           {!isInactive && (
             <div
               className="flex gap-2 justify-end"
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             >
               {membership.canUpdate && (
                 <Button
@@ -133,19 +133,21 @@ export function MemberListItem(props: {
                   aria-label={__("Edit role")}
                 />
               )}
-              {isRemoving ? (
-                <Spinner size={16} />
-              ) : (
-                membership.canDelete && (
-                  <Button
-                    variant="danger"
-                    onClick={handleRemove}
-                    disabled={isRemoving}
-                    icon={IconTrashCan}
-                    aria-label={__("Remove member")}
-                  />
-                )
-              )}
+              {isRemoving
+                ? (
+                    <Spinner size={16} />
+                  )
+                : (
+                    membership.canDelete && (
+                      <Button
+                        variant="danger"
+                        onClick={handleRemove}
+                        disabled={isRemoving}
+                        icon={IconTrashCan}
+                        aria-label={__("Remove member")}
+                      />
+                    )
+                  )}
             </div>
           )}
         </Td>

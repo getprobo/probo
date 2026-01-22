@@ -123,12 +123,12 @@ export default function ContinualImprovementsPage({
     ContinualImprovementsConnectionKey,
     { filter: { snapshotId: snapshotId || null } },
   );
-  const improvements =
-    data?.continualImprovements?.edges?.map((edge) => edge.node) ?? [];
+  const improvements
+    = data?.continualImprovements?.edges?.map(edge => edge.node) ?? [];
 
-  const hasAnyAction =
-    !isSnapshotMode &&
-    improvements.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
+  const hasAnyAction
+    = !isSnapshotMode
+      && improvements.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -151,57 +151,59 @@ export default function ContinualImprovementsPage({
         )}
       </PageHeader>
 
-      {improvements.length > 0 ? (
-        <Card>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{__("Reference ID")}</Th>
-                <Th>{__("Description")}</Th>
-                <Th>{__("Status")}</Th>
-                <Th>{__("Priority")}</Th>
-                <Th>{__("Owner")}</Th>
-                <Th>{__("Target Date")}</Th>
-                {hasAnyAction && <Th>{__("Actions")}</Th>}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {improvements.map((improvement) => (
-                <ImprovementRow
-                  key={improvement.id}
-                  improvement={improvement}
-                  connectionId={connectionId}
-                  snapshotId={snapshotId}
-                  hasAnyAction={hasAnyAction}
-                />
-              ))}
-            </Tbody>
-          </Table>
+      {improvements.length > 0
+        ? (
+            <Card>
+              <Table>
+                <Thead>
+                  <Tr>
+                    <Th>{__("Reference ID")}</Th>
+                    <Th>{__("Description")}</Th>
+                    <Th>{__("Status")}</Th>
+                    <Th>{__("Priority")}</Th>
+                    <Th>{__("Owner")}</Th>
+                    <Th>{__("Target Date")}</Th>
+                    {hasAnyAction && <Th>{__("Actions")}</Th>}
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {improvements.map(improvement => (
+                    <ImprovementRow
+                      key={improvement.id}
+                      improvement={improvement}
+                      connectionId={connectionId}
+                      snapshotId={snapshotId}
+                      hasAnyAction={hasAnyAction}
+                    />
+                  ))}
+                </Tbody>
+              </Table>
 
-          {hasNext && (
-            <div className="p-4 border-t">
-              <Button
-                variant="secondary"
-                onClick={() => loadNext(10)}
-                disabled={isLoadingNext}
-              >
-                {isLoadingNext ? __("Loading...") : __("Load more")}
-              </Button>
-            </div>
+              {hasNext && (
+                <div className="p-4 border-t">
+                  <Button
+                    variant="secondary"
+                    onClick={() => loadNext(10)}
+                    disabled={isLoadingNext}
+                  >
+                    {isLoadingNext ? __("Loading...") : __("Load more")}
+                  </Button>
+                </div>
+              )}
+            </Card>
+          )
+        : (
+            <Card padded>
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">
+                  {__("No continual improvements yet")}
+                </h3>
+                <p className="text-txt-tertiary mb-4">
+                  {__("Create your first continual improvement to get started.")}
+                </p>
+              </div>
+            </Card>
           )}
-        </Card>
-      ) : (
-        <Card padded>
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No continual improvements yet")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__("Create your first continual improvement to get started.")}
-            </p>
-          </div>
-        </Card>
-      )}
     </div>
   );
 }
@@ -281,13 +283,15 @@ function ImprovementRow({
       </Td>
       <Td>{improvement.owner?.fullName || "-"}</Td>
       <Td>
-        {improvement.targetDate ? (
-          <time dateTime={improvement.targetDate}>
-            {formatDate(improvement.targetDate)}
-          </time>
-        ) : (
-          <span className="text-txt-tertiary">{__("No target date")}</span>
-        )}
+        {improvement.targetDate
+          ? (
+              <time dateTime={improvement.targetDate}>
+                {formatDate(improvement.targetDate)}
+              </time>
+            )
+          : (
+              <span className="text-txt-tertiary">{__("No target date")}</span>
+            )}
       </Td>
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">

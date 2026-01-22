@@ -18,7 +18,7 @@ export const vendorRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<VendorGraphListQuery>(coreEnvironment, vendorsQuery, {
-        organizationId: organizationId!,
+        organizationId: organizationId,
         snapshotId: null,
       }),
     ),
@@ -31,7 +31,7 @@ export const vendorRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
       loadQuery<VendorGraphListQuery>(coreEnvironment, vendorsQuery, {
-        organizationId: organizationId!,
+        organizationId: organizationId,
         snapshotId,
       }),
     ),
@@ -44,7 +44,7 @@ export const vendorRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
       loadQuery<VendorGraphNodeQuery>(coreEnvironment, vendorNodeQuery, {
-        vendorId: vendorId!,
+        vendorId: vendorId,
       }),
     ),
     Component: withQueryRef(
@@ -103,7 +103,7 @@ export const vendorRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
       loadQuery<VendorGraphNodeQuery>(coreEnvironment, vendorNodeQuery, {
-        vendorId: vendorId!,
+        vendorId: vendorId,
       }),
     ),
     Component: withQueryRef(

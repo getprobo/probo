@@ -17,7 +17,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import type { TrustCenterDocumentsCardFragment$key } from "/__generated__/core/TrustCenterDocumentsCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
@@ -46,7 +46,7 @@ type Mutation<Params> = (p: {
       trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC";
     } & Params;
   };
-}) => void;
+}) => Promise<void>;
 
 type Props<Params> = {
   documents: TrustCenterDocumentsCardFragment$key[];
@@ -64,11 +64,11 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
   }, [props.documents, limit]);
   const showMoreButton = limit !== null && props.documents.length > limit;
 
-  const onChangeVisibility = (
+  const onChangeVisibility = async (
     documentId: string,
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
   ) => {
-    props.onChangeVisibility({
+    await props.onChangeVisibility({
       variables: {
         input: {
           id: documentId,
@@ -128,37 +128,27 @@ function DocumentRow(props: {
   onChangeVisibility: (
     documentId: string,
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
-  ) => void;
+  ) => Promise<void>;
   disabled?: boolean;
   canUpdate: boolean;
 }) {
-  const { documentFragmentRef, onChangeVisibility, disabled, canUpdate } =
-    props;
+  const { documentFragmentRef, onChangeVisibility, disabled, canUpdate }
+    = props;
   const document = useFragment(
     trustCenterDocumentFragment,
     documentFragmentRef,
   );
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
 
   const handleValueChange = useCallback(
-    (value: string) => {
+    async (value: string) => {
       const stringValue = typeof value === "string" ? value : "";
       const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
-      setOptimisticValue(typedValue);
-      onChangeVisibility(document.id, typedValue);
+      await onChangeVisibility(document.id, typedValue);
     },
     [document.id, onChangeVisibility],
   );
-
-  useEffect(() => {
-    if (optimisticValue && document.trustCenterVisibility === optimisticValue) {
-      setOptimisticValue(null);
-    }
-  }, [document.trustCenterVisibility, optimisticValue]);
-
-  const currentValue = optimisticValue || document.trustCenterVisibility;
 
   const visibilityOptions = getTrustCenterVisibilityOptions(__);
 
@@ -178,12 +168,12 @@ function DocumentRow(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={currentValue}
-          onValueChange={handleValueChange}
+          value={document.trustCenterVisibility}
+          onValueChange={value => void handleValueChange(value)}
           disabled={disabled || !canUpdate}
           className="w-[105px]"
         >
-          {visibilityOptions.map((option) => (
+          {visibilityOptions.map(option => (
             <Option key={option.value} value={option.value}>
               <div className="flex items-center justify-between w-full">
                 <Badge variant={option.variant}>{option.label}</Badge>

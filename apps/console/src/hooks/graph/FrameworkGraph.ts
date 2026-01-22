@@ -59,7 +59,7 @@ export const useDeleteFrameworkMutation = (
           return commitDelete({
             variables: {
               input: {
-                frameworkId: framework.id!,
+                frameworkId: framework.id,
               },
               connections: [connectionId],
             },
@@ -69,7 +69,7 @@ export const useDeleteFrameworkMutation = (
         {
           message: sprintf(
             __(
-              'This will permanently delete framework "%s". This action cannot be undone.',
+              "This will permanently delete framework \"%s\". This action cannot be undone.",
             ),
             framework.name,
           ),

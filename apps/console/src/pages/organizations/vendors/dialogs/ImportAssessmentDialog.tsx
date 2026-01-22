@@ -46,18 +46,18 @@ export function ImportAssessmentDialog({ vendorId, children }: Props) {
       defaultValues: {
         url: "",
       },
-    }
+    },
   );
   const [assess, isAssessing] = useMutationWithToasts(
     importAssessmentMutation,
     {
       successMessage: __("Vendor assessed successfully."),
       errorMessage: __("Failed to assess vendor"),
-    }
+    },
   );
 
-  const onSubmit = handleSubmit((data) => {
-    assess({
+  const onSubmit = async (data: z.infer<typeof schema>) => {
+    await assess({
       variables: {
         input: {
           id: vendorId,
@@ -69,7 +69,8 @@ export function ImportAssessmentDialog({ vendorId, children }: Props) {
         reset();
       },
     });
-  });
+  };
+
   return (
     <Dialog
       ref={dialogRef}
@@ -77,7 +78,7 @@ export function ImportAssessmentDialog({ vendorId, children }: Props) {
       title={__("Assessment from website")}
       className="max-w-lg"
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <Field
             required

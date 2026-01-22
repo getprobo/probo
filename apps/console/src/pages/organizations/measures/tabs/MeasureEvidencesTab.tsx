@@ -104,11 +104,11 @@ export default function MeasureEvidencesTab() {
   }>();
   const pagination = usePaginationFragment(evidencesFragment, measure);
   const connectionId = pagination.data.evidences.__id;
-  const evidences =
-    pagination.data.evidences?.edges?.map((edge) => edge.node) ?? [];
+  const evidences
+    = pagination.data.evidences?.edges?.map(edge => edge.node) ?? [];
   const navigate = useNavigate();
   const { __ } = useTranslate();
-  const evidence = evidences.find((e) => e.id === evidenceId);
+  const evidence = evidences.find(e => e.id === evidenceId);
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const isSnapshotMode = Boolean(snapshotId);
@@ -128,7 +128,7 @@ export default function MeasureEvidencesTab() {
           </Tr>
         </Thead>
         <Tbody>
-          {evidences.map((evidence) => (
+          {evidences.map(evidence => (
             <EvidenceRow
               key={evidence.id}
               evidenceKey={evidence}
@@ -157,7 +157,7 @@ export default function MeasureEvidencesTab() {
             const baseUrl = isSnapshotMode
               ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/measures/${measure.id}/evidences`
               : `/organizations/${organizationId}/measures/${measure.id}/evidences`;
-            navigate(baseUrl);
+            void navigate(baseUrl);
           }}
           evidenceId={evidence.id}
           filename={evidence.file?.fileName || ""}
@@ -189,7 +189,7 @@ function EvidenceRow(props: {
     deleteEvidenceMutation,
     {
       successMessage: sprintf(
-        __('Evidence "%s" has been deleted successfully'),
+        __("Evidence \"%s\" has been deleted successfully"),
         evidence.file?.fileName || __("Link evidence"),
       ),
       errorMessage: __("Failed to delete evidence"),
@@ -224,7 +224,7 @@ function EvidenceRow(props: {
       {
         message: sprintf(
           __(
-            'This will permanently delete the evidence "%s". This action cannot be undone.',
+            "This will permanently delete the evidence \"%s\". This action cannot be undone.",
           ),
           evidence.file?.fileName || __("Link evidence"),
         ),

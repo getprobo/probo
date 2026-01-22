@@ -31,8 +31,8 @@ const getResultBadge = (statusCode: number) => {
 };
 
 const getMethodBadge = (method: string) => {
-  const variants: Record<string, "neutral" | "info" | "danger" | "highlight"> =
-    {
+  const variants: Record<string, "neutral" | "info" | "danger" | "highlight">
+    = {
       GET: "info",
       POST: "highlight",
       PUT: "highlight",
@@ -58,7 +58,7 @@ export function SCIMEventListItem(props: {
 
   const event = useFragment<SCIMEventListItemFragment$key>(
     SCIMEventListItemFragment,
-    fKey
+    fKey,
   );
 
   const hasError = !!event.errorMessage;
@@ -71,11 +71,13 @@ export function SCIMEventListItem(props: {
       >
         <Td className="whitespace-nowrap">
           <div className="flex items-center gap-2">
-            {isExpanded ? (
-              <IconChevronDown size={16} className="text-txt-secondary" />
-            ) : (
-              <IconChevronRight size={16} className="text-txt-secondary" />
-            )}
+            {isExpanded
+              ? (
+                  <IconChevronDown size={16} className="text-txt-secondary" />
+                )
+              : (
+                  <IconChevronRight size={16} className="text-txt-secondary" />
+                )}
             {formatDate(event.createdAt)}
           </div>
         </Td>

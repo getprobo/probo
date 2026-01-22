@@ -47,8 +47,8 @@ export function ViewerMembershipLayout(props: {
 
   const { __ } = useTranslate();
 
-  const { organization, viewer } =
-    usePreloadedQuery<ViewerMembershipLayoutQuery>(
+  const { organization, viewer }
+    = usePreloadedQuery<ViewerMembershipLayoutQuery>(
       viewerMembershipLayoutQuery,
       queryRef,
     );
@@ -58,7 +58,7 @@ export function ViewerMembershipLayout(props: {
 
   return (
     <Layout
-      headerLeading={
+      headerLeading={(
         <>
           <MembershipsDropdown
             organizationFKey={organization}
@@ -77,12 +77,12 @@ export function ViewerMembershipLayout(props: {
             </Link>
           )}
         </>
-      }
-      headerTrailing={
+      )}
+      headerTrailing={(
         <Suspense fallback={<Skeleton className="w-32 h-8" />}>
           <ViewerMembershipDropdown fKey={organization} />
         </Suspense>
-      }
+      )}
       sidebar={!hideSidebar && <Sidebar fKey={organization} />}
     >
       <CoreRelayProvider>

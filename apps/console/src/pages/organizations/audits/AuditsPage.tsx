@@ -93,13 +93,13 @@ export default function AuditsPage(props: Props) {
     paginatedAuditsFragment,
     data.node as AuditsPageFragment$key,
   );
-  const audits = pagination.data.audits?.edges?.map((edge) => edge.node) ?? [];
+  const audits = pagination.data.audits?.edges?.map(edge => edge.node) ?? [];
   const connectionId = pagination.data.audits.__id;
 
   usePageTitle(__("Audits"));
 
   const hasAnyAction = audits.some(
-    (audit) => audit.canDelete || audit.canUpdate,
+    audit => audit.canDelete || audit.canUpdate,
   );
 
   return (
@@ -132,7 +132,7 @@ export default function AuditsPage(props: Props) {
           </Tr>
         </Thead>
         <Tbody>
-          {audits.map((entry) => (
+          {audits.map(entry => (
             <AuditRow
               key={entry.id}
               entry={entry}
@@ -171,13 +171,15 @@ function AuditRow({
       <Td>{formatDate(entry.validFrom) || __("Not set")}</Td>
       <Td>{formatDate(entry.validUntil) || __("Not set")}</Td>
       <Td>
-        {entry.report ? (
-          <div className="flex flex-col">
-            <Badge variant="success">{__("Uploaded")}</Badge>
-          </div>
-        ) : (
-          <Badge variant="neutral">{__("Not uploaded")}</Badge>
-        )}
+        {entry.report
+          ? (
+              <div className="flex flex-col">
+                <Badge variant="success">{__("Uploaded")}</Badge>
+              </div>
+            )
+          : (
+              <Badge variant="neutral">{__("Not uploaded")}</Badge>
+            )}
       </Td>
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">

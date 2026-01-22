@@ -4,7 +4,10 @@ import { useTranslate } from "@probo/i18n";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 
-type Props<TFieldValues extends FieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>> = {
+type Props<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+> = {
   organizationId: string;
   control: Control<TFieldValues>;
   name: TName;
@@ -55,16 +58,15 @@ function PeopleSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
           id={name}
           variant="editor"
           placeholder={__("Select an owner")}
-          onValueChange={(value) =>
-            field.onChange(value === "__NONE__" ? null : value)
-          }
+          onValueChange={value =>
+            field.onChange(value === "__NONE__" ? null : value)}
           key={people?.length.toString() ?? "0"}
           {...field}
           className="w-full"
           value={field.value ?? (props.optional ? "__NONE__" : "")}
         >
           {props.optional && <Option value="__NONE__">{__("None")}</Option>}
-          {people?.map((p) => (
+          {people?.map(p => (
             <Option key={p.id} value={p.id} className="flex gap-2">
               <Avatar name={p.fullName} />
               {p.fullName}

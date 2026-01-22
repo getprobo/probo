@@ -80,8 +80,8 @@ export function InvitationListItem(props: {
             connections: [connectionId],
           },
           updater: (store) => {
-            const { updatableData } =
-              store.readUpdatableFragment<MembersPage_invitationsTotalCountFragment$key>(
+            const { updatableData }
+              = store.readUpdatableFragment<MembersPage_invitationsTotalCountFragment$key>(
                 invitationCountFragment,
                 totalCountFKey,
               );
@@ -112,13 +112,17 @@ export function InvitationListItem(props: {
       </Td>
       <Td>{new Date(invitation.createdAt).toLocaleDateString()}</Td>
       <Td>
-        {invitation.status === "ACCEPTED" ? (
-          <Badge variant="success">{__("Accepted")}</Badge>
-        ) : invitation.status === "EXPIRED" ? (
-          <Badge variant="danger">{__("Expired")}</Badge>
-        ) : (
-          <Badge variant="warning">{__("Pending")}</Badge>
-        )}
+        {invitation.status === "ACCEPTED"
+          ? (
+              <Badge variant="success">{__("Accepted")}</Badge>
+            )
+          : invitation.status === "EXPIRED"
+            ? (
+                <Badge variant="danger">{__("Expired")}</Badge>
+              )
+            : (
+                <Badge variant="warning">{__("Pending")}</Badge>
+              )}
       </Td>
       <Td>
         {invitation.acceptedAt
@@ -128,22 +132,24 @@ export function InvitationListItem(props: {
       <Td noLink width={80} className="text-end">
         <div
           className="flex gap-2 justify-end"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
-          {isDeleting ? (
-            <Spinner size={16} />
-          ) : (
-            invitation.canDelete &&
-            invitation.status !== "ACCEPTED" && (
-              <Button
-                variant="danger"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                icon={IconTrashCan}
-                aria-label={__("Delete invitation")}
-              />
-            )
-          )}
+          {isDeleting
+            ? (
+                <Spinner size={16} />
+              )
+            : (
+                invitation.canDelete
+                && invitation.status !== "ACCEPTED" && (
+                  <Button
+                    variant="danger"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    icon={IconTrashCan}
+                    aria-label={__("Delete invitation")}
+                  />
+                )
+              )}
         </div>
       </Td>
     </Tr>

@@ -6,8 +6,8 @@ import type { APIKeysPageQuery } from "/__generated__/iam/APIKeysPageQuery.graph
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
 function APIKeysPageLoaderInner() {
-  const [queryRef, loadQuery] =
-    useQueryLoader<APIKeysPageQuery>(apiKeysPageQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<APIKeysPageQuery>(apiKeysPageQuery);
 
   useEffect(() => {
     loadQuery({});

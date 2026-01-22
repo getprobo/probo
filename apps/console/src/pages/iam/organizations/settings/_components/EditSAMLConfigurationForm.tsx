@@ -66,8 +66,8 @@ export function EditSAMLConfigurationForm(props: {
   const { __ } = useTranslate();
   const { toast } = useToast();
 
-  const { samlConfiguration } =
-    usePreloadedQuery<EditSAMLConfigurationFormQuery>(
+  const { samlConfiguration }
+    = usePreloadedQuery<EditSAMLConfigurationFormQuery>(
       samlConfigurationFormQuery,
       queryRef,
     );
@@ -75,8 +75,8 @@ export function EditSAMLConfigurationForm(props: {
     throw new Error("node is not a SAML configuration");
   }
 
-  const [update, isUpdating] =
-    useMutationWithToasts<EditSAMLConfigurationForm_updateMutation>(
+  const [update, isUpdating]
+    = useMutationWithToasts<EditSAMLConfigurationForm_updateMutation>(
       updateSAMLConfigurationMutation,
       {
         successMessage: "SAML configuration updated successfully.",
@@ -85,8 +85,8 @@ export function EditSAMLConfigurationForm(props: {
     );
 
   const handleUpdate = useCallback(
-    (data: SAMLConfigurationFormData) => {
-      update({
+    async (data: SAMLConfigurationFormData) => {
+      await update({
         variables: {
           input: {
             samlConfigurationId: samlConfiguration.id,

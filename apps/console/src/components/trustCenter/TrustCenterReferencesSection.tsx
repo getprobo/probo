@@ -49,8 +49,8 @@ export function TrustCenterReferencesSection({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
-  const { node: trustCenterNode } =
-    useLazyLoadQuery<TrustCenterReferenceGraphQuery>(
+  const { node: trustCenterNode }
+    = useLazyLoadQuery<TrustCenterReferenceGraphQuery>(
       trustCenterReferencesQuery,
       { trustCenterId: trustCenterId || "" },
       { fetchPolicy: "network-only", fetchKey: refetchKey },
@@ -60,8 +60,8 @@ export function TrustCenterReferencesSection({
   }
   const [updateRank] = useUpdateTrustCenterReferenceRankMutation();
 
-  const references =
-    trustCenterNode?.references?.edges?.map((edge) => edge.node) || [];
+  const references
+    = trustCenterNode?.references?.edges?.map(edge => edge.node) || [];
   const referencesConnectionId = trustCenterNode?.references?.__id || "";
 
   const handleCreate = () => {
@@ -89,7 +89,7 @@ export function TrustCenterReferencesSection({
     }
   };
 
-  const handleDrop = (targetIndex: number) => {
+  const handleDrop = async (targetIndex: number) => {
     if (draggedIndex === null || draggedIndex === targetIndex) {
       setDraggedIndex(null);
       setDragOverIndex(null);
@@ -99,7 +99,7 @@ export function TrustCenterReferencesSection({
     const draggedRef = references[draggedIndex];
     const targetRank = references[targetIndex].rank;
 
-    updateRank({
+    await updateRank({
       variables: {
         input: {
           id: draggedRef.id,
@@ -107,7 +107,7 @@ export function TrustCenterReferencesSection({
         },
       },
       onCompleted: () => {
-        setRefetchKey((prev) => prev + 1);
+        setRefetchKey(prev => prev + 1);
       },
     });
 
@@ -158,8 +158,8 @@ export function TrustCenterReferencesSection({
               connectionId={referencesConnectionId}
               onVisitWebsite={() => handleVisitWebsite(reference.websiteUrl)}
               onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDrop={() => handleDrop(index)}
+              onDragOver={e => handleDragOver(e, index)}
+              onDrop={() => void handleDrop(index)}
             />
           ))}
         </Tbody>

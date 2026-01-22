@@ -101,15 +101,15 @@ function LinkedSnapshotsDialogContent(props: Omit<Props, "children">) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const snapshots = useMemo(
-    () => data.snapshots?.edges?.map((edge) => edge.node) ?? [],
+    () => data.snapshots?.edges?.map(edge => edge.node) ?? [],
     [data.snapshots],
   );
   const linkedIds = useMemo(() => {
-    return new Set(props.linkedSnapshots?.map((s) => s.id) ?? []);
+    return new Set(props.linkedSnapshots?.map(s => s.id) ?? []);
   }, [props.linkedSnapshots]);
 
   const filteredSnapshots = useMemo(() => {
-    return snapshots.filter((snapshot) =>
+    return snapshots.filter(snapshot =>
       snapshot.name.toLowerCase().includes(search.toLowerCase()),
     );
   }, [snapshots, search]);
@@ -124,7 +124,7 @@ function LinkedSnapshotsDialogContent(props: Omit<Props, "children">) {
         />
       </div>
       <div className="divide-y divide-border-low">
-        {filteredSnapshots.map((snapshot) => (
+        {filteredSnapshots.map(snapshot => (
           <SnapshotRow
             key={snapshot.id}
             snapshot={snapshot}
@@ -187,7 +187,9 @@ function SnapshotRow(props: RowProps) {
         asChild
       >
         <span>
-          <IconComponent size={16} /> {isLinked ? __("Unlink") : __("Link")}
+          <IconComponent size={16} />
+          {" "}
+          {isLinked ? __("Unlink") : __("Link")}
         </span>
       </Button>
     </button>

@@ -111,25 +111,27 @@ export function InvitationList(props: {
         </Tr>
       </Thead>
       <Tbody>
-        {totalCount === 0 ? (
-          <Tr>
-            <Td colSpan={7} className="text-center text-txt-secondary">
-              {__("No invitations")}
-            </Td>
-          </Tr>
-        ) : (
-          invitationsPagination.data.invitations.edges.map(
-            ({ node: invitation }) => (
-              <InvitationListItem
-                connectionId={invitationsPagination.data.invitations.__id}
-                key={invitation.id}
-                fKey={invitation}
-                onRefetch={refetchInvitations}
-                totalCountFKey={totalCountFKey}
-              />
-            ),
-          )
-        )}
+        {totalCount === 0
+          ? (
+              <Tr>
+                <Td colSpan={7} className="text-center text-txt-secondary">
+                  {__("No invitations")}
+                </Td>
+              </Tr>
+            )
+          : (
+              invitationsPagination.data.invitations.edges.map(
+                ({ node: invitation }) => (
+                  <InvitationListItem
+                    connectionId={invitationsPagination.data.invitations.__id}
+                    key={invitation.id}
+                    fKey={invitation}
+                    onRefetch={refetchInvitations}
+                    totalCountFKey={totalCountFKey}
+                  />
+                ),
+              )
+            )}
       </Tbody>
     </SortableTable>
   );

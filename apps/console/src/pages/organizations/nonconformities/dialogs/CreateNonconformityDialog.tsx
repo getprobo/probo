@@ -72,7 +72,7 @@ export function CreateNonconformityDialog({
     },
   });
 
-  const onSubmit = handleSubmit(async (formData: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     try {
       await createNonconformity({
         organizationId,
@@ -103,7 +103,7 @@ export function CreateNonconformityDialog({
         variant: "error",
       });
     }
-  });
+  };
 
   return (
     <Dialog
@@ -112,7 +112,7 @@ export function CreateNonconformityDialog({
       title={<Breadcrumb items={[__("Nonconformities"), __("Create")]} />}
       className="max-w-2xl"
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
             label={__("Reference ID")}
@@ -153,7 +153,7 @@ export function CreateNonconformityDialog({
                     value={field.value}
                     className="w-full"
                   >
-                    {statusOptions.map((option) => (
+                    {statusOptions.map(option => (
                       <Option key={option.value} value={option.value}>
                         {option.label}
                       </Option>
@@ -203,7 +203,11 @@ export function CreateNonconformityDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="rootCause">{__("Root Cause")} *</Label>
+            <Label htmlFor="rootCause">
+              {__("Root Cause")}
+              {" "}
+              *
+            </Label>
             <Textarea
               id="rootCause"
               {...register("rootCause")}

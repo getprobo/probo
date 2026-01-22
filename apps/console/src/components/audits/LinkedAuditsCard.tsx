@@ -131,7 +131,7 @@ export function LinkedAuditsCard<Params>(props: Props<Params>) {
               </Td>
             </Tr>
           )}
-          {audits.map((audit) => (
+          {audits.map(audit => (
             <AuditRow
               key={audit.id}
               audit={audit}

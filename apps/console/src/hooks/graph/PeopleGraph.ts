@@ -58,7 +58,7 @@ export function usePeople(
     { fetchPolicy: "network-only" },
   );
   return useMemo(() => {
-    return data.organization?.peoples?.edges.map((edge) => edge.node) ?? [];
+    return data.organization?.peoples?.edges.map(edge => edge.node) ?? [];
   }, [data]);
 }
 
@@ -123,7 +123,7 @@ export function usePeopleQuery(
     paginatedPeopleFragment,
     data.organization as PeopleGraphPaginatedFragment$key,
   );
-  const people = pagination.data.peoples?.edges.map((edge) => edge.node);
+  const people = pagination.data.peoples?.edges.map(edge => edge.node);
   return {
     ...pagination,
     people,
@@ -179,7 +179,7 @@ export const useDeletePeople = (
       {
         message: sprintf(
           __(
-            'This will permanently delete "%s". This action cannot be undone.',
+            "This will permanently delete \"%s\". This action cannot be undone.",
           ),
           people.fullName,
         ),

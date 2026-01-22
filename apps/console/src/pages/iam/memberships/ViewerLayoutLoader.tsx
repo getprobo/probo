@@ -6,8 +6,8 @@ import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 import { ViewerLayoutLoading } from "./ViewerLayoutLoading";
 
 function ViewerLayoutLoader() {
-  const [queryRef, loadQuery] =
-    useQueryLoader<ViewerLayoutQuery>(viewerLayoutQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<ViewerLayoutQuery>(viewerLayoutQuery);
 
   useEffect(() => {
     loadQuery({});

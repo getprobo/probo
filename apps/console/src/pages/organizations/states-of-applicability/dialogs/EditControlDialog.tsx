@@ -86,10 +86,10 @@ export const EditControlDialog = forwardRef<EditControlDialogRef, { onSuccess?: 
       },
     }));
 
-    const onSubmit = handleSubmit((data) => {
+    const onSubmit = async (data: z.infer<typeof schema>) => {
       if (!control) return;
 
-      linkMutate({
+      await linkMutate({
         variables: {
           input: {
             stateOfApplicabilityId: control.stateOfApplicabilityId,
@@ -110,67 +110,69 @@ export const EditControlDialog = forwardRef<EditControlDialogRef, { onSuccess?: 
           }
         },
       });
-    });
+    };
 
     return (
       <Dialog
         ref={dialogRef}
         className="max-w-lg"
-        title={
+        title={(
           <Breadcrumb
             items={[__("States of Applicability"), __("Edit Control")]}
           />
-        }
+        )}
       >
-        {control ? (
-          <form onSubmit={onSubmit}>
-            <DialogContent padded className="space-y-4">
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-txt-secondary">
-                  {control.frameworkName}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge size="md">{control.sectionTitle}</Badge>
-                  <span className="text-base font-medium text-txt-primary">{control.name}</span>
-                </div>
-              </div>
+        {control
+          ? (
+              <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
+                <DialogContent padded className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-txt-secondary">
+                      {control.frameworkName}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge size="md">{control.sectionTitle}</Badge>
+                      <span className="text-base font-medium text-txt-primary">{control.name}</span>
+                    </div>
+                  </div>
 
-              <Field label={__("Applicability")}>
-                <Select
-                  variant="editor"
-                  value={applicability ? "yes" : "no"}
-                  onValueChange={(value) => setValue("applicability", value === "yes")}
-                >
-                  <Option value="yes">{__("Yes")}</Option>
-                  <Option value="no">{__("No")}</Option>
-                </Select>
-              </Field>
+                  <Field label={__("Applicability")}>
+                    <Select
+                      variant="editor"
+                      value={applicability ? "yes" : "no"}
+                      onValueChange={value => setValue("applicability", value === "yes")}
+                    >
+                      <Option value="yes">{__("Yes")}</Option>
+                      <Option value="no">{__("No")}</Option>
+                    </Select>
+                  </Field>
 
-              {!applicability && (
-                <Field label={__("Justification")}>
-                  <Textarea
-                    {...register("justification")}
-                    placeholder={__("Reason for non-applicability")}
-                    autogrow
-                  />
-                </Field>
-              )}
-            </DialogContent>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => dialogRef.current?.close()}
-              >
-                {__("Cancel")}
-              </Button>
-              <Button type="submit" disabled={isLinking}>
-                {__("Save")}
-              </Button>
-            </DialogFooter>
-          </form>
-        ) : null}
+                  {!applicability && (
+                    <Field label={__("Justification")}>
+                      <Textarea
+                        {...register("justification")}
+                        placeholder={__("Reason for non-applicability")}
+                        autogrow
+                      />
+                    </Field>
+                  )}
+                </DialogContent>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => dialogRef.current?.close()}
+                  >
+                    {__("Cancel")}
+                  </Button>
+                  <Button type="submit" disabled={isLinking}>
+                    {__("Save")}
+                  </Button>
+                </DialogFooter>
+              </form>
+            )
+          : null}
       </Dialog>
     );
-  }
+  },
 );

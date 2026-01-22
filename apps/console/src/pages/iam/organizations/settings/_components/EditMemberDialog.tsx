@@ -50,9 +50,9 @@ export function EditMemberDialog(props: {
     },
   );
 
-  const handleUpdateRole = (e: React.FormEvent) => {
+  const handleUpdateRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateMembership({
+    await updateMembership({
       variables: {
         input: {
           membershipId: membership.id,
@@ -66,7 +66,7 @@ export function EditMemberDialog(props: {
 
   return (
     <Dialog defaultOpen={true} onClose={onClose} title={__("Edit Member Role")}>
-      <form onSubmit={handleUpdateRole}>
+      <form onSubmit={e => void handleUpdateRole(e)}>
         <DialogContent padded className="space-y-6">
           <div>
             <p className="text-txt-secondary text-sm mb-4">

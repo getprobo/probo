@@ -99,8 +99,8 @@ export default function TrustCenterFilesTab() {
     defaultValues: { name: "", category: "" },
   });
 
-  const files =
-    organization.trustCenterFiles?.edges?.map((edge) => edge.node) || [];
+  const files
+    = organization.trustCenterFiles?.edges?.map(edge => edge.node) || [];
 
   const handleFileUpload = useCallback(
     (acceptedFiles: File[]) => {
@@ -222,7 +222,7 @@ export default function TrustCenterFilesTab() {
   ]);
 
   const handleChangeVisibility = useCallback(
-    (params: {
+    async (params: {
       variables: {
         input: {
           id: string;
@@ -230,7 +230,7 @@ export default function TrustCenterFilesTab() {
         };
       };
     }) => {
-      updateFile(params);
+      await updateFile(params);
     },
     [updateFile],
   );
@@ -269,7 +269,7 @@ export default function TrustCenterFilesTab() {
       />
 
       <Dialog ref={createDialogRef} title={__("Add File")}>
-        <form onSubmit={handleCreate}>
+        <form onSubmit={e => void handleCreate(e)}>
           <DialogContent padded className="space-y-4">
             <Dropzone
               description={__("Upload file (max 10MB)")}
@@ -280,7 +280,9 @@ export default function TrustCenterFilesTab() {
             />
             {uploadedFile && (
               <div className="text-sm text-txt-secondary">
-                {__("Selected file")}: {uploadedFile.name}
+                {__("Selected file")}
+                :
+                {uploadedFile.name}
               </div>
             )}
             {createForm.formState.errors.root && (
@@ -304,15 +306,14 @@ export default function TrustCenterFilesTab() {
               label={__("Visibility")}
               type="select"
               value={createForm.watch("trustCenterVisibility")}
-              onValueChange={(value) =>
+              onValueChange={value =>
                 createForm.setValue(
                   "trustCenterVisibility",
                   value as "NONE" | "PRIVATE" | "PUBLIC",
-                )
-              }
+                )}
               error={createForm.formState.errors.trustCenterVisibility?.message}
             >
-              {getTrustCenterVisibilityOptions(__).map((option) => (
+              {getTrustCenterVisibilityOptions(__).map(option => (
                 <Option key={option.value} value={option.value}>
                   <div className="flex items-center justify-between w-full">
                     <Badge variant={option.variant}>{option.label}</Badge>
@@ -334,7 +335,7 @@ export default function TrustCenterFilesTab() {
       </Dialog>
 
       <Dialog ref={editDialogRef} title={__("Edit File")}>
-        <form onSubmit={handleUpdate}>
+        <form onSubmit={e => void handleUpdate(e)}>
           <DialogContent padded className="space-y-4">
             <Field
               label={__("Name")}
@@ -369,7 +370,7 @@ export default function TrustCenterFilesTab() {
         <DialogFooter>
           <Button
             variant="danger"
-            onClick={handleDeleteConfirm}
+            onClick={() => void handleDeleteConfirm()}
             disabled={isDeleting}
           >
             {isDeleting && <Spinner />}

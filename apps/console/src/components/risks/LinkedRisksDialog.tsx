@@ -74,24 +74,24 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const risks = useMemo(
-    () => data.organization?.risks?.edges?.map((edge) => edge.node) ?? [],
+    () => data.organization?.risks?.edges?.map(edge => edge.node) ?? [],
     [data.organization?.risks],
   );
   const linkedIds = useMemo(() => {
-    return new Set(props.linkedRisks?.map((r) => r.id) ?? []);
+    return new Set(props.linkedRisks?.map(r => r.id) ?? []);
   }, [props.linkedRisks]);
 
   const filteredRisks = useMemo(() => {
     return risks.filter(
-      (risk) =>
-        (category === null || risk.category === category) &&
-        (risk.name.toLowerCase().includes(search.toLowerCase()) ||
-          risk.description?.toLowerCase().includes(search.toLowerCase())),
+      risk =>
+        (category === null || risk.category === category)
+        && (risk.name.toLowerCase().includes(search.toLowerCase())
+          || risk.description?.toLowerCase().includes(search.toLowerCase())),
     );
   }, [risks, search, category]);
 
   const categories = useMemo(
-    () => Array.from(new Set(risks.map((r) => r.category))),
+    () => Array.from(new Set(risks.map(r => r.category))),
     [risks],
   );
 
@@ -109,7 +109,7 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
           onValueChange={setCategory}
           className="max-w-[180px]"
         >
-          {categories.map((category) => (
+          {categories.map(category => (
             <Option key={category} value={category}>
               {category}
             </Option>
@@ -117,7 +117,7 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
         </Select>
       </div>
       <div className="divide-y divide-border-low">
-        {filteredRisks.map((risk) => (
+        {filteredRisks.map(risk => (
           <RiskRow
             key={risk.id}
             risk={risk}
@@ -167,7 +167,9 @@ function RiskRow(props: RowProps) {
         asChild
       >
         <span>
-          <IconComponent size={16} /> {isLinked ? __("Unlink") : __("Link")}
+          <IconComponent size={16} />
+          {" "}
+          {isLinked ? __("Unlink") : __("Link")}
         </span>
       </Button>
     </button>

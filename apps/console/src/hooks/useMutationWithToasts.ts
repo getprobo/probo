@@ -13,7 +13,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
   baseOptions?: {
     successMessage?: string | ((response: T["response"]) => string);
     errorMessage?: string;
-  }
+  },
 ) {
   const [mutate, isLoading] = useMutation<T>(query);
   const { toast } = useToast();
@@ -24,7 +24,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
         onSuccess?: () => void;
         successMessage?: string | ((response: T["response"]) => string);
         errorMessage?: string;
-      }
+      },
     ) => {
       const options = { ...baseOptions, ...queryOptions };
       return new Promise<void>((resolve, reject) =>
@@ -39,7 +39,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
                 description: formatError(errorTitle, error as GraphQLError[]),
                 variant: "error",
               });
-              reject(error);
+              reject(new Error(errorTitle));
               return;
             }
             const successMessage = typeof options.successMessage === "function"
@@ -49,8 +49,8 @@ export function useMutationWithToasts<T extends MutationParameters>(
             toast({
               title: __("Success"),
               description:
-                successMessage ??
-                __("Operation completed successfully"),
+                successMessage
+                ?? __("Operation completed successfully"),
               variant: "success",
             });
             options.onSuccess?.();
@@ -65,10 +65,10 @@ export function useMutationWithToasts<T extends MutationParameters>(
             });
             reject(error);
           },
-        })
+        }),
       );
     },
-    [mutate, toast, __, baseOptions]
+    [mutate, toast, __, baseOptions],
   );
 
   return [mutateWithToast, isLoading] as const;

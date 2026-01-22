@@ -46,8 +46,8 @@ export function MembershipsDropdown(props: {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
 
-  const currentOrganization =
-    useFragment<MembershipsDropdown_organizationFragment$key>(
+  const currentOrganization
+    = useFragment<MembershipsDropdown_organizationFragment$key>(
       organizationFragment,
       organizationFKey,
     );
@@ -72,7 +72,7 @@ export function MembershipsDropdown(props: {
     <div className="flex items-center gap-1">
       <Dropdown
         onOpenChange={handleOpenMenu}
-        toggle={
+        toggle={(
           <Button
             className="-ml-3"
             variant="tertiary"
@@ -80,7 +80,7 @@ export function MembershipsDropdown(props: {
           >
             {currentOrganization.name}
           </Button>
-        }
+        )}
       >
         <div className="px-3 py-2">
           <Input
@@ -97,11 +97,11 @@ export function MembershipsDropdown(props: {
         <div className="max-h-150 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
           {queryRef && (
             <Suspense
-              fallback={
+              fallback={(
                 <div className="px-3 py-2 text-gray-500">
                   {__("Loading organizations...")}
                 </div>
-              }
+              )}
             >
               <MembershipsDropdownMenu search={search} queryRef={queryRef} />
             </Suspense>

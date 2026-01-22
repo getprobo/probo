@@ -10,7 +10,7 @@ export function DocumentClassificationOptions() {
 
   return (
     <>
-      {documentClassifications.map((classification) => (
+      {documentClassifications.map(classification => (
         <Option key={classification} value={classification}>
           {getDocumentClassificationLabel(__, classification)}
         </Option>

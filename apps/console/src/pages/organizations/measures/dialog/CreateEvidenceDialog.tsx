@@ -42,19 +42,20 @@ type Props = {
 };
 
 export function CreateEvidenceDialog(props: Props) {
+  const { ref, ...rest } = props;
   const { __ } = useTranslate();
   const [tab, setTab] = useState("upload");
   return (
     <Dialog
-      title={
+      title={(
         <Breadcrumb
           items={[
             { label: __("Measures detail") },
             { label: __("Create Evidence") },
           ]}
         />
-      }
-      ref={props.ref}
+      )}
+      ref={ref}
       className="max-w-lg"
     >
       <Tabs className="px-6">
@@ -65,8 +66,8 @@ export function CreateEvidenceDialog(props: Props) {
           {__("Link")}
         </TabItem>
       </Tabs>
-      {tab === "upload" && <EvidenceUpload {...props} />}
-      {tab === "link" && <EvidenceLink {...props} />}
+      {tab === "upload" && <EvidenceUpload {...rest} />}
+      {tab === "link" && <EvidenceLink ref={ref} {...rest} />}
     </Dialog>
   );
 }
@@ -79,9 +80,9 @@ function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
     successMessage: __("Evidence uploaded successfully"),
     errorMessage: __("Failed to create evidence"),
   });
-  const handleDrop = (files: File[]) => {
+  const handleDrop = async (files: File[]) => {
     for (const file of files) {
-      mutate({
+      await mutate({
         variables: {
           connections: [connectionId],
           input: {
@@ -103,10 +104,10 @@ function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
       <DialogContent padded>
         <Dropzone
           description={__(
-            "Only PDF, DOCX, XLSX, PPTX, CSV, JPG, PNG, WEBP, URI files up to 10MB are allowed"
+            "Only PDF, DOCX, XLSX, PPTX, CSV, JPG, PNG, WEBP, URI files up to 10MB are allowed",
           )}
           isUploading={isUpdating}
-          onDrop={handleDrop}
+          onDrop={files => void handleDrop(files)}
           accept={{
             "text/plain": [".uri"],
             "text/csv": [".csv"],
@@ -142,14 +143,14 @@ function EvidenceLink({ measureId, connectionId, ref }: Props) {
         name: "",
         url: "",
       },
-    }
+    },
   );
 
   const [mutate] = useMutationWithToasts(uploadEvidenceMutation, {
     successMessage: __("Evidence created successfully"),
     errorMessage: __("Failed to create evidence"),
   });
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof linkSchema>) => {
     const fileName = `${data.name.trim()}.uri`;
     const file = new File([data.url.trim()], fileName, {
       type: "text/uri-list",
@@ -168,9 +169,10 @@ function EvidenceLink({ measureId, connectionId, ref }: Props) {
     });
     ref.current?.close();
     reset();
-  });
+  };
+
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
       <DialogContent padded className="space-y-4">
         <Field
           required

@@ -78,7 +78,7 @@ export default function VendorRiskAssessmentTab() {
     VendorRiskAssessmentTabQuery,
     VendorRiskAssessmentTabFragment$key
   >(riskAssessmentsFragment, vendor);
-  const assessments = data.riskAssessments.edges.map((edge) => edge.node);
+  const assessments = data.riskAssessments.edges.map(edge => edge.node);
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
@@ -130,16 +130,15 @@ export default function VendorRiskAssessmentTab() {
                 </TrButton>
               </CreateRiskAssessmentDialog>
             )}
-            {assessments.map((assessment) => (
+            {assessments.map(assessment => (
               <AssessmentRow
                 key={assessment.id}
                 assessmentKey={assessment}
                 isExpanded={expanded === assessment.id}
                 onClick={() =>
-                  setExpanded((prev) =>
+                  setExpanded(prev =>
                     prev === assessment.id ? null : assessment.id,
-                  )
-                }
+                  )}
               />
             ))}
           </Tbody>
@@ -157,8 +156,8 @@ type AssessmentRowProps = {
 
 function AssessmentRow(props: AssessmentRowProps) {
   const { __ } = useTranslate();
-  const assessment =
-    useFragment<VendorRiskAssessmentTabFragment_assessment$key>(
+  const assessment
+    = useFragment<VendorRiskAssessmentTabFragment_assessment$key>(
       riskAssessmentFragment,
       props.assessmentKey,
     );
@@ -197,7 +196,10 @@ function AssessmentRow(props: AssessmentRowProps) {
         <Tr className={clsx("border-none", isExpired && "opacity-50")}>
           <Td colSpan={4}>
             <div className="space-y-2">
-              <div>{__("Notes")}:</div>
+              <div>
+                {__("Notes")}
+                :
+              </div>
               <p className="text-txt-secondary">{assessment.notes}</p>
             </div>
           </Td>

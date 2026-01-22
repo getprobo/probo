@@ -49,7 +49,7 @@ export function EditServiceDialog({ serviceId, service, onClose }: Props) {
         name: service.name || "",
         description: service.description || "",
       },
-    }
+    },
   );
 
   const [updateService, isLoading] = useMutationWithToasts(
@@ -57,13 +57,13 @@ export function EditServiceDialog({ serviceId, service, onClose }: Props) {
     {
       successMessage: __("Service updated successfully."),
       errorMessage: __("Failed to update service"),
-    }
+    },
   );
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     const cleanData = cleanFormData(data);
 
-    updateService({
+    await updateService({
       variables: {
         input: {
           id: serviceId,
@@ -74,7 +74,7 @@ export function EditServiceDialog({ serviceId, service, onClose }: Props) {
         onClose();
       },
     });
-  });
+  };
 
   const dialogRef = useDialogRef();
 
@@ -91,7 +91,7 @@ export function EditServiceDialog({ serviceId, service, onClose }: Props) {
         <Breadcrumb items={[__("Services"), __("Edit Service")]} />
       }
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
             label={__("Name")}

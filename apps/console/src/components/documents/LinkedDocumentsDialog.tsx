@@ -102,15 +102,15 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const documents = useMemo(
-    () => data.documents?.edges?.map((edge) => edge.node) ?? [],
+    () => data.documents?.edges?.map(edge => edge.node) ?? [],
     [data.documents],
   );
   const linkedIds = useMemo(() => {
-    return new Set(props.linkedDocuments?.map((m) => m.id) ?? []);
+    return new Set(props.linkedDocuments?.map(m => m.id) ?? []);
   }, [props.linkedDocuments]);
 
   const filteredDocuments = useMemo(() => {
-    return documents.filter((document) =>
+    return documents.filter(document =>
       document.title.toLowerCase().includes(search.toLowerCase()),
     );
   }, [documents, search]);
@@ -125,7 +125,7 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
         />
       </div>
       <div className="divide-y divide-border-low">
-        {filteredDocuments.map((document) => (
+        {filteredDocuments.map(document => (
           <DocumentRow
             key={document.id}
             document={document}
@@ -177,7 +177,9 @@ function DocumentRow(props: RowProps) {
         asChild
       >
         <span>
-          <IconComponent size={16} /> {isLinked ? __("Unlink") : __("Link")}
+          <IconComponent size={16} />
+          {" "}
+          {isLinked ? __("Unlink") : __("Link")}
         </span>
       </Button>
     </button>

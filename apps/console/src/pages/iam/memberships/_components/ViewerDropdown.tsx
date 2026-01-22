@@ -35,8 +35,8 @@ export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
 
-  const { canListAPIKeys, email, fullName } =
-    useFragment<ViewerDropdownFragment$key>(fragment, fKey);
+  const { canListAPIKeys, email, fullName }
+    = useFragment<ViewerDropdownFragment$key>(fragment, fKey);
   const [signOut] = useMutation(signOutMutation);
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = (e) => {

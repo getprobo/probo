@@ -143,7 +143,7 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
               </Td>
             </Tr>
           )}
-          {obligations.map((obligation) => (
+          {obligations.map(obligation => (
             <ObligationRow
               key={obligation.id}
               obligation={obligation}

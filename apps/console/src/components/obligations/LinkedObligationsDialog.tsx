@@ -111,19 +111,19 @@ function LinkedObligationsDialogContent(props: Omit<Props, "children">) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const obligations = useMemo(
-    () => data.obligations?.edges?.map((edge) => edge.node) ?? [],
+    () => data.obligations?.edges?.map(edge => edge.node) ?? [],
     [data.obligations],
   );
   const linkedIds = useMemo(() => {
-    return new Set(props.linkedObligations?.map((o) => o.id) ?? []);
+    return new Set(props.linkedObligations?.map(o => o.id) ?? []);
   }, [props.linkedObligations]);
 
   const filteredObligations = useMemo(() => {
     return obligations.filter(
-      (obligation) =>
-        obligation.area?.toLowerCase().includes(search.toLowerCase()) ||
-        obligation.source?.toLowerCase().includes(search.toLowerCase()) ||
-        obligation.owner?.fullName
+      obligation =>
+        obligation.area?.toLowerCase().includes(search.toLowerCase())
+        || obligation.source?.toLowerCase().includes(search.toLowerCase())
+        || obligation.owner?.fullName
           ?.toLowerCase()
           .includes(search.toLowerCase()),
     );
@@ -139,7 +139,7 @@ function LinkedObligationsDialogContent(props: Omit<Props, "children">) {
         />
       </div>
       <div className="divide-y divide-border-low">
-        {filteredObligations.map((obligation) => (
+        {filteredObligations.map(obligation => (
           <ObligationRow
             key={obligation.id}
             obligation={obligation}

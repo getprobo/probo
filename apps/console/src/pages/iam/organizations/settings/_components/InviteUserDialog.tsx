@@ -72,21 +72,21 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
   const dialogRef = useDialogRef();
 
   const { role } = use(CurrentUser);
-  const [inviteUser, isInviting] =
-    useMutationWithToasts<InviteUserDialogMutation>(inviteMutation, {
+  const [inviteUser, isInviting]
+    = useMutationWithToasts<InviteUserDialogMutation>(inviteMutation, {
       successMessage: __("Invitation sent successfully"),
       errorMessage: __("Failed to send invitation"),
     });
 
   const assignableRoles = getAssignableRoles(role);
 
-  const { register, handleSubmit, formState, reset, control } =
-    useFormWithSchema(schema, {
+  const { register, handleSubmit, formState, reset, control }
+    = useFormWithSchema(schema, {
       defaultValues: { role: "VIEWER" },
     });
 
-  const onSubmit = handleSubmit((data) => {
-    inviteUser({
+  const onSubmit = async (data: z.infer<typeof schema>) => {
+    await inviteUser({
       variables: {
         input: {
           organizationId,
@@ -101,8 +101,8 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
         dialogRef.current?.close();
       },
       updater: (store) => {
-        const { updatableData } =
-          store.readUpdatableFragment<MembersPage_invitationsTotalCountFragment$key>(
+        const { updatableData }
+          = store.readUpdatableFragment<MembersPage_invitationsTotalCountFragment$key>(
             invitationCountFragment,
             fKey,
           );
@@ -112,7 +112,7 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
         }
       },
     });
-  });
+  };
 
   return (
     <Dialog
@@ -121,7 +121,7 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
       className="max-w-lg"
       ref={dialogRef}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <p className="text-txt-secondary text-sm">
             Send an invitation to join your workspace.

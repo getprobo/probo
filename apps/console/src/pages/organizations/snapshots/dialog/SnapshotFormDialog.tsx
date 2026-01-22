@@ -75,7 +75,7 @@ export default function SnapshotFormDialog(props: Props) {
     },
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof snapshotSchema>) => {
     await mutate({
       variables: {
         input: {
@@ -89,7 +89,7 @@ export default function SnapshotFormDialog(props: Props) {
     });
     reset();
     dialogRef.current?.close();
-  });
+  };
 
   return (
     <Dialog
@@ -97,7 +97,7 @@ export default function SnapshotFormDialog(props: Props) {
       trigger={props.children}
       title={<Breadcrumb items={[__("Snapshots"), __("New Snapshot")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
           <div className="py-8 px-10 space-y-4">
             <Input

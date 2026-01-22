@@ -46,7 +46,7 @@ export default function RiskControlsTab() {
   }>();
   const { __ } = useTranslate();
   const [data, refetch] = useRefetchableFragment(controlsFragment, risk);
-  const controls = data.controls.edges.map((edge) => edge.node);
+  const controls = data.controls.edges.map(edge => edge.node);
   const organizationId = useOrganizationId();
 
   return (
@@ -65,14 +65,15 @@ export default function RiskControlsTab() {
             </Td>
           </Tr>
         )}
-        {controls.map((control) => (
+        {controls.map(control => (
           <Tr
             key={control.id}
             to={`/organizations/${organizationId}/frameworks/${control.framework.id}/controls/${control.id}`}
           >
             <Td>
               <span className="inline-flex gap-2 items-center">
-                {control.framework.name}{" "}
+                {control.framework.name}
+                {" "}
                 <Badge size="md">{control.sectionTitle}</Badge>
               </span>
             </Td>

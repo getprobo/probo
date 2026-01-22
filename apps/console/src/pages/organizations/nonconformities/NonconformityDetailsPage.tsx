@@ -61,8 +61,8 @@ type Props = {
 };
 
 export default function NonconformityDetailsPage(props: Props) {
-  const { node: nonconformity } =
-    usePreloadedQuery<NonconformityGraphNodeQuery>(
+  const { node: nonconformity }
+    = usePreloadedQuery<NonconformityGraphNodeQuery>(
       nonconformityNodeQuery,
       props.queryRef,
     );
@@ -82,8 +82,8 @@ export default function NonconformityDetailsPage(props: Props) {
     ),
   );
 
-  const { control, formState, handleSubmit, register, reset } =
-    useFormWithSchema(updateNonconformitySchema, {
+  const { control, formState, handleSubmit, register, reset }
+    = useFormWithSchema(updateNonconformitySchema, {
       defaultValues: {
         referenceId: nonconformity.referenceId || "",
         description: nonconformity.description || "",
@@ -183,7 +183,7 @@ export default function NonconformityDetailsPage(props: Props) {
 
       <div className="max-w-4xl">
         <Card padded>
-          <form onSubmit={onSubmit} className="space-y-6">
+          <form onSubmit={e => void onSubmit(e)} className="space-y-6">
             <Field
               label={__("Reference ID")}
               required
@@ -223,7 +223,7 @@ export default function NonconformityDetailsPage(props: Props) {
                 required
                 disabled={isSnapshotMode}
               >
-                {statusOptions.map((option) => (
+                {statusOptions.map(option => (
                   <Option key={option.value} value={option.value}>
                     {option.label}
                   </Option>
@@ -291,13 +291,13 @@ export default function NonconformityDetailsPage(props: Props) {
             </Field>
 
             <div className="flex justify-end">
-              {formState.isDirty &&
-                !isSnapshotMode &&
-                nonconformity.canUpdate && (
-                  <Button type="submit" disabled={formState.isSubmitting}>
-                    {formState.isSubmitting ? __("Updating...") : __("Update")}
-                  </Button>
-                )}
+              {formState.isDirty
+                && !isSnapshotMode
+                && nonconformity.canUpdate && (
+                <Button type="submit" disabled={formState.isSubmitting}>
+                  {formState.isSubmitting ? __("Updating...") : __("Update")}
+                </Button>
+              )}
             </div>
           </form>
         </Card>

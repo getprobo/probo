@@ -76,7 +76,7 @@ export function EditBusinessAssociateAgreementDialog({
     errorMessage: __("Failed to update Business Associate Agreement"),
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     const formatDatetime = (dateString?: string) => {
       if (!dateString) return null;
       return `${dateString}T00:00:00Z`;
@@ -94,7 +94,7 @@ export function EditBusinessAssociateAgreementDialog({
 
     onSuccess?.();
     ref.current?.close();
-  });
+  };
 
   const handleClose = () => {
     reset();
@@ -108,7 +108,7 @@ export function EditBusinessAssociateAgreementDialog({
       className="max-w-lg"
       onClose={handleClose}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Field label={__("Valid from")}>

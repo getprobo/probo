@@ -53,7 +53,7 @@ export default function RiskMeasuresTab() {
   }>();
   const data = useFragment<RiskMeasuresTabFragment$key>(measuresFragment, risk);
   const connectionId = data.measures.__id;
-  const measures = data.measures?.edges?.map((edge) => edge.node) ?? [];
+  const measures = data.measures?.edges?.map(edge => edge.node) ?? [];
 
   const canLinkMeasure = risk.canCreateMeasureMapping;
   const canUnlinkMeasure = risk.canDeleteMeasureMapping;

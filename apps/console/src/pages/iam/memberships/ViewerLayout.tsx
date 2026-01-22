@@ -26,13 +26,13 @@ export function ViewerLayout(props: {
 
   return (
     <Layout
-      headerTrailing={
+      headerTrailing={(
         <div className="ml-auto">
           <Suspense fallback={<Skeleton className="w-32 h-8" />}>
             <ViewerDropdown fKey={viewer} />
           </Suspense>
         </div>
-      }
+      )}
     >
       <Outlet />
     </Layout>

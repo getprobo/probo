@@ -22,14 +22,14 @@ export default function PasswordSignInPage() {
 
   const { toast } = useToast();
 
-  const [signIn, isSigningIn] =
-    useMutation<PasswordSignInPageMutation>(signInMutation);
+  const [signIn, isSigningIn]
+    = useMutation<PasswordSignInPageMutation>(signInMutation);
 
   const handlePasswordLogin: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const emailValue = formData.get("email")?.toString();
-    const passwordValue = formData.get("password")?.toString();
+    const emailValue = formData.get("email") ? (formData.get("email") as string).toString() : "";
+    const passwordValue = formData.get("password") ? (formData.get("password") as string).toString() : "";
 
     if (!emailValue || !passwordValue) return;
 
@@ -104,14 +104,16 @@ export default function PasswordSignInPage() {
       </Button>
 
       <div className="text-center mt-6 text-sm text-txt-secondary">
-        {__("Don't have an account ?")}{" "}
+        {__("Don't have an account ?")}
+        {" "}
         <Link to="/auth/register" className="underline hover:text-txt-primary">
           {__("Register")}
         </Link>
       </div>
 
       <div className="text-center text-sm text-txt-secondary">
-        {__("Forgot password?")}{" "}
+        {__("Forgot password?")}
+        {" "}
         <Link
           to="/auth/forgot-password"
           className="underline hover:text-txt-primary"

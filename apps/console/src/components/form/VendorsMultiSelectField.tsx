@@ -45,7 +45,7 @@ export function VendorsMultiSelectField<T extends FieldValues = FieldValues>({
 }
 
 function VendorsMultiSelectWithQuery<T extends FieldValues = FieldValues>(
-  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled" | "selectedVendors">
+  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled" | "selectedVendors">,
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control, selectedVendors = [] } = props;
@@ -54,7 +54,7 @@ function VendorsMultiSelectWithQuery<T extends FieldValues = FieldValues>(
 
   const allVendors = [...vendors];
   if (props.disabled) {
-    selectedVendors.forEach(selectedVendor => {
+    selectedVendors.forEach((selectedVendor) => {
       if (!allVendors.find(v => v.id === selectedVendor.id)) {
         allVendors.push(selectedVendor);
       }
@@ -98,7 +98,7 @@ function VendorsMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                   open={isOpen}
                   onOpenChange={setIsOpen}
                 >
-                  {availableVendors.map((vendor) => (
+                  {availableVendors.map(vendor => (
                     <Option key={vendor.id} value={vendor.id} className="flex gap-2">
                       <Avatar
                         name={vendor.name}
@@ -120,7 +120,7 @@ function VendorsMultiSelectWithQuery<T extends FieldValues = FieldValues>(
 
               {selectedVendors.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedVendors.map((vendor) => (
+                  {selectedVendors.map(vendor => (
                     <Badge key={vendor.id} variant="neutral" className="flex items-center gap-2">
                       <Avatar
                         name={vendor.name}

@@ -78,7 +78,7 @@ export function SAMLConfigurationForm(props: {
   isEditing?: boolean;
   disabled: boolean;
   initialValues?: SAMLConfigurationFormData;
-  onSubmit: (data: SAMLConfigurationFormData) => void;
+  onSubmit: (data: SAMLConfigurationFormData) => Promise<void>;
 }) {
   const {
     disabled,
@@ -94,9 +94,8 @@ export function SAMLConfigurationForm(props: {
 
   return (
     <form
-      onSubmit={async (e) => {
-        e.preventDefault();
-        await form.handleSubmit(onSubmit)();
+      onSubmit={(e) => {
+        void form.handleSubmit(onSubmit)(e);
         form.reset(form.getValues());
       }}
     >

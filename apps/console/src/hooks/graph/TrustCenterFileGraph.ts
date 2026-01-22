@@ -28,7 +28,7 @@ export function useCreateTrustCenterFileMutation() {
     {
       successMessage: "File uploaded successfully",
       errorMessage: "Failed to upload file",
-    }
+    },
   );
 }
 
@@ -52,7 +52,7 @@ export function useUpdateTrustCenterFileMutation() {
     {
       successMessage: "File updated successfully",
       errorMessage: "Failed to update file",
-    }
+    },
   );
 }
 
@@ -73,6 +73,6 @@ export function useDeleteTrustCenterFileMutation() {
     {
       successMessage: "File deleted successfully",
       errorMessage: "Failed to delete file",
-    }
+    },
   );
 }

@@ -72,7 +72,7 @@ export function CreateObligationDialog({
     },
   });
 
-  const onSubmit = handleSubmit(async (formData: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     try {
       await createObligation({
         organizationId,
@@ -103,7 +103,7 @@ export function CreateObligationDialog({
         variant: "error",
       });
     }
-  });
+  };
 
   return (
     <Dialog
@@ -112,7 +112,7 @@ export function CreateObligationDialog({
       title={<Breadcrumb items={[__("Obligations"), __("Create Obligation")]} />}
       className="max-w-2xl"
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Field
@@ -143,7 +143,7 @@ export function CreateObligationDialog({
                     value={field.value}
                     className="w-full"
                   >
-                    {statusOptions.map((option) => (
+                    {statusOptions.map(option => (
                       <Option key={option.value} value={option.value}>
                         {option.label}
                       </Option>
@@ -186,7 +186,7 @@ export function CreateObligationDialog({
                     value={field.value}
                     className="w-full"
                   >
-                    {typeOptions.map((option) => (
+                    {typeOptions.map(option => (
                       <Option key={option.value} value={option.value}>
                         {option.label}
                       </Option>

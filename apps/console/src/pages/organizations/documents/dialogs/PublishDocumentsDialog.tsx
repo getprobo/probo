@@ -49,13 +49,13 @@ export function PublishDocumentsDialog({
     changelog: z.string().min(1, __("Changelog is required")),
   });
 
-  const [publishMutation] =
-    useMutationWithToasts<PublishDocumentsDialogMutation>(
+  const [publishMutation]
+    = useMutationWithToasts<PublishDocumentsDialogMutation>(
       documentsPublishMutation,
       {
         successMessage: (response) => {
-          const actualPublishedCount =
-            response.bulkPublishDocumentVersions.documentEdges.length;
+          const actualPublishedCount
+            = response.bulkPublishDocumentVersions.documentEdges.length;
           return sprintf(__("%s documents published"), actualPublishedCount);
         },
         errorMessage: sprintf(
@@ -75,7 +75,7 @@ export function PublishDocumentsDialog({
     },
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     await publishMutation({
       variables: {
         input: {
@@ -88,7 +88,7 @@ export function PublishDocumentsDialog({
         onSave();
       },
     });
-  });
+  };
 
   return (
     <Dialog
@@ -97,7 +97,7 @@ export function PublishDocumentsDialog({
       trigger={children}
       title={<Breadcrumb items={[__("Documents"), __("Publish documents")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <Field
             id="changelog"

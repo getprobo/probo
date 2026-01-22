@@ -66,7 +66,7 @@ export function DeleteBusinessAssociateAgreementDialog({
         <p className="text-txt-secondary">
           {sprintf(
             __("Are you sure you want to delete the Business Associate Agreement \"%s\"?"),
-            fileName
+            fileName,
           )}
         </p>
         <p className="text-txt-secondary mt-2">
@@ -77,7 +77,7 @@ export function DeleteBusinessAssociateAgreementDialog({
       <DialogFooter>
         <Button
           variant="danger"
-          onClick={handleDelete}
+          onClick={() => void handleDelete()}
           disabled={isDeleting}
           icon={isDeleting ? Spinner : undefined}
         >

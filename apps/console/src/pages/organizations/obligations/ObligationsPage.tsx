@@ -44,8 +44,8 @@ import type {
 } from "/__generated__/core/ObligationsPageFragment.graphql";
 import type { ObligationGraphListQuery } from "/__generated__/core/ObligationGraphListQuery.graphql";
 
-type Obligation =
-  ObligationsPageFragment$data["obligations"]["edges"][number]["node"];
+type Obligation
+  = ObligationsPageFragment$data["obligations"]["edges"][number]["node"];
 
 interface ObligationsPageProps {
   queryRef: PreloadedQuery<ObligationGraphListQuery>;
@@ -118,12 +118,12 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
   );
 
   const connectionId = obligationsData?.obligations?.__id || "";
-  const obligations: Obligation[] =
-    obligationsData?.obligations?.edges?.map((edge) => edge.node) ?? [];
+  const obligations: Obligation[]
+    = obligationsData?.obligations?.edges?.map(edge => edge.node) ?? [];
 
-  const hasAnyAction =
-    !isSnapshotMode &&
-    obligations.some(({ canUpdate, canDelete }) => canDelete || canUpdate);
+  const hasAnyAction
+    = !isSnapshotMode
+      && obligations.some(({ canUpdate, canDelete }) => canDelete || canUpdate);
 
   return (
     <div className="space-y-6">
@@ -144,56 +144,58 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
         )}
       </PageHeader>
 
-      {obligations.length === 0 ? (
-        <Card padded>
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No obligations yet")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__("Create your first obligation to get started.")}
-            </p>
-          </div>
-        </Card>
-      ) : (
-        <Card>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{__("Area")}</Th>
-                <Th>{__("Source")}</Th>
-                <Th>{__("Status")}</Th>
-                <Th>{__("Owner")}</Th>
-                <Th>{__("Due Date")}</Th>
-                {hasAnyAction && <Th>{__("Actions")}</Th>}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {obligations.map((obligation) => (
-                <ObligationRow
-                  key={obligation.id}
-                  obligation={obligation}
-                  connectionId={connectionId}
-                  snapshotId={snapshotId}
-                  hasAnyAction={hasAnyAction}
-                />
-              ))}
-            </Tbody>
-          </Table>
+      {obligations.length === 0
+        ? (
+            <Card padded>
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">
+                  {__("No obligations yet")}
+                </h3>
+                <p className="text-txt-tertiary mb-4">
+                  {__("Create your first obligation to get started.")}
+                </p>
+              </div>
+            </Card>
+          )
+        : (
+            <Card>
+              <Table>
+                <Thead>
+                  <Tr>
+                    <Th>{__("Area")}</Th>
+                    <Th>{__("Source")}</Th>
+                    <Th>{__("Status")}</Th>
+                    <Th>{__("Owner")}</Th>
+                    <Th>{__("Due Date")}</Th>
+                    {hasAnyAction && <Th>{__("Actions")}</Th>}
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {obligations.map(obligation => (
+                    <ObligationRow
+                      key={obligation.id}
+                      obligation={obligation}
+                      connectionId={connectionId}
+                      snapshotId={snapshotId}
+                      hasAnyAction={hasAnyAction}
+                    />
+                  ))}
+                </Tbody>
+              </Table>
 
-          {hasNext && (
-            <div className="p-4 border-t">
-              <Button
-                variant="secondary"
-                onClick={() => loadNext(10)}
-                disabled={!hasNext}
-              >
-                {__("Load more")}
-              </Button>
-            </div>
+              {hasNext && (
+                <div className="p-4 border-t">
+                  <Button
+                    variant="secondary"
+                    onClick={() => loadNext(10)}
+                    disabled={!hasNext}
+                  >
+                    {__("Load more")}
+                  </Button>
+                </div>
+              )}
+            </Card>
           )}
-        </Card>
-      )}
     </div>
   );
 }
@@ -253,13 +255,15 @@ function ObligationRow({
       </Td>
       <Td>{obligation.owner?.fullName || "-"}</Td>
       <Td>
-        {obligation.dueDate ? (
-          <time dateTime={obligation.dueDate}>
-            {formatDate(obligation.dueDate)}
-          </time>
-        ) : (
-          <span className="text-txt-tertiary">{__("No due date")}</span>
-        )}
+        {obligation.dueDate
+          ? (
+              <time dateTime={obligation.dueDate}>
+                {formatDate(obligation.dueDate)}
+              </time>
+            )
+          : (
+              <span className="text-txt-tertiary">{__("No due date")}</span>
+            )}
       </Td>
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">

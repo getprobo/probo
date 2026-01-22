@@ -1,18 +1,25 @@
 import type { ComponentProps } from "react";
 import { Field } from "@probo/ui";
-import { Controller, type FieldValues } from "react-hook-form";
+import { Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { Select } from "@probo/ui";
 
-type Props<T extends typeof Field | typeof Select, TFieldValues extends FieldValues = FieldValues> =
-  ComponentProps<T> & Omit<ComponentProps<typeof Controller<TFieldValues>>, "render">;
+type Props<
+  T extends typeof Field | typeof Select,
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>
+  = ComponentProps<T> & Omit<ComponentProps<typeof Controller<TFieldValues, TName>>, "render">;
 
-export function ControlledField<TFieldValues extends FieldValues = FieldValues>({
+export function ControlledField<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>({
   control,
   name,
   ...props
-}: Props<typeof Field, TFieldValues>) {
+}: Props<typeof Field, TFieldValues, TName>) {
   return (
-    <Controller
+    <Controller<TFieldValues, TName>
       control={control}
       name={name}
       render={({ field }) => (
@@ -21,7 +28,7 @@ export function ControlledField<TFieldValues extends FieldValues = FieldValues>(
             {...props}
             {...field}
             // TODO : Find a better way to handle this case (comparing number and string for select create issues)
-            value={field.value ? field.value.toString() : ""}
+            value={field.value ? (field.value as readonly string[] | string | number).toString() : ""}
             onValueChange={field.onChange}
           />
         </>

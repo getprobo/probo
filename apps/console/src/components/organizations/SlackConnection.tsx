@@ -27,7 +27,7 @@ export function SlackConnections({
   ];
 
   const slackConnections = slackConnectionDefinitions.map((def) => {
-    const connected = connectedSlackConnections.find((c) => c.id);
+    const connected = connectedSlackConnections.find(c => c.id);
     return {
       ...def,
       createdAt: connected?.createdAt,
@@ -49,7 +49,7 @@ export function SlackConnections({
 
   return (
     <div className="space-y-2">
-      {slackConnections.map((slackConnection) => (
+      {slackConnections.map(slackConnection => (
         <Card
           key={slackConnection.id}
           padded
@@ -61,37 +61,41 @@ export function SlackConnections({
           <div className="mr-auto">
             <h3 className="text-base font-semibold">{slackConnection.name}</h3>
             <p className="text-sm text-txt-tertiary">
-              {slackConnection.createdAt ? (
-                <>
-                  {sprintf(
-                    __("Connected on %s"),
-                    dateTimeFormat(slackConnection.createdAt),
-                  )}
-                  {slackConnection.channel && (
+              {slackConnection.createdAt
+                ? (
                     <>
-                      {" • "}
-                      {sprintf(__("Channel: %s"), slackConnection.channel)}
+                      {sprintf(
+                        __("Connected on %s"),
+                        dateTimeFormat(slackConnection.createdAt),
+                      )}
+                      {slackConnection.channel && (
+                        <>
+                          {" • "}
+                          {sprintf(__("Channel: %s"), slackConnection.channel)}
+                        </>
+                      )}
                     </>
+                  )
+                : (
+                    slackConnection.description
                   )}
-                </>
-              ) : (
-                slackConnection.description
-              )}
             </p>
           </div>
-          {slackConnection.createdAt ? (
-            <div>
-              <Badge variant="success" size="md">
-                {__("Connected")}
-              </Badge>
-            </div>
-          ) : (
-            canUpdate && (
-              <Button variant="secondary" asChild>
-                <a href={getUrl(slackConnection.id)}>{__("Connect")}</a>
-              </Button>
-            )
-          )}
+          {slackConnection.createdAt
+            ? (
+                <div>
+                  <Badge variant="success" size="md">
+                    {__("Connected")}
+                  </Badge>
+                </div>
+              )
+            : (
+                canUpdate && (
+                  <Button variant="secondary" asChild>
+                    <a href={getUrl(slackConnection.id)}>{__("Connect")}</a>
+                  </Button>
+                )
+              )}
         </Card>
       ))}
     </div>

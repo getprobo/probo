@@ -44,7 +44,7 @@ export default function TrustCenterOverviewTab() {
 
     setIsActive(active);
 
-    updateTrustCenter({
+    await updateTrustCenter({
       variables: {
         input: {
           trustCenterId: organization.trustCenter.id,
@@ -133,7 +133,7 @@ export default function TrustCenterOverviewTab() {
             </div>
             <Checkbox
               checked={isActive}
-              onChange={handleToggleActive}
+              onChange={checked => void handleToggleActive(checked)}
               disabled={!canUpdateTrustCenter}
             />
           </div>
@@ -160,8 +160,7 @@ export default function TrustCenterOverviewTab() {
                 <Button
                   variant="secondary"
                   onClick={() =>
-                    window.open(trustCenterUrl, "_blank", "noopener,noreferrer")
-                  }
+                    window.open(trustCenterUrl, "_blank", "noopener,noreferrer")}
                 >
                   {__("View")}
                 </Button>
@@ -193,77 +192,83 @@ export default function TrustCenterOverviewTab() {
           </div>
           <Card padded className="space-y-4">
             <div className="space-y-2">
-              {!organization.trustCenter?.ndaFileName &&
-              organization.trustCenter.canUploadNDA ? (
-                <p className="text-sm text-txt-tertiary">
-                  {__(
-                    "Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center",
-                  )}
-                </p>
-              ) : (
-                <></>
-              )}
-              {organization.trustCenter?.ndaFileName ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">
-                          {organization.trustCenter.ndaFileName ||
-                            __("Non-Disclosure Agreement")}
-                        </p>
-                      </div>
-                      <p className="text-xs text-txt-tertiary">
-                        {__(
-                          "Visitors will need to accept this NDA before accessing your trust center",
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => {
-                          if (organization.trustCenter?.ndaFileUrl) {
-                            window.open(
-                              organization.trustCenter.ndaFileUrl,
-                              "_blank",
-                            );
-                          }
-                        }}
-                      >
-                        {__("Download PDF")}
-                      </Button>
-                      {organization.trustCenter?.canDeleteNDA && (
-                        <Button
-                          variant="quaternary"
-                          icon={IconTrashCan}
-                          onClick={handleNDADelete}
-                          disabled={isDeletingNDA}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {canUpdateTrustCenter ? (
-                    <Dropzone
-                      description={__("Upload PDF files up to 10MB")}
-                      isUploading={isUploadingNDA}
-                      onDrop={handleNDAUpload}
-                      accept={{
-                        "application/pdf": [".pdf"],
-                      }}
-                      maxSize={10}
-                    />
-                  ) : (
+              {!organization.trustCenter?.ndaFileName
+                && organization.trustCenter.canUploadNDA
+                ? (
                     <p className="text-sm text-txt-tertiary">
-                      {__("No NDA file uploaded")}
+                      {__(
+                        "Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center",
+                      )}
                     </p>
+                  )
+                : (
+                    <></>
                   )}
-                </>
-              )}
+              {organization.trustCenter?.ndaFileName
+                ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">
+                              {organization.trustCenter.ndaFileName
+                                || __("Non-Disclosure Agreement")}
+                            </p>
+                          </div>
+                          <p className="text-xs text-txt-tertiary">
+                            {__(
+                              "Visitors will need to accept this NDA before accessing your trust center",
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => {
+                              if (organization.trustCenter?.ndaFileUrl) {
+                                window.open(
+                                  organization.trustCenter.ndaFileUrl,
+                                  "_blank",
+                                );
+                              }
+                            }}
+                          >
+                            {__("Download PDF")}
+                          </Button>
+                          {organization.trustCenter?.canDeleteNDA && (
+                            <Button
+                              variant="quaternary"
+                              icon={IconTrashCan}
+                              onClick={() => void handleNDADelete()}
+                              disabled={isDeletingNDA}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                : (
+                    <>
+                      {canUpdateTrustCenter
+                        ? (
+                            <Dropzone
+                              description={__("Upload PDF files up to 10MB")}
+                              isUploading={isUploadingNDA}
+                              onDrop={files => void handleNDAUpload(files)}
+                              accept={{
+                                "application/pdf": [".pdf"],
+                              }}
+                              maxSize={10}
+                            />
+                          )
+                        : (
+                            <p className="text-sm text-txt-tertiary">
+                              {__("No NDA file uploaded")}
+                            </p>
+                          )}
+                    </>
+                  )}
             </div>
           </Card>
         </div>
@@ -276,8 +281,8 @@ export default function TrustCenterOverviewTab() {
             canUpdate={!!organization.trustCenter?.canUpdate}
             organizationId={organization.id!}
             slackConnections={
-              organization.slackConnections?.edges?.map((edge) => edge.node) ??
-              []
+              organization.slackConnections?.edges?.map(edge => edge.node)
+              ?? []
             }
           />
         </Card>

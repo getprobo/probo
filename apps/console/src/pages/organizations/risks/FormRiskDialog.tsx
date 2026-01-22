@@ -27,6 +27,7 @@ import {
 } from "/components/form/ControlledField";
 import {
   useRiskForm,
+  type RiskData,
   type RiskForm,
   type RiskKey,
 } from "/hooks/forms/useRiskForm";
@@ -90,13 +91,13 @@ export default function FormRiskDialog({
   const dialogRef = useDialogRef();
   const ref = refProps ?? dialogRef;
 
-  const { control, handleSubmit, setValue, register, watch, formState, reset } =
-    useRiskForm(risk);
+  const { control, handleSubmit, setValue, register, watch, formState, reset }
+    = useRiskForm(risk);
   const errors = formState.errors ?? {};
-  const [createRisk, isLoadingCreate] =
-    useMutationWithToasts<FormRiskDialogMutation>(createRiskMutation);
-  const [updateRisk, isLoadingUpdate] =
-    useMutationWithToasts<FormRiskDialogUpdateRiskMutation>(updateRiskMutation);
+  const [createRisk, isLoadingCreate]
+    = useMutationWithToasts<FormRiskDialogMutation>(createRiskMutation);
+  const [updateRisk, isLoadingUpdate]
+    = useMutationWithToasts<FormRiskDialogUpdateRiskMutation>(updateRiskMutation);
   const isLoading = isLoadingCreate || isLoadingUpdate;
 
   const onTemplateChange = (risk: RiskTemplate) => {
@@ -104,9 +105,9 @@ export default function FormRiskDialog({
     setValue("description", risk.description);
   };
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = async (data: RiskData) => {
     if (risk) {
-      updateRisk({
+      await updateRisk({
         variables: {
           input: {
             id: risk.id,
@@ -122,7 +123,7 @@ export default function FormRiskDialog({
       });
       return;
     }
-    createRisk({
+    await createRisk({
       variables: {
         input: {
           ...data,
@@ -139,7 +140,7 @@ export default function FormRiskDialog({
         onSuccess?.();
       },
     });
-  });
+  };
 
   const [showNote, toggleNote] = useToggle(false);
 
@@ -147,13 +148,13 @@ export default function FormRiskDialog({
     <Dialog
       ref={ref}
       trigger={trigger}
-      title={
+      title={(
         <Breadcrumb
           items={[__("Risks"), risk ? __("Edit Risk") : __("New Risk")]}
         />
-      }
+      )}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
           {/* Main form */}
           <div className="py-8 px-12 space-y-6">
@@ -287,9 +288,12 @@ function ImpactAndLikelihood({
           placeholder={__("Select impact level")}
           error={errors?.[`${prefix}Impact`]?.message}
         >
-          {getRiskImpacts(__).map((i) => (
+          {getRiskImpacts(__).map(i => (
             <Option key={i.value} value={i.value.toString()}>
-              {i.value} - {i.label}
+              {i.value}
+              {" "}
+              -
+              {i.label}
             </Option>
           ))}
         </ControlledField>
@@ -301,9 +305,12 @@ function ImpactAndLikelihood({
           placeholder={__("Select likelihood level")}
           error={errors?.[`${prefix}Likelihood`]?.message}
         >
-          {getRiskLikelihoods(__).map((l) => (
+          {getRiskLikelihoods(__).map(l => (
             <Option key={l.value} value={l.value.toString()}>
-              {l.value} - {l.label}
+              {l.value}
+              {" "}
+              -
+              {l.label}
             </Option>
           ))}
         </ControlledField>
@@ -330,19 +337,19 @@ function TemplateSelector({
   );
 
   const categories = useMemo(
-    () => Array.from(new Set(risks?.map((t) => t.category))),
+    () => Array.from(new Set(risks?.map(t => t.category))),
     [risks],
   );
 
   const selectedCategory = watch("category");
 
   const templates = useMemo(
-    () => risks?.filter((r) => r.category === selectedCategory) ?? [],
+    () => risks?.filter(r => r.category === selectedCategory) ?? [],
     [risks, selectedCategory],
   );
 
   const onTemplateChange = (template: string) => {
-    const risk = risks?.find((r) => r.name === template);
+    const risk = risks?.find(r => r.name === template);
     if (!risk) {
       throw new Error("Risk not found");
     }
@@ -357,7 +364,7 @@ function TemplateSelector({
           name="category"
           placeholder={__("Select a category")}
         >
-          {categories.map((category) => (
+          {categories.map(category => (
             <Option key={category} value={category}>
               {category}
             </Option>
@@ -369,7 +376,7 @@ function TemplateSelector({
           placeholder={__("Select template")}
           onValueChange={onTemplateChange}
         >
-          {templates?.map((template) => (
+          {templates?.map(template => (
             <Option key={template.name} value={template.name}>
               {template.name}
             </Option>

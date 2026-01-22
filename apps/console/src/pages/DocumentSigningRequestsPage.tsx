@@ -34,8 +34,8 @@ export default function DocumentSigningRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signingData, setSigningData] =
-    useState<DocumentSigningResponse | null>(null);
+  const [signingData, setSigningData]
+    = useState<DocumentSigningResponse | null>(null);
   const [currentDocIndex, setCurrentDocIndex] = useState(0);
   const [showAllDocuments, setShowAllDocuments] = useState(false);
 
@@ -53,7 +53,7 @@ export default function DocumentSigningRequestsPage() {
   useEffect(() => {
     if (!token) {
       setError(
-        __("Missing signing token. Please check your URL and try again.")
+        __("Missing signing token. Please check your URL and try again."),
       );
       setLoading(false);
       return;
@@ -66,26 +66,26 @@ export default function DocumentSigningRequestsPage() {
           {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${token}`,
+              "Authorization": `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!response.ok) {
           throw new Error(__("Failed to fetch signing documents"));
         }
 
-        const documents: Document[] = await response.json();
+        const documents = (await response.json()) as Document[];
 
-        const enhancedDocuments = documents.map((doc) => ({
+        const enhancedDocuments = documents.map(doc => ({
           ...doc,
           signed: false,
         }));
 
         // Extract organization name from the first document
-        const organizationName =
-          documents.length > 0
+        const organizationName
+          = documents.length > 0
             ? documents[0].organization_name || "Organization"
             : "Organization";
 
@@ -95,14 +95,14 @@ export default function DocumentSigningRequestsPage() {
         });
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : __("An unknown error occurred")
+          err instanceof Error ? err.message : __("An unknown error occurred"),
         );
       } finally {
         setLoading(false);
       }
     }
 
-    fetchDocuments();
+    void fetchDocuments();
   }, [token, __]);
 
   const handleSignDocument = async () => {
@@ -117,10 +117,10 @@ export default function DocumentSigningRequestsPage() {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
+            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -146,7 +146,7 @@ export default function DocumentSigningRequestsPage() {
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : __("Failed to sign document")
+        err instanceof Error ? err.message : __("Failed to sign document"),
       );
     } finally {
       setSigning(false);
@@ -161,7 +161,7 @@ export default function DocumentSigningRequestsPage() {
 
   const getSignedCount = () => {
     if (!signingData) return 0;
-    return signingData.documents.filter((doc) => doc.signed).length;
+    return signingData.documents.filter(doc => doc.signed).length;
   };
 
   if (loading) {
@@ -217,7 +217,7 @@ export default function DocumentSigningRequestsPage() {
             </h1>
             <p className="text-txt-tertiary">
               {__(
-                "There are no documents requiring your signature at this time."
+                "There are no documents requiring your signature at this time.",
               )}
             </p>
           </Card>
@@ -247,165 +247,167 @@ export default function DocumentSigningRequestsPage() {
             <h1 className="text-2xl font-semibold mb-6">
               {sprintf(
                 __("%s requests your signature"),
-                signingData.organizationName
+                signingData.organizationName,
               )}
             </h1>
-            {allSigned ? (
-              <p className="text-txt-secondary text-base">
-                {__(
-                  "You have successfully signed all documents. You can now close this page."
+            {allSigned
+              ? (
+                  <p className="text-txt-secondary text-base">
+                    {__("You have successfully signed all documents. You can now close this page.")}
+                  </p>
+                )
+              : (
+                  <>
+                    <p className="text-txt-secondary text-base mb-4">
+                      {__("Please review and sign the following documents:")}
+                    </p>
+                    <Card className="mb-6 overflow-hidden">
+                      <div className="divide-y divide-border-solid">
+                        {(() => {
+                          const renderDocumentItem = (
+                            doc: Document,
+                            index: number,
+                          ) => (
+                            <div
+                              key={doc.document_version_id}
+                              className={clsx(
+                                "flex items-center gap-3 py-3 px-4 transition-colors",
+                                index === currentDocIndex
+                                  ? "bg-blue-50 border-l-4 border-blue-500"
+                                  : "bg-transparent hover:bg-level-1",
+                              )}
+                            >
+                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-level-2 flex-shrink-0">
+                                {doc.signed
+                                  ? (
+                                      <IconCircleCheck
+                                        size={20}
+                                        className="text-txt-success"
+                                      />
+                                    )
+                                  : (
+                                      <span className="text-sm font-semibold text-txt-tertiary">
+                                        {index + 1}
+                                      </span>
+                                    )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={clsx(
+                                    "text-sm font-medium truncate",
+                                    doc.signed
+                                      ? "text-txt-tertiary"
+                                      : "text-txt-primary",
+                                  )}
+                                >
+                                  {doc.title}
+                                </p>
+                              </div>
+                              <div className="flex-shrink-0">
+                                <span
+                                  className={clsx(
+                                    "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
+                                    doc.signed
+                                      ? "bg-green-100 text-green-800"
+                                      : index === currentDocIndex
+                                        ? "bg-blue-100 text-blue-800"
+                                        : "bg-gray-100 text-gray-700",
+                                  )}
+                                >
+                                  {doc.signed
+                                    ? __("Signed")
+                                    : index === currentDocIndex
+                                      ? __("In review")
+                                      : __("Waiting signature")}
+                                </span>
+                              </div>
+                            </div>
+                          );
+
+                          const totalDocs = signingData.documents.length;
+
+                          if (totalDocs <= 4) {
+                            return signingData.documents.map((doc, index) =>
+                              renderDocumentItem(doc, index),
+                            );
+                          }
+
+                          if (showAllDocuments) {
+                            return (
+                              <>
+                                {signingData.documents.map((doc, index) =>
+                                  renderDocumentItem(doc, index),
+                                )}
+                                <button
+                                  onClick={() => setShowAllDocuments(false)}
+                                  className="w-full py-3 px-4 text-sm text-txt-secondary hover:bg-level-1 transition-colors text-left flex items-center gap-2"
+                                >
+                                  <span className="text-txt-tertiary">•••</span>
+                                  {__("Show less")}
+                                </button>
+                              </>
+                            );
+                          }
+
+                          // Always show current document in collapsed view with two "show more" buttons
+                          const firstDoc = signingData.documents[0];
+                          const currentIsFirst = currentDocIndex === 0;
+                          const currentIsLast = currentDocIndex === totalDocs - 1;
+
+                          // Calculate hidden docs before and after current
+                          const hiddenBeforeCurrent = currentIsFirst
+                            ? 0
+                            : currentDocIndex - 1;
+                          const hiddenAfterCurrent = currentIsLast
+                            ? 0
+                            : totalDocs - currentDocIndex - 2;
+
+                          return (
+                            <>
+                              {/* First document */}
+                              {renderDocumentItem(firstDoc, 0)}
+
+                              {/* Show more button for documents BEFORE current (signed documents) */}
+                              {hiddenBeforeCurrent > 0 && (
+                                <button
+                                  onClick={() => setShowAllDocuments(true)}
+                                  className="w-full py-3 px-4 text-sm text-txt-secondary hover:bg-level-1 transition-colors text-left flex items-center gap-2"
+                                >
+                                  <span className="text-txt-tertiary">•••</span>
+                                  {sprintf(
+                                    __("Show %s more documents"),
+                                    hiddenBeforeCurrent,
+                                  )}
+                                </button>
+                              )}
+
+                              {/* Current document (if not first) */}
+                              {!currentIsFirst
+                                && renderDocumentItem(currentDoc, currentDocIndex)}
+
+                              {/* Show more button for documents AFTER current (upcoming documents) */}
+                              {hiddenAfterCurrent > 0 && (
+                                <button
+                                  onClick={() => setShowAllDocuments(true)}
+                                  className="w-full py-3 px-4 text-sm text-txt-secondary hover:bg-level-1 transition-colors text-left flex items-center gap-2"
+                                >
+                                  <span className="text-txt-tertiary">•••</span>
+                                  {sprintf(
+                                    __("Show %s more documents"),
+                                    hiddenAfterCurrent,
+                                  )}
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </Card>
+                    <p className="text-txt-secondary text-sm mb-6">
+                      {__("Please review the document carefully before signing.")}
+                    </p>
+                  </>
                 )}
-              </p>
-            ) : (
-              <>
-                <p className="text-txt-secondary text-base mb-4">
-                  {__("Please review and sign the following documents:")}
-                </p>
-                <Card className="mb-6 overflow-hidden">
-                  <div className="divide-y divide-border-solid">
-                    {(() => {
-                      const renderDocumentItem = (
-                        doc: Document,
-                        index: number
-                      ) => (
-                        <div
-                          key={doc.document_version_id}
-                          className={clsx(
-                            "flex items-center gap-3 py-3 px-4 transition-colors",
-                            index === currentDocIndex
-                              ? "bg-blue-50 border-l-4 border-blue-500"
-                              : "bg-transparent hover:bg-level-1"
-                          )}
-                        >
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-level-2 flex-shrink-0">
-                            {doc.signed ? (
-                              <IconCircleCheck
-                                size={20}
-                                className="text-txt-success"
-                              />
-                            ) : (
-                              <span className="text-sm font-semibold text-txt-tertiary">
-                                {index + 1}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className={clsx(
-                                "text-sm font-medium truncate",
-                                doc.signed
-                                  ? "text-txt-tertiary"
-                                  : "text-txt-primary"
-                              )}
-                            >
-                              {doc.title}
-                            </p>
-                          </div>
-                          <div className="flex-shrink-0">
-                            <span
-                              className={clsx(
-                                "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
-                                doc.signed
-                                  ? "bg-green-100 text-green-800"
-                                  : index === currentDocIndex
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-gray-100 text-gray-700"
-                              )}
-                            >
-                              {doc.signed
-                                ? __("Signed")
-                                : index === currentDocIndex
-                                  ? __("In review")
-                                  : __("Waiting signature")}
-                            </span>
-                          </div>
-                        </div>
-                      );
-
-                      const totalDocs = signingData.documents.length;
-
-                      if (totalDocs <= 4) {
-                        return signingData.documents.map((doc, index) =>
-                          renderDocumentItem(doc, index)
-                        );
-                      }
-
-                      if (showAllDocuments) {
-                        return (
-                          <>
-                            {signingData.documents.map((doc, index) =>
-                              renderDocumentItem(doc, index)
-                            )}
-                            <button
-                              onClick={() => setShowAllDocuments(false)}
-                              className="w-full py-3 px-4 text-sm text-txt-secondary hover:bg-level-1 transition-colors text-left flex items-center gap-2"
-                            >
-                              <span className="text-txt-tertiary">•••</span>
-                              {__("Show less")}
-                            </button>
-                          </>
-                        );
-                      }
-
-                      // Always show current document in collapsed view with two "show more" buttons
-                      const firstDoc = signingData.documents[0];
-                      const currentIsFirst = currentDocIndex === 0;
-                      const currentIsLast = currentDocIndex === totalDocs - 1;
-
-                      // Calculate hidden docs before and after current
-                      const hiddenBeforeCurrent = currentIsFirst
-                        ? 0
-                        : currentDocIndex - 1;
-                      const hiddenAfterCurrent = currentIsLast
-                        ? 0
-                        : totalDocs - currentDocIndex - 2;
-
-                      return (
-                        <>
-                          {/* First document */}
-                          {renderDocumentItem(firstDoc, 0)}
-
-                          {/* Show more button for documents BEFORE current (signed documents) */}
-                          {hiddenBeforeCurrent > 0 && (
-                            <button
-                              onClick={() => setShowAllDocuments(true)}
-                              className="w-full py-3 px-4 text-sm text-txt-secondary hover:bg-level-1 transition-colors text-left flex items-center gap-2"
-                            >
-                              <span className="text-txt-tertiary">•••</span>
-                              {sprintf(
-                                __("Show %s more documents"),
-                                hiddenBeforeCurrent
-                              )}
-                            </button>
-                          )}
-
-                          {/* Current document (if not first) */}
-                          {!currentIsFirst &&
-                            renderDocumentItem(currentDoc, currentDocIndex)}
-
-                          {/* Show more button for documents AFTER current (upcoming documents) */}
-                          {hiddenAfterCurrent > 0 && (
-                            <button
-                              onClick={() => setShowAllDocuments(true)}
-                              className="w-full py-3 px-4 text-sm text-txt-secondary hover:bg-level-1 transition-colors text-left flex items-center gap-2"
-                            >
-                              <span className="text-txt-tertiary">•••</span>
-                              {sprintf(
-                                __("Show %s more documents"),
-                                hiddenAfterCurrent
-                              )}
-                            </button>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                </Card>
-                <p className="text-txt-secondary text-sm mb-6">
-                  {__("Please review the document carefully before signing.")}
-                </p>
-              </>
-            )}
             {isMobile && pdfUrl && (
               <Button variant="secondary" asChild className="my-6 w-full">
                 <a target="_blank" rel="noopener noreferrer" href={pdfUrl}>
@@ -416,7 +418,7 @@ export default function DocumentSigningRequestsPage() {
             {!currentDoc.signed && !allSigned && (
               <>
                 <Button
-                  onClick={handleSignDocument}
+                  onClick={() => void handleSignDocument()}
                   className="h-10 w-full"
                   icon={signing ? Spinner : undefined}
                   disabled={signing}
@@ -425,7 +427,7 @@ export default function DocumentSigningRequestsPage() {
                 </Button>
                 <p className="text-xs text-txt-tertiary mt-2">
                   {__(
-                    "By clicking 'I acknowledge and agree', your digital signature will be recorded."
+                    "By clicking 'I acknowledge and agree', your digital signature will be recorded.",
                   )}
                 </p>
               </>
@@ -439,10 +441,12 @@ export default function DocumentSigningRequestsPage() {
               href="https://www.getprobo.com/"
               className={clsx(
                 "flex gap-1 text-sm font-medium text-txt-tertiary items-center w-max mx-auto",
-                isMobile ? "mt-15" : "mt-30"
+                isMobile ? "mt-15" : "mt-30",
               )}
             >
-              Powered by <Logo withPicto className="h-6" />
+              Powered by
+              {" "}
+              <Logo withPicto className="h-6" />
             </a>
           </div>
           {isDesktop && (

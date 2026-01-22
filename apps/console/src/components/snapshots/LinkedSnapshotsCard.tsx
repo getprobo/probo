@@ -136,7 +136,7 @@ export function LinkedSnapshotsCard<Params>(props: Props<Params>) {
               </Td>
             </Tr>
           )}
-          {snapshots.map((snapshot) => (
+          {snapshots.map(snapshot => (
             <SnapshotRow
               key={snapshot.id}
               snapshot={snapshot}

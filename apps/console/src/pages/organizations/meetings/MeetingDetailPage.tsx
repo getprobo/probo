@@ -72,13 +72,13 @@ export default function MeetingDetailPage(props: Props) {
             input: { meetingId: meeting.id },
           },
           onSuccess: () => {
-            navigate(`/organizations/${organizationId}/meetings`);
+            void navigate(`/organizations/${organizationId}/meetings`);
           },
         }),
       {
         message: sprintf(
           __(
-            'This will permanently delete the meeting "%s". This action cannot be undone.',
+            "This will permanently delete the meeting \"%s\". This action cannot be undone.",
           ),
           meeting.name,
         ),
@@ -134,7 +134,7 @@ export default function MeetingDetailPage(props: Props) {
         />
         {meeting.attendees && meeting.attendees.length > 0 && (
           <div className="flex gap-2 items-center flex-wrap">
-            {meeting.attendees.map((attendee) => (
+            {meeting.attendees.map(attendee => (
               <div key={attendee.id} className="flex gap-2 items-center">
                 <Avatar name={attendee.fullName ?? ""} />
                 <Link

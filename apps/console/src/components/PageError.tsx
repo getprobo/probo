@@ -26,8 +26,8 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
   // Reset error boundary on page change
   useEffect(() => {
     if (
-      location.pathname !== baseLocation.current.pathname &&
-      resetErrorBoundary
+      location.pathname !== baseLocation.current.pathname
+      && resetErrorBoundary
     ) {
       resetErrorBoundary();
     }
@@ -54,7 +54,7 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     );
   }
 
-  if (!error || (error && error.toString().includes("PAGE_NOT_FOUND"))) {
+  if (!error || (error instanceof Error && error.message.includes("PAGE_NOT_FOUND"))) {
     return (
       <div className={classNames.wrapper}>
         <h1 className={classNames.title}>
@@ -68,7 +68,7 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     );
   }
 
-  if (error && error.toString().includes("FORBIDDEN")) {
+  if (error instanceof Error && error.message.includes("FORBIDDEN")) {
     return (
       <div className={classNames.wrapper}>
         <h1 className={classNames.title}>
@@ -82,7 +82,7 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     );
   }
 
-  if (error && error.toString().includes("UNAUTHORIZED")) {
+  if (error instanceof Error && error.message.includes("UNAUTHORIZED")) {
     return (
       <div className={classNames.wrapper}>
         <h1 className={classNames.title}>
@@ -103,7 +103,8 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
         <summary className={classNames.description}>
           {__("Something went wrong")}
         </summary>
-        <p className={classNames.detail}>{error.toString()}</p>
+        {error instanceof Error
+          && <p className={classNames.detail}>{error.message}</p>}
       </details>
     </div>
   );

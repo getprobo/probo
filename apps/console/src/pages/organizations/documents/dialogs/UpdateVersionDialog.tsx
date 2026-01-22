@@ -10,7 +10,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { type RefObject } from "react";
+import { useEffect, type RefObject } from "react";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import type { UpdateVersionDialogCreateMutation } from "/__generated__/core/UpdateVersionDialogCreateMutation.graphql";
@@ -82,10 +82,10 @@ export default function UpdateVersionDialog({
 
   const version = document.versions.edges[0].node;
   const isDraft = version?.status === "DRAFT";
-  const [createDraftDocumentVersion, isCreatingDraft] =
-    useMutation<UpdateVersionDialogCreateMutation>(createDraftDocument);
-  const [updateDocumentVersion, isUpdating] =
-    useMutationWithToasts<UpdateVersionDialogUpdateMutation>(
+  const [createDraftDocumentVersion, isCreatingDraft]
+    = useMutation<UpdateVersionDialogCreateMutation>(createDraftDocument);
+  const [updateDocumentVersion, isUpdating]
+    = useMutationWithToasts<UpdateVersionDialogUpdateMutation>(
       UpdateDocumentMutation,
       {
         successMessage: __("Document updated successfully."),
@@ -98,19 +98,23 @@ export default function UpdateVersionDialog({
     },
   });
 
-  ref.current = {
-    open: () => {
-      dialogRef.current?.open();
-    },
-  };
+  useEffect(() => {
+    if (!ref.current) {
+      ref.current = {
+        open: () => {
+          dialogRef.current?.open();
+        },
+      };
+    }
+  });
 
   if (!version) {
     return;
   }
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = async (data: z.infer<typeof versionSchema>) => {
     if (isDraft) {
-      updateDocumentVersion({
+      await updateDocumentVersion({
         variables: {
           input: {
             documentVersionId: version.id,
@@ -140,11 +144,11 @@ export default function UpdateVersionDialog({
             return;
           }
 
-          const newVersionId =
-            createResponse?.createDraftDocumentVersion?.documentVersionEdge
+          const newVersionId
+            = createResponse?.createDraftDocumentVersion?.documentVersionEdge
               ?.node?.id;
           if (newVersionId && data.content !== version.content) {
-            updateDocumentVersion({
+            void updateDocumentVersion({
               variables: {
                 input: {
                   documentVersionId: newVersionId,
@@ -161,7 +165,7 @@ export default function UpdateVersionDialog({
         },
       });
     }
-  });
+  };
 
   const isLoading = isCreatingDraft || isUpdating;
 
@@ -170,7 +174,7 @@ export default function UpdateVersionDialog({
       ref={dialogRef}
       title={<Breadcrumb items={[__("Documents"), __("Edit document")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent>
           <Textarea
             id="content"

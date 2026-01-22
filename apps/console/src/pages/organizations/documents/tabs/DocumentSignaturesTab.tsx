@@ -72,8 +72,8 @@ export default function DocumentSignaturesTab() {
   }
 
   const toggleState = (state: SignatureState) => {
-    setSelectedStates((prev) =>
-      prev.includes(state) ? prev.filter((s) => s !== state) : [...prev, state],
+    setSelectedStates(prev =>
+      prev.includes(state) ? prev.filter(s => s !== state) : [...prev, state],
     );
   };
 
@@ -127,9 +127,9 @@ function SignatureList(props: {
     DocumentSignaturesTabRefetchQuery,
     DocumentSignaturesTab_version$key
   >(versionFragment, propVersion);
-  const signatures = version.signatures?.edges?.map((edge) => edge.node) ?? [];
+  const signatures = version.signatures?.edges?.map(edge => edge.node) ?? [];
   const { __ } = useTranslate();
-  const signatureMap = new Map(signatures.map((s) => [s.signedBy.id, s]));
+  const signatureMap = new Map(signatures.map(s => [s.signedBy.id, s]));
   const organizationId = useOrganizationId();
   const people = usePeople(organizationId, { excludeContractEnded: true });
   const signable = version.status === "PUBLISHED";
@@ -142,8 +142,8 @@ function SignatureList(props: {
       return;
     }
 
-    const filter =
-      selectedStates.length > 0 ? { states: selectedStates } : null;
+    const filter
+      = selectedStates.length > 0 ? { states: selectedStates } : null;
 
     refetch({ signatureFilter: filter });
   }, [selectedStates, refetch]);
@@ -165,9 +165,9 @@ function SignatureList(props: {
   }
 
   // When a filter is active, only show people who have signatures in the filtered results
-  const filteredPeople =
-    selectedStates.length > 0
-      ? people.filter((p) => signatureMap.has(p.id))
+  const filteredPeople
+    = selectedStates.length > 0
+      ? people.filter(p => signatureMap.has(p.id))
       : people;
 
   if (filteredPeople.length === 0 && selectedStates.length > 0) {
@@ -180,7 +180,7 @@ function SignatureList(props: {
 
   return (
     <div className="space-y-2 divide-y divide-border-solid">
-      {filteredPeople.map((p) => (
+      {filteredPeople.map(p => (
         <SignatureItem
           key={p.id}
           versionId={version.id}
@@ -286,7 +286,7 @@ function SignatureItem(props: {
             className="ml-auto"
             disabled={isSendingRequest}
             onClick={() => {
-              requestSignature({
+              void requestSignature({
                 variables: {
                   input: {
                     documentVersionId: props.versionId,
@@ -315,11 +315,13 @@ function SignatureItem(props: {
           {signature.signedBy.fullName}
         </div>
         <div className="text-xs text-txt-secondary flex items-center gap-1">
-          {isSigned ? (
-            <IconCircleCheck size={16} className="text-txt-accent" />
-          ) : (
-            <IconClock size={16} />
-          )}
+          {isSigned
+            ? (
+                <IconCircleCheck size={16} className="text-txt-accent" />
+              )
+            : (
+                <IconClock size={16} />
+              )}
           <span>
             {sprintf(
               label,
@@ -330,31 +332,33 @@ function SignatureItem(props: {
           </span>
         </div>
       </div>
-      {isSigned ? (
-        <Badge variant="success" className="ml-auto">
-          {__("Signed")}
-        </Badge>
-      ) : (
-        signature.canCancel && (
-          <Button
-            variant="danger"
-            className="ml-auto"
-            disabled={isCancellingSignature}
-            onClick={() => {
-              cancelSignature({
-                variables: {
-                  input: {
-                    documentVersionSignatureId: signature.id,
-                  },
-                  connections: [props.connectionId],
-                },
-              });
-            }}
-          >
-            {__("Cancel request")}
-          </Button>
-        )
-      )}
+      {isSigned
+        ? (
+            <Badge variant="success" className="ml-auto">
+              {__("Signed")}
+            </Badge>
+          )
+        : (
+            signature.canCancel && (
+              <Button
+                variant="danger"
+                className="ml-auto"
+                disabled={isCancellingSignature}
+                onClick={() => {
+                  void cancelSignature({
+                    variables: {
+                      input: {
+                        documentVersionSignatureId: signature.id,
+                      },
+                      connections: [props.connectionId],
+                    },
+                  });
+                }}
+              >
+                {__("Cancel request")}
+              </Button>
+            )
+          )}
     </div>
   );
 }

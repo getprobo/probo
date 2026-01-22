@@ -88,8 +88,8 @@ export function OrganizationForm(props: {
     string | null
   >(null);
 
-  const { canUpdate, ...organization } =
-    useFragment<OrganizationFormFragment$key>(fragment, fKey);
+  const { canUpdate, ...organization }
+    = useFragment<OrganizationFormFragment$key>(fragment, fKey);
 
   const [updateOrganization, isUpdatingOrganization] = useMutationWithToasts(
     updateOrganizationMutation,
@@ -98,8 +98,8 @@ export function OrganizationForm(props: {
       errorMessage: __("Failed to update organization"),
     },
   );
-  const [deleteHorizontalLogo, isDeletingHorizontalLogo] =
-    useMutationWithToasts(deleteHorizontalLogoMutation, {
+  const [deleteHorizontalLogo, isDeletingHorizontalLogo]
+    = useMutationWithToasts(deleteHorizontalLogoMutation, {
       successMessage: __("Horizontal logo deleted successfully"),
       errorMessage: __("Failed to delete horizontal logo"),
     });
@@ -127,7 +127,7 @@ export function OrganizationForm(props: {
     };
     reader.readAsDataURL(file);
 
-    updateOrganization({
+    void updateOrganization({
       variables: {
         input: {
           organizationId: organization.id,
@@ -155,7 +155,7 @@ export function OrganizationForm(props: {
     };
     reader.readAsDataURL(file);
 
-    updateOrganization({
+    void updateOrganization({
       variables: {
         input: {
           organizationId: organization.id,
@@ -171,8 +171,8 @@ export function OrganizationForm(props: {
     });
   };
 
-  const handleDeleteHorizontalLogo = () => {
-    deleteHorizontalLogo({
+  const handleDeleteHorizontalLogo = async () => {
+    await deleteHorizontalLogo({
       variables: {
         input: {
           organizationId: organization.id,
@@ -184,8 +184,8 @@ export function OrganizationForm(props: {
     });
   };
 
-  const onSubmit = handleSubmit((data: OrganizationFormData) => {
-    updateOrganization({
+  const onSubmit = handleSubmit(async (data: OrganizationFormData) => {
+    await updateOrganization({
       variables: {
         input: {
           organizationId: organization.id,
@@ -200,7 +200,7 @@ export function OrganizationForm(props: {
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={e => void onSubmit(e)} className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium">{__("Organization details")}</h2>
         {formState.isSubmitting && <Spinner />}
@@ -241,9 +241,9 @@ export function OrganizationForm(props: {
               <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
                 <img
                   src={
-                    horizontalLogoPreview ||
-                    organization.horizontalLogoUrl ||
-                    undefined
+                    horizontalLogoPreview
+                    || organization.horizontalLogoUrl
+                    || undefined
                   }
                   alt={__("Horizontal logo")}
                   className="h-12 max-w-xs object-contain"
@@ -267,7 +267,7 @@ export function OrganizationForm(props: {
             {canUpdate && organization.horizontalLogoUrl && (
               <Dialog
                 ref={deleteDialogRef}
-                trigger={
+                trigger={(
                   <Button
                     type="button"
                     variant="quaternary"
@@ -275,7 +275,7 @@ export function OrganizationForm(props: {
                     aria-label={__("Delete horizontal logo")}
                     className="text-red-600 hover:text-red-700"
                   />
-                }
+                )}
                 title={__("Delete Horizontal Logo")}
                 className="max-w-md"
               >
@@ -291,7 +291,7 @@ export function OrganizationForm(props: {
                 <DialogFooter>
                   <Button
                     variant="danger"
-                    onClick={handleDeleteHorizontalLogo}
+                    onClick={() => void handleDeleteHorizontalLogo()}
                     disabled={isDeletingHorizontalLogo}
                     icon={isDeletingHorizontalLogo ? Spinner : IconTrashCan}
                   >

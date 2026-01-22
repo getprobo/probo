@@ -150,7 +150,7 @@ export const useDeleteAsset = (
       {
         message: sprintf(
           __(
-            'This will permanently delete "%s". This action cannot be undone.',
+            "This will permanently delete \"%s\". This action cannot be undone.",
           ),
           asset.name,
         ),

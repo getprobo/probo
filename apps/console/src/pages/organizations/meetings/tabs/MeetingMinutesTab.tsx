@@ -9,13 +9,15 @@ export default function MeetingMinutesTab() {
 
   return (
     <div>
-      {meeting.minutes ? (
-        <Markdown content={meeting.minutes} />
-      ) : (
-        <div className="text-txt-tertiary text-sm">
-          No minutes recorded yet. Click "Edit minutes" to add meeting minutes.
-        </div>
-      )}
+      {meeting.minutes
+        ? (
+            <Markdown content={meeting.minutes} />
+          )
+        : (
+            <div className="text-txt-tertiary text-sm">
+              No minutes recorded yet. Click "Edit minutes" to add meeting minutes.
+            </div>
+          )}
     </div>
   );
 }

@@ -24,7 +24,7 @@ export const frameworkRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<FrameworkGraphListQuery>(coreEnvironment, frameworksQuery, {
-        organizationId: organizationId!,
+        organizationId: organizationId,
       }),
     ),
     Component: withQueryRef(
@@ -36,7 +36,7 @@ export const frameworkRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ frameworkId }) =>
       loadQuery<FrameworkGraphNodeQuery>(coreEnvironment, frameworkNodeQuery, {
-        frameworkId: frameworkId!,
+        frameworkId: frameworkId,
       }),
     ),
     Component: withQueryRef(
@@ -54,7 +54,7 @@ export const frameworkRoutes = [
           loadQuery<FrameworkGraphControlNodeQuery>(
             coreEnvironment,
             frameworkControlNodeQuery,
-            { controlId: controlId! },
+            { controlId: controlId },
           ),
         ),
         Component: withQueryRef(

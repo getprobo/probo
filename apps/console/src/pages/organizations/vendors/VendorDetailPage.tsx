@@ -52,13 +52,13 @@ export default function VendorDetailPage(props: Props) {
     vendor as VendorComplianceTabFragment$key,
   ).complianceReports.edges.length;
 
-  const vendorsUrl =
-    isSnapshotMode && snapshotId
+  const vendorsUrl
+    = isSnapshotMode && snapshotId
       ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors`
       : `/organizations/${organizationId}/vendors`;
 
-  const baseVendorUrl =
-    isSnapshotMode && snapshotId
+  const baseVendorUrl
+    = isSnapshotMode && snapshotId
       ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors/${vendor.id}`
       : `/organizations/${organizationId}/vendors/${vendor.id}`;
 
@@ -90,7 +90,7 @@ export default function VendorDetailPage(props: Props) {
         {!isSnapshotMode && (
           <div className="flex gap-2 items-center">
             {vendor.canAssess && (
-              <ImportAssessmentDialog vendorId={vendor.id!}>
+              <ImportAssessmentDialog vendorId={vendor.id}>
                 <Button icon={IconPageTextLine} variant="secondary">
                   {__("Assessment From Website")}
                 </Button>

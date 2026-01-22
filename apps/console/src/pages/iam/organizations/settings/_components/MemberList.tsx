@@ -73,22 +73,24 @@ export function MemberList(props: { fKey: MemberListFragment$key }) {
         </Tr>
       </Thead>
       <Tbody>
-        {membersPagination.data.members.totalCount === 0 ? (
-          <Tr>
-            <Td colSpan={5} className="text-center text-txt-secondary">
-              {__("No members")}
-            </Td>
-          </Tr>
-        ) : (
-          membersPagination.data.members.edges.map(({ node: membership }) => (
-            <MemberListItem
-              connectionId={membersPagination.data.members.__id}
-              key={membership.id}
-              fKey={membership}
-              onRefetch={refetchMemberships}
-            />
-          ))
-        )}
+        {membersPagination.data.members.totalCount === 0
+          ? (
+              <Tr>
+                <Td colSpan={5} className="text-center text-txt-secondary">
+                  {__("No members")}
+                </Td>
+              </Tr>
+            )
+          : (
+              membersPagination.data.members.edges.map(({ node: membership }) => (
+                <MemberListItem
+                  connectionId={membersPagination.data.members.__id}
+                  key={membership.id}
+                  fKey={membership}
+                  onRefetch={refetchMemberships}
+                />
+              ))
+            )}
       </Tbody>
     </SortableTable>
   );

@@ -18,7 +18,7 @@ export const statesOfApplicabilityRoutes = [
       loadQuery<StateOfApplicabilityGraphPaginatedQuery>(
         coreEnvironment,
         paginatedStateOfApplicabilityQuery,
-        { organizationId: organizationId! },
+        { organizationId: organizationId },
       ),
     ),
     Component: withQueryRef(
@@ -32,7 +32,7 @@ export const statesOfApplicabilityRoutes = [
       loadQuery<StateOfApplicabilityGraphPaginatedQuery>(
         coreEnvironment,
         paginatedStateOfApplicabilityQuery,
-        { organizationId: organizationId! },
+        { organizationId: organizationId },
       ),
     ),
     Component: withQueryRef(
@@ -46,7 +46,7 @@ export const statesOfApplicabilityRoutes = [
       loadQuery<StateOfApplicabilityGraphNodeQuery>(
         coreEnvironment,
         stateOfApplicabilityNodeQuery,
-        { stateOfApplicabilityId: stateOfApplicabilityId! },
+        { stateOfApplicabilityId: stateOfApplicabilityId },
       ),
     ),
     Component: withQueryRef(
@@ -60,7 +60,7 @@ export const statesOfApplicabilityRoutes = [
       loadQuery<StateOfApplicabilityGraphNodeQuery>(
         coreEnvironment,
         stateOfApplicabilityNodeQuery,
-        { stateOfApplicabilityId: stateOfApplicabilityId! },
+        { stateOfApplicabilityId: stateOfApplicabilityId },
       ),
     ),
     Component: withQueryRef(

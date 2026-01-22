@@ -5,8 +5,8 @@ import { useTranslate } from "@probo/i18n";
 import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-export const ProcessingActivitiesConnectionKey =
-  "ProcessingActivitiesPage_processingActivities";
+export const ProcessingActivitiesConnectionKey
+  = "ProcessingActivitiesPage_processingActivities";
 export type ProcessingActivityDPIAResidualRisk = "LOW" | "MEDIUM" | "HIGH";
 
 export const processingActivitiesQuery = graphql`

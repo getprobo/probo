@@ -16,7 +16,7 @@ const schema = z.object({
   position: z.string().min(1).nullable(),
   additionalEmailAddresses: z.preprocess(
     // Empty additional emails are skipped
-    (v) => (v as string[]).filter((v) => !!v),
+    v => (v as string[]).filter(v => !!v),
     z.array(z.string().email()),
   ),
   kind: z.enum(peopleRoles),
@@ -29,8 +29,8 @@ export default function PeopleProfileTab() {
     people: PeopleGraphNodeQuery$data["node"];
   }>();
   const { __ } = useTranslate();
-  const { control, formState, handleSubmit, register, reset } =
-    useFormWithSchema(schema, {
+  const { control, formState, handleSubmit, register, reset }
+    = useFormWithSchema(schema, {
       defaultValues: {
         kind: people.kind,
         fullName: people.fullName,
@@ -48,7 +48,7 @@ export default function PeopleProfileTab() {
       errorMessage: __("Failed to update member"),
     },
   );
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = handleSubmit(async (data: z.infer<typeof schema>) => {
     const input = {
       id: people.id!,
       fullName: data.fullName,
@@ -60,7 +60,7 @@ export default function PeopleProfileTab() {
       contractEndDate: formatDatetime(data.contractEndDate) ?? null,
     };
 
-    mutate({
+    await mutate({
       variables: { input },
       onCompleted: () => {
         reset(data);
@@ -69,7 +69,7 @@ export default function PeopleProfileTab() {
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={e => void onSubmit(e)} className="space-y-4">
       <Card padded className="space-y-4">
         <Field label={__("Full name")} {...register("fullName")} type="text" />
         <Field

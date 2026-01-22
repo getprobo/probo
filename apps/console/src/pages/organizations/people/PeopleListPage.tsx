@@ -59,7 +59,7 @@ export default function PeopleListPage({
   usePageTitle(__("Members"));
 
   const hasAnyAction = people.some(
-    ({ canDelete, canUpdate }) => canDelete || canUpdate
+    ({ canDelete, canUpdate }) => canDelete || canUpdate,
   );
 
   return (
@@ -67,7 +67,7 @@ export default function PeopleListPage({
       <PageHeader
         title={__("Members")}
         description={__(
-          "Keep track of your company's workforce and their progress towards completing tasks assigned to them."
+          "Keep track of your company's workforce and their progress towards completing tasks assigned to them.",
         )}
       >
         {data.canCreatePeople && (
@@ -91,7 +91,7 @@ export default function PeopleListPage({
           </Tr>
         </Thead>
         <Tbody>
-          {people.map((person) => (
+          {people.map(person => (
             <PeopleRow
               key={person.id}
               people={person}

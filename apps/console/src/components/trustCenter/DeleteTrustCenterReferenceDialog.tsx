@@ -60,7 +60,7 @@ export function DeleteTrustCenterReferenceDialog({
         <p className="text-txt-secondary">
           {sprintf(
             __("Are you sure you want to delete the reference \"%s\"?"),
-            referenceName
+            referenceName,
           )}
         </p>
         <p className="text-txt-secondary mt-2">
@@ -71,7 +71,7 @@ export function DeleteTrustCenterReferenceDialog({
       <DialogFooter>
         <Button
           variant="danger"
-          onClick={handleDelete}
+          onClick={() => void handleDelete()}
           disabled={isDeleting}
           icon={isDeleting ? Spinner : IconTrashCan}
         >

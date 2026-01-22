@@ -141,7 +141,7 @@ export function AssetsTable(props: Props) {
           <VendorsCell
             name="vendorIds"
             organizationId={organizationId}
-            defaultValue={item?.vendors?.edges?.map((edge) => edge.node) ?? []}
+            defaultValue={item?.vendors?.edges?.map(edge => edge.node) ?? []}
           />
         </>
       )}
@@ -163,7 +163,7 @@ const useDeleteAsset = (connectionId: string) => {
         promisifyMutation(mutate)({
           variables: {
             input: {
-              assetId: asset.id!,
+              assetId: asset.id,
             },
             connections: [connectionId],
           },
@@ -171,7 +171,7 @@ const useDeleteAsset = (connectionId: string) => {
       {
         message: sprintf(
           __(
-            'This will permanently delete "%s". This action cannot be undone.',
+            "This will permanently delete \"%s\". This action cannot be undone.",
           ),
           asset.name,
         ),

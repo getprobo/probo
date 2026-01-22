@@ -39,48 +39,50 @@ export function EmployeeDocumentsPage(props: {
     queryRef,
   );
 
-  const documents = signableDocuments.edges.map((edge) => edge.node);
+  const documents = signableDocuments.edges.map(edge => edge.node);
 
   usePageTitle(__("Documents"));
 
   return (
     <div className="space-y-6">
       <PageHeader title={__("Documents")} />
-      {documents.length > 0 ? (
-        <Card>
-          <table className="w-full">
-            <Thead>
-              <Tr>
-                <Th className="min-w-0 pr-12">{__("Name")}</Th>
-                <Th className="w-48">{__("Type")}</Th>
-                <Th className="w-36">{__("Classification")}</Th>
-                <Th className="w-40">{__("Last update")}</Th>
-                <Th className="w-32">{__("Signed")}</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {documents.map((document) => (
-                <DocumentRow
-                  key={document.id}
-                  fKey={document}
-                  organizationId={organizationId}
-                />
-              ))}
-            </Tbody>
-          </table>
-        </Card>
-      ) : (
-        <Card padded>
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No documents yet")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__("No documents have been requested for your signature.")}
-            </p>
-          </div>
-        </Card>
-      )}
+      {documents.length > 0
+        ? (
+            <Card>
+              <table className="w-full">
+                <Thead>
+                  <Tr>
+                    <Th className="min-w-0 pr-12">{__("Name")}</Th>
+                    <Th className="w-48">{__("Type")}</Th>
+                    <Th className="w-36">{__("Classification")}</Th>
+                    <Th className="w-40">{__("Last update")}</Th>
+                    <Th className="w-32">{__("Signed")}</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {documents.map(document => (
+                    <DocumentRow
+                      key={document.id}
+                      fKey={document}
+                      organizationId={organizationId}
+                    />
+                  ))}
+                </Tbody>
+              </table>
+            </Card>
+          )
+        : (
+            <Card padded>
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">
+                  {__("No documents yet")}
+                </h3>
+                <p className="text-txt-tertiary mb-4">
+                  {__("No documents have been requested for your signature.")}
+                </p>
+              </div>
+            </Card>
+          )}
     </div>
   );
 }

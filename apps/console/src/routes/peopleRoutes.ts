@@ -23,7 +23,7 @@ export const peopleRoutes = [
       loadQuery<PeopleGraphPaginatedQuery>(
         coreEnvironment,
         paginatedPeopleQuery,
-        { organizationId: organizationId! },
+        { organizationId: organizationId },
       ),
     ),
     Component: withQueryRef(
@@ -35,7 +35,7 @@ export const peopleRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ peopleId }) =>
       loadQuery<PeopleGraphNodeQuery>(coreEnvironment, peopleNodeQuery, {
-        peopleId: peopleId!,
+        peopleId: peopleId,
       }),
     ),
     Component: withQueryRef(

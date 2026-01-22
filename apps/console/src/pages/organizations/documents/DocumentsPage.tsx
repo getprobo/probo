@@ -108,20 +108,20 @@ export default function DocumentsPage(props: Props) {
     props.queryRef,
   ).organization;
 
-  const { email: defaultEmail } = use(CurrentUser)
+  const { email: defaultEmail } = use(CurrentUser);
   const pagination = usePaginationFragment(
     documentsFragment,
     organization as DocumentsPageListFragment$key,
   );
 
   const documents = pagination.data.documents.edges
-    .map((edge) => edge.node)
+    .map(edge => edge.node)
     .filter(Boolean);
   const connectionId = pagination.data.documents.__id;
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
   const [bulkDeleteDocuments] = useBulkDeleteDocumentsMutation();
-  const [bulkExportDocuments, isBulkExporting] =
-    useBulkExportDocumentsMutation();
+  const [bulkExportDocuments, isBulkExporting]
+    = useBulkExportDocumentsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
   const confirm = useConfirm();
   const bulkExportDialogRef = useRef<BulkExportDialogRef>(null);
@@ -138,8 +138,8 @@ export default function DocumentsPage(props: Props) {
   );
   const hasAnyAction = canDeleteAny || canUpdateAny;
 
-  const handleSendSigningNotifications = () => {
-    sendSigningNotifications({
+  const handleSendSigningNotifications = async () => {
+    await sendSigningNotifications({
       variables: {
         input: { organizationId: organization.id },
       },
@@ -169,7 +169,7 @@ export default function DocumentsPage(props: Props) {
     );
   };
 
-  const handleBulkExport = (options: {
+  const handleBulkExport = async (options: {
     withWatermark: boolean;
     withSignatures: boolean;
     watermarkEmail?: string;
@@ -178,15 +178,14 @@ export default function DocumentsPage(props: Props) {
       documentIds: selection,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
-      ...(options.withWatermark &&
-        options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+      ...(options.withWatermark
+        && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
     };
 
-    bulkExportDocuments({
+    await bulkExportDocuments({
       variables: { input },
-    }).then(() => {
-      clear();
     });
+    clear();
   };
 
   return (
@@ -200,7 +199,7 @@ export default function DocumentsPage(props: Props) {
             <Button
               icon={IconBell2}
               variant="secondary"
-              onClick={handleSendSigningNotifications}
+              onClick={void handleSendSigningNotifications}
             >
               {__("Send signing notifications")}
             </Button>
@@ -215,133 +214,139 @@ export default function DocumentsPage(props: Props) {
           )}
         </div>
       </PageHeader>
-      {documents.length > 0 ? (
-        <SortableTable {...pagination}>
-          <Thead>
-            {selection.length === 0 ? (
-              <Tr>
-                <Th className="w-18">
-                  <Checkbox
-                    checked={
-                      selection.length === documents.length &&
-                      documents.length > 0
-                    }
-                    onChange={() => reset(documents.map((d) => d.id))}
+      {documents.length > 0
+        ? (
+            <SortableTable {...pagination}>
+              <Thead>
+                {selection.length === 0
+                  ? (
+                      <Tr>
+                        <Th className="w-18">
+                          <Checkbox
+                            checked={
+                              selection.length === documents.length
+                              && documents.length > 0
+                            }
+                            onChange={() => reset(documents.map(d => d.id))}
+                          />
+                        </Th>
+                        <SortableTh field="TITLE" className="min-w-0">
+                          {__("Name")}
+                        </SortableTh>
+                        <Th className="w-24">{__("Status")}</Th>
+                        <Th className="w-20">{__("Version")}</Th>
+                        <SortableTh field="DOCUMENT_TYPE" className="w-28">
+                          {__("Type")}
+                        </SortableTh>
+                        <Th className="w-32">{__("Classification")}</Th>
+                        <Th className="w-60">{__("Owner")}</Th>
+                        <Th className="w-60">{__("Last update")}</Th>
+                        <Th className="w-20">{__("Signatures")}</Th>
+                        {hasAnyAction && <Th className="w-18"></Th>}
+                      </Tr>
+                    )
+                  : (
+                      <Tr>
+                        <Th colspan={10} compact>
+                          <div className="flex justify-between items-center h-8">
+                            <div className="flex gap-2 items-center">
+                              {sprintf(__("%s documents selected"), selection.length)}
+                              {" "}
+                              -
+                              <button
+                                onClick={clear}
+                                className="flex gap-1 items-center hover:text-txt-primary"
+                              >
+                                <IconCrossLargeX size={12} />
+                                {__("Clear selection")}
+                              </button>
+                            </div>
+                            <div className="flex gap-2 items-center">
+                              {canUpdateAny && (
+                                <PublishDocumentsDialog
+                                  documentIds={selection}
+                                  onSave={clear}
+                                >
+                                  <Button
+                                    icon={IconCheckmark1}
+                                    className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                  >
+                                    {__("Publish")}
+                                  </Button>
+                                </PublishDocumentsDialog>
+                              )}
+                              {canRequestAnySignatures && (
+                                <SignatureDocumentsDialog
+                                  documentIds={selection}
+                                  onSave={clear}
+                                >
+                                  <Button
+                                    variant="secondary"
+                                    icon={IconSignature}
+                                    className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                  >
+                                    {__("Request signature")}
+                                  </Button>
+                                </SignatureDocumentsDialog>
+                              )}
+                              <BulkExportDialog
+                                ref={bulkExportDialogRef}
+                                onExport={handleBulkExport}
+                                isLoading={isBulkExporting}
+                                defaultEmail={defaultEmail}
+                                selectedCount={selection.length}
+                              >
+                                <Button
+                                  variant="secondary"
+                                  icon={IconArrowDown}
+                                  className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                >
+                                  {__("Export")}
+                                </Button>
+                              </BulkExportDialog>
+                              {canDeleteAny && (
+                                <Button
+                                  variant="danger"
+                                  icon={IconTrashCan}
+                                  onClick={handleBulkDelete}
+                                  className="py-0.5 px-2 text-xs h-6 min-h-6"
+                                >
+                                  {__("Delete")}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </Th>
+                      </Tr>
+                    )}
+              </Thead>
+              <Tbody>
+                {documents.map(document => (
+                  <DocumentRow
+                    checked={selection.includes(document.id)}
+                    onCheck={() => toggle(document.id)}
+                    key={document.id}
+                    document={document}
+                    organizationId={organization.id}
+                    connectionId={connectionId}
+                    hasAnyAction={hasAnyAction}
                   />
-                </Th>
-                <SortableTh field="TITLE" className="min-w-0">
-                  {__("Name")}
-                </SortableTh>
-                <Th className="w-24">{__("Status")}</Th>
-                <Th className="w-20">{__("Version")}</Th>
-                <SortableTh field="DOCUMENT_TYPE" className="w-28">
-                  {__("Type")}
-                </SortableTh>
-                <Th className="w-32">{__("Classification")}</Th>
-                <Th className="w-60">{__("Owner")}</Th>
-                <Th className="w-60">{__("Last update")}</Th>
-                <Th className="w-20">{__("Signatures")}</Th>
-                {hasAnyAction && <Th className="w-18"></Th>}
-              </Tr>
-            ) : (
-              <Tr>
-                <Th colspan={10} compact>
-                  <div className="flex justify-between items-center h-8">
-                    <div className="flex gap-2 items-center">
-                      {sprintf(__("%s documents selected"), selection.length)} -
-                      <button
-                        onClick={clear}
-                        className="flex gap-1 items-center hover:text-txt-primary"
-                      >
-                        <IconCrossLargeX size={12} />
-                        {__("Clear selection")}
-                      </button>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      {canUpdateAny && (
-                        <PublishDocumentsDialog
-                          documentIds={selection}
-                          onSave={clear}
-                        >
-                          <Button
-                            icon={IconCheckmark1}
-                            className="py-0.5 px-2 text-xs h-6 min-h-6"
-                          >
-                            {__("Publish")}
-                          </Button>
-                        </PublishDocumentsDialog>
-                      )}
-                      {canRequestAnySignatures && (
-                        <SignatureDocumentsDialog
-                          documentIds={selection}
-                          onSave={clear}
-                        >
-                          <Button
-                            variant="secondary"
-                            icon={IconSignature}
-                            className="py-0.5 px-2 text-xs h-6 min-h-6"
-                          >
-                            {__("Request signature")}
-                          </Button>
-                        </SignatureDocumentsDialog>
-                      )}
-                      <BulkExportDialog
-                        ref={bulkExportDialogRef}
-                        onExport={handleBulkExport}
-                        isLoading={isBulkExporting}
-                        defaultEmail={defaultEmail}
-                        selectedCount={selection.length}
-                      >
-                        <Button
-                          variant="secondary"
-                          icon={IconArrowDown}
-                          className="py-0.5 px-2 text-xs h-6 min-h-6"
-                        >
-                          {__("Export")}
-                        </Button>
-                      </BulkExportDialog>
-                      {canDeleteAny && (
-                        <Button
-                          variant="danger"
-                          icon={IconTrashCan}
-                          onClick={handleBulkDelete}
-                          className="py-0.5 px-2 text-xs h-6 min-h-6"
-                        >
-                          {__("Delete")}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Th>
-              </Tr>
-            )}
-          </Thead>
-          <Tbody>
-            {documents.map((document) => (
-              <DocumentRow
-                checked={selection.includes(document.id)}
-                onCheck={() => toggle(document.id)}
-                key={document.id}
-                document={document}
-                organizationId={organization.id}
-                connectionId={connectionId}
-                hasAnyAction={hasAnyAction}
-              />
-            ))}
-          </Tbody>
-        </SortableTable>
-      ) : (
-        <Card padded>
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No documents yet")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__("Create your first document to get started.")}
-            </p>
-          </div>
-        </Card>
-      )}
+                ))}
+              </Tbody>
+            </SortableTable>
+          )
+        : (
+            <Card padded>
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">
+                  {__("No documents yet")}
+                </h3>
+                <p className="text-txt-tertiary mb-4">
+                  {__("Create your first document to get started.")}
+                </p>
+              </div>
+            </Card>
+          )}
     </div>
   );
 }
@@ -409,11 +414,11 @@ function DocumentRow({
     return null;
   }
 
-  const signatures =
-    lastVersion.signatures?.edges?.map((edge) => edge?.node)?.filter(Boolean) ??
-    [];
+  const signatures
+    = lastVersion.signatures?.edges?.map(edge => edge?.node)?.filter(Boolean)
+      ?? [];
   const signedCount = signatures.filter(
-    (signature) => signature.state === "SIGNED",
+    signature => signature.state === "SIGNED",
   ).length;
 
   const handleDelete = () => {
@@ -427,7 +432,7 @@ function DocumentRow({
       {
         message: sprintf(
           __(
-            'This will permanently delete the document "%s". This action cannot be undone.',
+            "This will permanently delete the document \"%s\". This action cannot be undone.",
           ),
           document.title,
         ),
@@ -448,7 +453,10 @@ function DocumentRow({
           {isDraft ? __("Draft") : __("Published")}
         </Badge>
       </Td>
-      <Td className="w-20">v{lastVersion.version}</Td>
+      <Td className="w-20">
+        v
+        {lastVersion.version}
+      </Td>
       <Td className="w-28">
         {getDocumentTypeLabel(__, document.documentType)}
       </Td>
@@ -463,7 +471,9 @@ function DocumentRow({
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>
       <Td className="w-20">
-        {signedCount}/{signatures.length}
+        {signedCount}
+        /
+        {signatures.length}
       </Td>
       {hasAnyAction && (
         <Td noLink width={50} className="text-end w-18">

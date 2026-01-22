@@ -38,7 +38,7 @@ type Mutation<Params> = (p: {
       showOnTrustCenter: boolean;
     } & Params;
   };
-}) => void;
+}) => Promise<void>;
 
 type Props<Params> = {
   vendors: TrustCenterVendorsCardFragment$key[];
@@ -55,8 +55,8 @@ export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
   }, [props.vendors, limit]);
   const showMoreButton = limit !== null && props.vendors.length > limit;
 
-  const onToggleVisibility = (vendorId: string, showOnTrustCenter: boolean) => {
-    props.onToggleVisibility({
+  const onToggleVisibility = async (vendorId: string, showOnTrustCenter: boolean) => {
+    await props.onToggleVisibility({
       variables: {
         input: {
           id: vendorId,
@@ -112,7 +112,7 @@ export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
 
 function VendorRow(props: {
   vendor: TrustCenterVendorsCardFragment$key;
-  onToggleVisibility: (vendorId: string, showOnTrustCenter: boolean) => void;
+  onToggleVisibility: (vendorId: string, showOnTrustCenter: boolean) => Promise<void>;
   disabled?: boolean;
 }) {
   const vendor = useFragment(trustCenterVendorFragment, props.vendor);
@@ -137,8 +137,7 @@ function VendorRow(props: {
           <Button
             variant="secondary"
             onClick={() =>
-              props.onToggleVisibility(vendor.id, !vendor.showOnTrustCenter)
-            }
+              void props.onToggleVisibility(vendor.id, !vendor.showOnTrustCenter)}
             icon={vendor.showOnTrustCenter ? IconCrossLargeX : IconCheckmark1}
             disabled={props.disabled}
           >

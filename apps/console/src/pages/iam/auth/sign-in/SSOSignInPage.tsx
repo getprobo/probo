@@ -19,15 +19,15 @@ const ssoAvailabilityQuery = graphql`
 export default function SSOSignInPage() {
   const { __ } = useTranslate();
 
-  const [queryRef, loadQuery] =
-    useQueryLoader<SSOSignInPageQuery>(ssoAvailabilityQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<SSOSignInPageQuery>(ssoAvailabilityQuery);
   const [checking, setChecking] = useState(false);
 
   const handleSSOCheck: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     setChecking(true);
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email")?.toString();
+    const email = formData.get("email") ? (formData.get("email") as string).toString() : "";
 
     if (!email) return;
 
@@ -66,7 +66,8 @@ export default function SSOSignInPage() {
         </Button>
 
         <div className="text-center mt-6 text-sm text-txt-secondary">
-          {__("Don't have an account ?")}{" "}
+          {__("Don't have an account ?")}
+          {" "}
           <Link
             to="/auth/register"
             className="underline hover:text-txt-primary"
@@ -112,7 +113,7 @@ function NavigateToSSOLoginURL(props: {
         variant: "error",
       });
 
-      navigate("/auth/login");
+      void navigate("/auth/login");
       return;
     }
 

@@ -65,20 +65,21 @@ type Props = {
 };
 
 export default function MeasureFormDialog(props: Props) {
+  const { children, measure: measureKey, connection, ...rest } = props;
   const { __ } = useTranslate();
   const ref = useDialogRef();
-  const dialogRef = props.ref ?? ref;
-  const measure = useFragment(measureFragment, props.measure);
+  const dialogRef = rest.ref ?? ref;
+  const measure = useFragment(measureFragment, measureKey);
   const organizationId = useOrganizationId();
   const [updateMeasure] = useUpdateMeasure();
   const [createMeasure] = useMutationWithToasts(measureCreateMutation, {
     successMessage: __("Measure created successfully."),
     errorMessage: __("Failed to create measure"),
   });
-  const mutate = props.measure ? updateMeasure : createMeasure;
+  const mutate = measureKey ? updateMeasure : createMeasure;
 
-  const { control, handleSubmit, register, formState, reset } =
-    useFormWithSchema(measureSchema, {
+  const { control, handleSubmit, register, formState, reset }
+    = useFormWithSchema(measureSchema, {
       values: {
         name: measure?.name ?? "",
         description: measure?.description ?? "",
@@ -87,7 +88,7 @@ export default function MeasureFormDialog(props: Props) {
       },
     });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof measureSchema>) => {
     if (measure) {
       await mutate({
         variables: {
@@ -109,28 +110,28 @@ export default function MeasureFormDialog(props: Props) {
             description: data.description || null,
             category: data.category,
           },
-          connections: [props.connection!],
+          connections: [connection!],
         },
       });
       reset();
     }
     dialogRef.current?.close();
-  });
+  };
 
   return (
     <Dialog
       ref={dialogRef}
-      trigger={props.children}
-      title={
+      trigger={children}
+      title={(
         <Breadcrumb
           items={[
             __("Measures"),
             measure ? __("Edit Measure") : __("New Measure"),
           ]}
         />
-      }
+      )}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
           <div className="py-8 px-10 space-y-6">
             <Field
@@ -171,7 +172,7 @@ export default function MeasureFormDialog(props: Props) {
                   name="state"
                   placeholder={__("Select state")}
                 >
-                  {measureStates.map((state) => (
+                  {measureStates.map(state => (
                     <Option key={state} value={state}>
                       {getMeasureStateLabel(__, state)}
                     </Option>

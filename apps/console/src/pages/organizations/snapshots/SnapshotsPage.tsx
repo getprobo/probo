@@ -71,7 +71,7 @@ export default function SnapshotsPage(props: Props) {
     organization,
   );
   const connectionId = data.snapshots.__id;
-  const snapshots = data.snapshots.edges.map((edge) => edge.node);
+  const snapshots = data.snapshots.edges.map(edge => edge.node);
   usePageTitle(__("Snapshots"));
 
   const hasAnyAction = snapshots.some(({ canDelete }) => canDelete);
@@ -93,39 +93,41 @@ export default function SnapshotsPage(props: Props) {
         )}
       </PageHeader>
 
-      {snapshots.length > 0 ? (
-        <Table>
-          <Thead>
-            <Tr>
-              <Th>{__("Name")}</Th>
-              <Th>{__("Type")}</Th>
-              <Th>{__("Description")}</Th>
-              <Th>{__("Created")}</Th>
-              {hasAnyAction && <Th></Th>}
-            </Tr>
-          </Thead>
-          <Tbody>
-            {snapshots.map((snapshot) => (
-              <SnapshotRow
-                key={snapshot.id}
-                snapshot={snapshot}
-                connectionId={connectionId}
-                organizationId={organizationId}
-                hasAnyAction={hasAnyAction}
-              />
-            ))}
-          </Tbody>
-        </Table>
-      ) : (
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-txt-secondary mb-2">
-            {__("No snapshots yet")}
-          </h3>
-          <p className="text-txt-tertiary mb-6">
-            {__("Create your first snapshot to get started")}
-          </p>
-        </div>
-      )}
+      {snapshots.length > 0
+        ? (
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>{__("Name")}</Th>
+                  <Th>{__("Type")}</Th>
+                  <Th>{__("Description")}</Th>
+                  <Th>{__("Created")}</Th>
+                  {hasAnyAction && <Th></Th>}
+                </Tr>
+              </Thead>
+              <Tbody>
+                {snapshots.map(snapshot => (
+                  <SnapshotRow
+                    key={snapshot.id}
+                    snapshot={snapshot}
+                    connectionId={connectionId}
+                    organizationId={organizationId}
+                    hasAnyAction={hasAnyAction}
+                  />
+                ))}
+              </Tbody>
+            </Table>
+          )
+        : (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-medium text-txt-secondary mb-2">
+                {__("No snapshots yet")}
+              </h3>
+              <p className="text-txt-tertiary mb-6">
+                {__("Create your first snapshot to get started")}
+              </p>
+            </div>
+          )}
     </div>
   );
 }

@@ -136,7 +136,7 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
               </Td>
             </Tr>
           )}
-          {measures.map((measure) => (
+          {measures.map(measure => (
             <MeasureRow
               key={measure.id}
               measure={measure}

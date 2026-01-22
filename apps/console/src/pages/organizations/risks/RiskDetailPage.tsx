@@ -73,17 +73,17 @@ export default function RiskDetailPage(props: Props) {
     confirm(
       () =>
         new Promise<void>((resolve) => {
-          deleteRisk({
+          void deleteRisk({
             variables: {
               input: { riskId },
               connections: [connectionId],
             },
             onSuccess() {
-              const risksUrl =
-                isSnapshotMode && snapshotId
+              const risksUrl
+                = isSnapshotMode && snapshotId
                   ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
                   : `/organizations/${organizationId}/risks`;
-              navigate(risksUrl);
+              void navigate(risksUrl);
               resolve();
             },
           });
@@ -91,7 +91,7 @@ export default function RiskDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the risk "%s". This action cannot be undone.',
+            "This will permanently delete the risk \"%s\". This action cannot be undone.",
           ),
           risk.name,
         ),
@@ -104,13 +104,13 @@ export default function RiskDetailPage(props: Props) {
   const controlsCount = risk.controlsInfo?.totalCount ?? 0;
   const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
 
-  const risksUrl =
-    isSnapshotMode && snapshotId
+  const risksUrl
+    = isSnapshotMode && snapshotId
       ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
       : `/organizations/${organizationId}/risks`;
 
-  const baseTabUrl =
-    isSnapshotMode && snapshotId
+  const baseTabUrl
+    = isSnapshotMode && snapshotId
       ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${riskId}`
       : `/organizations/${organizationId}/risks/${riskId}`;
 
@@ -134,11 +134,11 @@ export default function RiskDetailPage(props: Props) {
           <div className="flex gap-2">
             {risk.canUpdate && (
               <FormRiskDialog
-                trigger={
+                trigger={(
                   <Button icon={IconPencil} variant="secondary">
                     {__("Edit")}
                   </Button>
-                }
+                )}
                 risk={{ id: riskId, ...risk }}
               />
             )}

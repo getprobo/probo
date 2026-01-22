@@ -56,7 +56,7 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
     return <PageError error="FORBIDDEN" />;
   }
 
-  return <PageError error={error?.toString()} />;
+  return <PageError error={error instanceof Error ? error.message : ""} />;
 }
 
 const routes = [
@@ -133,7 +133,7 @@ const routes = [
               },
             ],
           },
-        ]
+        ],
       },
     ],
   },
@@ -200,6 +200,7 @@ const routes = [
           {
             index: true,
             loader: () => {
+              // eslint-disable-next-line
               throw redirect("general");
             },
           },

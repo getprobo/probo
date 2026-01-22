@@ -18,20 +18,21 @@ export function EvidenceDownloadDialog({ evidenceId, onClose }: Props) {
       className="max-w-sm"
       onClose={onClose}
       defaultOpen
-      title={
+      title={(
         <Breadcrumb
           items={[{ label: __("Evidences") }, { label: __("Download") }]}
         />
-      }
+      )}
     >
       <DialogContent padded>
         <Suspense
-          fallback={
+          fallback={(
             <div className="flex gap-2 justify-center">
               <Spinner />
-              {__("Generating download link")}...
+              {__("Generating download link")}
+              ...
             </div>
-          }
+          )}
         >
           <DownloadLink evidenceId={evidenceId} onClose={onClose} />
         </Suspense>

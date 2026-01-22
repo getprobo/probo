@@ -5,8 +5,8 @@ import { useTranslate } from "@probo/i18n";
 import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-export const NonconformitiesConnectionKey =
-  "NonconformitiesPage_nonconformities";
+export const NonconformitiesConnectionKey
+  = "NonconformitiesPage_nonconformities";
 
 export const nonconformitiesQuery = graphql`
   query NonconformityGraphListQuery($organizationId: ID!, $snapshotId: ID) {

@@ -38,11 +38,13 @@ export function VersionRow({
       )}
     >
       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-level-2 flex-shrink-0">
-        {isVersionSigned ? (
-          <IconCircleCheck size={20} className="text-txt-success" />
-        ) : (
-          <IconRadioUnchecked size={20} className="text-txt-tertiary" />
-        )}
+        {isVersionSigned
+          ? (
+              <IconCircleCheck size={20} className="text-txt-success" />
+            )
+          : (
+              <IconRadioUnchecked size={20} className="text-txt-tertiary" />
+            )}
       </div>
       <div className="flex-1 min-w-0">
         <p
@@ -53,12 +55,12 @@ export function VersionRow({
         >
           {versionData.publishedAt
             ? `v${versionData.version} - ${(() => {
-                const date = new Date(versionData.publishedAt);
-                const day = String(date.getDate()).padStart(2, "0");
-                const month = String(date.getMonth() + 1).padStart(2, "0");
-                const year = date.getFullYear();
-                return `${day}/${month}/${year}`;
-              })()}`
+              const date = new Date(versionData.publishedAt);
+              const day = String(date.getDate()).padStart(2, "0");
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const year = date.getFullYear();
+              return `${day}/${month}/${year}`;
+            })()}`
             : `v${versionData.version}`}
         </p>
       </div>

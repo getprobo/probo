@@ -12,7 +12,9 @@ type Props<TFieldValues extends FieldValues = FieldValues> = {
 /**
  * A field to handle multiple emails
  */
-export function EmailsField<TFieldValues extends FieldValues = FieldValues>({ control, register }: Props<TFieldValues>) {
+export function EmailsField<
+  TFieldValues extends FieldValues = FieldValues,
+>({ control, register }: Props<TFieldValues>) {
   const { __ } = useTranslate();
   const { fields, append, remove } = useFieldArray({
     name: "additionalEmailAddresses" as ArrayPath<TFieldValues>,

@@ -53,18 +53,20 @@ export function SCIMEventList(props: { fKey: SCIMEventListFragment$key }) {
         </Tr>
       </Thead>
       <Tbody>
-        {!eventsPagination.data.events?.edges ||
-        eventsPagination.data.events.edges.length === 0 ? (
-          <Tr>
-            <Td colSpan={4} className="text-center text-txt-secondary">
-              {__("No SCIM events recorded yet.")}
-            </Td>
-          </Tr>
-        ) : (
-          eventsPagination.data.events.edges.map(({ node: event }) => (
-            <SCIMEventListItem key={event.id} fKey={event} />
-          ))
-        )}
+        {!eventsPagination.data.events?.edges
+          || eventsPagination.data.events.edges.length === 0
+          ? (
+              <Tr>
+                <Td colSpan={4} className="text-center text-txt-secondary">
+                  {__("No SCIM events recorded yet.")}
+                </Td>
+              </Tr>
+            )
+          : (
+              eventsPagination.data.events.edges.map(({ node: event }) => (
+                <SCIMEventListItem key={event.id} fKey={event} />
+              ))
+            )}
       </Tbody>
     </SortableTable>
   );

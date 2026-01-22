@@ -12,6 +12,7 @@ import {
 } from "@probo/ui";
 import {
   Suspense,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -104,11 +105,11 @@ export function LinkedControlsDialog(props: Props) {
         </div>
         <div ref={contentRef}>
           <Suspense
-            fallback={
+            fallback={(
               <div style={{ minHeight }}>
                 <Spinner centered />
               </div>
-            }
+            )}
           >
             <LinkedControlsDialogContent {...props} ref={searchRef} />
           </Suspense>
@@ -123,32 +124,37 @@ function LinkedControlsDialogContent(props: Props & { ref: SearchRef }) {
   const mainData = useLazyLoadQuery<LinkedControlsDialogQuery>(query, {
     organizationId,
   });
-  const { data, loadNext, hasNext, isLoadingNext, refetch } =
-    usePaginationFragment(
-      controlsFragment,
-      mainData.organization as LinkedControlsDialogFragment$key,
-    );
+  const { data, loadNext, hasNext, isLoadingNext, refetch } = usePaginationFragment(
+    controlsFragment,
+    mainData.organization as LinkedControlsDialogFragment$key,
+  );
 
-  const controls = data.controls?.edges?.map((edge) => edge.node) ?? [];
+  const controls = data.controls?.edges?.map(edge => edge.node) ?? [];
   const controlIds = useMemo(() => {
-    return new Set(props.linkedControls?.map((c) => c.id) ?? []);
+    return new Set(props.linkedControls?.map(c => c.id) ?? []);
   }, [props.linkedControls]);
 
-  props.ref.current = {
-    search: useDebounceCallback((v: string) => {
-      refetch({
-        first: 20,
-        filter: {
-          query: v,
-        },
-      });
-    }, 500),
-  };
+  const handleSearch = useDebounceCallback((v: string) => {
+    refetch({
+      first: 20,
+      filter: {
+        query: v,
+      },
+    });
+  }, 500);
+
+  useEffect(() => {
+    if (!props.ref.current) {
+      props.ref.current = {
+        search: handleSearch,
+      };
+    }
+  });
 
   return (
     <>
       <div className="divide-y divide-border-low">
-        {controls.map((control) => (
+        {controls.map(control => (
           <ControlRow
             key={control.id}
             control={control}
@@ -182,7 +188,10 @@ function ControlRow(
       className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full text-start"
       onClick={() => onClick(props.control.id)}
     >
-      {props.control.sectionTitle} : {props.control.name}
+      {props.control.sectionTitle}
+      {" "}
+      :
+      {props.control.name}
       <Badge>{props.control.framework.name}</Badge>
       <Button
         disabled={props.disabled}
@@ -191,7 +200,9 @@ function ControlRow(
         asChild
       >
         <span>
-          <IconComponent size={16} /> {isLinked ? __("Unlink") : __("Link")}
+          <IconComponent size={16} />
+          {" "}
+          {isLinked ? __("Unlink") : __("Link")}
         </span>
       </Button>
     </button>

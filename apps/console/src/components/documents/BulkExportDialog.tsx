@@ -35,7 +35,7 @@ type BulkExportFormData = z.infer<typeof bulkExportSchema>;
 
 type Props = {
   children: ReactNode;
-  onExport: (options: BulkExportFormData) => void;
+  onExport: (options: BulkExportFormData) => Promise<void>;
   isLoading?: boolean;
   defaultEmail: string;
   selectedCount: number;
@@ -59,7 +59,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
           watermarkEmail: defaultEmail,
           withSignatures: true,
         },
-      }
+      },
     );
 
     const watchWatermark = watch("withWatermark");
@@ -70,14 +70,14 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
       close: () => dialogRef.current?.close(),
     }));
 
-    const onSubmit = handleSubmit((data) => {
+    const onSubmit = async (data: BulkExportFormData) => {
       const options = {
         ...data,
         watermarkEmail: data.withWatermark ? data.watermarkEmail : undefined,
       };
-      onExport(options);
+      await onExport(options);
       dialogRef.current?.close();
-    });
+    };
 
     return (
       <>
@@ -87,13 +87,13 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
           ref={dialogRef}
           title={sprintf(__("Export %s Documents"), selectedCount)}
         >
-          <form onSubmit={onSubmit}>
+          <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
             <DialogContent className="space-y-4" padded>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Checkbox
                     checked={watchSignatures}
-                    onChange={(checked) => setValue("withSignatures", checked)}
+                    onChange={checked => setValue("withSignatures", checked)}
                   />
                   <div className="flex-1">
                     <label className="text-sm font-medium text-txt-primary cursor-pointer">
@@ -108,7 +108,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                 <div className="flex items-start gap-3">
                   <Checkbox
                     checked={watchWatermark}
-                    onChange={(checked) => setValue("withWatermark", checked)}
+                    onChange={checked => setValue("withWatermark", checked)}
                   />
                   <div className="flex-1">
                     <label className="text-sm font-medium text-txt-primary cursor-pointer">
@@ -146,19 +146,23 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                 type="submit"
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <>
-                    <Spinner size={16} />
-                    {__("Exporting...")}
-                  </>
-                ) : (
-                  __("Export Documents")
-                )}
+                {isLoading
+                  ? (
+                      <>
+                        <Spinner size={16} />
+                        {__("Exporting...")}
+                      </>
+                    )
+                  : (
+                      __("Export Documents")
+                    )}
               </Button>
             </DialogFooter>
           </form>
         </Dialog>
       </>
     );
-  }
+  },
 );
+
+BulkExportDialog.displayName = "BulkExportDialog";

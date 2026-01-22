@@ -197,12 +197,12 @@ export default function DocumentDetailPage(props: Props) {
   const [isEditingOwner, setIsEditingOwner] = useState(false);
   const [isEditingType, setIsEditingType] = useState(false);
   const [isEditingClassification, setIsEditingClassification] = useState(false);
-  const versions = document.versions.edges.map((edge) => edge.node);
-  const currentVersion =
-    document.versions.edges.find((v) => v.node.id === versionId)?.node ??
-    document.versions.edges[0].node;
-  const signatures = currentVersion.signatures?.edges?.map((s) => s.node) ?? [];
-  const signedSignatures = signatures.filter((s) => s.state === "SIGNED");
+  const versions = document.versions.edges.map(edge => edge.node);
+  const currentVersion
+    = document.versions.edges.find(v => v.node.id === versionId)?.node
+      ?? document.versions.edges[0].node;
+  const signatures = currentVersion.signatures?.edges?.map(s => s.node) ?? [];
+  const signedSignatures = signatures.filter(s => s.state === "SIGNED");
   const isDraft = currentVersion.status === "DRAFT";
   const [publishDocumentVersion, isPublishing] = useMutationWithToasts(
     publishDocumentVersionMutation,
@@ -212,10 +212,10 @@ export default function DocumentDetailPage(props: Props) {
     },
   );
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
-  const [deleteDraftDocumentVersion, isDeletingDraft] =
-    useDeleteDraftDocumentVersionMutation();
-  const [exportDocumentVersionPDF, isExporting] =
-    useMutationWithToasts<DocumentDetailPageExportPDFMutation>(
+  const [deleteDraftDocumentVersion, isDeletingDraft]
+    = useDeleteDraftDocumentVersionMutation();
+  const [exportDocumentVersionPDF, isExporting]
+    = useMutationWithToasts<DocumentDetailPageExportPDFMutation>(
       exportDocumentVersionPDFMutation,
       {
         successMessage: __("PDF download started."),
@@ -224,8 +224,8 @@ export default function DocumentDetailPage(props: Props) {
     );
 
   const { email: defaultEmail } = use(CurrentUser);
-  const [updateDocument, isUpdatingDocument] =
-    useMutationWithToasts<DocumentDetailPageUpdateMutation>(
+  const [updateDocument, isUpdatingDocument]
+    = useMutationWithToasts<DocumentDetailPageUpdateMutation>(
       updateDocumentMutation,
       {
         successMessage: __("Document updated successfully."),
@@ -248,8 +248,8 @@ export default function DocumentDetailPage(props: Props) {
 
   usePageTitle(document.title);
 
-  const handleUpdateTitle = (data: { title: string }) => {
-    updateDocument({
+  const handleUpdateTitle = async (data: { title: string }) => {
+    await updateDocument({
       variables: {
         input: {
           id: document.id,
@@ -262,8 +262,8 @@ export default function DocumentDetailPage(props: Props) {
     });
   };
 
-  const handleUpdateOwner = (data: { ownerId: string }) => {
-    updateDocument({
+  const handleUpdateOwner = async (data: { ownerId: string }) => {
+    await updateDocument({
       variables: {
         input: {
           id: document.id,
@@ -276,10 +276,10 @@ export default function DocumentDetailPage(props: Props) {
     });
   };
 
-  const handleUpdateDocumentType = (data: {
+  const handleUpdateDocumentType = async (data: {
     documentType: (typeof documentTypes)[number];
   }) => {
-    updateDocument({
+    await updateDocument({
       variables: {
         input: {
           id: document.id,
@@ -298,10 +298,10 @@ export default function DocumentDetailPage(props: Props) {
     });
   };
 
-  const handleUpdateClassification = (data: {
+  const handleUpdateClassification = async (data: {
     classification: (typeof documentClassifications)[number];
   }) => {
-    updateDocument({
+    await updateDocument({
       variables: {
         input: {
           id: document.id,
@@ -320,8 +320,8 @@ export default function DocumentDetailPage(props: Props) {
     });
   };
 
-  const handlePublish = () => {
-    publishDocumentVersion({
+  const handlePublish = async () => {
+    await publishDocumentVersion({
       variables: {
         input: { documentId: document.id },
       },
@@ -334,12 +334,12 @@ export default function DocumentDetailPage(props: Props) {
     confirm(
       () =>
         new Promise<void>((resolve) => {
-          deleteDocument({
+          void deleteDocument({
             variables: {
               input: { documentId: document.id },
             },
             onSuccess() {
-              navigate(`/organizations/${organizationId}/documents`);
+              void navigate(`/organizations/${organizationId}/documents`);
               resolve();
             },
             onError: () => resolve(),
@@ -348,7 +348,7 @@ export default function DocumentDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the document "%s". This action cannot be undone.',
+            "This will permanently delete the document \"%s\". This action cannot be undone.",
           ),
           document.title,
         ),
@@ -360,7 +360,7 @@ export default function DocumentDetailPage(props: Props) {
     confirm(
       () =>
         new Promise<void>((resolve) => {
-          deleteDraftDocumentVersion({
+          void deleteDraftDocumentVersion({
             variables: {
               input: { documentVersionId: currentVersion.id },
               connections: [versionConnectionId],
@@ -381,7 +381,7 @@ export default function DocumentDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the draft version %s of "%s". This action cannot be undone.',
+            "This will permanently delete the draft version %s of \"%s\". This action cannot be undone.",
           ),
           currentVersion.version,
           document.title,
@@ -390,7 +390,7 @@ export default function DocumentDetailPage(props: Props) {
     );
   };
 
-  const handleDownloadPdf = (options: {
+  const handleDownloadPdf = async (options: {
     withWatermark: boolean;
     withSignatures: boolean;
     watermarkEmail?: string;
@@ -399,11 +399,11 @@ export default function DocumentDetailPage(props: Props) {
       documentVersionId: currentVersion.id,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
-      ...(options.withWatermark &&
-        options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+      ...(options.withWatermark
+        && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
     };
 
-    exportDocumentVersionPDF({
+    await exportDocumentVersionPDF({
       variables: { input },
       onCompleted: (data) => {
         if (data.exportDocumentVersionPDF?.data) {
@@ -434,7 +434,7 @@ export default function DocumentDetailPage(props: Props) {
       />
       <PdfDownloadDialog
         ref={pdfDownloadDialogRef}
-        onDownload={handleDownloadPdf}
+        onDownload={options => void handleDownloadPdf(options)}
         isLoading={isExporting}
         defaultEmail={defaultEmail}
       >
@@ -456,7 +456,7 @@ export default function DocumentDetailPage(props: Props) {
           <div className="flex gap-2">
             {isDraft && document.canPublish && (
               <Button
-                onClick={handlePublish}
+                onClick={() => void handlePublish()}
                 icon={IconCheckmark1}
                 disabled={isPublishing}
               >
@@ -464,14 +464,14 @@ export default function DocumentDetailPage(props: Props) {
               </Button>
             )}
             <Dropdown
-              toggle={
+              toggle={(
                 <Button icon={IconClock} variant="secondary">
                   {__("Version history")}
                   <IconChevronDown size={12} />
                 </Button>
-              }
+              )}
             >
-              {versions.map((version) => (
+              {versions.map(version => (
                 <DropdownItem asChild key={version.id}>
                   <VersionItem
                     document={document}
@@ -492,17 +492,17 @@ export default function DocumentDetailPage(props: Props) {
                   {isDraft ? __("Edit draft document") : __("Create new draft")}
                 </DropdownItem>
               )}
-              {isDraft &&
-                versions.length > 1 &&
-                currentVersion.canDeleteDraft && (
-                  <DropdownItem
-                    onClick={handleDeleteDraft}
-                    icon={IconTrashCan}
-                    disabled={isDeletingDraft}
-                  >
-                    {__("Delete draft document")}
-                  </DropdownItem>
-                )}
+              {isDraft
+                && versions.length > 1
+                && currentVersion.canDeleteDraft && (
+                <DropdownItem
+                  onClick={handleDeleteDraft}
+                  icon={IconTrashCan}
+                  disabled={isDeletingDraft}
+                >
+                  {__("Delete draft document")}
+                </DropdownItem>
+              )}
               <DropdownItem
                 onClick={() => pdfDownloadDialogRef.current?.open()}
                 icon={IconArrowDown}
@@ -525,50 +525,52 @@ export default function DocumentDetailPage(props: Props) {
         </div>
         <PageHeader
           title={
-            isEditingTitle ? (
-              <div className="flex items-center gap-2">
-                <Input
-                  {...register("title")}
-                  variant="title"
-                  className="flex-1"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                      setIsEditingTitle(false);
-                      reset();
-                    }
-                    if (e.key === "Enter") {
-                      handleSubmit(handleUpdateTitle)();
-                    }
-                  }}
-                />
-                <Button
-                  variant="quaternary"
-                  icon={IconCheckmark1}
-                  onClick={handleSubmit(handleUpdateTitle)}
-                  disabled={isUpdatingDocument}
-                />
-                <Button
-                  variant="quaternary"
-                  icon={IconCrossLargeX}
-                  onClick={() => {
-                    setIsEditingTitle(false);
-                    reset();
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span>{document.title}</span>
-                {document.canUpdate && (
-                  <Button
-                    variant="quaternary"
-                    icon={IconPencil}
-                    onClick={() => setIsEditingTitle(true)}
-                  />
-                )}
-              </div>
-            )
+            isEditingTitle
+              ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      {...register("title")}
+                      variant="title"
+                      className="flex-1"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setIsEditingTitle(false);
+                          reset();
+                        }
+                        if (e.key === "Enter") {
+                          void handleSubmit(handleUpdateTitle)();
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="quaternary"
+                      icon={IconCheckmark1}
+                      onClick={() => void handleSubmit(handleUpdateTitle)()}
+                      disabled={isUpdatingDocument}
+                    />
+                    <Button
+                      variant="quaternary"
+                      icon={IconCrossLargeX}
+                      onClick={() => {
+                        setIsEditingTitle(false);
+                        reset();
+                      }}
+                    />
+                  </div>
+                )
+              : (
+                  <div className="flex items-center gap-2">
+                    <span>{document.title}</span>
+                    {document.canUpdate && (
+                      <Button
+                        variant="quaternary"
+                        icon={IconPencil}
+                        onClick={() => setIsEditingTitle(true)}
+                      />
+                    )}
+                  </div>
+                )
           }
         />
 
@@ -582,7 +584,9 @@ export default function DocumentDetailPage(props: Props) {
             <TabLink to={`${urlPrefix}/signatures`}>
               {__("Signatures")}
               <TabBadge>
-                {signedSignatures.length}/{signatures.length}
+                {signedSignatures.length}
+                /
+                {signatures.length}
               </TabBadge>
             </TabLink>
           )}
@@ -595,93 +599,99 @@ export default function DocumentDetailPage(props: Props) {
           {__("Properties")}
         </div>
         <PropertyRow label={__("Owner")}>
-          {isEditingOwner ? (
-            <EditablePropertyContent
-              onSave={handleSubmit(handleUpdateOwner)}
-              onCancel={() => {
-                setIsEditingOwner(false);
-                reset();
-              }}
-              disabled={isUpdatingDocument}
-            >
-              <PeopleSelectField
-                name="ownerId"
-                control={control}
-                organizationId={organizationId}
-              />
-            </EditablePropertyContent>
-          ) : (
-            <ReadOnlyPropertyContent
-              onEdit={() => setIsEditingOwner(true)}
-              canEdit={document.canUpdate}
-            >
-              <Badge variant="highlight" size="md" className="gap-2">
-                <Avatar name={currentVersion.owner?.fullName ?? ""} />
-                {currentVersion.owner?.fullName}
-              </Badge>
-            </ReadOnlyPropertyContent>
-          )}
+          {isEditingOwner
+            ? (
+                <EditablePropertyContent
+                  onSave={() => void handleSubmit(handleUpdateOwner)()}
+                  onCancel={() => {
+                    setIsEditingOwner(false);
+                    reset();
+                  }}
+                  disabled={isUpdatingDocument}
+                >
+                  <PeopleSelectField
+                    name="ownerId"
+                    control={control}
+                    organizationId={organizationId}
+                  />
+                </EditablePropertyContent>
+              )
+            : (
+                <ReadOnlyPropertyContent
+                  onEdit={() => setIsEditingOwner(true)}
+                  canEdit={document.canUpdate}
+                >
+                  <Badge variant="highlight" size="md" className="gap-2">
+                    <Avatar name={currentVersion.owner?.fullName ?? ""} />
+                    {currentVersion.owner?.fullName}
+                  </Badge>
+                </ReadOnlyPropertyContent>
+              )}
         </PropertyRow>
         <PropertyRow label={__("Type")}>
-          {isEditingType ? (
-            <EditablePropertyContent
-              onSave={handleSubmit(handleUpdateDocumentType)}
-              onCancel={() => {
-                setIsEditingType(false);
-                reset();
-              }}
-              disabled={isUpdatingDocument}
-            >
-              <ControlledField
-                name="documentType"
-                control={control}
-                type="select"
-              >
-                <DocumentTypeOptions />
-              </ControlledField>
-            </EditablePropertyContent>
-          ) : (
-            <ReadOnlyPropertyContent
-              onEdit={() => setIsEditingType(true)}
-              canEdit={document.canUpdate}
-            >
-              <div className="text-sm text-txt-secondary">
-                {getDocumentTypeLabel(__, document.documentType)}
-              </div>
-            </ReadOnlyPropertyContent>
-          )}
+          {isEditingType
+            ? (
+                <EditablePropertyContent
+                  onSave={() => void handleSubmit(handleUpdateDocumentType)()}
+                  onCancel={() => {
+                    setIsEditingType(false);
+                    reset();
+                  }}
+                  disabled={isUpdatingDocument}
+                >
+                  <ControlledField
+                    name="documentType"
+                    control={control}
+                    type="select"
+                  >
+                    <DocumentTypeOptions />
+                  </ControlledField>
+                </EditablePropertyContent>
+              )
+            : (
+                <ReadOnlyPropertyContent
+                  onEdit={() => setIsEditingType(true)}
+                  canEdit={document.canUpdate}
+                >
+                  <div className="text-sm text-txt-secondary">
+                    {getDocumentTypeLabel(__, document.documentType)}
+                  </div>
+                </ReadOnlyPropertyContent>
+              )}
         </PropertyRow>
         <PropertyRow label={__("Classification")}>
-          {isEditingClassification ? (
-            <EditablePropertyContent
-              onSave={handleSubmit(handleUpdateClassification)}
-              onCancel={() => {
-                setIsEditingClassification(false);
-                reset();
-              }}
-              disabled={isUpdatingDocument}
-            >
-              <ControlledField
-                name="classification"
-                control={control}
-                type="select"
-              >
-                <DocumentClassificationOptions />
-              </ControlledField>
-            </EditablePropertyContent>
-          ) : (
-            <ReadOnlyPropertyContent
-              onEdit={() => setIsEditingClassification(true)}
-              canEdit={document.canUpdate}
-            >
-              <div className="text-sm text-txt-secondary">
-                {getDocumentClassificationLabel(
-                  __,
-                  currentVersion.classification,
-                )}
-              </div>
-            </ReadOnlyPropertyContent>
-          )}
+          {isEditingClassification
+            ? (
+                <EditablePropertyContent
+                  onSave={() => void handleSubmit(handleUpdateClassification)()}
+                  onCancel={() => {
+                    setIsEditingClassification(false);
+                    reset();
+                  }}
+                  disabled={isUpdatingDocument}
+                >
+                  <ControlledField
+                    name="classification"
+                    control={control}
+                    type="select"
+                  >
+                    <DocumentClassificationOptions />
+                  </ControlledField>
+                </EditablePropertyContent>
+              )
+            : (
+                <ReadOnlyPropertyContent
+                  onEdit={() => setIsEditingClassification(true)}
+                  canEdit={document.canUpdate}
+                >
+                  <div className="text-sm text-txt-secondary">
+                    {getDocumentClassificationLabel(
+                      __,
+                      currentVersion.classification,
+                    )}
+                  </div>
+                </ReadOnlyPropertyContent>
+              )}
         </PropertyRow>
         <PropertyRow label={__("Status")}>
           <Badge

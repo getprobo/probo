@@ -14,7 +14,7 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   sprintf,
   getAuditStateVariant,
@@ -47,7 +47,7 @@ type Mutation<Params> = (p: {
       trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC";
     } & Params;
   };
-}) => void;
+}) => Promise<void>;
 
 type Props<Params> = {
   audits: TrustCenterAuditsCardFragment$key[];
@@ -65,11 +65,11 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
   }, [props.audits, limit]);
   const showMoreButton = limit !== null && props.audits.length > limit;
 
-  const onChangeVisibility = (
+  const onChangeVisibility = async (
     auditId: string,
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
   ) => {
-    props.onChangeVisibility({
+    await props.onChangeVisibility({
       variables: {
         input: {
           id: auditId,
@@ -130,7 +130,7 @@ function AuditRow(props: {
   onChangeVisibility: (
     auditId: string,
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
-  ) => void;
+  ) => Promise<void>;
   disabled?: boolean;
   canUpdate: boolean;
 }) {
@@ -138,25 +138,15 @@ function AuditRow(props: {
   const audit = useFragment(trustCenterAuditFragment, auditFragmentRef);
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
 
   const handleValueChange = useCallback(
-    (value: string) => {
+    async (value: string) => {
       const stringValue = typeof value === "string" ? value : "";
       const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
-      setOptimisticValue(typedValue);
-      onChangeVisibility(audit.id, typedValue);
+      await onChangeVisibility(audit.id, typedValue);
     },
     [audit.id, onChangeVisibility],
   );
-
-  useEffect(() => {
-    if (optimisticValue && audit.trustCenterVisibility === optimisticValue) {
-      setOptimisticValue(null);
-    }
-  }, [audit.trustCenterVisibility, optimisticValue]);
-
-  const currentValue = optimisticValue || audit.trustCenterVisibility;
 
   const visibilityOptions = getTrustCenterVisibilityOptions(__);
 
@@ -179,12 +169,12 @@ function AuditRow(props: {
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={currentValue}
-          onValueChange={handleValueChange}
+          value={audit.trustCenterVisibility}
+          onValueChange={value => void handleValueChange(value)}
           disabled={disabled || !canUpdate}
           className="w-[105px]"
         >
-          {visibilityOptions.map((option) => (
+          {visibilityOptions.map(option => (
             <Option key={option.value} value={option.value}>
               <div className="flex items-center justify-between w-full">
                 <Badge variant={option.variant}>{option.label}</Badge>

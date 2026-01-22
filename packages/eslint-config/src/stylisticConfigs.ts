@@ -18,7 +18,14 @@ export const stylisticConfigs = [
     rules: {
       "@stylistic/max-len": [
         "warn",
-        { code: 120, ignoreUrls: true, ignoreStrings: true },
+        {
+          code: 120,
+          tabWidth: 2,
+          ignoreStrings: true,
+          ignoreTemplateLiterals: true,
+          ignoreTrailingComments: true,
+          ignoreUrls: true,
+        },
       ],
     },
   } satisfies Linter.Config,

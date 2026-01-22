@@ -75,7 +75,7 @@ const createTaskSchema = z.object({
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
   measureId: z.preprocess(
-    (val) => (val === "" || val == null ? null : val),
+    val => (val === "" || val == null ? null : val),
     z.string().nullable().optional(),
   ),
   deadline: z.string().optional().nullable(),
@@ -86,11 +86,11 @@ const updateTaskSchema = z.object({
   description: z.string().optional().nullable(),
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.preprocess(
-    (val) => (val === "" || val == null ? null : val),
+    val => (val === "" || val == null ? null : val),
     z.string().nullable().optional(),
   ),
   measureId: z.preprocess(
-    (val) => (val === "" || val == null ? null : val),
+    val => (val === "" || val == null ? null : val),
     z.string().nullable().optional(),
   ),
   deadline: z.string().optional().nullable(),
@@ -105,11 +105,12 @@ type Props = {
 };
 
 export default function TaskFormDialog(props: Props) {
+  const { children, connection, ref, task: taskKey, measureId } = props;
   const { __ } = useTranslate();
-  const ref = useDialogRef();
-  const dialogRef = props.ref ?? ref;
+  const newRef = useDialogRef();
+  const dialogRef = ref ?? newRef;
   const organizationId = useOrganizationId();
-  const task = useFragment(taskFragment, props.task);
+  const task = useFragment(taskFragment, taskKey);
   const relayEnv = useRelayEnvironment();
   const [mutate] = useMutationWithToasts(
     task ? taskUpdateMutation : taskCreateMutation,
@@ -121,19 +122,19 @@ export default function TaskFormDialog(props: Props) {
 
   const isUpdating = !!task;
 
-  const { control, handleSubmit, register, formState, reset } =
-    useFormWithSchema(isUpdating ? updateTaskSchema : createTaskSchema, {
+  const { control, handleSubmit, register, formState, reset }
+    = useFormWithSchema(isUpdating ? updateTaskSchema : createTaskSchema, {
       defaultValues: {
         name: task?.name ?? "",
         description: task?.description ?? "",
         timeEstimate: task?.timeEstimate ?? "",
         assignedToId: task?.assignedTo?.id ?? "",
-        measureId: task?.measure?.id ?? props.measureId ?? "",
+        measureId: task?.measure?.id ?? measureId ?? "",
         deadline: task?.deadline?.split("T")[0] ?? "",
       },
     });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof updateTaskSchema | typeof createTaskSchema>) => {
     if (task) {
       await mutate({
         variables: {
@@ -160,7 +161,7 @@ export default function TaskFormDialog(props: Props) {
             assignedToId: data.assignedToId || null,
             measureId: data.measureId || null,
           },
-          connections: [props.connection!],
+          connections: [connection!],
         },
         onCompleted: (_response, errors) => {
           if (!errors && data.measureId) {
@@ -171,20 +172,20 @@ export default function TaskFormDialog(props: Props) {
       reset();
     }
     dialogRef.current?.close();
-  });
-  const showMeasure = !props.measureId;
+  };
+  const showMeasure = !measureId;
 
   return (
     <Dialog
       ref={dialogRef}
-      trigger={props.children}
-      title={
+      trigger={children}
+      title={(
         <Breadcrumb
           items={[__("Tasks"), isUpdating ? __("Edit Task") : __("New Task")]}
         />
-      }
+      )}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
           <div className="py-8 px-10 space-y-4">
             <Input
@@ -240,7 +241,7 @@ export default function TaskFormDialog(props: Props) {
                   <DurationPicker
                     {...field}
                     value={value ?? null}
-                    onValueChange={(value) => onChange(value)}
+                    onValueChange={value => onChange(value)}
                   />
                 )}
               />

@@ -73,8 +73,8 @@ export function CreateAuditDialog({
 }: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
-  const { control, handleSubmit, register, formState, reset } =
-    useFormWithSchema(schema, {
+  const { control, handleSubmit, register, formState, reset }
+    = useFormWithSchema(schema, {
       defaultValues: {
         frameworkId: "",
         name: "",
@@ -86,7 +86,7 @@ export function CreateAuditDialog({
   const ref = useDialogRef();
   const createAudit = useCreateAudit(connection);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
       await createAudit({
         organizationId,
@@ -113,7 +113,7 @@ export function CreateAuditDialog({
         variant: "error",
       });
     }
-  });
+  };
 
   return (
     <Dialog
@@ -121,7 +121,7 @@ export function CreateAuditDialog({
       trigger={children}
       title={<Breadcrumb items={[__("Audits"), __("New Audit")]} />}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
           <Field label={__("Framework")}>
             <Suspense
@@ -147,7 +147,7 @@ export function CreateAuditDialog({
             type="select"
             label={__("State")}
           >
-            {auditStates.map((state) => (
+            {auditStates.map(state => (
               <Option key={state} value={state}>
                 {getAuditStateLabel(__, state)}
               </Option>
@@ -188,9 +188,9 @@ function FrameworkSelect({
     { organizationId },
     { fetchPolicy: "network-only" },
   );
-  const frameworks =
-    data?.organization?.frameworks?.edges
-      ?.map((edge) => edge.node)
+  const frameworks
+    = data?.organization?.frameworks?.edges
+      ?.map(edge => edge.node)
       .filter((node): node is NonNullable<typeof node> => node !== null) ?? [];
 
   return (
@@ -207,7 +207,7 @@ function FrameworkSelect({
           className="w-full"
           value={field.value ?? ""}
         >
-          {frameworks.map((framework) => (
+          {frameworks.map(framework => (
             <Option key={framework.id} value={framework.id}>
               {framework.name}
             </Option>

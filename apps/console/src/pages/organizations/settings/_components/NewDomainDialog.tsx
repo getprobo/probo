@@ -33,6 +33,7 @@ const createCustomDomainMutation = graphql`
         createdAt
         updatedAt
         sslExpiresAt
+        canDelete: permission(action: "core:custom-domain:delete")
       }
     }
   }
@@ -47,8 +48,6 @@ const schema = z.object({
       "Please enter a valid domain (e.g., compliance.example.com)",
     ),
 });
-
-type CustomDomainFormData = z.infer<typeof schema>;
 
 export function NewDomainDialog(props: PropsWithChildren) {
   const { children } = props;
@@ -66,15 +65,15 @@ export function NewDomainDialog(props: PropsWithChildren) {
     },
   );
 
-  const [createCustomDomain, isCreating] =
-    useMutationWithToasts<NewDomainDialogMutation>(createCustomDomainMutation, {
+  const [createCustomDomain, isCreating]
+    = useMutationWithToasts<NewDomainDialogMutation>(createCustomDomainMutation, {
       successMessage: __(
         "Domain added successfully. Configure the DNS records to verify and activate your domain.",
       ),
       errorMessage: __("Failed to add domain"),
     });
 
-  const onSubmit = handleSubmit(async (data: CustomDomainFormData) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     const normalizedDomain = data.domain
       .trim()
       .toLowerCase()
@@ -108,7 +107,7 @@ export function NewDomainDialog(props: PropsWithChildren) {
         dialogRef.current?.close();
       },
     });
-  });
+  };
 
   return (
     <Dialog
@@ -116,7 +115,7 @@ export function NewDomainDialog(props: PropsWithChildren) {
       trigger={children}
       title={<Breadcrumb items={[__("Custom Domain"), __("Add Domain")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <div>
             <p className="text-sm text-txt-secondary mb-4">
@@ -137,7 +136,9 @@ export function NewDomainDialog(props: PropsWithChildren) {
 
           <div className="bg-subtle rounded-lg p-4">
             <p className="text-xs text-txt-secondary">
-              <strong>{__("Examples:")}</strong> compliance.example.com,
+              <strong>{__("Examples:")}</strong>
+              {" "}
+              compliance.example.com,
               trust.example.com
             </p>
           </div>

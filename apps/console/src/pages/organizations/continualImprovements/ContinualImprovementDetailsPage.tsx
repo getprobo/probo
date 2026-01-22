@@ -56,8 +56,8 @@ type Props = {
 };
 
 export default function ContinualImprovementDetailsPage(props: Props) {
-  const { node: improvement } =
-    usePreloadedQuery<ContinualImprovementGraphNodeQuery>(
+  const { node: improvement }
+    = usePreloadedQuery<ContinualImprovementGraphNodeQuery>(
       continualImprovementNodeQuery,
       props.queryRef,
     );
@@ -195,7 +195,7 @@ export default function ContinualImprovementDetailsPage(props: Props) {
             </div>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={e => void onSubmit(e)} className="space-y-4">
             <Field
               label={__("Reference ID")}
               {...register("referenceId")}
@@ -258,13 +258,17 @@ export default function ContinualImprovementDetailsPage(props: Props) {
                 name="status"
                 render={({ field }) => (
                   <div>
-                    <Label>{__("Status")} *</Label>
+                    <Label>
+                      {__("Status")}
+                      {" "}
+                      *
+                    </Label>
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
                       disabled={isSnapshotMode}
                     >
-                      {statusOptions.map((option) => (
+                      {statusOptions.map(option => (
                         <Option key={option.value} value={option.value}>
                           {option.label}
                         </Option>
@@ -284,13 +288,17 @@ export default function ContinualImprovementDetailsPage(props: Props) {
                 name="priority"
                 render={({ field }) => (
                   <div>
-                    <Label>{__("Priority")} *</Label>
+                    <Label>
+                      {__("Priority")}
+                      {" "}
+                      *
+                    </Label>
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
                       disabled={isSnapshotMode}
                     >
-                      {priorityOptions.map((option) => (
+                      {priorityOptions.map(option => (
                         <Option key={option.value} value={option.value}>
                           {option.label}
                         </Option>

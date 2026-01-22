@@ -56,14 +56,14 @@ export function CreateMeetingDialog({ children, connectionId }: Props) {
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
   const organizationId = useOrganizationId();
-  const [createMeeting, isCreating] =
-    useMutation<CreateMeetingDialogCreateMutation>(createMeetingMutation);
+  const [createMeeting, isCreating]
+    = useMutation<CreateMeetingDialogCreateMutation>(createMeetingMutation);
   const { handleSubmit, register, control } = useFormWithSchema(
     meetingSchema,
     {},
   );
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = (data: z.infer<typeof meetingSchema>) => {
     createMeeting({
       variables: {
         input: {
@@ -78,11 +78,11 @@ export function CreateMeetingDialog({ children, connectionId }: Props) {
         dialogRef.current?.close();
       },
     });
-  });
+  };
 
   return (
     <Dialog ref={dialogRef} trigger={children} title={__("Create meeting")}>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field label={__("Meeting name")} required>
             <Input

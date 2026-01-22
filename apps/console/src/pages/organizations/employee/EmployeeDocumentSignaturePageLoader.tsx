@@ -11,8 +11,8 @@ import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 
 function EmployeeDocumentSignaturePageLoader() {
   const { documentId } = useParams();
-  const [queryRef, loadQuery] =
-    useQueryLoader<EmployeeDocumentSignaturePageQuery>(
+  const [queryRef, loadQuery]
+    = useQueryLoader<EmployeeDocumentSignaturePageQuery>(
       employeeDocumentSignaturePageQuery,
     );
 

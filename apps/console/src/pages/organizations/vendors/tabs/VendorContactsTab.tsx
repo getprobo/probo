@@ -96,12 +96,12 @@ export default function VendorContactsTab() {
     VendorContactsTabFragment$key
   >(vendorContactsFragment, vendor);
   const connectionId = data.contacts.__id;
-  const contacts = data.contacts.edges.map((edge) => edge.node);
+  const contacts = data.contacts.edges.map(edge => edge.node);
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const [editingContact, setEditingContact] =
-    useState<VendorContactsTabFragment_contact$data | null>(null);
+  const [editingContact, setEditingContact]
+    = useState<VendorContactsTabFragment_contact$data | null>(null);
   const hasAnyAction = contacts.some(
     ({ canUpdate, canDelete }) => canUpdate || canDelete,
   );
@@ -134,7 +134,7 @@ export default function VendorContactsTab() {
           </Tr>
         </Thead>
         <Tbody>
-          {contacts.map((contact) => (
+          {contacts.map(contact => (
             <ContactRow
               key={contact.id}
               contactKey={contact}
@@ -191,7 +191,7 @@ function ContactRow(props: ContactRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the contact "%s". This action cannot be undone.',
+            "This will permanently delete the contact \"%s\". This action cannot be undone.",
           ),
           contact.fullName || contact.email || __("Unnamed contact"),
         ),
@@ -203,28 +203,32 @@ function ContactRow(props: ContactRowProps) {
     <Tr>
       <Td>{contact.fullName || __("—")}</Td>
       <Td>
-        {contact.email ? (
-          <a
-            href={`mailto:${contact.email}`}
-            className="text-primary-600 hover:text-primary-800"
-          >
-            {contact.email}
-          </a>
-        ) : (
-          __("—")
-        )}
+        {contact.email
+          ? (
+              <a
+                href={`mailto:${contact.email}`}
+                className="text-primary-600 hover:text-primary-800"
+              >
+                {contact.email}
+              </a>
+            )
+          : (
+              __("—")
+            )}
       </Td>
       <Td>
-        {contact.phone ? (
-          <a
-            href={`tel:${contact.phone}`}
-            className="text-primary-600 hover:text-primary-800"
-          >
-            {contact.phone}
-          </a>
-        ) : (
-          __("—")
-        )}
+        {contact.phone
+          ? (
+              <a
+                href={`tel:${contact.phone}`}
+                className="text-primary-600 hover:text-primary-800"
+              >
+                {contact.phone}
+              </a>
+            )
+          : (
+              __("—")
+            )}
       </Td>
       <Td>{contact.role || __("—")}</Td>
       {!props.isSnapshotMode && hasAnyAction && (

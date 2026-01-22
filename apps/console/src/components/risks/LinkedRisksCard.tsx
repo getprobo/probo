@@ -103,7 +103,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
               </Td>
             </Tr>
           )}
-          {props.risks.map((risk) => (
+          {props.risks.map(risk => (
             <RiskRow
               key={risk.id}
               risk={risk}

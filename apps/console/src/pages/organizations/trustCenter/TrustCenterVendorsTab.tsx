@@ -18,10 +18,10 @@ type ContextType = {
 export default function TrustCenterVendorsTab() {
   const { __ } = useTranslate();
   const { organization } = useOutletContext<ContextType>();
-  const [updateVendorVisibility, isUpdatingVendors] =
-    useTrustCenterVendorUpdate();
+  const [updateVendorVisibility, isUpdatingVendors]
+    = useTrustCenterVendorUpdate();
 
-  const vendors = organization.vendors?.edges?.map((edge) => edge.node) || [];
+  const vendors = organization.vendors?.edges?.map(edge => edge.node) || [];
 
   return (
     <div className="space-y-4">

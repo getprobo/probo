@@ -30,9 +30,9 @@ export function CreateVendorDialog({
   const { search, vendors, query } = useVendorSearch();
   const [createVendor] = useCreateVendorMutation();
 
-  const onSelect = (vendor: Vendor | string) => {
-    const input =
-      typeof vendor === "string"
+  const onSelect = async (vendor: Vendor | string) => {
+    const input
+      = typeof vendor === "string"
         ? {
             organizationId,
             name: vendor,
@@ -56,7 +56,7 @@ export function CreateVendorDialog({
             statusPageUrl: vendor.statusPageUrl || null,
             termsOfServiceUrl: vendor.termsOfServiceUrl || null,
           };
-    createVendor({
+    await createVendor({
       variables: {
         input,
         connections: [connection],
@@ -73,16 +73,19 @@ export function CreateVendorDialog({
     <Dialog ref={dialogRef} trigger={children} title={__("Add a vendor")}>
       <DialogContent className="p-6">
         <Combobox onSearch={search} placeholder={__("Type vendor's name")}>
-          {vendors.map((vendor) => (
-            <ComboboxItem key={vendor.name} onClick={() => onSelect(vendor)}>
+          {vendors.map(vendor => (
+            <ComboboxItem key={vendor.name} onClick={() => void onSelect(vendor)}>
               <Avatar name={vendor.name} src={faviconUrl(vendor.websiteUrl)} />
               {vendor.name}
             </ComboboxItem>
           ))}
           {query.trim().length >= 2 && (
-            <ComboboxItem onClick={() => onSelect(query.trim())}>
+            <ComboboxItem onClick={() => void onSelect(query.trim())}>
               <IconPlusLarge size={20} />
-              {__("Create a new vendor")} : {query}
+              {__("Create a new vendor")}
+              {" "}
+              :
+              {query}
             </ComboboxItem>
           )}
         </Combobox>

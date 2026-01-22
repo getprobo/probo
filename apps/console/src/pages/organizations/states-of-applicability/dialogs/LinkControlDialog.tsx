@@ -101,7 +101,7 @@ function ControlRow({
     return control.applicability ? "applicable" : "not-applicable";
   });
   const [justification, setJustification] = useState(
-    control.justification || ""
+    control.justification || "",
   );
   const [showJustification, setShowJustification] = useState(false);
 
@@ -115,11 +115,11 @@ function ControlRow({
     errorMessage: __("Failed to remove control"),
   });
 
-  const handleStateChange = (newState: string) => {
+  const handleStateChange = async (newState: string) => {
     setSelectedState(newState);
 
     if (newState === "not-linked") {
-      unlinkMutate({
+      await unlinkMutate({
         variables: {
           input: {
             stateOfApplicabilityId,
@@ -133,7 +133,7 @@ function ControlRow({
       });
     } else if (newState === "applicable") {
       setShowJustification(false);
-      linkMutate({
+      await linkMutate({
         variables: {
           input: {
             stateOfApplicabilityId,
@@ -152,8 +152,8 @@ function ControlRow({
     }
   };
 
-  const handleSaveJustification = () => {
-    linkMutate({
+  const handleSaveJustification = async () => {
+    await linkMutate({
       variables: {
         input: {
           stateOfApplicabilityId,
@@ -187,7 +187,7 @@ function ControlRow({
           <Select
             variant="editor"
             value={selectedState}
-            onValueChange={handleStateChange}
+            onValueChange={value => void handleStateChange(value)}
             disabled={isLinking || isUnlinking}
             className="w-48"
           >
@@ -207,7 +207,7 @@ function ControlRow({
         <div className="mt-3 flex items-start gap-2">
           <Textarea
             value={justification}
-            onChange={(e) => setJustification(e.target.value)}
+            onChange={e => setJustification(e.target.value)}
             placeholder={__("Reason for non-applicability")}
             className="flex-1"
             autogrow
@@ -215,7 +215,7 @@ function ControlRow({
           <Button
             variant="primary"
             icon={IconCheckmark1}
-            onClick={handleSaveJustification}
+            onClick={() => void handleSaveJustification()}
             disabled={isLinking}
             aria-label={__("Save")}
           />
@@ -238,7 +238,7 @@ function LinkControlDialogContent({
   const data = useLazyLoadQuery(
     linkControlQuery,
     { stateOfApplicabilityId },
-    { fetchPolicy: "store-or-network" }
+    { fetchPolicy: "store-or-network" },
   ) as {
     node: {
       availableControls?: Control[];
@@ -250,10 +250,10 @@ function LinkControlDialogContent({
     if (!search) return controls;
     const lowerSearch = search.toLowerCase();
     return controls.filter(
-      (c) =>
-        c.name.toLowerCase().includes(lowerSearch) ||
-        c.sectionTitle.toLowerCase().includes(lowerSearch) ||
-        c.frameworkName.toLowerCase().includes(lowerSearch)
+      c =>
+        c.name.toLowerCase().includes(lowerSearch)
+        || c.sectionTitle.toLowerCase().includes(lowerSearch)
+        || c.frameworkName.toLowerCase().includes(lowerSearch),
     );
   }, [data.node?.availableControls, search]);
 
@@ -294,41 +294,43 @@ function LinkControlDialogContent({
           />
         </div>
         <div className="max-h-[60vh] overflow-y-auto">
-          {filteredControls.length === 0 ? (
-            <div className="p-8 text-center text-txt-secondary">
-              {__("No controls found")}
-            </div>
-          ) : (
-            Object.entries(groupedControls).map(([frameworkName, sections]) => {
-              const isCollapsed = collapsedFrameworks.has(frameworkName);
-              return (
-                <div key={frameworkName}>
-                  <div className="sticky top-0 bg-level-1 px-4 py-2 border-b border-border-low z-10 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-txt-primary">{frameworkName}</h3>
-                    <Button
-                      variant="tertiary"
-                      icon={isCollapsed ? IconChevronDown : IconChevronUp}
-                      onClick={() => toggleFramework(frameworkName)}
-                      aria-label={isCollapsed ? __("Expand") : __("Collapse")}
-                    />
-                  </div>
-                  {!isCollapsed && Object.entries(sections).map(([sectionTitle, sectionControls]) => (
-                    <div key={`${frameworkName}-${sectionTitle}`}>
-                      {sectionControls.map((control) => (
-                        <ControlRow
-                          key={control.controlId}
-                          control={control}
-                          stateOfApplicabilityId={stateOfApplicabilityId}
-                          isLinked={control.stateOfApplicabilityId !== null}
-                          onUpdate={onUpdate}
+          {filteredControls.length === 0
+            ? (
+                <div className="p-8 text-center text-txt-secondary">
+                  {__("No controls found")}
+                </div>
+              )
+            : (
+                Object.entries(groupedControls).map(([frameworkName, sections]) => {
+                  const isCollapsed = collapsedFrameworks.has(frameworkName);
+                  return (
+                    <div key={frameworkName}>
+                      <div className="sticky top-0 bg-level-1 px-4 py-2 border-b border-border-low z-10 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-txt-primary">{frameworkName}</h3>
+                        <Button
+                          variant="tertiary"
+                          icon={isCollapsed ? IconChevronDown : IconChevronUp}
+                          onClick={() => toggleFramework(frameworkName)}
+                          aria-label={isCollapsed ? __("Expand") : __("Collapse")}
                         />
+                      </div>
+                      {!isCollapsed && Object.entries(sections).map(([sectionTitle, sectionControls]) => (
+                        <div key={`${frameworkName}-${sectionTitle}`}>
+                          {sectionControls.map(control => (
+                            <ControlRow
+                              key={control.controlId}
+                              control={control}
+                              stateOfApplicabilityId={stateOfApplicabilityId}
+                              isLinked={control.stateOfApplicabilityId !== null}
+                              onUpdate={onUpdate}
+                            />
+                          ))}
+                        </div>
                       ))}
                     </div>
-                  ))}
-                </div>
-              );
-            })
-          )}
+                  );
+                })
+              )}
         </div>
       </DialogContent>
       <DialogFooter exitLabel={__("Close")}></DialogFooter>
@@ -359,27 +361,29 @@ export const LinkControlDialog = forwardRef<LinkControlDialogRef>((_props, ref) 
     <Dialog
       ref={dialogRef}
       className="max-w-3xl"
-      title={
+      title={(
         <Breadcrumb
           items={[__("States of Applicability"), __("Add Controls")]}
         />
-      }
+      )}
       onClose={handleClose}
     >
-      {stateOfApplicabilityId ? (
-        <Suspense
-          fallback={
-            <DialogContent padded className="flex items-center justify-center py-8">
-              <Spinner />
-            </DialogContent>
-          }
-        >
-          <LinkControlDialogContent
-            stateOfApplicabilityId={stateOfApplicabilityId}
-            onUpdate={onUpdateCallback}
-          />
-        </Suspense>
-      ) : null}
+      {stateOfApplicabilityId
+        ? (
+            <Suspense
+              fallback={(
+                <DialogContent padded className="flex items-center justify-center py-8">
+                  <Spinner />
+                </DialogContent>
+              )}
+            >
+              <LinkControlDialogContent
+                stateOfApplicabilityId={stateOfApplicabilityId}
+                onUpdate={onUpdateCallback}
+              />
+            </Suspense>
+          )
+        : null}
     </Dialog>
   );
 });

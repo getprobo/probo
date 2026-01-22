@@ -10,7 +10,7 @@ export default function TrustCenterAuditsTab() {
   const { organization } = useOutletContext<TrustCenterGraphQuery$data>();
   const [updateAuditVisibility, isUpdatingAudits] = useTrustCenterAuditUpdate();
 
-  const audits = (organization.audits?.edges ?? []).map((edge) => edge.node);
+  const audits = (organization.audits?.edges ?? []).map(edge => edge.node);
 
   return (
     <div className="space-y-4">

@@ -74,10 +74,10 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
     },
   );
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     const cleanData = cleanFormData(data);
 
-    updateContact({
+    await updateContact({
       variables: {
         input: {
           id: contactId,
@@ -88,7 +88,7 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
         onClose();
       },
     });
-  });
+  };
 
   const dialogRef = useDialogRef();
 
@@ -103,7 +103,7 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
       onClose={onClose}
       title={<Breadcrumb items={[__("Contacts"), __("Edit Contact")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
             label={__("Name")}

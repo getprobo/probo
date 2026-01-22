@@ -90,16 +90,16 @@ export function SCIMConfiguration(props: {
 
   const deleteDialogRef = useDialogRef();
 
-  const [createSCIMConfiguration, isCreatingSAMLConfiguration] =
-    useMutation<SCIMConfigurationCreateMutation>(
+  const [createSCIMConfiguration, isCreatingSAMLConfiguration]
+    = useMutation<SCIMConfigurationCreateMutation>(
       createSCIMConfigurationMutation,
     );
-  const [deleteSCIMConfiguration, isDeletingSCIMConfiguration] =
-    useMutation<SCIMConfigurationDeleteMutation>(
+  const [deleteSCIMConfiguration, isDeletingSCIMConfiguration]
+    = useMutation<SCIMConfigurationDeleteMutation>(
       deleteSCIMConfigurationMutation,
     );
-  const [regenerateSCIMToken, isRegeneratingSCIMToken] =
-    useMutation<SCIMConfigurationRegenerateTokenMutation>(
+  const [regenerateSCIMToken, isRegeneratingSCIMToken]
+    = useMutation<SCIMConfigurationRegenerateTokenMutation>(
       regenerateSCIMTokenMutation,
     );
 
@@ -208,7 +208,7 @@ export function SCIMConfiguration(props: {
   };
 
   const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     toast({
       title: __("Copied to clipboard"),
       description: label,
@@ -273,8 +273,7 @@ export function SCIMConfiguration(props: {
                     copyToClipboard(
                       scimConfiguration.endpointUrl,
                       __("SCIM Endpoint URL"),
-                    )
-                  }
+                    )}
                   icon={IconSquareBehindSquare2}
                 />
               </div>

@@ -81,7 +81,7 @@ export function useStateOfApplicabilityQuery(
     paginatedStateOfApplicabilityFragment,
     data.organization as StateOfApplicabilityGraphPaginatedFragment$key,
   );
-  const statesOfApplicability = pagination.data.statesOfApplicability?.edges.map((edge) => edge.node);
+  const statesOfApplicability = pagination.data.statesOfApplicability?.edges.map(edge => edge.node);
   return {
     ...pagination,
     statesOfApplicability,
@@ -142,7 +142,7 @@ export const useDeleteStateOfApplicability = (
       {
         message: sprintf(
           __(
-            'This will permanently delete "%s". This action cannot be undone.',
+            "This will permanently delete \"%s\". This action cannot be undone.",
           ),
           stateOfApplicability.name,
         ),

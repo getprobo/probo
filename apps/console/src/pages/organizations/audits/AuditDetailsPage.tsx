@@ -76,11 +76,11 @@ export default function AuditDetailsPage(props: Props) {
   const deleteAudit = useDeleteAudit(
     { id: auditEntry.id!, framework: { name: auditEntry.framework!.name } },
     ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits"),
-    () => navigate(`/organizations/${organizationId}/audits`),
+    () => void navigate(`/organizations/${organizationId}/audits`),
   );
 
-  const { control, formState, handleSubmit, register, reset } =
-    useFormWithSchema(updateAuditSchema, {
+  const { control, formState, handleSubmit, register, reset }
+    = useFormWithSchema(updateAuditSchema, {
       defaultValues: {
         name: auditEntry.name || null,
         validFrom: auditEntry.validFrom?.split("T")[0] || "",
@@ -134,12 +134,22 @@ export default function AuditDetailsPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the audit report "%s". This action cannot be undone.',
+            "This will permanently delete the audit report \"%s\". This action cannot be undone.",
           ),
           auditEntry.report.filename,
         ),
       },
     );
+  };
+
+  const handleUploadFile = async (files: File[]) => {
+    if (files.length > 0 && auditEntry.id) {
+      await uploadAuditReport({
+        auditId: auditEntry.id,
+        file: files[0],
+      });
+      window.location.reload();
+    }
   };
 
   return (
@@ -152,8 +162,8 @@ export default function AuditDetailsPage(props: Props) {
           },
           {
             label:
-              (auditEntry.name || auditEntry.framework?.name) ??
-              __("Unknown Audit"),
+              (auditEntry.name || auditEntry.framework?.name)
+              ?? __("Unknown Audit"),
           },
         ]}
       />
@@ -188,7 +198,7 @@ export default function AuditDetailsPage(props: Props) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={e => void onSubmit(e)} className="space-y-6">
           <Field label={__("Name")}>
             <Input {...register("name")} placeholder={__("Audit name")} />
           </Field>
@@ -199,7 +209,7 @@ export default function AuditDetailsPage(props: Props) {
             type="select"
             label={__("State")}
           >
-            {auditStates.map((state) => (
+            {auditStates.map(state => (
               <Option key={state} value={state}>
                 {getAuditStateLabel(__, state)}
               </Option>
@@ -227,75 +237,70 @@ export default function AuditDetailsPage(props: Props) {
           <div className="space-y-4">
             <h3 className="text-lg font-medium">{__("Audit Report")}</h3>
 
-            {auditEntry.report ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-success-50 border border-success-200 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <IconArrowInbox className="text-success-600" size={20} />
-                    <div className="flex-1">
-                      <p className="font-medium text-success-900">
-                        {auditEntry.report.filename}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-success-700">
-                        <span>{fileSize(__, auditEntry.report.size)}</span>
-                        <span>
-                          {__("Uploaded")}{" "}
-                          {formatDate(auditEntry.report.createdAt)}
-                        </span>
+            {auditEntry.report
+              ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-success-50 border border-success-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <IconArrowInbox className="text-success-600" size={20} />
+                        <div className="flex-1">
+                          <p className="font-medium text-success-900">
+                            {auditEntry.report.filename}
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-success-700">
+                            <span>{fileSize(__, auditEntry.report.size)}</span>
+                            <span>
+                              {__("Uploaded")}
+                              {" "}
+                              {formatDate(auditEntry.report.createdAt)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                      <ActionDropdown>
+                        <DropdownItem
+                          onClick={() => {
+                            if (auditEntry.report?.downloadUrl) {
+                              window.open(auditEntry.report.downloadUrl, "_blank");
+                            }
+                          }}
+                          icon={IconArrowInbox}
+                        >
+                          {__("Download")}
+                        </DropdownItem>
+                        <DropdownItem
+                          variant="danger"
+                          icon={IconTrashCan}
+                          onClick={handleDeleteReport}
+                        >
+                          {__("Delete")}
+                        </DropdownItem>
+                      </ActionDropdown>
                     </div>
                   </div>
-                  <ActionDropdown>
-                    <DropdownItem
-                      onClick={() => {
-                        if (auditEntry.report?.downloadUrl) {
-                          window.open(auditEntry.report.downloadUrl, "_blank");
-                        }
-                      }}
-                      icon={IconArrowInbox}
-                    >
-                      {__("Download")}
-                    </DropdownItem>
-                    <DropdownItem
-                      variant="danger"
-                      icon={IconTrashCan}
-                      onClick={handleDeleteReport}
-                    >
-                      {__("Delete")}
-                    </DropdownItem>
-                  </ActionDropdown>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-neutral-600">
-                  {__(
-                    "Upload the final audit report document (PDF recommended)",
-                  )}
-                </p>
-                <Dropzone
-                  description={__(
-                    "Only PDF, DOCX files up to 25MB are allowed",
-                  )}
-                  isUploading={isUploading}
-                  onDrop={async (files) => {
-                    if (files.length > 0 && auditEntry.id) {
-                      await uploadAuditReport({
-                        auditId: auditEntry.id,
-                        file: files[0],
-                      });
-                      window.location.reload();
-                    }
-                  }}
-                  accept={{
-                    "application/pdf": [".pdf"],
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                )
+              : (
+                  <div className="space-y-4">
+                    <p className="text-neutral-600">
+                      {__(
+                        "Upload the final audit report document (PDF recommended)",
+                      )}
+                    </p>
+                    <Dropzone
+                      description={__(
+                        "Only PDF, DOCX files up to 25MB are allowed",
+                      )}
+                      isUploading={isUploading}
+                      onDrop={files => void handleUploadFile(files)}
+                      accept={{
+                        "application/pdf": [".pdf"],
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
                       [".docx"],
-                  }}
-                  maxSize={25}
-                />
-              </div>
-            )}
+                      }}
+                      maxSize={25}
+                    />
+                  </div>
+                )}
           </div>
         </Card>
       </div>

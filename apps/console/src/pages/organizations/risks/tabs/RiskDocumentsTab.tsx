@@ -56,7 +56,7 @@ export default function RiskDocumentsTab() {
     risk,
   );
   const connectionId = data.documents.__id;
-  const documents = data.documents?.edges?.map((edge) => edge.node) ?? [];
+  const documents = data.documents?.edges?.map(edge => edge.node) ?? [];
 
   const canLinkDocument = risk.canCreateDocumentMapping;
   const canUnlinkDocument = risk.canDeleteDocumentMapping;

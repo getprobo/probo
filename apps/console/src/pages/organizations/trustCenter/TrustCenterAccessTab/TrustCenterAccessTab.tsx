@@ -17,7 +17,7 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import z from "zod";
 import {
   useTrustCenterAccesses,
@@ -29,6 +29,7 @@ import { TrustCenterAccessItem } from "./TrustCenterAccessItem";
 import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 import type { NodeOf } from "/types";
 import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
+import type { TrustCenterAccessGraphCreateMutation } from "/__generated__/core/TrustCenterAccessGraphCreateMutation.graphql";
 
 export default function TrustCenterAccessTab() {
   const { __ } = useTranslate();
@@ -44,7 +45,7 @@ export default function TrustCenterAccessTab() {
       .email(__("Please enter a valid email address")),
   });
 
-  const [createInvitation, isCreating] = useMutationWithToasts(
+  const [createInvitation, isCreating] = useMutationWithToasts<TrustCenterAccessGraphCreateMutation>(
     createTrustCenterAccessMutation,
     {
       successMessage: __("Access created successfully"),
@@ -56,7 +57,6 @@ export default function TrustCenterAccessTab() {
   const [editingAccess, setEditingAccess] = useState<NodeOf<
     TrustCenterAccessGraph_accesses$data["accesses"]
   > | null>(null);
-  const [pendingEditEmail, setPendingEditEmail] = useState<string | null>(null);
 
   const inviteForm = useFormWithSchema(inviteSchema, {
     defaultValues: { name: "", email: "" },
@@ -70,11 +70,11 @@ export default function TrustCenterAccessTab() {
   } = useTrustCenterAccesses(organization.trustCenter?.id || "");
 
   const accesses = useMemo(
-    () => trustCenterData?.accesses?.edges.map((edge) => edge.node) ?? [],
+    () => trustCenterData?.accesses?.edges.map(edge => edge.node) ?? [],
     [trustCenterData?.accesses?.edges],
   );
 
-  const handleInvite = inviteForm.handleSubmit(async (data) => {
+  const handleInvite = async (data: z.infer<typeof inviteSchema>) => {
     if (!organization.trustCenter?.id) {
       return;
     }
@@ -92,19 +92,12 @@ export default function TrustCenterAccessTab() {
         },
         connections: connectionId ? [connectionId] : [],
       },
-      onSuccess: () => {
-        setPendingEditEmail(email);
-      },
-    });
-  });
+      onCompleted: (response, errors) => {
+        if (errors?.length) {
+          return;
+        }
 
-  useEffect(() => {
-    if (pendingEditEmail && accesses.length > 0) {
-      const newAccess = accesses.find(
-        (access) => access.email === pendingEditEmail,
-      );
-      if (newAccess) {
-        setPendingEditEmail(null);
+        const newAccess = response.createTrustCenterAccess.trustCenterAccessEdge.node;
         setEditingAccess(newAccess);
         setTimeout(() => {
           dialogRef.current?.close();
@@ -112,9 +105,9 @@ export default function TrustCenterAccessTab() {
         setTimeout(() => {
           inviteForm.reset();
         }, 300);
-      }
-    }
-  }, [accesses, pendingEditEmail, dialogRef, inviteForm]);
+      },
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -127,83 +120,87 @@ export default function TrustCenterAccessTab() {
             )}
           </p>
         </div>
-        {organization.trustCenter?.id &&
-          organization.trustCenter.canCreateAccess && (
-            <Button
-              icon={IconPlusLarge}
-              onClick={() => {
-                inviteForm.reset();
-                dialogRef.current?.open();
-              }}
-            >
-              {__("Add Access")}
-            </Button>
-          )}
+        {organization.trustCenter?.id
+          && organization.trustCenter.canCreateAccess && (
+          <Button
+            icon={IconPlusLarge}
+            onClick={() => {
+              inviteForm.reset();
+              dialogRef.current?.open();
+            }}
+          >
+            {__("Add Access")}
+          </Button>
+        )}
       </div>
 
-      {!organization.trustCenter?.id ? (
-        <Table>
-          <Tbody>
-            <Tr>
-              <Td className="text-center text-txt-tertiary py-8">
-                <Spinner />
-              </Td>
-            </Tr>
-          </Tbody>
-        </Table>
-      ) : accesses.length === 0 ? (
-        <Table>
-          <Tbody>
-            <Tr>
-              <Td className="text-center text-txt-tertiary py-8">
-                {__("No external access granted yet")}
-              </Td>
-            </Tr>
-          </Tbody>
-        </Table>
-      ) : (
-        <>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{__("Name")}</Th>
-                <Th>{__("Email")}</Th>
-                <Th>{__("Date")}</Th>
-                <Th className="text-center">{__("Active")}</Th>
-                <Th className="text-center">{__("Access")}</Th>
-                <Th className="text-center">{__("Requests")}</Th>
-                <Th className="text-center">{__("NDA")}</Th>
-                <Th></Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {accesses.map((access) => (
-                <TrustCenterAccessItem
-                  key={`${access.id}-${editingAccess?.id === access.id}`}
-                  access={access}
-                  connectionId={trustCenterData?.accesses?.__id}
-                  dialogOpen={editingAccess?.id === access.id}
-                />
-              ))}
-            </Tbody>
-          </Table>
-          {hasNext && (
-            <Button
-              variant="tertiary"
-              onClick={loadMore}
-              disabled={isLoadingNext}
-              className="mt-3 mx-auto"
-              icon={IconChevronDown}
-            >
-              {isLoadingNext && <Spinner />}
-              {__("Show More")}
-            </Button>
-          )}
-        </>
-      )}
+      {!organization.trustCenter?.id
+        ? (
+            <Table>
+              <Tbody>
+                <Tr>
+                  <Td className="text-center text-txt-tertiary py-8">
+                    <Spinner />
+                  </Td>
+                </Tr>
+              </Tbody>
+            </Table>
+          )
+        : accesses.length === 0
+          ? (
+              <Table>
+                <Tbody>
+                  <Tr>
+                    <Td className="text-center text-txt-tertiary py-8">
+                      {__("No external access granted yet")}
+                    </Td>
+                  </Tr>
+                </Tbody>
+              </Table>
+            )
+          : (
+              <>
+                <Table>
+                  <Thead>
+                    <Tr>
+                      <Th>{__("Name")}</Th>
+                      <Th>{__("Email")}</Th>
+                      <Th>{__("Date")}</Th>
+                      <Th className="text-center">{__("Active")}</Th>
+                      <Th className="text-center">{__("Access")}</Th>
+                      <Th className="text-center">{__("Requests")}</Th>
+                      <Th className="text-center">{__("NDA")}</Th>
+                      <Th></Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {accesses.map(access => (
+                      <TrustCenterAccessItem
+                        key={`${access.id}-${editingAccess?.id === access.id}`}
+                        access={access}
+                        connectionId={trustCenterData?.accesses?.__id}
+                        dialogOpen={editingAccess?.id === access.id}
+                      />
+                    ))}
+                  </Tbody>
+                </Table>
+                {hasNext && (
+                  <Button
+                    variant="tertiary"
+                    onClick={loadMore}
+                    disabled={isLoadingNext}
+                    className="mt-3 mx-auto"
+                    icon={IconChevronDown}
+                  >
+                    {isLoadingNext && <Spinner />}
+                    {__("Show More")}
+                  </Button>
+                )}
+              </>
+            )}
 
       <Dialog ref={dialogRef} title={__("Invite External Access")}>
-        <form onSubmit={handleInvite}>
+        <form onSubmit={e => void inviteForm.handleSubmit(handleInvite)(e)}>
           <DialogContent padded className="space-y-6">
             <div>
               <p className="text-txt-secondary text-sm mb-4">

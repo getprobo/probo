@@ -7,7 +7,7 @@ export function DocumentTypeOptions() {
 
   return (
     <>
-      {documentTypes.map((type) => (
+      {documentTypes.map(type => (
         <Option key={type} value={type}>
           {getDocumentTypeLabel(__, type)}
         </Option>

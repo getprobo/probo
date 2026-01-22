@@ -37,8 +37,8 @@ export function CreateDatumDialog({
   onCreated,
 }: Props) {
   const { __ } = useTranslate();
-  const { control, handleSubmit, register, formState, reset } =
-    useFormWithSchema(schema, {
+  const { control, handleSubmit, register, formState, reset }
+    = useFormWithSchema(schema, {
       defaultValues: {
         name: "",
         dataClassification: "PUBLIC",
@@ -49,7 +49,7 @@ export function CreateDatumDialog({
   const ref = useDialogRef();
   const createDatum = useCreateDatum(connection);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
       await createDatum({
         ...data,
@@ -61,7 +61,7 @@ export function CreateDatumDialog({
     } catch (error) {
       console.error("Failed to create datum:", error);
     }
-  });
+  };
 
   return (
     <Dialog
@@ -69,7 +69,7 @@ export function CreateDatumDialog({
       trigger={children}
       title={<Breadcrumb items={[__("Data"), __("New Data")]} />}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
           <Field label={__("Name")} {...register("name")} type="text" />
           <ControlledField

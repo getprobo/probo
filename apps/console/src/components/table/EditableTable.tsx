@@ -81,7 +81,7 @@ export function EditableTable<
         ))}
         <CellHead />
       </Row>
-      {props.items.map((item) => (
+      {props.items.map(item => (
         <EditableRow onUpdate={(k, v) => update(item.id, k, v)} key={item.id}>
           {props.row({
             item,
@@ -91,18 +91,20 @@ export function EditableTable<
           <Cell>{props.action({ item })}</Cell>
         </EditableRow>
       ))}
-      {showAdd ? (
-        <NewItemRow
-          schema={props.schema}
-          defaultValue={props.defaultValue}
-          connectionId={props.connectionId}
-          row={props.row}
-          mutation={props.createMutation}
-          onSuccess={toggleAdd}
-        />
-      ) : (
-        <RowButton onClick={toggleAdd} type="button">{props.addLabel}</RowButton>
-      )}
+      {showAdd
+        ? (
+            <NewItemRow
+              schema={props.schema}
+              defaultValue={props.defaultValue}
+              connectionId={props.connectionId}
+              row={props.row}
+              mutation={props.createMutation}
+              onSuccess={toggleAdd}
+            />
+          )
+        : (
+            <RowButton onClick={toggleAdd} type="button">{props.addLabel}</RowButton>
+          )}
     </SortableDataTable>
   );
 }
@@ -144,7 +146,7 @@ function NewItemRow<T extends { id: string }, S extends z.ZodSchema>(props: {
           disabled={!isOk || isMutating}
           variant="tertiary"
           className={clsx(isOk ? "text-txt-success" : "text-txt-secondary")}
-          onClick={onSubmit}
+          onClick={() => void onSubmit()}
         >
           {isMutating ? <Spinner size={16} /> : <IconCheckmark1 size={16} />}
         </Button>

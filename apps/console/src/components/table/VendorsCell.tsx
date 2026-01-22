@@ -26,9 +26,8 @@ export function VendorsCell(props: Props) {
       variables={{
         organizationId: props.organizationId,
       }}
-      items={(data) =>
-        data.organization?.vendors?.edges?.map((edge) => edge.node) ?? []
-      }
+      items={data =>
+        data.organization?.vendors?.edges?.map(edge => edge.node) ?? []}
       itemRenderer={({ item, onRemove }) => (
         <VendorBadge vendor={item} onRemove={onRemove} />
       )}

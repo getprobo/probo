@@ -39,9 +39,9 @@ type Props = {
   tasks:
     | TasksPageFragment$data["tasks"]["edges"]
     | Extract<
-        MeasureTasksTabQuery$data["node"],
-        { __typename: "Measure" }
-      >["tasks"]["edges"];
+      MeasureTasksTabQuery$data["node"],
+      { __typename: "Measure" }
+    >["tasks"]["edges"];
   connectionId: string;
 };
 
@@ -67,52 +67,54 @@ export function TasksCard({ tasks, connectionId }: Props) {
 
   return (
     <div className="space-y-6">
-      {tasks.length === 0 ? (
-        <p className="text-center py-6 text-txt-secondary">{__("No tasks")}</p>
-      ) : (
-        <Card>
-          <Tabs className="px-6">
-            {hashes.map((h) => (
-              <TabItem asChild active={hash === h.hash} key={h.hash}>
-                <Link to={`#${h.hash}`}>
-                  {h.label}
-                  <TabBadge>{tasksPerHash.get(h.hash)?.length}</TabBadge>
-                </Link>
-              </TabItem>
-            ))}
-          </Tabs>
-          <div className="divide-y divide-border-solid">
-            {hash === "all"
-              ? // All tabs group the todo using the state
-                hashes
-                  .slice(0, 2)
-                  .filter((h) => tasksPerHash.get(h.hash)?.length)
-                  .map((h) => (
-                    <Fragment key={h.label}>
-                      <h2 className="px-6 py-3 text-sm font-medium flex items-center gap-2 bg-subtle">
-                        <TaskStateIcon state={h.state!} />
-                        {h.label}
-                      </h2>
-                      {tasksPerHash.get(h.hash)?.map(({ node: task }) => (
-                        <TaskRow
-                          key={task.id}
-                          fKey={task}
-                          connectionId={connectionId}
-                        />
-                      ))}
-                    </Fragment>
-                  ))
-              : // Todo and Done tab simply list todos
-                filteredTasks?.map(({ node: task }) => (
-                  <TaskRow
-                    key={task.id}
-                    fKey={task}
-                    connectionId={connectionId}
-                  />
+      {tasks.length === 0
+        ? (
+            <p className="text-center py-6 text-txt-secondary">{__("No tasks")}</p>
+          )
+        : (
+            <Card>
+              <Tabs className="px-6">
+                {hashes.map(h => (
+                  <TabItem asChild active={hash === h.hash} key={h.hash}>
+                    <Link to={`#${h.hash}`}>
+                      {h.label}
+                      <TabBadge>{tasksPerHash.get(h.hash)?.length}</TabBadge>
+                    </Link>
+                  </TabItem>
                 ))}
-          </div>
-        </Card>
-      )}
+              </Tabs>
+              <div className="divide-y divide-border-solid">
+                {hash === "all"
+                  // All tabs group the todo using the state
+                  ? hashes
+                      .slice(0, 2)
+                      .filter(h => tasksPerHash.get(h.hash)?.length)
+                      .map(h => (
+                        <Fragment key={h.label}>
+                          <h2 className="px-6 py-3 text-sm font-medium flex items-center gap-2 bg-subtle">
+                            <TaskStateIcon state={h.state!} />
+                            {h.label}
+                          </h2>
+                          {tasksPerHash.get(h.hash)?.map(({ node: task }) => (
+                            <TaskRow
+                              key={task.id}
+                              fKey={task}
+                              connectionId={connectionId}
+                            />
+                          ))}
+                        </Fragment>
+                      ))
+                  // Todo and Done tab simply list todos
+                  : filteredTasks?.map(({ node: task }) => (
+                      <TaskRow
+                        key={task.id}
+                        fKey={task}
+                        connectionId={connectionId}
+                      />
+                    ))}
+              </div>
+            </Card>
+          )}
     </div>
   );
 }
@@ -163,15 +165,15 @@ function TaskRow(props: TaskRowProps) {
   const params = useParams<{ measureId?: string }>();
 
   const relayEnv = useRelayEnvironment();
-  const { canUpdate, canDelete, ...task } =
-    useFragment<TasksCard_TaskRowFragment$key>(
+  const { canUpdate, canDelete, ...task }
+    = useFragment<TasksCard_TaskRowFragment$key>(
       fragment,
       props.fKey as TasksCard_TaskRowFragment$key,
     );
   const [updateTask, isUpdating] = useMutation(taskUpdateMutation);
 
-  const onToggle = () => {
-    promisifyMutation(updateTask)({
+  const onToggle = async () => {
+    await promisifyMutation(updateTask)({
       variables: {
         input: {
           taskId: task.id,
@@ -217,7 +219,7 @@ function TaskRow(props: TaskRowProps) {
           <div className="flex items-center gap-2 pt-[2px]">
             <PriorityLevel level={1} />
             <button
-              onClick={onToggle}
+              onClick={() => void onToggle()}
               className="cursor-pointer -m-1 p-1 disabled:opacity-60"
               disabled={isUpdating}
             >
@@ -227,7 +229,7 @@ function TaskRow(props: TaskRowProps) {
           <div className="text-sm space-y-1 flex-1">
             <h2 className="font-medium">{task.name}</h2>
             {task.description && (
-              <p className="text-txt-secondary whitespace-pre-wrap break-words">
+              <p className="text-txt-secondary whitespace-pre-wrap wrap-break-word">
                 {task.description}
               </p>
             )}

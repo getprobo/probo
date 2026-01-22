@@ -22,7 +22,7 @@ const schema = z
     password: z.string().min(8),
     confirmPassword: z.string().min(8),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
   });
@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
     resetPasswordMutation,
   );
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit((data) => {
     if (!token) {
       toast({
         title: __("Reset failed"),
@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
           description: __("Password reset successfully"),
           variant: "success",
         });
-        navigate("/auth/login", { replace: true });
+        void navigate("/auth/login", { replace: true });
       },
     });
   });
@@ -102,7 +102,7 @@ export default function ResetPasswordPage() {
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={e => void onSubmit(e)} className="space-y-4">
         <Field
           label={__("New Password")}
           type="password"
@@ -130,7 +130,8 @@ export default function ResetPasswordPage() {
 
       <div className="text-center">
         <p className="text-sm text-txt-tertiary">
-          {__("Remember your password?")}{" "}
+          {__("Remember your password?")}
+          {" "}
           <Link
             to="/auth/login"
             className="underline text-txt-primary hover:text-txt-secondary"

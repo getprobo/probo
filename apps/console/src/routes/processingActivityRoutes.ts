@@ -23,7 +23,7 @@ export const processingActivityRoutes = [
         coreEnvironment,
         processingActivitiesQuery,
         {
-          organizationId: organizationId!,
+          organizationId: organizationId,
           snapshotId: null,
         },
       ),
@@ -43,7 +43,7 @@ export const processingActivityRoutes = [
         coreEnvironment,
         processingActivitiesQuery,
         {
-          organizationId: organizationId!,
+          organizationId: organizationId,
           snapshotId,
         },
       ),
@@ -63,7 +63,7 @@ export const processingActivityRoutes = [
         coreEnvironment,
         processingActivityNodeQuery,
         {
-          processingActivityId: activityId!,
+          processingActivityId: activityId,
         },
       ),
     ),
@@ -82,7 +82,7 @@ export const processingActivityRoutes = [
         coreEnvironment,
         processingActivityNodeQuery,
         {
-          processingActivityId: activityId!,
+          processingActivityId: activityId,
         },
       ),
     ),

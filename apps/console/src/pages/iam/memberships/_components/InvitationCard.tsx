@@ -48,16 +48,16 @@ interface InvitationCardProps {
 }
 
 export function InvitationCard(props: InvitationCardProps) {
-  const { pendingInvitationsConnectionId, membershipConnectionId, fKey } =
-    props;
+  const { pendingInvitationsConnectionId, membershipConnectionId, fKey }
+    = props;
 
   const { __ } = useTranslate();
   const { toast } = useToast();
 
   const invitation = useFragment<InvitationCardFragment$key>(fragment, fKey);
 
-  const [acceptInvitation, isAccepting] =
-    useMutation<InvitationCardMutation>(acceptMutation);
+  const [acceptInvitation, isAccepting]
+    = useMutation<InvitationCardMutation>(acceptMutation);
 
   const handleAccept = () => {
     acceptInvitation({
@@ -96,10 +96,14 @@ export function InvitationCard(props: InvitationCardProps) {
             {invitation.organization.name}
           </h3>
           <p className="text-sm text-txt-secondary">
-            {__("Role")}: <span className="font-medium">{invitation.role}</span>
+            {__("Role")}
+            :
+            <span className="font-medium">{invitation.role}</span>
           </p>
           <p className="text-xs text-txt-tertiary">
-            {__("Invited on")} {formatDate(invitation.createdAt)}
+            {__("Invited on")}
+            {" "}
+            {formatDate(invitation.createdAt)}
           </p>
         </div>
         <Button onClick={handleAccept} disabled={isAccepting}>

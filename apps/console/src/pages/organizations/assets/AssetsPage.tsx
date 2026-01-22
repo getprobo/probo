@@ -85,10 +85,10 @@ export default function AssetsPage(props: Props) {
     paginatedAssetsFragment,
     data.node as AssetsPageFragment$key,
   );
-  const assets = pagination.data.assets?.edges.map((edge) => edge.node);
+  const assets = pagination.data.assets?.edges.map(edge => edge.node);
   const connectionId = pagination.data.assets.__id;
 
-  const canWrite = assets.some((asset) => asset.canDelete || asset.canUpdate);
+  const canWrite = assets.some(asset => asset.canDelete || asset.canUpdate);
   usePageTitle(__("Assets"));
 
   return (
@@ -109,15 +109,17 @@ export default function AssetsPage(props: Props) {
           </CreateAssetDialog>
         )}
       </PageHeader>
-      {isSnapshotMode || !canWrite ? (
-        <ReadOnlyAssetsTable pagination={pagination} assets={assets} />
-      ) : (
-        <AssetsTable
-          connectionId={connectionId}
-          pagination={pagination}
-          assets={assets}
-        />
-      )}
+      {isSnapshotMode || !canWrite
+        ? (
+            <ReadOnlyAssetsTable pagination={pagination} assets={assets} />
+          )
+        : (
+            <AssetsTable
+              connectionId={connectionId}
+              pagination={pagination}
+              assets={assets}
+            />
+          )}
     </div>
   );
 }

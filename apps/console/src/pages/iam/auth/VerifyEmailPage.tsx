@@ -37,10 +37,10 @@ export default function VerifyEmailPage() {
     },
   });
 
-  const [verifyEmail] =
-    useMutation<VerifyEmailPageMutation>(verifyEmailMutation);
+  const [verifyEmail]
+    = useMutation<VerifyEmailPageMutation>(verifyEmailMutation);
 
-  const handleSubmit = form.handleSubmit(async (data) => {
+  const handleSubmit = form.handleSubmit((data) => {
     verifyEmail({
       variables: {
         input: {
@@ -83,40 +83,42 @@ export default function VerifyEmailPage() {
         </p>
       </div>
 
-      {isConfirmed ? (
-        <div className="space-y-4 text-center">
-          <p className="text-green-600 dark:text-green-400">
-            {__("Your email has been confirmed successfully!")}
-          </p>
-          <Button to="/auth/login" className="w-full">
-            {__("Proceed to Login")}
-          </Button>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Field
-            label={__("Confirmation Token")}
-            type="text"
-            placeholder={__("Enter your confirmation token")}
-            {...form.register("token")}
-            error={form.formState.errors.token?.message}
-            disabled={form.formState.isSubmitting}
-            help={__(
-              "The token has been automatically filled from the URL if available",
-            )}
-          />
+      {isConfirmed
+        ? (
+            <div className="space-y-4 text-center">
+              <p className="text-green-600 dark:text-green-400">
+                {__("Your email has been confirmed successfully!")}
+              </p>
+              <Button to="/auth/login" className="w-full">
+                {__("Proceed to Login")}
+              </Button>
+            </div>
+          )
+        : (
+            <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
+              <Field
+                label={__("Confirmation Token")}
+                type="text"
+                placeholder={__("Enter your confirmation token")}
+                {...form.register("token")}
+                error={form.formState.errors.token?.message}
+                disabled={form.formState.isSubmitting}
+                help={__(
+                  "The token has been automatically filled from the URL if available",
+                )}
+              />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={form.formState.isSubmitting}
-          >
-            {form.formState.isSubmitting
-              ? __("Confirming...")
-              : __("Confirm Email")}
-          </Button>
-        </form>
-      )}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting
+                  ? __("Confirming...")
+                  : __("Confirm Email")}
+              </Button>
+            </form>
+          )}
 
       <div className="text-center">
         {!isConfirmed && (

@@ -26,6 +26,7 @@ const documentTabs = (prefix: string) => {
         const redirectPath = versionId
           ? `${basePath}/versions/${versionId}/description`
           : `${basePath}/description`;
+        // eslint-disable-next-line
         throw redirect(redirectPath);
       },
       Component: Fragment,
@@ -63,7 +64,7 @@ export const documentsRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<DocumentGraphListQuery>(coreEnvironment, documentsQuery, {
-        organizationId: organizationId!,
+        organizationId: organizationId,
       }),
     ),
     Component: withQueryRef(
@@ -75,7 +76,7 @@ export const documentsRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ documentId }) =>
       loadQuery<DocumentGraphNodeQuery>(coreEnvironment, documentNodeQuery, {
-        documentId: documentId!,
+        documentId: documentId,
       }),
     ),
     Component: withQueryRef(

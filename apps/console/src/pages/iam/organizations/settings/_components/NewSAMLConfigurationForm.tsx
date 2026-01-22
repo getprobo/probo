@@ -40,8 +40,8 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
 
-  const [create, isCreating] =
-    useMutationWithToasts<NewSAMLConfigurationForm_createMutation>(
+  const [create, isCreating]
+    = useMutationWithToasts<NewSAMLConfigurationForm_createMutation>(
       createSAMLConfigurationMutation,
       {
         successMessage: "SAML configuration created successfully.",
@@ -50,13 +50,13 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
     );
 
   const handleCreate = useCallback(
-    (data: SAMLConfigurationFormData) => {
+    async (data: SAMLConfigurationFormData) => {
       const connectionID = ConnectionHandler.getConnectionID(
         organizationId,
         "SAMLConfigurationListFragment_samlConfigurations",
       );
 
-      create({
+      await create({
         variables: {
           input: {
             organizationId,

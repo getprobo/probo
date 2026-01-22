@@ -37,8 +37,8 @@ export function CreateAssetDialog({
   organizationId,
 }: Props) {
   const { __ } = useTranslate();
-  const { control, handleSubmit, register, formState, reset } =
-    useFormWithSchema(schema, {
+  const { control, handleSubmit, register, formState, reset }
+    = useFormWithSchema(schema, {
       defaultValues: {
         name: "",
         amount: 0,
@@ -50,7 +50,7 @@ export function CreateAssetDialog({
   const ref = useDialogRef();
   const [createAsset] = useCreateAsset(connection);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
       await createAsset({
         ...data,
@@ -61,7 +61,7 @@ export function CreateAssetDialog({
     } catch (error) {
       console.error("Failed to create asset:", error);
     }
-  });
+  };
 
   return (
     <Dialog
@@ -69,7 +69,7 @@ export function CreateAssetDialog({
       trigger={children}
       title={<Breadcrumb items={[__("Assets"), __("New Asset")]} />}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
         <DialogContent padded className="space-y-4">
           <Field label={__("Name")} {...register("name")} type="text" />
           <Field

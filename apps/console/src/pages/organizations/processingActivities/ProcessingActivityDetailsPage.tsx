@@ -98,8 +98,8 @@ type Props = {
 };
 
 export default function ProcessingActivityDetailsPage(props: Props) {
-  const { node: activity } =
-    usePreloadedQuery<ProcessingActivityGraphNodeQuery>(
+  const { node: activity }
+    = usePreloadedQuery<ProcessingActivityGraphNodeQuery>(
       processingActivityNodeQuery,
       props.queryRef,
     );
@@ -192,8 +192,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     connectionId,
   );
 
-  const vendors = activity?.vendors?.edges.map((edge) => edge.node) ?? [];
-  const vendorIds = vendors.map((vendor) => vendor.id);
+  const vendors = activity?.vendors?.edges.map(edge => edge.node) ?? [];
+  const vendorIds = vendors.map(vendor => vendor.id);
 
   const { register, handleSubmit, formState, control } = useFormWithSchema(
     updateProcessingActivitySchema,
@@ -214,8 +214,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         retentionPeriod: activity.retentionPeriod || "",
         securityMeasures: activity.securityMeasures || "",
         dataProtectionImpactAssessmentNeeded:
-          activity.dataProtectionImpactAssessmentNeeded ||
-          ("NOT_NEEDED" as const),
+          activity.dataProtectionImpactAssessmentNeeded
+          || ("NOT_NEEDED" as const),
         transferImpactAssessmentNeeded:
           activity.transferImpactAssessmentNeeded || ("NOT_NEEDED" as const),
         lastReviewDate: toDateInput(activity.lastReviewDate),
@@ -231,13 +231,13 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     defaultValues: {
       description: activity?.dataProtectionImpactAssessment?.description || "",
       necessityAndProportionality:
-        activity?.dataProtectionImpactAssessment?.necessityAndProportionality ||
-        "",
+        activity?.dataProtectionImpactAssessment?.necessityAndProportionality
+        || "",
       potentialRisk:
         activity?.dataProtectionImpactAssessment?.potentialRisk || "",
       mitigations: activity?.dataProtectionImpactAssessment?.mitigations || "",
-      residualRisk: (activity?.dataProtectionImpactAssessment?.residualRisk ||
-        "") as ProcessingActivityDPIAResidualRisk | "",
+      residualRisk: (activity?.dataProtectionImpactAssessment?.residualRisk
+        || "") as ProcessingActivityDPIAResidualRisk | "",
     },
   });
 
@@ -303,20 +303,20 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const onDPIASubmit = dpiaForm.handleSubmit(async (formData) => {
     setDpiaSubmitting(true);
     try {
-      const isCreating =
-        !activity?.dataProtectionImpactAssessment?.id || dpiaDeleted;
+      const isCreating
+        = !activity?.dataProtectionImpactAssessment?.id || dpiaDeleted;
       if (!isCreating) {
         // Update existing DPIA
         await updateDPIA({
-          id: activity.dataProtectionImpactAssessment!.id,
+          id: activity.dataProtectionImpactAssessment.id,
           description: formData.description || undefined,
           necessityAndProportionality:
             formData.necessityAndProportionality || undefined,
           potentialRisk: formData.potentialRisk || undefined,
           mitigations: formData.mitigations || undefined,
           residualRisk:
-            (formData.residualRisk as ProcessingActivityDPIAResidualRisk) ||
-            undefined,
+            (formData.residualRisk as ProcessingActivityDPIAResidualRisk)
+            || undefined,
         });
         toast({
           title: __("Success"),
@@ -333,8 +333,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
           potentialRisk: formData.potentialRisk || undefined,
           mitigations: formData.mitigations || undefined,
           residualRisk:
-            (formData.residualRisk as ProcessingActivityDPIAResidualRisk) ||
-            undefined,
+            (formData.residualRisk as ProcessingActivityDPIAResidualRisk)
+            || undefined,
         });
         setDpiaDeleted(false);
         toast({
@@ -364,7 +364,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       if (!isCreating) {
         // Update existing TIA
         await updateTIA({
-          id: activity.transferImpactAssessment!.id,
+          id: activity.transferImpactAssessment.id,
           dataSubjects: formData.dataSubjects || undefined,
           legalMechanism: formData.legalMechanism || undefined,
           transfer: formData.transfer || undefined,
@@ -407,8 +407,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     }
   });
 
-  const breadcrumbProcessingActivitiesUrl =
-    isSnapshotMode && snapshotId
+  const breadcrumbProcessingActivitiesUrl
+    = isSnapshotMode && snapshotId
       ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities`
       : `/organizations/${organizationId}/processing-activities`;
 
@@ -464,7 +464,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "overview" && (
         <Card>
           <div className="p-6">
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={e => void onSubmit(e)} className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <Field
@@ -476,7 +476,11 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                   />
 
                   <div>
-                    <Label htmlFor="role">{__("Role")} *</Label>
+                    <Label htmlFor="role">
+                      {__("Role")}
+                      {" "}
+                      *
+                    </Label>
                     <Controller
                       control={control}
                       name="role"
@@ -526,7 +530,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
                   <div>
                     <Label htmlFor="specialOrCriminalData">
-                      {__("Special or Criminal Data")} *
+                      {__("Special or Criminal Data")}
+                      {" "}
+                      *
                     </Label>
                     <Controller
                       control={control}
@@ -561,7 +567,11 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                   />
 
                   <div>
-                    <Label htmlFor="lawfulBasis">{__("Lawful Basis")} *</Label>
+                    <Label htmlFor="lawfulBasis">
+                      {__("Lawful Basis")}
+                      {" "}
+                      *
+                    </Label>
                     <Controller
                       control={control}
                       name="lawfulBasis"
@@ -699,7 +709,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
                   <div>
                     <Label htmlFor="dataProtectionImpactAssessmentNeeded">
-                      {__("Data Protection Impact Assessment")} *
+                      {__("Data Protection Impact Assessment")}
+                      {" "}
+                      *
                     </Label>
                     <Controller
                       control={control}
@@ -729,7 +741,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
                   <div>
                     <Label htmlFor="transferImpactAssessmentNeeded">
-                      {__("Transfer Impact Assessment")} *
+                      {__("Transfer Impact Assessment")}
+                      {" "}
+                      *
                     </Label>
                     <Controller
                       control={control}
@@ -791,156 +805,158 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "dpia" && (
         <Card>
           <div className="p-6">
-            {!showDpiaForm &&
-            (!activity?.dataProtectionImpactAssessment?.id || dpiaDeleted) ? (
-              <div className="flex flex-col items-center justify-center py-16 w-full">
-                <h2 className="text-xl font-semibold mb-6 text-center">
-                  {__("Data Protection Impact Assessment")}
-                </h2>
-                {!isSnapshotMode && activity.canCreateDPIA && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowDpiaForm(true)}
-                  >
-                    {__("Create DPIA")}
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">
-                    {__("Data Protection Impact Assessment")}
-                  </h2>
-                  {!isSnapshotMode &&
-                    activity?.dataProtectionImpactAssessment?.id &&
-                    !dpiaDeleted &&
-                    activity.dataProtectionImpactAssessment.canDelete && (
-                      <Button variant="danger" onClick={deleteDPIA}>
-                        {__("Delete DPIA")}
+            {!showDpiaForm
+              && (!activity?.dataProtectionImpactAssessment?.id || dpiaDeleted)
+              ? (
+                  <div className="flex flex-col items-center justify-center py-16 w-full">
+                    <h2 className="text-xl font-semibold mb-6 text-center">
+                      {__("Data Protection Impact Assessment")}
+                    </h2>
+                    {!isSnapshotMode && activity.canCreateDPIA && (
+                      <Button
+                        variant="primary"
+                        onClick={() => setShowDpiaForm(true)}
+                      >
+                        {__("Create DPIA")}
                       </Button>
                     )}
-                </div>
-
-                <form onSubmit={onDPIASubmit} className="space-y-6">
-                  <div>
-                    <Label htmlFor="dpia-description">
-                      {__("Description")}
-                    </Label>
-                    <Textarea
-                      id="dpia-description"
-                      {...dpiaForm.register("description")}
-                      placeholder={__(
-                        "Describe the processing activity and its purpose",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
-                    />
                   </div>
-
-                  <div>
-                    <Label htmlFor="dpia-necessity">
-                      {__("Necessity and Proportionality")}
-                    </Label>
-                    <Textarea
-                      id="dpia-necessity"
-                      {...dpiaForm.register("necessityAndProportionality")}
-                      placeholder={__(
-                        "Explain why the processing is necessary and proportionate",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dpia-potential-risk">
-                      {__("Potential Risk")}
-                    </Label>
-                    <Textarea
-                      id="dpia-potential-risk"
-                      {...dpiaForm.register("potentialRisk")}
-                      placeholder={__(
-                        "Describe the potential risks to data subjects",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dpia-mitigations">
-                      {__("Mitigations")}
-                    </Label>
-                    <Textarea
-                      id="dpia-mitigations"
-                      {...dpiaForm.register("mitigations")}
-                      placeholder={__(
-                        "Describe measures to mitigate the identified risks",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dpia-residual-risk">
-                      {__("Residual Risk")}
-                    </Label>
-                    <Controller
-                      control={dpiaForm.control}
-                      name="residualRisk"
-                      render={({ field }) => (
-                        <Select
-                          id="dpia-residual-risk"
-                          placeholder={__("Select residual risk level")}
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="w-full"
-                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
-                        >
-                          <Option value="LOW">{__("Low")}</Option>
-                          <Option value="MEDIUM">{__("Medium")}</Option>
-                          <Option value="HIGH">{__("High")}</Option>
-                        </Select>
-                      )}
-                    />
-                  </div>
-
-                  {!isSnapshotMode && (
-                    <div className="flex justify-end gap-3 pt-4">
-                      {(!activity?.dataProtectionImpactAssessment?.id ||
-                        dpiaDeleted) && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => setShowDpiaForm(false)}
-                        >
-                          {__("Cancel")}
-                        </Button>
-                      )}
-                      {(activity?.dataProtectionImpactAssessment?.id &&
-                      !dpiaDeleted
-                        ? activity.dataProtectionImpactAssessment.canUpdate
-                        : activity.canCreateDPIA) && (
-                        <Button
-                          type="submit"
-                          variant="primary"
-                          disabled={dpiaSubmitting}
-                        >
-                          {dpiaSubmitting
-                            ? __("Saving...")
-                            : activity?.dataProtectionImpactAssessment?.id &&
-                                !dpiaDeleted
-                              ? __("Update DPIA")
-                              : __("Create DPIA")}
+                )
+              : (
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold">
+                        {__("Data Protection Impact Assessment")}
+                      </h2>
+                      {!isSnapshotMode
+                        && activity?.dataProtectionImpactAssessment?.id
+                        && !dpiaDeleted
+                        && activity.dataProtectionImpactAssessment.canDelete && (
+                        <Button variant="danger" onClick={deleteDPIA}>
+                          {__("Delete DPIA")}
                         </Button>
                       )}
                     </div>
-                  )}
-                </form>
-              </>
-            )}
+
+                    <form onSubmit={e => void onDPIASubmit(e)} className="space-y-6">
+                      <div>
+                        <Label htmlFor="dpia-description">
+                          {__("Description")}
+                        </Label>
+                        <Textarea
+                          id="dpia-description"
+                          {...dpiaForm.register("description")}
+                          placeholder={__(
+                            "Describe the processing activity and its purpose",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="dpia-necessity">
+                          {__("Necessity and Proportionality")}
+                        </Label>
+                        <Textarea
+                          id="dpia-necessity"
+                          {...dpiaForm.register("necessityAndProportionality")}
+                          placeholder={__(
+                            "Explain why the processing is necessary and proportionate",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="dpia-potential-risk">
+                          {__("Potential Risk")}
+                        </Label>
+                        <Textarea
+                          id="dpia-potential-risk"
+                          {...dpiaForm.register("potentialRisk")}
+                          placeholder={__(
+                            "Describe the potential risks to data subjects",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="dpia-mitigations">
+                          {__("Mitigations")}
+                        </Label>
+                        <Textarea
+                          id="dpia-mitigations"
+                          {...dpiaForm.register("mitigations")}
+                          placeholder={__(
+                            "Describe measures to mitigate the identified risks",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="dpia-residual-risk">
+                          {__("Residual Risk")}
+                        </Label>
+                        <Controller
+                          control={dpiaForm.control}
+                          name="residualRisk"
+                          render={({ field }) => (
+                            <Select
+                              id="dpia-residual-risk"
+                              placeholder={__("Select residual risk level")}
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              className="w-full"
+                              disabled={isSnapshotMode || !canCreateOrUpdateDPIA}
+                            >
+                              <Option value="LOW">{__("Low")}</Option>
+                              <Option value="MEDIUM">{__("Medium")}</Option>
+                              <Option value="HIGH">{__("High")}</Option>
+                            </Select>
+                          )}
+                        />
+                      </div>
+
+                      {!isSnapshotMode && (
+                        <div className="flex justify-end gap-3 pt-4">
+                          {(!activity?.dataProtectionImpactAssessment?.id
+                            || dpiaDeleted) && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => setShowDpiaForm(false)}
+                            >
+                              {__("Cancel")}
+                            </Button>
+                          )}
+                          {(activity?.dataProtectionImpactAssessment?.id
+                            && !dpiaDeleted
+                            ? activity.dataProtectionImpactAssessment.canUpdate
+                            : activity.canCreateDPIA) && (
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              disabled={dpiaSubmitting}
+                            >
+                              {dpiaSubmitting
+                                ? __("Saving...")
+                                : activity?.dataProtectionImpactAssessment?.id
+                                  && !dpiaDeleted
+                                  ? __("Update DPIA")
+                                  : __("Create DPIA")}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </form>
+                  </>
+                )}
           </div>
         </Card>
       )}
@@ -948,144 +964,146 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "tia" && (
         <Card>
           <div className="p-6">
-            {!showTiaForm &&
-            (!activity?.transferImpactAssessment?.id || tiaDeleted) ? (
-              <div className="flex flex-col items-center justify-center py-16 w-full">
-                <h2 className="text-xl font-semibold mb-6 text-center">
-                  {__("Transfer Impact Assessment")}
-                </h2>
-                {!isSnapshotMode && activity.canCreateTIA && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowTiaForm(true)}
-                  >
-                    {__("Create TIA")}
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">
-                    {__("Transfer Impact Assessment")}
-                  </h2>
-                  {!isSnapshotMode &&
-                    activity?.transferImpactAssessment?.id &&
-                    !tiaDeleted &&
-                    activity.transferImpactAssessment.canDelete && (
-                      <Button variant="danger" onClick={deleteTIA}>
-                        {__("Delete TIA")}
+            {!showTiaForm
+              && (!activity?.transferImpactAssessment?.id || tiaDeleted)
+              ? (
+                  <div className="flex flex-col items-center justify-center py-16 w-full">
+                    <h2 className="text-xl font-semibold mb-6 text-center">
+                      {__("Transfer Impact Assessment")}
+                    </h2>
+                    {!isSnapshotMode && activity.canCreateTIA && (
+                      <Button
+                        variant="primary"
+                        onClick={() => setShowTiaForm(true)}
+                      >
+                        {__("Create TIA")}
                       </Button>
                     )}
-                </div>
-
-                <form onSubmit={onTIASubmit} className="space-y-6">
-                  <div>
-                    <Label htmlFor="tia-data-subjects">
-                      {__("Data Subjects")}
-                    </Label>
-                    <Textarea
-                      id="tia-data-subjects"
-                      {...tiaForm.register("dataSubjects")}
-                      placeholder={__(
-                        "Describe the data subjects involved in the transfer",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateTIA}
-                    />
                   </div>
-
-                  <div>
-                    <Label htmlFor="tia-legal-mechanism">
-                      {__("Legal Mechanism")}
-                    </Label>
-                    <Textarea
-                      id="tia-legal-mechanism"
-                      {...tiaForm.register("legalMechanism")}
-                      placeholder={__(
-                        "Describe the legal mechanism for the transfer (e.g., SCCs, BCRs, adequacy decision)",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateTIA}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tia-transfer">{__("Transfer")}</Label>
-                    <Textarea
-                      id="tia-transfer"
-                      {...tiaForm.register("transfer")}
-                      placeholder={__(
-                        "Describe the nature and details of the data transfer",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateTIA}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tia-local-law-risk">
-                      {__("Local Law Risk")}
-                    </Label>
-                    <Textarea
-                      id="tia-local-law-risk"
-                      {...tiaForm.register("localLawRisk")}
-                      placeholder={__(
-                        "Assess the risks related to the local laws of the destination country",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateTIA}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tia-supplementary-measures">
-                      {__("Supplementary Measures")}
-                    </Label>
-                    <Textarea
-                      id="tia-supplementary-measures"
-                      {...tiaForm.register("supplementaryMeasures")}
-                      placeholder={__(
-                        "Describe any supplementary measures taken to ensure adequate protection",
-                      )}
-                      rows={4}
-                      disabled={isSnapshotMode || !canCreateOrUpdateTIA}
-                    />
-                  </div>
-
-                  {!isSnapshotMode && (
-                    <div className="flex justify-end gap-3 pt-4">
-                      {(!activity?.transferImpactAssessment?.id ||
-                        tiaDeleted) && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => setShowTiaForm(false)}
-                        >
-                          {__("Cancel")}
-                        </Button>
-                      )}
-                      {(activity?.transferImpactAssessment?.id && !tiaDeleted
-                        ? activity.transferImpactAssessment.canUpdate
-                        : activity.canCreateTIA) && (
-                        <Button
-                          type="submit"
-                          variant="primary"
-                          disabled={tiaSubmitting}
-                        >
-                          {tiaSubmitting
-                            ? __("Saving...")
-                            : activity?.transferImpactAssessment?.id &&
-                                !tiaDeleted
-                              ? __("Update TIA")
-                              : __("Create TIA")}
+                )
+              : (
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold">
+                        {__("Transfer Impact Assessment")}
+                      </h2>
+                      {!isSnapshotMode
+                        && activity?.transferImpactAssessment?.id
+                        && !tiaDeleted
+                        && activity.transferImpactAssessment.canDelete && (
+                        <Button variant="danger" onClick={deleteTIA}>
+                          {__("Delete TIA")}
                         </Button>
                       )}
                     </div>
-                  )}
-                </form>
-              </>
-            )}
+
+                    <form onSubmit={e => void onTIASubmit(e)} className="space-y-6">
+                      <div>
+                        <Label htmlFor="tia-data-subjects">
+                          {__("Data Subjects")}
+                        </Label>
+                        <Textarea
+                          id="tia-data-subjects"
+                          {...tiaForm.register("dataSubjects")}
+                          placeholder={__(
+                            "Describe the data subjects involved in the transfer",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="tia-legal-mechanism">
+                          {__("Legal Mechanism")}
+                        </Label>
+                        <Textarea
+                          id="tia-legal-mechanism"
+                          {...tiaForm.register("legalMechanism")}
+                          placeholder={__(
+                            "Describe the legal mechanism for the transfer (e.g., SCCs, BCRs, adequacy decision)",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="tia-transfer">{__("Transfer")}</Label>
+                        <Textarea
+                          id="tia-transfer"
+                          {...tiaForm.register("transfer")}
+                          placeholder={__(
+                            "Describe the nature and details of the data transfer",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="tia-local-law-risk">
+                          {__("Local Law Risk")}
+                        </Label>
+                        <Textarea
+                          id="tia-local-law-risk"
+                          {...tiaForm.register("localLawRisk")}
+                          placeholder={__(
+                            "Assess the risks related to the local laws of the destination country",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="tia-supplementary-measures">
+                          {__("Supplementary Measures")}
+                        </Label>
+                        <Textarea
+                          id="tia-supplementary-measures"
+                          {...tiaForm.register("supplementaryMeasures")}
+                          placeholder={__(
+                            "Describe any supplementary measures taken to ensure adequate protection",
+                          )}
+                          rows={4}
+                          disabled={isSnapshotMode || !canCreateOrUpdateTIA}
+                        />
+                      </div>
+
+                      {!isSnapshotMode && (
+                        <div className="flex justify-end gap-3 pt-4">
+                          {(!activity?.transferImpactAssessment?.id
+                            || tiaDeleted) && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => setShowTiaForm(false)}
+                            >
+                              {__("Cancel")}
+                            </Button>
+                          )}
+                          {(activity?.transferImpactAssessment?.id && !tiaDeleted
+                            ? activity.transferImpactAssessment.canUpdate
+                            : activity.canCreateTIA) && (
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              disabled={tiaSubmitting}
+                            >
+                              {tiaSubmitting
+                                ? __("Saving...")
+                                : activity?.transferImpactAssessment?.id
+                                  && !tiaDeleted
+                                  ? __("Update TIA")
+                                  : __("Create TIA")}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </form>
+                  </>
+                )}
           </div>
         </Card>
       )}

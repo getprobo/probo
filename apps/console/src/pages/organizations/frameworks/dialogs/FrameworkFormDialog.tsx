@@ -64,13 +64,14 @@ const schema = z.object({
  * Form to update or create a new framework
  */
 export function FrameworkFormDialog(props: Props) {
+  const { children, connectionId, ref, framework, organizationId } = props;
   const { __ } = useTranslate();
-  const ref = useDialogRef();
-  const dialogRef = props.ref ?? ref;
+  const newRef = useDialogRef();
+  const dialogRef = ref ?? newRef;
   const { register, handleSubmit, reset } = useFormWithSchema(schema, {
     defaultValues: {
-      name: props.framework?.name ?? "",
-      description: props.framework?.description ?? "",
+      name: framework?.name ?? "",
+      description: framework?.description ?? "",
     },
   });
   const [create, isCreating] = useMutationWithToasts(createFrameworkMutation, {
@@ -81,12 +82,12 @@ export function FrameworkFormDialog(props: Props) {
     successMessage: __("Framework updated successfully"),
     errorMessage: __("Failed to update framework"),
   });
-  const onSubmit = handleSubmit(async (data) => {
-    if (props.framework) {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
+    if (framework) {
       await update({
         variables: {
           input: {
-            id: props.framework.id,
+            id: framework.id,
             ...data,
             description: data.description || null,
           },
@@ -101,22 +102,22 @@ export function FrameworkFormDialog(props: Props) {
         input: {
           ...data,
           description: data.description || null,
-          organizationId: props.organizationId,
+          organizationId: organizationId,
         },
-        connections: [props.connectionId],
+        connections: [connectionId],
       },
     });
     reset();
     dialogRef.current?.close();
-  });
+  };
 
   return (
     <Dialog
-      trigger={props.children}
+      trigger={children}
       ref={dialogRef}
       title={<Breadcrumb items={[__("Framework"), __("New Framework")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Input
             {...register("name")}
@@ -133,7 +134,7 @@ export function FrameworkFormDialog(props: Props) {
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isCreating || isUpdating}>
-            {props.framework ? __("Update framework") : __("Create framework")}
+            {framework ? __("Update framework") : __("Create framework")}
           </Button>
         </DialogFooter>
       </form>

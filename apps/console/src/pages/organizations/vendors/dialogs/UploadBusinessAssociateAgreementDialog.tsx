@@ -81,7 +81,7 @@ export function UploadBusinessAssociateAgreementDialog({
     }
   };
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     if (!uploadedFile) {
       return;
     }
@@ -110,7 +110,7 @@ export function UploadBusinessAssociateAgreementDialog({
     setUploadedFile(null);
     onSuccess?.();
     ref.current?.close();
-  });
+  };
 
   const handleClose = () => {
     reset();
@@ -125,54 +125,57 @@ export function UploadBusinessAssociateAgreementDialog({
       className="max-w-lg"
       onClose={handleClose}
     >
-        <form onSubmit={onSubmit}>
-          <DialogContent padded className="space-y-4">
-            <Dropzone
-              description={__("Only PDF files up to 10MB are allowed")}
-              isUploading={isSubmitting}
-              onDrop={handleDrop}
-              accept={{
-                "application/pdf": [".pdf"],
-              }}
-              maxSize={10}
-            />
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
+        <DialogContent padded className="space-y-4">
+          <Dropzone
+            description={__("Only PDF files up to 10MB are allowed")}
+            isUploading={isSubmitting}
+            onDrop={handleDrop}
+            accept={{
+              "application/pdf": [".pdf"],
+            }}
+            maxSize={10}
+          />
 
-            {uploadedFile && (
-              <div className="p-3 bg-tertiary-subtle rounded-lg">
-                <p className="text-sm font-medium">{__("Selected file")}:</p>
-                <p className="text-sm text-txt-secondary">{uploadedFile.name}</p>
-              </div>
-            )}
-
-            <Field
-              {...register("fileName")}
-              label={__("File name")}
-              type="text"
-              required
-              error={errors.fileName?.message}
-              placeholder={__("Business Associate Agreement")}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <Field label={__("Valid from")}>
-                <Input {...register("validFrom")} type="date" />
-              </Field>
-              <Field label={__("Valid until")}>
-                <Input {...register("validUntil")} type="date" />
-              </Field>
+          {uploadedFile && (
+            <div className="p-3 bg-tertiary-subtle rounded-lg">
+              <p className="text-sm font-medium">
+                {__("Selected file")}
+                :
+              </p>
+              <p className="text-sm text-txt-secondary">{uploadedFile.name}</p>
             </div>
-          </DialogContent>
+          )}
 
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={isSubmitting || !uploadedFile}
-              icon={isSubmitting ? Spinner : undefined}
-            >
-              {__("Upload")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Dialog>
-    );
+          <Field
+            {...register("fileName")}
+            label={__("File name")}
+            type="text"
+            required
+            error={errors.fileName?.message}
+            placeholder={__("Business Associate Agreement")}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={__("Valid from")}>
+              <Input {...register("validFrom")} type="date" />
+            </Field>
+            <Field label={__("Valid until")}>
+              <Input {...register("validUntil")} type="date" />
+            </Field>
+          </div>
+        </DialogContent>
+
+        <DialogFooter>
+          <Button
+            type="submit"
+            disabled={isSubmitting || !uploadedFile}
+            icon={isSubmitting ? Spinner : undefined}
+          >
+            {__("Upload")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
+  );
 }

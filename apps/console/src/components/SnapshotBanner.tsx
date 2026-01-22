@@ -46,8 +46,8 @@ export function SnapshotBanner({ snapshotId }: Props) {
   }
 
   if (
-    snapshot.type &&
-    !isSnapshotTypeValidForUrl(snapshot.type, location.pathname)
+    snapshot.type
+    && !isSnapshotTypeValidForUrl(snapshot.type, location.pathname)
   ) {
     throw new Error("PAGE_NOT_FOUND");
   }
@@ -58,7 +58,9 @@ export function SnapshotBanner({ snapshotId }: Props) {
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
           <span className="font-medium text-warning-800">
-            {__("Snapshot")} {snapshot.name}
+            {__("Snapshot")}
+            {" "}
+            {snapshot.name}
           </span>
         </div>
         <p className="text-sm text-warning-700">

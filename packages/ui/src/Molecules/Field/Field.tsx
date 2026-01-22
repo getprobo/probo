@@ -14,7 +14,9 @@ type BaseProps<T extends string, P> = {
     children?: ReactNode;
 } & P;
 
-type Props<T extends string | readonly string[] | number = string> =
+type FieldValue = string | readonly string[] | number
+
+type Props<T extends FieldValue = string> =
     | BaseProps<never, ComponentProps<typeof Input>>
     | BaseProps<"text", ComponentProps<typeof Input>>
     | BaseProps<"email", ComponentProps<typeof Input>>
@@ -34,7 +36,7 @@ const field = tv({
 
 const { base: baseClass, label: labelClass, help: helpClass } = field();
 
-export function Field<T extends string | readonly string[] | number = string>(props: Props<T>) {
+export function Field<T extends FieldValue = string>(props: Props<T>) {
     const showHelp = props.help && !props.error;
     const childrenAsInput = !props.type && props.children;
     return (
@@ -55,7 +57,7 @@ export function Field<T extends string | readonly string[] | number = string>(pr
     );
 }
 
-function getInput<T extends string | readonly string[] | number = string>(props: Props<T>) {
+function getInput<T extends FieldValue = string>(props: Props<T>) {
     const { error, onValueChange, type, ...restProps } = props;
     const baseProps = {
         ["aria-invalid"]: !!error,

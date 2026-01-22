@@ -94,12 +94,12 @@ export default function VendorServicesTab() {
     VendorServicesTabFragment$key
   >(vendorServicesFragment, vendor);
   const connectionId = data.services.__id;
-  const services = data.services.edges.map((edge) => edge.node);
+  const services = data.services.edges.map(edge => edge.node);
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const [editingService, setEditingService] =
-    useState<VendorServicesTabFragment_service$data | null>(null);
+  const [editingService, setEditingService]
+    = useState<VendorServicesTabFragment_service$data | null>(null);
   const hasAnyAction = services.some(
     ({ canUpdate, canDelete }) => canUpdate || canDelete,
   );
@@ -130,7 +130,7 @@ export default function VendorServicesTab() {
           </Tr>
         </Thead>
         <Tbody>
-          {services.map((service) => (
+          {services.map(service => (
             <ServiceRow
               key={service.id}
               serviceKey={service}
@@ -187,7 +187,7 @@ function ServiceRow(props: ServiceRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the service "%s". This action cannot be undone.',
+            "This will permanently delete the service \"%s\". This action cannot be undone.",
           ),
           service.name,
         ),

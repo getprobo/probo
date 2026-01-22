@@ -64,7 +64,7 @@ export function CreateContinualImprovementDialog({
     },
   });
 
-  const onSubmit = handleSubmit(async (formData: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     try {
       await createImprovement({
         organizationId,
@@ -92,7 +92,7 @@ export function CreateContinualImprovementDialog({
         variant: "error",
       });
     }
-  });
+  };
 
   const statusOptions = [
     { value: "OPEN", label: __("Open") },
@@ -113,7 +113,7 @@ export function CreateContinualImprovementDialog({
       title={<Breadcrumb items={[__("Continual Improvements"), __("Create Entry")]} />}
       className="max-w-2xl"
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
             label={__("Reference ID")}
@@ -174,12 +174,16 @@ export function CreateContinualImprovementDialog({
               name="status"
               render={({ field }) => (
                 <div>
-                  <Label>{__("Status")} *</Label>
+                  <Label>
+                    {__("Status")}
+                    {" "}
+                    *
+                  </Label>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    {statusOptions.map((option) => (
+                    {statusOptions.map(option => (
                       <Option key={option.value} value={option.value}>
                         {option.label}
                       </Option>
@@ -199,12 +203,16 @@ export function CreateContinualImprovementDialog({
               name="priority"
               render={({ field }) => (
                 <div>
-                  <Label>{__("Priority")} *</Label>
+                  <Label>
+                    {__("Priority")}
+                    {" "}
+                    *
+                  </Label>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    {priorityOptions.map((option) => (
+                    {priorityOptions.map(option => (
                       <Option key={option.value} value={option.value}>
                         {option.label}
                       </Option>

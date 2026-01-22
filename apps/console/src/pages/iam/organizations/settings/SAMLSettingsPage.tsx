@@ -39,8 +39,8 @@ export function SAMLSettingsPage(props: {
   const formDialogRef = useDialogRef();
   const domainDialogRef = useDialogRef();
   const [isEditing, setIsEditing] = useState<boolean>();
-  const [domainVerificationToken, setDomainVerificationToken] =
-    useState<string>();
+  const [domainVerificationToken, setDomainVerificationToken]
+    = useState<string>();
 
   const { __ } = useTranslate();
 
@@ -48,8 +48,8 @@ export function SAMLSettingsPage(props: {
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }
-  const [formQueryRef, loadFormQuery] =
-    useQueryLoader<EditSAMLConfigurationFormQuery>(samlConfigurationFormQuery);
+  const [formQueryRef, loadFormQuery]
+    = useQueryLoader<EditSAMLConfigurationFormQuery>(samlConfigurationFormQuery);
 
   const handleOpenFormDialog = (samlConfigurationId?: string) => {
     setIsEditing(!!samlConfigurationId);
@@ -96,18 +96,20 @@ export function SAMLSettingsPage(props: {
         onClose={handleCloseFormDialog}
         title={<Breadcrumb items={[__("SAML Settings"), __("Configure")]} />}
       >
-        {isEditing ? (
-          <Suspense>
-            {formQueryRef && (
-              <EditSAMLConfigurationForm
-                queryRef={formQueryRef}
-                onUpdate={handleCloseFormDialog}
-              />
+        {isEditing
+          ? (
+              <Suspense>
+                {formQueryRef && (
+                  <EditSAMLConfigurationForm
+                    queryRef={formQueryRef}
+                    onUpdate={handleCloseFormDialog}
+                  />
+                )}
+              </Suspense>
+            )
+          : (
+              <NewSAMLConfigurationForm onCreate={handleCloseFormDialog} />
             )}
-          </Suspense>
-        ) : (
-          <NewSAMLConfigurationForm onCreate={handleCloseFormDialog} />
-        )}
       </Dialog>
 
       <Dialog

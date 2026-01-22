@@ -97,7 +97,7 @@ export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>) {
     risksFragment,
     data.organization as RiskGraphFragment$key,
   );
-  const risks = pagination.data?.risks?.edges.map((edge) => edge.node);
+  const risks = pagination.data?.risks?.edges.map(edge => edge.node);
 
   return {
     ...pagination,

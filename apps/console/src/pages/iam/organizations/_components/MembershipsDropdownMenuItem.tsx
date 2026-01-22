@@ -63,21 +63,21 @@ export function MembershipsDropdownMenuItem(props: {
 
   const navigate = useNavigate();
 
-  const { id, lastSession, organization } =
-    useFragment<MembershipsDropdownMenuItemFragment$key>(fragment, fKey);
+  const { id, lastSession, organization }
+    = useFragment<MembershipsDropdownMenuItemFragment$key>(fragment, fKey);
 
   const isAuthenticated = !!lastSession;
-  const isExpired =
-    lastSession && parseDate(lastSession.expiresAt) < new Date();
+  const isExpired
+    = lastSession && parseDate(lastSession.expiresAt) < new Date();
 
-  const [assumeOrganizationSession] =
-    useMutation<MembershipsDropdownMenuItem_assumeMutation>(
+  const [assumeOrganizationSession]
+    = useMutation<MembershipsDropdownMenuItem_assumeMutation>(
       assumeOrganizationSessionMutation,
     );
 
   const handleAssumeOrganizationSession = useCallback(() => {
     if (isAuthenticated) {
-      navigate(`/organizations/${organization.id}`);
+      void navigate(`/organizations/${organization.id}`);
     } else {
       assumeOrganizationSession({
         variables: {
@@ -94,13 +94,13 @@ export function MembershipsDropdownMenuItem(props: {
 
           switch (result.__typename) {
             case "PasswordRequired":
-              navigate("/auth/login");
+              void navigate("/auth/login");
               break;
             case "SAMLAuthenticationRequired":
               window.location.href = result.redirectUrl;
               break;
             default:
-              navigate(`/organizations/${organization.id}`);
+              void navigate(`/organizations/${organization.id}`);
           }
         },
       });

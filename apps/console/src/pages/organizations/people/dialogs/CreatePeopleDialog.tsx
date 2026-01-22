@@ -30,7 +30,7 @@ const schema = z.object({
   primaryEmailAddress: z.string().email(),
   additionalEmailAddresses: z.preprocess(
     // Empty additional emails are skipped
-    (v) => (v as string[]).filter((v) => !!v),
+    v => (v as string[]).filter(v => !!v),
     z.array(z.string().email()),
   ),
   kind: z.enum(peopleRoles),
@@ -73,8 +73,8 @@ export function CreatePeopleDialog({ children, connectionId }: Props) {
     errorMessage: __("Failed to create person"),
   });
 
-  const onSubmit = handleSubmit((data) => {
-    mutate({
+  const onSubmit = async (data: z.infer<typeof schema>) => {
+    await mutate({
       variables: {
         input: {
           ...data,
@@ -88,7 +88,7 @@ export function CreatePeopleDialog({ children, connectionId }: Props) {
         ref.current?.close();
       },
     });
-  });
+  };
 
   return (
     <Dialog
@@ -96,7 +96,7 @@ export function CreatePeopleDialog({ children, connectionId }: Props) {
       trigger={children}
       title={<Breadcrumb items={[__("People"), __("New Person")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
             label={__("Full name")}
@@ -120,7 +120,7 @@ export function CreatePeopleDialog({ children, connectionId }: Props) {
             type="select"
             label={__("Role")}
           >
-            {getRoles(__).map((role) => (
+            {getRoles(__).map(role => (
               <Option key={role.value} value={role.value}>
                 {role.label}
               </Option>

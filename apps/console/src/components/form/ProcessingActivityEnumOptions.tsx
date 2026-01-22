@@ -21,7 +21,7 @@ export function SpecialOrCriminalDataOptions() {
 
   return (
     <>
-      {options.map((option) => (
+      {options.map(option => (
         <Option key={option.value} value={option.value}>
           {option.label}
         </Option>
@@ -47,7 +47,7 @@ export function LawfulBasisOptions() {
 
   return (
     <>
-      {options.map((option) => (
+      {options.map(option => (
         <Option key={option.value} value={option.value}>
           {option.label}
         </Option>
@@ -113,7 +113,7 @@ export function TransferSafeguardsOptions() {
 
   return (
     <>
-      {options.map((option) => (
+      {options.map(option => (
         <Option key={option.value} value={option.value}>
           {option.label}
         </Option>
@@ -135,7 +135,7 @@ export function DataProtectionImpactAssessmentOptions() {
 
   return (
     <>
-      {options.map((option) => (
+      {options.map(option => (
         <Option key={option.value} value={option.value}>
           {option.label}
         </Option>
@@ -157,7 +157,7 @@ export function TransferImpactAssessmentOptions() {
 
   return (
     <>
-      {options.map((option) => (
+      {options.map(option => (
         <Option key={option.value} value={option.value}>
           {option.label}
         </Option>
@@ -179,7 +179,7 @@ export function RoleOptions() {
 
   return (
     <>
-      {options.map((option) => (
+      {options.map(option => (
         <Option key={option.value} value={option.value}>
           {option.label}
         </Option>

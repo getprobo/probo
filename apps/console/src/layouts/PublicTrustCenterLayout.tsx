@@ -49,15 +49,17 @@ export function PublicTrustCenterLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              {organizationLogo ? (
-                <img
-                  src={organizationLogo}
-                  alt={organizationName}
-                  className="h-8 w-8 rounded"
-                />
-              ) : (
-                <Logo className="h-8 w-8" />
-              )}
+              {organizationLogo
+                ? (
+                    <img
+                      src={organizationLogo}
+                      alt={organizationName}
+                      className="h-8 w-8 rounded"
+                    />
+                  )
+                : (
+                    <Logo className="h-8 w-8" />
+                  )}
               <div>
                 <h1 className="text-lg font-semibold text-txt-primary">
                   {organizationName}
@@ -85,7 +87,7 @@ export function PublicTrustCenterLayout({
                 <Button
                   variant="tertiary"
                   icon={IconArrowBoxLeft}
-                  onClick={handleLogout}
+                  onClick={() => void handleLogout()}
                   title={__("Logout")}
                   className="text-sm"
                 />

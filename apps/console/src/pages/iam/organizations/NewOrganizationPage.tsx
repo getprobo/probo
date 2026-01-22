@@ -31,13 +31,13 @@ function NewOrganizationPage() {
   const { toast } = useToast();
   const { __ } = useTranslate();
 
-  const [createOrganization, isCreating] =
-    useMutation<NewOrganizationPageMutation>(createOrganizationMutation);
+  const [createOrganization, isCreating]
+    = useMutation<NewOrganizationPageMutation>(createOrganizationMutation);
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const name = formData.get("name")?.toString();
+    const name = formData.get("name") ? (formData.get("name") as string).toString() : "";
     if (!name) {
       toast({
         title: __("Error"),
@@ -47,7 +47,7 @@ function NewOrganizationPage() {
       return;
     }
 
-    createOrganization({
+    void createOrganization({
       variables: {
         input: {
           name,
@@ -64,7 +64,7 @@ function NewOrganizationPage() {
         }
 
         const org = r.createOrganization!.organization;
-        navigate(`/organizations/${org!.id}`);
+        void navigate(`/organizations/${org!.id}`);
         toast({
           title: __("Success"),
           description: __("Organization has been created successfully"),
@@ -84,7 +84,7 @@ function NewOrganizationPage() {
   return (
     <div className="space-y-6">
       <Link
-        to={location.state?.from ?? "/"}
+        to={(location.state as { from: string })?.from ?? "/"}
         className="mb-4 inline-flex gap-2 items-center"
       >
         <IconChevronLeft size={16} />
@@ -97,7 +97,7 @@ function NewOrganizationPage() {
         )}
       />
       <Card padded asChild>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
           <h2 className="text-xl font-semibold mb-1">
             {__("Organization Details")}
           </h2>

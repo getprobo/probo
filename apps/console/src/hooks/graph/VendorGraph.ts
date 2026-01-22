@@ -79,7 +79,7 @@ export const useDeleteVendor = (
       {
         message: sprintf(
           __(
-            'This will permanently delete vendor "%s". This action cannot be undone.',
+            "This will permanently delete vendor \"%s\". This action cannot be undone.",
           ),
           vendor.name,
         ),
@@ -218,6 +218,6 @@ export function useVendors(organizationId: string) {
     { fetchPolicy: "network-only" },
   );
   return useMemo(() => {
-    return data.organization?.vendors?.edges.map((edge) => edge.node) ?? [];
+    return data.organization?.vendors?.edges.map(edge => edge.node) ?? [];
   }, [data]);
 }

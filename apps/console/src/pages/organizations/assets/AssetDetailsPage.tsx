@@ -66,11 +66,11 @@ export default function AssetDetailsPage(props: Props) {
   );
   const deleteAsset = useDeleteAsset(assetEntry, connectionId);
 
-  const vendors = assetEntry.vendors?.edges.map((edge) => edge.node) ?? [];
-  const vendorIds = vendors.map((vendor) => vendor.id);
+  const vendors = assetEntry.vendors?.edges.map(edge => edge.node) ?? [];
+  const vendorIds = vendors.map(vendor => vendor.id);
 
-  const { control, formState, handleSubmit, register, reset } =
-    useFormWithSchema(updateAssetSchema, {
+  const { control, formState, handleSubmit, register, reset }
+    = useFormWithSchema(updateAssetSchema, {
       defaultValues: {
         name: assetEntry.name || "",
         amount: assetEntry.amount || 0,
@@ -91,8 +91,8 @@ export default function AssetDetailsPage(props: Props) {
     reset(formData);
   });
 
-  const breadcrumbAssetsUrl =
-    isSnapshotMode && snapshotId
+  const breadcrumbAssetsUrl
+    = isSnapshotMode && snapshotId
       ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets`
       : `/organizations/${organizationId}/assets`;
 
@@ -135,7 +135,7 @@ export default function AssetDetailsPage(props: Props) {
         )}
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-6 max-w-2xl">
+      <form onSubmit={e => void onSubmit(e)} className="space-y-6 max-w-2xl">
         <Field
           label={__("Name")}
           {...register("name")}

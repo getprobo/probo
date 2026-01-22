@@ -74,10 +74,10 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
     { organizationId },
     { fetchPolicy: "network-only" },
   );
-  const audits =
-    data?.organization?.audits?.edges
-      ?.map((edge) => edge.node)
-      .filter((node) => node !== null) ?? [];
+  const audits
+    = data?.organization?.audits?.edges
+      ?.map(edge => edge.node)
+      .filter(node => node !== null) ?? [];
 
   const NONE_VALUE = "__NONE__";
 
@@ -91,9 +91,8 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
           id={name}
           variant="editor"
           placeholder={__("Select an audit")}
-          onValueChange={(value) =>
-            field.onChange(value === NONE_VALUE ? "" : value)
-          }
+          onValueChange={value =>
+            field.onChange(value === NONE_VALUE ? "" : value)}
           key={audits?.length.toString() ?? "0"}
           {...field}
           className="w-full"
@@ -102,7 +101,7 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
           <Option value={NONE_VALUE}>
             <span className="text-txt-tertiary">{__("None")}</span>
           </Option>
-          {audits?.map((audit) => (
+          {audits?.map(audit => (
             <Option key={audit.id} value={audit.id}>
               <div className="flex items-center justify-between w-full">
                 <span>

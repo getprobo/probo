@@ -68,7 +68,7 @@ export function CreateRightsRequestDialog({
     },
   });
 
-  const onSubmit = handleSubmit(async (formData: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     try {
       await createRequest({
         organizationId,
@@ -96,7 +96,7 @@ export function CreateRightsRequestDialog({
         variant: "error",
       });
     }
-  });
+  };
 
   const typeOptions = getRightsRequestTypeOptions(__);
   const stateOptions = getRightsRequestStateOptions(__);
@@ -108,7 +108,7 @@ export function CreateRightsRequestDialog({
       title={<Breadcrumb items={[__("Rights Requests"), __("Create Request")]} />}
       className="max-w-2xl"
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Controller
@@ -116,12 +116,16 @@ export function CreateRightsRequestDialog({
               name="requestType"
               render={({ field }) => (
                 <div>
-                  <Label>{__("Request Type")} *</Label>
+                  <Label>
+                    {__("Request Type")}
+                    {" "}
+                    *
+                  </Label>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    {typeOptions.map((option) => (
+                    {typeOptions.map(option => (
                       <Option key={option.value} value={option.value}>
                         {option.label}
                       </Option>
@@ -141,12 +145,16 @@ export function CreateRightsRequestDialog({
               name="requestState"
               render={({ field }) => (
                 <div>
-                  <Label>{__("State")} *</Label>
+                  <Label>
+                    {__("State")}
+                    {" "}
+                    *
+                  </Label>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    {stateOptions.map((option) => (
+                    {stateOptions.map(option => (
                       <Option key={option.value} value={option.value}>
                         {option.label}
                       </Option>

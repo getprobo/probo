@@ -7,7 +7,7 @@ export function useVendorSearch() {
   const [query, setQuery] = useState("");
   const [vendors, setVendors] = useState<Vendor[]>([]);
   useEffect(() => {
-    import("@probo/vendors").then((module) => {
+    void import("@probo/vendors").then((module) => {
       const ms = new MiniSearch({
         fields: ["name"],
         storeFields: Object.keys(module.default[0]),
@@ -16,7 +16,7 @@ export function useVendorSearch() {
           prefix: true,
         },
       });
-      ms.addAll(module.default.map((v) => ({ ...v, id: v.name })));
+      ms.addAll(module.default.map(v => ({ ...v, id: v.name })));
       // @ts-expect-error not enough types to handle this case
       searchRef.current = ms.search.bind(ms);
     });

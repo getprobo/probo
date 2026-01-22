@@ -64,13 +64,13 @@ export function SignatureDocumentsDialog({
 
   const schema = z.object({});
 
-  const [publishMutation] =
-    useMutationWithToasts<SignatureDocumentsDialogMutation>(
+  const [publishMutation]
+    = useMutationWithToasts<SignatureDocumentsDialogMutation>(
       documentsSignatureMutation,
       {
         successMessage: (response) => {
-          const actualRequestsCount =
-            response.bulkRequestSignatures.documentVersionSignatureEdges.length;
+          const actualRequestsCount
+            = response.bulkRequestSignatures.documentVersionSignatureEdges.length;
           return sprintf(__("%s signature requests sent"), actualRequestsCount);
         },
         errorMessage: __("Failed to send signature requests"),
@@ -82,7 +82,7 @@ export function SignatureDocumentsDialog({
     formState: { isSubmitting },
   } = useFormWithSchema(schema, {});
 
-  const onSubmit = handleSubmit(async () => {
+  const onSubmit = async () => {
     await publishMutation({
       variables: {
         input: {
@@ -95,7 +95,7 @@ export function SignatureDocumentsDialog({
         onSave();
       },
     });
-  });
+  };
 
   return (
     <Dialog
@@ -104,7 +104,7 @@ export function SignatureDocumentsDialog({
       trigger={children}
       title={<Breadcrumb items={[__("Documents"), __("Signature requests")]} />}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent>
           <Suspense fallback={<Spinner />}>
             <PeopleList onChange={toggle} selectedPeople={selectedPeople} />
@@ -147,12 +147,12 @@ function PeopleList({
     paginatedPeopleFragment,
     data.organization as PeopleGraphPaginatedFragment$key,
   );
-  const people = page.peoples.edges.map((edge) => edge.node);
+  const people = page.peoples.edges.map(edge => edge.node);
   return (
     <>
       <Table className="border-none rounded-none">
         <Tbody>
-          {people.map((person) => (
+          {people.map(person => (
             <Tr key={person.id}>
               <Td width={75}>
                 <Checkbox

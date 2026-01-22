@@ -44,28 +44,28 @@ export function LinkedMeasureDialog({ children, ...props }: Props) {
 
 function LinkedMeasuresDialogContent(props: Omit<Props, "children">) {
   const organizationId = useOrganizationId();
-  const { data, loadNext, hasNext, isLoadingNext } =
-    usePaginatedMeasures(organizationId);
+  const { data, loadNext, hasNext, isLoadingNext }
+    = usePaginatedMeasures(organizationId);
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
-  const measures = useMemo(() => data.measures?.edges?.map((edge) => edge.node) ?? [], [data.measures]);
+  const measures = useMemo(() => data.measures?.edges?.map(edge => edge.node) ?? [], [data.measures]);
   const linkedIds = useMemo(() => {
-    return new Set(props.linkedMeasures?.map((m) => m.id) ?? []);
+    return new Set(props.linkedMeasures?.map(m => m.id) ?? []);
   }, [props.linkedMeasures]);
 
   const filteredMeasures = useMemo(() => {
     return measures.filter(
-      (measure) =>
-        (category === null || measure.category === category) &&
-        (measure.name.toLowerCase().includes(search.toLowerCase()) ||
-          measure.description?.toLowerCase().includes(search.toLowerCase()))
+      measure =>
+        (category === null || measure.category === category)
+        && (measure.name.toLowerCase().includes(search.toLowerCase())
+          || measure.description?.toLowerCase().includes(search.toLowerCase())),
     );
   }, [measures, search, category]);
 
   const categories = useMemo(
-    () => Array.from(new Set(measures.map((m) => m.category))),
-    [measures]
+    () => Array.from(new Set(measures.map(m => m.category))),
+    [measures],
   );
 
   return (
@@ -82,7 +82,7 @@ function LinkedMeasuresDialogContent(props: Omit<Props, "children">) {
           onValueChange={setCategory}
           className="max-w-[180px]"
         >
-          {categories.map((category) => (
+          {categories.map(category => (
             <Option key={category} value={category}>
               {category}
             </Option>
@@ -90,7 +90,7 @@ function LinkedMeasuresDialogContent(props: Omit<Props, "children">) {
         </Select>
       </div>
       <div className="divide-y divide-border-low">
-        {filteredMeasures.map((measure) => (
+        {filteredMeasures.map(measure => (
           <MeasureRow
             key={measure.id}
             measure={measure}
@@ -140,7 +140,9 @@ function MeasureRow(props: RowProps) {
         asChild
       >
         <span>
-          <IconComponent size={16} /> {isLinked ? __("Unlink") : __("Link")}
+          <IconComponent size={16} />
+          {" "}
+          {isLinked ? __("Unlink") : __("Link")}
         </span>
       </Button>
     </button>

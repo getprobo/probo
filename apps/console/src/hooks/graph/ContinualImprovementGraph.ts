@@ -5,8 +5,8 @@ import { useTranslate } from "@probo/i18n";
 import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-export const ContinualImprovementsConnectionKey =
-  "ContinualImprovementsPage_continualImprovements";
+export const ContinualImprovementsConnectionKey
+  = "ContinualImprovementsPage_continualImprovements";
 
 export const continualImprovementsQuery = graphql`
   query ContinualImprovementGraphListQuery(

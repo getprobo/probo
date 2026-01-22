@@ -20,7 +20,7 @@ export const measureRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<MeasureGraphListQuery>(coreEnvironment, measuresQuery, {
-        organizationId: organizationId!,
+        organizationId: organizationId,
       }),
     ),
     Component: withQueryRef(
@@ -38,7 +38,7 @@ export const measureRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ measureId }) =>
       loadQuery<MeasureGraphNodeQuery>(coreEnvironment, measureNodeQuery, {
-        measureId: measureId!,
+        measureId: measureId,
       }),
     ),
     Component: withQueryRef(
@@ -48,6 +48,7 @@ export const measureRoutes = [
       {
         path: "",
         loader: () => {
+          // eslint-disable-next-line
           throw redirect("evidences");
         },
         Component: Fragment,

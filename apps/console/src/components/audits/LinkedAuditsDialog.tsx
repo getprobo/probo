@@ -104,15 +104,15 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const audits = useMemo(
-    () => data.audits?.edges?.map((edge) => edge.node) ?? [],
+    () => data.audits?.edges?.map(edge => edge.node) ?? [],
     [data.audits],
   );
   const linkedIds = useMemo(() => {
-    return new Set(props.linkedAudits?.map((a) => a.id) ?? []);
+    return new Set(props.linkedAudits?.map(a => a.id) ?? []);
   }, [props.linkedAudits]);
 
   const filteredAudits = useMemo(() => {
-    return audits.filter((audit) =>
+    return audits.filter(audit =>
       (audit.name || "").toLowerCase().includes(search.toLowerCase()),
     );
   }, [audits, search]);
@@ -127,7 +127,7 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
         />
       </div>
       <div className="divide-y divide-border-low">
-        {filteredAudits.map((audit) => (
+        {filteredAudits.map(audit => (
           <AuditRow
             key={audit.id}
             audit={audit}
@@ -186,7 +186,9 @@ function AuditRow(props: RowProps) {
         asChild
       >
         <span>
-          <IconComponent size={16} /> {isLinked ? __("Unlink") : __("Link")}
+          <IconComponent size={16} />
+          {" "}
+          {isLinked ? __("Unlink") : __("Link")}
         </span>
       </Button>
     </button>

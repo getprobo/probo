@@ -35,7 +35,7 @@ export const SetEndOfContractDialog = forwardRef<SetEndOfContractDialogRef, Prop
     peopleId,
     currentContractEndDate,
   },
-  ref
+  ref,
 ) {
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
@@ -61,7 +61,7 @@ export const SetEndOfContractDialog = forwardRef<SetEndOfContractDialogRef, Prop
     errorMessage: __("Failed to update end of contract"),
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     await mutate({
       variables: {
         input: {
@@ -72,7 +72,7 @@ export const SetEndOfContractDialog = forwardRef<SetEndOfContractDialogRef, Prop
     });
 
     dialogRef.current?.close();
-  });
+  };
 
   const handleClose = () => {
     reset();
@@ -85,7 +85,7 @@ export const SetEndOfContractDialog = forwardRef<SetEndOfContractDialogRef, Prop
       className="max-w-lg"
       onClose={handleClose}
     >
-      <form onSubmit={onSubmit}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field label={__("End of contract")}>
             <Input {...register("contractEndDate")} type="date" />

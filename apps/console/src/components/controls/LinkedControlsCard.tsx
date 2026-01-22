@@ -111,7 +111,7 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
             </Td>
           </Tr>
         )}
-        {controls.map((control) => (
+        {controls.map(control => (
           <ControlRow
             key={control.id}
             control={control}
@@ -152,7 +152,8 @@ function ControlRow(props: {
     >
       <Td>
         <span className="inline-flex gap-2 items-center">
-          {control.framework.name}{" "}
+          {control.framework.name}
+          {" "}
           <Badge size="md">{control.sectionTitle}</Badge>
         </span>
       </Td>

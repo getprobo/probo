@@ -24,6 +24,7 @@ const meetingTabs = (prefix: string) => {
       }: LoaderFunctionArgs) => {
         const basePath = `/organizations/${organizationId}/meetings/${meetingId}`;
         const redirectPath = `${basePath}/minutes`;
+        // eslint-disable-next-line
         throw redirect(redirectPath);
       },
       Component: Fragment,

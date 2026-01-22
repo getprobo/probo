@@ -42,8 +42,8 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
     const { __ } = useTranslate();
     const dialogRef = useDialogRef();
 
-    const { register, handleSubmit, formState, watch, setValue } =
-      useFormWithSchema(pdfDownloadSchema, {
+    const { register, handleSubmit, formState, watch, setValue }
+      = useFormWithSchema(pdfDownloadSchema, {
         defaultValues: {
           withWatermark: false,
           watermarkEmail: defaultEmail,
@@ -59,14 +59,14 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
       close: () => dialogRef.current?.close(),
     }));
 
-    const onSubmit = handleSubmit((data) => {
+    const onSubmit = (data: PdfDownloadFormData) => {
       const options = {
         ...data,
         watermarkEmail: data.withWatermark ? data.watermarkEmail : undefined,
       };
       onDownload(options);
       dialogRef.current?.close();
-    });
+    };
 
     return (
       <>
@@ -76,13 +76,13 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
           ref={dialogRef}
           title={__("Download PDF Options")}
         >
-          <form onSubmit={onSubmit}>
+          <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
             <DialogContent className="space-y-4" padded>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Checkbox
                     checked={watchSignatures}
-                    onChange={(checked) => setValue("withSignatures", checked)}
+                    onChange={checked => setValue("withSignatures", checked)}
                   />
                   <div className="flex-1">
                     <label className="text-sm font-medium text-txt-primary cursor-pointer">
@@ -99,7 +99,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                 <div className="flex items-start gap-3">
                   <Checkbox
                     checked={watchWatermark}
-                    onChange={(checked) => setValue("withWatermark", checked)}
+                    onChange={checked => setValue("withWatermark", checked)}
                   />
                   <div className="flex-1">
                     <label className="text-sm font-medium text-txt-primary cursor-pointer">
@@ -130,14 +130,16 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
             </DialogContent>
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Spinner size={16} />
-                    {__("Downloading...")}
-                  </>
-                ) : (
-                  __("Download PDF")
-                )}
+                {isLoading
+                  ? (
+                      <>
+                        <Spinner size={16} />
+                        {__("Downloading...")}
+                      </>
+                    )
+                  : (
+                      __("Download PDF")
+                    )}
               </Button>
             </DialogFooter>
           </form>

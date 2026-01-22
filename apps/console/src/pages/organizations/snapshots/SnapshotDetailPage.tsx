@@ -26,7 +26,7 @@ export default function SnapshotDetailPage({ queryRef }: Props) {
     const snapshotType = snapshot.type;
     const urlPath = getSnapshotTypeUrlPath(snapshotType);
 
-    navigate(
+    void navigate(
       `/organizations/${organizationId}/snapshots/${snapshotId}${urlPath}`,
       {
         replace: true,

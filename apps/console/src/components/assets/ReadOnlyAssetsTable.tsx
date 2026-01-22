@@ -39,7 +39,7 @@ export function ReadOnlyAssetsTable(props: Props) {
         </Tr>
       </Thead>
       <Tbody>
-        {assets.map((entry) => (
+        {assets.map(entry => (
           <AssetRow key={entry.id} entry={entry} />
         ))}
       </Tbody>
@@ -51,7 +51,7 @@ function AssetRow({ entry }: { entry: AssetEntry }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
+  const vendors = entry.vendors?.edges.map(edge => edge.node) ?? [];
 
   return (
     <Tr
@@ -70,31 +70,34 @@ function AssetRow({ entry }: { entry: AssetEntry }) {
       <Td>{entry.amount}</Td>
       <Td>{entry.owner?.fullName ?? __("Unassigned")}</Td>
       <Td>
-        {vendors.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {vendors.slice(0, 3).map((vendor) => (
-              <Badge
-                key={vendor.id}
-                variant="neutral"
-                className="flex items-center gap-1"
-              >
-                <Avatar
-                  name={vendor.name}
-                  src={faviconUrl(vendor.websiteUrl)}
-                  size="s"
-                />
-                <span className="text-xs">{vendor.name}</span>
-              </Badge>
-            ))}
-            {vendors.length > 3 && (
-              <Badge variant="neutral" className="text-xs">
-                +{vendors.length - 3}
-              </Badge>
+        {vendors.length > 0
+          ? (
+              <div className="flex flex-wrap gap-1">
+                {vendors.slice(0, 3).map(vendor => (
+                  <Badge
+                    key={vendor.id}
+                    variant="neutral"
+                    className="flex items-center gap-1"
+                  >
+                    <Avatar
+                      name={vendor.name}
+                      src={faviconUrl(vendor.websiteUrl)}
+                      size="s"
+                    />
+                    <span className="text-xs">{vendor.name}</span>
+                  </Badge>
+                ))}
+                {vendors.length > 3 && (
+                  <Badge variant="neutral" className="text-xs">
+                    +
+                    {vendors.length - 3}
+                  </Badge>
+                )}
+              </div>
+            )
+          : (
+              <span className="text-txt-secondary text-sm">{__("None")}</span>
             )}
-          </div>
-        ) : (
-          <span className="text-txt-secondary text-sm">{__("None")}</span>
-        )}
       </Td>
     </Tr>
   );

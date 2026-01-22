@@ -43,8 +43,8 @@ export function TrustCenterAccessEditDialog(
 
   const { __ } = useTranslate();
 
-  const [queryRef, loadDocumentAccessesQuery] =
-    useQueryLoader<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
+  const [queryRef, loadDocumentAccessesQuery]
+    = useQueryLoader<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
       loadTrustCenterAccessDocumentAccessesQuery,
     );
 
@@ -86,14 +86,14 @@ export function TrustCenterAccessEditForm(
   const { access, onSubmit, queryRef } = props;
 
   const { __ } = useTranslate();
-  const data =
-    usePreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
+  const data
+    = usePreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
       loadTrustCenterAccessDocumentAccessesQuery,
       queryRef,
     );
 
-  const initialDocumentAccesses =
-    data.node.availableDocumentAccesses?.edges.map((edge) =>
+  const initialDocumentAccesses
+    = data.node.availableDocumentAccesses?.edges.map(edge =>
       getTrustCenterDocumentAccessInfo(edge.node, __),
     ) ?? [];
   const initialStatusByID = initialDocumentAccesses.reduce<
@@ -114,7 +114,7 @@ export function TrustCenterAccessEditForm(
       setDocumentAccesses((prev) => {
         const nextDocumentAccesses = [...prev];
         const docAccessIndex = nextDocumentAccesses.findIndex(
-          (element) => element.id === documentAccess.id,
+          element => element.id === documentAccess.id,
         );
         const previousDocAccess = nextDocumentAccesses[docAccessIndex];
         nextDocumentAccesses.splice(docAccessIndex, 1, {
@@ -128,13 +128,13 @@ export function TrustCenterAccessEditForm(
     [],
   );
   const handleGrantAllDocumentAccess = useCallback(() => {
-    setDocumentAccesses((prev) =>
-      prev.map((element) => ({ ...element, status: "GRANTED" })),
+    setDocumentAccesses(prev =>
+      prev.map(element => ({ ...element, status: "GRANTED" })),
     );
   }, []);
   const handleRejectOrRevokeAllDocumentAccess = useCallback(() => {
-    setDocumentAccesses((prev) =>
-      prev.map((element) => ({
+    setDocumentAccesses(prev =>
+      prev.map(element => ({
         ...element,
         status:
           initialStatusByID[element.id] === "GRANTED" ? "REVOKED" : "REJECTED",
@@ -162,10 +162,10 @@ export function TrustCenterAccessEditForm(
   );
 
   const handleSubmit = editForm.handleSubmit(async (data) => {
-    const documents: { id: string; status: TrustCenterDocumentAccessStatus }[] =
-      [];
-    const reports: { id: string; status: TrustCenterDocumentAccessStatus }[] =
-      [];
+    const documents: { id: string; status: TrustCenterDocumentAccessStatus }[]
+      = [];
+    const reports: { id: string; status: TrustCenterDocumentAccessStatus }[]
+      = [];
     const trustCenterFiles: {
       id: string;
       status: TrustCenterDocumentAccessStatus;
@@ -206,7 +206,7 @@ export function TrustCenterAccessEditForm(
   });
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={e => void handleSubmit(e)}>
       <DialogContent padded className="space-y-6">
         <div>
           <p className="text-txt-secondary text-sm mb-4">
@@ -232,7 +232,7 @@ export function TrustCenterAccessEditForm(
             </div>
             <Checkbox
               checked={editForm.watch("active")}
-              onChange={(checked) => editForm.setValue("active", checked)}
+              onChange={checked => editForm.setValue("active", checked)}
             />
           </div>
         </div>
