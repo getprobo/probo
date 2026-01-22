@@ -22,16 +22,16 @@ import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { PeopleGraphPaginatedFragment$key } from "#/__generated__/core/PeopleGraphPaginatedFragment.graphql.ts";
-import type { PeopleGraphPaginatedQuery } from "#/__generated__/core/PeopleGraphPaginatedQuery.graphql.ts";
-import type { SignatureDocumentsDialogMutation } from "#/__generated__/core/SignatureDocumentsDialogMutation.graphql.ts";
+import type { PeopleGraphPaginatedFragment$key } from "#/__generated__/core/PeopleGraphPaginatedFragment.graphql";
+import type { PeopleGraphPaginatedQuery } from "#/__generated__/core/PeopleGraphPaginatedQuery.graphql";
+import type { SignatureDocumentsDialogMutation } from "#/__generated__/core/SignatureDocumentsDialogMutation.graphql";
 import {
   paginatedPeopleFragment,
   paginatedPeopleQuery,
-} from "#/hooks/graph/PeopleGraph.ts";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema.ts";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts.ts";
-import { useOrganizationId } from "#/hooks/useOrganizationId.ts";
+} from "#/hooks/graph/PeopleGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   documentIds: string[];

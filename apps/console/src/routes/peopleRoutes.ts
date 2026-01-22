@@ -9,7 +9,7 @@ import { loadQuery } from "react-relay";
 import type { PeopleGraphNodeQuery } from "#/__generated__/core/PeopleGraphNodeQuery.graphql";
 import type { PeopleGraphPaginatedQuery } from "#/__generated__/core/PeopleGraphPaginatedQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton.tsx";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
 import {
   paginatedPeopleQuery,

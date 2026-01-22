@@ -13,8 +13,8 @@ import { graphql } from "relay-runtime";
 
 import { AuditRow } from "#/components/AuditRow";
 import { DocumentRow } from "#/components/DocumentRow";
-import { RowHeader } from "#/components/RowHeader.tsx";
-import { Rows } from "#/components/Rows.tsx";
+import { RowHeader } from "#/components/RowHeader";
+import { Rows } from "#/components/Rows";
 import { TrustCenterFileRow } from "#/components/TrustCenterFileRow";
 import { VendorRow } from "#/components/VendorRow";
 import { documentTypeLabel } from "#/helpers/documents";

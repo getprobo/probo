@@ -13,9 +13,9 @@ import { type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { PublishDocumentsDialogMutation } from "#/__generated__/core/PublishDocumentsDialogMutation.graphql.ts";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema.ts";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts.ts";
+import type { PublishDocumentsDialogMutation } from "#/__generated__/core/PublishDocumentsDialogMutation.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 type Props = {
   documentIds: string[];

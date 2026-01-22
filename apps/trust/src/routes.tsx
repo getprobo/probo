@@ -18,10 +18,10 @@ import {
   currentTrustVendorsQuery,
 } from "#/queries/TrustGraph";
 
-import { PageError } from "./components/PageError.tsx";
-import { MainSkeleton } from "./components/Skeletons/MainSkeleton.tsx";
-import { TabSkeleton } from "./components/Skeletons/TabSkeleton.tsx";
-import { consoleEnvironment } from "./providers/RelayProviders.tsx";
+import { PageError } from "./components/PageError";
+import { MainSkeleton } from "./components/Skeletons/MainSkeleton";
+import { TabSkeleton } from "./components/Skeletons/TabSkeleton";
+import { consoleEnvironment } from "./providers/RelayProviders";
 
 /**
  * Top level error boundary
@@ -35,11 +35,11 @@ function ErrorBoundary() {
 const routes = [
   {
     path: "/connect",
-    Component: lazy(() => import("./pages/auth/ConnectPageLoader.tsx")),
+    Component: lazy(() => import("./pages/auth/ConnectPageLoader")),
   },
   {
     path: "/verify-magic-link",
-    Component: lazy(() => import("./pages/auth/VerifyMagicLinkPage.tsx")),
+    Component: lazy(() => import("./pages/auth/VerifyMagicLinkPage")),
   },
   {
     path: "/",

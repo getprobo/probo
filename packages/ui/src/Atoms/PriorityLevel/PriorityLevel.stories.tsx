@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { PriorityLevel } from "./PriorityLevel.tsx";
+import { PriorityLevel } from "./PriorityLevel";
 
 export default {
   title: "Atoms/PriorityLevel",

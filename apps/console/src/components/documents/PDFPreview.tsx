@@ -6,7 +6,7 @@ import {
   IconPlusLarge,
   Spinner,
 } from "@probo/ui";
-import { IconMinusLarge } from "@probo/ui/src/Atoms/Icons/IconMinusLarge.tsx";
+import { IconMinusLarge } from "@probo/ui/src/Atoms/Icons/IconMinusLarge";
 import { type ComponentProps, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 

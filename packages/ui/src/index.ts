@@ -23,10 +23,10 @@ export {
   DropdownSeparator,
 } from "./Atoms/Dropdown/Dropdown";
 export { Avatar } from "./Atoms/Avatar/Avatar";
-export { Field } from "./Molecules/Field/Field.tsx";
-export { Input } from "./Atoms/Input/Input.tsx";
-export { Textarea } from "./Atoms/Textarea/Textarea.tsx";
-export { Option, Select } from "./Atoms/Select/Select.tsx";
+export { Field } from "./Molecules/Field/Field";
+export { Input } from "./Atoms/Input/Input";
+export { Textarea } from "./Atoms/Textarea/Textarea";
+export { Option, Select } from "./Atoms/Select/Select";
 export { Label } from "./Atoms/Label/Label";
 export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
 export { Table, Tbody, Td, Th, Thead, Tr, TrButton } from "./Atoms/Table/Table";
@@ -35,7 +35,7 @@ export { Markdown } from "./Atoms/Markdown/Markdown";
 export { Dropzone } from "./Atoms/Dropzone/Dropzone";
 export { ControlItem } from "./Atoms/ControlItem/ControlItem";
 export { InfiniteScrollTrigger } from "./Atoms/InfiniteScrollTrigger/InfiniteScrollTrigger";
-export { PriorityLevel } from "./Atoms/PriorityLevel/PriorityLevel.tsx";
+export { PriorityLevel } from "./Atoms/PriorityLevel/PriorityLevel";
 export { TaskStateIcon } from "./Atoms/Icons/TaskStateIcon";
 export { Checkbox } from "./Atoms/Checkbox/Checkbox";
 export {
@@ -63,8 +63,8 @@ export {
 } from "./Molecules/Dialog/Dialog";
 export { ConfirmDialog, useConfirm } from "./Molecules/Dialog/ConfirmDialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
-export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
-export { DocumentVersionBadge } from "./Molecules/Badge/DocumentVersionBadge.tsx";
+export { SeverityBadge } from "./Molecules/Badge/SeverityBadge";
+export { DocumentVersionBadge } from "./Molecules/Badge/DocumentVersionBadge";
 export { RisksChart } from "./Molecules/Risks/RisksChart";
 export { RiskOverview } from "./Molecules/Risks/RiskOverview";
 export { Combobox, ComboboxItem } from "./Molecules/Combobox/Combobox";

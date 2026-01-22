@@ -1,4 +1,4 @@
-import type { IconProps } from "./type.ts";
+import type { IconProps } from "./type";
 
 export function IconSettingsGear2({ size = 24, className }: IconProps) {
   return (

@@ -1,7 +1,7 @@
 import { type KeyboardEventHandler, useRef, useState } from "react";
 
-import { EditableCell, useEditableCellRef } from "./EditableCell.tsx";
-import { useEditableRowContext } from "./EditableRow.tsx";
+import { EditableCell, useEditableCellRef } from "./EditableCell";
+import { useEditableRowContext } from "./EditableRow";
 
 type Props = {
   name: string;

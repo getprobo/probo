@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Field } from "./Field.tsx";
+import { Field } from "./Field";
 
 export default {
   title: "Molecules/Field",

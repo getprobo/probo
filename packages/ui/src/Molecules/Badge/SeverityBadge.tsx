@@ -1,6 +1,6 @@
 import { useTranslate } from "@probo/i18n";
 
-import { Badge } from "../../Atoms/Badge/Badge.tsx";
+import { Badge } from "../../Atoms/Badge/Badge";
 
 type Props = {
   score: number;

@@ -5,7 +5,7 @@ import type {
   RefObject,
 } from "react";
 
-import { button, Button } from "../../Atoms/Button/Button.tsx";
+import { button, Button } from "../../Atoms/Button/Button";
 
 type Props = PropsWithChildren<{
   onChange: ChangeEventHandler<HTMLInputElement>;

@@ -1,4 +1,4 @@
-import type { IconProps } from "./type.ts";
+import type { IconProps } from "./type";
 
 // Source: Lucide Icons "rotate-cw" - https://lucide.dev/icons/rotate-cw
 // Licensed under ISC License

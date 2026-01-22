@@ -1,4 +1,4 @@
-import type { IconProps } from "./type.ts";
+import type { IconProps } from "./type";
 
 // https://lucide.dev/icons/key-round
 export function IconKey({ size = 24, className }: IconProps) {

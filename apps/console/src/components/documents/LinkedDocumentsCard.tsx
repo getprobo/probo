@@ -24,7 +24,7 @@ import { graphql } from "relay-runtime";
 import type { LinkedDocumentsCardFragment$key } from "#/__generated__/core/LinkedDocumentsCardFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { LinkedDocumentDialog } from "./LinkedDocumentsDialog.tsx";
+import { LinkedDocumentDialog } from "./LinkedDocumentsDialog";
 
 const linkedDocumentFragment = graphql`
   fragment LinkedDocumentsCardFragment on Document {

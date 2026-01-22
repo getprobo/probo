@@ -3,7 +3,7 @@ import { Avatar, Badge, Button, Field, IconCrossLargeX, Option, Select } from "@
 import { type ComponentProps, Suspense, useState } from "react";
 import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 
-import { usePeople } from "#/hooks/graph/PeopleGraph.ts";
+import { usePeople } from "#/hooks/graph/PeopleGraph";
 
 type Person = {
   id: string;

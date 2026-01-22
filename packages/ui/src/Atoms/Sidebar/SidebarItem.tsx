@@ -2,7 +2,7 @@ import type { FC, PropsWithChildren } from "react";
 import { NavLink } from "react-router";
 import { tv } from "tailwind-variants";
 
-import { useSidebarCollapsed } from "./Sidebar.tsx";
+import { useSidebarCollapsed } from "./Sidebar";
 
 const sidebarItem = tv({
   base: "flex items-center gap-2 w-full py-2 rounded-full",

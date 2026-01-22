@@ -1,9 +1,9 @@
 import { useStateWithRef } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { EditableCell, selectCell, SelectValue, Spinner } from "@probo/ui";
-import { useEditableCellRef } from "@probo/ui/src/Molecules/Table/EditableCell.tsx";
-import { useEditableRowContext } from "@probo/ui/src/Molecules/Table/EditableRow.tsx";
-import { getKey } from "@probo/ui/src/Molecules/Table/utils.ts";
+import { useEditableCellRef } from "@probo/ui/src/Molecules/Table/EditableCell";
+import { useEditableRowContext } from "@probo/ui/src/Molecules/Table/EditableRow";
+import { getKey } from "@probo/ui/src/Molecules/Table/utils";
 import { Command } from "cmdk";
 import { type ReactNode, Suspense } from "react";
 import { useLazyLoadQuery } from "react-relay";

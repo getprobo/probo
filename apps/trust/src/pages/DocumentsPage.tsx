@@ -4,11 +4,11 @@ import { Fragment } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import { DocumentRow } from "#/components/DocumentRow";
-import { RowHeader } from "#/components/RowHeader.tsx";
-import { Rows } from "#/components/Rows.tsx";
+import { RowHeader } from "#/components/RowHeader";
+import { Rows } from "#/components/Rows";
 import { TrustCenterFileRow } from "#/components/TrustCenterFileRow";
 import { documentTypeLabel } from "#/helpers/documents";
-import type { TrustGraphCurrentDocumentsQuery } from "#/queries/__generated__/TrustGraphCurrentDocumentsQuery.graphql.ts";
+import type { TrustGraphCurrentDocumentsQuery } from "#/queries/__generated__/TrustGraphCurrentDocumentsQuery.graphql";
 import { currentTrustDocumentsQuery } from "#/queries/TrustGraph";
 
 type Props = {

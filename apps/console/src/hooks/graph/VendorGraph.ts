@@ -5,11 +5,11 @@ import { useMemo } from "react";
 import { useLazyLoadQuery, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { VendorGraphCreateMutation } from "#/__generated__/core/VendorGraphCreateMutation.graphql.ts";
-import type { VendorGraphDeleteMutation } from "#/__generated__/core/VendorGraphDeleteMutation.graphql.ts";
-import type { VendorGraphSelectQuery } from "#/__generated__/core/VendorGraphSelectQuery.graphql.ts";
+import type { VendorGraphCreateMutation } from "#/__generated__/core/VendorGraphCreateMutation.graphql";
+import type { VendorGraphDeleteMutation } from "#/__generated__/core/VendorGraphDeleteMutation.graphql";
+import type { VendorGraphSelectQuery } from "#/__generated__/core/VendorGraphSelectQuery.graphql";
 
-import { useMutationWithToasts } from "../useMutationWithToasts.ts";
+import { useMutationWithToasts } from "../useMutationWithToasts";
 
 const createVendorMutation = graphql`
   mutation VendorGraphCreateMutation(

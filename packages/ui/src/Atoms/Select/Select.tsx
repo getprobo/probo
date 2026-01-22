@@ -19,10 +19,10 @@ import {
 } from "react";
 import { tv } from "tailwind-variants";
 
-import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.tsx";
-import { IconMagnifyingGlass } from "../Icons/IconMagnifyingGlass.tsx";
-import { Input, input } from "../Input/Input.tsx";
-import { Spinner } from "../Spinner/Spinner.tsx";
+import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical";
+import { IconMagnifyingGlass } from "../Icons/IconMagnifyingGlass";
+import { Input, input } from "../Input/Input";
+import { Spinner } from "../Spinner/Spinner";
 
 type Props<T> = PropsWithChildren<
   {

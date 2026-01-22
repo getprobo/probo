@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { fn } from "@storybook/test";
 import { type FC, Fragment, useState } from "react";
 
-import { Badge } from "../../Atoms/Badge/Badge.tsx";
-import { CellHead, DataTable, Row } from "../../Atoms/DataTable/DataTable.tsx";
+import { Badge } from "../../Atoms/Badge/Badge";
+import { CellHead, DataTable, Row } from "../../Atoms/DataTable/DataTable";
 
-import { EditableRow } from "./EditableRow.tsx";
-import { SelectCell } from "./SelectCell.tsx";
-import { TextCell } from "./TextCell.tsx";
+import { EditableRow } from "./EditableRow";
+import { SelectCell } from "./SelectCell";
+import { TextCell } from "./TextCell";
 
 type Component = FC<{ onUpdate: (key: string, value: unknown) => void }>;
 

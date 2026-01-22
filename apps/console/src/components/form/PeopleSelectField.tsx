@@ -3,7 +3,7 @@ import { Avatar, Field, Option, Select } from "@probo/ui";
 import { type ComponentProps, Suspense } from "react";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 
-import { usePeople } from "#/hooks/graph/PeopleGraph.ts";
+import { usePeople } from "#/hooks/graph/PeopleGraph";
 
 type Props<
   TFieldValues extends FieldValues = FieldValues,

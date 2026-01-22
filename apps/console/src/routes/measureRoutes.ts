@@ -59,7 +59,7 @@ export const measureRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("#/pages/organizations/measures/tabs/MeasureRisksTab.tsx"),
+            import("#/pages/organizations/measures/tabs/MeasureRisksTab"),
         ),
       },
       {
@@ -67,7 +67,7 @@ export const measureRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("#/pages/organizations/measures/tabs/MeasureTasksTab.tsx"),
+            import("#/pages/organizations/measures/tabs/MeasureTasksTab"),
         ),
       },
       {
@@ -75,7 +75,7 @@ export const measureRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("#/pages/organizations/measures/tabs/MeasureControlsTab.tsx"),
+            import("#/pages/organizations/measures/tabs/MeasureControlsTab"),
         ),
       },
       {
@@ -83,7 +83,7 @@ export const measureRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("#/pages/organizations/measures/tabs/MeasureEvidencesTab.tsx"),
+            import("#/pages/organizations/measures/tabs/MeasureEvidencesTab"),
         ),
       },
     ],

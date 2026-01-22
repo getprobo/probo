@@ -3,9 +3,9 @@ import { clsx } from "clsx";
 import type { ComponentProps, FC, PropsWithChildren, ReactNode } from "react";
 import { tv } from "tailwind-variants";
 
-import { Button } from "../Button/Button.tsx";
+import { Button } from "../Button/Button";
 import { IconDotGrid1x3Horizontal } from "../Icons";
-import type { IconProps } from "../Icons/type.ts";
+import type { IconProps } from "../Icons/type";
 
 type Props = PropsWithChildren<{
   toggle?: ReactNode;

@@ -53,11 +53,11 @@ import {
   useDeleteDocumentMutation,
   useSendSigningNotificationsMutation,
 } from "#/hooks/graph/DocumentGraph";
-import { CurrentUser } from "#/providers/CurrentUser.tsx";
+import { CurrentUser } from "#/providers/CurrentUser";
 
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
-import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
-import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog.tsx";
+import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog";
+import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization

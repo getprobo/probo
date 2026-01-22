@@ -8,7 +8,7 @@ import {
 
 import { Card } from "../Card/Card";
 import { IconPlusLarge } from "../Icons";
-import { type AsChildProps, Slot } from "../Slot.tsx";
+import { type AsChildProps, Slot } from "../Slot";
 
 export function DataTable({
   children,

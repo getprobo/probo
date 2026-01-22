@@ -1,7 +1,7 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton.tsx";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
 export const statesOfApplicabilityRoutes = [
   {

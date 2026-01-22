@@ -6,11 +6,11 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { RiskGraphDeleteMutation } from "#/__generated__/core/RiskGraphDeleteMutation.graphql.ts";
-import type { RiskGraphFragment$key } from "#/__generated__/core/RiskGraphFragment.graphql.ts";
-import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery.graphql.ts";
+import type { RiskGraphDeleteMutation } from "#/__generated__/core/RiskGraphDeleteMutation.graphql";
+import type { RiskGraphFragment$key } from "#/__generated__/core/RiskGraphFragment.graphql";
+import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery.graphql";
 
-import { useMutationWithToasts } from "../useMutationWithToasts.ts";
+import { useMutationWithToasts } from "../useMutationWithToasts";
 
 const deleteRiskMutation = graphql`
   mutation RiskGraphDeleteMutation(

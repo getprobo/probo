@@ -4,11 +4,11 @@ import { Command } from "cmdk";
 import { Fragment, type ReactNode } from "react";
 import { tv } from "tailwind-variants";
 
-import { Badge } from "../../Atoms/Badge/Badge.tsx";
+import { Badge } from "../../Atoms/Badge/Badge";
 
-import { EditableCell, useEditableCellRef } from "./EditableCell.tsx";
-import { useEditableRowContext } from "./EditableRow.tsx";
-import { getKey } from "./utils.ts";
+import { EditableCell, useEditableCellRef } from "./EditableCell";
+import { useEditableRowContext } from "./EditableRow";
+import { getKey } from "./utils";
 
 type Props<T> = {
   name: string;

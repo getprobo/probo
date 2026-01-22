@@ -1,4 +1,4 @@
-import type { IconProps } from "./type.ts";
+import type { IconProps } from "./type";
 
 export function IconDotGrid1x3Horizontal({ size = 24, className }: IconProps) {
   return (

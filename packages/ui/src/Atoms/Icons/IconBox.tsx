@@ -1,4 +1,4 @@
-import type { IconProps } from "./type.ts";
+import type { IconProps } from "./type";
 
 // https://lucide.dev/icons/box
 export function IconBox({ size = 24, className }: IconProps) {

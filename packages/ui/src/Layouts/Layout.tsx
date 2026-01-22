@@ -11,10 +11,10 @@ import {
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
 
-import { Logo } from "../Atoms/Logo/Logo.tsx";
-import { Sidebar } from "../Atoms/Sidebar/Sidebar.tsx";
-import { Toasts } from "../Atoms/Toasts/Toasts.tsx";
-import { ConfirmDialog } from "../Molecules/Dialog/ConfirmDialog.tsx";
+import { Logo } from "../Atoms/Logo/Logo";
+import { Sidebar } from "../Atoms/Sidebar/Sidebar";
+import { Toasts } from "../Atoms/Toasts/Toasts";
+import { ConfirmDialog } from "../Molecules/Dialog/ConfirmDialog";
 
 type Props = PropsWithChildren<{
   headerLeading?: ReactNode;

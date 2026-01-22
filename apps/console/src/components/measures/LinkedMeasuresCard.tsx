@@ -23,7 +23,7 @@ import { graphql } from "relay-runtime";
 import type { LinkedMeasuresCardFragment$key } from "#/__generated__/core/LinkedMeasuresCardFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { LinkedMeasureDialog } from "./LinkedMeasuresDialog.tsx";
+import { LinkedMeasureDialog } from "./LinkedMeasuresDialog";
 
 const linkedMeasureFragment = graphql`
   fragment LinkedMeasuresCardFragment on Measure {

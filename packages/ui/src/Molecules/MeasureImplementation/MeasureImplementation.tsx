@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import clsx from "clsx";
 import type { ComponentProps } from "react";
 
-import type { MeasureBadge } from "../Badge/MeasureBadge.tsx";
+import type { MeasureBadge } from "../Badge/MeasureBadge";
 
 type MeasureState = ComponentProps<typeof MeasureBadge>["state"];
 

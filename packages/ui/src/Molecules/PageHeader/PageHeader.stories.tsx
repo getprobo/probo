@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Button } from "../../Atoms/Button/Button.tsx";
+import { Button } from "../../Atoms/Button/Button";
 
 import { PageHeader } from "./PageHeader";
 

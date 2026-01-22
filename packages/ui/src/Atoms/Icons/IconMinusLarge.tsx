@@ -1,4 +1,4 @@
-import type { IconProps } from "./type.ts";
+import type { IconProps } from "./type";
 
 export function IconMinusLarge({ size = 16, className }: IconProps) {
   return (

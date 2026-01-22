@@ -6,7 +6,7 @@ import {
   useRef,
 } from "react";
 
-import { Row } from "../../Atoms/DataTable/DataTable.tsx";
+import { Row } from "../../Atoms/DataTable/DataTable";
 
 type Props = {
   onUpdate: (key: string, value: unknown) => void;

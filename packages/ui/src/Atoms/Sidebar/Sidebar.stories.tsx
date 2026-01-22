@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { IconBank } from "../Icons/IconBank.tsx";
+import { IconBank } from "../Icons/IconBank";
 
 import { Sidebar } from "./Sidebar";
 import { SidebarItem } from "./SidebarItem";

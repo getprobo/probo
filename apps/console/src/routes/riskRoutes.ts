@@ -12,7 +12,7 @@ import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery
 import type { RiskGraphNodeQuery } from "#/__generated__/core/RiskGraphNodeQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
-import { RisksPageSkeleton } from "#/components/skeletons/RisksPageSkeleton.tsx";
+import { RisksPageSkeleton } from "#/components/skeletons/RisksPageSkeleton";
 import { coreEnvironment } from "#/environments";
 import { riskNodeQuery, risksQuery } from "#/hooks/graph/RiskGraph";
 
@@ -67,28 +67,28 @@ export const riskRoutes = [
         path: "overview",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskOverviewTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskOverviewTab"),
         ),
       },
       {
         path: "measures",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskMeasuresTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskMeasuresTab"),
         ),
       },
       {
         path: "documents",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskDocumentsTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskDocumentsTab"),
         ),
       },
       {
         path: "controls",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskControlsTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskControlsTab"),
         ),
       },
       {
@@ -96,7 +96,7 @@ export const riskRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("#/pages/organizations/risks/tabs/RiskObligationsTab.tsx"),
+            import("#/pages/organizations/risks/tabs/RiskObligationsTab"),
         ),
       },
     ],
@@ -125,7 +125,7 @@ export const riskRoutes = [
         path: "overview",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("#/pages/organizations/risks/tabs/RiskOverviewTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskOverviewTab"),
         ),
       },
     ],

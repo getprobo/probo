@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Select } from "../../Atoms/Select/Select.tsx";
+import { Select } from "../../Atoms/Select/Select";
 
-import { SentitivityOptions } from "./SentitivityOptions.tsx";
+import { SentitivityOptions } from "./SentitivityOptions";
 
 export default {
   title: "Molecules/Select/SentitivitySelect",

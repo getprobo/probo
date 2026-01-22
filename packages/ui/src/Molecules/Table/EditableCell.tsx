@@ -9,9 +9,9 @@ import {
   useState,
 } from "react";
 
-import { Cell } from "../../Atoms/DataTable/DataTable.tsx";
+import { Cell } from "../../Atoms/DataTable/DataTable";
 
-import { useEditableRowContext } from "./EditableRow.tsx";
+import { useEditableRowContext } from "./EditableRow";
 
 export function useEditableCellRef() {
   return useRef<{ close: () => void } | null>(null);

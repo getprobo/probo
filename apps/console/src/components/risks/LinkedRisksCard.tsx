@@ -17,7 +17,7 @@ import { graphql } from "relay-runtime";
 import type { LinkedRisksCardFragment$key } from "#/__generated__/core/LinkedRisksCardFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { LinkedRisksDialog } from "./LinkedRisksDialog.tsx";
+import { LinkedRisksDialog } from "./LinkedRisksDialog";
 
 const linkedRiskFragment = graphql`
   fragment LinkedRisksCardFragment on Risk {

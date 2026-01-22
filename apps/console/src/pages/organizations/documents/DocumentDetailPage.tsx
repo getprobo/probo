@@ -74,7 +74,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
-import type { NodeOf } from "#/types.ts";
+import type { NodeOf } from "#/types";
 
 import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
 
