@@ -18,16 +18,16 @@ export function DocumentsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const data = usePreloadedQuery<TrustGraphCurrentDocumentsQuery>(
     currentTrustDocumentsQuery,
-    queryRef
+    queryRef,
   );
-  const documents =
-    data.currentTrustCenter?.documents.edges.map((edge) => edge.node) ?? [];
-  const files =
-    data.currentTrustCenter?.trustCenterFiles.edges.map((edge) => edge.node) ?? [];
-  const documentsPerType = groupBy(documents, (document) =>
-    documentTypeLabel(document.documentType, __)
+  const documents
+    = data.currentTrustCenter?.documents.edges.map(edge => edge.node) ?? [];
+  const files
+    = data.currentTrustCenter?.trustCenterFiles.edges.map(edge => edge.node) ?? [];
+  const documentsPerType = groupBy(documents, document =>
+    documentTypeLabel(document.documentType, __),
   );
-  const filesPerCategory = groupBy(files, (file) => file.category);
+  const filesPerCategory = groupBy(files, file => file.category);
   return (
     <div>
       <h2 className="font-medium mb-1">{__("Documents")}</h2>
@@ -38,7 +38,7 @@ export function DocumentsPage({ queryRef }: Props) {
         {objectEntries(documentsPerType).map(([label, documents]) => (
           <Fragment key={label}>
             <RowHeader>{label}</RowHeader>
-            {documents.map((document) => (
+            {documents.map(document => (
               <DocumentRow key={document.id} document={document} />
             ))}
           </Fragment>
@@ -46,7 +46,7 @@ export function DocumentsPage({ queryRef }: Props) {
         {objectEntries(filesPerCategory).map(([category, files]) => (
           <Fragment key={category}>
             <RowHeader>{category}</RowHeader>
-            {files.map((file) => (
+            {files.map(file => (
               <TrustCenterFileRow key={file.id} file={file} />
             ))}
           </Fragment>

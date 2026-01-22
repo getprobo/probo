@@ -27,7 +27,7 @@ import {
 function ErrorBoundary({ error: propsError }: { error?: string }) {
   const error = useRouteError() ?? propsError;
 
-  return <PageError error={error?.toString()} />;
+  return <PageError error={error instanceof Error ? error.message : ""} />;
 }
 
 const routes = [
@@ -41,7 +41,8 @@ const routes = [
   },
   {
     path: "/",
-    loader: async () => {
+    loader: () => {
+      // eslint-disable-next-line
       throw redirect("/overview");
     },
     Component: Fragment,

@@ -12,7 +12,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
   baseOptions?: {
     onSuccess?: (response: T["response"]) => void;
     errorMessage?: string;
-  }
+  },
 ) {
   const [mutate, isLoading] = useMutation<T>(query);
   const { toast } = useToast();
@@ -22,7 +22,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
       queryOptions: UseMutationConfig<T> & {
         onSuccess?: (response: T["response"]) => void;
         errorMessage?: string;
-      }
+      },
     ) => {
       const options = { ...baseOptions, ...queryOptions };
       return new Promise<void>((resolve, reject) =>
@@ -34,11 +34,11 @@ export function useMutationWithToasts<T extends MutationParameters>(
               toast({
                 title: __("Error"),
                 description:
-                  options.errorMessage ??
-                  __("Failed to commit this operation."),
+                  options.errorMessage
+                  ?? __("Failed to commit this operation."),
                 variant: "error",
               });
-              reject(error);
+              reject(error instanceof Error ? error : new Error(__("Failed to commit this operation.")));
               return;
             }
             options.onSuccess?.(response);
@@ -53,10 +53,10 @@ export function useMutationWithToasts<T extends MutationParameters>(
             });
             reject(error);
           },
-        })
+        }),
       );
     },
-    [mutate, toast, __, baseOptions]
+    [mutate, toast, __, baseOptions],
   );
 
   return [mutateWithToast, isLoading] as const;

@@ -25,14 +25,14 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
   // Reset error boundary on page change
   useEffect(() => {
     if (
-      location.pathname !== baseLocation.current.pathname &&
-      resetErrorBoundary
+      location.pathname !== baseLocation.current.pathname
+      && resetErrorBoundary
     ) {
       resetErrorBoundary();
     }
   }, [location, resetErrorBoundary]);
 
-  if (!error || (error && error.toString().includes("PAGE_NOT_FOUND"))) {
+  if (!error || (error instanceof Error && error.message.includes("PAGE_NOT_FOUND"))) {
     return (
       <div className={classNames.wrapper}>
         <h1 className={classNames.title}>
@@ -46,22 +46,21 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     );
   }
 
-  if (
-    error
-      .toString()
+  if (error instanceof Error
+    && error.message
       .toLowerCase()
       .match(/(token|expired|invalid|401|unauthorized)/)
   ) {
-    const isExpiredToken = error.toString().toLowerCase().includes("expired");
+    const isExpiredToken = error.message.toLowerCase().includes("expired");
     const title = isExpiredToken
       ? __("Expired token")
       : __("Invalid Access Link");
     const description = isExpiredToken
       ? __(
-          "This access link has expired. Trust center access links are valid for 7 days for security reasons."
+          "This access link has expired. Trust center access links are valid for 7 days for security reasons.",
         )
       : __(
-          "This access link is not valid. It may have been revoked or the link might be incorrect."
+          "This access link is not valid. It may have been revoked or the link might be incorrect.",
         );
     return (
       <div className={classNames.wrapper}>
@@ -81,7 +80,8 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
         <summary className={classNames.description}>
           {__("Something went wrong")}
         </summary>
-        <p className={classNames.detail}>{error.toString()}</p>
+        {error instanceof Error
+          && <p className={classNames.detail}>{error.message}</p>}
       </details>
     </div>
   );

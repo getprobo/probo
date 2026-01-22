@@ -13,8 +13,8 @@ type Props = {
 export function SubprocessorsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const data = usePreloadedQuery(currentTrustVendorsQuery, queryRef);
-  const vendors =
-    data.currentTrustCenter?.vendors.edges.map((edge) => edge.node) ?? [];
+  const vendors
+    = data.currentTrustCenter?.vendors.edges.map(edge => edge.node) ?? [];
 
   const hasAnyCountries = vendors.some(vendor => vendor.countries.length > 0);
 
@@ -24,11 +24,11 @@ export function SubprocessorsPage({ queryRef }: Props) {
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          data.currentTrustCenter?.organization.name ?? ""
+          data.currentTrustCenter?.organization.name ?? "",
         )}
       </p>
       <Rows>
-        {vendors.map((vendor) => (
+        {vendors.map(vendor => (
           <VendorRow key={vendor.id} vendor={vendor} hasAnyCountries={hasAnyCountries} />
         ))}
       </Rows>

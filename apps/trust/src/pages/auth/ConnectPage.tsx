@@ -59,12 +59,11 @@ export function ConnectPage(props: {
     if (!magicLinkSent && interval.current) {
       clearInterval(interval.current);
       interval.current = undefined;
-      setTimer(timerDurationSeconds);
     }
     if (magicLinkSent) {
       clearInterval(interval.current);
       interval.current = setInterval(() => {
-        setTimer((timer) => Math.max(timer - 1, 0));
+        setTimer(timer => Math.max(timer - 1, 0));
       }, 1000);
     }
 
@@ -138,7 +137,7 @@ export function ConnectPage(props: {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
           <Field
             label={__("Email")}
             placeholder="john.doe@acme.com"

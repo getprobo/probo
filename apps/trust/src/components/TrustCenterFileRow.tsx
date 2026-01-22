@@ -58,12 +58,12 @@ export function TrustCenterFileRow(props: {
   const file = useFragment(trustCenterFileRowFragment, props.file);
   const [hasRequested, setHasRequested] = useState(file.hasUserRequestedAccess);
 
-  const [requestAccess, isRequestingAccess] =
-    useMutation<TrustCenterFileRow_requestAccessMutation>(
+  const [requestAccess, isRequestingAccess]
+    = useMutation<TrustCenterFileRow_requestAccessMutation>(
       requestAccessMutation,
     );
-  const [commitDownload, downloading] =
-    useMutationWithToasts<TrustCenterFileRowDownloadMutation>(downloadMutation);
+  const [commitDownload, downloading]
+    = useMutationWithToasts<TrustCenterFileRowDownloadMutation>(downloadMutation);
 
   const handleRequestAccess = () => {
     requestAccess({
@@ -98,8 +98,8 @@ export function TrustCenterFileRow(props: {
     });
   };
 
-  const handleDownload = () => {
-    commitDownload({
+  const handleDownload = async () => {
+    await commitDownload({
       variables: {
         input: {
           trustCenterFileId: file.id,
@@ -117,36 +117,40 @@ export function TrustCenterFileRow(props: {
         <IconPageTextLine size={16} className=" flex-none text-txt-tertiary" />
         {file.name}
       </div>
-      {file.isUserAuthorized ? (
-        <Button
-          className="w-full md:w-max"
-          variant="secondary"
-          disabled={downloading}
-          icon={downloading ? Spinner : IconArrowInbox}
-          onClick={handleDownload}
-        >
-          {__("Download")}
-        </Button>
-      ) : viewer ? (
-        <Button
-          disabled={hasRequested || isRequestingAccess}
-          className="w-full md:w-max"
-          variant="secondary"
-          icon={IconLock}
-          onClick={handleRequestAccess}
-        >
-          {hasRequested ? __("Access requested") : __("Request access")}
-        </Button>
-      ) : (
-        <Button
-          className="w-full md:w-max"
-          variant="secondary"
-          icon={IconLock}
-          to="/connect"
-        >
-          {hasRequested ? __("Access requested") : __("Request access")}
-        </Button>
-      )}
+      {file.isUserAuthorized
+        ? (
+            <Button
+              className="w-full md:w-max"
+              variant="secondary"
+              disabled={downloading}
+              icon={downloading ? Spinner : IconArrowInbox}
+              onClick={() => void handleDownload()}
+            >
+              {__("Download")}
+            </Button>
+          )
+        : viewer
+          ? (
+              <Button
+                disabled={hasRequested || isRequestingAccess}
+                className="w-full md:w-max"
+                variant="secondary"
+                icon={IconLock}
+                onClick={handleRequestAccess}
+              >
+                {hasRequested ? __("Access requested") : __("Request access")}
+              </Button>
+            )
+          : (
+              <Button
+                className="w-full md:w-max"
+                variant="secondary"
+                icon={IconLock}
+                to="/connect"
+              >
+                {hasRequested ? __("Access requested") : __("Request access")}
+              </Button>
+            )}
     </div>
   );
 }

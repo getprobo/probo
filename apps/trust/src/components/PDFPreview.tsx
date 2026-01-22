@@ -15,8 +15,8 @@ import { IconMinusLarge } from "@probo/ui/src/Atoms/Icons/IconMinusLarge.tsx";
 // Worker for PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-const btnClass =
-  "size-8 grid place-items-center hover:bg-secondary-hover cursor-pointer rounded-sm disabled:opacity-30 transition-all";
+const btnClass
+  = "size-8 grid place-items-center hover:bg-secondary-hover cursor-pointer rounded-sm disabled:opacity-30 transition-all";
 
 export function PDFPreview({ src, name }: { src: string; name?: string }) {
   const [numPages, setNumPages] = useState(0);
@@ -92,7 +92,10 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
             <IconChevronLeft size={16} />
           </button>
           <div>
-            {currentPage} / {numPages}
+            {currentPage}
+            {" "}
+            /
+            {numPages}
           </div>
           <button onClick={movePage(1)} className={btnClass}>
             <IconChevronRight size={16} />
@@ -122,7 +125,7 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
           ref={documentRef}
         >
           {numPages === 0 && <Spinner className="mx-auto" />}
-          {times(numPages, (index) => (
+          {times(numPages, index => (
             <Page
               className="w-max h-max mx-auto shadow-mid"
               key={index.toString()}

@@ -60,8 +60,8 @@ export function NDADialog({
     },
   });
 
-  const handleSubmit = handleSubmitWrapper(({ fullName }) => {
-    commitSigning({
+  const handleSubmit = handleSubmitWrapper(async ({ fullName }) => {
+    await commitSigning({
       variables: {
         input: {
           fullName,
@@ -98,7 +98,7 @@ export function NDADialog({
               </Button>
             </Card>
           )}
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={e => void handleSubmit(e)}>
             <div className="mt-4">
               <Field
                 required
@@ -129,7 +129,9 @@ export function NDADialog({
               isMobile ? "mt-15" : "mt-30",
             )}
           >
-            Powered by <Logo withPicto className="h-6" />
+            Powered by
+            {" "}
+            <Logo withPicto className="h-6" />
           </a>
         </div>
         {isDesktop && (

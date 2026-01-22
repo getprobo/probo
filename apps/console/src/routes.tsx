@@ -153,7 +153,6 @@ const routes = [
     children: [
       {
         index: true,
-        // Component: () => "hello world",
         Component: lazy(
           () =>
             import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),

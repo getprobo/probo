@@ -67,14 +67,14 @@ const overviewFragment = graphql`
 
 export function OverviewPage() {
   const { trustCenter } = useOutletContext<{
-    trustCenter: OverviewPageFragment$key &
-      TrustGraphCurrentQuery$data["currentTrustCenter"];
+    trustCenter: OverviewPageFragment$key
+      & TrustGraphCurrentQuery$data["currentTrustCenter"];
   }>();
   const fragment = useFragment(overviewFragment, trustCenter);
   return (
     <div>
       <References
-        references={fragment.references.edges.map((edge) => edge.node)}
+        references={fragment.references.edges.map(edge => edge.node)}
       />
       <Documents
         audits={trustCenter.audits.edges}
@@ -106,12 +106,12 @@ function Documents({
 }) {
   const { __ } = useTranslate();
   const documentsPerType = groupBy(
-    documents.map((edge) => edge.node),
-    (node) => documentTypeLabel(node.documentType, __),
+    documents.map(edge => edge.node),
+    node => documentTypeLabel(node.documentType, __),
   );
   const filesPerCategory = groupBy(
-    files.map((edge) => edge.node),
-    (node) => node.category,
+    files.map(edge => edge.node),
+    node => node.category,
   );
   const hasAudits = audits.length > 0;
   const hasDocuments = hasAudits || documents.length > 0 || files.length > 0;
@@ -130,7 +130,7 @@ function Documents({
         {audits.length > 0 && (
           <>
             <RowHeader>{__("Compliance")}</RowHeader>
-            {audits.map((audit) => (
+            {audits.map(audit => (
               <AuditRow key={audit.node.id} audit={audit.node} />
             ))}
           </>
@@ -138,7 +138,7 @@ function Documents({
         {objectEntries(documentsPerType).map(([label, documents]) => (
           <Fragment key={label}>
             <RowHeader>{label}</RowHeader>
-            {documents.map((document) => (
+            {documents.map(document => (
               <DocumentRow key={document.id} document={document} />
             ))}
           </Fragment>
@@ -146,7 +146,7 @@ function Documents({
         {objectEntries(filesPerCategory).map(([category, files]) => (
           <Fragment key={category}>
             <RowHeader>{category}</RowHeader>
-            {files.map((file) => (
+            {files.map(file => (
               <TrustCenterFileRow key={file.id} file={file} />
             ))}
           </Fragment>
@@ -189,7 +189,7 @@ function Subprocessors({
         )}
       </p>
       <Rows className="mb-8 *:py-5">
-        {vendors.map((vendor) => (
+        {vendors.map(vendor => (
           <VendorRow
             key={vendor.node.id}
             vendor={vendor.node}
@@ -223,7 +223,7 @@ function References({ references }: { references: Reference[] }) {
     <div className="mb-8">
       <h2 className="font-medium mb-4">{__("Trusted by")}</h2>
       <Card className="grid grid-cols-2 flex-wrap p-6 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-        {references.map((reference) => (
+        {references.map(reference => (
           <a
             key={reference.id}
             href={reference.websiteUrl}

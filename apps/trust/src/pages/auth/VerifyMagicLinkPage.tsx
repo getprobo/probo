@@ -42,7 +42,7 @@ export default function VerifyMagicLinkPagePageMutation() {
     verifyMagicLinkMutation,
   );
 
-  const handleSubmit = form.handleSubmit(async (data) => {
+  const handleSubmit = form.handleSubmit((data) => {
     verifyMagicLink({
       variables: {
         input: {
@@ -79,7 +79,7 @@ export default function VerifyMagicLinkPagePageMutation() {
 
   useEffect(() => {
     if (!submittedRef.current && searchParams.get("token")) {
-      handleSubmit();
+      void handleSubmit();
       submittedRef.current = true;
     }
   });
@@ -94,7 +94,7 @@ export default function VerifyMagicLinkPagePageMutation() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
           <Field
             label={__("Confirmation Token")}
             type="text"

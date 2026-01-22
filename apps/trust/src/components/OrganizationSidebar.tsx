@@ -35,8 +35,8 @@ export function OrganizationSidebar({
   const isAuthenticated = !!use(Viewer);
   const { toast } = useToast();
 
-  const [requestAllAccesses, isRequestingAccess] =
-    useMutation<OrganizationSidebar_requestAllAccessesMutation>(
+  const [requestAllAccesses, isRequestingAccess]
+    = useMutation<OrganizationSidebar_requestAllAccessesMutation>(
       requestAllAccessesMutation,
     );
 
@@ -75,15 +75,17 @@ export function OrganizationSidebar({
   return (
     <Card className="p-6 relative overflow-hidden border-b border-border-low isolate">
       <div className="h-21 bg-[#044E4114] absolute top-0 left-0 right-0 -z-1"></div>
-      {trustCenter.organization.logoUrl ? (
-        <img
-          alt=""
-          src={trustCenter.organization.logoUrl}
-          className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1"
-        />
-      ) : (
-        <div className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1" />
-      )}
+      {trustCenter.organization.logoUrl
+        ? (
+            <img
+              alt=""
+              src={trustCenter.organization.logoUrl}
+              className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1"
+            />
+          )
+        : (
+            <div className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1" />
+          )}
       <h1 className="text-2xl mt-6">{trustCenter.organization.name}</h1>
       <p className="text-sm text-txt-secondary mt-1">
         {trustCenter.organization.description}
@@ -137,7 +139,7 @@ export function OrganizationSidebar({
                   gridTemplateColumns: "repeat(auto-fit, 75px",
                 }}
               >
-                {trustCenter.audits.edges.map((audit) => (
+                {trustCenter.audits.edges.map(audit => (
                   <AuditRowAvatar key={audit.node.id} audit={audit.node} />
                 ))}
               </div>
@@ -148,26 +150,28 @@ export function OrganizationSidebar({
         )}
 
         {/* Actions */}
-        {isAuthenticated ? (
-          <Button
-            disabled={isRequestingAccess}
-            variant="primary"
-            icon={IconLock}
-            className="w-full h-10"
-            onClick={handleRequestAllAccesses}
-          >
-            {__("Request access")}
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            icon={IconLock}
-            className="w-full h-10"
-            to="/connect"
-          >
-            {__("Request access")}
-          </Button>
-        )}
+        {isAuthenticated
+          ? (
+              <Button
+                disabled={isRequestingAccess}
+                variant="primary"
+                icon={IconLock}
+                className="w-full h-10"
+                onClick={handleRequestAllAccesses}
+              >
+                {__("Request access")}
+              </Button>
+            )
+          : (
+              <Button
+                variant="primary"
+                icon={IconLock}
+                className="w-full h-10"
+                to="/connect"
+              >
+                {__("Request access")}
+              </Button>
+            )}
       </div>
     </Card>
   );

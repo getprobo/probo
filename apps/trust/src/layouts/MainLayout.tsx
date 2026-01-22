@@ -21,10 +21,10 @@ export function MainLayout(props: Props) {
   if (!trustCenter) {
     return null;
   }
-  const showNDADialog =
-    trustCenter.isViewerMember &&
-    !trustCenter.hasAcceptedNonDisclosureAgreement &&
-    trustCenter.ndaFileUrl;
+  const showNDADialog
+    = trustCenter.isViewerMember
+      && !trustCenter.hasAcceptedNonDisclosureAgreement
+      && trustCenter.ndaFileUrl;
   return (
     <Viewer value={data.viewer}>
       <TrustCenterProvider trustCenter={trustCenter}>
@@ -51,7 +51,9 @@ export function MainLayout(props: Props) {
           href="https://www.getprobo.com/"
           className="flex gap-2 text-sm font-medium text-txt-tertiary items-center w-max mx-auto my-10"
         >
-          {__("Powered by")} <Logo withPicto className="h-6" />
+          {__("Powered by")}
+          {" "}
+          <Logo withPicto className="h-6" />
         </a>
       </TrustCenterProvider>
     </Viewer>

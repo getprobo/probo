@@ -68,10 +68,10 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
     audit.report?.hasUserRequestedAccess,
   );
 
-  const [requestAccess, isRequestingAccess] =
-    useMutation<AuditRow_requestAccessMutation>(requestAccessMutation);
-  const [commitDownload, downloading] =
-    useMutationWithToasts<AuditRowDownloadMutation>(downloadMutation);
+  const [requestAccess, isRequestingAccess]
+    = useMutation<AuditRow_requestAccessMutation>(requestAccessMutation);
+  const [commitDownload, downloading]
+    = useMutationWithToasts<AuditRowDownloadMutation>(downloadMutation);
 
   const handleRequestAccess = () => {
     requestAccess({
@@ -106,11 +106,11 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
     });
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!audit.report?.id) {
       return;
     }
-    commitDownload({
+    await commitDownload({
       variables: {
         input: {
           reportId: audit.report.id,
@@ -128,36 +128,40 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.framework.name}
       </div>
-      {audit.report && audit.report.isUserAuthorized ? (
-        <Button
-          className="w-full md:w-max"
-          variant="secondary"
-          disabled={downloading}
-          icon={downloading ? Spinner : IconArrowInbox}
-          onClick={handleDownload}
-        >
-          {__("Download")}
-        </Button>
-      ) : viewer ? (
-        <Button
-          disabled={hasRequested || isRequestingAccess}
-          className="w-full md:w-max"
-          variant="secondary"
-          icon={IconLock}
-          onClick={handleRequestAccess}
-        >
-          {hasRequested ? __("Access requested") : __("Request access")}
-        </Button>
-      ) : (
-        <Button
-          className="w-full md:w-max"
-          variant="secondary"
-          icon={IconLock}
-          to="/connect"
-        >
-          {hasRequested ? __("Access requested") : __("Request access")}
-        </Button>
-      )}
+      {audit.report && audit.report.isUserAuthorized
+        ? (
+            <Button
+              className="w-full md:w-max"
+              variant="secondary"
+              disabled={downloading}
+              icon={downloading ? Spinner : IconArrowInbox}
+              onClick={() => void handleDownload()}
+            >
+              {__("Download")}
+            </Button>
+          )
+        : viewer
+          ? (
+              <Button
+                disabled={hasRequested || isRequestingAccess}
+                className="w-full md:w-max"
+                variant="secondary"
+                icon={IconLock}
+                onClick={handleRequestAccess}
+              >
+                {hasRequested ? __("Access requested") : __("Request access")}
+              </Button>
+            )
+          : (
+              <Button
+                className="w-full md:w-max"
+                variant="secondary"
+                icon={IconLock}
+                to="/connect"
+              >
+                {hasRequested ? __("Access requested") : __("Request access")}
+              </Button>
+            )}
     </div>
   );
 }

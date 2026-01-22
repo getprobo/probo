@@ -5,8 +5,8 @@ import { RelayProvider } from "/providers/RelayProviders";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
 
 function ConnectPageLoader() {
-  const [queryRef, loadQuery] =
-    useQueryLoader<ConnectPageQuery>(connectPageQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<ConnectPageQuery>(connectPageQuery);
 
   useEffect(() => {
     if (!queryRef) {
