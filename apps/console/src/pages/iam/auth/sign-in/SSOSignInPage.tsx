@@ -1,10 +1,10 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
-import { useEffect, useState, type FormEventHandler } from "react";
+import { type FormEventHandler, useEffect, useState } from "react";
 import {
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
-  type PreloadedQuery,
 } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";

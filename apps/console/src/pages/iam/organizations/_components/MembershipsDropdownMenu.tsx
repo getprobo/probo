@@ -1,5 +1,5 @@
-import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { useMemo } from "react";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MembershipsDropdownMenuQuery } from "/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
 

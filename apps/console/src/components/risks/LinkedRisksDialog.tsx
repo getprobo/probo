@@ -1,3 +1,4 @@
+import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -12,10 +13,9 @@ import {
   Select,
   Spinner,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { Suspense, useMemo, useState, type ReactNode } from "react";
-import { graphql } from "relay-runtime";
+import { type ReactNode, Suspense, useMemo, useState } from "react";
 import { useLazyLoadQuery } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { LinkedRisksDialogQuery } from "/__generated__/core/LinkedRisksDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";

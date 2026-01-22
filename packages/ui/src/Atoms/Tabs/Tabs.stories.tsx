@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Tabs, TabLink, TabBadge } from "./Tabs";
+import { TabBadge, TabLink, Tabs } from "./Tabs";
 
 export default {
   title: "Atoms/Tabs",

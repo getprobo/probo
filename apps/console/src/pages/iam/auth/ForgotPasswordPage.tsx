@@ -1,12 +1,12 @@
+import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useState } from "react";
-import { Link } from "react-router";
-import { z } from "zod";
-import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
-import { formatError } from "@probo/helpers";
+import { Link } from "react-router";
+import { graphql } from "relay-runtime";
+import { z } from "zod";
 
 import type { ForgotPasswordPageMutation } from "/__generated__/iam/ForgotPasswordPageMutation.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";

@@ -1,6 +1,6 @@
-import { useEffect, type ReactNode } from "react";
-import { useTranslate } from "@probo/i18n";
 import { useRefSync } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import { type ReactNode, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
 import { Spinner } from "../Spinner/Spinner";

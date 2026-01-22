@@ -1,34 +1,34 @@
-import { graphql, useRefetchableFragment } from "react-relay";
+import { useTranslate } from "@probo/i18n";
 import {
+  ActionDropdown,
   Badge,
+  Button,
+  DropdownItem,
+  IconPencil,
+  IconPlusLarge,
+  IconTrashCan,
   Table,
   Tbody,
   Td,
   Th,
   Thead,
   Tr,
-  Button,
-  IconPlusLarge,
-  IconPencil,
-  IconTrashCan,
-  ActionDropdown,
-  DropdownItem,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useRef } from "react";
+import { graphql, useRefetchableFragment } from "react-relay";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { StateOfApplicabilityControlsTabFragment$key } from "/__generated__/core/StateOfApplicabilityControlsTabFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
-import {
-  LinkControlDialog,
-  type LinkControlDialogRef,
-} from "../dialogs/LinkControlDialog";
 import {
   EditControlDialog,
   type EditControlDialogRef,
 } from "../dialogs/EditControlDialog";
+import {
+  LinkControlDialog,
+  type LinkControlDialogRef,
+} from "../dialogs/LinkControlDialog";
 
 export const controlsFragment = graphql`
     fragment StateOfApplicabilityControlsTabFragment on StateOfApplicability

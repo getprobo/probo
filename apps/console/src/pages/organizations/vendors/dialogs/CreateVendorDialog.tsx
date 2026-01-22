@@ -1,15 +1,15 @@
+import { faviconUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
+  Avatar,
   Combobox,
   ComboboxItem,
   Dialog,
   DialogContent,
   DialogFooter,
-  Avatar,
   IconPlusLarge,
   useDialogRef,
 } from "@probo/ui";
-import { faviconUrl } from "@probo/helpers";
 import type { Vendor } from "@probo/vendors";
 import { type ReactNode } from "react";
 

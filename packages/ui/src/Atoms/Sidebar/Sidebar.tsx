@@ -1,13 +1,13 @@
+import { clsx } from "clsx";
 import {
   createContext,
   type PropsWithChildren,
   useContext,
   useState,
 } from "react";
-import { clsx } from "clsx";
 
-import { IconCollapse, IconExpand } from "../Icons";
 import { Button } from "../Button/Button";
+import { IconCollapse, IconExpand } from "../Icons";
 
 const sidebarContext = createContext({ open: true });
 

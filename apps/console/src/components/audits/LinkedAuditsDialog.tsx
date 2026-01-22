@@ -1,9 +1,11 @@
+import { getAuditStateVariant } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
+  Badge,
   Button,
   Dialog,
   DialogContent,
   DialogFooter,
-  Badge,
   IconMagnifyingGlass,
   IconPlusLarge,
   IconTrashCan,
@@ -11,19 +13,17 @@ import {
   Input,
   Spinner,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { getAuditStateVariant } from "@probo/helpers";
-import { Suspense, useMemo, useState, type ReactNode } from "react";
-import { graphql } from "relay-runtime";
+import { type ReactNode, Suspense, useMemo, useState } from "react";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import type { LinkedAuditsDialogQuery } from "/__generated__/core/LinkedAuditsDialogQuery.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
 import type {
   LinkedAuditsDialogFragment$data,
   LinkedAuditsDialogFragment$key,
 } from "/__generated__/core/LinkedAuditsDialogFragment.graphql";
+import type { LinkedAuditsDialogQuery } from "/__generated__/core/LinkedAuditsDialogQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { NodeOf } from "/types";
 
 const auditsQuery = graphql`
   query LinkedAuditsDialogQuery($organizationId: ID!) {

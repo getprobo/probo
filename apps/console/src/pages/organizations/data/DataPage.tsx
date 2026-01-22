@@ -1,41 +1,41 @@
-import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
-  Avatar,
-} from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
+import { faviconUrl } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import {
+  ActionDropdown,
+  Avatar,
+  Badge,
+  Button,
+  DropdownItem,
+  IconPlusLarge,
+  IconTrashCan,
+  PageHeader,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@probo/ui";
 import {
   graphql,
+  type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
-  type PreloadedQuery,
 } from "react-relay";
 import { useParams } from "react-router";
-import { faviconUrl } from "@probo/helpers";
 
+import type { DataListQuery } from "/__generated__/core/DataListQuery.graphql";
+import type {
+  DataPageFragment$data,
+  DataPageFragment$key,
+} from "/__generated__/core/DataPageFragment.graphql";
 import type { DatumGraphListQuery } from "/__generated__/core/DatumGraphListQuery.graphql";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { SortableTable } from "/components/SortableTable";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
-import type {
-  DataPageFragment$key,
-  DataPageFragment$data,
-} from "/__generated__/core/DataPageFragment.graphql";
-import type { DataListQuery } from "/__generated__/core/DataListQuery.graphql";
-import { SortableTable } from "/components/SortableTable";
-import { SnapshotBanner } from "/components/SnapshotBanner";
 
-import { useDeleteDatum, dataQuery } from "../../../hooks/graph/DatumGraph";
+import { dataQuery, useDeleteDatum } from "../../../hooks/graph/DatumGraph";
 
 import { CreateDatumDialog } from "./dialogs/CreateDatumDialog";
 

@@ -1,9 +1,9 @@
+import { useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
-import { useRefetchableFragment } from "react-relay";
 
-import { LinkedControlsCard } from "/components/controls/LinkedControlsCard";
 import type { DocumentControlsTabFragment$key } from "/__generated__/core/DocumentControlsTabFragment.graphql";
+import { LinkedControlsCard } from "/components/controls/LinkedControlsCard";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
 
 export const controlsFragment = graphql`

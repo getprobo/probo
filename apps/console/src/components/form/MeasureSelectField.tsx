@@ -1,6 +1,6 @@
-import { Field, Combobox, ComboboxItem } from "@probo/ui";
-import { Suspense, useMemo, useState, type ComponentProps } from "react";
 import { useTranslate } from "@probo/i18n";
+import { Combobox, ComboboxItem, Field } from "@probo/ui";
+import { type ComponentProps, Suspense, useMemo, useState } from "react";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 
 import { usePaginatedMeasures } from "/hooks/graph/usePaginatedMeasures";

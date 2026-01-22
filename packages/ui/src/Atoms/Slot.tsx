@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { cloneElement, isValidElement, Children } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
+import { Children, cloneElement, isValidElement } from "react";
 
 export type AsChildProps<DefaultElementProps>
   = | ({ asChild?: false } & DefaultElementProps)

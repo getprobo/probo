@@ -1,9 +1,9 @@
-import { useQueryLoader } from "react-relay";
 import { useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
+import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
-import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
 
 import { SAMLSettingsPage, samlSettingsPageQuery } from "./SAMLSettingsPage";
 

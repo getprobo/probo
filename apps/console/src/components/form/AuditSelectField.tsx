@@ -1,14 +1,14 @@
-import { Field, Option, Select, Badge } from "@probo/ui";
-import { Suspense, type ComponentProps } from "react";
+import { getAuditStateLabel, getAuditStateVariant } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+import { Badge, Field, Option, Select } from "@probo/ui";
+import { type ComponentProps, Suspense } from "react";
 import {
   type Control,
   Controller,
   type FieldValues,
   type Path,
 } from "react-hook-form";
-import { useLazyLoadQuery, graphql } from "react-relay";
-import { getAuditStateVariant, getAuditStateLabel } from "@probo/helpers";
+import { graphql, useLazyLoadQuery } from "react-relay";
 
 import type { AuditSelectFieldQuery } from "/__generated__/core/AuditSelectFieldQuery.graphql";
 

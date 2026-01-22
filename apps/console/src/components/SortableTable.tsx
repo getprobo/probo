@@ -9,11 +9,11 @@ import {
 } from "@probo/ui";
 import { clsx } from "clsx";
 import {
+  type ComponentProps,
   createContext,
   startTransition,
   useContext,
   useState,
-  type ComponentProps,
 } from "react";
 import type { LoadMoreFn } from "react-relay";
 import type { OperationType } from "relay-runtime";

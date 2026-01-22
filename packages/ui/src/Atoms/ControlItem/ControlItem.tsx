@@ -1,4 +1,4 @@
-import { useEffect, useRef, type HTMLAttributes } from "react";
+import { type HTMLAttributes, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { tv } from "tailwind-variants";
 

@@ -1,9 +1,9 @@
-import { useTranslate } from "@probo/i18n";
 import {
   getRiskImpacts,
   getRiskLikelihoods,
   getSeverity,
 } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import clsx from "clsx";
 
 import { Card } from "../../Atoms/Card/Card";

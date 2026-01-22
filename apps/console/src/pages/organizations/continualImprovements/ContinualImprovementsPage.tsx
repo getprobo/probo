@@ -1,52 +1,52 @@
 import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Card,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
+  formatDate,
+  getStatusLabel,
+  getStatusVariant,
+  promisifyMutation,
+  sprintf,
+} from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import {
   ActionDropdown,
+  Badge,
+  Button,
+  Card,
   DropdownItem,
+  IconPlusLarge,
   IconTrashCan,
+  PageHeader,
   Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
   useConfirm,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { usePageTitle } from "@probo/hooks";
 import {
   ConnectionHandler,
   graphql,
+  type PreloadedQuery,
+  useMutation,
   usePaginationFragment,
   usePreloadedQuery,
-  useMutation,
-  type PreloadedQuery,
 } from "react-relay";
 import { useParams } from "react-router";
-import {
-  sprintf,
-  promisifyMutation,
-  getStatusVariant,
-  getStatusLabel,
-  formatDate,
-} from "@probo/helpers";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import type { NodeOf } from "/types";
-import type {
-  ContinualImprovementsPageFragment$key,
-  ContinualImprovementsPageFragment$data,
-} from "/__generated__/core/ContinualImprovementsPageFragment.graphql";
 import type { ContinualImprovementGraphListQuery } from "/__generated__/core/ContinualImprovementGraphListQuery.graphql";
+import type {
+  ContinualImprovementsPageFragment$data,
+  ContinualImprovementsPageFragment$key,
+} from "/__generated__/core/ContinualImprovementsPageFragment.graphql";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { NodeOf } from "/types";
 
 import {
-  deleteContinualImprovementMutation,
   ContinualImprovementsConnectionKey,
   continualImprovementsQuery,
+  deleteContinualImprovementMutation,
 } from "../../../hooks/graph/ContinualImprovementGraph";
 
 import { CreateContinualImprovementDialog } from "./dialogs/CreateContinualImprovementDialog";

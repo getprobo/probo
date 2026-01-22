@@ -1,17 +1,17 @@
-import { loadQuery } from "react-relay";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { loadQuery } from "react-relay";
 
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
 import type { AssetGraphListQuery } from "/__generated__/core/AssetGraphListQuery.graphql";
 import type { AssetGraphNodeQuery } from "/__generated__/core/AssetGraphNodeQuery.graphql";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
 
-import { assetsQuery, assetNodeQuery } from "../hooks/graph/AssetGraph";
+import { assetNodeQuery, assetsQuery } from "../hooks/graph/AssetGraph";
 
 export const assetRoutes = [
   {

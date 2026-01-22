@@ -1,23 +1,23 @@
-import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
-  PageHeader,
-  Tabs,
-  TabLink,
   Badge,
-  IconSettingsGear2,
-  IconMedal,
   IconCheckmark1,
-  IconPageTextLine,
   IconFolder2,
-  IconStore,
+  IconMedal,
+  IconPageTextLine,
   IconPeopleAdd,
+  IconSettingsGear2,
+  IconStore,
+  PageHeader,
+  TabLink,
+  Tabs,
 } from "@probo/ui";
-import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
-import { trustCenterQuery } from "/hooks/graph/TrustCenterGraph";
 import type { TrustCenterGraphQuery } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import { trustCenterQuery } from "/hooks/graph/TrustCenterGraph";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
 type Props = {

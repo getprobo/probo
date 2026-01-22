@@ -1,10 +1,6 @@
-import {
-  useMutation,
-  usePreloadedQuery,
-  type PreloadedQuery,
-  type UseMutationConfig,
-} from "react-relay";
-import { graphql, type MutationParameters } from "relay-runtime";
+import { formatError, type GraphQLError } from "@probo/helpers";
+import { promisifyMutation } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Button,
@@ -14,21 +10,25 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import {
+  type PreloadedQuery,
+  useMutation,
+  type UseMutationConfig,
+  usePreloadedQuery,
+} from "react-relay";
 import { useNavigate, useOutletContext } from "react-router";
-import { promisifyMutation } from "@probo/helpers";
+import { graphql, type MutationParameters } from "relay-runtime";
 
-import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
+import type { FrameworkDetailPageFragment$data } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
+import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 import { LinkedAuditsCard } from "/components/audits/LinkedAuditsCard";
+import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
+import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 import { LinkedObligationsCard } from "/components/obligations/LinkedObligationsCard";
 import { LinkedSnapshotsCard } from "/components/snapshots/LinkedSnapshotsCard";
 import { LinkedStatesOfApplicabilityCard } from "/components/states-of-applicability/LinkedStatesOfApplicabilityCard";
-import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
-import type { FrameworkDetailPageFragment$data } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 

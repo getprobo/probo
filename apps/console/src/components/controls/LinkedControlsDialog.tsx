@@ -1,3 +1,4 @@
+import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -11,25 +12,24 @@ import {
   Spinner,
 } from "@probo/ui";
 import {
+  type ReactNode,
+  type RefObject,
   Suspense,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
-  type RefObject,
 } from "react";
-import { useTranslate } from "@probo/i18n";
-import { graphql } from "relay-runtime";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { LinkedControlsDialogQuery } from "/__generated__/core/LinkedControlsDialogQuery.graphql";
 import type {
   LinkedControlsDialogFragment$data,
   LinkedControlsDialogFragment$key,
 } from "/__generated__/core/LinkedControlsDialogFragment.graphql";
+import type { LinkedControlsDialogQuery } from "/__generated__/core/LinkedControlsDialogQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
 
 const query = graphql`

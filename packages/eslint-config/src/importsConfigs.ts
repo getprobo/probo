@@ -19,6 +19,12 @@ export const importsConfigs = [
               position: "after",
             },
           ],
+          "named": true,
+          "alphabetize": {
+            order: "asc",
+            orderImportKind: "asc",
+            caseInsensitive: true,
+          },
         },
       ],
     },

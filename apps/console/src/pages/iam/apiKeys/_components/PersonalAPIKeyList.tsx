@@ -1,14 +1,5 @@
-import { useState } from "react";
-import { Controller } from "react-hook-form";
-import {
-  ConnectionHandler,
-  graphql,
-  useFragment,
-  useMutation,
-} from "react-relay";
-import { z } from "zod";
-import { useTranslate } from "@probo/i18n";
 import { formatError } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -24,10 +15,19 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
+import { useState } from "react";
+import { Controller } from "react-hook-form";
+import {
+  ConnectionHandler,
+  graphql,
+  useFragment,
+  useMutation,
+} from "react-relay";
+import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import type { PersonalAPIKeyListFragment$key } from "/__generated__/iam/PersonalAPIKeyListFragment.graphql";
 import type { PersonalAPIKeyListCreateMutation } from "/__generated__/iam/PersonalAPIKeyListCreateMutation.graphql";
+import type { PersonalAPIKeyListFragment$key } from "/__generated__/iam/PersonalAPIKeyListFragment.graphql";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
 import { PersonalAPIKeysTable } from "./PersonalAPIKeysTable";
 import { PersonalAPIKeyTokenDialog } from "./PersonalAPIKeyTokenDialog";

@@ -3,20 +3,20 @@ import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge, PageHeader } from "@probo/ui";
 import {
   graphql,
+  type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
-  type PreloadedQuery,
 } from "react-relay";
 import { useParams } from "react-router";
 
+import type { AssetGraphListQuery } from "/__generated__/core/AssetGraphListQuery.graphql";
 import type { AssetsPageFragment$key } from "/__generated__/core/AssetsPageFragment.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { assetsQuery } from "/hooks/graph/AssetGraph";
-import type { AssetGraphListQuery } from "/__generated__/core/AssetGraphListQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
-import { ReadOnlyAssetsTable } from "../../../components/assets/ReadOnlyAssetsTable";
 import { AssetsTable } from "../../../components/assets/AssetsTable";
+import { ReadOnlyAssetsTable } from "../../../components/assets/ReadOnlyAssetsTable";
 
 import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
 

@@ -1,14 +1,14 @@
-import { graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
 import {
-  usePreloadedQuery,
-  usePaginationFragment,
   type PreloadedQuery,
+  usePaginationFragment,
+  usePreloadedQuery,
 } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { RiskGraphDeleteMutation } from "/__generated__/core/RiskGraphDeleteMutation.graphql.ts";
-import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql.ts";
 import type { RiskGraphFragment$key } from "/__generated__/core/RiskGraphFragment.graphql.ts";
+import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql.ts";
 
 import { useMutationWithToasts } from "../useMutationWithToasts.ts";
 

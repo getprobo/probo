@@ -1,46 +1,46 @@
 import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Card,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
+  formatDate,
+  getStatusLabel,
+  getStatusVariant,
+  promisifyMutation,
+  sprintf,
+} from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import {
   ActionDropdown,
+  Badge,
+  Button,
+  Card,
   DropdownItem,
+  IconPlusLarge,
   IconTrashCan,
+  PageHeader,
   Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
   useConfirm,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { usePageTitle } from "@probo/hooks";
 import {
+  ConnectionHandler,
   graphql,
+  type PreloadedQuery,
+  useMutation,
   usePaginationFragment,
   usePreloadedQuery,
-  useMutation,
-  ConnectionHandler,
-  type PreloadedQuery,
 } from "react-relay";
-import {
-  sprintf,
-  promisifyMutation,
-  getStatusVariant,
-  getStatusLabel,
-  formatDate,
-} from "@probo/helpers";
 import { useParams } from "react-router";
 
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type {
-  NonconformitiesPageFragment$key,
   NonconformitiesPageFragment$data,
+  NonconformitiesPageFragment$key,
 } from "/__generated__/core/NonconformitiesPageFragment.graphql";
 import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import {
   deleteNonconformityMutation,

@@ -1,7 +1,7 @@
 import { useOutletContext } from "react-router";
 
-import { TrustCenterReferencesSection } from "/components/trustCenter/TrustCenterReferencesSection";
 import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import { TrustCenterReferencesSection } from "/components/trustCenter/TrustCenterReferencesSection";
 
 export default function TrustCenterReferencesTab() {
   const { organization } = useOutletContext<TrustCenterGraphQuery$data>();

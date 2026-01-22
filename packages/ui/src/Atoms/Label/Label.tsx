@@ -1,6 +1,6 @@
+import { Label as RadixLabel } from "@radix-ui/react-label";
 import type { ComponentProps } from "react";
 import { tv } from "tailwind-variants";
-import { Label as RadixLabel } from "@radix-ui/react-label";
 
 type Props = ComponentProps<typeof RadixLabel>;
 

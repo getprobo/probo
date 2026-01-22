@@ -1,19 +1,19 @@
-import { Fragment } from "react";
-import { loadQuery } from "react-relay";
-import { redirect, type LoaderFunctionArgs } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { Fragment } from "react";
+import { loadQuery } from "react-relay";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 
-import { coreEnvironment } from "/environments";
-import { documentsQuery, documentNodeQuery } from "/hooks/graph/DocumentGraph";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import type { DocumentGraphListQuery } from "/__generated__/core/DocumentGraphListQuery.graphql";
 import type { DocumentGraphNodeQuery } from "/__generated__/core/DocumentGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
+import { documentNodeQuery, documentsQuery } from "/hooks/graph/DocumentGraph";
 
 const documentTabs = (prefix: string) => {
   return [

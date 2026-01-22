@@ -1,28 +1,28 @@
-import { graphql } from "relay-runtime";
+import { sprintf } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
-  Card,
-  IconPlusLarge,
   Button,
-  Tr,
-  Td,
-  Table,
-  Thead,
-  Tbody,
-  Th,
-  IconChevronDown,
-  IconTrashCan,
-  DocumentVersionBadge,
+  Card,
   DocumentTypeBadge,
+  DocumentVersionBadge,
+  IconChevronDown,
+  IconPlusLarge,
+  IconTrashCan,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
   TrButton,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useFragment } from "react-relay";
-import { useMemo, useState } from "react";
-import { sprintf } from "@probo/helpers";
 import { clsx } from "clsx";
+import { useMemo, useState } from "react";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { LinkedDocumentsCardFragment$key } from "/__generated__/core/LinkedDocumentsCardFragment.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import { LinkedDocumentDialog } from "./LinkedDocumentsDialog.tsx";
 

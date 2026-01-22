@@ -1,46 +1,46 @@
+import { formatError, type GraphQLError } from "@probo/helpers";
 import {
-  ConnectionHandler,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
+  formatDatetime,
+  getStatusLabel,
+  getStatusVariant,
+  validateSnapshotConsistency,
+} from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
   Breadcrumb,
   Button,
+  Card,
   DropdownItem,
   Field,
-  Option,
   Input,
-  Card,
+  Label,
+  Option,
+  Select,
   Textarea,
   useToast,
-  Select,
-  Label,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useParams } from "react-router";
 import { Controller } from "react-hook-form";
-import { formatError, type GraphQLError } from "@probo/helpers";
-import { z } from "zod";
 import {
-  getStatusVariant,
-  getStatusLabel,
-  formatDatetime,
-  validateSnapshotConsistency,
-} from "@probo/helpers";
+  ConnectionHandler,
+  type PreloadedQuery,
+  usePreloadedQuery,
+} from "react-relay";
+import { useParams } from "react-router";
+import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ContinualImprovementGraphNodeQuery } from "/__generated__/core/ContinualImprovementGraphNodeQuery.graphql";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import {
   continualImprovementNodeQuery,
+  ContinualImprovementsConnectionKey,
   useDeleteContinualImprovement,
   useUpdateContinualImprovement,
-  ContinualImprovementsConnectionKey,
 } from "../../../hooks/graph/ContinualImprovementGraph";
 
 const updateImprovementSchema = z.object({

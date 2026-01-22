@@ -1,48 +1,48 @@
+import { formatError, type GraphQLError } from "@probo/helpers";
 import {
-  ConnectionHandler,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
+  formatDatetime,
+  getObligationStatusLabel,
+  getObligationStatusOptions,
+  getObligationStatusVariant,
+  getObligationTypeOptions,
+  validateSnapshotConsistency,
+} from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
   Breadcrumb,
   Button,
+  Card,
   DropdownItem,
   Field,
   IconTrashCan,
-  Option,
   Input,
-  Card,
+  Option,
+  Select,
   Textarea,
   useToast,
-  Select,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useParams } from "react-router";
 import { Controller } from "react-hook-form";
-import { formatError, type GraphQLError } from "@probo/helpers";
-import { z } from "zod";
 import {
-  getObligationStatusVariant,
-  getObligationStatusLabel,
-  formatDatetime,
-  getObligationStatusOptions,
-  validateSnapshotConsistency,
-  getObligationTypeOptions,
-} from "@probo/helpers";
+  ConnectionHandler,
+  type PreloadedQuery,
+  usePreloadedQuery,
+} from "react-relay";
+import { useParams } from "react-router";
+import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationGraphNodeQuery } from "/__generated__/core/ObligationGraphNodeQuery.graphql";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import {
   obligationNodeQuery,
+  ObligationsConnectionKey,
   useDeleteObligation,
   useUpdateObligation,
-  ObligationsConnectionKey,
 } from "../../../hooks/graph/ObligationGraph";
 
 const updateObligationSchema = z.object({

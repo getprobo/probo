@@ -1,20 +1,20 @@
+import { lazy } from "@probo/react-lazy";
+import {
+  type AppRoute,
+  loaderFromQueryLoader,
+  withQueryRef,
+} from "@probo/routes";
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { redirect } from "react-router";
-import { lazy } from "@probo/react-lazy";
-import {
-  loaderFromQueryLoader,
-  withQueryRef,
-  type AppRoute,
-} from "@probo/routes";
 
+import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql";
+import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { RisksPageSkeleton } from "/components/skeletons/RisksPageSkeleton.tsx";
 import { coreEnvironment } from "/environments";
 import { riskNodeQuery, risksQuery } from "/hooks/graph/RiskGraph";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
-import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql";
 
 export const riskRoutes = [
   {

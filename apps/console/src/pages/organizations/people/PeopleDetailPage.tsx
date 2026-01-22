@@ -1,8 +1,4 @@
-import {
-  ConnectionHandler,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Avatar,
@@ -12,7 +8,11 @@ import {
   TabLink,
   Tabs,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
+import {
+  ConnectionHandler,
+  type PreloadedQuery,
+  usePreloadedQuery,
+} from "react-relay";
 import { Outlet } from "react-router";
 
 import type { PeopleGraphNodeQuery } from "/__generated__/core/PeopleGraphNodeQuery.graphql";

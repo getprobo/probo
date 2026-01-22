@@ -9,12 +9,12 @@ import {
   IconTrashCan,
   useDialogRef,
 } from "@probo/ui";
-import { useState, type PropsWithChildren } from "react";
+import { type PropsWithChildren, useState } from "react";
 import { graphql } from "relay-runtime";
 
+import type { DeleteDomainDialogMutation } from "/__generated__/core/DeleteDomainDialogMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { DeleteDomainDialogMutation } from "/__generated__/core/DeleteDomainDialogMutation.graphql";
 
 const deleteCustomDomainMutation = graphql`
   mutation DeleteDomainDialogMutation($input: DeleteCustomDomainInput!) {

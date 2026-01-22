@@ -17,19 +17,19 @@ import {
 import { useMutation } from "react-relay";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
 import { Link } from "react-router";
-import { z } from "zod";
 import type { OperationType } from "relay-runtime";
+import { z } from "zod";
 
-import {
-  createAssetMutation,
-  deleteAssetMutation,
-  updateAssetMutation,
-} from "/hooks/graph/AssetGraph";
 import type { AssetGraphDeleteMutation } from "/__generated__/core/AssetGraphDeleteMutation.graphql";
 import type {
   AssetsPageFragment$data,
   AssetsPageFragment$key,
 } from "/__generated__/core/AssetsPageFragment.graphql";
+import {
+  createAssetMutation,
+  deleteAssetMutation,
+  updateAssetMutation,
+} from "/hooks/graph/AssetGraph";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import { EditableTable } from "../table/EditableTable";

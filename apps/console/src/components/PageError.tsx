@@ -1,8 +1,8 @@
-import { useLocation, useRouteError } from "react-router";
-import { IconPageCross } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useEffect, useRef } from "react";
 import { AuthenticationRequiredError } from "@probo/relay";
+import { IconPageCross } from "@probo/ui";
+import { useEffect, useRef } from "react";
+import { useLocation, useRouteError } from "react-router";
 
 const classNames = {
   wrapper: "py-10 text-center space-y-2 ",

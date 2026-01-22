@@ -1,19 +1,19 @@
-import { loadQuery } from "react-relay";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { loadQuery } from "react-relay";
 
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import {
-  rightsRequestsQuery,
-  rightsRequestNodeQuery,
-} from "/hooks/graph/RightsRequestGraph";
 import type { RightsRequestGraphListQuery } from "/__generated__/core/RightsRequestGraphListQuery.graphql";
 import type { RightsRequestGraphNodeQuery } from "/__generated__/core/RightsRequestGraphNodeQuery.graphql";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
+import {
+  rightsRequestNodeQuery,
+  rightsRequestsQuery,
+} from "/hooks/graph/RightsRequestGraph";
 
 export const rightsRequestRoutes = [
   {

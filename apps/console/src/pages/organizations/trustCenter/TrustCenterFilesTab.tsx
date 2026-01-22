@@ -1,30 +1,30 @@
+import { getTrustCenterVisibilityOptions } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
+  Badge,
   Button,
   Dialog,
   DialogContent,
   DialogFooter,
+  Dropzone,
   Field,
+  IconPlusLarge,
+  Option,
   Spinner,
   useDialogRef,
-  Dropzone,
-  Option,
-  Badge,
-  IconPlusLarge,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
+import { useCallback, useState } from "react";
 import { useOutletContext } from "react-router";
-import { useState, useCallback } from "react";
 import { z } from "zod";
-import { getTrustCenterVisibilityOptions } from "@probo/helpers";
 
+import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import { TrustCenterFilesCard } from "/components/trustCenter/TrustCenterFilesCard";
 import {
   useCreateTrustCenterFileMutation,
-  useUpdateTrustCenterFileMutation,
   useDeleteTrustCenterFileMutation,
+  useUpdateTrustCenterFileMutation,
 } from "/hooks/graph/TrustCenterFileGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { TrustCenterFilesCard } from "/components/trustCenter/TrustCenterFilesCard";
-import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 
 const acceptedFileTypes = {
   "application/csv": [".csv"],

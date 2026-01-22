@@ -1,5 +1,5 @@
-import type { ComponentProps } from "react";
 import { Field, Select } from "@probo/ui";
+import type { ComponentProps } from "react";
 import { Controller, type FieldPath, type FieldValues } from "react-hook-form";
 
 type Props<

@@ -3,6 +3,7 @@ import {
   getTrustCenterDocumentAccessInfo,
   type TrustCenterDocumentAccessInfo,
 } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Checkbox,
@@ -12,15 +13,15 @@ import {
   Field,
   Spinner,
 } from "@probo/ui";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import {
-  usePreloadedQuery,
   type PreloadedQuery,
+  usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
-import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
-import { Suspense, useCallback, useEffect, useState } from "react";
 
+import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
 import type { TrustCenterAccessGraphLoadDocumentAccessesQuery } from "/__generated__/core/TrustCenterAccessGraphLoadDocumentAccessesQuery.graphql";
 import {
   loadTrustCenterAccessDocumentAccessesQuery,
@@ -28,7 +29,6 @@ import {
 } from "/hooks/graph/TrustCenterAccessGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
 import type { NodeOf } from "/types";
 
 import { TrustCenterDocumentAccessList } from "./TrustCenterDocumentAccessList";

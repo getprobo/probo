@@ -10,14 +10,14 @@ import {
   Textarea,
   useDialogRef,
 } from "@probo/ui";
-import { type ReactNode, useState, useImperativeHandle, forwardRef } from "react";
+import { forwardRef, type ReactNode, useImperativeHandle, useState } from "react";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import {
   useCreateTrustCenterReferenceMutation,
   useUpdateTrustCenterReferenceMutation,
 } from "/hooks/graph/TrustCenterReferenceGraph";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
 const referenceSchema = z.object({
   name: z.string().min(1, "Name is required"),

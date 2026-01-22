@@ -1,9 +1,5 @@
-import {
-  ConnectionHandler,
-  useFragment,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
+import { faviconUrl, validateSnapshotConsistency } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -15,19 +11,23 @@ import {
   TabLink,
   Tabs,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
+import {
+  ConnectionHandler,
+  type PreloadedQuery,
+  useFragment,
+  usePreloadedQuery,
+} from "react-relay";
 import { Outlet, useParams } from "react-router";
-import { faviconUrl, validateSnapshotConsistency } from "@probo/helpers";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { VendorComplianceTabFragment$key } from "/__generated__/core/VendorComplianceTabFragment.graphql";
+import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import {
   useDeleteVendor,
   vendorConnectionKey,
   vendorNodeQuery,
 } from "/hooks/graph/VendorGraph";
-import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import type { VendorComplianceTabFragment$key } from "/__generated__/core/VendorComplianceTabFragment.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
 import { complianceReportsFragment } from "./tabs/VendorComplianceTab";

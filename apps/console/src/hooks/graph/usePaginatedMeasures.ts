@@ -1,7 +1,7 @@
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
-import type { usePaginatedMeasuresQuery } from "/__generated__/core/usePaginatedMeasuresQuery.graphql";
 import type { usePaginatedMeasuresFragment$key } from "/__generated__/core/usePaginatedMeasuresFragment.graphql";
+import type { usePaginatedMeasuresQuery } from "/__generated__/core/usePaginatedMeasuresQuery.graphql";
 
 const measuresQuery = graphql`
   query usePaginatedMeasuresQuery($organizationId: ID!) {

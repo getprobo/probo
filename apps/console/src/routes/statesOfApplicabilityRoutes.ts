@@ -1,15 +1,15 @@
 import { lazy } from "@probo/react-lazy";
+import { type AppRoute, loaderFromQueryLoader, withQueryRef } from "@probo/routes";
 import { loadQuery } from "react-relay";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
-import { coreEnvironment } from "/environments";
+import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton.tsx";
+import { coreEnvironment } from "/environments";
 import {
   paginatedStateOfApplicabilityQuery,
   stateOfApplicabilityNodeQuery,
 } from "/hooks/graph/StateOfApplicabilityGraph";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
-import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
 
 export const statesOfApplicabilityRoutes = [
   {

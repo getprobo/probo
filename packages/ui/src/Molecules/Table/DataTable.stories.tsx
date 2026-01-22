@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { type FC, Fragment, useState } from "react";
 import { fn } from "@storybook/test";
+import { type FC, Fragment, useState } from "react";
 
-import { CellHead, DataTable, Row } from "../../Atoms/DataTable/DataTable.tsx";
 import { Badge } from "../../Atoms/Badge/Badge.tsx";
+import { CellHead, DataTable, Row } from "../../Atoms/DataTable/DataTable.tsx";
 
 import { EditableRow } from "./EditableRow.tsx";
-import { TextCell } from "./TextCell.tsx";
 import { SelectCell } from "./SelectCell.tsx";
+import { TextCell } from "./TextCell.tsx";
 
 type Component = FC<{ onUpdate: (key: string, value: unknown) => void }>;
 

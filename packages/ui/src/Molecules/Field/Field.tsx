@@ -1,10 +1,10 @@
-import { tv } from "tailwind-variants";
 import { type ComponentProps, type ReactNode } from "react";
+import { tv } from "tailwind-variants";
 
-import { Label } from "../../Atoms/Label/Label";
 import { Input } from "../../Atoms/Input/Input";
-import { Textarea } from "../../Atoms/Textarea/Textarea";
+import { Label } from "../../Atoms/Label/Label";
 import { Select } from "../../Atoms/Select/Select";
+import { Textarea } from "../../Atoms/Textarea/Textarea";
 
 type BaseProps<T extends string, P> = {
   label?: string;

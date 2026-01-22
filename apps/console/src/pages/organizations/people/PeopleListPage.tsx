@@ -1,30 +1,30 @@
-import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Avatar,
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
-  IconCalendar2,
-} from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { type PreloadedQuery } from "react-relay";
-import { usePageTitle } from "@probo/hooks";
 import { getRole } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import {
+  ActionDropdown,
+  Avatar,
+  Button,
+  DropdownItem,
+  IconCalendar2,
+  IconPlusLarge,
+  IconTrashCan,
+  PageHeader,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@probo/ui";
 import { useRef } from "react";
+import { type PreloadedQuery } from "react-relay";
 
-import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
-import { useDeletePeople, usePeopleQuery } from "/hooks/graph/PeopleGraph";
-import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { PeopleGraphPaginatedFragment$data } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
-import type { NodeOf } from "/types";
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
+import { SortableTable, SortableTh } from "/components/SortableTable";
+import { useDeletePeople, usePeopleQuery } from "/hooks/graph/PeopleGraph";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { NodeOf } from "/types";
 
 import { CreatePeopleDialog } from "./dialogs/CreatePeopleDialog";
 import {

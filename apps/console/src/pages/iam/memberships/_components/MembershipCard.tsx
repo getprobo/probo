@@ -1,3 +1,4 @@
+import { parseDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Avatar,
@@ -8,14 +9,13 @@ import {
   IconClock,
   IconLock,
 } from "@probo/ui";
+import { useCallback } from "react";
+import { useFragment, useMutation } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
-import { useFragment, useMutation } from "react-relay";
-import { parseDate } from "@probo/helpers";
-import { useCallback } from "react";
 
-import type { MembershipCardFragment$key } from "/__generated__/iam/MembershipCardFragment.graphql";
 import type { MembershipCard_assumeMutation } from "/__generated__/iam/MembershipCard_assumeMutation.graphql";
+import type { MembershipCardFragment$key } from "/__generated__/iam/MembershipCardFragment.graphql";
 
 const fragment = graphql`
   fragment MembershipCardFragment on Membership {

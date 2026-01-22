@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import MiniSearch from "minisearch";
 import type { Vendor } from "@probo/vendors";
+import MiniSearch from "minisearch";
+import { useEffect, useRef, useState } from "react";
 
 export function useVendorSearch() {
   const searchRef = useRef<(s: string) => Vendor[]>(() => []);

@@ -1,7 +1,7 @@
-import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import { useTranslate } from "@probo/i18n";
-import { PageHeader, Tbody, Thead, Tr, Th, Card } from "@probo/ui";
 import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import { Card, PageHeader, Tbody, Th, Thead, Tr } from "@probo/ui";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { EmployeeDocumentsPageQuery } from "/__generated__/core/EmployeeDocumentsPageQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";

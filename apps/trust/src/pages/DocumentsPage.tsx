@@ -1,15 +1,15 @@
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { groupBy, objectEntries } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Fragment } from "react";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import { currentTrustDocumentsQuery } from "/queries/TrustGraph";
-import type { TrustGraphCurrentDocumentsQuery } from "/queries/__generated__/TrustGraphCurrentDocumentsQuery.graphql.ts";
-import { documentTypeLabel } from "/helpers/documents";
 import { DocumentRow } from "/components/DocumentRow";
-import { TrustCenterFileRow } from "/components/TrustCenterFileRow";
-import { Rows } from "/components/Rows.tsx";
 import { RowHeader } from "/components/RowHeader.tsx";
+import { Rows } from "/components/Rows.tsx";
+import { TrustCenterFileRow } from "/components/TrustCenterFileRow";
+import { documentTypeLabel } from "/helpers/documents";
+import type { TrustGraphCurrentDocumentsQuery } from "/queries/__generated__/TrustGraphCurrentDocumentsQuery.graphql.ts";
+import { currentTrustDocumentsQuery } from "/queries/TrustGraph";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphCurrentDocumentsQuery>;

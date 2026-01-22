@@ -1,46 +1,46 @@
 import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Card,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
+  formatDate,
+  getRightsRequestStateLabel,
+  getRightsRequestStateVariant,
+  getRightsRequestTypeLabel,
+  promisifyMutation,
+  sprintf,
+} from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import {
   ActionDropdown,
+  Badge,
+  Button,
+  Card,
   DropdownItem,
+  IconPlusLarge,
   IconTrashCan,
+  PageHeader,
   Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
   useConfirm,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { usePageTitle } from "@probo/hooks";
 import {
   ConnectionHandler,
   graphql,
+  type PreloadedQuery,
+  useMutation,
   usePaginationFragment,
   usePreloadedQuery,
-  useMutation,
-  type PreloadedQuery,
 } from "react-relay";
-import {
-  sprintf,
-  promisifyMutation,
-  formatDate,
-  getRightsRequestTypeLabel,
-  getRightsRequestStateVariant,
-  getRightsRequestStateLabel,
-} from "@probo/helpers";
 
+import type { RightsRequestGraphListQuery } from "/__generated__/core/RightsRequestGraphListQuery.graphql";
+import type {
+  RightsRequestsPageFragment$data,
+  RightsRequestsPageFragment$key,
+} from "/__generated__/core/RightsRequestsPageFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
-import type {
-  RightsRequestsPageFragment$key,
-  RightsRequestsPageFragment$data,
-} from "/__generated__/core/RightsRequestsPageFragment.graphql";
-import type { RightsRequestGraphListQuery } from "/__generated__/core/RightsRequestGraphListQuery.graphql";
 
 import {
   deleteRightsRequestMutation,

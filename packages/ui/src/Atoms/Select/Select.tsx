@@ -1,16 +1,15 @@
+import * as ScrollArea from "@radix-ui/react-scroll-area";
 import {
+  Content,
+  Icon,
+  Item,
+  ItemText,
+  Portal,
   Root,
   Trigger,
   Value,
-  Icon,
-  Portal,
-  Content,
   Viewport,
-  Item,
-  ItemText,
 } from "@radix-ui/react-select";
-import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { tv } from "tailwind-variants";
 import {
   Children,
   type ComponentProps,
@@ -18,10 +17,11 @@ import {
   type PropsWithChildren,
   type ReactNode,
 } from "react";
+import { tv } from "tailwind-variants";
 
-import { Input, input } from "../Input/Input.tsx";
 import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.tsx";
 import { IconMagnifyingGlass } from "../Icons/IconMagnifyingGlass.tsx";
+import { Input, input } from "../Input/Input.tsx";
 import { Spinner } from "../Spinner/Spinner.tsx";
 
 type Props<T> = PropsWithChildren<

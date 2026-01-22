@@ -1,3 +1,4 @@
+import { formatDatetime, toDateInput } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -11,11 +12,10 @@ import {
 } from "@probo/ui";
 import { forwardRef, useImperativeHandle } from "react";
 import { z } from "zod";
-import { formatDatetime, toDateInput } from "@probo/helpers";
 
+import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 
 const schema = z.object({
   contractEndDate: z.string().optional(),

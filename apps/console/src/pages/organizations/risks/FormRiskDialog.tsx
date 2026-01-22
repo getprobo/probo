@@ -1,42 +1,42 @@
+import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
+import { useToggle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
+  Card,
   Dialog,
   DialogContent,
   DialogFooter,
-  Label,
-  Select,
-  Option,
   Field,
-  Card,
-  PropertyRow,
   IconPlusLarge,
+  Label,
+  Option,
+  PropertyRow,
+  Select,
   Textarea,
   useDialogRef,
 } from "@probo/ui";
-import { useMemo, type ReactNode } from "react";
-import { graphql } from "relay-runtime";
-import { useToggle } from "@probo/hooks";
+import { type ReactNode, useMemo } from "react";
 import type { FieldErrors } from "react-hook-form";
-import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
+import { graphql } from "relay-runtime";
 
-import { useFetchQuery } from "/hooks/useFetchQuery";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { FormRiskDialogMutation } from "/__generated__/core/FormRiskDialogMutation.graphql";
+import type { FormRiskDialogUpdateRiskMutation } from "/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
 import {
   ControlledField,
   ControlledSelect,
 } from "/components/form/ControlledField";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import {
-  useRiskForm,
   type RiskData,
   type RiskForm,
   type RiskKey,
+  useRiskForm,
 } from "/hooks/forms/useRiskForm";
+import { useFetchQuery } from "/hooks/useFetchQuery";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { FormRiskDialogMutation } from "/__generated__/core/FormRiskDialogMutation.graphql";
-import type { FormRiskDialogUpdateRiskMutation } from "/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 type Props = {
   trigger?: ReactNode;

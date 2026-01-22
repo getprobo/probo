@@ -1,19 +1,19 @@
-import { loadQuery } from "react-relay";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { loadQuery } from "react-relay";
 
-import { coreEnvironment } from "/environments";
+import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
+import type { ProcessingActivityGraphNodeQuery } from "/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
 import {
   processingActivitiesQuery,
   processingActivityNodeQuery,
 } from "/hooks/graph/ProcessingActivityGraph";
-import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
-import type { ProcessingActivityGraphNodeQuery } from "/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
 
 export const processingActivityRoutes = [
   {

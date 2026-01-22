@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router";
+import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
+  IconCircleCheck,
+  IconCircleProgress,
   Logo,
   Spinner,
-  IconCircleProgress,
-  IconCircleCheck,
 } from "@probo/ui";
-import { useWindowSize } from "usehooks-ts";
 import { clsx } from "clsx";
-import { sprintf } from "@probo/helpers";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
+import { useWindowSize } from "usehooks-ts";
 
 import { PDFPreview } from "../components/documents/PDFPreview";
 

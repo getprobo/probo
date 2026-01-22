@@ -1,8 +1,8 @@
-import { useQueryLoader } from "react-relay";
 import { useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { GeneralSettingsPageQuery } from "/__generated__/iam/GeneralSettingsPageQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
 import {

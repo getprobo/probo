@@ -1,27 +1,27 @@
-import { createBrowserRouter, redirect, useRouteError } from "react-router";
-import { Fragment, lazy } from "react";
-import { loadQuery } from "react-relay";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   routeFromAppRoute,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { Fragment, lazy } from "react";
+import { loadQuery } from "react-relay";
+import { createBrowserRouter, redirect, useRouteError } from "react-router";
 
 import { MainLayout } from "/layouts/MainLayout";
+import { DocumentsPage } from "/pages/DocumentsPage";
+import { OverviewPage } from "/pages/OverviewPage";
+import { SubprocessorsPage } from "/pages/SubprocessorsPage";
 import {
-  currentTrustGraphQuery,
   currentTrustDocumentsQuery,
+  currentTrustGraphQuery,
   currentTrustVendorsQuery,
 } from "/queries/TrustGraph";
-import { OverviewPage } from "/pages/OverviewPage";
-import { DocumentsPage } from "/pages/DocumentsPage";
-import { SubprocessorsPage } from "/pages/SubprocessorsPage";
 
 import { PageError } from "./components/PageError.tsx";
-import { consoleEnvironment } from "./providers/RelayProviders.tsx";
-import { TabSkeleton } from "./components/Skeletons/TabSkeleton.tsx";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton.tsx";
+import { TabSkeleton } from "./components/Skeletons/TabSkeleton.tsx";
+import { consoleEnvironment } from "./providers/RelayProviders.tsx";
 
 /**
  * Top level error boundary

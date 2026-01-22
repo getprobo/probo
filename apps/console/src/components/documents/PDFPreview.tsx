@@ -1,7 +1,4 @@
-import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/Page/TextLayer.css";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import { type ComponentProps, useRef, useState } from "react";
+import { times } from "@probo/helpers";
 import {
   IconArrowInbox,
   IconChevronLeft,
@@ -9,8 +6,12 @@ import {
   IconPlusLarge,
   Spinner,
 } from "@probo/ui";
-import { times } from "@probo/helpers";
 import { IconMinusLarge } from "@probo/ui/src/Atoms/Icons/IconMinusLarge.tsx";
+import { type ComponentProps, useRef, useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+
+import "react-pdf/dist/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
 
 // Worker for PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;

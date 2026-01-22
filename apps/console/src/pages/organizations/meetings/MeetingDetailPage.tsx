@@ -1,5 +1,4 @@
-import type { PreloadedQuery } from "react-relay";
-import { graphql, useFragment, usePreloadedQuery } from "react-relay";
+import { formatDate, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -12,17 +11,18 @@ import {
   PageHeader,
   useConfirm,
 } from "@probo/ui";
-import { sprintf, formatDate } from "@probo/helpers";
-import { Link, Outlet, useNavigate } from "react-router";
 import { useRef } from "react";
+import type { PreloadedQuery } from "react-relay";
+import { graphql, useFragment, usePreloadedQuery } from "react-relay";
+import { Link, Outlet, useNavigate } from "react-router";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { MeetingDetailPageMeetingFragment$key } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
 import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
 import {
   meetingNodeQuery,
   useDeleteMeetingMutation,
 } from "/hooks/graph/MeetingGraph";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import {
   UpdateMeetingMinutesDialog,

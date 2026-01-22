@@ -1,6 +1,4 @@
-import type { GraphQLTaggedNode, OperationType } from "relay-runtime";
-import type { KeyType, KeyTypeData } from "react-relay/relay-hooks/helpers";
-import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
+import { useToggle } from "@probo/hooks";
 import {
   Button,
   Cell,
@@ -11,18 +9,20 @@ import {
   RowButton,
   Spinner,
 } from "@probo/ui";
-import { z } from "zod";
-import { type ReactNode } from "react";
-import { useToggle } from "@probo/hooks";
 import { clsx } from "clsx";
+import { type ReactNode } from "react";
+import type { KeyType, KeyTypeData } from "react-relay/relay-hooks/helpers";
+import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
+import type { GraphQLTaggedNode, OperationType } from "relay-runtime";
+import { z } from "zod";
 
-import { useStateWithSchema } from "/hooks/useStateWithSchema.ts";
-import { useMutateField } from "/hooks/useMutateField.tsx";
-import {
+import { defaultPageSize,
   SortableCellHead,
-  SortableDataTable, defaultPageSize,
+  SortableDataTable,
 } from "/components/table/SortableDataTable.tsx";
+import { useMutateField } from "/hooks/useMutateField.tsx";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
+import { useStateWithSchema } from "/hooks/useStateWithSchema.ts";
 
 type ColumnDefinition = { label: string; field: string } | string;
 

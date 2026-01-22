@@ -1,10 +1,10 @@
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
-import { formatError, type GraphQLError } from "@probo/helpers";
 
 import type { PasswordSignInPageMutation } from "/__generated__/iam/PasswordSignInPageMutation.graphql";
 

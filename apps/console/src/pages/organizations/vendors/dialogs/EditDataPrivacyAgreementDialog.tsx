@@ -1,3 +1,4 @@
+import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Dialog,
@@ -8,7 +9,6 @@ import {
   Spinner,
   useDialogRef,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 import { graphql } from "react-relay";
 import { z } from "zod";
 

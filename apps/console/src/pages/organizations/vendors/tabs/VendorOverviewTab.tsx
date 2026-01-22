@@ -1,36 +1,36 @@
+import { downloadFile, formatDate } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { useOutletContext, useParams } from "react-router";
 import {
   Button,
   Card,
   Field,
-  Input,
+  IconPencil,
   IconPlusLarge,
   IconTrashCan,
-  IconPencil,
+  Input,
   Option,
 } from "@probo/ui";
-import { useMemo } from "react";
-import { usePageTitle } from "@probo/hooks";
-import { downloadFile, formatDate } from "@probo/helpers";
-import { useFragment, graphql } from "react-relay";
 import type { VendorCategory } from "@probo/vendors";
+import { useMemo } from "react";
+import { graphql, useFragment } from "react-relay";
+import { useOutletContext, useParams } from "react-router";
 
-import { useVendorForm } from "/hooks/forms/useVendorForm";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { ControlledField } from "/components/form/ControlledField";
-import { CountriesField } from "/components/form/CountriesField";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "/__generated__/core/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
 import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "/__generated__/core/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import { ControlledField } from "/components/form/ControlledField";
+import { CountriesField } from "/components/form/CountriesField";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { useVendorForm } from "/hooks/forms/useVendorForm";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
-import { UploadBusinessAssociateAgreementDialog } from "../dialogs/UploadBusinessAssociateAgreementDialog";
 import { DeleteBusinessAssociateAgreementDialog } from "../dialogs/DeleteBusinessAssociateAgreementDialog";
-import { EditBusinessAssociateAgreementDialog } from "../dialogs/EditBusinessAssociateAgreementDialog";
-import { UploadDataPrivacyAgreementDialog } from "../dialogs/UploadDataPrivacyAgreementDialog";
 import { DeleteDataPrivacyAgreementDialog } from "../dialogs/DeleteDataPrivacyAgreementDialog";
+import { EditBusinessAssociateAgreementDialog } from "../dialogs/EditBusinessAssociateAgreementDialog";
 import { EditDataPrivacyAgreementDialog } from "../dialogs/EditDataPrivacyAgreementDialog";
+import { UploadBusinessAssociateAgreementDialog } from "../dialogs/UploadBusinessAssociateAgreementDialog";
+import { UploadDataPrivacyAgreementDialog } from "../dialogs/UploadDataPrivacyAgreementDialog";
 
 const vendorBusinessAssociateAgreementFragment = graphql`
   fragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {

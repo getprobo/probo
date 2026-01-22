@@ -1,20 +1,20 @@
 import { useTranslate } from "@probo/i18n";
 import {
+  Badge,
+  Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogFooter,
-  Button,
-  Checkbox,
   Textarea,
-  Badge,
 } from "@probo/ui";
-import { Suspense, useState, useRef } from "react";
 import type { ReactNode } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { LinkedStatesOfApplicabilityDialogQuery } from "/__generated__/core/LinkedStatesOfApplicabilityDialogQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 const query = graphql`
     query LinkedStatesOfApplicabilityDialogQuery($organizationId: ID!) {

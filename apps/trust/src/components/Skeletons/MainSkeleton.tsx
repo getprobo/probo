@@ -1,6 +1,6 @@
-import { Skeleton, TabLink, Tabs } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 import { getTrustCenterUrl } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { Skeleton, TabLink, Tabs } from "@probo/ui";
 
 import { TabSkeleton } from "./TabSkeleton";
 

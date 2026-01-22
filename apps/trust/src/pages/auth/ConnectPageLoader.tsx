@@ -1,10 +1,10 @@
-import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
 import { RelayProvider } from "/providers/RelayProviders";
 
-import { ConnectPage, connectPageQuery } from "./ConnectPage";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
+import { ConnectPage, connectPageQuery } from "./ConnectPage";
 
 function ConnectPageLoader() {
   const [queryRef, loadQuery]

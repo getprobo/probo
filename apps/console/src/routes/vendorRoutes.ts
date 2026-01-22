@@ -1,17 +1,17 @@
 import { lazy } from "@probo/react-lazy";
-import { loadQuery } from "react-relay";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { loadQuery } from "react-relay";
 
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { vendorNodeQuery, vendorsQuery } from "/hooks/graph/VendorGraph";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import type { VendorGraphListQuery } from "/__generated__/core/VendorGraphListQuery.graphql";
 import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
+import { vendorNodeQuery, vendorsQuery } from "/hooks/graph/VendorGraph";
 
 export const vendorRoutes = [
   {

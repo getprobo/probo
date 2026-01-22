@@ -1,4 +1,4 @@
-import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -8,7 +8,7 @@ import {
   Input,
 } from "@probo/ui";
 import { useMemo, useState } from "react";
-import { usePageTitle } from "@probo/hooks";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MembershipsPageQuery } from "/__generated__/iam/MembershipsPageQuery.graphql";
 

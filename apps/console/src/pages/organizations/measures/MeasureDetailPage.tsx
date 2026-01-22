@@ -1,4 +1,10 @@
-import { Outlet, useNavigate, useParams } from "react-router";
+import {
+  getMeasureStateLabel,
+  measureStates,
+  slugify,
+  sprintf,
+} from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -21,7 +27,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { MeasureBadge } from "@probo/ui/src/Molecules/Badge/MeasureBadge";
-import { useTranslate } from "@probo/i18n";
+import { Suspense } from "react";
 import {
   ConnectionHandler,
   graphql,
@@ -29,16 +35,10 @@ import {
   useLazyLoadQuery,
   usePreloadedQuery,
 } from "react-relay";
-import {
-  getMeasureStateLabel,
-  measureStates,
-  slugify,
-  sprintf,
-} from "@probo/helpers";
-import { Suspense } from "react";
+import { Outlet, useNavigate, useParams } from "react-router";
 
-import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
 import type { MeasureDetailPageTasksCountQuery } from "/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
+import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
 import {
   MeasureConnectionKey,
   measureNodeQuery,

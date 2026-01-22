@@ -1,3 +1,4 @@
+import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -9,12 +10,11 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 import { Suspense, useEffect } from "react";
 import { useLazyLoadQuery } from "react-relay";
 
-import { evidenceFileQuery } from "/hooks/graph/EvidenceGraph.ts";
 import type { EvidenceGraphFileQuery } from "/__generated__/core/EvidenceGraphFileQuery.graphql.ts";
+import { evidenceFileQuery } from "/hooks/graph/EvidenceGraph.ts";
 
 type Props = {
   evidenceId: string;

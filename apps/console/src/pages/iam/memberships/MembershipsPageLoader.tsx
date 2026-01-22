@@ -1,6 +1,6 @@
-import { useQueryLoader } from "react-relay";
-import { Suspense, useEffect } from "react";
 import { CenteredLayoutSkeleton } from "@probo/ui";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
 import type { MembershipsPageQuery } from "/__generated__/iam/MembershipsPageQuery.graphql";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";

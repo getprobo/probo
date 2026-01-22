@@ -1,8 +1,8 @@
+import { formatDate } from "@probo/helpers";
+import { Badge, IconChevronDown, IconChevronRight, Td, Tr } from "@probo/ui";
 import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import { Td, Tr, Badge, IconChevronDown, IconChevronRight } from "@probo/ui";
-import { formatDate } from "@probo/helpers";
 
 import type { SCIMEventListItemFragment$key } from "/__generated__/iam/SCIMEventListItemFragment.graphql";
 

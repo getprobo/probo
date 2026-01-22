@@ -1,10 +1,10 @@
 import { graphql, useFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
+import type { RiskGraphNodeQuery$data } from "/__generated__/core/RiskGraphNodeQuery.graphql";
 import type { RiskMeasuresTabFragment$key } from "/__generated__/core/RiskMeasuresTabFragment.graphql";
 import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
-import type { RiskGraphNodeQuery$data } from "/__generated__/core/RiskGraphNodeQuery.graphql";
 
 export const measuresFragment = graphql`
   fragment RiskMeasuresTabFragment on Risk {

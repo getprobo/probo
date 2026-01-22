@@ -1,14 +1,14 @@
+import { useStateWithRef } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import { Command } from "cmdk";
 import { Fragment, type ReactNode } from "react";
-import { useTranslate } from "@probo/i18n";
-import { useStateWithRef } from "@probo/hooks";
 import { tv } from "tailwind-variants";
 
 import { Badge } from "../../Atoms/Badge/Badge.tsx";
 
+import { EditableCell, useEditableCellRef } from "./EditableCell.tsx";
 import { useEditableRowContext } from "./EditableRow.tsx";
 import { getKey } from "./utils.ts";
-import { EditableCell, useEditableCellRef } from "./EditableCell.tsx";
 
 type Props<T> = {
   name: string;

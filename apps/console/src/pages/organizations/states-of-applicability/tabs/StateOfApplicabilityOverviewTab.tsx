@@ -1,7 +1,7 @@
-import { useOutletContext } from "react-router";
-import { Card, Field } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 import { formatDate } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { Card, Field } from "@probo/ui";
+import { useOutletContext } from "react-router";
 
 import type { StateOfApplicabilityGraphNodeQuery$data } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
 

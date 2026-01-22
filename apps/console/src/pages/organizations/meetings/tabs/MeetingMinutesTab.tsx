@@ -1,5 +1,5 @@
-import { useOutletContext } from "react-router";
 import { Markdown } from "@probo/ui";
+import { useOutletContext } from "react-router";
 
 import type { MeetingDetailPageMeetingFragment$data } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
 

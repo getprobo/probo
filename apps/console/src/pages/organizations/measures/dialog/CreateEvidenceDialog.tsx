@@ -1,24 +1,24 @@
+import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
   Dialog,
   DialogContent,
   DialogFooter,
+  type DialogRef,
   Dropzone,
   Field,
   Spinner,
   TabItem,
   Tabs,
-  type DialogRef,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { graphql, useRelayEnvironment } from "react-relay";
 import { useState } from "react";
+import { graphql, useRelayEnvironment } from "react-relay";
 import { z } from "zod";
 
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 const uploadEvidenceMutation = graphql`
   mutation CreateEvidenceDialogUploadMutation(

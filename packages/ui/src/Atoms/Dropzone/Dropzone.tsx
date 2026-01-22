@@ -1,7 +1,7 @@
 import { useRefSync } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { useCallback } from "react";
-import { useDropzone, type FileRejection } from "react-dropzone";
+import { type FileRejection, useDropzone } from "react-dropzone";
 import { tv } from "tailwind-variants";
 
 import { IconPageCross, IconUpload } from "../Icons";

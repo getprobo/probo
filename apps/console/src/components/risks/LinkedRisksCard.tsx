@@ -1,4 +1,4 @@
-import { graphql } from "relay-runtime";
+import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconTrashCan,
@@ -11,8 +11,8 @@ import {
   Tr,
   TrButton,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { LinkedRisksCardFragment$key } from "/__generated__/core/LinkedRisksCardFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";

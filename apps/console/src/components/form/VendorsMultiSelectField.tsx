@@ -1,8 +1,8 @@
-import { Avatar, Field, Option, Select, Badge, Button, IconCrossLargeX } from "@probo/ui";
-import { Suspense, useState, type ComponentProps } from "react";
-import { useTranslate } from "@probo/i18n";
-import { type Control, Controller, type FieldValues, Path } from "react-hook-form";
 import { faviconUrl } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { Avatar, Badge, Button, Field, IconCrossLargeX, Option, Select } from "@probo/ui";
+import { type ComponentProps, Suspense, useState } from "react";
+import { type Control, Controller, type FieldValues, Path } from "react-hook-form";
 
 import { useVendors } from "/hooks/graph/VendorGraph.ts";
 

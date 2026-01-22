@@ -1,5 +1,5 @@
+import { ConfirmDialog, Toasts } from "@probo/ui";
 import { RouterProvider } from "react-router";
-import { Toasts, ConfirmDialog } from "@probo/ui";
 
 import { router } from "./routes";
 

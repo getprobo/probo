@@ -1,3 +1,5 @@
+import { useCopy } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
   Breadcrumb,
   Button,
@@ -5,8 +7,6 @@ import {
   DialogContent,
   DialogFooter,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useCopy } from "@probo/hooks";
 
 export function PersonalAPIKeyTokenDialog(props: {
   dialogRef: React.RefObject<{ open: () => void; close: () => void } | null>;

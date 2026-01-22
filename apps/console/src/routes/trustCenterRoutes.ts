@@ -1,15 +1,15 @@
-import { loadQuery } from "react-relay";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { loadQuery } from "react-relay";
 
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import type { TrustCenterGraphQuery } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
 
 import { trustCenterQuery } from "../hooks/graph/TrustCenterGraph";
 

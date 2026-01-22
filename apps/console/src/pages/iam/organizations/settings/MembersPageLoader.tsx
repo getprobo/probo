@@ -1,9 +1,9 @@
-import { useQueryLoader } from "react-relay";
 import { useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
+import type { MembersPageQuery } from "/__generated__/iam/MembersPageQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
-import type { MembersPageQuery } from "/__generated__/iam/MembersPageQuery.graphql";
 
 import { MembersPage, membersPageQuery } from "./MembersPage";
 

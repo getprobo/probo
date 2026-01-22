@@ -1,37 +1,37 @@
+import { sprintf } from "@probo/helpers";
+import { useList } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
+  Avatar,
+  Breadcrumb,
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogFooter,
-  useDialogRef,
-  Breadcrumb,
-  Tr,
+  IconChevronDown,
+  Spinner,
+  Table,
   Tbody,
   Td,
-  Avatar,
-  Spinner,
-  Checkbox,
-  Table,
-  IconChevronDown,
+  Tr,
+  useDialogRef,
 } from "@probo/ui";
-import { Suspense, type ReactNode } from "react";
-import { useTranslate } from "@probo/i18n";
-import { graphql } from "relay-runtime";
-import { sprintf } from "@probo/helpers";
-import { z } from "zod";
-import { useList } from "@probo/hooks";
+import { type ReactNode, Suspense } from "react";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { graphql } from "relay-runtime";
+import { z } from "zod";
 
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
-import { useOrganizationId } from "/hooks/useOrganizationId.ts";
+import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql.ts";
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql.ts";
 import type { SignatureDocumentsDialogMutation } from "/__generated__/core/SignatureDocumentsDialogMutation.graphql.ts";
-import { useFormWithSchema } from "/hooks/useFormWithSchema.ts";
 import {
   paginatedPeopleFragment,
   paginatedPeopleQuery,
 } from "/hooks/graph/PeopleGraph.ts";
-import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql.ts";
-import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql.ts";
+import { useFormWithSchema } from "/hooks/useFormWithSchema.ts";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
+import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 
 type Props = {
   documentIds: string[];

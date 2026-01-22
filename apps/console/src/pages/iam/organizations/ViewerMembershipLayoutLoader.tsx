@@ -1,9 +1,9 @@
-import { useQueryLoader } from "react-relay";
-import { Suspense, useEffect } from "react";
 import { Skeleton } from "@probo/ui";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { ViewerMembershipLayoutQuery } from "/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
 import {

@@ -1,17 +1,17 @@
+import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogFooter,
   Field,
-  useDialogRef,
   Spinner,
-  Checkbox,
+  useDialogRef,
 } from "@probo/ui";
-import { type ReactNode, useImperativeHandle, forwardRef } from "react";
+import { forwardRef, type ReactNode, useImperativeHandle } from "react";
 import { z } from "zod";
-import { sprintf } from "@probo/helpers";
 
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 

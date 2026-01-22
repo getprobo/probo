@@ -1,3 +1,4 @@
+import { useCopy } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -10,16 +11,15 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
-import { ConnectionHandler, graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
-import { useCopy } from "@probo/hooks";
+import { ConnectionHandler, graphql } from "relay-runtime";
 
+import type { SAMLConfigurationList_deleteMutation } from "/__generated__/iam/SAMLConfigurationList_deleteMutation.graphql";
 import type {
   SAMLConfigurationListFragment$data,
   SAMLConfigurationListFragment$key,
 } from "/__generated__/iam/SAMLConfigurationListFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { SAMLConfigurationList_deleteMutation } from "/__generated__/iam/SAMLConfigurationList_deleteMutation.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
 

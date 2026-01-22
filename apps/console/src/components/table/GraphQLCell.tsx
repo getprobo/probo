@@ -1,11 +1,11 @@
 import { useStateWithRef } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { EditableCell, SelectValue, Spinner, selectCell } from "@probo/ui";
+import { EditableCell, selectCell, SelectValue, Spinner } from "@probo/ui";
 import { useEditableCellRef } from "@probo/ui/src/Molecules/Table/EditableCell.tsx";
 import { useEditableRowContext } from "@probo/ui/src/Molecules/Table/EditableRow.tsx";
 import { getKey } from "@probo/ui/src/Molecules/Table/utils.ts";
 import { Command } from "cmdk";
-import { Suspense, type ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { useLazyLoadQuery } from "react-relay";
 import type {
   GraphQLTaggedNode,

@@ -1,3 +1,4 @@
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -7,10 +8,9 @@ import {
   PageHeader,
   useToast,
 } from "@probo/ui";
-import { graphql, useMutation } from "react-relay";
 import type { FormEventHandler } from "react";
+import { graphql, useMutation } from "react-relay";
 import { Link, useLocation, useNavigate } from "react-router";
-import { formatError } from "@probo/helpers";
 
 import type { NewOrganizationPageMutation } from "/__generated__/iam/NewOrganizationPageMutation.graphql";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";

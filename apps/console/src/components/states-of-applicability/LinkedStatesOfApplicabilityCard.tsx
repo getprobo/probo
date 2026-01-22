@@ -1,27 +1,27 @@
-import { graphql } from "relay-runtime";
-import {
-  Card,
-  IconPlusLarge,
-  Button,
-  Tr,
-  Td,
-  Table,
-  Thead,
-  Tbody,
-  Th,
-  IconChevronDown,
-  IconTrashCan,
-  TrButton,
-  Badge,
-} from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useFragment } from "react-relay";
-import { useMemo, useState, useEffect } from "react";
 import { sprintf } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import {
+  Badge,
+  Button,
+  Card,
+  IconChevronDown,
+  IconPlusLarge,
+  IconTrashCan,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  TrButton,
+} from "@probo/ui";
 import { clsx } from "clsx";
+import { useEffect, useMemo, useState } from "react";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { LinkedStatesOfApplicabilityCardFragment$key } from "/__generated__/core/LinkedStatesOfApplicabilityCardFragment.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import { LinkedStatesOfApplicabilityDialog } from "./LinkedStatesOfApplicabilityDialog";
 

@@ -1,9 +1,9 @@
+import { countries, type CountryCode, getCountryName, getCountryOptions } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { useEffect, useState } from "react";
-import { Badge, Input, IconCrossLargeX } from "@probo/ui";
-import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
-import { getCountryName, getCountryOptions, countries, type CountryCode } from "@probo/helpers";
+import { Badge, IconCrossLargeX, Input } from "@probo/ui";
 import { clsx } from "clsx";
+import { useEffect, useState } from "react";
+import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 
 type Props<T extends FieldValues = FieldValues> = {
   control: Control<T>;

@@ -1,3 +1,4 @@
+import { useTranslate } from "@probo/i18n";
 import {
   Avatar,
   Button,
@@ -13,15 +14,14 @@ import {
   Textarea,
   useDialogRef,
 } from "@probo/ui";
-import { useState, type ChangeEventHandler } from "react";
+import { type ChangeEventHandler, useState } from "react";
+import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
-import { useTranslate } from "@probo/i18n";
-import { useFragment } from "react-relay";
 
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import type { OrganizationFormFragment$key } from "/__generated__/iam/OrganizationFormFragment.graphql";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 const fragment = graphql`
   fragment OrganizationFormFragment on Organization {

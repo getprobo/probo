@@ -1,5 +1,5 @@
-import type { GraphQLTaggedNode } from "relay-runtime";
 import { useMutation } from "react-relay";
+import type { GraphQLTaggedNode } from "relay-runtime";
 
 export type MutationFieldUpdate<T extends Record<string, unknown>, TKey extends keyof T> = (
   field: TKey,

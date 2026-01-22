@@ -1,24 +1,24 @@
+import { formatError, type GraphQLError } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Card, Spinner, useToast } from "@probo/ui";
+import { useEffect, useRef, useState } from "react";
 import {
-  usePreloadedQuery,
+  type PreloadedQuery,
   useFragment,
   useMutation,
-  type PreloadedQuery,
+  usePreloadedQuery,
 } from "react-relay";
 import { graphql } from "react-relay";
-import { usePageTitle } from "@probo/hooks";
 import { useNavigate } from "react-router";
 import { useWindowSize } from "usehooks-ts";
-import { useState, useEffect, useRef } from "react";
-import { formatError, type GraphQLError } from "@probo/helpers";
 
+import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
+import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "/__generated__/core/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
 import type { EmployeeDocumentSignaturePageQuery } from "/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
 import type { EmployeeDocumentSignaturePageSignMutation } from "/__generated__/core/EmployeeDocumentSignaturePageSignMutation.graphql";
-import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "/__generated__/core/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PDFPreview } from "/components/documents/PDFPreview";
-import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import { VersionActions } from "./_components/VersionActions";
 import { VersionRow } from "./_components/VersionRow";

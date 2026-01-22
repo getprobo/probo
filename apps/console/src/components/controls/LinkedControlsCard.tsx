@@ -1,18 +1,18 @@
-import { graphql } from "relay-runtime";
+import { useTranslate } from "@probo/i18n";
 import {
-  Button,
-  Tr,
-  Td,
-  Thead,
-  Tbody,
-  Th,
-  IconTrashCan,
   Badge,
+  Button,
+  IconTrashCan,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
   TrButton,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useFragment } from "react-relay";
 import type { ComponentProps } from "react";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { LinkedControlsCardFragment$key } from "/__generated__/core/LinkedControlsCardFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";

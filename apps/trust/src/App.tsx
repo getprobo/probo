@@ -1,5 +1,5 @@
-import { RouterProvider } from "react-router";
 import { Toasts } from "@probo/ui";
+import { RouterProvider } from "react-router";
 
 import { router } from "./routes";
 

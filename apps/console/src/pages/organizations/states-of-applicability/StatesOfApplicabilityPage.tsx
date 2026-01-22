@@ -1,43 +1,43 @@
-import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Card,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
-  Table,
-} from "@probo/ui";
+import { formatDate } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
-  usePreloadedQuery,
+  ActionDropdown,
+  Button,
+  Card,
+  DropdownItem,
+  IconPlusLarge,
+  IconTrashCan,
+  PageHeader,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@probo/ui";
+import { useEffect } from "react";
+import {
   type PreloadedQuery,
   usePaginationFragment,
+  usePreloadedQuery,
 } from "react-relay";
-import { usePageTitle } from "@probo/hooks";
-import { useEffect } from "react";
-import { formatDate } from "@probo/helpers";
 import { useParams } from "react-router";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
 import type {
   StateOfApplicabilityGraphPaginatedFragment$data,
   StateOfApplicabilityGraphPaginatedFragment$key,
 } from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
+import type { StateOfApplicabilityListQuery } from "/__generated__/core/StateOfApplicabilityListQuery.graphql";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import {
-  useDeleteStateOfApplicability,
   paginatedStateOfApplicabilityFragment,
   paginatedStateOfApplicabilityQuery,
+  useDeleteStateOfApplicability,
 } from "/hooks/graph/StateOfApplicabilityGraph";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import type { StateOfApplicabilityListQuery } from "/__generated__/core/StateOfApplicabilityListQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { NodeOf } from "/types";
 
 import { CreateStateOfApplicabilityDialog } from "./dialogs/CreateStateOfApplicabilityDialog";
 

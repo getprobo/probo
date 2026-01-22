@@ -1,7 +1,7 @@
-import { Outlet } from "react-router";
-import { Logo, Button, IconArrowBoxLeft, useToast } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { Button, IconArrowBoxLeft, Logo, useToast } from "@probo/ui";
 import type { ReactNode } from "react";
+import { Outlet } from "react-router";
 
 type Props = {
   organizationName: string;

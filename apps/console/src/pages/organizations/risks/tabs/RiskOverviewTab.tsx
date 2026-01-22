@@ -1,7 +1,7 @@
+import { RiskOverview } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
-import { RiskOverview } from "@probo/ui";
 
 import type { RiskOverviewTabFragment$key } from "/__generated__/core/RiskOverviewTabFragment.graphql";
 

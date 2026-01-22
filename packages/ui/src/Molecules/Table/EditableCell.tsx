@@ -1,3 +1,4 @@
+import { focusSiblingElement } from "@probo/helpers";
 import * as Popover from "@radix-ui/react-popover";
 import {
   type CSSProperties,
@@ -7,7 +8,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { focusSiblingElement } from "@probo/helpers";
 
 import { Cell } from "../../Atoms/DataTable/DataTable.tsx";
 

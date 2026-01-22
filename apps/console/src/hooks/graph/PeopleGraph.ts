@@ -1,24 +1,24 @@
-import { graphql } from "relay-runtime";
 import {
+  formatError,
+  type GraphQLError,
+  promisifyMutation,
+  sprintf,
+} from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { useConfirm, useToast } from "@probo/ui";
+import { useMemo } from "react";
+import {
+  type PreloadedQuery,
   useLazyLoadQuery,
   useMutation,
   usePaginationFragment,
   usePreloadedQuery,
-  type PreloadedQuery,
 } from "react-relay";
-import { useMemo } from "react";
-import { useConfirm, useToast } from "@probo/ui";
-import {
-  promisifyMutation,
-  sprintf,
-  formatError,
-  type GraphQLError,
-} from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { graphql } from "relay-runtime";
 
-import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
-import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
 import type { PeopleGraphDeleteMutation } from "/__generated__/core/PeopleGraphDeleteMutation.graphql";
+import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
 import type { PeopleGraphQuery } from "/__generated__/core/PeopleGraphQuery.graphql";
 
 export const peopleQuery = graphql`

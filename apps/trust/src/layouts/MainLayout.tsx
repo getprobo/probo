@@ -1,14 +1,14 @@
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Logo, TabLink, Tabs } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { Logo, TabLink, Tabs } from "@probo/ui";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
-import type { TrustGraphCurrentQuery } from "/queries/__generated__/TrustGraphCurrentQuery.graphql.ts";
-import { currentTrustGraphQuery } from "/queries/TrustGraph.ts";
-import { OrganizationSidebar } from "/components/OrganizationSidebar";
 import { NDADialog } from "/components/NDADialog";
+import { OrganizationSidebar } from "/components/OrganizationSidebar";
 import { TrustCenterProvider } from "/providers/TrustCenterProvider";
 import { Viewer } from "/providers/Viewer";
+import type { TrustGraphCurrentQuery } from "/queries/__generated__/TrustGraphCurrentQuery.graphql.ts";
+import { currentTrustGraphQuery } from "/queries/TrustGraph.ts";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphCurrentQuery>;

@@ -1,18 +1,18 @@
-import { graphql } from "relay-runtime";
 import {
+  formatError,
+  type GraphQLError,
+  promisifyMutation,
+  sprintf,
+} from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { useConfirm, useToast } from "@probo/ui";
+import {
+  type PreloadedQuery,
   useMutation,
   usePaginationFragment,
   usePreloadedQuery,
-  type PreloadedQuery,
 } from "react-relay";
-import { useConfirm, useToast } from "@probo/ui";
-import {
-  promisifyMutation,
-  sprintf,
-  formatError,
-  type GraphQLError,
-} from "@probo/helpers";
-import { useTranslate } from "@probo/i18n";
+import { graphql } from "relay-runtime";
 
 import type { StateOfApplicabilityGraphDeleteMutation } from "/__generated__/core/StateOfApplicabilityGraphDeleteMutation.graphql";
 import type { StateOfApplicabilityGraphPaginatedFragment$key } from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";

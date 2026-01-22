@@ -1,3 +1,8 @@
+import {
+  certificationCategoryLabel,
+  certifications,
+  objectEntries,
+} from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -8,18 +13,13 @@ import {
   IconCrossLargeX,
   IconPlusLarge,
 } from "@probo/ui";
+import { clsx } from "clsx";
+import { useState } from "react";
 import { Controller } from "react-hook-form";
 import { useOutletContext, useParams } from "react-router";
-import {
-  certificationCategoryLabel,
-  certifications,
-  objectEntries,
-} from "@probo/helpers";
-import { useState } from "react";
-import { clsx } from "clsx";
 
-import { useVendorForm } from "/hooks/forms/useVendorForm";
 import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import { useVendorForm } from "/hooks/forms/useVendorForm";
 
 /**
  * Vendor certifications tab

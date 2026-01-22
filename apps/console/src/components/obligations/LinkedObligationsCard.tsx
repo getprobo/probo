@@ -1,29 +1,29 @@
-import { graphql } from "relay-runtime";
 import {
-  Card,
-  IconPlusLarge,
-  Button,
-  Tr,
-  Td,
-  Table,
-  Thead,
-  Tbody,
-  Th,
-  IconChevronDown,
-  IconTrashCan,
-  TrButton,
-  Badge,
-} from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useFragment } from "react-relay";
-import { useMemo, useState } from "react";
-import {
-  sprintf,
-  getObligationStatusVariant,
   getObligationStatusLabel,
+  getObligationStatusVariant,
+  sprintf,
 } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import {
+  Badge,
+  Button,
+  Card,
+  IconChevronDown,
+  IconPlusLarge,
+  IconTrashCan,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  TrButton,
+} from "@probo/ui";
 import { clsx } from "clsx";
+import { useMemo, useState } from "react";
+import { useFragment } from "react-relay";
 import { useParams } from "react-router";
+import { graphql } from "relay-runtime";
 
 import type { LinkedObligationsCardFragment$key } from "/__generated__/core/LinkedObligationsCardFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";

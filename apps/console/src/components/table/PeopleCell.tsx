@@ -1,7 +1,7 @@
 import { Avatar } from "@probo/ui";
 
-import { GraphQLCell } from "/components/table/GraphQLCell.tsx";
 import type { PeopleGraphQuery } from "/__generated__/core/PeopleGraphQuery.graphql.ts";
+import { GraphQLCell } from "/components/table/GraphQLCell.tsx";
 import { peopleQuery } from "/hooks/graph/PeopleGraph.ts";
 
 type Props = {

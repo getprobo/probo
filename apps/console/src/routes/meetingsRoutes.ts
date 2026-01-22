@@ -1,19 +1,19 @@
-import { Fragment } from "react";
-import { loadQuery } from "react-relay";
-import { redirect, type LoaderFunctionArgs } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { Fragment } from "react";
+import { loadQuery } from "react-relay";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 
-import { coreEnvironment } from "/environments";
-import { meetingsQuery, meetingNodeQuery } from "/hooks/graph/MeetingGraph";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
 import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
+import { meetingNodeQuery, meetingsQuery } from "/hooks/graph/MeetingGraph";
 
 const meetingTabs = (prefix: string) => {
   return [

@@ -1,5 +1,5 @@
-import type { HTMLAttributes } from "react";
 import { useTranslate } from "@probo/i18n";
+import type { HTMLAttributes } from "react";
 
 import { Button } from "../../Atoms/Button/Button";
 import { IconPlusLarge } from "../../Atoms/Icons";

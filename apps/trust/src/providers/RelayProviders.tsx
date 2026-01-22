@@ -1,12 +1,12 @@
+import { makeFetchQuery } from "@probo/relay";
+import type { PropsWithChildren } from "react";
+import { RelayEnvironmentProvider } from "react-relay";
 import {
   Environment,
   Network,
   RecordSource,
   Store,
 } from "relay-runtime";
-import type { PropsWithChildren } from "react";
-import { RelayEnvironmentProvider } from "react-relay";
-import { makeFetchQuery } from "@probo/relay";
 
 import { getPathPrefix } from "/utils/pathPrefix";
 

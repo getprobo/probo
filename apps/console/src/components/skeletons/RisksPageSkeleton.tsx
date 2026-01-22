@@ -1,5 +1,5 @@
-import { Button, IconPlusLarge, PageHeader, Skeleton } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { Button, IconPlusLarge, PageHeader, Skeleton } from "@probo/ui";
 
 export function RisksPageSkeleton() {
   const { __ } = useTranslate();

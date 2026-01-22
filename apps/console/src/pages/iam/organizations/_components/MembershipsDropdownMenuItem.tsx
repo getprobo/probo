@@ -1,3 +1,4 @@
+import { parseDate } from "@probo/helpers";
 import {
   Avatar,
   DropdownItem,
@@ -5,14 +6,13 @@ import {
   IconClock,
   IconLock,
 } from "@probo/ui";
-import { graphql } from "relay-runtime";
-import { useFragment, useMutation } from "react-relay";
-import { parseDate } from "@probo/helpers";
 import { useCallback } from "react";
+import { useFragment, useMutation } from "react-relay";
 import { useNavigate } from "react-router";
+import { graphql } from "relay-runtime";
 
-import type { MembershipsDropdownMenuItemFragment$key } from "/__generated__/iam/MembershipsDropdownMenuItemFragment.graphql";
 import type { MembershipsDropdownMenuItem_assumeMutation } from "/__generated__/iam/MembershipsDropdownMenuItem_assumeMutation.graphql";
+import type { MembershipsDropdownMenuItemFragment$key } from "/__generated__/iam/MembershipsDropdownMenuItemFragment.graphql";
 
 const fragment = graphql`
   fragment MembershipsDropdownMenuItemFragment on Membership {

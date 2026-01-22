@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { Meta, StoryObj } from "@storybook/react";
 import { times } from "@probo/helpers";
+import type { Meta, StoryObj } from "@storybook/react";
+import { useState } from "react";
 
 import { Combobox, ComboboxItem } from "./Combobox";
 

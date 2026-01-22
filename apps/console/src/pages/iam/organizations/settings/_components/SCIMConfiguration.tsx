@@ -1,22 +1,22 @@
-import { useState } from "react";
-import { graphql, useFragment, useMutation } from "react-relay";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
   Dialog,
+  IconRotateCw,
+  IconSquareBehindSquare2,
+  IconTrashCan,
   useDialogRef,
   useToast,
-  IconSquareBehindSquare2,
-  IconRotateCw,
-  IconTrashCan,
 } from "@probo/ui";
-import { formatError } from "@probo/helpers";
+import { useState } from "react";
+import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { SCIMConfigurationCreateMutation } from "/__generated__/iam/SCIMConfigurationCreateMutation.graphql";
 import type { SCIMConfigurationDeleteMutation } from "/__generated__/iam/SCIMConfigurationDeleteMutation.graphql";
-import type { SCIMConfigurationRegenerateTokenMutation } from "/__generated__/iam/SCIMConfigurationRegenerateTokenMutation.graphql";
 import type { SCIMConfigurationFragment$key } from "/__generated__/iam/SCIMConfigurationFragment.graphql";
+import type { SCIMConfigurationRegenerateTokenMutation } from "/__generated__/iam/SCIMConfigurationRegenerateTokenMutation.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
 const SCIMConfigurationFragment = graphql`

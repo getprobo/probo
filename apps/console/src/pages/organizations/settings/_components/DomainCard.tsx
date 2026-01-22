@@ -1,16 +1,16 @@
-import { Badge, Button, Card } from "@probo/ui";
 import {
   getCustomDomainStatusBadgeLabel,
   getCustomDomainStatusBadgeVariant,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { graphql } from "relay-runtime";
+import { Badge, Button, Card } from "@probo/ui";
 import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { DomainCardFragment$key } from "/__generated__/core/DomainCardFragment.graphql";
 
-import { DomainDialog } from "./DomainDialog";
 import { DeleteDomainDialog } from "./DeleteDomainDialog";
+import { DomainDialog } from "./DomainDialog";
 
 const fragment = graphql`
   fragment DomainCardFragment on CustomDomain {

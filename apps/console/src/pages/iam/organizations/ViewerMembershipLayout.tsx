@@ -1,16 +1,16 @@
-import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import { Link, Outlet } from "react-router";
+import { useTranslate } from "@probo/i18n";
 import { Badge, Button, IconPeopleAdd, Layout, Skeleton } from "@probo/ui";
 import { Suspense } from "react";
-import { useTranslate } from "@probo/i18n";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { Link, Outlet } from "react-router";
 
 import type { ViewerMembershipLayoutQuery } from "/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
 import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 import { CurrentUser } from "/providers/CurrentUser";
 
-import { ViewerMembershipDropdown } from "./_components/ViewerMembershipDropdown";
 import { MembershipsDropdown } from "./_components/MembershipsDropdown";
 import { Sidebar } from "./_components/Sidebar";
+import { ViewerMembershipDropdown } from "./_components/ViewerMembershipDropdown";
 
 export const viewerMembershipLayoutQuery = graphql`
   query ViewerMembershipLayoutQuery(

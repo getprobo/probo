@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Select, Option } from "./Select";
+import { Option, Select } from "./Select";
 
 export default {
   title: "Atoms/Form/Select",

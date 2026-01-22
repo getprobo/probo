@@ -1,11 +1,11 @@
-import {
-  useRef,
-  type TextareaHTMLAttributes,
-  type RefCallback,
-  useLayoutEffect,
-  useCallback,
-} from "react";
 import clsx from "clsx";
+import {
+  type RefCallback,
+  type TextareaHTMLAttributes,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+} from "react";
 
 import { input } from "../Input/Input";
 

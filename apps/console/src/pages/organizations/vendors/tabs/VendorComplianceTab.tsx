@@ -1,7 +1,6 @@
-import { useOutletContext, useParams } from "react-router";
-import { graphql } from "relay-runtime";
-import { useTranslate } from "@probo/i18n";
+import { fileSize, formatDate, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   DropdownItem,
@@ -14,16 +13,17 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
-import { useFragment, useMutation, useRefetchableFragment } from "react-relay";
-import { sprintf, fileSize, formatDate } from "@probo/helpers";
 import type { ComponentProps } from "react";
+import { useFragment, useMutation, useRefetchableFragment } from "react-relay";
+import { useOutletContext, useParams } from "react-router";
+import { graphql } from "relay-runtime";
 
+import type { ComplianceReportListQuery } from "/__generated__/core/ComplianceReportListQuery.graphql";
 import type { VendorComplianceTabFragment$key } from "/__generated__/core/VendorComplianceTabFragment.graphql";
 import type { VendorComplianceTabFragment_report$key } from "/__generated__/core/VendorComplianceTabFragment_report.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import type { ComplianceReportListQuery } from "/__generated__/core/ComplianceReportListQuery.graphql";
+import { SortableTable, SortableTh } from "/components/SortableTable";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 export const complianceReportsFragment = graphql`
   fragment VendorComplianceTabFragment on Vendor

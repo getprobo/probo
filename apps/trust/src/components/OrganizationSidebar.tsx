@@ -1,3 +1,4 @@
+import { domain, formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -7,10 +8,9 @@ import {
   IconMedal,
   useToast,
 } from "@probo/ui";
-import { use, type PropsWithChildren } from "react";
-import { domain, formatError } from "@probo/helpers";
-import { graphql } from "relay-runtime";
+import { type PropsWithChildren, use } from "react";
 import { useMutation } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import { Viewer } from "/providers/Viewer";
 import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";

@@ -2,9 +2,9 @@ import { useTranslate } from "@probo/i18n";
 import { Option } from "@probo/ui";
 
 import type {
-  ProcessingActivitySpecialOrCriminalDatum,
-  ProcessingActivityLawfulBasis,
   ProcessingActivityDataProtectionImpactAssessment,
+  ProcessingActivityLawfulBasis,
+  ProcessingActivitySpecialOrCriminalDatum,
   ProcessingActivityTransferImpactAssessment,
 } from "/__generated__/core/ProcessingActivityGraphCreateMutation.graphql";
 

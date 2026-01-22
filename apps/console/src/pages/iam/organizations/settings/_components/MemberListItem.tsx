@@ -1,3 +1,4 @@
+import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -13,7 +14,6 @@ import { clsx } from "clsx";
 import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import { sprintf } from "@probo/helpers";
 
 import type { MemberListItemFragment$key } from "/__generated__/iam/MemberListItemFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";

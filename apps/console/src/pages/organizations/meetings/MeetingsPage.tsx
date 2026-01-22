@@ -1,47 +1,47 @@
+import { formatDate, sprintf } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
-  PageHeader,
-  Tbody,
-  Thead,
-  Tr,
-  Th,
-  Td,
-  Avatar,
-  IconTrashCan,
-  Button,
-  IconPlusLarge,
-  useConfirm,
   ActionDropdown,
-  DropdownItem,
+  Avatar,
+  Button,
   Card,
-  Textarea,
-  Markdown,
-  IconPencil,
+  DropdownItem,
   IconCheckmark1,
   IconCrossLargeX,
+  IconPencil,
+  IconPlusLarge,
+  IconTrashCan,
+  Markdown,
+  PageHeader,
+  Tbody,
+  Td,
+  Textarea,
+  Th,
+  Thead,
+  Tr,
+  useConfirm,
 } from "@probo/ui";
+import { useRef, useState } from "react";
 import {
+  type PreloadedQuery,
   useFragment,
   usePaginationFragment,
   usePreloadedQuery,
-  type PreloadedQuery,
 } from "react-relay";
-import { graphql } from "relay-runtime";
-import { usePageTitle } from "@probo/hooks";
-import { formatDate, sprintf } from "@probo/helpers";
 import { Link } from "react-router";
-import { useState, useRef } from "react";
+import { graphql } from "relay-runtime";
 
+import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
+import type { MeetingsPage_UpdateSummaryMutation } from "/__generated__/core/MeetingsPage_UpdateSummaryMutation.graphql";
+import type { MeetingsPageListFragment$key } from "/__generated__/core/MeetingsPageListFragment.graphql";
 import type { MeetingsPageRowFragment$key } from "/__generated__/core/MeetingsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
-import type { MeetingsPageListFragment$key } from "/__generated__/core/MeetingsPageListFragment.graphql";
 import {
   meetingsQuery,
   useDeleteMeetingMutation,
 } from "/hooks/graph/MeetingGraph";
-import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { MeetingsPage_UpdateSummaryMutation } from "/__generated__/core/MeetingsPage_UpdateSummaryMutation.graphql";
 
 import { CreateMeetingDialog } from "./dialogs/CreateMeetingDialog";
 

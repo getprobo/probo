@@ -1,23 +1,23 @@
-import { graphql } from "relay-runtime";
-import {
-  Button,
-  Tr,
-  Td,
-  Table,
-  Thead,
-  Tbody,
-  Th,
-  IconChevronDown,
-  DocumentVersionBadge,
-  DocumentTypeBadge,
-  Field,
-  Option,
-  Badge,
-} from "@probo/ui";
+import { getTrustCenterVisibilityOptions, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+import {
+  Badge,
+  Button,
+  DocumentTypeBadge,
+  DocumentVersionBadge,
+  Field,
+  IconChevronDown,
+  Option,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@probo/ui";
+import { useCallback, useMemo, useState } from "react";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback } from "react";
-import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
+import { graphql } from "relay-runtime";
 
 import type { TrustCenterDocumentsCardFragment$key } from "/__generated__/core/TrustCenterDocumentsCardFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";

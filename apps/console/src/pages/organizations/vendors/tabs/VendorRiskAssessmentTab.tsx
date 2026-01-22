@@ -1,29 +1,29 @@
-import { useOutletContext, useParams } from "react-router";
-import { graphql } from "relay-runtime";
-import { useTranslate } from "@probo/i18n";
+import { formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
+  Badge,
   Button,
+  IconPlusLarge,
+  RiskBadge,
   Tbody,
   Td,
   Th,
   Thead,
   Tr,
-  IconPlusLarge,
-  RiskBadge,
-  Badge,
   TrButton,
 } from "@probo/ui";
-import { formatDate } from "@probo/helpers";
-import { useFragment, useRefetchableFragment } from "react-relay";
 import { clsx } from "clsx";
-import { useState, type ComponentProps } from "react";
+import { type ComponentProps, useState } from "react";
+import { useFragment, useRefetchableFragment } from "react-relay";
+import { useOutletContext, useParams } from "react-router";
+import { graphql } from "relay-runtime";
 
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import type { VendorRiskAssessmentTabFragment_assessment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment_assessment.graphql";
-import type { VendorRiskAssessmentTabFragment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment.graphql";
 import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { VendorRiskAssessmentTabFragment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment.graphql";
+import type { VendorRiskAssessmentTabFragment_assessment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment_assessment.graphql";
 import type { VendorRiskAssessmentTabQuery } from "/__generated__/core/VendorRiskAssessmentTabQuery.graphql";
+import { SortableTable, SortableTh } from "/components/SortableTable";
 
 import { CreateRiskAssessmentDialog } from "../dialogs/CreateRiskAssessmentDialog";
 

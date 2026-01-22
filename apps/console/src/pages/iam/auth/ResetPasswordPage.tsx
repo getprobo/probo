@@ -1,11 +1,11 @@
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
-import { Link, useNavigate, useSearchParams } from "react-router";
-import { z } from "zod";
-import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { graphql } from "relay-runtime";
+import { z } from "zod";
 
 import type { ResetPasswordPageMutation } from "/__generated__/iam/ResetPasswordPageMutation.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";

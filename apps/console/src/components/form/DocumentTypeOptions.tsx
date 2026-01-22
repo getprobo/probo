@@ -1,6 +1,6 @@
+import { documentTypes, getDocumentTypeLabel } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Option } from "@probo/ui";
-import { documentTypes, getDocumentTypeLabel } from "@probo/helpers";
 
 export function DocumentTypeOptions() {
   const { __ } = useTranslate();

@@ -1,43 +1,43 @@
-import { useNavigate, useParams } from "react-router";
+import { formatDate, validateSnapshotConsistency } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Breadcrumb,
-  DropdownItem,
-  IconTrashCan,
-  IconArrowDown,
-  PageHeader,
-  Card,
   Button,
-  IconPencil,
+  Card,
+  DropdownItem,
+  IconArrowDown,
   IconCheckmark1,
   IconCrossLargeX,
+  IconPencil,
+  IconTrashCan,
   Input,
+  PageHeader,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
+import { Suspense, useState } from "react";
 import {
   ConnectionHandler,
   graphql,
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { useState, Suspense } from "react";
-import { usePageTitle } from "@probo/hooks";
-import { formatDate, validateSnapshotConsistency } from "@probo/helpers";
+import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
 
-import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
 import type { StateOfApplicabilityDetailPageExportMutation } from "/__generated__/core/StateOfApplicabilityDetailPageExportMutation.graphql";
+import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import {
   StateOfApplicabilityConnectionKey,
   stateOfApplicabilityNodeQuery,
-  useDeleteStateOfApplicability,
   updateStateOfApplicabilityMutation,
+  useDeleteStateOfApplicability,
 } from "/hooks/graph/StateOfApplicabilityGraph";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
 
 import StateOfApplicabilityControlsTab from "./tabs/StateOfApplicabilityControlsTab";
 

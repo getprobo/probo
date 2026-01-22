@@ -1,14 +1,14 @@
+import clsx from "clsx";
 import {
   type ComponentPropsWithRef,
   type FC,
   type PropsWithChildren,
   type ReactNode,
 } from "react";
-import clsx from "clsx";
 
 import { Card } from "../Card/Card";
-import { type AsChildProps, Slot } from "../Slot.tsx";
 import { IconPlusLarge } from "../Icons";
+import { type AsChildProps, Slot } from "../Slot.tsx";
 
 export function DataTable({
   children,

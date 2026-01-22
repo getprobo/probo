@@ -1,36 +1,36 @@
-import { useTranslate } from "@probo/i18n";
 import { safeOpenUrl } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   Avatar,
   Button,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
+  IconArrowLink,
+  IconPencil,
   IconPlusLarge,
   IconTrashCan,
-  IconPencil,
-  IconArrowLink,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
 } from "@probo/ui";
 import { useRef, useState } from "react";
 import { useLazyLoadQuery } from "react-relay";
 
+import type {
+  TrustCenterReferenceGraphQuery$data,
+  TrustCenterReferenceGraphQuery,
+} from "/__generated__/core/TrustCenterReferenceGraphQuery.graphql";
 import {
   trustCenterReferencesQuery,
   useUpdateTrustCenterReferenceRankMutation,
 } from "/hooks/graph/TrustCenterReferenceGraph";
-import type {
-  TrustCenterReferenceGraphQuery,
-  TrustCenterReferenceGraphQuery$data,
-} from "/__generated__/core/TrustCenterReferenceGraphQuery.graphql";
 
+import { DeleteTrustCenterReferenceDialog } from "./DeleteTrustCenterReferenceDialog";
 import {
   TrustCenterReferenceDialog,
   type TrustCenterReferenceDialogRef,
 } from "./TrustCenterReferenceDialog";
-import { DeleteTrustCenterReferenceDialog } from "./DeleteTrustCenterReferenceDialog";
 
 type Props = {
   trustCenterId: string;

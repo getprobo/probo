@@ -1,15 +1,15 @@
-import { loadQuery } from "react-relay";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { loadQuery } from "react-relay";
 
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
 import type { NonconformityGraphNodeQuery } from "/__generated__/core/NonconformityGraphNodeQuery.graphql";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
 
 import {
   nonconformitiesQuery,

@@ -1,5 +1,5 @@
-import type { PropsWithChildren } from "react";
 import { TranslatorProvider as ProboTranslatorProvider } from "@probo/i18n";
+import type { PropsWithChildren } from "react";
 
 // TODO : implement a way to retrieve translations strings
 const loader = () => {

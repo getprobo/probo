@@ -1,7 +1,7 @@
-import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import { graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, IconPlusLarge } from "@probo/ui";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
 

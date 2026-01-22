@@ -1,9 +1,5 @@
-import {
-  ConnectionHandler,
-  type PreloadedQuery,
-  usePreloadedQuery,
-} from "react-relay";
-import { useParams } from "react-router";
+import { validateSnapshotConsistency } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -14,22 +10,26 @@ import {
   IconTrashCan,
   Option,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
+import {
+  ConnectionHandler,
+  type PreloadedQuery,
+  usePreloadedQuery,
+} from "react-relay";
+import { useParams } from "react-router";
 import { z } from "zod";
-import { validateSnapshotConsistency } from "@probo/helpers";
 
+import type { DatumGraphNodeQuery } from "/__generated__/core/DatumGraphNodeQuery.graphql";
+import { ControlledField } from "/components/form/ControlledField";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import {
   datumNodeQuery,
   useDeleteDatum,
   useUpdateDatum,
 } from "/hooks/graph/DatumGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { ControlledField } from "/components/form/ControlledField";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import type { DatumGraphNodeQuery } from "/__generated__/core/DatumGraphNodeQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 const updateDatumSchema = z.object({
   name: z.string().min(1, "Name is required"),

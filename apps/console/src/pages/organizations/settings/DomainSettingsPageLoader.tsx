@@ -1,9 +1,9 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
+import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CoreRelayProvider } from "/providers/CoreRelayProvider";
-import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
 
 import {
   DomainSettingsPage,

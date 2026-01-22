@@ -1,5 +1,5 @@
-import { Environment, Network, RecordSource, Store } from "relay-runtime";
 import { makeFetchQuery } from "@probo/relay";
+import { Environment, Network, RecordSource, Store } from "relay-runtime";
 
 export const coreEnvironment = new Environment({
   configName: "core",

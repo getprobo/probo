@@ -1,43 +1,43 @@
+import { Role } from "@probo/helpers";
+import { lazy } from "@probo/react-lazy";
+import {
+  ForbiddenError,
+  UnAuthenticatedError,
+  UnauthorizedError,
+} from "@probo/relay";
+import { type AppRoute, routeFromAppRoute } from "@probo/routes";
+import { CenteredLayout } from "@probo/ui";
+import { use } from "react";
 import {
   createBrowserRouter,
   Navigate,
   redirect,
   useRouteError,
 } from "react-router";
-import { lazy } from "@probo/react-lazy";
-import { routeFromAppRoute, type AppRoute } from "@probo/routes";
-import { Role } from "@probo/helpers";
-import {
-  ForbiddenError,
-  UnAuthenticatedError,
-  UnauthorizedError,
-} from "@probo/relay";
-import { use } from "react";
-import { CenteredLayout } from "@probo/ui";
 
-import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
-import { riskRoutes } from "./routes/riskRoutes.ts";
-import { measureRoutes } from "./routes/measureRoutes.ts";
-import { documentsRoutes } from "./routes/documentsRoutes.ts";
-import { vendorRoutes } from "./routes/vendorRoutes.ts";
-import { peopleRoutes } from "./routes/peopleRoutes.ts";
-import { frameworkRoutes } from "./routes/frameworkRoutes.ts";
-import { PageError } from "./components/PageError.tsx";
-import { taskRoutes } from "./routes/taskRoutes.ts";
-import { dataRoutes } from "./routes/dataRoutes.ts";
-import { assetRoutes } from "./routes/assetRoutes.ts";
-import { auditRoutes } from "./routes/auditRoutes.ts";
-import { meetingsRoutes } from "./routes/meetingsRoutes.ts";
-import { trustCenterRoutes } from "./routes/trustCenterRoutes.ts";
-import { nonconformityRoutes } from "./routes/nonconformityRoutes.ts";
-import { obligationRoutes } from "./routes/obligationRoutes.ts";
-import { snapshotsRoutes } from "./routes/snapshotsRoutes.ts";
-import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.ts";
-import { rightsRequestRoutes } from "./routes/rightsRequestRoutes.ts";
-import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
-import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes.ts";
-import { CurrentUser } from "./providers/CurrentUser.tsx";
-import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading.tsx";
+import { PageError } from "./components/PageError";
+import { PageSkeleton } from "./components/skeletons/PageSkeleton";
+import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
+import { CurrentUser } from "./providers/CurrentUser";
+import { assetRoutes } from "./routes/assetRoutes";
+import { auditRoutes } from "./routes/auditRoutes";
+import { continualImprovementRoutes } from "./routes/continualImprovementRoutes";
+import { dataRoutes } from "./routes/dataRoutes";
+import { documentsRoutes } from "./routes/documentsRoutes";
+import { frameworkRoutes } from "./routes/frameworkRoutes";
+import { measureRoutes } from "./routes/measureRoutes";
+import { meetingsRoutes } from "./routes/meetingsRoutes";
+import { nonconformityRoutes } from "./routes/nonconformityRoutes";
+import { obligationRoutes } from "./routes/obligationRoutes";
+import { peopleRoutes } from "./routes/peopleRoutes";
+import { processingActivityRoutes } from "./routes/processingActivityRoutes";
+import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
+import { riskRoutes } from "./routes/riskRoutes";
+import { snapshotsRoutes } from "./routes/snapshotsRoutes";
+import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes";
+import { taskRoutes } from "./routes/taskRoutes";
+import { trustCenterRoutes } from "./routes/trustCenterRoutes";
+import { vendorRoutes } from "./routes/vendorRoutes";
 
 /**
  * Top level error boundary

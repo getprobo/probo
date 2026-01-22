@@ -1,21 +1,21 @@
+import { sprintf } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
+  Breadcrumb,
   Button,
   Dialog,
   DialogContent,
   DialogFooter,
   Field,
   useDialogRef,
-  Breadcrumb,
 } from "@probo/ui";
 import { type ReactNode } from "react";
-import { useTranslate } from "@probo/i18n";
-import { z } from "zod";
 import { graphql } from "relay-runtime";
-import { sprintf } from "@probo/helpers";
+import { z } from "zod";
 
+import type { PublishDocumentsDialogMutation } from "/__generated__/core/PublishDocumentsDialogMutation.graphql.ts";
 import { useFormWithSchema } from "/hooks/useFormWithSchema.ts";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
-import type { PublishDocumentsDialogMutation } from "/__generated__/core/PublishDocumentsDialogMutation.graphql.ts";
 
 type Props = {
   documentIds: string[];

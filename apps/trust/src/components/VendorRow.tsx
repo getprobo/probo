@@ -1,8 +1,8 @@
-import { graphql } from "relay-runtime";
-import { useFragment } from "react-relay";
-import { IconPin, IconShield } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 import { faviconUrl, getCountryName } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { IconPin, IconShield } from "@probo/ui";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
 import type { VendorRowFragment$key } from "./__generated__/VendorRowFragment.graphql";
 

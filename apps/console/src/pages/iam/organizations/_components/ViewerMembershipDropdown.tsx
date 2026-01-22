@@ -1,3 +1,5 @@
+import { formatError } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   DropdownSeparator,
   IconArrowBoxLeft,
@@ -8,10 +10,8 @@ import {
   UserDropdownItem,
   useToast,
 } from "@probo/ui";
-import { graphql } from "relay-runtime";
 import { useFragment, useMutation } from "react-relay";
-import { useTranslate } from "@probo/i18n";
-import { formatError } from "@probo/helpers";
+import { graphql } from "relay-runtime";
 
 import type { ViewerMembershipDropdownFragment$key } from "/__generated__/iam/ViewerMembershipDropdownFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";

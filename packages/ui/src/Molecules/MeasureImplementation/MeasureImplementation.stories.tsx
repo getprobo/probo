@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { times } from "@probo/helpers";
+import type { Meta, StoryObj } from "@storybook/react";
 
 import { MeasureImplementation } from "./MeasureImplementation";
 

@@ -1,14 +1,14 @@
 import { useTranslate } from "@probo/i18n";
 import {
-  Root,
-  Overlay,
-  Content,
-  Title,
-  Description,
   Cancel,
+  Content,
+  Description,
+  Overlay,
+  Root,
+  Title,
 } from "@radix-ui/react-alert-dialog";
-import { useCallback, useState, useMemo, type ComponentProps } from "react";
 import { Root as Portal } from "@radix-ui/react-portal";
+import { type ComponentProps, useCallback, useMemo, useState } from "react";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 

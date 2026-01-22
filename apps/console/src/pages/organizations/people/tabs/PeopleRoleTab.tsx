@@ -1,16 +1,16 @@
+import { getRoles, peopleRoles } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, IconCheckmark1, Option } from "@probo/ui";
 import { type PropsWithChildren } from "react";
-import { z } from "zod";
-import { getRoles, peopleRoles } from "@probo/helpers";
 import { useOutletContext } from "react-router";
+import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { ControlledField } from "/components/form/ControlledField";
 import type { PeopleGraphNodeQuery$data } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
-import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { PeopleGraphUpdateMutation } from "/__generated__/core/PeopleGraphUpdateMutation.graphql";
+import { ControlledField } from "/components/form/ControlledField";
+import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 const schema = z.object({
   kind: z.enum(peopleRoles),

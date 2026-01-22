@@ -1,14 +1,13 @@
-import { useOutletContext, useParams } from "react-router";
-import { graphql } from "relay-runtime";
-import { useTranslate } from "@probo/i18n";
+import { sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Button,
   DropdownItem,
+  IconPencil,
   IconPlusLarge,
   IconTrashCan,
-  IconPencil,
   PageHeader,
   Tbody,
   Td,
@@ -17,19 +16,20 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
+import { type ComponentProps, useState } from "react";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import { sprintf } from "@probo/helpers";
-import { useState, type ComponentProps } from "react";
+import { useOutletContext, useParams } from "react-router";
+import { graphql } from "relay-runtime";
 
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { VendorServicesListQuery } from "/__generated__/core/VendorServicesListQuery.graphql";
+import type { VendorServicesTabFragment$key } from "/__generated__/core/VendorServicesTabFragment.graphql";
 import type {
   VendorServicesTabFragment_service$data,
   VendorServicesTabFragment_service$key,
 } from "/__generated__/core/VendorServicesTabFragment_service.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { SortableTable, SortableTh } from "/components/SortableTable";
-import type { VendorServicesTabFragment$key } from "/__generated__/core/VendorServicesTabFragment.graphql";
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import type { VendorServicesListQuery } from "/__generated__/core/VendorServicesListQuery.graphql";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 import { CreateServiceDialog } from "../dialogs/CreateServiceDialog";
 import { EditServiceDialog } from "../dialogs/EditServiceDialog";

@@ -1,8 +1,8 @@
-import { graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
+import { graphql } from "relay-runtime";
 
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { TrustCenterAuditGraphUpdateMutation } from "/__generated__/core/TrustCenterAuditGraphUpdateMutation.graphql";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 export const trustCenterAuditUpdateMutation = graphql`
   mutation TrustCenterAuditGraphUpdateMutation($input: UpdateAuditInput!) {

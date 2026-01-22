@@ -4,15 +4,15 @@ import {
   ComboboxPopover,
   ComboboxProvider,
 } from "@ariakit/react";
+import { isEmpty } from "@probo/helpers";
 import {
   type ComponentProps,
   type PropsWithChildren,
   type ReactNode,
 } from "react";
-import { isEmpty } from "@probo/helpers";
 
-import { input } from "../../Atoms/Input/Input";
 import { dropdown, dropdownItem } from "../../Atoms/Dropdown/Dropdown";
+import { input } from "../../Atoms/Input/Input";
 
 type Props = {
   children: ReactNode;

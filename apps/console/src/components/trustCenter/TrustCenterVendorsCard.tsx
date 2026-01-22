@@ -1,24 +1,24 @@
-import { graphql } from "relay-runtime";
-import {
-  Button,
-  Tr,
-  Td,
-  Table,
-  Thead,
-  Tbody,
-  Th,
-  IconChevronDown,
-  IconCheckmark1,
-  IconCrossLargeX,
-  Badge,
-} from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useFragment } from "react-relay";
-import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import {
+  Badge,
+  Button,
+  IconCheckmark1,
+  IconChevronDown,
+  IconCrossLargeX,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@probo/ui";
+import { useMemo, useState } from "react";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { TrustCenterVendorsCardFragment$key } from "/__generated__/core/TrustCenterVendorsCardFragment.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 const trustCenterVendorFragment = graphql`
   fragment TrustCenterVendorsCardFragment on Vendor {

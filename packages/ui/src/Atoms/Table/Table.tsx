@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
   createContext,
   type FC,
@@ -8,7 +9,6 @@ import {
   useContext,
 } from "react";
 import { Link } from "react-router";
-import clsx from "clsx";
 
 import { Card } from "../Card/Card";
 import { IconPlusLarge } from "../Icons";

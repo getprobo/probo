@@ -1,3 +1,4 @@
+import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
@@ -13,11 +14,10 @@ import {
   Select,
   Spinner,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { Suspense, useMemo, useState, type ReactNode } from "react";
+import { type ReactNode, Suspense, useMemo, useState } from "react";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { usePaginatedMeasures } from "/hooks/graph/usePaginatedMeasures";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 type Props = {
   children: ReactNode;

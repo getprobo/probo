@@ -1,47 +1,47 @@
 import {
-  ConnectionHandler,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
+  formatDatetime,
+  formatError,
+  getRightsRequestStateLabel,
+  getRightsRequestStateOptions,
+  getRightsRequestStateVariant,
+  getRightsRequestTypeLabel,
+  getRightsRequestTypeOptions,
+  type GraphQLError,
+  toDateInput,
+} from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
   Breadcrumb,
   Button,
+  Card,
   DropdownItem,
   Field,
-  Option,
   Input,
-  Card,
+  Label,
+  Option,
+  Select,
   Textarea,
   useToast,
-  Select,
-  Label,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 import { Controller } from "react-hook-form";
 import {
-  formatError,
-  type GraphQLError,
-  formatDatetime,
-  toDateInput,
-  getRightsRequestTypeLabel,
-  getRightsRequestTypeOptions,
-  getRightsRequestStateVariant,
-  getRightsRequestStateLabel,
-  getRightsRequestStateOptions,
-} from "@probo/helpers";
+  ConnectionHandler,
+  type PreloadedQuery,
+  usePreloadedQuery,
+} from "react-relay";
 import { z } from "zod";
 
+import type { RightsRequestGraphNodeQuery } from "/__generated__/core/RightsRequestGraphNodeQuery.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { RightsRequestGraphNodeQuery } from "/__generated__/core/RightsRequestGraphNodeQuery.graphql";
 
 import {
   rightsRequestNodeQuery,
+  RightsRequestsConnectionKey,
   useDeleteRightsRequest,
   useUpdateRightsRequest,
-  RightsRequestsConnectionKey,
 } from "../../../hooks/graph/RightsRequestGraph";
 
 const updateRequestSchema = z.object({

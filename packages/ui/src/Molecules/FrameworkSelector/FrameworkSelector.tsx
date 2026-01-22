@@ -1,17 +1,17 @@
 import { useTranslate } from "@probo/i18n";
 
-import { Dropdown, DropdownItem } from "../../Atoms/Dropdown/Dropdown";
-import { IconChevronDown, IconPlusLarge } from "../../Atoms/Icons";
 import { Button } from "../../Atoms/Button/Button";
-import { ISO27001 } from "../../Atoms/Frameworks/ISO27001";
-import { SOC2 } from "../../Atoms/Frameworks/SOC2";
-import { HIPAA } from "../../Atoms/Frameworks/HIPAA";
+import { Dropdown, DropdownItem } from "../../Atoms/Dropdown/Dropdown";
 import { CCPA } from "../../Atoms/Frameworks/CCPA";
-import { GDPR } from "../../Atoms/Frameworks/GDPR";
-import { NIS2 } from "../../Atoms/Frameworks/NIS2";
 import { DORA } from "../../Atoms/Frameworks/DORA";
+import { GDPR } from "../../Atoms/Frameworks/GDPR";
+import { HIPAA } from "../../Atoms/Frameworks/HIPAA";
+import { ISO27001 } from "../../Atoms/Frameworks/ISO27001";
 import { ISO27701 } from "../../Atoms/Frameworks/ISO27701";
 import { ISO42001 } from "../../Atoms/Frameworks/ISO42001";
+import { NIS2 } from "../../Atoms/Frameworks/NIS2";
+import { SOC2 } from "../../Atoms/Frameworks/SOC2";
+import { IconChevronDown, IconPlusLarge } from "../../Atoms/Icons";
 
 const availableFrameworks = [
   {

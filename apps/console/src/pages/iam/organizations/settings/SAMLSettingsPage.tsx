@@ -1,22 +1,22 @@
+import { useTranslate } from "@probo/i18n";
+import { Breadcrumb, Button, Dialog, useDialogRef } from "@probo/ui";
+import { Suspense, useState } from "react";
 import {
   graphql,
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
-  type PreloadedQuery,
 } from "react-relay";
-import { Suspense, useState } from "react";
-import { Breadcrumb, Button, Dialog, useDialogRef } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
 
-import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
 import type { EditSAMLConfigurationFormQuery } from "/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
+import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
 
-import { SAMLConfigurationList } from "./_components/SAMLConfigurationList";
-import { NewSAMLConfigurationForm } from "./_components/NewSAMLConfigurationForm";
 import {
   EditSAMLConfigurationForm,
   samlConfigurationFormQuery,
 } from "./_components/EditSAMLConfigurationForm";
+import { NewSAMLConfigurationForm } from "./_components/NewSAMLConfigurationForm";
+import { SAMLConfigurationList } from "./_components/SAMLConfigurationList";
 import { SAMLDomainVerifyDialog } from "./_components/SAMLDomainVerifyDialog";
 
 export const samlSettingsPageQuery = graphql`

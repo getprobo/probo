@@ -1,6 +1,6 @@
+import { getSnapshotTypeLabel, snapshotTypes } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Option } from "@probo/ui";
-import { snapshotTypes, getSnapshotTypeLabel } from "@probo/helpers";
 
 export function SnapshotTypeOptions() {
   const { __ } = useTranslate();

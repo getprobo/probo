@@ -1,4 +1,11 @@
 import {
+  getTreatment,
+  sprintf,
+  validateSnapshotConsistency,
+} from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import {
   ActionDropdown,
   Avatar,
   Badge,
@@ -15,25 +22,18 @@ import {
   Tabs,
   useConfirm,
 } from "@probo/ui";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet, useNavigate, useParams } from "react-router";
-import { useTranslate } from "@probo/i18n";
-import {
-  getTreatment,
-  sprintf,
-  validateSnapshotConsistency,
-} from "@probo/helpers";
 import { ConnectionHandler } from "relay-runtime";
-import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import { usePageTitle } from "@probo/hooks";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import {
   riskNodeQuery,
   RisksConnectionKey,
   useDeleteRiskMutation,
 } from "/hooks/graph/RiskGraph";
-import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 import FormRiskDialog from "./FormRiskDialog";
 

@@ -1,19 +1,19 @@
+import { lazy } from "@probo/react-lazy";
+import {
+  type AppRoute,
+  loaderFromQueryLoader,
+  withQueryRef,
+} from "@probo/routes";
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { redirect } from "react-router";
-import { lazy } from "@probo/react-lazy";
-import {
-  loaderFromQueryLoader,
-  withQueryRef,
-  type AppRoute,
-} from "@probo/routes";
 
-import { coreEnvironment } from "/environments";
-import { measureNodeQuery, measuresQuery } from "/hooks/graph/MeasureGraph";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import type { MeasureGraphListQuery } from "/__generated__/core/MeasureGraphListQuery.graphql";
 import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
+import { measureNodeQuery, measuresQuery } from "/hooks/graph/MeasureGraph";
 
 export const measureRoutes = [
   {

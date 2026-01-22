@@ -1,10 +1,10 @@
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
-import type { TrustCenterAccessGraphQuery } from "/__generated__/core/TrustCenterAccessGraphQuery.graphql";
 import type {
   TrustCenterAccessGraph_accesses$data,
   TrustCenterAccessGraph_accesses$key,
 } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
+import type { TrustCenterAccessGraphQuery } from "/__generated__/core/TrustCenterAccessGraphQuery.graphql";
 
 export const trustCenterAccessesPaginationFragment = graphql`
   fragment TrustCenterAccessGraph_accesses on TrustCenter

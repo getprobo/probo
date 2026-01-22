@@ -1,6 +1,6 @@
 import { useCopy } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { DialogContent, Button } from "@probo/ui";
+import { Button, DialogContent } from "@probo/ui";
 
 export function SAMLDomainVerifyDialog(props: {
   domainVerificationToken: string;

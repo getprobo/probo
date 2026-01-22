@@ -1,28 +1,28 @@
-import { graphql } from "relay-runtime";
+import { formatDate, getTrustCenterVisibilityOptions, sprintf } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
-  Button,
-  Tr,
-  Td,
-  Table,
-  Thead,
-  Tbody,
-  Th,
-  IconChevronDown,
-  Field,
-  Option,
   Badge,
+  Button,
+  Field,
+  IconArrowLink,
+  IconChevronDown,
   IconPencil,
   IconTrashCan,
-  IconArrowLink,
+  Option,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
+import { useCallback, useMemo, useState } from "react";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback } from "react";
-import { sprintf, getTrustCenterVisibilityOptions, formatDate } from "@probo/helpers";
+import { graphql } from "relay-runtime";
 
 import type {
-  TrustCenterFilesCardFragment$key,
   TrustCenterFilesCardFragment$data,
+  TrustCenterFilesCardFragment$key,
 } from "/__generated__/core/TrustCenterFilesCardFragment.graphql";
 
 const trustCenterFileFragment = graphql`

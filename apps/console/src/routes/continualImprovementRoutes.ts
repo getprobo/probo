@@ -1,19 +1,19 @@
-import { loadQuery } from "react-relay";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { loadQuery } from "react-relay";
 
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import {
-  continualImprovementsQuery,
-  continualImprovementNodeQuery,
-} from "/hooks/graph/ContinualImprovementGraph";
 import type { ContinualImprovementGraphListQuery } from "/__generated__/core/ContinualImprovementGraphListQuery.graphql";
 import type { ContinualImprovementGraphNodeQuery } from "/__generated__/core/ContinualImprovementGraphNodeQuery.graphql";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
+import {
+  continualImprovementNodeQuery,
+  continualImprovementsQuery,
+} from "/hooks/graph/ContinualImprovementGraph";
 
 export const continualImprovementRoutes = [
   {

@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { sprintf } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogFooter,
-  Button,
   Field,
   IconTrashCan,
   useDialogRef,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { sprintf } from "@probo/helpers";
+import { useState } from "react";
 
 type DeleteOrganizationDialogProps = {
   children: React.ReactNode;

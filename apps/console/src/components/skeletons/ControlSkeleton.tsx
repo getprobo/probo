@@ -1,5 +1,5 @@
-import { ActionDropdown, Skeleton, Button, IconPencil } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { ActionDropdown, Button, IconPencil, Skeleton } from "@probo/ui";
 
 /**
  * Skeleton state for the framework control panel

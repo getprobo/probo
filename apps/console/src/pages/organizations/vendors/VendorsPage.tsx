@@ -1,42 +1,42 @@
-import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Avatar,
-  RiskBadge,
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
-} from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
+import { faviconUrl, formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
+  ActionDropdown,
+  Avatar,
+  Button,
+  DropdownItem,
+  IconPlusLarge,
+  IconTrashCan,
+  PageHeader,
+  RiskBadge,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@probo/ui";
+import {
+  type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
-  type PreloadedQuery,
 } from "react-relay";
 import { useParams } from "react-router";
-import { faviconUrl, formatDate } from "@probo/helpers";
 
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
-import {
-  paginatedVendorsFragment,
-  useDeleteVendor,
-  vendorsQuery,
-} from "/hooks/graph/VendorGraph";
 import type { VendorGraphListQuery } from "/__generated__/core/VendorGraphListQuery.graphql";
 import type {
   VendorGraphPaginatedFragment$data,
   VendorGraphPaginatedFragment$key,
 } from "/__generated__/core/VendorGraphPaginatedFragment.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { SortableTable, SortableTh } from "/components/SortableTable";
+import {
+  paginatedVendorsFragment,
+  useDeleteVendor,
+  vendorsQuery,
+} from "/hooks/graph/VendorGraph";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { NodeOf } from "/types";
 
 import { CreateVendorDialog } from "./dialogs/CreateVendorDialog";
 

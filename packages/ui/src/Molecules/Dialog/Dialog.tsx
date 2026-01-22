@@ -1,27 +1,27 @@
+import { useTranslate } from "@probo/i18n";
 import {
-  Root,
-  Trigger,
-  Portal,
-  Overlay,
-  Content,
-  Title,
   Close,
+  Content,
+  Overlay,
+  Portal,
+  Root,
+  Title,
+  Trigger,
 } from "@radix-ui/react-dialog";
+import clsx from "clsx";
 import {
   Children,
   cloneElement,
-  isValidElement,
-  useEffect,
-  useRef,
-  useState,
   type ComponentProps,
   type CSSProperties,
   type HTMLAttributes,
+  isValidElement,
   type ReactNode,
   type RefObject,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
-import { useTranslate } from "@probo/i18n";
-import clsx from "clsx";
 import { tv } from "tailwind-variants";
 
 import { Button } from "../../Atoms/Button/Button";

@@ -1,15 +1,15 @@
+import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
-import { Link, useSearchParams } from "react-router";
-import { z } from "zod";
 import { useState } from "react";
-import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
-import { formatError } from "@probo/helpers";
+import { Link, useSearchParams } from "react-router";
+import { graphql } from "relay-runtime";
+import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import type { VerifyEmailPageMutation } from "/__generated__/iam/VerifyEmailPageMutation.graphql";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
 const verifyEmailMutation = graphql`
   mutation VerifyEmailPageMutation($input: VerifyEmailInput!) {

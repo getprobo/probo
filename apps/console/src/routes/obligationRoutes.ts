@@ -1,19 +1,19 @@
-import { loadQuery } from "react-relay";
 import { lazy } from "@probo/react-lazy";
 import {
+  type AppRoute,
   loaderFromQueryLoader,
   withQueryRef,
-  type AppRoute,
 } from "@probo/routes";
+import { loadQuery } from "react-relay";
 
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import {
-  obligationsQuery,
-  obligationNodeQuery,
-} from "/hooks/graph/ObligationGraph";
 import type { ObligationGraphListQuery } from "/__generated__/core/ObligationGraphListQuery.graphql";
 import type { ObligationGraphNodeQuery } from "/__generated__/core/ObligationGraphNodeQuery.graphql";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
+import {
+  obligationNodeQuery,
+  obligationsQuery,
+} from "/hooks/graph/ObligationGraph";
 
 export const obligationRoutes = [
   {

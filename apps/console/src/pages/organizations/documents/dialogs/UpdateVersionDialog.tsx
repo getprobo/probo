@@ -10,16 +10,16 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useEffect, type RefObject } from "react";
-import { graphql } from "relay-runtime";
+import { type RefObject, useEffect } from "react";
 import { useMutation } from "react-relay";
+import { graphql } from "relay-runtime";
 import { z } from "zod";
 
+import type { DocumentDetailPageDocumentFragment$data } from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
 import type { UpdateVersionDialogCreateMutation } from "/__generated__/core/UpdateVersionDialogCreateMutation.graphql";
 import type { UpdateVersionDialogUpdateMutation } from "/__generated__/core/UpdateVersionDialogUpdateMutation.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { DocumentDetailPageDocumentFragment$data } from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
 
 const createDraftDocument = graphql`
   mutation UpdateVersionDialogCreateMutation(

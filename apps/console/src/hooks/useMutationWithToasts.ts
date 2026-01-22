@@ -1,9 +1,9 @@
+import { formatError, type GraphQLError } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { useToast } from "@probo/ui";
 import { useCallback } from "react";
 import { useMutation, type UseMutationConfig } from "react-relay";
-import { useToast } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import type { MutationParameters, GraphQLTaggedNode } from "relay-runtime";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import type { GraphQLTaggedNode, MutationParameters } from "relay-runtime";
 
 /**
  * A decorated useMutation hook that emits toast notifications on success or error.

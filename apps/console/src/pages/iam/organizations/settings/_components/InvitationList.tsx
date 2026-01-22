@@ -1,17 +1,17 @@
-import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
+import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { type ComponentProps } from "react";
+import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
 
 import type { InvitationListFragment$key } from "/__generated__/iam/InvitationListFragment.graphql";
 import type { InvitationListFragment_RefetchQuery } from "/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
+import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
 import {
+  type Order,
   SortableTable,
   SortableTh,
-  type Order,
 } from "/components/SortableTable";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
 
 import { InvitationListItem } from "./InvitationListItem";
 
