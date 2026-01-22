@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { Card, Field } from "@probo/ui";
 import { useOutletContext } from "react-router";
 
-import type { StateOfApplicabilityGraphNodeQuery$data } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
+import type { StateOfApplicabilityGraphNodeQuery$data } from "#/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
 
 type StateOfApplicabilityNode = NonNullable<
   StateOfApplicabilityGraphNodeQuery$data["node"]

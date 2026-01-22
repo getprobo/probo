@@ -1,7 +1,7 @@
 import { graphql } from "relay-runtime";
 
-import type { TrustCenterGraphUpdateMutation } from "/__generated__/core/TrustCenterGraphUpdateMutation.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import type { TrustCenterGraphUpdateMutation } from "#/__generated__/core/TrustCenterGraphUpdateMutation.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 export const trustCenterQuery = graphql`
   query TrustCenterGraphQuery($organizationId: ID!) {

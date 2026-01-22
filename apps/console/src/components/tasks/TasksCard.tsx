@@ -26,15 +26,15 @@ import {
 } from "react-relay";
 import { Link, useLocation, useParams } from "react-router";
 
-import type { MeasureTasksTabQuery$data } from "/__generated__/core/MeasureTasksTabQuery.graphql";
-import type { TaskFormDialogFragment$key } from "/__generated__/core/TaskFormDialogFragment.graphql";
-import type { TasksCard_TaskRowFragment$key } from "/__generated__/core/TasksCard_TaskRowFragment.graphql";
-import type { TasksPageFragment$data } from "/__generated__/core/TasksPageFragment.graphql";
+import type { MeasureTasksTabQuery$data } from "#/__generated__/core/MeasureTasksTabQuery.graphql";
+import type { TaskFormDialogFragment$key } from "#/__generated__/core/TaskFormDialogFragment.graphql";
+import type { TasksCard_TaskRowFragment$key } from "#/__generated__/core/TasksCard_TaskRowFragment.graphql";
+import type { TasksPageFragment$data } from "#/__generated__/core/TasksPageFragment.graphql";
 import TaskFormDialog, {
   taskUpdateMutation,
-} from "/components/tasks/TaskFormDialog";
-import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/components/tasks/TaskFormDialog";
+import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   tasks:

@@ -33,9 +33,9 @@ import {
 } from "react-relay";
 import { z } from "zod";
 
-import type { RightsRequestGraphNodeQuery } from "/__generated__/core/RightsRequestGraphNodeQuery.graphql";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { RightsRequestGraphNodeQuery } from "#/__generated__/core/RightsRequestGraphNodeQuery.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   rightsRequestNodeQuery,

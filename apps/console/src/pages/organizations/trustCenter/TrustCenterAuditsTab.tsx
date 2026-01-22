@@ -2,9 +2,9 @@ import { useTranslate } from "@probo/i18n";
 import { Spinner } from "@probo/ui";
 import { useOutletContext } from "react-router";
 
-import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
-import { TrustCenterAuditsCard } from "/components/trustCenter/TrustCenterAuditsCard";
-import { useTrustCenterAuditUpdate } from "/hooks/graph/TrustCenterAuditGraph";
+import type { TrustCenterGraphQuery$data } from "#/__generated__/core/TrustCenterGraphQuery.graphql";
+import { TrustCenterAuditsCard } from "#/components/trustCenter/TrustCenterAuditsCard";
+import { useTrustCenterAuditUpdate } from "#/hooks/graph/TrustCenterAuditGraph";
 
 export default function TrustCenterAuditsTab() {
   const { __ } = useTranslate();

@@ -20,16 +20,16 @@ import { useMemo, useState } from "react";
 import { useOutletContext } from "react-router";
 import { z } from "zod";
 
-import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
-import type { TrustCenterAccessGraphCreateMutation } from "/__generated__/core/TrustCenterAccessGraphCreateMutation.graphql";
-import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import type { TrustCenterAccessGraph_accesses$data } from "#/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
+import type { TrustCenterAccessGraphCreateMutation } from "#/__generated__/core/TrustCenterAccessGraphCreateMutation.graphql";
+import type { TrustCenterGraphQuery$data } from "#/__generated__/core/TrustCenterGraphQuery.graphql";
 import {
   createTrustCenterAccessMutation,
   useTrustCenterAccesses,
-} from "/hooks/graph/TrustCenterAccessGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { NodeOf } from "/types";
+} from "#/hooks/graph/TrustCenterAccessGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import type { NodeOf } from "#/types";
 
 import { TrustCenterAccessItem } from "./TrustCenterAccessItem";
 

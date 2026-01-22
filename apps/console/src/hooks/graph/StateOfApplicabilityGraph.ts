@@ -14,9 +14,9 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { StateOfApplicabilityGraphDeleteMutation } from "/__generated__/core/StateOfApplicabilityGraphDeleteMutation.graphql";
-import type { StateOfApplicabilityGraphPaginatedFragment$key } from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
+import type { StateOfApplicabilityGraphDeleteMutation } from "#/__generated__/core/StateOfApplicabilityGraphDeleteMutation.graphql";
+import type { StateOfApplicabilityGraphPaginatedFragment$key } from "#/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "#/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
 
 export const paginatedStateOfApplicabilityQuery = graphql`
   query StateOfApplicabilityGraphPaginatedQuery($organizationId: ID!) {

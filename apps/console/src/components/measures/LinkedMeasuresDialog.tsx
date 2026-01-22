@@ -16,8 +16,8 @@ import {
 } from "@probo/ui";
 import { type ReactNode, Suspense, useMemo, useState } from "react";
 
-import { usePaginatedMeasures } from "/hooks/graph/usePaginatedMeasures";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import { usePaginatedMeasures } from "#/hooks/graph/usePaginatedMeasures";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   children: ReactNode;

@@ -1,8 +1,8 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 
-import type { TrustCenterDocumentGraphUpdateMutation } from "/__generated__/core/TrustCenterDocumentGraphUpdateMutation.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import type { TrustCenterDocumentGraphUpdateMutation } from "#/__generated__/core/TrustCenterDocumentGraphUpdateMutation.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 export const trustCenterDocumentsQuery = graphql`
   query TrustCenterDocumentGraphQuery($organizationId: ID!) {

@@ -16,9 +16,9 @@ import {
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
-import type { TrustCenterGraphQuery } from "/__generated__/core/TrustCenterGraphQuery.graphql";
-import { trustCenterQuery } from "/hooks/graph/TrustCenterGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { TrustCenterGraphQuery } from "#/__generated__/core/TrustCenterGraphQuery.graphql";
+import { trustCenterQuery } from "#/hooks/graph/TrustCenterGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   queryRef: PreloadedQuery<TrustCenterGraphQuery>;

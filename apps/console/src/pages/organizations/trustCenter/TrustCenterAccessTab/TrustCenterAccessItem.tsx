@@ -11,10 +11,10 @@ import {
 } from "@probo/ui";
 import { useCallback, useState } from "react";
 
-import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
-import { deleteTrustCenterAccessMutation } from "/hooks/graph/TrustCenterAccessGraph";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { NodeOf } from "/types";
+import type { TrustCenterAccessGraph_accesses$data } from "#/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
+import { deleteTrustCenterAccessMutation } from "#/hooks/graph/TrustCenterAccessGraph";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import type { NodeOf } from "#/types";
 
 import { TrustCenterAccessEditDialog } from "./TrustCenterAccessEditDialog";
 

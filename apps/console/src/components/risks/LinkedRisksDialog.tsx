@@ -17,8 +17,8 @@ import { type ReactNode, Suspense, useMemo, useState } from "react";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { LinkedRisksDialogQuery } from "/__generated__/core/LinkedRisksDialogQuery.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedRisksDialogQuery } from "#/__generated__/core/LinkedRisksDialogQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const risksQuery = graphql`
   query LinkedRisksDialogQuery($organizationId: ID!) {

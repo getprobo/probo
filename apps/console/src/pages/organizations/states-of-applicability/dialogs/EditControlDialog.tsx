@@ -16,8 +16,8 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { graphql } from "react-relay";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const linkControlMutation = graphql`
   mutation EditControlDialogLinkMutation($input: CreateStateOfApplicabilityControlMappingInput!) {

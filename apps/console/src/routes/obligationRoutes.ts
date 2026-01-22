@@ -6,14 +6,14 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { ObligationGraphListQuery } from "/__generated__/core/ObligationGraphListQuery.graphql";
-import type { ObligationGraphNodeQuery } from "/__generated__/core/ObligationGraphNodeQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
+import type { ObligationGraphListQuery } from "#/__generated__/core/ObligationGraphListQuery.graphql";
+import type { ObligationGraphNodeQuery } from "#/__generated__/core/ObligationGraphNodeQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
 import {
   obligationNodeQuery,
   obligationsQuery,
-} from "/hooks/graph/ObligationGraph";
+} from "#/hooks/graph/ObligationGraph";
 
 export const obligationRoutes = [
   {
@@ -26,7 +26,7 @@ export const obligationRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/obligations/ObligationsPage")),
+      lazy(() => import("#/pages/organizations/obligations/ObligationsPage")),
     ),
   },
   {
@@ -39,7 +39,7 @@ export const obligationRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/obligations/ObligationsPage")),
+      lazy(() => import("#/pages/organizations/obligations/ObligationsPage")),
     ),
   },
   {
@@ -56,7 +56,7 @@ export const obligationRoutes = [
     ),
     Component: withQueryRef(
       lazy(
-        () => import("/pages/organizations/obligations/ObligationDetailsPage"),
+        () => import("#/pages/organizations/obligations/ObligationDetailsPage"),
       ),
     ),
   },
@@ -74,7 +74,7 @@ export const obligationRoutes = [
     ),
     Component: withQueryRef(
       lazy(
-        () => import("/pages/organizations/obligations/ObligationDetailsPage"),
+        () => import("#/pages/organizations/obligations/ObligationDetailsPage"),
       ),
     ),
   },

@@ -23,7 +23,7 @@ import { graphql } from "relay-runtime";
 import type {
   TrustCenterFilesCardFragment$data,
   TrustCenterFilesCardFragment$key,
-} from "/__generated__/core/TrustCenterFilesCardFragment.graphql";
+} from "#/__generated__/core/TrustCenterFilesCardFragment.graphql";
 
 const trustCenterFileFragment = graphql`
   fragment TrustCenterFilesCardFragment on TrustCenterFile {

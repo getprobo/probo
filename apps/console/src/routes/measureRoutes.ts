@@ -8,12 +8,12 @@ import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { redirect } from "react-router";
 
-import type { MeasureGraphListQuery } from "/__generated__/core/MeasureGraphListQuery.graphql";
-import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
-import { measureNodeQuery, measuresQuery } from "/hooks/graph/MeasureGraph";
+import type { MeasureGraphListQuery } from "#/__generated__/core/MeasureGraphListQuery.graphql";
+import type { MeasureGraphNodeQuery } from "#/__generated__/core/MeasureGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
+import { measureNodeQuery, measuresQuery } from "#/hooks/graph/MeasureGraph";
 
 export const measureRoutes = [
   {
@@ -25,7 +25,7 @@ export const measureRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/measures/MeasuresPage")),
+      lazy(() => import("#/pages/organizations/measures/MeasuresPage")),
     ),
     children: [
       {
@@ -43,7 +43,7 @@ export const measureRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/measures/MeasureDetailPage")),
+      lazy(() => import("#/pages/organizations/measures/MeasureDetailPage")),
     ),
     children: [
       {
@@ -59,7 +59,7 @@ export const measureRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/measures/tabs/MeasureRisksTab.tsx"),
+            import("#/pages/organizations/measures/tabs/MeasureRisksTab.tsx"),
         ),
       },
       {
@@ -67,7 +67,7 @@ export const measureRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/measures/tabs/MeasureTasksTab.tsx"),
+            import("#/pages/organizations/measures/tabs/MeasureTasksTab.tsx"),
         ),
       },
       {
@@ -75,7 +75,7 @@ export const measureRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/measures/tabs/MeasureControlsTab.tsx"),
+            import("#/pages/organizations/measures/tabs/MeasureControlsTab.tsx"),
         ),
       },
       {
@@ -83,7 +83,7 @@ export const measureRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/measures/tabs/MeasureEvidencesTab.tsx"),
+            import("#/pages/organizations/measures/tabs/MeasureEvidencesTab.tsx"),
         ),
       },
     ],

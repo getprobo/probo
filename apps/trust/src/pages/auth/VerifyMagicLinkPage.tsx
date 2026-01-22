@@ -8,8 +8,8 @@ import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { getPathPrefix } from "/utils/pathPrefix";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { VerifyMagicLinkPageMutation } from "./__generated__/VerifyMagicLinkPageMutation.graphql";
 import { AuthLayout } from "./AuthLayout";

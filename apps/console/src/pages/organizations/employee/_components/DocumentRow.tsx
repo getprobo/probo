@@ -7,7 +7,7 @@ import { useTranslate } from "@probo/i18n";
 import { Badge, Td, Tr } from "@probo/ui";
 import { graphql, useFragment } from "react-relay";
 
-import type { DocumentRowFragment$key } from "/__generated__/core/DocumentRowFragment.graphql";
+import type { DocumentRowFragment$key } from "#/__generated__/core/DocumentRowFragment.graphql";
 
 const fragment = graphql`
   fragment DocumentRowFragment on SignableDocument {

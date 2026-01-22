@@ -16,13 +16,13 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, usePreloadedQuery } from "react-relay";
 import { Link, Outlet, useNavigate } from "react-router";
 
-import type { MeetingDetailPageMeetingFragment$key } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
-import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
+import type { MeetingDetailPageMeetingFragment$key } from "#/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
+import type { MeetingGraphNodeQuery } from "#/__generated__/core/MeetingGraphNodeQuery.graphql";
 import {
   meetingNodeQuery,
   useDeleteMeetingMutation,
-} from "/hooks/graph/MeetingGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/graph/MeetingGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   UpdateMeetingMinutesDialog,

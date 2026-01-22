@@ -1,9 +1,9 @@
 import { faviconUrl } from "@probo/helpers";
 import { Avatar, Badge, IconCrossLargeX } from "@probo/ui";
 
-import type { VendorGraphSelectQuery } from "/__generated__/core/VendorGraphSelectQuery.graphql.ts";
-import { GraphQLCell } from "/components/table/GraphQLCell";
-import { vendorsSelectQuery } from "/hooks/graph/VendorGraph";
+import type { VendorGraphSelectQuery } from "#/__generated__/core/VendorGraphSelectQuery.graphql.ts";
+import { GraphQLCell } from "#/components/table/GraphQLCell";
+import { vendorsSelectQuery } from "#/hooks/graph/VendorGraph";
 
 type Vendor = {
   id: string;

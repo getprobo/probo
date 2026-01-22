@@ -20,8 +20,8 @@ import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
 import { z } from "zod";
 
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import { useCreateContinualImprovement } from "../../../../hooks/graph/ContinualImprovementGraph";
 

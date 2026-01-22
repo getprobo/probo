@@ -32,11 +32,11 @@ import {
 import { useParams } from "react-router";
 import { z } from "zod";
 
-import type { ObligationGraphNodeQuery } from "/__generated__/core/ObligationGraphNodeQuery.graphql";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { ObligationGraphNodeQuery } from "#/__generated__/core/ObligationGraphNodeQuery.graphql";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   obligationNodeQuery,

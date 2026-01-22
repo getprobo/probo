@@ -26,14 +26,14 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 
-import type { AuditGraphListQuery } from "/__generated__/core/AuditGraphListQuery.graphql";
+import type { AuditGraphListQuery } from "#/__generated__/core/AuditGraphListQuery.graphql";
 import type {
   AuditsPageFragment$data,
   AuditsPageFragment$key,
-} from "/__generated__/core/AuditsPageFragment.graphql";
-import { SortableTable } from "/components/SortableTable";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/AuditsPageFragment.graphql";
+import { SortableTable } from "#/components/SortableTable";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import { auditsQuery, useDeleteAudit } from "../../../hooks/graph/AuditGraph";
 

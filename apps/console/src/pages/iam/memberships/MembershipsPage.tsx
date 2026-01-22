@@ -10,7 +10,7 @@ import {
 import { useMemo, useState } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { MembershipsPageQuery } from "/__generated__/iam/MembershipsPageQuery.graphql";
+import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQuery.graphql";
 
 import { InvitationCard } from "./_components/InvitationCard";
 import { MembershipCard } from "./_components/MembershipCard";

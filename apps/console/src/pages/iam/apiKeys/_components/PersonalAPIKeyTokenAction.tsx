@@ -3,8 +3,8 @@ import { useTranslate } from "@probo/i18n";
 import { Button, useDialogRef, useToast } from "@probo/ui";
 import { useRefetchableFragment } from "react-relay";
 
-import type { PersonalAPIKeyRowFragment$key } from "/__generated__/iam/PersonalAPIKeyRowFragment.graphql";
-import type { PersonalAPIKeyRowRefetchQuery } from "/__generated__/iam/PersonalAPIKeyRowRefetchQuery.graphql";
+import type { PersonalAPIKeyRowFragment$key } from "#/__generated__/iam/PersonalAPIKeyRowFragment.graphql";
+import type { PersonalAPIKeyRowRefetchQuery } from "#/__generated__/iam/PersonalAPIKeyRowRefetchQuery.graphql";
 
 import { personalAPIKeyRowFragment } from "./PersonalAPIKeyRow";
 import { PersonalAPIKeyTokenDialog } from "./PersonalAPIKeyTokenDialog";

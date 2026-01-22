@@ -1,8 +1,8 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { ViewerLayoutQuery } from "/__generated__/iam/ViewerLayoutQuery.graphql";
-import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+import type { ViewerLayoutQuery } from "#/__generated__/iam/ViewerLayoutQuery.graphql";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import { ViewerLayout, viewerLayoutQuery } from "./ViewerLayout";
 import { ViewerLayoutLoading } from "./ViewerLayoutLoading";

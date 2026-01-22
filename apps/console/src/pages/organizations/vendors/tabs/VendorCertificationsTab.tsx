@@ -18,8 +18,8 @@ import { useState } from "react";
 import { Controller } from "react-hook-form";
 import { useOutletContext, useParams } from "react-router";
 
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import { useVendorForm } from "/hooks/forms/useVendorForm";
+import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+import { useVendorForm } from "#/hooks/forms/useVendorForm";
 
 /**
  * Vendor certifications tab

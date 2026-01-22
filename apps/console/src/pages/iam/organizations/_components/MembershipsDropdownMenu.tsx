@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { MembershipsDropdownMenuQuery } from "/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
+import type { MembershipsDropdownMenuQuery } from "#/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
 
 import { MembershipsDropdownMenuItem } from "./MembershipsDropdownMenuItem";
 

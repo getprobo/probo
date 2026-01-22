@@ -8,7 +8,7 @@ import {
   Store,
 } from "relay-runtime";
 
-import { getPathPrefix } from "/utils/pathPrefix";
+import { getPathPrefix } from "#/utils/pathPrefix";
 
 export class UnAuthenticatedError extends Error {
   constructor() {

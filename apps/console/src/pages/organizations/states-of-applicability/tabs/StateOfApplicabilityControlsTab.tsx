@@ -17,9 +17,9 @@ import {
 import { Suspense, useMemo, useRef } from "react";
 import { graphql, useRefetchableFragment } from "react-relay";
 
-import type { StateOfApplicabilityControlsTabFragment$key } from "/__generated__/core/StateOfApplicabilityControlsTabFragment.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { StateOfApplicabilityControlsTabFragment$key } from "#/__generated__/core/StateOfApplicabilityControlsTabFragment.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   EditControlDialog,

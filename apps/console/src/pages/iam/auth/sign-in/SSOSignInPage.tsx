@@ -9,7 +9,7 @@ import {
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { SSOSignInPageQuery } from "/__generated__/iam/SSOSignInPageQuery.graphql";
+import type { SSOSignInPageQuery } from "#/__generated__/iam/SSOSignInPageQuery.graphql";
 
 const ssoAvailabilityQuery = graphql`
   query SSOSignInPageQuery($email: EmailAddr!) {

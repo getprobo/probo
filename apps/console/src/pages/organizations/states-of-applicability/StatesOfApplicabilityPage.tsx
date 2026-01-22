@@ -27,17 +27,17 @@ import { useParams } from "react-router";
 import type {
   StateOfApplicabilityGraphPaginatedFragment$data,
   StateOfApplicabilityGraphPaginatedFragment$key,
-} from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
-import type { StateOfApplicabilityListQuery } from "/__generated__/core/StateOfApplicabilityListQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
+} from "#/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "#/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
+import type { StateOfApplicabilityListQuery } from "#/__generated__/core/StateOfApplicabilityListQuery.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
 import {
   paginatedStateOfApplicabilityFragment,
   paginatedStateOfApplicabilityQuery,
   useDeleteStateOfApplicability,
-} from "/hooks/graph/StateOfApplicabilityGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/hooks/graph/StateOfApplicabilityGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import { CreateStateOfApplicabilityDialog } from "./dialogs/CreateStateOfApplicabilityDialog";
 

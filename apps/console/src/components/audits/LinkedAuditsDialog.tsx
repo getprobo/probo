@@ -20,10 +20,10 @@ import { graphql } from "relay-runtime";
 import type {
   LinkedAuditsDialogFragment$data,
   LinkedAuditsDialogFragment$key,
-} from "/__generated__/core/LinkedAuditsDialogFragment.graphql";
-import type { LinkedAuditsDialogQuery } from "/__generated__/core/LinkedAuditsDialogQuery.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/LinkedAuditsDialogFragment.graphql";
+import type { LinkedAuditsDialogQuery } from "#/__generated__/core/LinkedAuditsDialogQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 const auditsQuery = graphql`
   query LinkedAuditsDialogQuery($organizationId: ID!) {

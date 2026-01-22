@@ -2,9 +2,9 @@ import { useTranslate } from "@probo/i18n";
 import { Spinner } from "@probo/ui";
 import { useOutletContext } from "react-router";
 
-import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
-import { TrustCenterDocumentsCard } from "/components/trustCenter/TrustCenterDocumentsCard";
-import { useUpdateDocumentVisibilityMutation } from "/hooks/graph/TrustCenterDocumentGraph";
+import type { TrustCenterGraphQuery$data } from "#/__generated__/core/TrustCenterGraphQuery.graphql";
+import { TrustCenterDocumentsCard } from "#/components/trustCenter/TrustCenterDocumentsCard";
+import { useUpdateDocumentVisibilityMutation } from "#/hooks/graph/TrustCenterDocumentGraph";
 
 export default function TrustCenterDocumentsTab() {
   const { __ } = useTranslate();

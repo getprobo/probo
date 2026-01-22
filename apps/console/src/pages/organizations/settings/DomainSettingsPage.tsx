@@ -3,7 +3,7 @@ import { Button, Card, IconPlusLarge } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
+import type { DomainSettingsPageQuery } from "#/__generated__/core/DomainSettingsPageQuery.graphql";
 
 import { DomainCard } from "./_components/DomainCard";
 import { NewDomainDialog } from "./_components/NewDomainDialog";

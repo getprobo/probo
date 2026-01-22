@@ -3,9 +3,9 @@ import { Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { graphql, useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
-import type { RiskControlsTabFragment$key } from "/__generated__/core/RiskControlsTabFragment.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { RiskControlsTabFragment$key } from "#/__generated__/core/RiskControlsTabFragment.graphql";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 export const controlsFragment = graphql`
   fragment RiskControlsTabFragment on Risk

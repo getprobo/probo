@@ -4,6 +4,15 @@ import { importX } from "eslint-plugin-import-x";
 export const importsConfigs = [
   importX.flatConfigs.recommended,
   {
+    ...importX.flatConfigs.typescript,
+    settings: {
+      "import-x/resolver-next": createTypeScriptImportResolver({
+        alwaysTryTypes: true,
+        project: "tsconfig.json",
+      }),
+    },
+  },
+  {
     rules: {
       "import-x/order": [
         "error",
@@ -14,7 +23,7 @@ export const importsConfigs = [
           "pathGroups": [
             {
               // Aliases
-              pattern: "/**",
+              pattern: "#/**",
               group: "external",
               position: "after",
             },
@@ -27,15 +36,6 @@ export const importsConfigs = [
           },
         },
       ],
-    },
-  },
-  {
-    ...importX.flatConfigs.typescript,
-    settings: {
-      "import-x/resolver-next": createTypeScriptImportResolver({
-        alwaysTryTypes: true,
-        project: "tsconfig.json",
-      }),
     },
   },
 ];

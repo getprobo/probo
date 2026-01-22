@@ -17,14 +17,14 @@ import { useCallback, useState } from "react";
 import { useOutletContext } from "react-router";
 import { z } from "zod";
 
-import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
-import { TrustCenterFilesCard } from "/components/trustCenter/TrustCenterFilesCard";
+import type { TrustCenterGraphQuery$data } from "#/__generated__/core/TrustCenterGraphQuery.graphql";
+import { TrustCenterFilesCard } from "#/components/trustCenter/TrustCenterFilesCard";
 import {
   useCreateTrustCenterFileMutation,
   useDeleteTrustCenterFileMutation,
   useUpdateTrustCenterFileMutation,
-} from "/hooks/graph/TrustCenterFileGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+} from "#/hooks/graph/TrustCenterFileGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const acceptedFileTypes = {
   "application/csv": [".csv"],

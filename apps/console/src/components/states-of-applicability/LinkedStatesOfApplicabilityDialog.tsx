@@ -13,8 +13,8 @@ import { Suspense, useRef, useState } from "react";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { LinkedStatesOfApplicabilityDialogQuery } from "/__generated__/core/LinkedStatesOfApplicabilityDialogQuery.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedStatesOfApplicabilityDialogQuery } from "#/__generated__/core/LinkedStatesOfApplicabilityDialogQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const query = graphql`
     query LinkedStatesOfApplicabilityDialogQuery($organizationId: ID!) {

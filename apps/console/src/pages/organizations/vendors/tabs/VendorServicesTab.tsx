@@ -21,15 +21,15 @@ import { useFragment, useRefetchableFragment } from "react-relay";
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import type { VendorServicesListQuery } from "/__generated__/core/VendorServicesListQuery.graphql";
-import type { VendorServicesTabFragment$key } from "/__generated__/core/VendorServicesTabFragment.graphql";
+import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { VendorServicesListQuery } from "#/__generated__/core/VendorServicesListQuery.graphql";
+import type { VendorServicesTabFragment$key } from "#/__generated__/core/VendorServicesTabFragment.graphql";
 import type {
   VendorServicesTabFragment_service$data,
   VendorServicesTabFragment_service$key,
-} from "/__generated__/core/VendorServicesTabFragment_service.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+} from "#/__generated__/core/VendorServicesTabFragment_service.graphql";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CreateServiceDialog } from "../dialogs/CreateServiceDialog";
 import { EditServiceDialog } from "../dialogs/EditServiceDialog";

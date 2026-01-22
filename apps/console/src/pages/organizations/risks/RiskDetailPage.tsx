@@ -26,14 +26,14 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { ConnectionHandler } from "relay-runtime";
 
-import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
+import type { RiskGraphNodeQuery } from "#/__generated__/core/RiskGraphNodeQuery.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
 import {
   riskNodeQuery,
   RisksConnectionKey,
   useDeleteRiskMutation,
-} from "/hooks/graph/RiskGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/graph/RiskGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import FormRiskDialog from "./FormRiskDialog";
 

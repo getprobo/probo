@@ -16,14 +16,14 @@ import { type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import type { z } from "zod";
 
-import type { CreateDocumentDialogMutation } from "/__generated__/core/CreateDocumentDialogMutation.graphql";
-import { ControlledField } from "/components/form/ControlledField";
-import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
-import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { documentSchema, useDocumentForm } from "/hooks/forms/useDocumentForm";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { CreateDocumentDialogMutation } from "#/__generated__/core/CreateDocumentDialogMutation.graphql";
+import { ControlledField } from "#/components/form/ControlledField";
+import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
+import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { documentSchema, useDocumentForm } from "#/hooks/forms/useDocumentForm";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   trigger?: ReactNode;

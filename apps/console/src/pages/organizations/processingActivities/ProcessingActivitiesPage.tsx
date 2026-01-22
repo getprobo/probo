@@ -43,20 +43,20 @@ import { useParams } from "react-router";
 import type {
   ProcessingActivitiesPageDPIAFragment$data,
   ProcessingActivitiesPageDPIAFragment$key,
-} from "/__generated__/core/ProcessingActivitiesPageDPIAFragment.graphql";
+} from "#/__generated__/core/ProcessingActivitiesPageDPIAFragment.graphql";
 import type {
   ProcessingActivitiesPageFragment$data,
   ProcessingActivitiesPageFragment$key,
-} from "/__generated__/core/ProcessingActivitiesPageFragment.graphql";
+} from "#/__generated__/core/ProcessingActivitiesPageFragment.graphql";
 import type {
   ProcessingActivitiesPageTIAFragment$data,
   ProcessingActivitiesPageTIAFragment$key,
-} from "/__generated__/core/ProcessingActivitiesPageTIAFragment.graphql";
-import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/ProcessingActivitiesPageTIAFragment.graphql";
+import type { ProcessingActivityGraphListQuery } from "#/__generated__/core/ProcessingActivityGraphListQuery.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import {
   getLawfulBasisLabel,

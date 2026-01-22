@@ -6,10 +6,10 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { TrustCenterGraphQuery } from "/__generated__/core/TrustCenterGraphQuery.graphql";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
+import type { TrustCenterGraphQuery } from "#/__generated__/core/TrustCenterGraphQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
 
 import { trustCenterQuery } from "../hooks/graph/TrustCenterGraph";
 
@@ -26,7 +26,7 @@ export const trustCenterRoutes = [
       ),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/trustCenter/TrustCenterPage")),
+      lazy(() => import("#/pages/organizations/trustCenter/TrustCenterPage")),
     ),
     children: [
       {
@@ -34,7 +34,7 @@ export const trustCenterRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/trustCenter/TrustCenterOverviewTab"),
+            import("#/pages/organizations/trustCenter/TrustCenterOverviewTab"),
         ),
       },
       {
@@ -42,14 +42,14 @@ export const trustCenterRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/trustCenter/TrustCenterReferencesTab"),
+            import("#/pages/organizations/trustCenter/TrustCenterReferencesTab"),
         ),
       },
       {
         path: "audits",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterAuditsTab"),
+          () => import("#/pages/organizations/trustCenter/TrustCenterAuditsTab"),
         ),
       },
       {
@@ -57,14 +57,14 @@ export const trustCenterRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/trustCenter/TrustCenterDocumentsTab"),
+            import("#/pages/organizations/trustCenter/TrustCenterDocumentsTab"),
         ),
       },
       {
         path: "files",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterFilesTab"),
+          () => import("#/pages/organizations/trustCenter/TrustCenterFilesTab"),
         ),
       },
       {
@@ -72,7 +72,7 @@ export const trustCenterRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/trustCenter/TrustCenterVendorsTab"),
+            import("#/pages/organizations/trustCenter/TrustCenterVendorsTab"),
         ),
       },
       {
@@ -80,7 +80,7 @@ export const trustCenterRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessTab"),
+            import("#/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessTab"),
         ),
       },
     ],

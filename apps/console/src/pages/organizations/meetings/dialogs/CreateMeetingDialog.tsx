@@ -14,10 +14,10 @@ import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { CreateMeetingDialogCreateMutation } from "/__generated__/core/CreateMeetingDialogCreateMutation.graphql";
-import { PeopleMultiSelectField } from "/components/form/PeopleMultiSelectField";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { CreateMeetingDialogCreateMutation } from "#/__generated__/core/CreateMeetingDialogCreateMutation.graphql";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const createMeetingMutation = graphql`
   mutation CreateMeetingDialogCreateMutation(

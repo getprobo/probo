@@ -35,10 +35,10 @@ import {
 import { useNavigate } from "react-router";
 import { z } from "zod";
 
-import type { AuditGraphNodeQuery } from "/__generated__/core/AuditGraphNodeQuery.graphql";
-import { ControlledField } from "/components/form/ControlledField";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { AuditGraphNodeQuery } from "#/__generated__/core/AuditGraphNodeQuery.graphql";
+import { ControlledField } from "#/components/form/ControlledField";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   auditNodeQuery,

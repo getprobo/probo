@@ -8,13 +8,13 @@ import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { redirect } from "react-router";
 
-import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql";
-import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { RisksPageSkeleton } from "/components/skeletons/RisksPageSkeleton.tsx";
-import { coreEnvironment } from "/environments";
-import { riskNodeQuery, risksQuery } from "/hooks/graph/RiskGraph";
+import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery.graphql";
+import type { RiskGraphNodeQuery } from "#/__generated__/core/RiskGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { RisksPageSkeleton } from "#/components/skeletons/RisksPageSkeleton.tsx";
+import { coreEnvironment } from "#/environments";
+import { riskNodeQuery, risksQuery } from "#/hooks/graph/RiskGraph";
 
 export const riskRoutes = [
   {
@@ -27,7 +27,7 @@ export const riskRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/risks/RisksPage")),
+      lazy(() => import("#/pages/organizations/risks/RisksPage")),
     ),
   },
   {
@@ -40,7 +40,7 @@ export const riskRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/risks/RisksPage")),
+      lazy(() => import("#/pages/organizations/risks/RisksPage")),
     ),
   },
   {
@@ -52,7 +52,7 @@ export const riskRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/risks/RiskDetailPage")),
+      lazy(() => import("#/pages/organizations/risks/RiskDetailPage")),
     ),
     children: [
       {
@@ -67,28 +67,28 @@ export const riskRoutes = [
         path: "overview",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/risks/tabs/RiskOverviewTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskOverviewTab.tsx"),
         ),
       },
       {
         path: "measures",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/risks/tabs/RiskMeasuresTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskMeasuresTab.tsx"),
         ),
       },
       {
         path: "documents",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/risks/tabs/RiskDocumentsTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskDocumentsTab.tsx"),
         ),
       },
       {
         path: "controls",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/risks/tabs/RiskControlsTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskControlsTab.tsx"),
         ),
       },
       {
@@ -96,7 +96,7 @@ export const riskRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
-            import("/pages/organizations/risks/tabs/RiskObligationsTab.tsx"),
+            import("#/pages/organizations/risks/tabs/RiskObligationsTab.tsx"),
         ),
       },
     ],
@@ -110,7 +110,7 @@ export const riskRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/risks/RiskDetailPage")),
+      lazy(() => import("#/pages/organizations/risks/RiskDetailPage")),
     ),
     children: [
       {
@@ -125,7 +125,7 @@ export const riskRoutes = [
         path: "overview",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/risks/tabs/RiskOverviewTab.tsx"),
+          () => import("#/pages/organizations/risks/tabs/RiskOverviewTab.tsx"),
         ),
       },
     ],

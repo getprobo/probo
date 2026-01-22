@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { SCIMEventListItemFragment$key } from "/__generated__/iam/SCIMEventListItemFragment.graphql";
+import type { SCIMEventListItemFragment$key } from "#/__generated__/iam/SCIMEventListItemFragment.graphql";
 
 const SCIMEventListItemFragment = graphql`
   fragment SCIMEventListItemFragment on SCIMEvent {

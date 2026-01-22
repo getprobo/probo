@@ -7,7 +7,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const signUpFromIvitationMutation = graphql`
   mutation SignUpFromInvitationPageMutation(

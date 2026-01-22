@@ -25,19 +25,19 @@ import {
 import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
 
-import type { StateOfApplicabilityDetailPageExportMutation } from "/__generated__/core/StateOfApplicabilityDetailPageExportMutation.graphql";
-import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { SnapshotBanner } from "/components/SnapshotBanner";
+import type { StateOfApplicabilityDetailPageExportMutation } from "#/__generated__/core/StateOfApplicabilityDetailPageExportMutation.graphql";
+import type { StateOfApplicabilityGraphNodeQuery } from "#/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
 import {
   StateOfApplicabilityConnectionKey,
   stateOfApplicabilityNodeQuery,
   updateStateOfApplicabilityMutation,
   useDeleteStateOfApplicability,
-} from "/hooks/graph/StateOfApplicabilityGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/graph/StateOfApplicabilityGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import StateOfApplicabilityControlsTab from "./tabs/StateOfApplicabilityControlsTab";
 

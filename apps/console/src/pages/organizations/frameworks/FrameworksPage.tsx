@@ -22,13 +22,13 @@ import {
 } from "react-relay";
 import { Link } from "react-router";
 
-import type { FrameworkGraphListQuery } from "/__generated__/core/FrameworkGraphListQuery.graphql";
-import type { FrameworksPageCardFragment$key } from "/__generated__/core/FrameworksPageCardFragment.graphql";
+import type { FrameworkGraphListQuery } from "#/__generated__/core/FrameworkGraphListQuery.graphql";
+import type { FrameworksPageCardFragment$key } from "#/__generated__/core/FrameworksPageCardFragment.graphql";
 import {
   frameworksQuery,
   useDeleteFrameworkMutation,
-} from "/hooks/graph/FrameworkGraph";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+} from "#/hooks/graph/FrameworkGraph";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 

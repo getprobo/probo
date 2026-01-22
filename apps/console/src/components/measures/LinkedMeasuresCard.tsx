@@ -20,8 +20,8 @@ import { useMemo, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { LinkedMeasuresCardFragment$key } from "/__generated__/core/LinkedMeasuresCardFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedMeasuresCardFragment$key } from "#/__generated__/core/LinkedMeasuresCardFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { LinkedMeasureDialog } from "./LinkedMeasuresDialog.tsx";
 

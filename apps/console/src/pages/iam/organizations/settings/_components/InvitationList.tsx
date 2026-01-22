@@ -3,15 +3,15 @@ import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { type ComponentProps } from "react";
 import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
 
-import type { InvitationListFragment$key } from "/__generated__/iam/InvitationListFragment.graphql";
-import type { InvitationListFragment_RefetchQuery } from "/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
-import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
+import type { InvitationListFragment$key } from "#/__generated__/iam/InvitationListFragment.graphql";
+import type { InvitationListFragment_RefetchQuery } from "#/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
+import type { MembersPage_invitationsTotalCountFragment$key } from "#/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
 import {
   type Order,
   SortableTable,
   SortableTh,
-} from "/components/SortableTable";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/components/SortableTable";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { InvitationListItem } from "./InvitationListItem";
 

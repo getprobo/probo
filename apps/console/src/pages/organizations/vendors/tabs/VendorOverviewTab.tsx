@@ -16,14 +16,14 @@ import { useMemo } from "react";
 import { graphql, useFragment } from "react-relay";
 import { useOutletContext, useParams } from "react-router";
 
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "/__generated__/core/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
-import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "/__generated__/core/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
-import { ControlledField } from "/components/form/ControlledField";
-import { CountriesField } from "/components/form/CountriesField";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { useVendorForm } from "/hooks/forms/useVendorForm";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "#/__generated__/core/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
+import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "#/__generated__/core/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
+import { ControlledField } from "#/components/form/ControlledField";
+import { CountriesField } from "#/components/form/CountriesField";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { useVendorForm } from "#/hooks/forms/useVendorForm";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { DeleteBusinessAssociateAgreementDialog } from "../dialogs/DeleteBusinessAssociateAgreementDialog";
 import { DeleteDataPrivacyAgreementDialog } from "../dialogs/DeleteDataPrivacyAgreementDialog";

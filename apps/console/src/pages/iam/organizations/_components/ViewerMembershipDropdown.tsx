@@ -13,8 +13,8 @@ import {
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ViewerMembershipDropdownFragment$key } from "/__generated__/iam/ViewerMembershipDropdownFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { ViewerMembershipDropdownFragment$key } from "#/__generated__/iam/ViewerMembershipDropdownFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 export const fragment = graphql`
   fragment ViewerMembershipDropdownFragment on Organization {

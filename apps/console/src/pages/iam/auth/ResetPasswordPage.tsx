@@ -7,8 +7,8 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { ResetPasswordPageMutation } from "/__generated__/iam/ResetPasswordPageMutation.graphql";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import type { ResetPasswordPageMutation } from "#/__generated__/iam/ResetPasswordPageMutation.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const resetPasswordMutation = graphql`
   mutation ResetPasswordPageMutation($input: ResetPasswordInput!) {

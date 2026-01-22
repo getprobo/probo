@@ -13,8 +13,8 @@ import {
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const createFrameworkMutation = graphql`
   mutation FrameworkFormDialogMutation(

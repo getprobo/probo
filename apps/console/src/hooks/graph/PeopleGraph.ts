@@ -16,10 +16,10 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { PeopleGraphDeleteMutation } from "/__generated__/core/PeopleGraphDeleteMutation.graphql";
-import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
-import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
-import type { PeopleGraphQuery } from "/__generated__/core/PeopleGraphQuery.graphql";
+import type { PeopleGraphDeleteMutation } from "#/__generated__/core/PeopleGraphDeleteMutation.graphql";
+import type { PeopleGraphPaginatedFragment$key } from "#/__generated__/core/PeopleGraphPaginatedFragment.graphql";
+import type { PeopleGraphPaginatedQuery } from "#/__generated__/core/PeopleGraphPaginatedQuery.graphql";
+import type { PeopleGraphQuery } from "#/__generated__/core/PeopleGraphQuery.graphql";
 
 export const peopleQuery = graphql`
   query PeopleGraphQuery($organizationId: ID!, $filter: PeopleFilter) {

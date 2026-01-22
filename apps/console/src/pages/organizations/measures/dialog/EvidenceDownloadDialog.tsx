@@ -4,8 +4,8 @@ import { Breadcrumb, Dialog, DialogContent, Spinner } from "@probo/ui";
 import { Suspense, useEffect } from "react";
 import { useLazyLoadQuery } from "react-relay";
 
-import type { EvidenceGraphFileQuery } from "/__generated__/core/EvidenceGraphFileQuery.graphql";
-import { evidenceFileQuery } from "/hooks/graph/EvidenceGraph";
+import type { EvidenceGraphFileQuery } from "#/__generated__/core/EvidenceGraphFileQuery.graphql";
+import { evidenceFileQuery } from "#/hooks/graph/EvidenceGraph";
 
 type Props = {
   evidenceId: string;

@@ -13,10 +13,10 @@ import { clsx } from "clsx";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { InvitationListItemFragment$key } from "/__generated__/iam/InvitationListItemFragment.graphql";
-import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { InvitationListItemFragment$key } from "#/__generated__/iam/InvitationListItemFragment.graphql";
+import type { MembersPage_invitationsTotalCountFragment$key } from "#/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { invitationCountFragment } from "../MembersPage";
 

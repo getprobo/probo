@@ -3,8 +3,8 @@ import { useTranslate } from "@probo/i18n";
 import { Card, PageHeader, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { EmployeeDocumentsPageQuery } from "/__generated__/core/EmployeeDocumentsPageQuery.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { EmployeeDocumentsPageQuery } from "#/__generated__/core/EmployeeDocumentsPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { DocumentRow } from "./_components/DocumentRow";
 

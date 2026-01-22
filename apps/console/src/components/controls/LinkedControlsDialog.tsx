@@ -27,10 +27,10 @@ import { useDebounceCallback } from "usehooks-ts";
 import type {
   LinkedControlsDialogFragment$data,
   LinkedControlsDialogFragment$key,
-} from "/__generated__/core/LinkedControlsDialogFragment.graphql";
-import type { LinkedControlsDialogQuery } from "/__generated__/core/LinkedControlsDialogQuery.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/LinkedControlsDialogFragment.graphql";
+import type { LinkedControlsDialogQuery } from "#/__generated__/core/LinkedControlsDialogQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 const query = graphql`
   query LinkedControlsDialogQuery($organizationId: ID!) {

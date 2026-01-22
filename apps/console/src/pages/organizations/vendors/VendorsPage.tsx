@@ -23,20 +23,20 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 
-import type { VendorGraphListQuery } from "/__generated__/core/VendorGraphListQuery.graphql";
+import type { VendorGraphListQuery } from "#/__generated__/core/VendorGraphListQuery.graphql";
 import type {
   VendorGraphPaginatedFragment$data,
   VendorGraphPaginatedFragment$key,
-} from "/__generated__/core/VendorGraphPaginatedFragment.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { SortableTable, SortableTh } from "/components/SortableTable";
+} from "#/__generated__/core/VendorGraphPaginatedFragment.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
 import {
   paginatedVendorsFragment,
   useDeleteVendor,
   vendorsQuery,
-} from "/hooks/graph/VendorGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/hooks/graph/VendorGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import { CreateVendorDialog } from "./dialogs/CreateVendorDialog";
 

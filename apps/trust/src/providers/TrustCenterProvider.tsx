@@ -1,6 +1,6 @@
 import { createContext, type ReactNode } from "react";
 
-import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 export const TrustCenterContext = createContext<
   TrustGraphCurrentQuery$data["currentTrustCenter"] | null

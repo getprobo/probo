@@ -19,10 +19,10 @@ import { z } from "zod";
 import { defaultPageSize,
   SortableCellHead,
   SortableDataTable,
-} from "/components/table/SortableDataTable.tsx";
-import { useMutateField } from "/hooks/useMutateField.tsx";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
-import { useStateWithSchema } from "/hooks/useStateWithSchema.ts";
+} from "#/components/table/SortableDataTable.tsx";
+import { useMutateField } from "#/hooks/useMutateField.tsx";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts.ts";
+import { useStateWithSchema } from "#/hooks/useStateWithSchema.ts";
 
 type ColumnDefinition = { label: string; field: string } | string;
 

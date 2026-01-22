@@ -12,9 +12,9 @@ import {
 import { forwardRef, useImperativeHandle } from "react";
 import { z } from "zod";
 
-import type { MeetingDetailPageMeetingFragment$data } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
-import { useUpdateMeetingMutation } from "/hooks/graph/MeetingGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import type { MeetingDetailPageMeetingFragment$data } from "#/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
+import { useUpdateMeetingMutation } from "#/hooks/graph/MeetingGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 type Props = {
   meeting: MeetingDetailPageMeetingFragment$data;

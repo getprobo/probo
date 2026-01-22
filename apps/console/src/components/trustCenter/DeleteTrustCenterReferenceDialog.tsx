@@ -10,8 +10,8 @@ import {
   useDialogRef,
 } from "@probo/ui";
 
-import { deleteTrustCenterReferenceMutation } from "/hooks/graph/TrustCenterReferenceGraph";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { deleteTrustCenterReferenceMutation } from "#/hooks/graph/TrustCenterReferenceGraph";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 type Props = {
   children: React.ReactNode;

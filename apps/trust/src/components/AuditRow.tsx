@@ -18,8 +18,8 @@ import { useFragment, useMutation } from "react-relay";
 import { useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
-import { useMutationWithToasts } from "/hooks/useMutationWithToast";
-import { Viewer } from "/providers/Viewer";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
+import { Viewer } from "#/providers/Viewer";
 
 import type { AuditRow_requestAccessMutation } from "./__generated__/AuditRow_requestAccessMutation.graphql";
 import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadMutation.graphql";

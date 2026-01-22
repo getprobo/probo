@@ -14,8 +14,8 @@ import {
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { LinkedRisksCardFragment$key } from "/__generated__/core/LinkedRisksCardFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedRisksCardFragment$key } from "#/__generated__/core/LinkedRisksCardFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { LinkedRisksDialog } from "./LinkedRisksDialog.tsx";
 

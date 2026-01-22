@@ -8,8 +8,8 @@ import { Link, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { VerifyEmailPageMutation } from "/__generated__/iam/VerifyEmailPageMutation.graphql";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import type { VerifyEmailPageMutation } from "#/__generated__/iam/VerifyEmailPageMutation.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const verifyEmailMutation = graphql`
   mutation VerifyEmailPageMutation($input: VerifyEmailInput!) {

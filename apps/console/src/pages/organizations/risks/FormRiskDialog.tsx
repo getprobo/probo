@@ -21,22 +21,22 @@ import { type ReactNode, useMemo } from "react";
 import type { FieldErrors } from "react-hook-form";
 import { graphql } from "relay-runtime";
 
-import type { FormRiskDialogMutation } from "/__generated__/core/FormRiskDialogMutation.graphql";
-import type { FormRiskDialogUpdateRiskMutation } from "/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
+import type { FormRiskDialogMutation } from "#/__generated__/core/FormRiskDialogMutation.graphql";
+import type { FormRiskDialogUpdateRiskMutation } from "#/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
 import {
   ControlledField,
   ControlledSelect,
-} from "/components/form/ControlledField";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
+} from "#/components/form/ControlledField";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import {
   type RiskData,
   type RiskForm,
   type RiskKey,
   useRiskForm,
-} from "/hooks/forms/useRiskForm";
-import { useFetchQuery } from "/hooks/useFetchQuery";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/forms/useRiskForm";
+import { useFetchQuery } from "#/hooks/useFetchQuery";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   trigger?: ReactNode;

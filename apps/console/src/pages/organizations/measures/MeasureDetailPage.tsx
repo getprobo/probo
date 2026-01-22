@@ -37,15 +37,15 @@ import {
 } from "react-relay";
 import { Outlet, useNavigate, useParams } from "react-router";
 
-import type { MeasureDetailPageTasksCountQuery } from "/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
-import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
+import type { MeasureDetailPageTasksCountQuery } from "#/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
+import type { MeasureGraphNodeQuery } from "#/__generated__/core/MeasureGraphNodeQuery.graphql";
 import {
   MeasureConnectionKey,
   measureNodeQuery,
   useDeleteMeasureMutation,
   useUpdateMeasure,
-} from "/hooks/graph/MeasureGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/graph/MeasureGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
 

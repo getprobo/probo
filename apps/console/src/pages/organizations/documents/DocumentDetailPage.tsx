@@ -53,28 +53,28 @@ import { z } from "zod";
 import type {
   DocumentDetailPageDocumentFragment$data,
   DocumentDetailPageDocumentFragment$key,
-} from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
-import type { DocumentDetailPageExportPDFMutation } from "/__generated__/core/DocumentDetailPageExportPDFMutation.graphql";
-import type { DocumentDetailPageUpdateMutation } from "/__generated__/core/DocumentDetailPageUpdateMutation.graphql";
-import type { DocumentGraphNodeQuery } from "/__generated__/core/DocumentGraphNodeQuery.graphql";
+} from "#/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentDetailPageExportPDFMutation } from "#/__generated__/core/DocumentDetailPageExportPDFMutation.graphql";
+import type { DocumentDetailPageUpdateMutation } from "#/__generated__/core/DocumentDetailPageUpdateMutation.graphql";
+import type { DocumentGraphNodeQuery } from "#/__generated__/core/DocumentGraphNodeQuery.graphql";
 import {
   PdfDownloadDialog,
   type PdfDownloadDialogRef,
-} from "/components/documents/PdfDownloadDialog";
-import { ControlledField } from "/components/form/ControlledField";
-import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
-import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
+} from "#/components/documents/PdfDownloadDialog";
+import { ControlledField } from "#/components/form/ControlledField";
+import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
+import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import {
   documentNodeQuery,
   useDeleteDocumentMutation,
   useDeleteDraftDocumentVersionMutation,
-} from "/hooks/graph/DocumentGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { CurrentUser } from "/providers/CurrentUser";
-import type { NodeOf } from "/types.ts";
+} from "#/hooks/graph/DocumentGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { CurrentUser } from "#/providers/CurrentUser";
+import type { NodeOf } from "#/types.ts";
 
 import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
 

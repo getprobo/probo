@@ -2,9 +2,9 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { EmployeeDocumentSignaturePageQuery } from "/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { CoreRelayProvider } from "/providers/CoreRelayProvider";
+import type { EmployeeDocumentSignaturePageQuery } from "#/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import {
   EmployeeDocumentSignaturePage,

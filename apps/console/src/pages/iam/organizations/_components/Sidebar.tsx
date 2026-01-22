@@ -25,8 +25,8 @@ import {
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { SidebarFragment$key } from "/__generated__/iam/SidebarFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { SidebarFragment$key } from "#/__generated__/iam/SidebarFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
     fragment SidebarFragment on Organization {

@@ -21,15 +21,15 @@ import { useFragment, useRefetchableFragment } from "react-relay";
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { VendorContactsListQuery } from "/__generated__/core/VendorContactsListQuery.graphql";
-import type { VendorContactsTabFragment$key } from "/__generated__/core/VendorContactsTabFragment.graphql";
+import type { VendorContactsListQuery } from "#/__generated__/core/VendorContactsListQuery.graphql";
+import type { VendorContactsTabFragment$key } from "#/__generated__/core/VendorContactsTabFragment.graphql";
 import type {
   VendorContactsTabFragment_contact$data,
   VendorContactsTabFragment_contact$key,
-} from "/__generated__/core/VendorContactsTabFragment_contact.graphql";
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+} from "#/__generated__/core/VendorContactsTabFragment_contact.graphql";
+import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CreateContactDialog } from "../dialogs/CreateContactDialog";
 import { EditContactDialog } from "../dialogs/EditContactDialog";

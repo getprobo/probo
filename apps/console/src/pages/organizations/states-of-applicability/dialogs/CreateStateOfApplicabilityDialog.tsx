@@ -13,12 +13,12 @@ import { Suspense } from "react";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 
-import type { StateOfApplicabilityGraphCreateMutation } from "/__generated__/core/StateOfApplicabilityGraphCreateMutation.graphql";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { createStateOfApplicabilityMutation } from "/hooks/graph/StateOfApplicabilityGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { StateOfApplicabilityGraphCreateMutation } from "#/__generated__/core/StateOfApplicabilityGraphCreateMutation.graphql";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { createStateOfApplicabilityMutation } from "#/hooks/graph/StateOfApplicabilityGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   children: ReactNode;

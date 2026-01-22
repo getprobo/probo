@@ -27,14 +27,14 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { SnapshotGraphListQuery } from "/__generated__/core/SnapshotGraphListQuery.graphql";
+import type { SnapshotGraphListQuery } from "#/__generated__/core/SnapshotGraphListQuery.graphql";
 import type {
   SnapshotsPageFragment$data,
   SnapshotsPageFragment$key,
-} from "/__generated__/core/SnapshotsPageFragment.graphql";
-import { snapshotsQuery, useDeleteSnapshot } from "/hooks/graph/SnapshotGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/SnapshotsPageFragment.graphql";
+import { snapshotsQuery, useDeleteSnapshot } from "#/hooks/graph/SnapshotGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import SnapshotFormDialog from "./dialog/SnapshotFormDialog";
 

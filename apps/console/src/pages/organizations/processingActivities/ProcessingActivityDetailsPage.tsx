@@ -32,12 +32,12 @@ import {
 import { useParams } from "react-router";
 import { z } from "zod";
 
-import type { ProcessingActivityGraphNodeQuery } from "/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { ProcessingActivityGraphNodeQuery } from "#/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { VendorsMultiSelectField } from "#/components/form/VendorsMultiSelectField";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   DataProtectionImpactAssessmentOptions,

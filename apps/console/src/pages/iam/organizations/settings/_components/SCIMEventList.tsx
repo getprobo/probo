@@ -2,9 +2,9 @@ import { useTranslate } from "@probo/i18n";
 import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { graphql, usePaginationFragment } from "react-relay";
 
-import type { SCIMEventListFragment$key } from "/__generated__/iam/SCIMEventListFragment.graphql";
-import type { SCIMEventListPaginationQuery } from "/__generated__/iam/SCIMEventListPaginationQuery.graphql";
-import { SortableTable } from "/components/SortableTable";
+import type { SCIMEventListFragment$key } from "#/__generated__/iam/SCIMEventListFragment.graphql";
+import type { SCIMEventListPaginationQuery } from "#/__generated__/iam/SCIMEventListPaginationQuery.graphql";
+import { SortableTable } from "#/components/SortableTable";
 
 import { SCIMEventListItem } from "./SCIMEventListItem";
 

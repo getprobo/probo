@@ -6,14 +6,14 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { RightsRequestGraphListQuery } from "/__generated__/core/RightsRequestGraphListQuery.graphql";
-import type { RightsRequestGraphNodeQuery } from "/__generated__/core/RightsRequestGraphNodeQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
+import type { RightsRequestGraphListQuery } from "#/__generated__/core/RightsRequestGraphListQuery.graphql";
+import type { RightsRequestGraphNodeQuery } from "#/__generated__/core/RightsRequestGraphNodeQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
 import {
   rightsRequestNodeQuery,
   rightsRequestsQuery,
-} from "/hooks/graph/RightsRequestGraph";
+} from "#/hooks/graph/RightsRequestGraph";
 
 export const rightsRequestRoutes = [
   {
@@ -30,7 +30,7 @@ export const rightsRequestRoutes = [
     ),
     Component: withQueryRef(
       lazy(
-        () => import("/pages/organizations/rightsRequests/RightsRequestsPage"),
+        () => import("#/pages/organizations/rightsRequests/RightsRequestsPage"),
       ),
     ),
   },
@@ -49,7 +49,7 @@ export const rightsRequestRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/rightsRequests/RightsRequestDetailsPage"),
+          import("#/pages/organizations/rightsRequests/RightsRequestDetailsPage"),
       ),
     ),
   },

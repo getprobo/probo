@@ -13,12 +13,12 @@ import { graphql } from "react-relay";
 import { useNavigate } from "react-router";
 import { useWindowSize } from "usehooks-ts";
 
-import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
-import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "/__generated__/core/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
-import type { EmployeeDocumentSignaturePageQuery } from "/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
-import type { EmployeeDocumentSignaturePageSignMutation } from "/__generated__/core/EmployeeDocumentSignaturePageSignMutation.graphql";
-import { PDFPreview } from "/components/documents/PDFPreview";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "#/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
+import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "#/__generated__/core/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
+import type { EmployeeDocumentSignaturePageQuery } from "#/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
+import type { EmployeeDocumentSignaturePageSignMutation } from "#/__generated__/core/EmployeeDocumentSignaturePageSignMutation.graphql";
+import { PDFPreview } from "#/components/documents/PDFPreview";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { VersionActions } from "./_components/VersionActions";
 import { VersionRow } from "./_components/VersionRow";

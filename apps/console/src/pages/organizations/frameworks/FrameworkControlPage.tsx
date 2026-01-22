@@ -19,16 +19,16 @@ import {
 import { useNavigate, useOutletContext } from "react-router";
 import { graphql, type MutationParameters } from "relay-runtime";
 
-import type { FrameworkDetailPageFragment$data } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
-import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
-import { LinkedAuditsCard } from "/components/audits/LinkedAuditsCard";
-import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
-import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
-import { LinkedObligationsCard } from "/components/obligations/LinkedObligationsCard";
-import { LinkedSnapshotsCard } from "/components/snapshots/LinkedSnapshotsCard";
-import { LinkedStatesOfApplicabilityCard } from "/components/states-of-applicability/LinkedStatesOfApplicabilityCard";
-import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { FrameworkDetailPageFragment$data } from "#/__generated__/core/FrameworkDetailPageFragment.graphql";
+import type { FrameworkGraphControlNodeQuery } from "#/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
+import { LinkedAuditsCard } from "#/components/audits/LinkedAuditsCard";
+import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard";
+import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
+import { LinkedObligationsCard } from "#/components/obligations/LinkedObligationsCard";
+import { LinkedSnapshotsCard } from "#/components/snapshots/LinkedSnapshotsCard";
+import { LinkedStatesOfApplicabilityCard } from "#/components/states-of-applicability/LinkedStatesOfApplicabilityCard";
+import { frameworkControlNodeQuery } from "#/hooks/graph/FrameworkGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 

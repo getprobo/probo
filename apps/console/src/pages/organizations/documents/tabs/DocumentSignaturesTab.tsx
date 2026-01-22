@@ -13,14 +13,14 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
-import type { DocumentDetailPageDocumentFragment$data } from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
-import type { DocumentSignaturesTab_signature$key } from "/__generated__/core/DocumentSignaturesTab_signature.graphql.ts";
-import type { DocumentSignaturesTab_version$key } from "/__generated__/core/DocumentSignaturesTab_version.graphql.ts";
-import type { DocumentSignaturesTabRefetchQuery } from "/__generated__/core/DocumentSignaturesTabRefetchQuery.graphql";
-import { usePeople } from "/hooks/graph/PeopleGraph.ts";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
-import { useOrganizationId } from "/hooks/useOrganizationId.ts";
-import type { ItemOf, NodeOf } from "/types";
+import type { DocumentDetailPageDocumentFragment$data } from "#/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentSignaturesTab_signature$key } from "#/__generated__/core/DocumentSignaturesTab_signature.graphql.ts";
+import type { DocumentSignaturesTab_version$key } from "#/__generated__/core/DocumentSignaturesTab_version.graphql.ts";
+import type { DocumentSignaturesTabRefetchQuery } from "#/__generated__/core/DocumentSignaturesTabRefetchQuery.graphql";
+import { usePeople } from "#/hooks/graph/PeopleGraph.ts";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts.ts";
+import { useOrganizationId } from "#/hooks/useOrganizationId.ts";
+import type { ItemOf, NodeOf } from "#/types";
 
 type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 

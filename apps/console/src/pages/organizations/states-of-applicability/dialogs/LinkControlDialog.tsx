@@ -20,7 +20,7 @@ import {
 import { forwardRef, Suspense, useImperativeHandle, useMemo, useState } from "react";
 import { graphql, useLazyLoadQuery } from "react-relay";
 
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const linkControlQuery = graphql`
   query LinkControlDialogQuery($stateOfApplicabilityId: ID!) {

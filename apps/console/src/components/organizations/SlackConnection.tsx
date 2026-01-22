@@ -2,7 +2,7 @@ import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Card } from "@probo/ui";
 
-import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import type { TrustCenterGraphQuery$data } from "#/__generated__/core/TrustCenterGraphQuery.graphql";
 
 type Props = {
   canUpdate: boolean;

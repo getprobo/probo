@@ -8,9 +8,9 @@ import type { OperationType } from "relay-runtime";
 import type {
   AssetsPageFragment$data,
   AssetsPageFragment$key,
-} from "/__generated__/core/AssetsPageFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/AssetsPageFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import { SortableTable } from "../SortableTable";
 

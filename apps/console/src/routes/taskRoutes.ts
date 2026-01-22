@@ -6,10 +6,10 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { TaskGraphQuery } from "/__generated__/core/TaskGraphQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
-import { tasksQuery } from "/hooks/graph/TaskGraph";
+import type { TaskGraphQuery } from "#/__generated__/core/TaskGraphQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
+import { tasksQuery } from "#/hooks/graph/TaskGraph";
 export const taskRoutes = [
   {
     path: "tasks",
@@ -20,7 +20,7 @@ export const taskRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/tasks/TasksPage")),
+      lazy(() => import("#/pages/organizations/tasks/TasksPage")),
     ),
   },
 ] satisfies AppRoute[];

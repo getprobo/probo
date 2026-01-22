@@ -20,11 +20,11 @@ import { useLazyLoadQuery } from "react-relay";
 import type {
   TrustCenterReferenceGraphQuery$data,
   TrustCenterReferenceGraphQuery,
-} from "/__generated__/core/TrustCenterReferenceGraphQuery.graphql";
+} from "#/__generated__/core/TrustCenterReferenceGraphQuery.graphql";
 import {
   trustCenterReferencesQuery,
   useUpdateTrustCenterReferenceRankMutation,
-} from "/hooks/graph/TrustCenterReferenceGraph";
+} from "#/hooks/graph/TrustCenterReferenceGraph";
 
 import { DeleteTrustCenterReferenceDialog } from "./DeleteTrustCenterReferenceDialog";
 import {

@@ -5,10 +5,10 @@ import { useCallback } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { EditSAMLConfigurationForm_updateMutation } from "/__generated__/iam/EditSAMLConfigurationForm_updateMutation.graphql";
-import type { EditSAMLConfigurationFormQuery } from "/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { EditSAMLConfigurationForm_updateMutation } from "#/__generated__/iam/EditSAMLConfigurationForm_updateMutation.graphql";
+import type { EditSAMLConfigurationFormQuery } from "#/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   SAMLConfigurationForm,

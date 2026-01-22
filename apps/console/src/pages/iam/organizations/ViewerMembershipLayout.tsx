@@ -4,9 +4,9 @@ import { Suspense } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, Outlet } from "react-router";
 
-import type { ViewerMembershipLayoutQuery } from "/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
-import { CoreRelayProvider } from "/providers/CoreRelayProvider";
-import { CurrentUser } from "/providers/CurrentUser";
+import type { ViewerMembershipLayoutQuery } from "#/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
+import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
+import { CurrentUser } from "#/providers/CurrentUser";
 
 import { MembershipsDropdown } from "./_components/MembershipsDropdown";
 import { Sidebar } from "./_components/Sidebar";

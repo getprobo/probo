@@ -6,8 +6,8 @@ import { Suspense } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { PersonalAPIKeyRow_revokeMutation } from "/__generated__/iam/PersonalAPIKeyRow_revokeMutation.graphql";
-import type { PersonalAPIKeyRowFragment$key } from "/__generated__/iam/PersonalAPIKeyRowFragment.graphql";
+import type { PersonalAPIKeyRow_revokeMutation } from "#/__generated__/iam/PersonalAPIKeyRow_revokeMutation.graphql";
+import type { PersonalAPIKeyRowFragment$key } from "#/__generated__/iam/PersonalAPIKeyRowFragment.graphql";
 
 import { PersonalAPIKeyTokenAction } from "./PersonalAPIKeyTokenAction";
 

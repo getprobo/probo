@@ -20,17 +20,17 @@ import { Link } from "react-router";
 import type { OperationType } from "relay-runtime";
 import { z } from "zod";
 
-import type { AssetGraphDeleteMutation } from "/__generated__/core/AssetGraphDeleteMutation.graphql";
+import type { AssetGraphDeleteMutation } from "#/__generated__/core/AssetGraphDeleteMutation.graphql";
 import type {
   AssetsPageFragment$data,
   AssetsPageFragment$key,
-} from "/__generated__/core/AssetsPageFragment.graphql";
+} from "#/__generated__/core/AssetsPageFragment.graphql";
 import {
   createAssetMutation,
   deleteAssetMutation,
   updateAssetMutation,
-} from "/hooks/graph/AssetGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/graph/AssetGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { EditableTable } from "../table/EditableTable";
 import { PeopleCell } from "../table/PeopleCell";

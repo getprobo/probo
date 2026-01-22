@@ -23,8 +23,8 @@ import { useCallback, useMemo, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { TrustCenterAuditsCardFragment$key } from "/__generated__/core/TrustCenterAuditsCardFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { TrustCenterAuditsCardFragment$key } from "#/__generated__/core/TrustCenterAuditsCardFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const trustCenterAuditFragment = graphql`
   fragment TrustCenterAuditsCardFragment on Audit {

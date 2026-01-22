@@ -25,8 +25,8 @@ import { useMemo, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { LinkedSnapshotsCardFragment$key } from "/__generated__/core/LinkedSnapshotsCardFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedSnapshotsCardFragment$key } from "#/__generated__/core/LinkedSnapshotsCardFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { LinkedSnapshotsDialog } from "./LinkedSnapshotsDialog";
 

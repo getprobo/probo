@@ -21,15 +21,15 @@ import {
 } from "react-relay";
 import { z } from "zod";
 
-import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
-import type { TrustCenterAccessGraphLoadDocumentAccessesQuery } from "/__generated__/core/TrustCenterAccessGraphLoadDocumentAccessesQuery.graphql";
+import type { TrustCenterAccessGraph_accesses$data } from "#/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
+import type { TrustCenterAccessGraphLoadDocumentAccessesQuery } from "#/__generated__/core/TrustCenterAccessGraphLoadDocumentAccessesQuery.graphql";
 import {
   loadTrustCenterAccessDocumentAccessesQuery,
   updateTrustCenterAccessMutation,
-} from "/hooks/graph/TrustCenterAccessGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { NodeOf } from "/types";
+} from "#/hooks/graph/TrustCenterAccessGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import type { NodeOf } from "#/types";
 
 import { TrustCenterDocumentAccessList } from "./TrustCenterDocumentAccessList";
 

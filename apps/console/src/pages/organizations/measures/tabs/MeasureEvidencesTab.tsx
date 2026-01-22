@@ -25,12 +25,12 @@ import {
 import { useNavigate, useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { MeasureEvidencesTabFragment$key } from "/__generated__/core/MeasureEvidencesTabFragment.graphql";
-import type { MeasureEvidencesTabFragment_evidence$key } from "/__generated__/core/MeasureEvidencesTabFragment_evidence.graphql";
-import { SortableTable } from "/components/SortableTable";
-import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { MeasureEvidencesTabFragment$key } from "#/__generated__/core/MeasureEvidencesTabFragment.graphql";
+import type { MeasureEvidencesTabFragment_evidence$key } from "#/__generated__/core/MeasureEvidencesTabFragment_evidence.graphql";
+import { SortableTable } from "#/components/SortableTable";
+import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
 import { EvidenceDownloadDialog } from "../dialog/EvidenceDownloadDialog";

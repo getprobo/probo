@@ -12,8 +12,8 @@ import {
 import { graphql } from "react-relay";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const updateDataPrivacyAgreementMutation = graphql`
   mutation EditDataPrivacyAgreementDialogMutation(

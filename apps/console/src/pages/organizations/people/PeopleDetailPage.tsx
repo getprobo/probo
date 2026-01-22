@@ -15,13 +15,13 @@ import {
 } from "react-relay";
 import { Outlet } from "react-router";
 
-import type { PeopleGraphNodeQuery } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
+import type { PeopleGraphNodeQuery } from "#/__generated__/core/PeopleGraphNodeQuery.graphql";
 import {
   PeopleConnectionKey,
   peopleNodeQuery,
   useDeletePeople,
-} from "/hooks/graph/PeopleGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/graph/PeopleGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   queryRef: PreloadedQuery<PeopleGraphNodeQuery>;

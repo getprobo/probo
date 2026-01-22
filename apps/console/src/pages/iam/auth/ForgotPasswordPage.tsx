@@ -8,8 +8,8 @@ import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { ForgotPasswordPageMutation } from "/__generated__/iam/ForgotPasswordPageMutation.graphql";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import type { ForgotPasswordPageMutation } from "#/__generated__/iam/ForgotPasswordPageMutation.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const sendInstructionsMutation = graphql`
   mutation ForgotPasswordPageMutation($input: ForgotPasswordInput!) {

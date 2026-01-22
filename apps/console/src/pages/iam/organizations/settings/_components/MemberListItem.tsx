@@ -15,9 +15,9 @@ import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { MemberListItemFragment$key } from "/__generated__/iam/MemberListItemFragment.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { MemberListItemFragment$key } from "#/__generated__/iam/MemberListItemFragment.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { EditMemberDialog } from "./EditMemberDialog";
 

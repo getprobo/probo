@@ -20,9 +20,9 @@ import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
 import { z } from "zod";
 
-import { AuditSelectField } from "/components/form/AuditSelectField";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { AuditSelectField } from "#/components/form/AuditSelectField";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import { useCreateNonconformity } from "../../../../hooks/graph/NonconformityGraph";
 

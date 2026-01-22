@@ -6,14 +6,14 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
-import type { ProcessingActivityGraphNodeQuery } from "/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
+import type { ProcessingActivityGraphListQuery } from "#/__generated__/core/ProcessingActivityGraphListQuery.graphql";
+import type { ProcessingActivityGraphNodeQuery } from "#/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
 import {
   processingActivitiesQuery,
   processingActivityNodeQuery,
-} from "/hooks/graph/ProcessingActivityGraph";
+} from "#/hooks/graph/ProcessingActivityGraph";
 
 export const processingActivityRoutes = [
   {
@@ -32,7 +32,7 @@ export const processingActivityRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/processingActivities/ProcessingActivitiesPage"),
+          import("#/pages/organizations/processingActivities/ProcessingActivitiesPage"),
       ),
     ),
   },
@@ -52,7 +52,7 @@ export const processingActivityRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/processingActivities/ProcessingActivitiesPage"),
+          import("#/pages/organizations/processingActivities/ProcessingActivitiesPage"),
       ),
     ),
   },
@@ -71,7 +71,7 @@ export const processingActivityRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/processingActivities/ProcessingActivityDetailsPage"),
+          import("#/pages/organizations/processingActivities/ProcessingActivityDetailsPage"),
       ),
     ),
   },
@@ -90,7 +90,7 @@ export const processingActivityRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/processingActivities/ProcessingActivityDetailsPage"),
+          import("#/pages/organizations/processingActivities/ProcessingActivityDetailsPage"),
       ),
     ),
   },

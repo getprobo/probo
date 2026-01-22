@@ -13,11 +13,11 @@ import {
 import { useState } from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
 
-import type { SCIMConfigurationCreateMutation } from "/__generated__/iam/SCIMConfigurationCreateMutation.graphql";
-import type { SCIMConfigurationDeleteMutation } from "/__generated__/iam/SCIMConfigurationDeleteMutation.graphql";
-import type { SCIMConfigurationFragment$key } from "/__generated__/iam/SCIMConfigurationFragment.graphql";
-import type { SCIMConfigurationRegenerateTokenMutation } from "/__generated__/iam/SCIMConfigurationRegenerateTokenMutation.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { SCIMConfigurationCreateMutation } from "#/__generated__/iam/SCIMConfigurationCreateMutation.graphql";
+import type { SCIMConfigurationDeleteMutation } from "#/__generated__/iam/SCIMConfigurationDeleteMutation.graphql";
+import type { SCIMConfigurationFragment$key } from "#/__generated__/iam/SCIMConfigurationFragment.graphql";
+import type { SCIMConfigurationRegenerateTokenMutation } from "#/__generated__/iam/SCIMConfigurationRegenerateTokenMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const SCIMConfigurationFragment = graphql`
   fragment SCIMConfigurationFragment on SCIMConfiguration {

@@ -3,7 +3,7 @@ import { Combobox, ComboboxItem, Field } from "@probo/ui";
 import { type ComponentProps, Suspense, useMemo, useState } from "react";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 
-import { usePaginatedMeasures } from "/hooks/graph/usePaginatedMeasures";
+import { usePaginatedMeasures } from "#/hooks/graph/usePaginatedMeasures";
 
 type Props<
   TFieldValues extends FieldValues = FieldValues,

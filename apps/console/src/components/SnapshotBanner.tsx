@@ -9,7 +9,7 @@ import { IconClock } from "@probo/ui";
 import { graphql, useLazyLoadQuery } from "react-relay";
 import { useLocation } from "react-router";
 
-import type { SnapshotBannerQuery } from "/__generated__/core/SnapshotBannerQuery.graphql";
+import type { SnapshotBannerQuery } from "#/__generated__/core/SnapshotBannerQuery.graphql";
 
 const snapshotQuery = graphql`
   query SnapshotBannerQuery($snapshotId: ID!) {

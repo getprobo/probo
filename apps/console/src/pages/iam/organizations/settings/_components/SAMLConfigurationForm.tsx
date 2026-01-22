@@ -13,7 +13,7 @@ import {
 import { Controller } from "react-hook-form";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const defaultValues: SAMLConfigurationFormData = {
   emailDomain: "",

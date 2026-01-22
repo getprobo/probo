@@ -5,7 +5,7 @@ import { z } from "zod";
 import type {
   useRiskFormFragment$data,
   useRiskFormFragment$key,
-} from "/__generated__/core/useRiskFormFragment.graphql";
+} from "#/__generated__/core/useRiskFormFragment.graphql";
 
 import { useFormWithSchema } from "../useFormWithSchema";
 

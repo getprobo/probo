@@ -1,7 +1,7 @@
 import { useTranslate } from "@probo/i18n";
 import { Table, Tbody, Th, Thead, Tr } from "@probo/ui";
 
-import type { PersonalAPIKeyListFragment$data } from "/__generated__/iam/PersonalAPIKeyListFragment.graphql";
+import type { PersonalAPIKeyListFragment$data } from "#/__generated__/iam/PersonalAPIKeyListFragment.graphql";
 
 import { PersonalAPIKeyRow } from "./PersonalAPIKeyRow";
 

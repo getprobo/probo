@@ -22,13 +22,13 @@ import {
 import type { PreloadedQuery } from "react-relay";
 import { useParams } from "react-router";
 
-import type { RiskGraphFragment$data } from "/__generated__/core/RiskGraphFragment.graphql";
-import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import { useDeleteRiskMutation, useRisksQuery } from "/hooks/graph/RiskGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+import type { RiskGraphFragment$data } from "#/__generated__/core/RiskGraphFragment.graphql";
+import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
+import { useDeleteRiskMutation, useRisksQuery } from "#/hooks/graph/RiskGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import FormRiskDialog from "./FormRiskDialog";
 

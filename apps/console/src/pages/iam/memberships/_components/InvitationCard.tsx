@@ -4,8 +4,8 @@ import { Button, Card, useToast } from "@probo/ui";
 import { useFragment, useMutation } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
-import type { InvitationCardFragment$key } from "/__generated__/iam/InvitationCardFragment.graphql";
-import type { InvitationCardMutation } from "/__generated__/iam/InvitationCardMutation.graphql";
+import type { InvitationCardFragment$key } from "#/__generated__/iam/InvitationCardFragment.graphql";
+import type { InvitationCardMutation } from "#/__generated__/iam/InvitationCardMutation.graphql";
 
 const fragment = graphql`
   fragment InvitationCardFragment on Invitation {

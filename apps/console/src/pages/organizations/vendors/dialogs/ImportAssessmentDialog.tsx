@@ -11,8 +11,8 @@ import type { ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const schema = z.object({
   url: z.string().url(),

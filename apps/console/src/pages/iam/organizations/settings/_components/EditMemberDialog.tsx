@@ -13,10 +13,10 @@ import {
 import { use, useState } from "react";
 import { graphql } from "relay-runtime";
 
-import type { MemberListItemFragment$data } from "/__generated__/iam/MemberListItemFragment.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { CurrentUser } from "/providers/CurrentUser";
+import type { MemberListItemFragment$data } from "#/__generated__/iam/MemberListItemFragment.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { CurrentUser } from "#/providers/CurrentUser";
 
 const updateMembershipMutation = graphql`
   mutation EditMemberDialog_updateMutation($input: UpdateMembershipInput!) {

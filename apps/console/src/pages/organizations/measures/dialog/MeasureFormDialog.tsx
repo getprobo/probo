@@ -19,12 +19,12 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { MeasureFormDialogMeasureFragment$key } from "/__generated__/core/MeasureFormDialogMeasureFragment.graphql";
-import { ControlledSelect } from "/components/form/ControlledField";
-import { useUpdateMeasure } from "/hooks/graph/MeasureGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { MeasureFormDialogMeasureFragment$key } from "#/__generated__/core/MeasureFormDialogMeasureFragment.graphql";
+import { ControlledSelect } from "#/components/form/ControlledField";
+import { useUpdateMeasure } from "#/hooks/graph/MeasureGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const measureFragment = graphql`
   fragment MeasureFormDialogMeasureFragment on Measure {

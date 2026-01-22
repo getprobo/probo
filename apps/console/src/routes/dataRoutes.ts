@@ -6,10 +6,10 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { DatumGraphListQuery } from "/__generated__/core/DatumGraphListQuery.graphql";
-import type { DatumGraphNodeQuery } from "/__generated__/core/DatumGraphNodeQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
+import type { DatumGraphListQuery } from "#/__generated__/core/DatumGraphListQuery.graphql";
+import type { DatumGraphNodeQuery } from "#/__generated__/core/DatumGraphNodeQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
 
 import { dataQuery, datumNodeQuery } from "../hooks/graph/DatumGraph";
 
@@ -24,7 +24,7 @@ export const dataRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/data/DataPage")),
+      lazy(() => import("#/pages/organizations/data/DataPage")),
     ),
   },
   {
@@ -37,7 +37,7 @@ export const dataRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/data/DataPage")),
+      lazy(() => import("#/pages/organizations/data/DataPage")),
     ),
   },
   {

@@ -18,12 +18,12 @@ import { useFragment, useMutation, useRefetchableFragment } from "react-relay";
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { ComplianceReportListQuery } from "/__generated__/core/ComplianceReportListQuery.graphql";
-import type { VendorComplianceTabFragment$key } from "/__generated__/core/VendorComplianceTabFragment.graphql";
-import type { VendorComplianceTabFragment_report$key } from "/__generated__/core/VendorComplianceTabFragment_report.graphql";
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import type { ComplianceReportListQuery } from "#/__generated__/core/ComplianceReportListQuery.graphql";
+import type { VendorComplianceTabFragment$key } from "#/__generated__/core/VendorComplianceTabFragment.graphql";
+import type { VendorComplianceTabFragment_report$key } from "#/__generated__/core/VendorComplianceTabFragment_report.graphql";
+import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 export const complianceReportsFragment = graphql`
   fragment VendorComplianceTabFragment on Vendor

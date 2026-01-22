@@ -13,8 +13,8 @@ import {
 import type { Vendor } from "@probo/vendors";
 import { type ReactNode } from "react";
 
-import { useCreateVendorMutation } from "/hooks/graph/VendorGraph";
-import { useVendorSearch } from "/hooks/useVendorSearch";
+import { useCreateVendorMutation } from "#/hooks/graph/VendorGraph";
+import { useVendorSearch } from "#/hooks/useVendorSearch";
 
 type Props = {
   children: ReactNode;

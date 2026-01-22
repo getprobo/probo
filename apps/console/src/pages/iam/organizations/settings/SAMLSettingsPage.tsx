@@ -8,8 +8,8 @@ import {
   useQueryLoader,
 } from "react-relay";
 
-import type { EditSAMLConfigurationFormQuery } from "/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
-import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
+import type { EditSAMLConfigurationFormQuery } from "#/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
+import type { SAMLSettingsPageQuery } from "#/__generated__/iam/SAMLSettingsPageQuery.graphql";
 
 import {
   EditSAMLConfigurationForm,

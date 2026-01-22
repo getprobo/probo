@@ -2,14 +2,14 @@ import { lazy } from "@probo/react-lazy";
 import { type AppRoute, loaderFromQueryLoader, withQueryRef } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton.tsx";
-import { coreEnvironment } from "/environments";
+import type { StateOfApplicabilityGraphNodeQuery } from "#/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "#/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton.tsx";
+import { coreEnvironment } from "#/environments";
 import {
   paginatedStateOfApplicabilityQuery,
   stateOfApplicabilityNodeQuery,
-} from "/hooks/graph/StateOfApplicabilityGraph";
+} from "#/hooks/graph/StateOfApplicabilityGraph";
 
 export const statesOfApplicabilityRoutes = [
   {
@@ -23,7 +23,7 @@ export const statesOfApplicabilityRoutes = [
       ),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/states-of-applicability/StatesOfApplicabilityPage")),
+      lazy(() => import("#/pages/organizations/states-of-applicability/StatesOfApplicabilityPage")),
     ),
   },
   {
@@ -37,7 +37,7 @@ export const statesOfApplicabilityRoutes = [
       ),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/states-of-applicability/StatesOfApplicabilityPage")),
+      lazy(() => import("#/pages/organizations/states-of-applicability/StatesOfApplicabilityPage")),
     ),
   },
   {
@@ -51,7 +51,7 @@ export const statesOfApplicabilityRoutes = [
       ),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/states-of-applicability/StateOfApplicabilityDetailPage")),
+      lazy(() => import("#/pages/organizations/states-of-applicability/StateOfApplicabilityDetailPage")),
     ),
   },
   {
@@ -65,7 +65,7 @@ export const statesOfApplicabilityRoutes = [
       ),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/states-of-applicability/StateOfApplicabilityDetailPage")),
+      lazy(() => import("#/pages/organizations/states-of-applicability/StateOfApplicabilityDetailPage")),
     ),
   },
 ] satisfies AppRoute[];

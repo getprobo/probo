@@ -23,10 +23,10 @@ import { graphql } from "relay-runtime";
 import type {
   LinkedObligationsDialogFragment$data,
   LinkedObligationsDialogFragment$key,
-} from "/__generated__/core/LinkedObligationsDialogFragment.graphql";
-import type { LinkedObligationsDialogQuery } from "/__generated__/core/LinkedObligationsDialogQuery.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/LinkedObligationsDialogFragment.graphql";
+import type { LinkedObligationsDialogQuery } from "#/__generated__/core/LinkedObligationsDialogQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 const obligationsQuery = graphql`
   query LinkedObligationsDialogQuery($organizationId: ID!) {

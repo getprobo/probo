@@ -13,9 +13,9 @@ import { useEffect } from "react";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { VendorContactsTabFragment_contact$data } from "/__generated__/core/VendorContactsTabFragment_contact.graphql";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import type { VendorContactsTabFragment_contact$data } from "#/__generated__/core/VendorContactsTabFragment_contact.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 type Props = {
   contactId: string;

@@ -12,8 +12,8 @@ import { use, useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import { useMutationWithToasts } from "/hooks/useMutationWithToast";
-import { Viewer } from "/providers/Viewer";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
+import { Viewer } from "#/providers/Viewer";
 
 import type { DocumentRow_requestAccessMutation } from "./__generated__/DocumentRow_requestAccessMutation.graphql";
 import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";

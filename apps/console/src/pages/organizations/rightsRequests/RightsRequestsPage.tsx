@@ -34,13 +34,13 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 
-import type { RightsRequestGraphListQuery } from "/__generated__/core/RightsRequestGraphListQuery.graphql";
+import type { RightsRequestGraphListQuery } from "#/__generated__/core/RightsRequestGraphListQuery.graphql";
 import type {
   RightsRequestsPageFragment$data,
   RightsRequestsPageFragment$key,
-} from "/__generated__/core/RightsRequestsPageFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/RightsRequestsPageFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import {
   deleteRightsRequestMutation,

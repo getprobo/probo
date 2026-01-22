@@ -10,7 +10,7 @@ import {
 } from "@probo/ui";
 import { graphql } from "react-relay";
 
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const deleteBusinessAssociateAgreementMutation = graphql`
   mutation DeleteBusinessAssociateAgreementDialogMutation(

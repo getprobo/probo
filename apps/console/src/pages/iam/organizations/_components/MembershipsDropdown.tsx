@@ -16,9 +16,9 @@ import { useFragment, useQueryLoader } from "react-relay";
 import { Link, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { MembershipsDropdown_organizationFragment$key } from "/__generated__/iam/MembershipsDropdown_organizationFragment.graphql";
-import type { MembershipsDropdown_viewerFragment$key } from "/__generated__/iam/MembershipsDropdown_viewerFragment.graphql";
-import type { MembershipsDropdownMenuQuery } from "/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
+import type { MembershipsDropdown_organizationFragment$key } from "#/__generated__/iam/MembershipsDropdown_organizationFragment.graphql";
+import type { MembershipsDropdown_viewerFragment$key } from "#/__generated__/iam/MembershipsDropdown_viewerFragment.graphql";
+import type { MembershipsDropdownMenuQuery } from "#/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
 
 import {
   MembershipsDropdownMenu,

@@ -2,9 +2,9 @@ import { useTranslate } from "@probo/i18n";
 import { Spinner } from "@probo/ui";
 import { useOutletContext } from "react-router";
 
-import type { TrustCenterVendorsCardFragment$key } from "/__generated__/core/TrustCenterVendorsCardFragment.graphql";
-import { TrustCenterVendorsCard } from "/components/trustCenter/TrustCenterVendorsCard";
-import { useTrustCenterVendorUpdate } from "/hooks/graph/TrustCenterVendorGraph";
+import type { TrustCenterVendorsCardFragment$key } from "#/__generated__/core/TrustCenterVendorsCardFragment.graphql";
+import { TrustCenterVendorsCard } from "#/components/trustCenter/TrustCenterVendorsCard";
+import { useTrustCenterVendorUpdate } from "#/hooks/graph/TrustCenterVendorGraph";
 
 type ContextType = {
   organization: {

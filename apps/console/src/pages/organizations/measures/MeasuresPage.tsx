@@ -34,19 +34,19 @@ import {
 import { Link, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { MeasureGraphListQuery } from "/__generated__/core/MeasureGraphListQuery.graphql";
+import type { MeasureGraphListQuery } from "#/__generated__/core/MeasureGraphListQuery.graphql";
 import type {
   MeasuresPageFragment$data,
   MeasuresPageFragment$key,
-} from "/__generated__/core/MeasuresPageFragment.graphql";
-import type { MeasuresPageImportMutation } from "/__generated__/core/MeasuresPageImportMutation.graphql";
+} from "#/__generated__/core/MeasuresPageFragment.graphql";
+import type { MeasuresPageImportMutation } from "#/__generated__/core/MeasuresPageImportMutation.graphql";
 import {
   measuresQuery,
   useDeleteMeasureMutation,
-} from "/hooks/graph/MeasureGraph";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/hooks/graph/MeasureGraph";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
 

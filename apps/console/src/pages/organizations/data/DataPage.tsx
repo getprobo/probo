@@ -24,16 +24,16 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 
-import type { DataListQuery } from "/__generated__/core/DataListQuery.graphql";
+import type { DataListQuery } from "#/__generated__/core/DataListQuery.graphql";
 import type {
   DataPageFragment$data,
   DataPageFragment$key,
-} from "/__generated__/core/DataPageFragment.graphql";
-import type { DatumGraphListQuery } from "/__generated__/core/DatumGraphListQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { SortableTable } from "/components/SortableTable";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/DataPageFragment.graphql";
+import type { DatumGraphListQuery } from "#/__generated__/core/DatumGraphListQuery.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { SortableTable } from "#/components/SortableTable";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import { dataQuery, useDeleteDatum } from "../../../hooks/graph/DatumGraph";
 

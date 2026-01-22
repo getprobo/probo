@@ -10,7 +10,7 @@ import {
 } from "react-hook-form";
 import { graphql, useLazyLoadQuery } from "react-relay";
 
-import type { AuditSelectFieldQuery } from "/__generated__/core/AuditSelectFieldQuery.graphql";
+import type { AuditSelectFieldQuery } from "#/__generated__/core/AuditSelectFieldQuery.graphql";
 
 const auditsQuery = graphql`
   query AuditSelectFieldQuery($organizationId: ID!) {

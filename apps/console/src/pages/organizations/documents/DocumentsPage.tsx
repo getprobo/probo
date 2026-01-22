@@ -38,22 +38,22 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DocumentGraphListQuery } from "/__generated__/core/DocumentGraphListQuery.graphql";
-import type { DocumentsPageListFragment$key } from "/__generated__/core/DocumentsPageListFragment.graphql";
-import type { DocumentsPageRowFragment$key } from "/__generated__/core/DocumentsPageRowFragment.graphql";
+import type { DocumentGraphListQuery } from "#/__generated__/core/DocumentGraphListQuery.graphql";
+import type { DocumentsPageListFragment$key } from "#/__generated__/core/DocumentsPageListFragment.graphql";
+import type { DocumentsPageRowFragment$key } from "#/__generated__/core/DocumentsPageRowFragment.graphql";
 import {
   BulkExportDialog,
   type BulkExportDialogRef,
-} from "/components/documents/BulkExportDialog";
-import { SortableTable, SortableTh } from "/components/SortableTable";
+} from "#/components/documents/BulkExportDialog";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
 import {
   documentsQuery,
   useBulkDeleteDocumentsMutation,
   useBulkExportDocumentsMutation,
   useDeleteDocumentMutation,
   useSendSigningNotificationsMutation,
-} from "/hooks/graph/DocumentGraph";
-import { CurrentUser } from "/providers/CurrentUser.tsx";
+} from "#/hooks/graph/DocumentGraph";
+import { CurrentUser } from "#/providers/CurrentUser.tsx";
 
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
 import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";

@@ -1,6 +1,6 @@
 import { useContext } from "react";
 
-import { TrustCenterContext } from "/providers/TrustCenterProvider";
+import { TrustCenterContext } from "#/providers/TrustCenterProvider";
 
 export function useTrustCenter(): {
   id: string;

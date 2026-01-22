@@ -1,10 +1,10 @@
 import { graphql } from "react-relay";
 
-import type { TrustCenterReferenceGraphCreateMutation } from "/__generated__/core/TrustCenterReferenceGraphCreateMutation.graphql";
-import type { TrustCenterReferenceGraphDeleteMutation } from "/__generated__/core/TrustCenterReferenceGraphDeleteMutation.graphql";
-import type { TrustCenterReferenceGraphUpdateMutation } from "/__generated__/core/TrustCenterReferenceGraphUpdateMutation.graphql";
-import type { TrustCenterReferenceGraphUpdateRankMutation } from "/__generated__/core/TrustCenterReferenceGraphUpdateRankMutation.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import type { TrustCenterReferenceGraphCreateMutation } from "#/__generated__/core/TrustCenterReferenceGraphCreateMutation.graphql";
+import type { TrustCenterReferenceGraphDeleteMutation } from "#/__generated__/core/TrustCenterReferenceGraphDeleteMutation.graphql";
+import type { TrustCenterReferenceGraphUpdateMutation } from "#/__generated__/core/TrustCenterReferenceGraphUpdateMutation.graphql";
+import type { TrustCenterReferenceGraphUpdateRankMutation } from "#/__generated__/core/TrustCenterReferenceGraphUpdateRankMutation.graphql";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 export const trustCenterReferencesQuery = graphql`
   query TrustCenterReferenceGraphQuery($trustCenterId: ID!) {

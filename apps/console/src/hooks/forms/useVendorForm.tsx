@@ -4,7 +4,7 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { useVendorFormFragment$key } from "/__generated__/core/useVendorFormFragment.graphql";
+import type { useVendorFormFragment$key } from "#/__generated__/core/useVendorFormFragment.graphql";
 
 import { useFormWithSchema } from "../useFormWithSchema";
 import { useMutationWithToasts } from "../useMutationWithToasts";

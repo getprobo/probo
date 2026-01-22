@@ -12,8 +12,8 @@ import type { FormEventHandler } from "react";
 import { graphql, useMutation } from "react-relay";
 import { Link, useLocation, useNavigate } from "react-router";
 
-import type { NewOrganizationPageMutation } from "/__generated__/iam/NewOrganizationPageMutation.graphql";
-import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+import type { NewOrganizationPageMutation } from "#/__generated__/iam/NewOrganizationPageMutation.graphql";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 const createOrganizationMutation = graphql`
   mutation NewOrganizationPageMutation($input: CreateOrganizationInput!) {

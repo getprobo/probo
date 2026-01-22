@@ -3,10 +3,10 @@ import { useEffect } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate, useParams } from "react-router";
 
-import type { SnapshotGraphNodeQuery } from "/__generated__/core/SnapshotGraphNodeQuery.graphql";
-import { PageError } from "/components/PageError";
-import { snapshotNodeQuery } from "/hooks/graph/SnapshotGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { SnapshotGraphNodeQuery } from "#/__generated__/core/SnapshotGraphNodeQuery.graphql";
+import { PageError } from "#/components/PageError";
+import { snapshotNodeQuery } from "#/hooks/graph/SnapshotGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 type Props = {
   queryRef: PreloadedQuery<SnapshotGraphNodeQuery>;

@@ -7,7 +7,7 @@ import { Badge, Button, Card } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DomainCardFragment$key } from "/__generated__/core/DomainCardFragment.graphql";
+import type { DomainCardFragment$key } from "#/__generated__/core/DomainCardFragment.graphql";
 
 import { DeleteDomainDialog } from "./DeleteDomainDialog";
 import { DomainDialog } from "./DomainDialog";

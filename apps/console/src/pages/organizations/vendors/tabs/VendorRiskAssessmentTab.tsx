@@ -19,11 +19,11 @@ import { useFragment, useRefetchableFragment } from "react-relay";
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import type { VendorRiskAssessmentTabFragment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment.graphql";
-import type { VendorRiskAssessmentTabFragment_assessment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment_assessment.graphql";
-import type { VendorRiskAssessmentTabQuery } from "/__generated__/core/VendorRiskAssessmentTabQuery.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
+import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { VendorRiskAssessmentTabFragment$key } from "#/__generated__/core/VendorRiskAssessmentTabFragment.graphql";
+import type { VendorRiskAssessmentTabFragment_assessment$key } from "#/__generated__/core/VendorRiskAssessmentTabFragment_assessment.graphql";
+import type { VendorRiskAssessmentTabQuery } from "#/__generated__/core/VendorRiskAssessmentTabQuery.graphql";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
 
 import { CreateRiskAssessmentDialog } from "../dialogs/CreateRiskAssessmentDialog";
 

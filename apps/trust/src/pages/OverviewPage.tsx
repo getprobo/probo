@@ -11,14 +11,14 @@ import { useFragment } from "react-relay";
 import { Link, useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
-import { AuditRow } from "/components/AuditRow";
-import { DocumentRow } from "/components/DocumentRow";
-import { RowHeader } from "/components/RowHeader.tsx";
-import { Rows } from "/components/Rows.tsx";
-import { TrustCenterFileRow } from "/components/TrustCenterFileRow";
-import { VendorRow } from "/components/VendorRow";
-import { documentTypeLabel } from "/helpers/documents";
-import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import { AuditRow } from "#/components/AuditRow";
+import { DocumentRow } from "#/components/DocumentRow";
+import { RowHeader } from "#/components/RowHeader.tsx";
+import { Rows } from "#/components/Rows.tsx";
+import { TrustCenterFileRow } from "#/components/TrustCenterFileRow";
+import { VendorRow } from "#/components/VendorRow";
+import { documentTypeLabel } from "#/helpers/documents";
+import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 import type {
   OverviewPageFragment$data,

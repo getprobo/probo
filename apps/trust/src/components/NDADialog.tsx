@@ -7,9 +7,9 @@ import { graphql } from "relay-runtime";
 import { useWindowSize } from "usehooks-ts";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToast";
-import { Viewer } from "/providers/Viewer";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
+import { Viewer } from "#/providers/Viewer";
 
 import { PDFPreview } from "./PDFPreview";
 

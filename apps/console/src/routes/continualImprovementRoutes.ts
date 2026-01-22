@@ -6,14 +6,14 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { ContinualImprovementGraphListQuery } from "/__generated__/core/ContinualImprovementGraphListQuery.graphql";
-import type { ContinualImprovementGraphNodeQuery } from "/__generated__/core/ContinualImprovementGraphNodeQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
+import type { ContinualImprovementGraphListQuery } from "#/__generated__/core/ContinualImprovementGraphListQuery.graphql";
+import type { ContinualImprovementGraphNodeQuery } from "#/__generated__/core/ContinualImprovementGraphNodeQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
 import {
   continualImprovementNodeQuery,
   continualImprovementsQuery,
-} from "/hooks/graph/ContinualImprovementGraph";
+} from "#/hooks/graph/ContinualImprovementGraph";
 
 export const continualImprovementRoutes = [
   {
@@ -32,7 +32,7 @@ export const continualImprovementRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/continualImprovements/ContinualImprovementsPage"),
+          import("#/pages/organizations/continualImprovements/ContinualImprovementsPage"),
       ),
     ),
   },
@@ -52,7 +52,7 @@ export const continualImprovementRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/continualImprovements/ContinualImprovementsPage"),
+          import("#/pages/organizations/continualImprovements/ContinualImprovementsPage"),
       ),
     ),
   },
@@ -71,7 +71,7 @@ export const continualImprovementRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/continualImprovements/ContinualImprovementDetailsPage"),
+          import("#/pages/organizations/continualImprovements/ContinualImprovementDetailsPage"),
       ),
     ),
   },
@@ -90,7 +90,7 @@ export const continualImprovementRoutes = [
     Component: withQueryRef(
       lazy(
         () =>
-          import("/pages/organizations/continualImprovements/ContinualImprovementDetailsPage"),
+          import("#/pages/organizations/continualImprovements/ContinualImprovementDetailsPage"),
       ),
     ),
   },

@@ -9,11 +9,11 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 
-import type { AssetGraphListQuery } from "/__generated__/core/AssetGraphListQuery.graphql";
-import type { AssetsPageFragment$key } from "/__generated__/core/AssetsPageFragment.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { assetsQuery } from "/hooks/graph/AssetGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { AssetGraphListQuery } from "#/__generated__/core/AssetGraphListQuery.graphql";
+import type { AssetsPageFragment$key } from "#/__generated__/core/AssetsPageFragment.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { assetsQuery } from "#/hooks/graph/AssetGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AssetsTable } from "../../../components/assets/AssetsTable";
 import { ReadOnlyAssetsTable } from "../../../components/assets/ReadOnlyAssetsTable";

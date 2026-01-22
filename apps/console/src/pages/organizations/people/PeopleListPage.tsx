@@ -19,12 +19,12 @@ import {
 import { useRef } from "react";
 import { type PreloadedQuery } from "react-relay";
 
-import type { PeopleGraphPaginatedFragment$data } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
-import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import { useDeletePeople, usePeopleQuery } from "/hooks/graph/PeopleGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+import type { PeopleGraphPaginatedFragment$data } from "#/__generated__/core/PeopleGraphPaginatedFragment.graphql";
+import type { PeopleGraphPaginatedQuery } from "#/__generated__/core/PeopleGraphPaginatedQuery.graphql";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
+import { useDeletePeople, usePeopleQuery } from "#/hooks/graph/PeopleGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import { CreatePeopleDialog } from "./dialogs/CreatePeopleDialog";
 import {

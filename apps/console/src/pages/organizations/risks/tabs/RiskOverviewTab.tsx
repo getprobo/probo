@@ -3,7 +3,7 @@ import { useFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { RiskOverviewTabFragment$key } from "/__generated__/core/RiskOverviewTabFragment.graphql";
+import type { RiskOverviewTabFragment$key } from "#/__generated__/core/RiskOverviewTabFragment.graphql";
 
 const overviewFragment = graphql`
   fragment RiskOverviewTabFragment on Risk {

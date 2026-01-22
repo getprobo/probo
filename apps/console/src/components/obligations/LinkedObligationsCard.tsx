@@ -25,8 +25,8 @@ import { useFragment } from "react-relay";
 import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { LinkedObligationsCardFragment$key } from "/__generated__/core/LinkedObligationsCardFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedObligationsCardFragment$key } from "#/__generated__/core/LinkedObligationsCardFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { LinkedObligationDialog } from "./LinkedObligationsDialog";
 

@@ -10,7 +10,7 @@ import {
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import type { ConnectPageMutation } from "./__generated__/ConnectPageMutation.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";

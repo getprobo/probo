@@ -2,10 +2,10 @@ import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import { Rows } from "/components/Rows.tsx";
-import { VendorRow } from "/components/VendorRow";
-import type { TrustGraphCurrentVendorsQuery } from "/queries/__generated__/TrustGraphCurrentVendorsQuery.graphql";
-import { currentTrustVendorsQuery } from "/queries/TrustGraph";
+import { Rows } from "#/components/Rows.tsx";
+import { VendorRow } from "#/components/VendorRow";
+import type { TrustGraphCurrentVendorsQuery } from "#/queries/__generated__/TrustGraphCurrentVendorsQuery.graphql";
+import { currentTrustVendorsQuery } from "#/queries/TrustGraph";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphCurrentVendorsQuery>;

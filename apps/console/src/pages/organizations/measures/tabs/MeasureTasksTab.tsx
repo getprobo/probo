@@ -4,9 +4,9 @@ import { useLazyLoadQuery } from "react-relay";
 import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { MeasureTasksTabQuery } from "/__generated__/core/MeasureTasksTabQuery.graphql";
-import TaskFormDialog from "/components/tasks/TaskFormDialog";
-import { TasksCard } from "/components/tasks/TasksCard";
+import type { MeasureTasksTabQuery } from "#/__generated__/core/MeasureTasksTabQuery.graphql";
+import TaskFormDialog from "#/components/tasks/TaskFormDialog";
+import { TasksCard } from "#/components/tasks/TasksCard";
 
 const tasksQuery = graphql`
   query MeasureTasksTabQuery($measureId: ID!) {

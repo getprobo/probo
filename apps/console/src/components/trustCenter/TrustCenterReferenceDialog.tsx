@@ -16,8 +16,8 @@ import { z } from "zod";
 import {
   useCreateTrustCenterReferenceMutation,
   useUpdateTrustCenterReferenceMutation,
-} from "/hooks/graph/TrustCenterReferenceGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+} from "#/hooks/graph/TrustCenterReferenceGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const referenceSchema = z.object({
   name: z.string().min(1, "Name is required"),

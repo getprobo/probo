@@ -12,7 +12,7 @@ import {
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ViewerDropdownFragment$key } from "/__generated__/iam/ViewerDropdownFragment.graphql";
+import type { ViewerDropdownFragment$key } from "#/__generated__/iam/ViewerDropdownFragment.graphql";
 
 export const fragment = graphql`
   fragment ViewerDropdownFragment on Identity {

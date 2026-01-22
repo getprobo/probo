@@ -14,8 +14,8 @@ import type { ComponentProps } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { LinkedControlsCardFragment$key } from "/__generated__/core/LinkedControlsCardFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedControlsCardFragment$key } from "#/__generated__/core/LinkedControlsCardFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { SortableTable, SortableTh } from "../SortableTable";
 

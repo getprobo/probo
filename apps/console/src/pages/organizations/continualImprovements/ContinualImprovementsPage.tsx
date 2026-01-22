@@ -34,14 +34,14 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 
-import type { ContinualImprovementGraphListQuery } from "/__generated__/core/ContinualImprovementGraphListQuery.graphql";
+import type { ContinualImprovementGraphListQuery } from "#/__generated__/core/ContinualImprovementGraphListQuery.graphql";
 import type {
   ContinualImprovementsPageFragment$data,
   ContinualImprovementsPageFragment$key,
-} from "/__generated__/core/ContinualImprovementsPageFragment.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { NodeOf } from "/types";
+} from "#/__generated__/core/ContinualImprovementsPageFragment.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
 
 import {
   ContinualImprovementsConnectionKey,

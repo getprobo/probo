@@ -5,12 +5,12 @@ import { type PropsWithChildren } from "react";
 import { useOutletContext } from "react-router";
 import { z } from "zod";
 
-import type { PeopleGraphNodeQuery$data } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
-import type { PeopleGraphUpdateMutation } from "/__generated__/core/PeopleGraphUpdateMutation.graphql";
-import { ControlledField } from "/components/form/ControlledField";
-import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import type { PeopleGraphNodeQuery$data } from "#/__generated__/core/PeopleGraphNodeQuery.graphql";
+import type { PeopleGraphUpdateMutation } from "#/__generated__/core/PeopleGraphUpdateMutation.graphql";
+import { ControlledField } from "#/components/form/ControlledField";
+import { updatePeopleMutation } from "#/hooks/graph/PeopleGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const schema = z.object({
   kind: z.enum(peopleRoles),

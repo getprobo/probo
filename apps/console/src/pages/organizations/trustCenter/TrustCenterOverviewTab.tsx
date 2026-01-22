@@ -11,12 +11,12 @@ import {
 import { useState } from "react";
 import { useOutletContext } from "react-router";
 
-import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import type { TrustCenterGraphQuery$data } from "#/__generated__/core/TrustCenterGraphQuery.graphql";
 import {
   useDeleteTrustCenterNDAMutation,
   useUpdateTrustCenterMutation,
   useUploadTrustCenterNDAMutation,
-} from "/hooks/graph/TrustCenterGraph";
+} from "#/hooks/graph/TrustCenterGraph";
 
 import { SlackConnections } from "../../../components/organizations/SlackConnection";
 

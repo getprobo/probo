@@ -1,7 +1,7 @@
 import { Logo } from "@probo/ui";
 import { Outlet } from "react-router";
 
-import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 export default function () {
   return (

@@ -6,10 +6,10 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
-import type { NonconformityGraphNodeQuery } from "/__generated__/core/NonconformityGraphNodeQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
+import type { NonconformityGraphListQuery } from "#/__generated__/core/NonconformityGraphListQuery.graphql";
+import type { NonconformityGraphNodeQuery } from "#/__generated__/core/NonconformityGraphNodeQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
 
 import {
   nonconformitiesQuery,

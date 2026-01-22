@@ -25,10 +25,10 @@ import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { CreateAuditDialogFrameworksQuery } from "/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
-import { ControlledField } from "/components/form/ControlledField";
-import { useCreateAudit } from "/hooks/graph/AuditGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
+import { ControlledField } from "#/components/form/ControlledField";
+import { useCreateAudit } from "#/hooks/graph/AuditGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const frameworksQuery = graphql`
   query CreateAuditDialogFrameworksQuery($organizationId: ID!) {

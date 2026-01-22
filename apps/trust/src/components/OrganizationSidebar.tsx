@@ -12,8 +12,8 @@ import { type PropsWithChildren, use } from "react";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import { Viewer } from "/providers/Viewer";
-import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import { Viewer } from "#/providers/Viewer";
+import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
 import { AuditRowAvatar } from "./AuditRow";

@@ -19,15 +19,15 @@ import {
 } from "react-relay";
 import { Outlet, useParams } from "react-router";
 
-import type { VendorComplianceTabFragment$key } from "/__generated__/core/VendorComplianceTabFragment.graphql";
-import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
+import type { VendorComplianceTabFragment$key } from "#/__generated__/core/VendorComplianceTabFragment.graphql";
+import type { VendorGraphNodeQuery } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
 import {
   useDeleteVendor,
   vendorConnectionKey,
   vendorNodeQuery,
-} from "/hooks/graph/VendorGraph";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/graph/VendorGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
 import { complianceReportsFragment } from "./tabs/VendorComplianceTab";

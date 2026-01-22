@@ -7,16 +7,16 @@ import {
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 
-import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
-import type { FrameworkGraphListQuery } from "/__generated__/core/FrameworkGraphListQuery.graphql";
-import type { FrameworkGraphNodeQuery } from "/__generated__/core/FrameworkGraphNodeQuery.graphql";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
+import type { FrameworkGraphControlNodeQuery } from "#/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
+import type { FrameworkGraphListQuery } from "#/__generated__/core/FrameworkGraphListQuery.graphql";
+import type { FrameworkGraphNodeQuery } from "#/__generated__/core/FrameworkGraphNodeQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
 import {
   frameworkControlNodeQuery,
   frameworkNodeQuery,
   frameworksQuery,
-} from "/hooks/graph/FrameworkGraph";
+} from "#/hooks/graph/FrameworkGraph";
 
 import { ControlSkeleton } from "../components/skeletons/ControlSkeleton";
 
@@ -30,7 +30,7 @@ export const frameworkRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/frameworks/FrameworksPage")),
+      lazy(() => import("#/pages/organizations/frameworks/FrameworksPage")),
     ),
   },
   {
@@ -42,7 +42,7 @@ export const frameworkRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/frameworks/FrameworkDetailPage")),
+      lazy(() => import("#/pages/organizations/frameworks/FrameworkDetailPage")),
     ),
     children: [
       {
@@ -62,7 +62,7 @@ export const frameworkRoutes = [
         Component: withQueryRef(
           lazy(
             () =>
-              import("/pages/organizations/frameworks/FrameworkControlPage"),
+              import("#/pages/organizations/frameworks/FrameworkControlPage"),
           ),
         ),
       },

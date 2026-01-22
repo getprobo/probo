@@ -32,16 +32,16 @@ import {
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
-import type { MeetingsPage_UpdateSummaryMutation } from "/__generated__/core/MeetingsPage_UpdateSummaryMutation.graphql";
-import type { MeetingsPageListFragment$key } from "/__generated__/core/MeetingsPageListFragment.graphql";
-import type { MeetingsPageRowFragment$key } from "/__generated__/core/MeetingsPageRowFragment.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
+import type { MeetingGraphListQuery } from "#/__generated__/core/MeetingGraphListQuery.graphql";
+import type { MeetingsPage_UpdateSummaryMutation } from "#/__generated__/core/MeetingsPage_UpdateSummaryMutation.graphql";
+import type { MeetingsPageListFragment$key } from "#/__generated__/core/MeetingsPageListFragment.graphql";
+import type { MeetingsPageRowFragment$key } from "#/__generated__/core/MeetingsPageRowFragment.graphql";
+import { SortableTable, SortableTh } from "#/components/SortableTable";
 import {
   meetingsQuery,
   useDeleteMeetingMutation,
-} from "/hooks/graph/MeetingGraph";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+} from "#/hooks/graph/MeetingGraph";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CreateMeetingDialog } from "./dialogs/CreateMeetingDialog";
 

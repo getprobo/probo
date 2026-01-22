@@ -32,13 +32,13 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 
-import type { ObligationGraphListQuery } from "/__generated__/core/ObligationGraphListQuery.graphql";
+import type { ObligationGraphListQuery } from "#/__generated__/core/ObligationGraphListQuery.graphql";
 import type {
   ObligationsPageFragment$data,
   ObligationsPageFragment$key,
-} from "/__generated__/core/ObligationsPageFragment.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/__generated__/core/ObligationsPageFragment.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   deleteObligationMutation,

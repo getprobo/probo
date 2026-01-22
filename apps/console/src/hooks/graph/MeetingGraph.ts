@@ -1,8 +1,8 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 
-import type { MeetingGraphDeleteMutation } from "/__generated__/core/MeetingGraphDeleteMutation.graphql";
-import type { MeetingGraphUpdateMutation } from "/__generated__/core/MeetingGraphUpdateMutation.graphql";
+import type { MeetingGraphDeleteMutation } from "#/__generated__/core/MeetingGraphDeleteMutation.graphql";
+import type { MeetingGraphUpdateMutation } from "#/__generated__/core/MeetingGraphUpdateMutation.graphql";
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 

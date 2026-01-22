@@ -6,12 +6,12 @@ import {
 } from "@probo/routes";
 import { loadQuery } from "react-relay";
 
-import type { VendorGraphListQuery } from "/__generated__/core/VendorGraphListQuery.graphql";
-import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
-import { vendorNodeQuery, vendorsQuery } from "/hooks/graph/VendorGraph";
+import type { VendorGraphListQuery } from "#/__generated__/core/VendorGraphListQuery.graphql";
+import type { VendorGraphNodeQuery } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
+import { vendorNodeQuery, vendorsQuery } from "#/hooks/graph/VendorGraph";
 
 export const vendorRoutes = [
   {
@@ -24,7 +24,7 @@ export const vendorRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/vendors/VendorsPage")),
+      lazy(() => import("#/pages/organizations/vendors/VendorsPage")),
     ),
   },
   {
@@ -37,7 +37,7 @@ export const vendorRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/vendors/VendorsPage")),
+      lazy(() => import("#/pages/organizations/vendors/VendorsPage")),
     ),
   },
   {

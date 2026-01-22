@@ -13,9 +13,9 @@ import {
 import { forwardRef, useImperativeHandle } from "react";
 import { z } from "zod";
 
-import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { updatePeopleMutation } from "#/hooks/graph/PeopleGraph";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const schema = z.object({
   contractEndDate: z.string().optional(),

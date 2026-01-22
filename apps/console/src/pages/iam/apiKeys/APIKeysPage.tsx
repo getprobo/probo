@@ -1,7 +1,7 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { APIKeysPageQuery } from "/__generated__/iam/APIKeysPageQuery.graphql";
+import type { APIKeysPageQuery } from "#/__generated__/iam/APIKeysPageQuery.graphql";
 
 import { PersonalAPIKeyList } from "./_components/PersonalAPIKeyList";
 

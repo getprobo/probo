@@ -19,17 +19,17 @@ import {
 import { Navigate, Outlet, useNavigate, useParams } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
-import type { FrameworkDetailPageExportFrameworkMutation } from "/__generated__/core/FrameworkDetailPageExportFrameworkMutation.graphql";
-import type { FrameworkDetailPageFragment$key } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
-import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "/__generated__/core/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
-import type { FrameworkGraphNodeQuery } from "/__generated__/core/FrameworkGraphNodeQuery.graphql";
+import type { FrameworkDetailPageExportFrameworkMutation } from "#/__generated__/core/FrameworkDetailPageExportFrameworkMutation.graphql";
+import type { FrameworkDetailPageFragment$key } from "#/__generated__/core/FrameworkDetailPageFragment.graphql";
+import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "#/__generated__/core/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
+import type { FrameworkGraphNodeQuery } from "#/__generated__/core/FrameworkGraphNodeQuery.graphql";
 import {
   connectionListKey,
   frameworkNodeQuery,
   useDeleteFrameworkMutation,
-} from "/hooks/graph/FrameworkGraph";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/hooks/graph/FrameworkGraph";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";

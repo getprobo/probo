@@ -17,8 +17,8 @@ import { useMemo, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { TrustCenterVendorsCardFragment$key } from "/__generated__/core/TrustCenterVendorsCardFragment.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { TrustCenterVendorsCardFragment$key } from "#/__generated__/core/TrustCenterVendorsCardFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const trustCenterVendorFragment = graphql`
   fragment TrustCenterVendorsCardFragment on Vendor {

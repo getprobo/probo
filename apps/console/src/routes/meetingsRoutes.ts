@@ -8,12 +8,12 @@ import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 
-import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
-import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
-import { meetingNodeQuery, meetingsQuery } from "/hooks/graph/MeetingGraph";
+import type { MeetingGraphListQuery } from "#/__generated__/core/MeetingGraphListQuery.graphql";
+import type { MeetingGraphNodeQuery } from "#/__generated__/core/MeetingGraphNodeQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "#/environments";
+import { meetingNodeQuery, meetingsQuery } from "#/hooks/graph/MeetingGraph";
 
 const meetingTabs = (prefix: string) => {
   return [
@@ -49,7 +49,7 @@ export const meetingsRoutes = [
       }),
     ),
     Component: withQueryRef(
-      lazy(() => import("/pages/organizations/meetings/MeetingsPage")),
+      lazy(() => import("#/pages/organizations/meetings/MeetingsPage")),
     ),
   },
   {

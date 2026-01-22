@@ -25,9 +25,9 @@ import {
 } from "react-relay";
 import { z } from "zod";
 
-import type { PersonalAPIKeyListCreateMutation } from "/__generated__/iam/PersonalAPIKeyListCreateMutation.graphql";
-import type { PersonalAPIKeyListFragment$key } from "/__generated__/iam/PersonalAPIKeyListFragment.graphql";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import type { PersonalAPIKeyListCreateMutation } from "#/__generated__/iam/PersonalAPIKeyListCreateMutation.graphql";
+import type { PersonalAPIKeyListFragment$key } from "#/__generated__/iam/PersonalAPIKeyListFragment.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import { PersonalAPIKeysTable } from "./PersonalAPIKeysTable";
 import { PersonalAPIKeyTokenDialog } from "./PersonalAPIKeyTokenDialog";

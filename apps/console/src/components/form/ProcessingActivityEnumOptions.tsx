@@ -6,7 +6,7 @@ import type {
   ProcessingActivityLawfulBasis,
   ProcessingActivitySpecialOrCriminalDatum,
   ProcessingActivityTransferImpactAssessment,
-} from "/__generated__/core/ProcessingActivityGraphCreateMutation.graphql";
+} from "#/__generated__/core/ProcessingActivityGraphCreateMutation.graphql";
 
 export function SpecialOrCriminalDataOptions() {
   const { __ } = useTranslate();

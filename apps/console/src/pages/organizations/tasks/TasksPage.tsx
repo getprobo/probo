@@ -8,11 +8,11 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { TaskGraphQuery } from "/__generated__/core/TaskGraphQuery.graphql";
-import type { TasksPageFragment$key } from "/__generated__/core/TasksPageFragment.graphql";
-import TaskFormDialog from "/components/tasks/TaskFormDialog";
-import { TasksCard } from "/components/tasks/TasksCard";
-import { tasksQuery } from "/hooks/graph/TaskGraph";
+import type { TaskGraphQuery } from "#/__generated__/core/TaskGraphQuery.graphql";
+import type { TasksPageFragment$key } from "#/__generated__/core/TasksPageFragment.graphql";
+import TaskFormDialog from "#/components/tasks/TaskFormDialog";
+import { TasksCard } from "#/components/tasks/TasksCard";
+import { tasksQuery } from "#/hooks/graph/TaskGraph";
 
 const tasksFragment = graphql`
   fragment TasksPageFragment on Organization

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
-import type { MembersPageQuery } from "/__generated__/iam/MembersPageQuery.graphql";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { MembersPageQuery } from "#/__generated__/iam/MembersPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { InvitationList } from "./_components/InvitationList";
 import { InviteUserDialog } from "./_components/InviteUserDialog";

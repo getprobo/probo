@@ -5,9 +5,9 @@ import { useMemo } from "react";
 import { useLazyLoadQuery, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { VendorGraphCreateMutation } from "/__generated__/core/VendorGraphCreateMutation.graphql.ts";
-import type { VendorGraphDeleteMutation } from "/__generated__/core/VendorGraphDeleteMutation.graphql.ts";
-import type { VendorGraphSelectQuery } from "/__generated__/core/VendorGraphSelectQuery.graphql.ts";
+import type { VendorGraphCreateMutation } from "#/__generated__/core/VendorGraphCreateMutation.graphql.ts";
+import type { VendorGraphDeleteMutation } from "#/__generated__/core/VendorGraphDeleteMutation.graphql.ts";
+import type { VendorGraphSelectQuery } from "#/__generated__/core/VendorGraphSelectQuery.graphql.ts";
 
 import { useMutationWithToasts } from "../useMutationWithToasts.ts";
 

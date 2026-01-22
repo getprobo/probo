@@ -37,10 +37,10 @@ import { useParams } from "react-router";
 import type {
   NonconformitiesPageFragment$data,
   NonconformitiesPageFragment$key,
-} from "/__generated__/core/NonconformitiesPageFragment.graphql";
-import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+} from "#/__generated__/core/NonconformitiesPageFragment.graphql";
+import type { NonconformityGraphListQuery } from "#/__generated__/core/NonconformityGraphListQuery.graphql";
+import { SnapshotBanner } from "#/components/SnapshotBanner";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   deleteNonconformityMutation,
