@@ -2,9 +2,9 @@ import { Input } from "./Input";
 import type { Meta, StoryObj } from "@storybook/react";
 
 export default {
-    title: "Atoms/Form/Input",
-    component: Input,
-    argTypes: {},
+  title: "Atoms/Form/Input",
+  component: Input,
+  argTypes: {},
 } satisfies Meta<typeof Input>;
 
 type Story = StoryObj<typeof Input>;
@@ -12,14 +12,14 @@ type Story = StoryObj<typeof Input>;
 export const Default: Story = {};
 
 export const Disabled: Story = {
-    args: {
-        disabled: true,
-    },
+  args: {
+    disabled: true,
+  },
 };
 
 export const Title: Story = {
-    args: {
-        variant: "title",
-        placeholder: "Policy title",
-    },
+  args: {
+    variant: "title",
+    placeholder: "Policy title",
+  },
 };

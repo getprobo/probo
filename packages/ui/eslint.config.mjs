@@ -1,14 +1,27 @@
-import { browser } from "@probo/eslint-config";
+import { defineConfig } from "eslint/config";
+import { configs } from "@probo/eslint-config";
 
-export default [
-    {
-        ignores: [
-            "dist",
-            "eslint.config.mjs",
-            "*.config.{js,mjs,ts}",
-            ".storybook/**",
-            "src/Atoms/Icons/**/*.tsx", // Icon files have parsing issues, likely auto-generated
-        ],
+export default defineConfig([
+  ...configs.base,
+  ...configs.ts,
+  ...configs.react,
+  ...configs.stylistic,
+  {
+    ignores: ["./tailwind.config.js"],
+    ...configs.languageOptions.browser,
+  },
+  {
+    files: ["./tailwind.config.js"],
+    languageOptions: {
+      ...configs.languageOptions.node.languageOptions,
+      sourceType: "commonjs",
     },
-    ...browser(["./tsconfig.app.json", "./tsconfig.node.json"], import.meta.dirname),
-];
+  },
+  {
+    languageOptions: {
+      parserOptions: {
+        tsConfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+]);

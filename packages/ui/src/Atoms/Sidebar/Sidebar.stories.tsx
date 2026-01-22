@@ -5,17 +5,17 @@ import { SidebarItem } from "./SidebarItem";
 import { IconBank } from "../Icons/IconBank.tsx";
 
 const meta: Meta<typeof Sidebar> = {
-    component: Sidebar,
-    subcomponents: { SidebarItem },
+  component: Sidebar,
+  subcomponents: { SidebarItem },
 };
 export default meta;
 
 type Story = StoryObj<typeof Sidebar>;
 
 export const Default: Story = {
-    render: (args) => (
-        <Sidebar {...args}>
-            <SidebarItem label="Dashboard" icon={IconBank} />
-        </Sidebar>
-    ),
+  render: args => (
+    <Sidebar {...args}>
+      <SidebarItem label="Dashboard" icon={IconBank} />
+    </Sidebar>
+  ),
 };

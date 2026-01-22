@@ -2,16 +2,16 @@ import { Markdown } from "./Markdown";
 import type { Meta, StoryObj } from "@storybook/react";
 
 export default {
-    title: "Atoms/Markdown",
-    component: Markdown,
-    argTypes: {},
+  title: "Atoms/Markdown",
+  component: Markdown,
+  argTypes: {},
 } satisfies Meta<typeof Markdown>;
 
 type Story = StoryObj<typeof Markdown>;
 
 export const Default: Story = {
-    args: {
-        content: `# Siquis facies post
+  args: {
+    content: `# Siquis facies post
 
 ## Venit Ianigenam egressus a tamen terra frater
 
@@ -71,5 +71,5 @@ Fecissem quem degravat quibus movere inmotus sacer Iovem, sic *urbis mala
 quoque*. Tereu ut tuos sed recessit petit patriaeque subit palude subposuere
 certum: tempora, telisque. In quaesitique habitavit nostris Scylaceaque potest
 omnia pastoribus meminisse ignara. Sed pando functaque perenni gemitus tibi.`,
-    },
+  },
 };

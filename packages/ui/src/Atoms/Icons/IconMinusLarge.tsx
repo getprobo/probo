@@ -1,6 +1,6 @@
-import type {IconProps} from "./type.ts";
+import type { IconProps } from "./type.ts";
 
-export function IconMinusLarge({size = 16, className}: IconProps) {
+export function IconMinusLarge({ size = 16, className }: IconProps) {
   return (
     <svg
       width={size}

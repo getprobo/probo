@@ -2,21 +2,23 @@ import { Tabs, TabLink, TabBadge } from "./Tabs";
 import type { Meta, StoryObj } from "@storybook/react";
 
 export default {
-    title: "Atoms/Tabs",
-    component: Tabs,
-    argTypes: {},
+  title: "Atoms/Tabs",
+  component: Tabs,
+  argTypes: {},
 } satisfies Meta<typeof Tabs>;
 
 type Story = StoryObj<typeof Tabs>;
 
 export const Default: Story = {
-    render: () => (
-        <Tabs>
-            <TabLink to="#">Tab 1</TabLink>
-            <TabLink to="/demo">Tab 2</TabLink>
-            <TabLink to="/demo2">
-                Tab 3 <TabBadge>3</TabBadge>
-            </TabLink>
-        </Tabs>
-    ),
+  render: () => (
+    <Tabs>
+      <TabLink to="#">Tab 1</TabLink>
+      <TabLink to="/demo">Tab 2</TabLink>
+      <TabLink to="/demo2">
+        Tab 3
+        {" "}
+        <TabBadge>3</TabBadge>
+      </TabLink>
+    </Tabs>
+  ),
 };

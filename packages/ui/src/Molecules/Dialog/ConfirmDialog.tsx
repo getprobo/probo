@@ -1,11 +1,11 @@
 import { useTranslate } from "@probo/i18n";
 import {
-    Root,
-    Overlay,
-    Content,
-    Title,
-    Description,
-    Cancel,
+  Root,
+  Overlay,
+  Content,
+  Title,
+  Description,
+  Cancel,
 } from "@radix-ui/react-alert-dialog";
 import { useCallback, useState, useMemo, type ComponentProps } from "react";
 import { Button } from "../../Atoms/Button/Button";
@@ -15,136 +15,136 @@ import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
 type State = {
-    title?: string;
-    message: string | null;
-    variant?: ComponentProps<typeof Button>["variant"];
-    label?: string;
-    onConfirm: () => Promise<unknown>;
+  title?: string;
+  message: string | null;
+  variant?: ComponentProps<typeof Button>["variant"];
+  label?: string;
+  onConfirm: () => Promise<unknown>;
 };
 
 const useConfirmStore = create(
-    combine(
-        {
-            message: null,
-            onConfirm: () => Promise.resolve(),
-        } as State,
-        (set) => ({
-            open: (props: State) => {
-                set(props);
-            },
-            close: () => {
-                set({
-                    message: null,
-                });
-            },
-        }),
-    ),
+  combine(
+    {
+      message: null,
+      onConfirm: () => Promise.resolve(),
+    } as State,
+    set => ({
+      open: (props: State) => {
+        set(props);
+      },
+      close: () => {
+        set({
+          message: null,
+        });
+      },
+    }),
+  ),
 );
 
 /**
  * Hook used to open a confirm dialog
  */
 export function useConfirm() {
-    const open = useConfirmStore((state) => state.open);
-    const { __ } = useTranslate();
+  const open = useConfirmStore(state => state.open);
+  const { __ } = useTranslate();
 
-    return useCallback(
-        (cb: State["onConfirm"], props: Omit<State, "onConfirm">) => {
-            open({
-                onConfirm: cb,
-                ...props,
-                message: props.message,
-                title: props.title ?? __("Are you sure ?"),
-                variant: props.variant ?? "danger",
-                label: props.label ?? __("Delete"),
-            });
-        },
-        [open, __],
-    );
+  return useCallback(
+    (cb: State["onConfirm"], props: Omit<State, "onConfirm">) => {
+      open({
+        onConfirm: cb,
+        ...props,
+        message: props.message,
+        title: props.title ?? __("Are you sure ?"),
+        variant: props.variant ?? "danger",
+        label: props.label ?? __("Delete"),
+      });
+    },
+    [open, __],
+  );
 }
 
 /**
  * Global component that displays a dialog when confirm() is called
  */
 export function ConfirmDialog() {
-    const message = useConfirmStore((state) => state.message);
-    const isOpen = !!message;
+  const message = useConfirmStore(state => state.message);
+  const isOpen = !!message;
 
-    if (!isOpen) {
-        return null;
-    }
+  if (!isOpen) {
+    return null;
+  }
 
-    return <ConfirmDialogContent />;
+  return <ConfirmDialogContent />;
 }
 
 function ConfirmDialogContent() {
-    const message = useConfirmStore((state) => state.message);
-    const title = useConfirmStore((state) => state.title);
-    const variant = useConfirmStore((state) => state.variant);
-    const label = useConfirmStore((state) => state.label);
-    const onConfirm = useConfirmStore((state) => state.onConfirm);
-    const close = useConfirmStore((state) => state.close);
+  const message = useConfirmStore(state => state.message);
+  const title = useConfirmStore(state => state.title);
+  const variant = useConfirmStore(state => state.variant);
+  const label = useConfirmStore(state => state.label);
+  const onConfirm = useConfirmStore(state => state.onConfirm);
+  const close = useConfirmStore(state => state.close);
 
-    const { __ } = useTranslate();
-    const isOpen = !!message;
+  const { __ } = useTranslate();
+  const isOpen = !!message;
 
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    const dialogStyles = useMemo(() => {
-        const styles = dialog();
-        return {
-            overlay: styles.overlay(),
-            content: styles.content({ className: "max-w-[500px]" }),
-            header: styles.header(),
-            title: styles.title(),
-            footer: styles.footer(),
-        };
-    }, []);
-
-    const handleConfirm = async () => {
-        setLoading(true);
-        try {
-            await onConfirm();
-        } catch (error) {
-            console.error('Confirm action failed:', error);
-        } finally {
-            close();
-            setLoading(false);
-        }
+  const dialogStyles = useMemo(() => {
+    const styles = dialog();
+    return {
+      overlay: styles.overlay(),
+      content: styles.content({ className: "max-w-[500px]" }),
+      header: styles.header(),
+      title: styles.title(),
+      footer: styles.footer(),
     };
+  }, []);
 
-    const handleOpenChange = (open: boolean) => {
-        if (!open) {
-            setLoading(false);
-            close();
-        }
-    };
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      await onConfirm();
+    } catch (error) {
+      console.error("Confirm action failed:", error);
+    } finally {
+      close();
+      setLoading(false);
+    }
+  };
 
-    return (
-        <Root open={isOpen} onOpenChange={handleOpenChange}>
-            <Portal>
-                <Overlay className={dialogStyles.overlay} />
-                <Content className={dialogStyles.content}>
-                    <header className={dialogStyles.header}>
-                        <Title children={title} className={dialogStyles.title} />
-                    </header>
-                    <Description className="p-6" children={message} />
-                    <footer className={dialogStyles.footer}>
-                        <Cancel asChild>
-                            <Button disabled={loading} variant="tertiary">
-                                {__("Cancel")}
-                            </Button>
-                        </Cancel>
-                        <Button
-                            disabled={loading}
-                            variant={variant}
-                            onClick={handleConfirm}
-                        >
-                            {label}
-                        </Button>
-                    </footer>
-                </Content>
-            </Portal>
-        </Root>
-    );
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setLoading(false);
+      close();
+    }
+  };
+
+  return (
+    <Root open={isOpen} onOpenChange={handleOpenChange}>
+      <Portal>
+        <Overlay className={dialogStyles.overlay} />
+        <Content className={dialogStyles.content}>
+          <header className={dialogStyles.header}>
+            <Title children={title} className={dialogStyles.title} />
+          </header>
+          <Description className="p-6" children={message} />
+          <footer className={dialogStyles.footer}>
+            <Cancel asChild>
+              <Button disabled={loading} variant="tertiary">
+                {__("Cancel")}
+              </Button>
+            </Cancel>
+            <Button
+              disabled={loading}
+              variant={variant}
+              onClick={() => void handleConfirm()}
+            >
+              {label}
+            </Button>
+          </footer>
+        </Content>
+      </Portal>
+    </Root>
+  );
 }

@@ -23,7 +23,7 @@ export const stylisticConfigs = [
           tabWidth: 2,
           ignoreStrings: true,
           ignoreTemplateLiterals: true,
-          ignoreTrailingComments: true,
+          ignoreComments: true,
           ignoreUrls: true,
         },
       ],

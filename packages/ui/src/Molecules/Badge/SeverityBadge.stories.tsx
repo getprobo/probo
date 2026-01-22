@@ -2,20 +2,20 @@ import { SeverityBadge } from "./SeverityBadge.tsx";
 import type { Meta, StoryObj } from "@storybook/react";
 
 export default {
-    title: "Molecules/Badges/SeverityBadge",
-    component: SeverityBadge,
-    argTypes: {},
+  title: "Molecules/Badges/SeverityBadge",
+  component: SeverityBadge,
+  argTypes: {},
 } satisfies Meta<typeof SeverityBadge>;
 
 type Story = StoryObj<typeof SeverityBadge>;
 
 export const Default: Story = {
-    render: () => (
-        <div className="space-y-2">
-            <SeverityBadge score={75} />
-            <SeverityBadge score={50} />
-            <SeverityBadge score={25} />
-            <SeverityBadge score={0} />
-        </div>
-    ),
+  render: () => (
+    <div className="space-y-2">
+      <SeverityBadge score={75} />
+      <SeverityBadge score={50} />
+      <SeverityBadge score={25} />
+      <SeverityBadge score={0} />
+    </div>
+  ),
 };
