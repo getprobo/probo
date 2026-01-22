@@ -19,5 +19,10 @@ export const tsConfigs = [
         },
       ],
     },
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
+    },
   } satisfies Linter.Config,
 ];

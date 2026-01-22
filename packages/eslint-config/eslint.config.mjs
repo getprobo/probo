@@ -10,11 +10,4 @@ export default defineConfig([
   ...tsConfigs,
   nodeLanguageOptionsConfig,
   ...stylisticConfigs,
-  {
-    languageOptions: {
-      parserOptions: {
-        tsConfigRootDir: import.meta.dirname,
-      },
-    },
-  },
 ]);

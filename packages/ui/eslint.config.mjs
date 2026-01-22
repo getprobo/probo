@@ -18,11 +18,4 @@ export default defineConfig([
       sourceType: "commonjs",
     },
   },
-  {
-    languageOptions: {
-      parserOptions: {
-        tsConfigRootDir: import.meta.dirname,
-      },
-    },
-  },
 ]);

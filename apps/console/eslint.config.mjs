@@ -8,11 +8,4 @@ export default defineConfig([
   ...configs.react,
   configs.languageOptions.browser,
   ...configs.stylistic,
-  {
-    languageOptions: {
-      parserOptions: {
-        tsConfigRootDir: import.meta.dirname,
-      },
-    },
-  },
 ]);
