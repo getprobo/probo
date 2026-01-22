@@ -47,7 +47,7 @@ function ErrorBoundary() {
     return <Navigate to="/auth/login" />;
   }
 
-  return <PageError error={error instanceof Error ? error : new Error("unkown error")} />;
+  return <PageError error={error instanceof Error ? error : new Error("unknown error")} />;
 }
 
 const routes = [
