@@ -1,5 +1,6 @@
-import { DocumentVersionBadge } from "./DocumentVersionBadge";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { DocumentVersionBadge } from "./DocumentVersionBadge";
 
 export default {
   title: "Molecules/Badges/DocumentVersionBadge",

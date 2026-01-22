@@ -1,9 +1,10 @@
 import type { HTMLAttributes } from "react";
+import { useTranslate } from "@probo/i18n";
+
 import { Button } from "../../Atoms/Button/Button";
 import { IconPlusLarge } from "../../Atoms/Icons";
 import { Input } from "../../Atoms/Input/Input";
 import { Option, Select } from "../../Atoms/Select/Select";
-import { useTranslate } from "@probo/i18n";
 
 type Props = {
   value: string | null;

@@ -8,15 +8,17 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
+
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { InvitationListItemFragment$key } from "/__generated__/iam/InvitationListItemFragment.graphql";
-import { invitationCountFragment } from "../MembersPage";
 import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
+
+import { invitationCountFragment } from "../MembersPage";
 
 const fragment = graphql`
   fragment InvitationListItemFragment on Invitation {

@@ -1,12 +1,12 @@
 import { useTranslate } from "@probo/i18n";
 import { Tr, Td, Badge } from "@probo/ui";
-import { useFragment } from "react-relay";
-import { graphql } from "react-relay";
+import { useFragment, graphql } from "react-relay";
 import {
   getDocumentClassificationLabel,
   getDocumentTypeLabel,
   formatDate,
 } from "@probo/helpers";
+
 import type { DocumentRowFragment$key } from "/__generated__/core/DocumentRowFragment.graphql";
 
 const fragment = graphql`

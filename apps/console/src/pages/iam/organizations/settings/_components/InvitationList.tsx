@@ -1,17 +1,19 @@
 import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { useTranslate } from "@probo/i18n";
+import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
+import { type ComponentProps } from "react";
+
+import type { InvitationListFragment$key } from "/__generated__/iam/InvitationListFragment.graphql";
+import type { InvitationListFragment_RefetchQuery } from "/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
 import {
   SortableTable,
   SortableTh,
   type Order,
 } from "/components/SortableTable";
-import { useTranslate } from "@probo/i18n";
-import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
-import { InvitationListItem } from "./InvitationListItem";
-import type { InvitationListFragment$key } from "/__generated__/iam/InvitationListFragment.graphql";
-import type { InvitationListFragment_RefetchQuery } from "/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
-import { type ComponentProps } from "react";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
+
+import { InvitationListItem } from "./InvitationListItem";
 
 const fragment = graphql`
   fragment InvitationListFragment on Organization

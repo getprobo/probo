@@ -25,14 +25,7 @@ import {
   useMutation,
   type PreloadedQuery,
 } from "react-relay";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
-import { CreateContinualImprovementDialog } from "./dialogs/CreateContinualImprovementDialog";
-import {
-  deleteContinualImprovementMutation,
-  ContinualImprovementsConnectionKey,
-  continualImprovementsQuery,
-} from "../../../hooks/graph/ContinualImprovementGraph";
 import {
   sprintf,
   promisifyMutation,
@@ -40,6 +33,8 @@ import {
   getStatusLabel,
   formatDate,
 } from "@probo/helpers";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type {
@@ -47,6 +42,14 @@ import type {
   ContinualImprovementsPageFragment$data,
 } from "/__generated__/core/ContinualImprovementsPageFragment.graphql";
 import type { ContinualImprovementGraphListQuery } from "/__generated__/core/ContinualImprovementGraphListQuery.graphql";
+
+import {
+  deleteContinualImprovementMutation,
+  ContinualImprovementsConnectionKey,
+  continualImprovementsQuery,
+} from "../../../hooks/graph/ContinualImprovementGraph";
+
+import { CreateContinualImprovementDialog } from "./dialogs/CreateContinualImprovementDialog";
 
 interface ContinualImprovementsPageProps {
   queryRef: PreloadedQuery<ContinualImprovementGraphListQuery>;

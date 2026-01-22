@@ -4,12 +4,6 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import {
-  rightsRequestNodeQuery,
-  useDeleteRightsRequest,
-  useUpdateRightsRequest,
-  RightsRequestsConnectionKey,
-} from "../../../hooks/graph/RightsRequestGraph";
-import {
   ActionDropdown,
   Badge,
   Breadcrumb,
@@ -25,8 +19,6 @@ import {
   Label,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import {
   formatError,
@@ -39,8 +31,18 @@ import {
   getRightsRequestStateLabel,
   getRightsRequestStateOptions,
 } from "@probo/helpers";
-import z from "zod";
+import { z } from "zod";
+
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { RightsRequestGraphNodeQuery } from "/__generated__/core/RightsRequestGraphNodeQuery.graphql";
+
+import {
+  rightsRequestNodeQuery,
+  useDeleteRightsRequest,
+  useUpdateRightsRequest,
+  RightsRequestsConnectionKey,
+} from "../../../hooks/graph/RightsRequestGraph";
 
 const updateRequestSchema = z.object({
   requestType: z.enum(["ACCESS", "DELETION", "PORTABILITY"]),

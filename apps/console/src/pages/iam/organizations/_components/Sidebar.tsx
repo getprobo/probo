@@ -22,9 +22,10 @@ import {
   SidebarItem,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { SidebarFragment$key } from "/__generated__/iam/SidebarFragment.graphql";
 
 const fragment = graphql`

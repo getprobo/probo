@@ -1,6 +1,8 @@
-import { Button } from "../../Atoms/Button/Button";
-import { Dialog, DialogContent, DialogFooter } from "./Dialog";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Button } from "../../Atoms/Button/Button";
+
+import { Dialog, DialogContent, DialogFooter } from "./Dialog";
 
 export default {
   title: "Atoms/Dialog",

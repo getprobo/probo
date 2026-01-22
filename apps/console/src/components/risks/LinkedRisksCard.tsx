@@ -12,9 +12,11 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedRisksCardFragment$key } from "/__generated__/core/LinkedRisksCardFragment.graphql";
 import { useFragment } from "react-relay";
+
+import type { LinkedRisksCardFragment$key } from "/__generated__/core/LinkedRisksCardFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+
 import { LinkedRisksDialog } from "./LinkedRisksDialog.tsx";
 
 const linkedRiskFragment = graphql`

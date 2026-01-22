@@ -1,5 +1,6 @@
-import { ErrorLayout } from "./ErrorLayout";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { ErrorLayout } from "./ErrorLayout";
 
 export default {
   title: "Layouts/ErrorLayout",

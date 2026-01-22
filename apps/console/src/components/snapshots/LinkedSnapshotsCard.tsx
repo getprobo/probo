@@ -15,7 +15,6 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedSnapshotsCardFragment$key } from "/__generated__/core/LinkedSnapshotsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import {
@@ -24,9 +23,12 @@ import {
   getSnapshotTypeUrlPath,
   formatDate,
 } from "@probo/helpers";
+import { clsx } from "clsx";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedSnapshotsCardFragment$key } from "/__generated__/core/LinkedSnapshotsCardFragment.graphql";
+
 import { LinkedSnapshotsDialog } from "./LinkedSnapshotsDialog";
-import clsx from "clsx";
 
 const linkedSnapshotFragment = graphql`
   fragment LinkedSnapshotsCardFragment on Snapshot {

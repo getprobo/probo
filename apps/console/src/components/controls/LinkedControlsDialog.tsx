@@ -21,15 +21,16 @@ import {
 } from "react";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { useDebounceCallback } from "usehooks-ts";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { LinkedControlsDialogQuery } from "/__generated__/core/LinkedControlsDialogQuery.graphql";
 import type {
   LinkedControlsDialogFragment$data,
   LinkedControlsDialogFragment$key,
 } from "/__generated__/core/LinkedControlsDialogFragment.graphql";
 import type { NodeOf } from "/types";
-import { useDebounceCallback } from "usehooks-ts";
 
 const query = graphql`
   query LinkedControlsDialogQuery($organizationId: ID!) {

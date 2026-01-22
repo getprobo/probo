@@ -4,12 +4,6 @@ import {
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
-import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
-import {
-  useDeleteVendor,
-  vendorConnectionKey,
-  vendorNodeQuery,
-} from "/hooks/graph/VendorGraph";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -22,13 +16,21 @@ import {
   Tabs,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet, useParams } from "react-router";
 import { faviconUrl, validateSnapshotConsistency } from "@probo/helpers";
-import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
-import { complianceReportsFragment } from "./tabs/VendorComplianceTab";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import {
+  useDeleteVendor,
+  vendorConnectionKey,
+  vendorNodeQuery,
+} from "/hooks/graph/VendorGraph";
+import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 import type { VendorComplianceTabFragment$key } from "/__generated__/core/VendorComplianceTabFragment.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+
+import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
+import { complianceReportsFragment } from "./tabs/VendorComplianceTab";
 
 type Props = {
   queryRef: PreloadedQuery<VendorGraphNodeQuery>;

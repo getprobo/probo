@@ -1,9 +1,11 @@
 import { useQueryLoader } from "react-relay";
-import { MembersPage, membersPageQuery } from "./MembersPage";
+import { useEffect } from "react";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
-import { useEffect } from "react";
 import type { MembersPageQuery } from "/__generated__/iam/MembersPageQuery.graphql";
+
+import { MembersPage, membersPageQuery } from "./MembersPage";
 
 function MembersPageLoader() {
   const organizationId = useOrganizationId();

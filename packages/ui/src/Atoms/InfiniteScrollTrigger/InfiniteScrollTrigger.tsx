@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { useTranslate } from "@probo/i18n";
 import { useRefSync } from "@probo/hooks";
 import { useInView } from "react-intersection-observer";
+
 import { Spinner } from "../Spinner/Spinner";
 
 type Props = {

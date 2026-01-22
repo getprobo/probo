@@ -2,14 +2,16 @@ import { Button, Card, Field, Logo, Spinner } from "@probo/ui";
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { use, useEffect } from "react";
-import { PDFPreview } from "./PDFPreview";
 import { useWindowSize } from "usehooks-ts";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { graphql } from "relay-runtime";
+import { z } from "zod";
+
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
-import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Viewer } from "/providers/Viewer";
+
+import { PDFPreview } from "./PDFPreview";
 
 const signMutation = graphql`
   mutation NDADialogSignMutation($input: AcceptNonDisclosureAgreementInput!) {

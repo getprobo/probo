@@ -1,6 +1,8 @@
-import { Select } from "../Select/Select";
-import { PropertyRow } from "./PropertyRow";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Select } from "../Select/Select";
+
+import { PropertyRow } from "./PropertyRow";
 
 export default {
   title: "Atoms/PropertyRow",

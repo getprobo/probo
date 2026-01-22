@@ -11,9 +11,10 @@ import {
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 import { useFragment, useMutation } from "react-relay";
-import type { MembershipCardFragment$key } from "/__generated__/iam/MembershipCardFragment.graphql";
 import { parseDate } from "@probo/helpers";
 import { useCallback } from "react";
+
+import type { MembershipCardFragment$key } from "/__generated__/iam/MembershipCardFragment.graphql";
 import type { MembershipCard_assumeMutation } from "/__generated__/iam/MembershipCard_assumeMutation.graphql";
 
 const fragment = graphql`

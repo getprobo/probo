@@ -25,24 +25,27 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useParams } from "react-router";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { CreateObligationDialog } from "./dialogs/CreateObligationDialog";
-import {
-  deleteObligationMutation,
-  obligationsQuery,
-} from "../../../hooks/graph/ObligationGraph";
 import {
   promisifyMutation,
   getObligationStatusVariant,
   getObligationStatusLabel,
   formatDate,
 } from "@probo/helpers";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type {
   ObligationsPageFragment$key,
   ObligationsPageFragment$data,
 } from "/__generated__/core/ObligationsPageFragment.graphql";
 import type { ObligationGraphListQuery } from "/__generated__/core/ObligationGraphListQuery.graphql";
+
+import {
+  deleteObligationMutation,
+  obligationsQuery,
+} from "../../../hooks/graph/ObligationGraph";
+
+import { CreateObligationDialog } from "./dialogs/CreateObligationDialog";
 
 type Obligation
   = ObligationsPageFragment$data["obligations"]["edges"][number]["node"];

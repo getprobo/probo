@@ -20,11 +20,11 @@ import {
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { faviconUrl, formatDate } from "@probo/helpers";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
-import { CreateVendorDialog } from "./dialogs/CreateVendorDialog";
 import {
   paginatedVendorsFragment,
   useDeleteVendor,
@@ -37,6 +37,8 @@ import type {
 } from "/__generated__/core/VendorGraphPaginatedFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+
+import { CreateVendorDialog } from "./dialogs/CreateVendorDialog";
 
 type Vendor = NodeOf<VendorGraphPaginatedFragment$data["vendors"]>;
 

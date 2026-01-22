@@ -1,5 +1,6 @@
-import { Checkbox } from "./Checkbox";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Checkbox } from "./Checkbox";
 
 export default {
   title: "Atoms/Checkbox",

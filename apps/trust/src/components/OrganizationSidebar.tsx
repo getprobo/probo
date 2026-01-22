@@ -9,12 +9,14 @@ import {
 } from "@probo/ui";
 import { use, type PropsWithChildren } from "react";
 import { domain, formatError } from "@probo/helpers";
-import { AuditRowAvatar } from "./AuditRow";
-import { Viewer } from "/providers/Viewer";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
-import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
+
+import { Viewer } from "/providers/Viewer";
 import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
+
+import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
+import { AuditRowAvatar } from "./AuditRow";
 
 const requestAllAccessesMutation = graphql`
   mutation OrganizationSidebar_requestAllAccessesMutation {

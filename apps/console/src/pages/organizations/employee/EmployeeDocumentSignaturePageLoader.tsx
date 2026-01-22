@@ -1,13 +1,15 @@
 import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { useParams } from "react-router";
+
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import type { EmployeeDocumentSignaturePageQuery } from "/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
+import { CoreRelayProvider } from "/providers/CoreRelayProvider";
+
 import {
   EmployeeDocumentSignaturePage,
   employeeDocumentSignaturePageQuery,
 } from "./EmployeeDocumentSignaturePage";
-import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 
 function EmployeeDocumentSignaturePageLoader() {
   const { documentId } = useParams();

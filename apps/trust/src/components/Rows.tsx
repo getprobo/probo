@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import clsx from "clsx";
+import { clsx } from "clsx";
 
 export function Rows({
   children,

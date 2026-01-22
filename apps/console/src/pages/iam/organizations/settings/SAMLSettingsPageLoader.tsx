@@ -1,9 +1,11 @@
 import { useQueryLoader } from "react-relay";
-import { SAMLSettingsPage, samlSettingsPageQuery } from "./SAMLSettingsPage";
+import { useEffect } from "react";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
-import { useEffect } from "react";
 import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
+
+import { SAMLSettingsPage, samlSettingsPageQuery } from "./SAMLSettingsPage";
 
 function SAMLSettingsPageLoader() {
   const organizationId = useOrganizationId();

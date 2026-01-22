@@ -1,10 +1,12 @@
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
 import { useTranslate } from "@probo/i18n";
+import { Button, Card, IconPlusLarge } from "@probo/ui";
+
+import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
+
 import { DomainCard } from "./_components/DomainCard";
 import { NewDomainDialog } from "./_components/NewDomainDialog";
-import { Button, Card, IconPlusLarge } from "@probo/ui";
 
 export const domainSettingsPageQuery = graphql`
   query DomainSettingsPageQuery($organizationId: ID!) {

@@ -1,7 +1,9 @@
+import type { Meta, StoryObj } from "@storybook/react";
+
 import { Button } from "../Button/Button";
 import { IconCircleQuestionmark1 } from "../Icons";
+
 import { Dropdown, DropdownItem, DropdownSeparator } from "./Dropdown";
-import type { Meta, StoryObj } from "@storybook/react";
 
 export default {
   title: "Atoms/Dropdown",

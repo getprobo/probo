@@ -9,11 +9,12 @@ import {
   useToast,
 } from "@probo/ui";
 import { graphql } from "relay-runtime";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useFragment, useMutation } from "react-relay";
 import { useTranslate } from "@probo/i18n";
-import type { ViewerMembershipDropdownFragment$key } from "/__generated__/iam/ViewerMembershipDropdownFragment.graphql";
 import { formatError } from "@probo/helpers";
+
+import type { ViewerMembershipDropdownFragment$key } from "/__generated__/iam/ViewerMembershipDropdownFragment.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 export const fragment = graphql`
   fragment ViewerMembershipDropdownFragment on Organization {

@@ -19,6 +19,7 @@ import {
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+
 import type { LinkedObligationsDialogQuery } from "/__generated__/core/LinkedObligationsDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";

@@ -4,6 +4,17 @@ import {
   redirect,
   useRouteError,
 } from "react-router";
+import { lazy } from "@probo/react-lazy";
+import { routeFromAppRoute, type AppRoute } from "@probo/routes";
+import { Role } from "@probo/helpers";
+import {
+  ForbiddenError,
+  UnAuthenticatedError,
+  UnauthorizedError,
+} from "@probo/relay";
+import { use } from "react";
+import { CenteredLayout } from "@probo/ui";
+
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
@@ -25,18 +36,8 @@ import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes.ts";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes.ts";
-import { lazy } from "@probo/react-lazy";
-import { routeFromAppRoute, type AppRoute } from "@probo/routes";
-import { Role } from "@probo/helpers";
-import {
-  ForbiddenError,
-  UnAuthenticatedError,
-  UnauthorizedError,
-} from "@probo/relay";
 import { CurrentUser } from "./providers/CurrentUser.tsx";
-import { use } from "react";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading.tsx";
-import { CenteredLayout } from "@probo/ui";
 
 /**
  * Top level error boundary

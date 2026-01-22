@@ -10,8 +10,6 @@ import {
   ItemText,
 } from "@radix-ui/react-select";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { Input, input } from "../Input/Input.tsx";
-import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.tsx";
 import { tv } from "tailwind-variants";
 import {
   Children,
@@ -20,6 +18,9 @@ import {
   type PropsWithChildren,
   type ReactNode,
 } from "react";
+
+import { Input, input } from "../Input/Input.tsx";
+import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.tsx";
 import { IconMagnifyingGlass } from "../Icons/IconMagnifyingGlass.tsx";
 import { Spinner } from "../Spinner/Spinner.tsx";
 

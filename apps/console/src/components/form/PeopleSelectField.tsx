@@ -2,6 +2,7 @@ import { Avatar, Field, Option, Select } from "@probo/ui";
 import { Suspense, type ComponentProps } from "react";
 import { useTranslate } from "@probo/i18n";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
+
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 
 type Props<

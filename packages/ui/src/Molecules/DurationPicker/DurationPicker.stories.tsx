@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { DurationPicker } from "./DurationPicker";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { DurationPicker } from "./DurationPicker";
 
 export default {
   title: "Molecules/DurationPicker",

@@ -27,21 +27,23 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
+import { usePageTitle } from "@probo/hooks";
+import { formatDate, sprintf } from "@probo/helpers";
+import { Link } from "react-router";
+import { useState, useRef } from "react";
+
+import type { MeetingsPageRowFragment$key } from "/__generated__/core/MeetingsPageRowFragment.graphql";
+import { SortableTable, SortableTh } from "/components/SortableTable";
+import type { MeetingsPageListFragment$key } from "/__generated__/core/MeetingsPageListFragment.graphql";
 import {
   meetingsQuery,
   useDeleteMeetingMutation,
 } from "/hooks/graph/MeetingGraph";
-import type { MeetingsPageListFragment$key } from "/__generated__/core/MeetingsPageListFragment.graphql";
-import { usePageTitle } from "@probo/hooks";
-import { formatDate, sprintf } from "@probo/helpers";
-import { CreateMeetingDialog } from "./dialogs/CreateMeetingDialog";
-import type { MeetingsPageRowFragment$key } from "/__generated__/core/MeetingsPageRowFragment.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import { Link } from "react-router";
-import { useState, useRef } from "react";
+import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { MeetingsPage_UpdateSummaryMutation } from "/__generated__/core/MeetingsPage_UpdateSummaryMutation.graphql";
+
+import { CreateMeetingDialog } from "./dialogs/CreateMeetingDialog";
 
 const meetingsFragment = graphql`
   fragment MeetingsPageListFragment on Organization

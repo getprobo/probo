@@ -1,5 +1,4 @@
 import { useNavigate, useOutletContext, useParams } from "react-router";
-import type { MeasureEvidencesTabFragment$key } from "/__generated__/core/MeasureEvidencesTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -23,16 +22,19 @@ import {
   usePaginationFragment,
   useRelayEnvironment,
 } from "react-relay";
+import { fileSize, fileType, sprintf, formatDate } from "@probo/helpers";
+import { useState } from "react";
+
 import { SortableTable } from "/components/SortableTable";
 import type { MeasureEvidencesTabFragment_evidence$key } from "/__generated__/core/MeasureEvidencesTabFragment_evidence.graphql";
-import { fileSize, fileType, sprintf, formatDate } from "@probo/helpers";
-import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
-import { useState } from "react";
-import { EvidenceDownloadDialog } from "../dialog/EvidenceDownloadDialog";
+import type { MeasureEvidencesTabFragment$key } from "/__generated__/core/MeasureEvidencesTabFragment.graphql";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+
+import { EvidenceDownloadDialog } from "../dialog/EvidenceDownloadDialog";
+import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
+import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 
 export const evidencesFragment = graphql`
   fragment MeasureEvidencesTabFragment on Measure

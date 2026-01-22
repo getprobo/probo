@@ -4,19 +4,6 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import {
-  processingActivityNodeQuery,
-  useDeleteProcessingActivity,
-  useUpdateProcessingActivity,
-  useCreateDataProtectionImpactAssessment,
-  useUpdateDataProtectionImpactAssessment,
-  useDeleteDataProtectionImpactAssessment,
-  useCreateTransferImpactAssessment,
-  useUpdateTransferImpactAssessment,
-  useDeleteTransferImpactAssessment,
-  ProcessingActivitiesConnectionKey,
-  type ProcessingActivityDPIAResidualRisk,
-} from "../../../hooks/graph/ProcessingActivityGraph";
-import {
   ActionDropdown,
   Breadcrumb,
   Button,
@@ -34,20 +21,24 @@ import {
   TabItem,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller, useForm } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
-import z from "zod";
+import { z } from "zod";
 import {
   validateSnapshotConsistency,
   formatDatetime,
   toDateInput,
 } from "@probo/helpers";
+import { useState, useEffect } from "react";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import type { ProcessingActivityGraphNodeQuery } from "/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
+
 import {
   SpecialOrCriminalDataOptions,
   LawfulBasisOptions,
@@ -56,9 +47,19 @@ import {
   TransferImpactAssessmentOptions,
   RoleOptions,
 } from "../../../components/form/ProcessingActivityEnumOptions";
-
-import type { ProcessingActivityGraphNodeQuery } from "/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
-import { useState, useEffect } from "react";
+import {
+  processingActivityNodeQuery,
+  useDeleteProcessingActivity,
+  useUpdateProcessingActivity,
+  useCreateDataProtectionImpactAssessment,
+  useUpdateDataProtectionImpactAssessment,
+  useDeleteDataProtectionImpactAssessment,
+  useCreateTransferImpactAssessment,
+  useUpdateTransferImpactAssessment,
+  useDeleteTransferImpactAssessment,
+  ProcessingActivitiesConnectionKey,
+  type ProcessingActivityDPIAResidualRisk,
+} from "../../../hooks/graph/ProcessingActivityGraph";
 
 const updateProcessingActivitySchema = z.object({
   name: z.string().min(1, "Name is required"),

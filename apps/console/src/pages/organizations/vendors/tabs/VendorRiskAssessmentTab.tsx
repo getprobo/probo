@@ -1,6 +1,5 @@
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { VendorRiskAssessmentTabFragment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -17,13 +16,16 @@ import {
 } from "@probo/ui";
 import { formatDate } from "@probo/helpers";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import type { VendorRiskAssessmentTabFragment_assessment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment_assessment.graphql";
-import { SortableTable, SortableTh } from "/components/SortableTable";
-import { CreateRiskAssessmentDialog } from "../dialogs/CreateRiskAssessmentDialog";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { useState, type ComponentProps } from "react";
+
+import { SortableTable, SortableTh } from "/components/SortableTable";
+import type { VendorRiskAssessmentTabFragment_assessment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment_assessment.graphql";
+import type { VendorRiskAssessmentTabFragment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment.graphql";
 import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 import type { VendorRiskAssessmentTabQuery } from "/__generated__/core/VendorRiskAssessmentTabQuery.graphql";
+
+import { CreateRiskAssessmentDialog } from "../dialogs/CreateRiskAssessmentDialog";
 
 const riskAssessmentsFragment = graphql`
   fragment VendorRiskAssessmentTabFragment on Vendor

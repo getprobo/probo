@@ -2,12 +2,13 @@ import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import z from "zod";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { z } from "zod";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
-import type { ResetPasswordPageMutation } from "/__generated__/iam/ResetPasswordPageMutation.graphql";
 import { formatError, type GraphQLError } from "@probo/helpers";
+
+import type { ResetPasswordPageMutation } from "/__generated__/iam/ResetPasswordPageMutation.graphql";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
 const resetPasswordMutation = graphql`
   mutation ResetPasswordPageMutation($input: ResetPasswordInput!) {

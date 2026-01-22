@@ -1,5 +1,6 @@
-import { RiskOverview } from "./RiskOverview";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { RiskOverview } from "./RiskOverview";
 
 export default {
   title: "Molecules/Risks/RiskOverview",

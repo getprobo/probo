@@ -15,13 +15,15 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedAuditsCardFragment$key } from "/__generated__/core/LinkedAuditsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf, getAuditStateVariant } from "@probo/helpers";
+import { clsx } from "clsx";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedAuditsCardFragment$key } from "/__generated__/core/LinkedAuditsCardFragment.graphql";
+
 import { LinkedAuditsDialog } from "./LinkedAuditsDialog";
-import clsx from "clsx";
 
 const linkedAuditFragment = graphql`
   fragment LinkedAuditsCardFragment on Audit {

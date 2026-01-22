@@ -15,13 +15,15 @@ import {
   Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedStatesOfApplicabilityCardFragment$key } from "/__generated__/core/LinkedStatesOfApplicabilityCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState, useEffect } from "react";
 import { sprintf } from "@probo/helpers";
+import { clsx } from "clsx";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedStatesOfApplicabilityCardFragment$key } from "/__generated__/core/LinkedStatesOfApplicabilityCardFragment.graphql";
+
 import { LinkedStatesOfApplicabilityDialog } from "./LinkedStatesOfApplicabilityDialog";
-import clsx from "clsx";
 
 const linkedStateOfApplicabilityFragment = graphql`
     fragment LinkedStatesOfApplicabilityCardFragment on StateOfApplicabilityControl {

@@ -1,5 +1,4 @@
 import { useTranslate } from "@probo/i18n";
-import { useVendorForm } from "/hooks/forms/useVendorForm";
 import { useOutletContext, useParams } from "react-router";
 import {
   Button,
@@ -11,24 +10,27 @@ import {
   IconPencil,
   Option,
 } from "@probo/ui";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { ControlledField } from "/components/form/ControlledField";
-import { CountriesField } from "/components/form/CountriesField";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useMemo } from "react";
 import { usePageTitle } from "@probo/hooks";
 import { downloadFile, formatDate } from "@probo/helpers";
 import { useFragment, graphql } from "react-relay";
+import type { VendorCategory } from "@probo/vendors";
+
+import { useVendorForm } from "/hooks/forms/useVendorForm";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { ControlledField } from "/components/form/ControlledField";
+import { CountriesField } from "/components/form/CountriesField";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "/__generated__/core/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
+import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "/__generated__/core/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+
 import { UploadBusinessAssociateAgreementDialog } from "../dialogs/UploadBusinessAssociateAgreementDialog";
 import { DeleteBusinessAssociateAgreementDialog } from "../dialogs/DeleteBusinessAssociateAgreementDialog";
 import { EditBusinessAssociateAgreementDialog } from "../dialogs/EditBusinessAssociateAgreementDialog";
 import { UploadDataPrivacyAgreementDialog } from "../dialogs/UploadDataPrivacyAgreementDialog";
 import { DeleteDataPrivacyAgreementDialog } from "../dialogs/DeleteDataPrivacyAgreementDialog";
 import { EditDataPrivacyAgreementDialog } from "../dialogs/EditDataPrivacyAgreementDialog";
-import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "/__generated__/core/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
-import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "/__generated__/core/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
-import type { VendorCategory } from "@probo/vendors";
-import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 
 const vendorBusinessAssociateAgreementFragment = graphql`
   fragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {

@@ -22,11 +22,10 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useParams } from "react-router";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { CreateDatumDialog } from "./dialogs/CreateDatumDialog";
-import { useDeleteDatum, dataQuery } from "../../../hooks/graph/DatumGraph";
-import type { DatumGraphListQuery } from "/__generated__/core/DatumGraphListQuery.graphql";
 import { faviconUrl } from "@probo/helpers";
+
+import type { DatumGraphListQuery } from "/__generated__/core/DatumGraphListQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
 import type {
   DataPageFragment$key,
@@ -35,6 +34,10 @@ import type {
 import type { DataListQuery } from "/__generated__/core/DataListQuery.graphql";
 import { SortableTable } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+
+import { useDeleteDatum, dataQuery } from "../../../hooks/graph/DatumGraph";
+
+import { CreateDatumDialog } from "./dialogs/CreateDatumDialog";
 
 const paginatedDataFragment = graphql`
   fragment DataPageFragment on Organization

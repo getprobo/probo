@@ -1,7 +1,3 @@
-import {
-  SortableCellHead,
-  SortableDataTable,
-} from "/components/table/SortableDataTable.tsx";
 import type { GraphQLTaggedNode, OperationType } from "relay-runtime";
 import type { KeyType, KeyTypeData } from "react-relay/relay-hooks/helpers";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
@@ -16,13 +12,17 @@ import {
   Spinner,
 } from "@probo/ui";
 import { z } from "zod";
-import { useMutateField } from "/hooks/useMutateField.tsx";
 import { type ReactNode } from "react";
 import { useToggle } from "@probo/hooks";
+import { clsx } from "clsx";
+
 import { useStateWithSchema } from "/hooks/useStateWithSchema.ts";
-import clsx from "clsx";
+import { useMutateField } from "/hooks/useMutateField.tsx";
+import {
+  SortableCellHead,
+  SortableDataTable, defaultPageSize,
+} from "/components/table/SortableDataTable.tsx";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
-import { defaultPageSize } from "/components/table/SortableDataTable.tsx";
 
 type ColumnDefinition = { label: string; field: string } | string;
 

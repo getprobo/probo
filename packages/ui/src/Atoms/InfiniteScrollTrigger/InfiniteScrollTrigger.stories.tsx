@@ -1,5 +1,6 @@
-import { InfiniteScrollTrigger } from "./InfiniteScrollTrigger";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { InfiniteScrollTrigger } from "./InfiniteScrollTrigger";
 
 export default {
   title: "Atoms/InfiniteScrollTrigger",

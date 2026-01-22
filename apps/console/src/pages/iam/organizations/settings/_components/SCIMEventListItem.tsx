@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { SCIMEventListItemFragment$key } from "/__generated__/iam/SCIMEventListItemFragment.graphql";
 import { Td, Tr, Badge, IconChevronDown, IconChevronRight } from "@probo/ui";
 import { formatDate } from "@probo/helpers";
+
+import type { SCIMEventListItemFragment$key } from "/__generated__/iam/SCIMEventListItemFragment.graphql";
 
 const SCIMEventListItemFragment = graphql`
   fragment SCIMEventListItemFragment on SCIMEvent {

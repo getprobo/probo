@@ -3,11 +3,13 @@ import { formatDate, formatError, type GraphQLError } from "@probo/helpers";
 import { Button, Spinner, Td, Tr, useConfirm, useToast } from "@probo/ui";
 import { graphql } from "relay-runtime";
 import { useMutation, useFragment } from "react-relay";
+import { clsx } from "clsx";
+import { Suspense } from "react";
+
 import type { PersonalAPIKeyRowFragment$key } from "/__generated__/iam/PersonalAPIKeyRowFragment.graphql";
 import type { PersonalAPIKeyRow_revokeMutation } from "/__generated__/iam/PersonalAPIKeyRow_revokeMutation.graphql";
-import clsx from "clsx";
+
 import { PersonalAPIKeyTokenAction } from "./PersonalAPIKeyTokenAction";
-import { Suspense } from "react";
 
 const revokeMutation = graphql`
   mutation PersonalAPIKeyRow_revokeMutation(

@@ -1,5 +1,4 @@
 import { Outlet, useNavigate, useParams } from "react-router";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import {
   ActionDropdown,
   Breadcrumb,
@@ -30,6 +29,14 @@ import {
   useLazyLoadQuery,
   usePreloadedQuery,
 } from "react-relay";
+import {
+  getMeasureStateLabel,
+  measureStates,
+  slugify,
+  sprintf,
+} from "@probo/helpers";
+import { Suspense } from "react";
+
 import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
 import type { MeasureDetailPageTasksCountQuery } from "/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
 import {
@@ -38,14 +45,9 @@ import {
   useDeleteMeasureMutation,
   useUpdateMeasure,
 } from "/hooks/graph/MeasureGraph";
-import {
-  getMeasureStateLabel,
-  measureStates,
-  slugify,
-  sprintf,
-} from "@probo/helpers";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
-import { Suspense } from "react";
 
 const tasksCountQuery = graphql`
   query MeasureDetailPageTasksCountQuery($measureId: ID!) {

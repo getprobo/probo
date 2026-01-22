@@ -16,6 +16,7 @@ import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { TrustCenterVendorsCardFragment$key } from "/__generated__/core/TrustCenterVendorsCardFragment.graphql";
 

@@ -1,6 +1,8 @@
-import { Button } from "../Button/Button";
-import { Toast, Toasts, useToast } from "./Toasts";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Button } from "../Button/Button";
+
+import { Toast, Toasts, useToast } from "./Toasts";
 
 export default {
   title: "Atoms/Toasts",

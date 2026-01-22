@@ -5,11 +5,6 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 import {
-  datumNodeQuery,
-  useDeleteDatum,
-  useUpdateDatum,
-} from "/hooks/graph/DatumGraph";
-import {
   ActionDropdown,
   Badge,
   Breadcrumb,
@@ -20,14 +15,20 @@ import {
   Option,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { z } from "zod";
+import { validateSnapshotConsistency } from "@probo/helpers";
+
+import {
+  datumNodeQuery,
+  useDeleteDatum,
+  useUpdateDatum,
+} from "/hooks/graph/DatumGraph";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { ControlledField } from "/components/form/ControlledField";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import z from "zod";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { validateSnapshotConsistency } from "@probo/helpers";
 import type { DatumGraphNodeQuery } from "/__generated__/core/DatumGraphNodeQuery.graphql";
 
 const updateDatumSchema = z.object({

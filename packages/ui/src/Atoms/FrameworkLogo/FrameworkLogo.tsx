@@ -1,4 +1,5 @@
 import clsx from "clsx";
+
 import { Avatar } from "../Avatar/Avatar";
 
 interface FrameworkLogoProps {

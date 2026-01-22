@@ -1,8 +1,8 @@
 import { useTranslate } from "@probo/i18n";
 import { IconCircleCheck, IconRadioUnchecked } from "@probo/ui";
-import clsx from "clsx";
-import { useFragment } from "react-relay";
-import { graphql } from "react-relay";
+import { clsx } from "clsx";
+import { useFragment, graphql } from "react-relay";
+
 import type { VersionRowFragment$key } from "/__generated__/core/VersionRowFragment.graphql";
 
 const fragment = graphql`

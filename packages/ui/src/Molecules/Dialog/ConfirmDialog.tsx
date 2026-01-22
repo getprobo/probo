@@ -8,11 +8,13 @@ import {
   Cancel,
 } from "@radix-ui/react-alert-dialog";
 import { useCallback, useState, useMemo, type ComponentProps } from "react";
-import { Button } from "../../Atoms/Button/Button";
 import { Root as Portal } from "@radix-ui/react-portal";
-import { dialog } from "./Dialog";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
+
+import { Button } from "../../Atoms/Button/Button";
+
+import { dialog } from "./Dialog";
 
 type State = {
   title?: string;

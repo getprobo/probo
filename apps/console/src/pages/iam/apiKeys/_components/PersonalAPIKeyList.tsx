@@ -24,9 +24,11 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
+
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import type { PersonalAPIKeyListFragment$key } from "/__generated__/iam/PersonalAPIKeyListFragment.graphql";
 import type { PersonalAPIKeyListCreateMutation } from "/__generated__/iam/PersonalAPIKeyListCreateMutation.graphql";
+
 import { PersonalAPIKeysTable } from "./PersonalAPIKeysTable";
 import { PersonalAPIKeyTokenDialog } from "./PersonalAPIKeyTokenDialog";
 

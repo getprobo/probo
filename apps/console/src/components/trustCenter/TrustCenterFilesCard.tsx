@@ -16,14 +16,14 @@ import {
   IconArrowLink,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { useFragment } from "react-relay";
+import { useMemo, useState, useCallback } from "react";
+import { sprintf, getTrustCenterVisibilityOptions, formatDate } from "@probo/helpers";
+
 import type {
   TrustCenterFilesCardFragment$key,
   TrustCenterFilesCardFragment$data,
 } from "/__generated__/core/TrustCenterFilesCardFragment.graphql";
-import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback } from "react";
-import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
-import { formatDate } from "@probo/helpers";
 
 const trustCenterFileFragment = graphql`
   fragment TrustCenterFilesCardFragment on TrustCenterFile {

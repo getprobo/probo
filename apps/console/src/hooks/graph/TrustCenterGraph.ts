@@ -1,4 +1,5 @@
 import { graphql } from "relay-runtime";
+
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { TrustCenterGraphUpdateMutation } from "/__generated__/core/TrustCenterGraphUpdateMutation.graphql";
 

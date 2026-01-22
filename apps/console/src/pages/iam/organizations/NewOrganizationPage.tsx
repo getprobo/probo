@@ -11,6 +11,7 @@ import { graphql, useMutation } from "react-relay";
 import type { FormEventHandler } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { formatError } from "@probo/helpers";
+
 import type { NewOrganizationPageMutation } from "/__generated__/iam/NewOrganizationPageMutation.graphql";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 

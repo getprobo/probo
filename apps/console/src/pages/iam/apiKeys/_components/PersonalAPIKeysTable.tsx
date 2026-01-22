@@ -1,7 +1,9 @@
 import { useTranslate } from "@probo/i18n";
 import { Table, Tbody, Th, Thead, Tr } from "@probo/ui";
-import { PersonalAPIKeyRow } from "./PersonalAPIKeyRow";
+
 import type { PersonalAPIKeyListFragment$data } from "/__generated__/iam/PersonalAPIKeyListFragment.graphql";
+
+import { PersonalAPIKeyRow } from "./PersonalAPIKeyRow";
 
 export function PersonalAPIKeysTable(props: {
   edges: PersonalAPIKeyListFragment$data["personalAPIKeys"]["edges"];

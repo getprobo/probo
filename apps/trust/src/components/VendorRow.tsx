@@ -1,9 +1,10 @@
 import { graphql } from "relay-runtime";
-import type { VendorRowFragment$key } from "./__generated__/VendorRowFragment.graphql";
 import { useFragment } from "react-relay";
 import { IconPin, IconShield } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { faviconUrl, getCountryName } from "@probo/helpers";
+
+import type { VendorRowFragment$key } from "./__generated__/VendorRowFragment.graphql";
 
 const vendorRowFragment = graphql`
   fragment VendorRowFragment on Vendor {

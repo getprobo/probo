@@ -1,5 +1,6 @@
-import { FileButton } from "./FileButton";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { FileButton } from "./FileButton";
 
 export default {
   title: "Molecules/FileButton",

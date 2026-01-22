@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { Outlet } from "react-router";
+
 import { Skeleton } from "../Atoms/Skeleton/Skeleton";
 
 export function CenteredLayout({ children }: PropsWithChildren) {

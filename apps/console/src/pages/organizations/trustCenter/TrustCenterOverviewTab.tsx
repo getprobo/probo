@@ -9,13 +9,15 @@ import {
   IconTrashCan,
 } from "@probo/ui";
 import { useOutletContext } from "react-router";
+import { useState } from "react";
+
 import {
   useUpdateTrustCenterMutation,
   useUploadTrustCenterNDAMutation,
   useDeleteTrustCenterNDAMutation,
 } from "/hooks/graph/TrustCenterGraph";
 import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
-import { useState } from "react";
+
 import { SlackConnections } from "../../../components/organizations/SlackConnection";
 
 export default function TrustCenterOverviewTab() {

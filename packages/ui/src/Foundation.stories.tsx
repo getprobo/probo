@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import * as icons from "./Atoms/Icons";
 import { objectKeys } from "@probo/helpers";
+
+import * as icons from "./Atoms/Icons";
 
 const meta = {
   title: "Foundations",

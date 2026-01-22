@@ -16,12 +16,14 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useCreateContinualImprovement } from "../../../../hooks/graph/ContinualImprovementGraph";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { Controller } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { formatDatetime } from "@probo/helpers";
+
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+
+import { useCreateContinualImprovement } from "../../../../hooks/graph/ContinualImprovementGraph";
 
 const schema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),

@@ -1,10 +1,12 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
-import { useMutationWithToasts } from "../useMutationWithToasts";
+
 import type { DocumentGraphDeleteMutation } from "/__generated__/core/DocumentGraphDeleteMutation.graphql";
 import type { DocumentGraphSendSigningNotificationsMutation } from "/__generated__/core/DocumentGraphSendSigningNotificationsMutation.graphql";
 import type { DocumentGraphDeleteDraftMutation } from "/__generated__/core/DocumentGraphDeleteDraftMutation.graphql";
 import type { DocumentGraphBulkExportDocumentsMutation } from "/__generated__/core/DocumentGraphBulkExportDocumentsMutation.graphql";
+
+import { useMutationWithToasts } from "../useMutationWithToasts";
 
 export const documentsQuery = graphql`
   query DocumentGraphListQuery($organizationId: ID!) {

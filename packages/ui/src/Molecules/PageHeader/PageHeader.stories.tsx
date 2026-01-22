@@ -1,6 +1,8 @@
-import { Button } from "../../Atoms/Button/Button.tsx";
-import { PageHeader } from "./PageHeader";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Button } from "../../Atoms/Button/Button.tsx";
+
+import { PageHeader } from "./PageHeader";
 
 export default {
   title: "Molecules/PageHeader",

@@ -8,10 +8,12 @@ import {
   Input,
 } from "@probo/ui";
 import { useMemo, useState } from "react";
+import { usePageTitle } from "@probo/hooks";
+
+import type { MembershipsPageQuery } from "/__generated__/iam/MembershipsPageQuery.graphql";
+
 import { InvitationCard } from "./_components/InvitationCard";
 import { MembershipCard } from "./_components/MembershipCard";
-import type { MembershipsPageQuery } from "/__generated__/iam/MembershipsPageQuery.graphql";
-import { usePageTitle } from "@probo/hooks";
 
 export const membershipsPageQuery = graphql`
   query MembershipsPageQuery {

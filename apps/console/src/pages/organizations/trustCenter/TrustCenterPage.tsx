@@ -14,10 +14,11 @@ import {
   IconPeopleAdd,
 } from "@probo/ui";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
+import { Outlet } from "react-router";
+
 import { trustCenterQuery } from "/hooks/graph/TrustCenterGraph";
 import type { TrustCenterGraphQuery } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Outlet } from "react-router";
 
 type Props = {
   queryRef: PreloadedQuery<TrustCenterGraphQuery>;

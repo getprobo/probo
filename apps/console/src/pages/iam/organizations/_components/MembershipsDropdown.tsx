@@ -14,10 +14,12 @@ import {
 } from "@probo/ui";
 import { Suspense, useCallback, useState } from "react";
 import { useTranslate } from "@probo/i18n";
-import type { MembershipsDropdownMenuQuery } from "/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
 import { Link, useLocation } from "react-router";
+
+import type { MembershipsDropdownMenuQuery } from "/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
 import type { MembershipsDropdown_organizationFragment$key } from "/__generated__/iam/MembershipsDropdown_organizationFragment.graphql";
 import type { MembershipsDropdown_viewerFragment$key } from "/__generated__/iam/MembershipsDropdown_viewerFragment.graphql";
+
 import {
   MembershipsDropdownMenu,
   membershipsDropdownMenuQuery,

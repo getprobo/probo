@@ -1,5 +1,7 @@
 import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
+
 import { coreEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton.tsx";
 import {
@@ -8,7 +10,6 @@ import {
 } from "/hooks/graph/StateOfApplicabilityGraph";
 import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
 import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
 export const statesOfApplicabilityRoutes = [
   {

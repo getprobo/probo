@@ -19,12 +19,8 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useParams } from "react-router";
-import z from "zod";
-import {
-  assetNodeQuery,
-  useDeleteAsset,
-  useUpdateAsset,
-} from "../../../hooks/graph/AssetGraph";
+import { z } from "zod";
+
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { ControlledField } from "/components/form/ControlledField";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
@@ -32,6 +28,12 @@ import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectFiel
 import type { AssetGraphNodeQuery } from "/__generated__/core/AssetGraphNodeQuery.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+
+import {
+  assetNodeQuery,
+  useDeleteAsset,
+  useUpdateAsset,
+} from "../../../hooks/graph/AssetGraph";
 
 const updateAssetSchema = z.object({
   name: z.string().min(1, "Name is required"),

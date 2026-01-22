@@ -1,5 +1,6 @@
-import { Dropzone } from "./Dropzone";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Dropzone } from "./Dropzone";
 
 export default {
   title: "Atoms/Dropzone",

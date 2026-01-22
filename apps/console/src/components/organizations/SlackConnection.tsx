@@ -1,6 +1,7 @@
 import { Badge, Button, Card } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { sprintf } from "@probo/helpers";
+
 import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 
 type Props = {

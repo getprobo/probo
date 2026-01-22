@@ -6,8 +6,9 @@ import {
 } from "relay-runtime";
 import type { PropsWithChildren } from "react";
 import { RelayEnvironmentProvider } from "react-relay";
-import { getPathPrefix } from "/utils/pathPrefix";
 import { makeFetchQuery } from "@probo/relay";
+
+import { getPathPrefix } from "/utils/pathPrefix";
 
 export class UnAuthenticatedError extends Error {
   constructor() {

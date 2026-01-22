@@ -18,17 +18,18 @@ import { Suspense, type ReactNode } from "react";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { sprintf } from "@probo/helpers";
+import { z } from "zod";
+import { useList } from "@probo/hooks";
+import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 import type { SignatureDocumentsDialogMutation } from "/__generated__/core/SignatureDocumentsDialogMutation.graphql.ts";
 import { useFormWithSchema } from "/hooks/useFormWithSchema.ts";
-import z from "zod";
 import {
   paginatedPeopleFragment,
   paginatedPeopleQuery,
 } from "/hooks/graph/PeopleGraph.ts";
-import { useList } from "@probo/hooks";
-import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql.ts";
 import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql.ts";
 

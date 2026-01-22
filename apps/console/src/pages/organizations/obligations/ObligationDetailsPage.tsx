@@ -4,12 +4,6 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import {
-  obligationNodeQuery,
-  useDeleteObligation,
-  useUpdateObligation,
-  ObligationsConnectionKey,
-} from "../../../hooks/graph/ObligationGraph";
-import {
   ActionDropdown,
   Badge,
   Breadcrumb,
@@ -26,12 +20,9 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useParams } from "react-router";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
-import z from "zod";
+import { z } from "zod";
 import {
   getObligationStatusVariant,
   getObligationStatusLabel,
@@ -40,8 +31,19 @@ import {
   validateSnapshotConsistency,
   getObligationTypeOptions,
 } from "@probo/helpers";
+
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationGraphNodeQuery } from "/__generated__/core/ObligationGraphNodeQuery.graphql";
+
+import {
+  obligationNodeQuery,
+  useDeleteObligation,
+  useUpdateObligation,
+  ObligationsConnectionKey,
+} from "../../../hooks/graph/ObligationGraph";
 
 const updateObligationSchema = z.object({
   area: z.string().optional(),

@@ -1,6 +1,7 @@
 import { randomInt, times } from "@probo/helpers";
-import { RisksChart } from "./RisksChart";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { RisksChart } from "./RisksChart";
 
 export default {
   title: "Molecules/Risks/RisksChart",

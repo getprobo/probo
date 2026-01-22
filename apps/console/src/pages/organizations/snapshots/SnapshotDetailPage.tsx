@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
+import { getSnapshotTypeUrlPath } from "@probo/helpers";
+
 import { snapshotNodeQuery } from "/hooks/graph/SnapshotGraph";
 import type { SnapshotGraphNodeQuery } from "/__generated__/core/SnapshotGraphNodeQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PageError } from "/components/PageError";
-import { getSnapshotTypeUrlPath } from "@probo/helpers";
 
 type Props = {
   queryRef: PreloadedQuery<SnapshotGraphNodeQuery>;

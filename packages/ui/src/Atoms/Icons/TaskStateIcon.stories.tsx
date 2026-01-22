@@ -1,5 +1,6 @@
-import { TaskStateIcon } from "./TaskStateIcon";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { TaskStateIcon } from "./TaskStateIcon";
 
 export default {
   title: "Atoms/TaskStateIcon",

@@ -5,11 +5,12 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { TaskGraphQuery } from "/__generated__/core/TaskGraphQuery.graphql";
 import { useTranslate } from "@probo/i18n";
+import { usePageTitle } from "@probo/hooks";
+
+import type { TaskGraphQuery } from "/__generated__/core/TaskGraphQuery.graphql";
 import type { TasksPageFragment$key } from "/__generated__/core/TasksPageFragment.graphql";
 import { tasksQuery } from "/hooks/graph/TaskGraph";
-import { usePageTitle } from "@probo/hooks";
 import { TasksCard } from "/components/tasks/TasksCard";
 import TaskFormDialog from "/components/tasks/TaskFormDialog";
 

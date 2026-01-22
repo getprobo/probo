@@ -16,21 +16,23 @@ import {
   IconTrashCan,
   PageHeader,
 } from "@probo/ui";
+import { useTranslate } from "@probo/i18n";
+import { Navigate, Outlet, useNavigate, useParams } from "react-router";
+
 import {
   connectionListKey,
   frameworkNodeQuery,
   useDeleteFrameworkMutation,
 } from "/hooks/graph/FrameworkGraph";
-import { useTranslate } from "@probo/i18n";
-import { Navigate, Outlet, useNavigate, useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { FrameworkGraphNodeQuery } from "/__generated__/core/FrameworkGraphNodeQuery.graphql";
 import type { FrameworkDetailPageFragment$key } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
 import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "/__generated__/core/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
 import type { FrameworkDetailPageExportFrameworkMutation } from "/__generated__/core/FrameworkDetailPageExportFrameworkMutation.graphql";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 const frameworkDetailFragment = graphql`
     fragment FrameworkDetailPageFragment on Framework {

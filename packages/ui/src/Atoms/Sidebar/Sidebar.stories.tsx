@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
+import { IconBank } from "../Icons/IconBank.tsx";
+
 import { Sidebar } from "./Sidebar";
 import { SidebarItem } from "./SidebarItem";
-import { IconBank } from "../Icons/IconBank.tsx";
 
 const meta: Meta<typeof Sidebar> = {
   component: Sidebar,

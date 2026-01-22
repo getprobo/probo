@@ -1,5 +1,6 @@
-import { Layout, Drawer } from "./Layout";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Layout, Drawer } from "./Layout";
 
 const meta = {
   title: "Layouts/Base",

@@ -1,5 +1,6 @@
-import { SeverityBadge } from "./SeverityBadge.tsx";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { SeverityBadge } from "./SeverityBadge.tsx";
 
 export default {
   title: "Molecules/Badges/SeverityBadge",

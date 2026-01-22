@@ -1,5 +1,4 @@
-import { ActionDropdown, Skeleton } from "@probo/ui";
-import { Button, IconPencil } from "@probo/ui";
+import { ActionDropdown, Skeleton, Button, IconPencil } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 
 /**

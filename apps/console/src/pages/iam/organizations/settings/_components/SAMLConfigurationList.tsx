@@ -12,6 +12,8 @@ import {
 } from "@probo/ui";
 import { ConnectionHandler, graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
+import { useCopy } from "@probo/hooks";
+
 import type {
   SAMLConfigurationListFragment$data,
   SAMLConfigurationListFragment$key,
@@ -20,7 +22,6 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { SAMLConfigurationList_deleteMutation } from "/__generated__/iam/SAMLConfigurationList_deleteMutation.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
-import { useCopy } from "@probo/hooks";
 
 const fragment = graphql`
   fragment SAMLConfigurationListFragment on Organization {

@@ -1,3 +1,6 @@
+import type { FC, PropsWithChildren } from "react";
+import { Link } from "react-router";
+
 import { Avatar } from "../../Atoms/Avatar/Avatar";
 import { Button } from "../../Atoms/Button/Button";
 import {
@@ -6,9 +9,7 @@ import {
   DropdownSeparator,
 } from "../../Atoms/Dropdown/Dropdown";
 import { IconChevronDown } from "../../Atoms/Icons";
-import type { FC, PropsWithChildren } from "react";
 import type { IconProps } from "../../Atoms/Icons/type";
-import { Link } from "react-router";
 
 type Props = PropsWithChildren<{ fullName: string; email: string }>;
 

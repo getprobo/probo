@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Card, Spinner } from "@probo/ui";
+import { Card, Spinner, useToast } from "@probo/ui";
 import {
   usePreloadedQuery,
   useFragment,
@@ -7,18 +7,19 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { graphql } from "react-relay";
-import type { EmployeeDocumentSignaturePageQuery } from "/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
 import { usePageTitle } from "@probo/hooks";
-import type { EmployeeDocumentSignaturePageSignMutation } from "/__generated__/core/EmployeeDocumentSignaturePageSignMutation.graphql";
-import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "/__generated__/core/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
 import { useNavigate } from "react-router";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PDFPreview } from "/components/documents/PDFPreview";
 import { useWindowSize } from "usehooks-ts";
 import { useState, useEffect, useRef } from "react";
-import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
-import { useToast } from "@probo/ui";
 import { formatError, type GraphQLError } from "@probo/helpers";
+
+import type { EmployeeDocumentSignaturePageQuery } from "/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
+import type { EmployeeDocumentSignaturePageSignMutation } from "/__generated__/core/EmployeeDocumentSignaturePageSignMutation.graphql";
+import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "/__generated__/core/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { PDFPreview } from "/components/documents/PDFPreview";
+import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
+
 import { VersionActions } from "./_components/VersionActions";
 import { VersionRow } from "./_components/VersionRow";
 

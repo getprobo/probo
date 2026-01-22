@@ -24,8 +24,8 @@ import {
 } from "@probo/helpers";
 import { ConnectionHandler } from "relay-runtime";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import FormRiskDialog from "./FormRiskDialog";
 import { usePageTitle } from "@probo/hooks";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import {
   riskNodeQuery,
@@ -34,6 +34,8 @@ import {
 } from "/hooks/graph/RiskGraph";
 import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+
+import FormRiskDialog from "./FormRiskDialog";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphNodeQuery>;

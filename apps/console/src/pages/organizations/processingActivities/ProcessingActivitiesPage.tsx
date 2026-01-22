@@ -24,10 +24,6 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
-  getLawfulBasisLabel,
-  getResidualRiskLabel,
-} from "../../../components/form/ProcessingActivityEnumOptions";
-import {
   ConnectionHandler,
   graphql,
   usePaginationFragment,
@@ -35,20 +31,15 @@ import {
   useMutation,
   type PreloadedQuery,
 } from "react-relay";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
-import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
-import {
-  deleteProcessingActivityMutation,
-  ProcessingActivitiesConnectionKey,
-  processingActivitiesQuery,
-} from "../../../hooks/graph/ProcessingActivityGraph";
 import {
   sprintf,
   promisifyMutation,
   downloadFile,
   toDateInput,
 } from "@probo/helpers";
+import { useState } from "react";
+
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
@@ -64,8 +55,20 @@ import type {
   ProcessingActivitiesPageTIAFragment$key,
   ProcessingActivitiesPageTIAFragment$data,
 } from "/__generated__/core/ProcessingActivitiesPageTIAFragment.graphql";
-import { useState } from "react";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
+
+import {
+  deleteProcessingActivityMutation,
+  ProcessingActivitiesConnectionKey,
+  processingActivitiesQuery,
+} from "../../../hooks/graph/ProcessingActivityGraph";
+import {
+  getLawfulBasisLabel,
+  getResidualRiskLabel,
+} from "../../../components/form/ProcessingActivityEnumOptions";
+
+import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
 
 interface ProcessingActivitiesPageProps {
   queryRef: PreloadedQuery<ProcessingActivityGraphListQuery>;

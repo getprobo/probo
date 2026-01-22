@@ -16,13 +16,15 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedDocumentsCardFragment$key } from "/__generated__/core/LinkedDocumentsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
+import { clsx } from "clsx";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { LinkedDocumentsCardFragment$key } from "/__generated__/core/LinkedDocumentsCardFragment.graphql";
+
 import { LinkedDocumentDialog } from "./LinkedDocumentsDialog.tsx";
-import clsx from "clsx";
 
 const linkedDocumentFragment = graphql`
   fragment LinkedDocumentsCardFragment on Document {

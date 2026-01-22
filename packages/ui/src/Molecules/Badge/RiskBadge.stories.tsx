@@ -1,5 +1,6 @@
-import { RiskBadge } from "./RiskBadge";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { RiskBadge } from "./RiskBadge";
 
 export default {
   title: "Molecules/Badges/RiskBadge",

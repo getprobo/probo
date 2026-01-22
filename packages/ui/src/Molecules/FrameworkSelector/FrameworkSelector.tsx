@@ -1,7 +1,8 @@
+import { useTranslate } from "@probo/i18n";
+
 import { Dropdown, DropdownItem } from "../../Atoms/Dropdown/Dropdown";
 import { IconChevronDown, IconPlusLarge } from "../../Atoms/Icons";
 import { Button } from "../../Atoms/Button/Button";
-import { useTranslate } from "@probo/i18n";
 import { ISO27001 } from "../../Atoms/Frameworks/ISO27001";
 import { SOC2 } from "../../Atoms/Frameworks/SOC2";
 import { HIPAA } from "../../Atoms/Frameworks/HIPAA";

@@ -1,13 +1,14 @@
 import { lazy } from "@probo/react-lazy";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { loadQuery } from "react-relay";
-import { coreEnvironment } from "/environments";
-import { tasksQuery } from "/hooks/graph/TaskGraph";
 import {
   loaderFromQueryLoader,
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
+
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { coreEnvironment } from "/environments";
+import { tasksQuery } from "/hooks/graph/TaskGraph";
 import type { TaskGraphQuery } from "/__generated__/core/TaskGraphQuery.graphql";
 export const taskRoutes = [
   {

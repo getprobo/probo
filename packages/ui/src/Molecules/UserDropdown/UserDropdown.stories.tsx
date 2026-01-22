@@ -1,11 +1,13 @@
+import type { Meta, StoryObj } from "@storybook/react";
+
 import { DropdownSeparator } from "../../Atoms/Dropdown/Dropdown";
 import {
   IconArrowBoxLeft,
   IconCircleQuestionmark,
   IconSettingsGear2,
 } from "../../Atoms/Icons";
+
 import { UserDropdown, UserDropdownItem } from "./UserDropdown";
-import type { Meta, StoryObj } from "@storybook/react";
 
 export default {
   title: "Molecules/UserDropdown",

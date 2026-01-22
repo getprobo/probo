@@ -1,6 +1,7 @@
 import type { FC, PropsWithChildren } from "react";
 import { tv } from "tailwind-variants";
 import { NavLink } from "react-router";
+
 import { useSidebarCollapsed } from "./Sidebar.tsx";
 
 const sidebarItem = tv({

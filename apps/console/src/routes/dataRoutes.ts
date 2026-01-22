@@ -1,15 +1,17 @@
 import { loadQuery } from "react-relay";
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
-import { dataQuery, datumNodeQuery } from "../hooks/graph/DatumGraph";
-import type { DatumGraphListQuery } from "/__generated__/core/DatumGraphListQuery.graphql";
-import type { DatumGraphNodeQuery } from "/__generated__/core/DatumGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
+
+import { coreEnvironment } from "/environments";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import type { DatumGraphListQuery } from "/__generated__/core/DatumGraphListQuery.graphql";
+import type { DatumGraphNodeQuery } from "/__generated__/core/DatumGraphNodeQuery.graphql";
+
+import { dataQuery, datumNodeQuery } from "../hooks/graph/DatumGraph";
 
 export const dataRoutes = [
   {

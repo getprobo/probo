@@ -1,8 +1,9 @@
 import type { HTMLAttributes, PropsWithChildren } from "react";
 import { NavLink, type NavLinkProps } from "react-router";
 import { Root, List } from "@radix-ui/react-tabs";
-import { Slot, type AsChildProps } from "../Slot";
 import { tv } from "tailwind-variants";
+
+import { Slot, type AsChildProps } from "../Slot";
 
 const cls = tv({
   slots: {

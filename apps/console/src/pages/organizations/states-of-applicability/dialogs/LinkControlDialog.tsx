@@ -18,8 +18,8 @@ import {
   IconCheckmark1,
 } from "@probo/ui";
 import { forwardRef, useImperativeHandle, useState, Suspense, useMemo } from "react";
-import { useLazyLoadQuery } from "react-relay";
-import { graphql } from "react-relay";
+import { useLazyLoadQuery, graphql } from "react-relay";
+
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 const linkControlQuery = graphql`

@@ -1,12 +1,14 @@
 import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { CoreRelayProvider } from "/providers/CoreRelayProvider";
+import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
+
 import {
   DomainSettingsPage,
   domainSettingsPageQuery,
 } from "./DomainSettingsPage";
-import { useQueryLoader } from "react-relay";
-import { CoreRelayProvider } from "/providers/CoreRelayProvider";
-import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
 
 function DomainSettingsPageLoader() {
   const organizationId = useOrganizationId();

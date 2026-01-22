@@ -25,13 +25,6 @@ import {
   ConnectionHandler,
   type PreloadedQuery,
 } from "react-relay";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { CreateNonconformityDialog } from "./dialogs/CreateNonconformityDialog";
-import {
-  deleteNonconformityMutation,
-  NonconformitiesConnectionKey,
-  nonconformitiesQuery,
-} from "../../../hooks/graph/NonconformityGraph";
 import {
   sprintf,
   promisifyMutation,
@@ -39,13 +32,23 @@ import {
   getStatusLabel,
   formatDate,
 } from "@probo/helpers";
-import { SnapshotBanner } from "/components/SnapshotBanner";
 import { useParams } from "react-router";
+
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type {
   NonconformitiesPageFragment$key,
   NonconformitiesPageFragment$data,
 } from "/__generated__/core/NonconformitiesPageFragment.graphql";
 import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
+
+import {
+  deleteNonconformityMutation,
+  NonconformitiesConnectionKey,
+  nonconformitiesQuery,
+} from "../../../hooks/graph/NonconformityGraph";
+
+import { CreateNonconformityDialog } from "./dialogs/CreateNonconformityDialog";
 
 type Nonconformity
   = NonconformitiesPageFragment$data["nonconformities"]["edges"][number]["node"];

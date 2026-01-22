@@ -9,11 +9,12 @@ import {
   IconPlusLarge,
   useDialogRef,
 } from "@probo/ui";
-import { useVendorSearch } from "/hooks/useVendorSearch";
 import { faviconUrl } from "@probo/helpers";
 import type { Vendor } from "@probo/vendors";
-import { useCreateVendorMutation } from "/hooks/graph/VendorGraph";
 import { type ReactNode } from "react";
+
+import { useCreateVendorMutation } from "/hooks/graph/VendorGraph";
+import { useVendorSearch } from "/hooks/useVendorSearch";
 
 type Props = {
   children: ReactNode;

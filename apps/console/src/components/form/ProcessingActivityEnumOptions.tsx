@@ -1,5 +1,6 @@
 import { useTranslate } from "@probo/i18n";
 import { Option } from "@probo/ui";
+
 import type {
   ProcessingActivitySpecialOrCriminalDatum,
   ProcessingActivityLawfulBasis,

@@ -1,5 +1,4 @@
 import { graphql } from "relay-runtime";
-import type { DocumentRowFragment$key } from "./__generated__/DocumentRowFragment.graphql";
 import { useFragment, useMutation } from "react-relay";
 import {
   Button,
@@ -10,11 +9,14 @@ import {
   useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";
-import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { downloadFile, formatError } from "@probo/helpers";
 import { use, useState } from "react";
+
+import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { Viewer } from "/providers/Viewer";
+
+import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";
+import type { DocumentRowFragment$key } from "./__generated__/DocumentRowFragment.graphql";
 import type { DocumentRow_requestAccessMutation } from "./__generated__/DocumentRow_requestAccessMutation.graphql";
 
 const requestAccessMutation = graphql`

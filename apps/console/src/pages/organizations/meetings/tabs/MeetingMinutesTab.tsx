@@ -1,6 +1,7 @@
 import { useOutletContext } from "react-router";
-import type { MeetingDetailPageMeetingFragment$data } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
 import { Markdown } from "@probo/ui";
+
+import type { MeetingDetailPageMeetingFragment$data } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
 
 export default function MeetingMinutesTab() {
   const { meeting } = useOutletContext<{

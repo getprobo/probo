@@ -1,9 +1,9 @@
 import { Avatar, Field, Option, Select, Badge, Button, IconCrossLargeX } from "@probo/ui";
 import { Suspense, useState, type ComponentProps } from "react";
 import { useTranslate } from "@probo/i18n";
-import { type Control, Controller, type FieldValues } from "react-hook-form";
+import { type Control, Controller, type FieldValues, Path } from "react-hook-form";
+
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
-import type { Path } from "react-hook-form";
 
 type Person = {
   id: string;

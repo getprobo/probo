@@ -1,5 +1,6 @@
-import { Spinner } from "./Spinner";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Spinner } from "./Spinner";
 
 export default {
   title: "Atoms/Spinner",

@@ -30,6 +30,14 @@ import {
 } from "react-relay";
 import { use, useRef } from "react";
 import { graphql } from "relay-runtime";
+import { useList, usePageTitle } from "@probo/hooks";
+import {
+  sprintf,
+  getDocumentTypeLabel,
+  getDocumentClassificationLabel,
+  formatDate,
+} from "@probo/helpers";
+
 import type { DocumentGraphListQuery } from "/__generated__/core/DocumentGraphListQuery.graphql";
 import {
   documentsQuery,
@@ -39,23 +47,17 @@ import {
   useBulkExportDocumentsMutation,
 } from "/hooks/graph/DocumentGraph";
 import type { DocumentsPageListFragment$key } from "/__generated__/core/DocumentsPageListFragment.graphql";
-import { useList, usePageTitle } from "@probo/hooks";
-import {
-  sprintf,
-  getDocumentTypeLabel,
-  getDocumentClassificationLabel,
-  formatDate,
-} from "@probo/helpers";
-import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
 import type { DocumentsPageRowFragment$key } from "/__generated__/core/DocumentsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
-import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
-import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog.tsx";
 import {
   BulkExportDialog,
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
 import { CurrentUser } from "/providers/CurrentUser.tsx";
+
+import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
+import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
+import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog.tsx";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization

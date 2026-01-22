@@ -15,6 +15,7 @@ import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+
 import type { LinkedDocumentsDialogQuery } from "/__generated__/core/LinkedDocumentsDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";

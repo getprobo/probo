@@ -9,6 +9,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { sprintf } from "@probo/helpers";
 import { graphql } from "react-relay";
+
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 const deleteBusinessAssociateAgreementMutation = graphql`

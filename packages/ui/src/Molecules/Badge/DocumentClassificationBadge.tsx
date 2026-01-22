@@ -1,6 +1,7 @@
-import { Badge } from "../../Atoms/Badge/Badge";
 import { getDocumentClassificationLabel } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+
+import { Badge } from "../../Atoms/Badge/Badge";
 
 type Props = {
   classification: string;

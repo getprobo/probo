@@ -15,7 +15,6 @@ import {
   Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedObligationsCardFragment$key } from "/__generated__/core/LinkedObligationsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import {
@@ -23,10 +22,13 @@ import {
   getObligationStatusVariant,
   getObligationStatusLabel,
 } from "@probo/helpers";
-import { LinkedObligationDialog } from "./LinkedObligationsDialog";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { useParams } from "react-router";
+
+import type { LinkedObligationsCardFragment$key } from "/__generated__/core/LinkedObligationsCardFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+
+import { LinkedObligationDialog } from "./LinkedObligationsDialog";
 
 const linkedObligationFragment = graphql`
   fragment LinkedObligationsCardFragment on Obligation {

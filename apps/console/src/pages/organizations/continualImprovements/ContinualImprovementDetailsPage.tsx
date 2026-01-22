@@ -4,12 +4,6 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import {
-  continualImprovementNodeQuery,
-  useDeleteContinualImprovement,
-  useUpdateContinualImprovement,
-  ContinualImprovementsConnectionKey,
-} from "../../../hooks/graph/ContinualImprovementGraph";
-import {
   ActionDropdown,
   Badge,
   Breadcrumb,
@@ -26,20 +20,28 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useParams } from "react-router";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
-import z from "zod";
+import { z } from "zod";
 import {
   getStatusVariant,
   getStatusLabel,
   formatDatetime,
   validateSnapshotConsistency,
 } from "@probo/helpers";
+
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ContinualImprovementGraphNodeQuery } from "/__generated__/core/ContinualImprovementGraphNodeQuery.graphql";
+
+import {
+  continualImprovementNodeQuery,
+  useDeleteContinualImprovement,
+  useUpdateContinualImprovement,
+  ContinualImprovementsConnectionKey,
+} from "../../../hooks/graph/ContinualImprovementGraph";
 
 const updateImprovementSchema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),

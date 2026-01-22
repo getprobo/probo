@@ -1,9 +1,11 @@
 import { useQueryLoader } from "react-relay";
-import { SCIMSettingsPage, scimSettingsPageQuery } from "./SCIMSettingsPage";
+import { useEffect } from "react";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
-import { useEffect } from "react";
 import type { SCIMSettingsPageQuery } from "/__generated__/iam/SCIMSettingsPageQuery.graphql";
+
+import { SCIMSettingsPage, scimSettingsPageQuery } from "./SCIMSettingsPage";
 
 function SCIMSettingsPageLoader() {
   const organizationId = useOrganizationId();

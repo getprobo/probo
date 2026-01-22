@@ -1,6 +1,7 @@
-import { Badge } from "../../Atoms/Badge/Badge";
 import { getDocumentTypeLabel } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+
+import { Badge } from "../../Atoms/Badge/Badge";
 
 type Props = {
   type: string;

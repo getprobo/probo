@@ -1,9 +1,11 @@
 import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
 import { CenteredLayoutSkeleton } from "@probo/ui";
+
 import type { MembershipsPageQuery } from "/__generated__/iam/MembershipsPageQuery.graphql";
-import { MembershipsPage, membershipsPageQuery } from "./MembershipsPage";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+
+import { MembershipsPage, membershipsPageQuery } from "./MembershipsPage";
 
 function MembershipsPageLoader() {
   const [queryRef, loadQuery]

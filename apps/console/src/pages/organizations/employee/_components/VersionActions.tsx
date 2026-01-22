@@ -1,7 +1,7 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Spinner } from "@probo/ui";
-import { useFragment } from "react-relay";
-import { graphql } from "react-relay";
+import { useFragment, graphql } from "react-relay";
+
 import type { VersionActionsFragment$key } from "/__generated__/core/VersionActionsFragment.graphql";
 
 const fragment = graphql`

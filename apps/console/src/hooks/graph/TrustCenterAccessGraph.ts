@@ -1,5 +1,5 @@
-import { graphql } from "react-relay";
-import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
+
 import type { TrustCenterAccessGraphQuery } from "/__generated__/core/TrustCenterAccessGraphQuery.graphql";
 import type {
   TrustCenterAccessGraph_accesses$data,

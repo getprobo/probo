@@ -1,6 +1,8 @@
 import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import type { SCIMSettingsPageQuery } from "/__generated__/iam/SCIMSettingsPageQuery.graphql";
 import { useTranslate } from "@probo/i18n";
+
+import type { SCIMSettingsPageQuery } from "/__generated__/iam/SCIMSettingsPageQuery.graphql";
+
 import { SCIMConfiguration } from "./_components/SCIMConfiguration";
 import { SCIMEventList } from "./_components/SCIMEventList";
 

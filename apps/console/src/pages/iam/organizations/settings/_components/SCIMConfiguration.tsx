@@ -11,12 +11,13 @@ import {
   IconRotateCw,
   IconTrashCan,
 } from "@probo/ui";
+import { formatError } from "@probo/helpers";
+
 import type { SCIMConfigurationCreateMutation } from "/__generated__/iam/SCIMConfigurationCreateMutation.graphql";
 import type { SCIMConfigurationDeleteMutation } from "/__generated__/iam/SCIMConfigurationDeleteMutation.graphql";
 import type { SCIMConfigurationRegenerateTokenMutation } from "/__generated__/iam/SCIMConfigurationRegenerateTokenMutation.graphql";
 import type { SCIMConfigurationFragment$key } from "/__generated__/iam/SCIMConfigurationFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { formatError } from "@probo/helpers";
 
 const SCIMConfigurationFragment = graphql`
   fragment SCIMConfigurationFragment on SCIMConfiguration {

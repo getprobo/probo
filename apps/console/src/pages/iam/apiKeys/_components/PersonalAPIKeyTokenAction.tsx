@@ -2,10 +2,12 @@ import { useTranslate } from "@probo/i18n";
 import { Button, useDialogRef, useToast } from "@probo/ui";
 import { formatError } from "@probo/helpers";
 import { useRefetchableFragment } from "react-relay";
-import { PersonalAPIKeyTokenDialog } from "./PersonalAPIKeyTokenDialog";
-import { personalAPIKeyRowFragment } from "./PersonalAPIKeyRow";
+
 import type { PersonalAPIKeyRowFragment$key } from "/__generated__/iam/PersonalAPIKeyRowFragment.graphql";
 import type { PersonalAPIKeyRowRefetchQuery } from "/__generated__/iam/PersonalAPIKeyRowRefetchQuery.graphql";
+
+import { PersonalAPIKeyTokenDialog } from "./PersonalAPIKeyTokenDialog";
+import { personalAPIKeyRowFragment } from "./PersonalAPIKeyRow";
 
 export function PersonalAPIKeyTokenAction(props: {
   fKey: PersonalAPIKeyRowFragment$key;

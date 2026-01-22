@@ -1,16 +1,18 @@
 import { Avatar, Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
-import { SortableTable } from "../SortableTable";
 import { useTranslate } from "@probo/i18n";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
+import type { OperationType } from "relay-runtime";
+import { useParams } from "react-router";
+import { faviconUrl, getAssetTypeVariant } from "@probo/helpers";
+
 import type {
   AssetsPageFragment$data,
   AssetsPageFragment$key,
 } from "/__generated__/core/AssetsPageFragment.graphql";
-import type { OperationType } from "relay-runtime";
 import type { NodeOf } from "/types";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useParams } from "react-router";
-import { faviconUrl, getAssetTypeVariant } from "@probo/helpers";
+
+import { SortableTable } from "../SortableTable";
 
 type AssetEntry = NodeOf<AssetsPageFragment$data["assets"]>;
 

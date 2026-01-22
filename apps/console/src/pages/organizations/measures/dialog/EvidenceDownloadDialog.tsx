@@ -2,9 +2,10 @@ import { Breadcrumb, Dialog, DialogContent, Spinner } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { Suspense, useEffect } from "react";
 import { useLazyLoadQuery } from "react-relay";
+import { downloadFile } from "@probo/helpers";
+
 import type { EvidenceGraphFileQuery } from "/__generated__/core/EvidenceGraphFileQuery.graphql";
 import { evidenceFileQuery } from "/hooks/graph/EvidenceGraph";
-import { downloadFile } from "@probo/helpers";
 
 type Props = {
   evidenceId: string;

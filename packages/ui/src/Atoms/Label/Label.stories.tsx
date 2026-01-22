@@ -1,5 +1,6 @@
-import { Label } from "./Label";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Label } from "./Label";
 
 export default {
   title: "Atoms/Form/Label",

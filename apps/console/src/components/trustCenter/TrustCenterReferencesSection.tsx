@@ -15,20 +15,22 @@ import {
   IconArrowLink,
 } from "@probo/ui";
 import { useRef, useState } from "react";
+import { useLazyLoadQuery } from "react-relay";
+
 import {
   trustCenterReferencesQuery,
   useUpdateTrustCenterReferenceRankMutation,
 } from "/hooks/graph/TrustCenterReferenceGraph";
+import type {
+  TrustCenterReferenceGraphQuery,
+  TrustCenterReferenceGraphQuery$data,
+} from "/__generated__/core/TrustCenterReferenceGraphQuery.graphql";
+
 import {
   TrustCenterReferenceDialog,
   type TrustCenterReferenceDialogRef,
 } from "./TrustCenterReferenceDialog";
 import { DeleteTrustCenterReferenceDialog } from "./DeleteTrustCenterReferenceDialog";
-import type {
-  TrustCenterReferenceGraphQuery,
-  TrustCenterReferenceGraphQuery$data,
-} from "/__generated__/core/TrustCenterReferenceGraphQuery.graphql";
-import { useLazyLoadQuery } from "react-relay";
 
 type Props = {
   trustCenterId: string;

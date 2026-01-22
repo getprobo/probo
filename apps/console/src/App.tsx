@@ -1,6 +1,7 @@
 import { RouterProvider } from "react-router";
-import { router } from "./routes";
 import { Toasts, ConfirmDialog } from "@probo/ui";
+
+import { router } from "./routes";
 
 export function App() {
   return (

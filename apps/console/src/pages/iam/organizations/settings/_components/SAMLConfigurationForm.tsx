@@ -11,7 +11,8 @@ import {
   Textarea,
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
-import z from "zod";
+import { z } from "zod";
+
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
 const defaultValues: SAMLConfigurationFormData = {

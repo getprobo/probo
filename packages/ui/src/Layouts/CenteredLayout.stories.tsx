@@ -1,5 +1,6 @@
-import { CenteredLayout } from "./CenteredLayout";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { CenteredLayout } from "./CenteredLayout";
 
 export default {
   title: "Layouts/CenteredLayout",

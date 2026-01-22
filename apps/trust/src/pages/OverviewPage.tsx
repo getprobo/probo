@@ -1,9 +1,5 @@
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import type {
-  OverviewPageFragment$data,
-  OverviewPageFragment$key,
-} from "./__generated__/OverviewPageFragment.graphql";
 import { Link, useOutletContext } from "react-router";
 import {
   groupBy,
@@ -13,15 +9,21 @@ import {
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Card, IconChevronRight } from "@probo/ui";
+import { Fragment } from "react";
+
 import { AuditRow } from "/components/AuditRow";
 import { documentTypeLabel } from "/helpers/documents";
-import { Fragment } from "react";
 import { DocumentRow } from "/components/DocumentRow";
 import { TrustCenterFileRow } from "/components/TrustCenterFileRow";
 import { VendorRow } from "/components/VendorRow";
 import { RowHeader } from "/components/RowHeader.tsx";
 import { Rows } from "/components/Rows.tsx";
 import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
+
+import type {
+  OverviewPageFragment$data,
+  OverviewPageFragment$key,
+} from "./__generated__/OverviewPageFragment.graphql";
 
 const overviewFragment = graphql`
   fragment OverviewPageFragment on TrustCenter {

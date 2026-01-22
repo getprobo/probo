@@ -1,8 +1,10 @@
 import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
+
 import type { ViewerLayoutQuery } from "/__generated__/iam/ViewerLayoutQuery.graphql";
-import { ViewerLayout, viewerLayoutQuery } from "./ViewerLayout";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+
+import { ViewerLayout, viewerLayoutQuery } from "./ViewerLayout";
 import { ViewerLayoutLoading } from "./ViewerLayoutLoading";
 
 function ViewerLayoutLoader() {

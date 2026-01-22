@@ -1,8 +1,13 @@
 import { createBrowserRouter, redirect, useRouteError } from "react-router";
 import { Fragment, lazy } from "react";
-import { consoleEnvironment } from "./providers/RelayProviders.tsx";
 import { loadQuery } from "react-relay";
-import { PageError } from "./components/PageError.tsx";
+import {
+  loaderFromQueryLoader,
+  routeFromAppRoute,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
+
 import { MainLayout } from "/layouts/MainLayout";
 import {
   currentTrustGraphQuery,
@@ -12,14 +17,11 @@ import {
 import { OverviewPage } from "/pages/OverviewPage";
 import { DocumentsPage } from "/pages/DocumentsPage";
 import { SubprocessorsPage } from "/pages/SubprocessorsPage";
+
+import { PageError } from "./components/PageError.tsx";
+import { consoleEnvironment } from "./providers/RelayProviders.tsx";
 import { TabSkeleton } from "./components/Skeletons/TabSkeleton.tsx";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton.tsx";
-import {
-  loaderFromQueryLoader,
-  routeFromAppRoute,
-  withQueryRef,
-  type AppRoute,
-} from "@probo/routes";
 
 /**
  * Top level error boundary

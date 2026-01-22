@@ -1,6 +1,7 @@
 import { Spinner } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
+
 import { TrustCenterDocumentsCard } from "/components/trustCenter/TrustCenterDocumentsCard";
 import { useUpdateDocumentVisibilityMutation } from "/hooks/graph/TrustCenterDocumentGraph";
 import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";

@@ -18,9 +18,8 @@ import { useMutation } from "react-relay";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
 import { Link } from "react-router";
 import { z } from "zod";
-import { EditableTable } from "../table/EditableTable";
-import { PeopleCell } from "../table/PeopleCell";
-import { VendorsCell } from "../table/VendorsCell";
+import type { OperationType } from "relay-runtime";
+
 import {
   createAssetMutation,
   deleteAssetMutation,
@@ -31,8 +30,11 @@ import type {
   AssetsPageFragment$data,
   AssetsPageFragment$key,
 } from "/__generated__/core/AssetsPageFragment.graphql";
-import type { OperationType } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+
+import { EditableTable } from "../table/EditableTable";
+import { PeopleCell } from "../table/PeopleCell";
+import { VendorsCell } from "../table/VendorsCell";
 
 type Props = {
   connectionId: string;

@@ -3,6 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { useCallback } from "react";
 import { useDropzone, type FileRejection } from "react-dropzone";
 import { tv } from "tailwind-variants";
+
 import { IconPageCross, IconUpload } from "../Icons";
 import { Spinner } from "../Spinner/Spinner";
 

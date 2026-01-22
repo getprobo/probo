@@ -16,8 +16,6 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { useCreateRightsRequest } from "../../../../hooks/graph/RightsRequestGraph";
 import { Controller } from "react-hook-form";
 import {
   formatError,
@@ -26,6 +24,10 @@ import {
   getRightsRequestTypeOptions,
   getRightsRequestStateOptions,
 } from "@probo/helpers";
+
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+
+import { useCreateRightsRequest } from "../../../../hooks/graph/RightsRequestGraph";
 
 const schema = z.object({
   requestType: z.enum(["ACCESS", "DELETION", "PORTABILITY"]),

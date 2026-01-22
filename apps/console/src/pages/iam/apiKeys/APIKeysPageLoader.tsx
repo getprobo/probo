@@ -1,9 +1,11 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { CenteredLayoutSkeleton } from "@probo/ui";
-import { APIKeysPage, apiKeysPageQuery } from "./APIKeysPage";
+
 import type { APIKeysPageQuery } from "/__generated__/iam/APIKeysPageQuery.graphql";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+
+import { APIKeysPage, apiKeysPageQuery } from "./APIKeysPage";
 
 function APIKeysPageLoaderInner() {
   const [queryRef, loadQuery]

@@ -9,14 +9,16 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
+import { sprintf } from "@probo/helpers";
+
 import type { MemberListItemFragment$key } from "/__generated__/iam/MemberListItemFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { sprintf } from "@probo/helpers";
+
 import { EditMemberDialog } from "./EditMemberDialog";
 
 const fragment = graphql`

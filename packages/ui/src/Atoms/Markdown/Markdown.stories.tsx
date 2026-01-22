@@ -1,5 +1,6 @@
-import { Markdown } from "./Markdown";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Markdown } from "./Markdown";
 
 export default {
   title: "Atoms/Markdown",

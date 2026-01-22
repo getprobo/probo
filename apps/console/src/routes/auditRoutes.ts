@@ -1,15 +1,17 @@
 import { loadQuery } from "react-relay";
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
-import { auditsQuery, auditNodeQuery } from "../hooks/graph/AuditGraph";
-import type { AuditGraphListQuery } from "/__generated__/core/AuditGraphListQuery.graphql";
-import type { AuditGraphNodeQuery } from "/__generated__/core/AuditGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
+
+import { coreEnvironment } from "/environments";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import type { AuditGraphListQuery } from "/__generated__/core/AuditGraphListQuery.graphql";
+import type { AuditGraphNodeQuery } from "/__generated__/core/AuditGraphNodeQuery.graphql";
+
+import { auditsQuery, auditNodeQuery } from "../hooks/graph/AuditGraph";
 
 export const auditRoutes = [
   {

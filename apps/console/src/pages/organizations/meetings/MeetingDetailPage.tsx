@@ -1,8 +1,6 @@
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, usePreloadedQuery } from "react-relay";
-import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
 import { usePageTitle } from "@probo/hooks";
-import type { MeetingDetailPageMeetingFragment$key } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -14,18 +12,22 @@ import {
   PageHeader,
   useConfirm,
 } from "@probo/ui";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { sprintf, formatDate } from "@probo/helpers";
 import { Link, Outlet, useNavigate } from "react-router";
-import {
-  UpdateMeetingMinutesDialog,
-  type UpdateMeetingMinutesDialogRef,
-} from "./dialogs/UpdateMeetingMinutesDialog";
 import { useRef } from "react";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { MeetingDetailPageMeetingFragment$key } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
+import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
 import {
   meetingNodeQuery,
   useDeleteMeetingMutation,
 } from "/hooks/graph/MeetingGraph";
+
+import {
+  UpdateMeetingMinutesDialog,
+  type UpdateMeetingMinutesDialogRef,
+} from "./dialogs/UpdateMeetingMinutesDialog";
 
 const meetingFragment = graphql`
   fragment MeetingDetailPageMeetingFragment on Meeting {

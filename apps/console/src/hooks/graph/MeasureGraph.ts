@@ -1,7 +1,9 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
-import { useMutationWithToasts } from "../useMutationWithToasts";
+
 import type { MeasureGraphDeleteMutation } from "/__generated__/core/MeasureGraphDeleteMutation.graphql";
+
+import { useMutationWithToasts } from "../useMutationWithToasts";
 
 export const measuresQuery = graphql`
   query MeasureGraphListQuery($organizationId: ID!) {

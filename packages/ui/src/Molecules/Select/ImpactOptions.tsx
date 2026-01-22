@@ -1,5 +1,6 @@
-import { Option } from "../../Atoms/Select/Select";
 import { useTranslate } from "@probo/i18n";
+
+import { Option } from "../../Atoms/Select/Select";
 
 export function ImpactOptions() {
   const { __ } = useTranslate();

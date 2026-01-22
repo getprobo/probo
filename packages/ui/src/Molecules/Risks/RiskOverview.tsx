@@ -1,12 +1,14 @@
 import { useTranslate } from "@probo/i18n";
-import { Card } from "../../Atoms/Card/Card";
-import { levelColors } from "./constants";
 import {
   getRiskImpacts,
   getRiskLikelihoods,
   getSeverity,
 } from "@probo/helpers";
 import clsx from "clsx";
+
+import { Card } from "../../Atoms/Card/Card";
+
+import { levelColors } from "./constants";
 
 type Props = {
   type: "inherent" | "residual";

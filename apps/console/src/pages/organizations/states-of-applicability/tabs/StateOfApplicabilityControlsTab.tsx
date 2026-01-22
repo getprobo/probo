@@ -15,9 +15,12 @@ import {
   DropdownItem,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { Suspense, useMemo, useRef } from "react";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { StateOfApplicabilityControlsTabFragment$key } from "/__generated__/core/StateOfApplicabilityControlsTabFragment.graphql";
-import { Suspense, useMemo, useRef } from "react";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+
 import {
   LinkControlDialog,
   type LinkControlDialogRef,
@@ -26,7 +29,6 @@ import {
   EditControlDialog,
   type EditControlDialogRef,
 } from "../dialogs/EditControlDialog";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 export const controlsFragment = graphql`
     fragment StateOfApplicabilityControlsTabFragment on StateOfApplicability

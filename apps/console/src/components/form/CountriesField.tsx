@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Badge, Input, IconCrossLargeX } from "@probo/ui";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { getCountryName, getCountryOptions, countries, type CountryCode } from "@probo/helpers";
-import clsx from "clsx";
+import { clsx } from "clsx";
 
 type Props<T extends FieldValues = FieldValues> = {
   control: Control<T>;

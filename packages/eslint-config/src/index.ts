@@ -3,9 +3,11 @@ import { browserLanguageOptionsConfig, nodeLanguageOptionsConfig } from "./langu
 import { tsConfigs } from "./tsConfigs.ts";
 import { reactConfigs } from "./reactConfigs.ts";
 import { stylisticConfigs } from "./stylisticConfigs.ts";
+import { importsConfigs } from "./importsConfigs.ts";
 
 export const configs = {
   base: baseConfigs,
+  imports: importsConfigs,
   ts: tsConfigs,
   languageOptions: {
     browser: browserLanguageOptionsConfig,

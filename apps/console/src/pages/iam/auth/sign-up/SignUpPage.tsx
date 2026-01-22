@@ -2,11 +2,12 @@ import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { Link, useNavigate } from "react-router";
-import z from "zod";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { z } from "zod";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import { formatError } from "@probo/helpers";
+
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
 const signUpMutation = graphql`
   mutation SignUpPageMutation($input: SignUpInput!) {

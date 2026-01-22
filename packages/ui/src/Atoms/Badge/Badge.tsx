@@ -1,5 +1,6 @@
 import type { HTMLAttributes } from "react";
 import { tv } from "tailwind-variants";
+
 import { Slot } from "../Slot";
 
 type Props = {

@@ -9,7 +9,6 @@ import {
   IconPlusLarge,
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
-import { useVendorForm } from "/hooks/forms/useVendorForm";
 import { useOutletContext, useParams } from "react-router";
 import {
   certificationCategoryLabel,
@@ -17,7 +16,9 @@ import {
   objectEntries,
 } from "@probo/helpers";
 import { useState } from "react";
-import clsx from "clsx";
+import { clsx } from "clsx";
+
+import { useVendorForm } from "/hooks/forms/useVendorForm";
 import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 
 /**

@@ -1,5 +1,6 @@
-import { ControlItem } from "./ControlItem";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { ControlItem } from "./ControlItem";
 
 export default {
   title: "Atoms/ControlItem",

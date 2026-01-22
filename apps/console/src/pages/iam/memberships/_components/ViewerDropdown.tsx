@@ -10,8 +10,9 @@ import {
 import { graphql } from "relay-runtime";
 import { useFragment, useMutation } from "react-relay";
 import { useTranslate } from "@probo/i18n";
-import type { ViewerDropdownFragment$key } from "/__generated__/iam/ViewerDropdownFragment.graphql";
 import { formatError } from "@probo/helpers";
+
+import type { ViewerDropdownFragment$key } from "/__generated__/iam/ViewerDropdownFragment.graphql";
 
 export const fragment = graphql`
   fragment ViewerDropdownFragment on Identity {

@@ -1,8 +1,7 @@
 import { Button, IconPlusLarge, IconTrashCan, Input, Label } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useFieldArray } from "react-hook-form";
-import type { ArrayPath, Control, FieldValue, FieldValues, Path } from "react-hook-form";
-import type { UseFormRegister } from "react-hook-form";
+import type { ArrayPath, Control, FieldValue, FieldValues, Path, UseFormRegister } from "react-hook-form";
 
 type Props<TFieldValues extends FieldValues = FieldValues> = {
   control: Control<TFieldValues>;

@@ -1,15 +1,17 @@
 import clsx from "clsx";
-import { Card } from "../../Atoms/Card/Card";
 import { useTranslate } from "@probo/i18n";
 import { getRiskImpacts, getRiskLikelihoods, groupBy } from "@probo/helpers";
 import { Fragment, useMemo } from "react";
+import { Link } from "react-router";
+
 import {
   Dropdown,
   DropdownItem,
   DropdownSeparator,
 } from "../../Atoms/Dropdown/Dropdown";
 import { IconChevronRight, IconFire3 } from "../../Atoms/Icons";
-import { Link } from "react-router";
+import { Card } from "../../Atoms/Card/Card";
+
 import { levelColors } from "./constants";
 
 type Props = {

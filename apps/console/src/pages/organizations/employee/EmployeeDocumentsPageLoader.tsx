@@ -1,13 +1,15 @@
 import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
+
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { EmployeeDocumentsPageQuery } from "/__generated__/core/EmployeeDocumentsPageQuery.graphql";
+import { CoreRelayProvider } from "/providers/CoreRelayProvider";
+
 import {
   EmployeeDocumentsPage,
   employeeDocumentsPageQuery,
 } from "./EmployeeDocumentsPage";
-import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 
 function EmployeeDocumentsPageLoader() {
   const organizationId = useOrganizationId();

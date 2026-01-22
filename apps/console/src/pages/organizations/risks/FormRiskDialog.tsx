@@ -16,11 +16,14 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useMemo, type ReactNode } from "react";
-import { useFetchQuery } from "/hooks/useFetchQuery";
 import { graphql } from "relay-runtime";
+import { useToggle } from "@probo/hooks";
+import type { FieldErrors } from "react-hook-form";
+import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
+
+import { useFetchQuery } from "/hooks/useFetchQuery";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useToggle } from "@probo/hooks";
 import {
   ControlledField,
   ControlledSelect,
@@ -31,11 +34,9 @@ import {
   type RiskForm,
   type RiskKey,
 } from "/hooks/forms/useRiskForm";
-import type { FieldErrors } from "react-hook-form";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { FormRiskDialogMutation } from "/__generated__/core/FormRiskDialogMutation.graphql";
 import type { FormRiskDialogUpdateRiskMutation } from "/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
-import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
 
 type Props = {
   trigger?: ReactNode;

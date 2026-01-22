@@ -16,6 +16,7 @@ import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
+
 import type { LinkedRisksDialogQuery } from "/__generated__/core/LinkedRisksDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 

@@ -3,12 +3,6 @@ import {
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
-import type { PeopleGraphNodeQuery } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
-import {
-  PeopleConnectionKey,
-  peopleNodeQuery,
-  useDeletePeople,
-} from "/hooks/graph/PeopleGraph";
 import {
   ActionDropdown,
   Avatar,
@@ -19,8 +13,15 @@ import {
   Tabs,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet } from "react-router";
+
+import type { PeopleGraphNodeQuery } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
+import {
+  PeopleConnectionKey,
+  peopleNodeQuery,
+  useDeletePeople,
+} from "/hooks/graph/PeopleGraph";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 type Props = {
   queryRef: PreloadedQuery<PeopleGraphNodeQuery>;

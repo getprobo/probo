@@ -14,8 +14,9 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { useState, useCallback } from "react";
-import z from "zod";
+import { z } from "zod";
 import { getTrustCenterVisibilityOptions } from "@probo/helpers";
+
 import {
   useCreateTrustCenterFileMutation,
   useUpdateTrustCenterFileMutation,

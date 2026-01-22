@@ -14,30 +14,32 @@ import {
   Table,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
 import {
   usePreloadedQuery,
   type PreloadedQuery,
   usePaginationFragment,
 } from "react-relay";
+import { usePageTitle } from "@probo/hooks";
+import { useEffect } from "react";
+import { formatDate } from "@probo/helpers";
+import { useParams } from "react-router";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { NodeOf } from "/types";
+import type {
+  StateOfApplicabilityGraphPaginatedFragment$data,
+  StateOfApplicabilityGraphPaginatedFragment$key,
+} from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
 import {
   useDeleteStateOfApplicability,
   paginatedStateOfApplicabilityFragment,
   paginatedStateOfApplicabilityQuery,
 } from "/hooks/graph/StateOfApplicabilityGraph";
-import type {
-  StateOfApplicabilityGraphPaginatedFragment$data,
-  StateOfApplicabilityGraphPaginatedFragment$key,
-} from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
-import type { NodeOf } from "/types";
-import { usePageTitle } from "@probo/hooks";
-import { CreateStateOfApplicabilityDialog } from "./dialogs/CreateStateOfApplicabilityDialog";
-import { useEffect } from "react";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { formatDate } from "@probo/helpers";
-import { useParams } from "react-router";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { StateOfApplicabilityListQuery } from "/__generated__/core/StateOfApplicabilityListQuery.graphql";
+
+import { CreateStateOfApplicabilityDialog } from "./dialogs/CreateStateOfApplicabilityDialog";
 
 type StateOfApplicability = NodeOf<
   StateOfApplicabilityGraphPaginatedFragment$data["statesOfApplicability"]

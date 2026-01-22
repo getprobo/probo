@@ -1,8 +1,9 @@
 import type { ComponentProps, FC, PropsWithChildren, ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
-import type { IconProps } from "../Icons/type.ts";
 import { tv } from "tailwind-variants";
+
+import type { IconProps } from "../Icons/type.ts";
 import { IconDotGrid1x3Horizontal } from "../Icons";
 import { Button } from "../Button/Button.tsx";
 

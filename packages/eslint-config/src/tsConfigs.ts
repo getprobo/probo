@@ -1,8 +1,8 @@
 import type { Linter } from "eslint";
-import tseslint from "typescript-eslint";
+import { configs } from "typescript-eslint";
 
 export const tsConfigs = [
-  ...tseslint.configs.recommendedTypeChecked,
+  ...configs.recommendedTypeChecked,
   {
     files: ["**/*.{ts,tsx}"],
     rules: {

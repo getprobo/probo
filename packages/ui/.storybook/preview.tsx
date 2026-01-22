@@ -1,9 +1,9 @@
 import type { Preview } from "@storybook/react";
+import { BrowserRouter } from "react-router";
+import { useEffect } from "react";
 
 import "../src/theme.css";
 import "./preview.css";
-import { BrowserRouter } from "react-router";
-import { useEffect } from "react";
 
 const preview: Preview = {
   parameters: {

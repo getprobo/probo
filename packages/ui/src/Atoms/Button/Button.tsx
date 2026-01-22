@@ -6,6 +6,7 @@ import type {
 } from "react";
 import { Link } from "react-router";
 import { tv, type VariantProps } from "tailwind-variants";
+
 import { Slot } from "../Slot";
 
 export const button = tv({

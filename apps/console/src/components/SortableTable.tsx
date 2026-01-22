@@ -7,7 +7,7 @@ import {
   Table,
   Th,
 } from "@probo/ui";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import {
   createContext,
   startTransition,

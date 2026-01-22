@@ -1,6 +1,7 @@
 import { graphql, useFragment } from "react-relay";
-import type { MeasureRisksTabFragment$key } from "/__generated__/core/MeasureRisksTabFragment.graphql";
 import { useOutletContext } from "react-router";
+
+import type { MeasureRisksTabFragment$key } from "/__generated__/core/MeasureRisksTabFragment.graphql";
 import { LinkedRisksCard } from "/components/risks/LinkedRisksCard";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
 

@@ -4,12 +4,6 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import {
-  nonconformityNodeQuery,
-  useDeleteNonconformity,
-  useUpdateNonconformity,
-  NonconformitiesConnectionKey,
-} from "../../../hooks/graph/NonconformityGraph";
-import {
   ActionDropdown,
   Badge,
   Breadcrumb,
@@ -24,14 +18,8 @@ import {
   useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { ControlledField } from "/components/form/ControlledField";
-import { SnapshotBanner } from "/components/SnapshotBanner";
 import { useParams } from "react-router";
-import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { AuditSelectField } from "/components/form/AuditSelectField";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import z from "zod";
+import { z } from "zod";
 import {
   getStatusVariant,
   getStatusLabel,
@@ -41,7 +29,21 @@ import {
   formatError,
   type GraphQLError,
 } from "@probo/helpers";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { ControlledField } from "/components/form/ControlledField";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { AuditSelectField } from "/components/form/AuditSelectField";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import type { NonconformityGraphNodeQuery } from "/__generated__/core/NonconformityGraphNodeQuery.graphql";
+
+import {
+  nonconformityNodeQuery,
+  useDeleteNonconformity,
+  useUpdateNonconformity,
+  NonconformitiesConnectionKey,
+} from "../../../hooks/graph/NonconformityGraph";
 
 const updateNonconformitySchema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),

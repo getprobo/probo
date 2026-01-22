@@ -1,13 +1,15 @@
-import { GraphQLCell } from "/components/table/GraphQLCell.tsx";
-import { vendorsSelectQuery } from "/hooks/graph/VendorGraph";
 import { Avatar, Badge, IconCrossLargeX } from "@probo/ui";
 import { faviconUrl } from "@probo/helpers";
+
+import { GraphQLCell } from "/components/table/GraphQLCell";
+import { vendorsSelectQuery } from "/hooks/graph/VendorGraph";
+import type { VendorGraphSelectQuery } from "/__generated__/core/VendorGraphSelectQuery.graphql.ts";
+
 type Vendor = {
   id: string;
   name: string;
   websiteUrl: string | null | undefined;
 };
-import type { VendorGraphSelectQuery } from "/__generated__/core/VendorGraphSelectQuery.graphql.ts";
 
 type Props = {
   name: string;

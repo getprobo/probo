@@ -9,8 +9,9 @@ import {
   Tabs,
 } from "@probo/ui";
 import { Outlet } from "react-router";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useTranslate } from "@probo/i18n";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 export default function () {
   const organizationId = useOrganizationId();

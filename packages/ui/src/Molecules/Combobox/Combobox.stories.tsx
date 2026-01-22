@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Combobox, ComboboxItem } from "./Combobox";
 import type { Meta, StoryObj } from "@storybook/react";
 import { times } from "@probo/helpers";
+
+import { Combobox, ComboboxItem } from "./Combobox";
 
 export default {
   title: "Atoms/Combobox",

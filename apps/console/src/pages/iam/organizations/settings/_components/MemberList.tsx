@@ -1,11 +1,13 @@
 import { graphql, usePaginationFragment } from "react-relay";
 import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import type { ComponentProps } from "react";
+
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { MemberListFragment_RefetchQuery } from "/__generated__/iam/MemberListFragment_RefetchQuery.graphql";
-import { MemberListItem } from "./MemberListItem";
 import type { MemberListFragment$key } from "/__generated__/iam/MemberListFragment.graphql";
-import type { ComponentProps } from "react";
+
+import { MemberListItem } from "./MemberListItem";
 
 const fragment = graphql`
   fragment MemberListFragment on Organization

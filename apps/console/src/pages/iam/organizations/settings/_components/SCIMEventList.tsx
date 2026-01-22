@@ -1,9 +1,11 @@
 import { graphql, usePaginationFragment } from "react-relay";
-import type { SCIMEventListFragment$key } from "/__generated__/iam/SCIMEventListFragment.graphql";
-import type { SCIMEventListPaginationQuery } from "/__generated__/iam/SCIMEventListPaginationQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import { Thead, Tbody, Tr, Th, Td } from "@probo/ui";
+
+import type { SCIMEventListFragment$key } from "/__generated__/iam/SCIMEventListFragment.graphql";
+import type { SCIMEventListPaginationQuery } from "/__generated__/iam/SCIMEventListPaginationQuery.graphql";
 import { SortableTable } from "/components/SortableTable";
+
 import { SCIMEventListItem } from "./SCIMEventListItem";
 
 const SCIMEventListFragment = graphql`

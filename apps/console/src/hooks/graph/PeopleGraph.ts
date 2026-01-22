@@ -1,5 +1,4 @@
 import { graphql } from "relay-runtime";
-import type { PeopleGraphQuery } from "/__generated__/core/PeopleGraphQuery.graphql";
 import {
   useLazyLoadQuery,
   useMutation,
@@ -8,10 +7,7 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useMemo } from "react";
-import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
-import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
 import { useConfirm, useToast } from "@probo/ui";
-import type { PeopleGraphDeleteMutation } from "/__generated__/core/PeopleGraphDeleteMutation.graphql";
 import {
   promisifyMutation,
   sprintf,
@@ -19,6 +15,11 @@ import {
   type GraphQLError,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
+import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
+import type { PeopleGraphDeleteMutation } from "/__generated__/core/PeopleGraphDeleteMutation.graphql";
+import type { PeopleGraphQuery } from "/__generated__/core/PeopleGraphQuery.graphql";
 
 export const peopleQuery = graphql`
   query PeopleGraphQuery($organizationId: ID!, $filter: PeopleFilter) {

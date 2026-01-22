@@ -1,4 +1,5 @@
 import type { PropsWithChildren } from "react";
+
 import { TranslatorProvider as ProboTranslatorProvider } from "../../../../packages/i18n/TranslatorProvider";
 
 // TODO : implement a way to retrieve translations strings

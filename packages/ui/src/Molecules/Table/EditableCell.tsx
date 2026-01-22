@@ -7,8 +7,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { Cell } from "../../Atoms/DataTable/DataTable.tsx";
 import { focusSiblingElement } from "@probo/helpers";
+
+import { Cell } from "../../Atoms/DataTable/DataTable.tsx";
+
 import { useEditableRowContext } from "./EditableRow.tsx";
 
 export function useEditableCellRef() {

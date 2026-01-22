@@ -1,12 +1,14 @@
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useQueryLoader } from "react-relay";
 import { useEffect } from "react";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { GeneralSettingsPageQuery } from "/__generated__/iam/GeneralSettingsPageQuery.graphql";
+import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+
 import {
   GeneralSettingsPage,
   generalSettingsPageQuery,
 } from "./GeneralSettingsPage";
-import type { GeneralSettingsPageQuery } from "/__generated__/iam/GeneralSettingsPageQuery.graphql";
-import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
 function GeneralSettingsPageLoader() {
   const organizationId = useOrganizationId();

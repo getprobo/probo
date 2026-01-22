@@ -9,10 +9,11 @@ import {
   IconCircleProgress,
   IconCircleCheck,
 } from "@probo/ui";
-import { PDFPreview } from "../components/documents/PDFPreview";
 import { useWindowSize } from "usehooks-ts";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { sprintf } from "@probo/helpers";
+
+import { PDFPreview } from "../components/documents/PDFPreview";
 
 type Document = {
   document_version_id: string;

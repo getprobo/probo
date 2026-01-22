@@ -1,13 +1,13 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, IconCheckmark1 } from "@probo/ui";
+import { Button, Card, IconCheckmark1, Option } from "@probo/ui";
 import { type PropsWithChildren } from "react";
-import z from "zod";
+import { z } from "zod";
+import { getRoles, peopleRoles } from "@probo/helpers";
+import { useOutletContext } from "react-router";
+
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { ControlledField } from "/components/form/ControlledField";
-import { Option } from "@probo/ui";
-import { getRoles, peopleRoles } from "@probo/helpers";
 import type { PeopleGraphNodeQuery$data } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
-import { useOutletContext } from "react-router";
 import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { PeopleGraphUpdateMutation } from "/__generated__/core/PeopleGraphUpdateMutation.graphql";

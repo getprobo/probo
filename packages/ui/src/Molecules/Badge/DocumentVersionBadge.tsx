@@ -1,4 +1,5 @@
 import { useTranslate } from "@probo/i18n";
+
 import { Badge } from "../../Atoms/Badge/Badge.tsx";
 
 type Props = {

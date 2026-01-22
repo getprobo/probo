@@ -4,6 +4,7 @@ import { configs } from "@probo/eslint-config";
 export default defineConfig([
   ...configs.base,
   ...configs.ts,
+  ...configs.imports,
   ...configs.react,
   ...configs.stylistic,
   {

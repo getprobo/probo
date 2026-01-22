@@ -1,8 +1,9 @@
 import type { ComponentProps } from "react";
-import type { MeasureBadge } from "../Badge/MeasureBadge.tsx";
 import { useTranslate } from "@probo/i18n";
 import { getMeasureStateLabel, measureStates } from "@probo/helpers";
 import clsx from "clsx";
+
+import type { MeasureBadge } from "../Badge/MeasureBadge.tsx";
 
 type MeasureState = ComponentProps<typeof MeasureBadge>["state"];
 

@@ -7,13 +7,14 @@ import {
   type ReactNode,
   useMemo,
 } from "react";
+import { createPortal } from "react-dom";
+import clsx from "clsx";
+import { Link } from "react-router";
+
 import { Sidebar } from "../Atoms/Sidebar/Sidebar.tsx";
 import { Logo } from "../Atoms/Logo/Logo.tsx";
 import { Toasts } from "../Atoms/Toasts/Toasts.tsx";
-import { createPortal } from "react-dom";
-import clsx from "clsx";
 import { ConfirmDialog } from "../Molecules/Dialog/ConfirmDialog.tsx";
-import { Link } from "react-router";
 
 type Props = PropsWithChildren<{
   headerLeading?: ReactNode;

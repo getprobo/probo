@@ -1,22 +1,24 @@
 import { loadQuery } from "react-relay";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "/environments";
-import {
-  frameworksQuery,
-  frameworkNodeQuery,
-  frameworkControlNodeQuery,
-} from "/hooks/graph/FrameworkGraph";
 import { Fragment } from "react";
 import { lazy } from "@probo/react-lazy";
-import { ControlSkeleton } from "../components/skeletons/ControlSkeleton";
 import {
   loaderFromQueryLoader,
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
+
+import {
+  frameworksQuery,
+  frameworkNodeQuery,
+  frameworkControlNodeQuery,
+} from "/hooks/graph/FrameworkGraph";
+import { coreEnvironment } from "/environments";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import type { FrameworkGraphListQuery } from "/__generated__/core/FrameworkGraphListQuery.graphql";
 import type { FrameworkGraphNodeQuery } from "/__generated__/core/FrameworkGraphNodeQuery.graphql";
 import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
+
+import { ControlSkeleton } from "../components/skeletons/ControlSkeleton";
 
 export const frameworkRoutes = [
   {

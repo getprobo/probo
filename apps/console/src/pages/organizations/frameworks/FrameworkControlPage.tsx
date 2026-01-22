@@ -16,19 +16,21 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { formatError, type GraphQLError } from "@probo/helpers";
-import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 import { useNavigate, useOutletContext } from "react-router";
+import { promisifyMutation } from "@probo/helpers";
+
+import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
 import { LinkedAuditsCard } from "/components/audits/LinkedAuditsCard";
 import { LinkedObligationsCard } from "/components/obligations/LinkedObligationsCard";
 import { LinkedSnapshotsCard } from "/components/snapshots/LinkedSnapshotsCard";
 import { LinkedStatesOfApplicabilityCard } from "/components/states-of-applicability/LinkedStatesOfApplicabilityCard";
-import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
-import { promisifyMutation } from "@probo/helpers";
 import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
 import type { FrameworkDetailPageFragment$data } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
+
+import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 
 const attachStateOfApplicabilityMutation = graphql`
     mutation FrameworkControlPageAttachStateOfApplicabilityMutation(

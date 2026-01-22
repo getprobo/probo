@@ -1,17 +1,17 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import { coreEnvironment } from "/environments";
-import { documentsQuery } from "/hooks/graph/DocumentGraph";
-import { documentNodeQuery } from "/hooks/graph/DocumentGraph";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import { lazy } from "@probo/react-lazy";
-import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import {
   loaderFromQueryLoader,
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
+
+import { coreEnvironment } from "/environments";
+import { documentsQuery, documentNodeQuery } from "/hooks/graph/DocumentGraph";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import type { DocumentGraphListQuery } from "/__generated__/core/DocumentGraphListQuery.graphql";
 import type { DocumentGraphNodeQuery } from "/__generated__/core/DocumentGraphNodeQuery.graphql";
 

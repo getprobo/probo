@@ -14,21 +14,23 @@ import {
   IconCalendar2,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
 import { type PreloadedQuery } from "react-relay";
+import { usePageTitle } from "@probo/hooks";
+import { getRole } from "@probo/helpers";
+import { useRef } from "react";
+
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
 import { useDeletePeople, usePeopleQuery } from "/hooks/graph/PeopleGraph";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { PeopleGraphPaginatedFragment$data } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
 import type { NodeOf } from "/types";
-import { usePageTitle } from "@probo/hooks";
-import { getRole } from "@probo/helpers";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+
 import { CreatePeopleDialog } from "./dialogs/CreatePeopleDialog";
 import {
   SetEndOfContractDialog,
   type SetEndOfContractDialogRef,
 } from "./dialogs/SetEndOfContractDialog";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useRef } from "react";
 
 type People = NodeOf<PeopleGraphPaginatedFragment$data["peoples"]>;
 

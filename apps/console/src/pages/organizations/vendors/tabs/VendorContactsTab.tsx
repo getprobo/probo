@@ -1,6 +1,5 @@
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { VendorContactsTabFragment$key } from "/__generated__/core/VendorContactsTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -19,18 +18,21 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { useFragment, useRefetchableFragment } from "react-relay";
+import { sprintf } from "@probo/helpers";
+import { useState, type ComponentProps } from "react";
+
 import type {
   VendorContactsTabFragment_contact$data,
   VendorContactsTabFragment_contact$key,
 } from "/__generated__/core/VendorContactsTabFragment_contact.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { sprintf } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
-import { CreateContactDialog } from "../dialogs/CreateContactDialog";
-import { EditContactDialog } from "../dialogs/EditContactDialog";
-import { useState, type ComponentProps } from "react";
+import type { VendorContactsTabFragment$key } from "/__generated__/core/VendorContactsTabFragment.graphql";
 import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 import type { VendorContactsListQuery } from "/__generated__/core/VendorContactsListQuery.graphql";
+
+import { CreateContactDialog } from "../dialogs/CreateContactDialog";
+import { EditContactDialog } from "../dialogs/EditContactDialog";
 
 export const vendorContactsFragment = graphql`
   fragment VendorContactsTabFragment on Vendor

@@ -9,12 +9,14 @@ import {
 } from "@probo/ui";
 import { formatDate } from "@probo/helpers";
 import { useCallback, useState } from "react";
+import { useTranslate } from "@probo/i18n";
+
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { deleteTrustCenterAccessMutation } from "/hooks/graph/TrustCenterAccessGraph";
-import { useTranslate } from "@probo/i18n";
-import { TrustCenterAccessEditDialog } from "./TrustCenterAccessEditDialog";
 import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
 import type { NodeOf } from "/types";
+
+import { TrustCenterAccessEditDialog } from "./TrustCenterAccessEditDialog";
 
 interface TrustCenterAccessItemProps {
   access: NodeOf<TrustCenterAccessGraph_accesses$data["accesses"]>;

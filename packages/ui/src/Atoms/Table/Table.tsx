@@ -7,9 +7,10 @@ import {
   type ThHTMLAttributes,
   useContext,
 } from "react";
-import { Card } from "../Card/Card";
 import { Link } from "react-router";
 import clsx from "clsx";
+
+import { Card } from "../Card/Card";
 import { IconPlusLarge } from "../Icons";
 
 export function Table({

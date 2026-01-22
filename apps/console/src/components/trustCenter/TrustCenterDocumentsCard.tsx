@@ -15,10 +15,11 @@ import {
   Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { TrustCenterDocumentsCardFragment$key } from "/__generated__/core/TrustCenterDocumentsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState, useCallback } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
+
+import type { TrustCenterDocumentsCardFragment$key } from "/__generated__/core/TrustCenterDocumentsCardFragment.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
 const trustCenterDocumentFragment = graphql`

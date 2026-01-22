@@ -1,5 +1,11 @@
 import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
+import {
+  loaderFromQueryLoader,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
+
 import { coreEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton.tsx";
 import {
@@ -7,11 +13,6 @@ import {
   peopleNodeQuery,
 } from "/hooks/graph/PeopleGraph";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import {
-  loaderFromQueryLoader,
-  withQueryRef,
-  type AppRoute,
-} from "@probo/routes";
 import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
 import type { PeopleGraphNodeQuery } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
 

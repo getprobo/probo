@@ -2,14 +2,16 @@ import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useSearchParams } from "react-router";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import z from "zod";
+import { z } from "zod";
 import { useEffect, useRef } from "react";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import { formatError } from "@probo/helpers";
-import type { VerifyMagicLinkPageMutation } from "./__generated__/VerifyMagicLinkPageMutation.graphql";
+
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { getPathPrefix } from "/utils/pathPrefix";
+
+import type { VerifyMagicLinkPageMutation } from "./__generated__/VerifyMagicLinkPageMutation.graphql";
 import { AuthLayout } from "./AuthLayout";
 
 const verifyMagicLinkMutation = graphql`

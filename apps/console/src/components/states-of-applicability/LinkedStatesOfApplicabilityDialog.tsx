@@ -12,6 +12,7 @@ import { Suspense, useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { LinkedStatesOfApplicabilityDialogQuery } from "/__generated__/core/LinkedStatesOfApplicabilityDialogQuery.graphql";
 

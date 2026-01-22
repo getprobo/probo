@@ -8,6 +8,7 @@ import {
 } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
+
 import type { SSOSignInPageQuery } from "/__generated__/iam/SSOSignInPageQuery.graphql";
 
 const ssoAvailabilityQuery = graphql`

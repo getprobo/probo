@@ -1,13 +1,15 @@
 import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
 import { Skeleton } from "@probo/ui";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+import type { ViewerMembershipLayoutQuery } from "/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
+
 import {
   ViewerMembershipLayout,
   viewerMembershipLayoutQuery,
 } from "../../iam/organizations/ViewerMembershipLayout";
-import type { ViewerMembershipLayoutQuery } from "/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
 
 function EmployeeLayoutLoader() {
   const organizationId = useOrganizationId();

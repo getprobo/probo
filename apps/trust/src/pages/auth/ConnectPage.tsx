@@ -1,18 +1,20 @@
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import z from "zod";
+import { z } from "zod";
 import { graphql } from "relay-runtime";
 import {
   useMutation,
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
-import { AuthLayout } from "./AuthLayout";
-import type { ConnectPageMutation } from "./__generated__/ConnectPageMutation.graphql";
 import { useEffect, useRef, useState } from "react";
+
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+
+import type { ConnectPageMutation } from "./__generated__/ConnectPageMutation.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
+import { AuthLayout } from "./AuthLayout";
 
 export const connectPageQuery = graphql`
   query ConnectPageQuery {

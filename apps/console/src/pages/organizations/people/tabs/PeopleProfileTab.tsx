@@ -1,13 +1,14 @@
-import z from "zod";
+import { z } from "zod";
 import { peopleRoles, formatDatetime } from "@probo/helpers";
 import { useOutletContext } from "react-router";
-import type { PeopleGraphNodeQuery$data } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
 import { useTranslate } from "@probo/i18n";
+import { Button, Card, Field, Input } from "@probo/ui";
+
+import type { PeopleGraphNodeQuery$data } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { PeopleGraphUpdateMutation } from "/__generated__/core/PeopleGraphUpdateMutation.graphql";
 import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
-import { Button, Card, Field, Input } from "@probo/ui";
 import { EmailsField } from "/components/form/EmailsField";
 
 const schema = z.object({

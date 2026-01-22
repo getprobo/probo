@@ -1,7 +1,8 @@
 import clsx from "clsx";
 import { Link } from "react-router";
-import { IconChevronRight } from "../Icons";
 import { Fragment } from "react/jsx-runtime";
+
+import { IconChevronRight } from "../Icons";
 
 type Props = {
   items: (ItemProps | string)[];

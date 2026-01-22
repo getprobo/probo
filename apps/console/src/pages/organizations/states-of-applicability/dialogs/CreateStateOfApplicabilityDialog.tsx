@@ -10,14 +10,15 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
+import { z } from "zod";
+import { Suspense } from "react";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { createStateOfApplicabilityMutation } from "/hooks/graph/StateOfApplicabilityGraph";
 import type { StateOfApplicabilityGraphCreateMutation } from "/__generated__/core/StateOfApplicabilityGraphCreateMutation.graphql";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { Suspense } from "react";
 
 type Props = {
   children: ReactNode;

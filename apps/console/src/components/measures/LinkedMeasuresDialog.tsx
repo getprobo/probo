@@ -15,6 +15,7 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
+
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { usePaginatedMeasures } from "/hooks/graph/usePaginatedMeasures";
 

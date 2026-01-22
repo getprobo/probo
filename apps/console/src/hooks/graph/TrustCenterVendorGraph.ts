@@ -1,6 +1,7 @@
 import { graphql } from "relay-runtime";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useTranslate } from "@probo/i18n";
+
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { TrustCenterVendorGraphUpdateMutation } from "/__generated__/core/TrustCenterVendorGraphUpdateMutation.graphql";
 
 export const trustCenterVendorUpdateMutation = graphql`

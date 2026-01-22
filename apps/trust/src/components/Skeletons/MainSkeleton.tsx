@@ -1,7 +1,8 @@
 import { Skeleton, TabLink, Tabs } from "@probo/ui";
-import { TabSkeleton } from "./TabSkeleton";
 import { useTranslate } from "@probo/i18n";
 import { getTrustCenterUrl } from "@probo/helpers";
+
+import { TabSkeleton } from "./TabSkeleton";
 
 export function MainSkeleton() {
   const { __ } = useTranslate();

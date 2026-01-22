@@ -25,13 +25,6 @@ import {
   useMutation,
   type PreloadedQuery,
 } from "react-relay";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { CreateRightsRequestDialog } from "./dialogs/CreateRightsRequestDialog";
-import {
-  deleteRightsRequestMutation,
-  RightsRequestsConnectionKey,
-  rightsRequestsQuery,
-} from "../../../hooks/graph/RightsRequestGraph";
 import {
   sprintf,
   promisifyMutation,
@@ -40,12 +33,22 @@ import {
   getRightsRequestStateVariant,
   getRightsRequestStateLabel,
 } from "@probo/helpers";
+
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
 import type {
   RightsRequestsPageFragment$key,
   RightsRequestsPageFragment$data,
 } from "/__generated__/core/RightsRequestsPageFragment.graphql";
 import type { RightsRequestGraphListQuery } from "/__generated__/core/RightsRequestGraphListQuery.graphql";
+
+import {
+  deleteRightsRequestMutation,
+  RightsRequestsConnectionKey,
+  rightsRequestsQuery,
+} from "../../../hooks/graph/RightsRequestGraph";
+
+import { CreateRightsRequestDialog } from "./dialogs/CreateRightsRequestDialog";
 
 interface RightsRequestsPageProps {
   queryRef: PreloadedQuery<RightsRequestGraphListQuery>;

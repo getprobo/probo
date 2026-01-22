@@ -7,7 +7,7 @@ import {
   IconChevronTriangleDownSmall,
   Spinner,
 } from "@probo/ui";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import {
   type ComponentProps,
   createContext,

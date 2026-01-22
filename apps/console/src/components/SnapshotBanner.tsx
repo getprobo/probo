@@ -2,13 +2,14 @@ import { IconClock } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useLazyLoadQuery, graphql } from "react-relay";
 import { useLocation } from "react-router";
-import type { SnapshotBannerQuery } from "/__generated__/core/SnapshotBannerQuery.graphql";
 import {
   getSnapshotTypeUrlPath,
   getSnapshotTypeLabel,
   sprintf,
   formatDate,
 } from "@probo/helpers";
+
+import type { SnapshotBannerQuery } from "/__generated__/core/SnapshotBannerQuery.graphql";
 
 const snapshotQuery = graphql`
   query SnapshotBannerQuery($snapshotId: ID!) {

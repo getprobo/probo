@@ -1,18 +1,20 @@
 import { loadQuery } from "react-relay";
-import { coreEnvironment } from "/environments";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
-import {
-  nonconformitiesQuery,
-  nonconformityNodeQuery,
-} from "../hooks/graph/NonconformityGraph";
-import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
-import type { NonconformityGraphNodeQuery } from "/__generated__/core/NonconformityGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
+
+import { coreEnvironment } from "/environments";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
+import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
+import type { NonconformityGraphNodeQuery } from "/__generated__/core/NonconformityGraphNodeQuery.graphql";
+
+import {
+  nonconformitiesQuery,
+  nonconformityNodeQuery,
+} from "../hooks/graph/NonconformityGraph";
 
 export const nonconformityRoutes = [
   {

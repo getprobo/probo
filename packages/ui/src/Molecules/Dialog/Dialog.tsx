@@ -7,7 +7,6 @@ import {
   Title,
   Close,
 } from "@radix-ui/react-dialog";
-import { IconCrossLargeX } from "../../Atoms/Icons";
 import {
   Children,
   cloneElement,
@@ -21,10 +20,12 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { Button } from "../../Atoms/Button/Button";
 import { useTranslate } from "@probo/i18n";
 import clsx from "clsx";
 import { tv } from "tailwind-variants";
+
+import { Button } from "../../Atoms/Button/Button";
+import { IconCrossLargeX } from "../../Atoms/Icons";
 
 export const dialog = tv({
   slots: {

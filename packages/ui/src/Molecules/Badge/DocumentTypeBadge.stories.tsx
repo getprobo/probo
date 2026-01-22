@@ -1,5 +1,6 @@
-import { DocumentTypeBadge } from "./DocumentTypeBadge";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { DocumentTypeBadge } from "./DocumentTypeBadge";
 
 export default {
   title: "Molecules/Badges/DocumentTypeBadge",

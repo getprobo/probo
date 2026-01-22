@@ -5,19 +5,7 @@ import {
   useFragment,
   usePreloadedQuery,
 } from "react-relay";
-import type { DocumentGraphNodeQuery } from "/__generated__/core/DocumentGraphNodeQuery.graphql";
-import {
-  documentNodeQuery,
-  useDeleteDocumentMutation,
-  useDeleteDraftDocumentVersionMutation,
-} from "/hooks/graph/DocumentGraph";
 import { usePageTitle } from "@probo/hooks";
-import type {
-  DocumentDetailPageDocumentFragment$data,
-  DocumentDetailPageDocumentFragment$key,
-} from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
-import type { DocumentDetailPageExportPDFMutation } from "/__generated__/core/DocumentDetailPageExportPDFMutation.graphql";
-import type { DocumentDetailPageUpdateMutation } from "/__generated__/core/DocumentDetailPageUpdateMutation.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -43,8 +31,6 @@ import {
   Tabs,
   useConfirm,
 } from "@probo/ui";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import {
   getDocumentTypeLabel,
   getDocumentClassificationLabel,
@@ -60,21 +46,37 @@ import {
   useNavigate,
   useParams,
 } from "react-router";
-import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
+import { use, useRef, useState } from "react";
+import { clsx } from "clsx";
+import { z } from "zod";
+
 import {
   PdfDownloadDialog,
   type PdfDownloadDialogRef,
 } from "/components/documents/PdfDownloadDialog";
-import { use, useRef, useState } from "react";
 import type { NodeOf } from "/types.ts";
-import clsx from "clsx";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { ControlledField } from "/components/form/ControlledField";
 import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
 import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
-import { z } from "zod";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { DocumentDetailPageUpdateMutation } from "/__generated__/core/DocumentDetailPageUpdateMutation.graphql";
+import type { DocumentDetailPageExportPDFMutation } from "/__generated__/core/DocumentDetailPageExportPDFMutation.graphql";
+import type {
+  DocumentDetailPageDocumentFragment$data,
+  DocumentDetailPageDocumentFragment$key,
+} from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
+import {
+  documentNodeQuery,
+  useDeleteDocumentMutation,
+  useDeleteDraftDocumentVersionMutation,
+} from "/hooks/graph/DocumentGraph";
+import type { DocumentGraphNodeQuery } from "/__generated__/core/DocumentGraphNodeQuery.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { CurrentUser } from "/providers/CurrentUser";
+
+import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;

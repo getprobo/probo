@@ -1,5 +1,6 @@
-import { Table, Tbody, Td, Th, Thead, Tr, TrButton } from "./Table";
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Table, Tbody, Td, Th, Thead, Tr, TrButton } from "./Table";
 
 export default {
   title: "Atoms/Table",

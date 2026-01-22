@@ -5,8 +5,9 @@ import {
   useLayoutEffect,
   useCallback,
 } from "react";
-import { input } from "../Input/Input";
 import clsx from "clsx";
+
+import { input } from "../Input/Input";
 
 type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   variant?: "bordered" | "ghost" | "title";
