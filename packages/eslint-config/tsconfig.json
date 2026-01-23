@@ -14,7 +14,8 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "types": ["@probo/eslint-plugin-relay-types"]
   },
-  "include": ["src/**/*.ts", "eslint.config.mjs"]
+  "include": ["src", "eslint.config.mjs"],
 }

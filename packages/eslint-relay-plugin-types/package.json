@@ -1,0 +1,12 @@
+{
+  "name": "@probo/eslint-plugin-relay-types",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared ESLint configuration for Probo monorepo",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts"
+    }
+  }
+}
