@@ -2,19 +2,19 @@ import { configs } from "@probo/eslint-config";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  ...configs.base,
-  ...configs.ts,
-  ...configs.imports,
-  ...configs.react,
-  ...configs.stylistic,
+  configs.base,
+  configs.ts,
+  configs.imports,
+  configs.react,
+  configs.stylistic,
   {
+    extends: [configs.languageOptions.browser],
     ignores: ["./tailwind.config.js"],
-    ...configs.languageOptions.browser,
   },
   {
+    extends: [configs.languageOptions.node],
     files: ["./tailwind.config.js"],
     languageOptions: {
-      ...configs.languageOptions.node.languageOptions,
       sourceType: "commonjs",
     },
   },

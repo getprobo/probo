@@ -1,7 +1,7 @@
 import stylistic from "@stylistic/eslint-plugin";
-import type { Linter } from "eslint";
+import type { FlatConfig } from "typescript-eslint";
 
-export const stylisticConfigs = [
+export const stylisticConfigs: FlatConfig.ConfigArray = [
   stylistic.configs.customize({
     arrowParens: false, // Will actually set it to "as-needed"
     blockSpacing: true,
@@ -28,5 +28,5 @@ export const stylisticConfigs = [
         },
       ],
     },
-  } satisfies Linter.Config,
+  },
 ];

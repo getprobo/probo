@@ -1,7 +1,15 @@
 import js from "@eslint/js";
-import type { Linter } from "eslint";
+import { globalIgnores } from "eslint/config";
+import type { FlatConfig } from "typescript-eslint";
 
-export const baseConfigs = [
-  { ignores: ["dist", "node_modules", "**/*.d.ts"] } satisfies Pick<Linter.Config, "ignores">,
+export const baseConfigs: FlatConfig.ConfigArray = [
+  { files: ["**/*.js", "**/*.mjs", "**/*.ts", "**/*.tsx"] },
+  globalIgnores([
+    ".turbo/",
+    "**/dist/",
+    "**/node_modules/",
+    "**/__generated__/",
+    "**/*.d.ts",
+  ]),
   js.configs.recommended,
 ];

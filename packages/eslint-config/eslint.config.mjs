@@ -1,13 +1,15 @@
 import { defineConfig } from "eslint/config";
 
 import { baseConfigs } from "#baseConfigs";
-import { tsConfigs } from "#tsConfigs";
-import { nodeLanguageOptionsConfig } from "#languageOptionsConfigs";
+import { importsConfigs } from "#importsConfigs";
+import { nodeLanguageOptionsConfigs } from "#languageOptionsConfigs";
 import { stylisticConfigs } from "#stylisticConfigs";
+import { tsConfigs } from "#tsConfigs";
 
 export default defineConfig([
   ...baseConfigs,
   ...tsConfigs,
-  nodeLanguageOptionsConfig,
+  ...importsConfigs,
   ...stylisticConfigs,
+  ...nodeLanguageOptionsConfigs,
 ]);

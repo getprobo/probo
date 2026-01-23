@@ -1,15 +1,16 @@
 import react from "eslint-plugin-react";
-import * as reactHooks from "eslint-plugin-react-hooks";
+import reactHooks from "eslint-plugin-react-hooks";
+import type { FlatConfig } from "typescript-eslint";
 
-export const reactConfigs = [
+export const reactConfigs: FlatConfig.ConfigArray = [
   {
     ...react.configs.flat.recommended,
     ...react.configs.flat["jsx-runtime"],
-    ...reactHooks.configs.flat.recommended,
     settings: {
       react: {
         version: "detect",
       },
     },
   },
+  reactHooks.configs.flat.recommended,
 ];

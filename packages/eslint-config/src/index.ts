@@ -1,18 +1,18 @@
 import { baseConfigs } from "./baseConfigs.ts";
-import { browserLanguageOptionsConfig, nodeLanguageOptionsConfig } from "./languageOptionsConfigs.ts";
-import { tsConfigs } from "./tsConfigs.ts";
+import { importsConfigs } from "./importsConfigs.ts";
+import { browserLanguageOptionsConfigs, nodeLanguageOptionsConfigs } from "./languageOptionsConfigs.ts";
 import { reactConfigs } from "./reactConfigs.ts";
 import { stylisticConfigs } from "./stylisticConfigs.ts";
-import { importsConfigs } from "./importsConfigs.ts";
+import { tsConfigs } from "./tsConfigs.ts";
 
 export const configs = {
   base: baseConfigs,
   imports: importsConfigs,
   ts: tsConfigs,
-  languageOptions: {
-    browser: browserLanguageOptionsConfig,
-    node: nodeLanguageOptionsConfig,
-  },
   react: reactConfigs,
   stylistic: stylisticConfigs,
+  languageOptions: {
+    browser: browserLanguageOptionsConfigs,
+    node: nodeLanguageOptionsConfigs,
+  },
 };

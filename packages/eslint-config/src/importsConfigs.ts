@@ -1,17 +1,10 @@
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import { importX } from "eslint-plugin-import-x";
+import type { FlatConfig } from "typescript-eslint";
 
-export const importsConfigs = [
+export const importsConfigs: FlatConfig.ConfigArray = [
   importX.flatConfigs.recommended,
-  {
-    ...importX.flatConfigs.typescript,
-    settings: {
-      "import-x/resolver-next": createTypeScriptImportResolver({
-        alwaysTryTypes: true,
-        project: "tsconfig.json",
-      }),
-    },
-  },
+  importX.flatConfigs.typescript,
   {
     rules: {
       "import-x/order": [
@@ -36,6 +29,12 @@ export const importsConfigs = [
           },
         },
       ],
+    },
+    settings: {
+      "import-x/resolver-next": createTypeScriptImportResolver({
+        alwaysTryTypes: true,
+        project: "tsconfig.json",
+      }),
     },
   },
 ];

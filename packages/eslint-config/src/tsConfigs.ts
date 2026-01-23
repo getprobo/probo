@@ -1,10 +1,8 @@
-import type { Linter } from "eslint";
-import { configs } from "typescript-eslint";
+import { configs, type FlatConfig } from "typescript-eslint";
 
-export const tsConfigs = [
+export const tsConfigs: FlatConfig.ConfigArray = [
   ...configs.recommendedTypeChecked,
   {
-    files: ["**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -19,10 +17,5 @@ export const tsConfigs = [
         },
       ],
     },
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-      },
-    },
-  } satisfies Linter.Config,
+  },
 ];

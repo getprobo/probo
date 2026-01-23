@@ -13,6 +13,7 @@
   "imports": {
     "#baseConfigs": "./src/baseConfigs.ts",
     "#tsConfigs": "./src/tsConfigs.ts",
+    "#importsConfigs": "./src/importsConfigs.ts",
     "#languageOptionsConfigs": "./src/languageOptionsConfigs.ts",
     "#stylisticConfigs": "./src/stylisticConfigs.ts"
   },
