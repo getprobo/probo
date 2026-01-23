@@ -13,7 +13,7 @@ export function Logo({ className, withPicto }: Props) {
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
-        className={clsx(className, "aspect-88/24")}
+        className={clsx(className, "aspect-[88/24]")}
         viewBox="0 0 90 24"
       >
         <g clipPath={`url(#${id}-a)`}>
