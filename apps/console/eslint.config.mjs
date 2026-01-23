@@ -6,6 +6,7 @@ export default defineConfig([
   configs.ts,
   configs.imports,
   configs.react,
+  configs.relay,
   configs.stylistic,
   configs.languageOptions.browser,
 ]);
