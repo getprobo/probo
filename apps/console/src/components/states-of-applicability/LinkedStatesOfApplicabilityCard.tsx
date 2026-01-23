@@ -15,7 +15,7 @@ import {
   Tr,
   TrButton,
 } from "@probo/ui";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";

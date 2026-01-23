@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { graphql } from "react-relay";
 import { useNavigate } from "react-router";
-import z from "zod";
+import { z } from "zod";
 
 import type { CreateStateOfApplicabilityDialogMutation } from "#/__generated__/core/CreateStateOfApplicabilityDialogMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";

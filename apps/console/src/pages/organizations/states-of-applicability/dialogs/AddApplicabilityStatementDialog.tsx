@@ -523,3 +523,5 @@ export const AddApplicabilityStatementDialog = forwardRef<AddApplicabilityStatem
     );
   },
 );
+
+AddApplicabilityStatementDialog.displayName = "AddApplicabilityStatementDialog";
