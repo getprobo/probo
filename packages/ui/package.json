@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . --concurrency 2",
     "dev": "storybook dev -p 6006 --no-open",
     "check": "tsc --noEmit -p tsconfig.app.json",
     "icons": "bun run src/Atoms/Icons/generator.ts"

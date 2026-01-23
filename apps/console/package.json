@@ -9,7 +9,7 @@
     "relay-compile": "npx relay-compiler",
     "relay": "npm run relay-clean && npm run relay-compile",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --concurrency 4",
     "check": "tsc --noEmit -p tsconfig.app.json",
     "preview": "vite preview"
   },

@@ -7,7 +7,7 @@
     "dev": "vite",
     "relay": "find src -type d -name \"__generated__\" -exec rm -rf {} + && npx relay-compiler ./relay.config.json",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --concurrency 2",
     "check": "tsc --noEmit -p tsconfig.app.json",
     "preview": "vite preview"
   },
