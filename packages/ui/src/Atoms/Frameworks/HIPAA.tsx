@@ -11,7 +11,7 @@ export function HIPAA(props: { className?: string }) {
       x="0px"
       y="0px"
       viewBox="0 0 60 60"
-      enable-background="new 0 0 60 60"
+      enableBackground="new 0 0 60 60"
       xmlSpace="preserve"
     >
       <circle
@@ -22,12 +22,12 @@ export function HIPAA(props: { className?: string }) {
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linecap="round"
+        strokeLinecap="round"
         d="M6,30c0,9.285099,5.2727,17.338699,12.987301,21.3298 M30,6c-7.1101,0-13.497999,3.0918-17.8927,8.0043"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linecap="round"
+        strokeLinecap="round"
         d="M53.494099,30c0,9.285099-5.272697,17.338699-12.987297,21.3298M29.494101,6c7.110098,0,13.497999,3.0918,17.892698,8.0043"
       />
       <circle
@@ -42,8 +42,8 @@ export function HIPAA(props: { className?: string }) {
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         d="M29.8696,25.396c-6.1423,0.2393-5.6989-9.0175-11.4363-9.017599c-3.2858,0-5.1936,4.928598-10.33418,4.928598c0.37099,3.179701,8.61708,9.9102,13.61988,9.4862"
       />
       <path
@@ -52,8 +52,8 @@ export function HIPAA(props: { className?: string }) {
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         d="M30,25.396c6.1423,0.2393,5.698898-9.0175,11.436401-9.017599c3.285698,0,5.193501,4.928598,10.334099,4.928598c-0.370998,3.179701-8.6171,9.9102-13.6199,9.4862"
       />
       <path

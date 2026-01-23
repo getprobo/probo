@@ -45,6 +45,7 @@ export function VendorRow(props: { vendor: VendorRowFragment$key; hasAnyCountrie
                 href={vendor.privacyPolicyUrl}
                 target="_blank"
                 className={`flex gap-1 text-txt-info items-center hover:underline ${!props.hasAnyCountries ? "md:justify-end" : ""}`}
+                rel="noreferrer"
               >
                 <IconShield size={16} className="flex-none" />
                 <span>{__("Privacy")}</span>

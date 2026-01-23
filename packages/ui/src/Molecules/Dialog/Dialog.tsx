@@ -8,7 +8,7 @@ import {
   Title,
   Trigger,
 } from "@radix-ui/react-dialog";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import {
   Children,
   cloneElement,
@@ -203,7 +203,6 @@ export function DialogContent({
   return (
     <div
       {...props}
-      children={children}
       className={clsx(
         "overflow-y-auto",
         props.className,
@@ -215,7 +214,9 @@ export function DialogContent({
           "maxHeight": "var(--maxHeight)",
         } as CSSProperties
       }
-    />
+    >
+      {children}
+    </div>
   );
 }
 

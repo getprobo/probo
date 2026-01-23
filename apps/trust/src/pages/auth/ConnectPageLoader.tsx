@@ -6,7 +6,7 @@ import { RelayProvider } from "#/providers/RelayProviders";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
 import { ConnectPage, connectPageQuery } from "./ConnectPage";
 
-function ConnectPageLoader() {
+function ConnectPageQueryLoader() {
   const [queryRef, loadQuery]
     = useQueryLoader<ConnectPageQuery>(connectPageQuery);
 
@@ -25,10 +25,10 @@ function ConnectPageLoader() {
   );
 }
 
-export default function () {
+export default function ConnectPageLoader() {
   return (
     <RelayProvider>
-      <ConnectPageLoader />
+      <ConnectPageQueryLoader />
     </RelayProvider>
   );
 }

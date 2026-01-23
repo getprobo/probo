@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Children, cloneElement, isValidElement } from "react";
 

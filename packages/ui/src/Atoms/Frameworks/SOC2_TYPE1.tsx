@@ -8,7 +8,7 @@ export function SOC2_TYPE1() {
       x="0px"
       y="0px"
       viewBox="0 0 60 60"
-      enable-background="new 0 0 60 60"
+      enableBackground="new 0 0 60 60"
       xmlSpace="preserve"
     >
       <path

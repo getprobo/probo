@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { Fragment } from "react/jsx-runtime";
 import { Link } from "react-router";
 

@@ -128,9 +128,9 @@ function ConfirmDialogContent() {
         <Overlay className={dialogStyles.overlay} />
         <Content className={dialogStyles.content}>
           <header className={dialogStyles.header}>
-            <Title children={title} className={dialogStyles.title} />
+            <Title className={dialogStyles.title}>{title}</Title>
           </header>
-          <Description className="p-6" children={message} />
+          <Description className="p-6">{message}</Description>
           <footer className={dialogStyles.footer}>
             <Cancel asChild>
               <Button disabled={loading} variant="tertiary">

@@ -98,9 +98,9 @@ export const Colors: Story = {
       ],
     ] as [string, string[]][];
     return (
-      <div className="divide-dashed divide-y-1 divide-border-low">
+      <div className="divide-dashed divide-y divide-border-low">
         {colors.map(([name, variants]) => (
-          <div className="space-y-10 py-10">
+          <div key={name} className="space-y-10 py-10">
             <h2 className="text-xl">{name}</h2>
             <div className="flex flex-wrap gap-8">
               {variants.map(variant => (
@@ -146,7 +146,7 @@ export const Typography: Story = {
       "text-xxs",
     ];
     return (
-      <div className="divide-dashed divide-y-1 divide-border-low">
+      <div className="divide-dashed divide-y divide-border-low">
         {textVariants.map(variant => (
           <div className="flex items-center py-4" key={variant}>
             <div className="opacity-50 w-50 flex-none">
@@ -168,6 +168,7 @@ export const Icons: Story = {
     return (
       <div className="flex flex-wrap gap-4">
         {objectKeys(icons).map((k) => {
+          /* eslint import-x/namespace: ['error', { allowComputed: true }] */
           const IconComponent = icons[k];
           return (
             <button

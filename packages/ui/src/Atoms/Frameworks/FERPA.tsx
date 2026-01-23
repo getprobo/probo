@@ -8,7 +8,7 @@ export function FERPA() {
       x="0px"
       y="0px"
       viewBox="0 0 60 60"
-      enable-background="new 0 0 60 60"
+      enableBackground="new 0 0 60 60"
       xmlSpace="preserve"
     >
       <rect
@@ -29,47 +29,47 @@ export function FERPA() {
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M39.9837,31.1087c-2.278999,0.845301-4.780701-0.233-4.780701-0.233s1.193302-2.4489,3.472301-3.2943c2.278999-0.845301,4.780598,0.233,4.780598,0.233S42.262699,30.2633,39.9837,31.1087z"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M36.877399,38.512798c-2.544899,0.164001-4.714298-1.354-4.714298-1.354s1.9566-1.783897,4.501499-1.947998c2.5448-0.164001,4.714298,1.354,4.714298,1.354S39.422298,38.348701,36.877399,38.512798z"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M33.2052,28.852501C32.822399,31.2246,30.2953,32.865898,30.2953,32.865898s-1.906399-2.204597-1.5236-4.576698s2.909901-4.013399,2.909901-4.013399S33.588001,26.4804,33.2052,28.852501z"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M24.9828,35.002602c2.383701,0.302898,4.672001-1.657703,4.672001-1.657703s-1.5763-2.451498-3.9599-2.754299c-2.383701-0.302898-4.672001,1.6577-4.672001,1.6577S22.599199,34.699799,24.9828,35.002602z"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M25.849501,41.308998c1.8536,0.048302,3.400999-1.636497,3.400999-1.636497s-1.4578-1.762802-3.3113-1.811001c-1.8536-0.048199-3.400999,1.636501-3.400999,1.636501S23.995899,41.260799,25.849501,41.308998z"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M34.430401,23.423201c0.451698,2.0844,2.318699,3.4489,2.318699,3.4489s1.134701-2.015001,0.682999-4.099401c-0.451698-2.0844-2.318699-3.4489-2.318699-3.4489S33.978699,21.3388,34.430401,23.423201z"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M28.4242,22.279499c-0.067101,2.361101-2.3174,4.212702-2.3174,4.212702s-2.141399-1.976601-2.0742-4.337702S26.3501,17.9419,26.3501,17.9419S28.4914,19.9184,28.4242,22.279499z"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M21.2068,29.0975c2.361099,0.0672,4.3377-2.0742,4.3377-2.0742s-1.851601-2.2502-4.2127-2.3174s-4.337601,2.0741-4.337601,2.0741S18.845699,29.0303,21.2068,29.0975z"
       />
       <path
         className="fill-none stroke-txt-primary"
-        stroke-linecap="round"
+        strokeLinecap="round"
         d="M24.527901,45.939899c1.3981-0.696499,4.033499-3.188499,5.056-5.462601 M20.4883,20.946501c0,0,9.6497,7.2514,9.907299,15.638998c0.0434,1.4137-0.288399,2.727802-0.811699,3.8918 M29.5839,40.477299c6.179401-6.8633,6.518799-16.037098,11.2883-18.222399"
       />
       <rect

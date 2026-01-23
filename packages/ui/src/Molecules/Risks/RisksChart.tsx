@@ -1,6 +1,6 @@
 import { getRiskImpacts, getRiskLikelihoods, groupBy } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { Fragment, useMemo } from "react";
 import { Link } from "react-router";
 

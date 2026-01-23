@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 
 type Props = { size?: number; className?: string; centered?: boolean };
 
