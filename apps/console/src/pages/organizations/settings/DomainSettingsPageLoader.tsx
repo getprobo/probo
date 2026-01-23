@@ -10,7 +10,7 @@ import {
   domainSettingsPageQuery,
 } from "./DomainSettingsPage";
 
-function DomainSettingsPageLoader() {
+function DomainSettingsPageQueryLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<DomainSettingsPageQuery>(
     domainSettingsPageQuery,
@@ -29,11 +29,11 @@ function DomainSettingsPageLoader() {
   return <DomainSettingsPage queryRef={queryRef} />;
 }
 
-export default function () {
+export default function DomainSettingsPageLoader() {
   return (
     <CoreRelayProvider>
       <Suspense>
-        <DomainSettingsPageLoader />
+        <DomainSettingsPageQueryLoader />
       </Suspense>
     </CoreRelayProvider>
   );

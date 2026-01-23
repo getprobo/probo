@@ -149,3 +149,5 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
     );
   },
 );
+
+PdfDownloadDialog.displayName = "PdfDownloadDialog";

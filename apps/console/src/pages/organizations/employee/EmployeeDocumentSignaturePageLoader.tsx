@@ -11,7 +11,7 @@ import {
   employeeDocumentSignaturePageQuery,
 } from "./EmployeeDocumentSignaturePage";
 
-function EmployeeDocumentSignaturePageLoader() {
+function EmployeeDocumentSignaturePageQueryLoader() {
   const { documentId } = useParams();
   const [queryRef, loadQuery]
     = useQueryLoader<EmployeeDocumentSignaturePageQuery>(
@@ -37,10 +37,10 @@ function EmployeeDocumentSignaturePageLoader() {
   );
 }
 
-export default function () {
+export default function EmployeeDocumentSignaturePageLoader() {
   return (
     <CoreRelayProvider>
-      <EmployeeDocumentSignaturePageLoader />
+      <EmployeeDocumentSignaturePageQueryLoader />
     </CoreRelayProvider>
   );
 }

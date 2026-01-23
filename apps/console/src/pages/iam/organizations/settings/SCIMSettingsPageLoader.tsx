@@ -7,7 +7,7 @@ import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import { SCIMSettingsPage, scimSettingsPageQuery } from "./SCIMSettingsPage";
 
-function SCIMSettingsPageLoader() {
+function SCIMSettingsPageQueryLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<SCIMSettingsPageQuery>(
     scimSettingsPageQuery,
@@ -26,10 +26,10 @@ function SCIMSettingsPageLoader() {
   return <SCIMSettingsPage queryRef={queryRef} />;
 }
 
-export default function () {
+export default function SCIMSettingsPageLoader() {
   return (
     <IAMRelayProvider>
-      <SCIMSettingsPageLoader />
+      <SCIMSettingsPageQueryLoader />
     </IAMRelayProvider>
   );
 }

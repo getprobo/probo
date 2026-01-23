@@ -11,7 +11,7 @@ import {
   employeeDocumentsPageQuery,
 } from "./EmployeeDocumentsPage";
 
-function EmployeeDocumentsPageLoader() {
+function EmployeeDocumentsPageQueryLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<EmployeeDocumentsPageQuery>(
     employeeDocumentsPageQuery,
@@ -30,11 +30,11 @@ function EmployeeDocumentsPageLoader() {
   return <EmployeeDocumentsPage queryRef={queryRef} />;
 }
 
-export default function () {
+export default function EmployeeDocumentsPageLoader() {
   return (
     <CoreRelayProvider>
       <Suspense fallback={<PageSkeleton />}>
-        <EmployeeDocumentsPageLoader />
+        <EmployeeDocumentsPageQueryLoader />
       </Suspense>
     </CoreRelayProvider>
   );

@@ -7,7 +7,7 @@ import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import { MembersPage, membersPageQuery } from "./MembersPage";
 
-function MembersPageLoader() {
+function MembersPageQueryLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery]
     = useQueryLoader<MembersPageQuery>(membersPageQuery);
@@ -25,10 +25,10 @@ function MembersPageLoader() {
   return <MembersPage queryRef={queryRef} />;
 }
 
-export default function () {
+export default function MembersPageLoader() {
   return (
     <IAMRelayProvider>
-      <MembersPageLoader />
+      <MembersPageQueryLoader />
     </IAMRelayProvider>
   );
 }

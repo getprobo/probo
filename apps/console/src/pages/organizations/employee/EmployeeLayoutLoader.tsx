@@ -11,7 +11,7 @@ import {
   viewerMembershipLayoutQuery,
 } from "../../iam/organizations/ViewerMembershipLayout";
 
-function EmployeeLayoutLoader() {
+function EmployeeLayoutQueryLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<ViewerMembershipLayoutQuery>(
     viewerMembershipLayoutQuery,
@@ -35,10 +35,10 @@ function EmployeeLayoutLoader() {
   );
 }
 
-export default function () {
+export default function EmployeeLayoutLoader() {
   return (
     <IAMRelayProvider>
-      <EmployeeLayoutLoader />
+      <EmployeeLayoutQueryLoader />
     </IAMRelayProvider>
   );
 }

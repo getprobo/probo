@@ -10,7 +10,7 @@ import {
   generalSettingsPageQuery,
 } from "./GeneralSettingsPage";
 
-function GeneralSettingsPageLoader() {
+function GeneralSettingsPageQueryLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<GeneralSettingsPageQuery>(
     generalSettingsPageQuery,
@@ -29,10 +29,10 @@ function GeneralSettingsPageLoader() {
   return <GeneralSettingsPage queryRef={queryRef} />;
 }
 
-export default function () {
+export default function GeneralSettingsPageLoader() {
   return (
     <IAMRelayProvider>
-      <GeneralSettingsPageLoader />
+      <GeneralSettingsPageQueryLoader />
     </IAMRelayProvider>
   );
 }

@@ -11,7 +11,7 @@ import {
   viewerMembershipLayoutQuery,
 } from "./ViewerMembershipLayout";
 
-function MembershipLayoutLoader() {
+function ViewerMembershipLayoutQueryLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<ViewerMembershipLayoutQuery>(
     viewerMembershipLayoutQuery,
@@ -35,10 +35,10 @@ function MembershipLayoutLoader() {
   );
 }
 
-export default function () {
+export default function ViewerMembershipLayoutLoader() {
   return (
     <IAMRelayProvider>
-      <MembershipLayoutLoader />
+      <ViewerMembershipLayoutQueryLoader />
     </IAMRelayProvider>
   );
 }

@@ -166,3 +166,5 @@ export const EditControlDialog = forwardRef<EditControlDialogRef>((_props, ref) 
     </Dialog>
   );
 });
+
+EditControlDialog.displayName = "EditControlDialog";

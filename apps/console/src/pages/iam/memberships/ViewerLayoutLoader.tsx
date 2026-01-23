@@ -7,7 +7,7 @@ import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 import { ViewerLayout, viewerLayoutQuery } from "./ViewerLayout";
 import { ViewerLayoutLoading } from "./ViewerLayoutLoading";
 
-function ViewerLayoutLoader() {
+function ViewerLayoutQueryLoader() {
   const [queryRef, loadQuery]
     = useQueryLoader<ViewerLayoutQuery>(viewerLayoutQuery);
 
@@ -26,10 +26,10 @@ function ViewerLayoutLoader() {
   );
 }
 
-export default function () {
+export default function ViewerLayoutLoader() {
   return (
     <IAMRelayProvider>
-      <ViewerLayoutLoader />
+      <ViewerLayoutQueryLoader />
     </IAMRelayProvider>
   );
 }

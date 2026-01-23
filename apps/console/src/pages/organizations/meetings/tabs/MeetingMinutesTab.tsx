@@ -16,7 +16,7 @@ export default function MeetingMinutesTab() {
           )
         : (
             <div className="text-txt-tertiary text-sm">
-              No minutes recorded yet. Click "Edit minutes" to add meeting minutes.
+              {"No minutes recorded yet. Click \"Edit minutes\" to add meeting minutes."}
             </div>
           )}
     </div>

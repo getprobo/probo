@@ -7,7 +7,7 @@ import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import { SAMLSettingsPage, samlSettingsPageQuery } from "./SAMLSettingsPage";
 
-function SAMLSettingsPageLoader() {
+function SAMLSettingsPageQueryLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<SAMLSettingsPageQuery>(
     samlSettingsPageQuery,
@@ -26,10 +26,10 @@ function SAMLSettingsPageLoader() {
   return <SAMLSettingsPage queryRef={queryRef} />;
 }
 
-export default function () {
+export default function SAMLSettingsPageLoader() {
   return (
     <IAMRelayProvider>
-      <SAMLSettingsPageLoader />
+      <SAMLSettingsPageQueryLoader />
     </IAMRelayProvider>
   );
 }

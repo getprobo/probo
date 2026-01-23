@@ -26,7 +26,7 @@ const createOrganizationMutation = graphql`
   }
 `;
 
-function NewOrganizationPage() {
+function NewOrganizationPageInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -124,10 +124,10 @@ function NewOrganizationPage() {
   );
 }
 
-export default function () {
+export default function NewOrganizationPage() {
   return (
     <IAMRelayProvider>
-      <NewOrganizationPage />
+      <NewOrganizationPageInner />
     </IAMRelayProvider>
   );
 }

@@ -466,3 +466,5 @@ export const LinkControlDialog = forwardRef<LinkControlDialogRef>((_props, ref) 
     </Dialog>
   );
 });
+
+LinkControlDialog.displayName = "LinkControlDialog";

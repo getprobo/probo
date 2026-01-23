@@ -3,7 +3,7 @@ import { Outlet } from "react-router";
 
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-export default function () {
+export default function AuthLayout() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen text-txt-primary">
       <div className="bg-level-0 flex flex-col items-center justify-center">
