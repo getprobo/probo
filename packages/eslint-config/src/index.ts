@@ -1,9 +1,9 @@
-import { baseConfigs } from "./baseConfigs.ts";
-import { importsConfigs } from "./importsConfigs.ts";
-import { browserLanguageOptionsConfigs, nodeLanguageOptionsConfigs } from "./languageOptionsConfigs.ts";
-import { reactConfigs } from "./reactConfigs.ts";
-import { stylisticConfigs } from "./stylisticConfigs.ts";
-import { tsConfigs } from "./tsConfigs.ts";
+import { baseConfigs } from "#baseConfigs";
+import { importsConfigs } from "#importsConfigs";
+import { browserLanguageOptionsConfigs, nodeLanguageOptionsConfigs } from "#languageOptionsConfigs";
+import { reactConfigs } from "#reactConfigs";
+import { stylisticConfigs } from "#stylisticConfigs";
+import { tsConfigs } from "#tsConfigs";
 
 export const configs = {
   base: baseConfigs,

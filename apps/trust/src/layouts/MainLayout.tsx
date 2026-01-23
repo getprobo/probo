@@ -7,8 +7,8 @@ import { NDADialog } from "#/components/NDADialog";
 import { OrganizationSidebar } from "#/components/OrganizationSidebar";
 import { TrustCenterProvider } from "#/providers/TrustCenterProvider";
 import { Viewer } from "#/providers/Viewer";
-import type { TrustGraphCurrentQuery } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql.ts";
-import { currentTrustGraphQuery } from "#/queries/TrustGraph.ts";
+import type { TrustGraphCurrentQuery } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import { currentTrustGraphQuery } from "#/queries/TrustGraph";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphCurrentQuery>;
