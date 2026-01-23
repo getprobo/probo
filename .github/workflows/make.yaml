@@ -89,6 +89,28 @@ jobs:
           severity-cutoff: critical
           output-format: table
 
+  lint:
+    name: "lint"
+    runs-on: "ubuntu-22.04"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          submodules: recursive
+      - uses: "actions/setup-go@v5"
+        with:
+          go-version: "1.25.5"
+          cache: true
+      - uses: "actions/setup-node@v6"
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+      - run: "npm i -g npm@11.8.0"
+      - run: "npm ci"
+      - run: "make build"
+      - run: "npm run lint"
+
   test:
     name: "test"
     runs-on: "ubuntu-22.04"
@@ -118,7 +140,6 @@ jobs:
             coverage.out
             coverage.html
           retention-days: 30
-      - run: "make lint"
       # Trivy ignore does not work for license scanning in Github action
       # - uses: "aquasecurity/trivy-action@0.33.1"
       #   with:
