@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.10] - 2026-01-23
+
+### Added
+
+- New up to date linting rules for TS codebase
+
+### Changed
+
+- Refactor SOA
+- Dropped prettier
+- Updated eslint related dependencies
+- Ignore new TLS errors in logs
+
+### Fixed
+
+- otel utf8 errors
+
 ## [0.116.9] - 2026-01-21
 
 ### Fixed
