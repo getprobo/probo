@@ -27,7 +27,7 @@ const pdfDownloadSchema = z.object({
 type PdfDownloadFormData = z.infer<typeof pdfDownloadSchema>;
 
 type Props = {
-  children: ReactNode;
+  children?: ReactNode;
   onDownload: (options: PdfDownloadFormData) => void;
   isLoading?: boolean;
   defaultEmail: string;

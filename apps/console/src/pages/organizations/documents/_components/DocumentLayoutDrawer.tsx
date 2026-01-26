@@ -1,0 +1,320 @@
+import { documentClassifications, documentTypes, formatDate, getDocumentClassificationLabel, getDocumentTypeLabel } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { Avatar, Badge, Button, Drawer, IconCheckmark1, IconCrossLargeX, IconPencil, PropertyRow } from "@probo/ui";
+import { useState } from "react";
+import { loadQuery, useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
+import { z } from "zod";
+
+import type { DocumentLayoutDrawerFragment$key } from "#/__generated__/core/DocumentLayoutDrawerFragment.graphql";
+import type { DocumentLayoutDrawerMutation } from "#/__generated__/core/DocumentLayoutDrawerMutation.graphql";
+import type { DocumentLayoutQuery$data } from "#/__generated__/core/DocumentLayoutQuery.graphql";
+import { ControlledField } from "#/components/form/ControlledField";
+import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
+import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { coreEnvironment } from "#/environments";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { NodeOf } from "#/types";
+
+import { documentLayoutQuery } from "../DocumentLayout";
+
+const fragment = graphql`
+  fragment DocumentLayoutDrawerFragment on Document {
+    id
+    documentType
+    canUpdate: permission(action: "core:document:update")
+  }
+`;
+
+const updateDocumentMutation = graphql`
+  mutation DocumentLayoutDrawerMutation($input: UpdateDocumentInput!) {
+    updateDocument(input: $input) {
+      document {
+        id
+        documentType
+        classification
+        owner {
+          id
+          fullName
+        }
+      }
+    }
+  }
+`;
+
+const schema = z.object({
+  ownerId: z.string().min(1, "Owner is required"),
+  documentType: z.enum(documentTypes),
+  classification: z.enum(documentClassifications),
+});
+
+export function DocumentLayoutDrawer(props: {
+  currentVersion: NodeOf<Extract<DocumentLayoutQuery$data["document"], { __typename: "Document" }>["versions"]>;
+  fKey: DocumentLayoutDrawerFragment$key;
+  isDraft: boolean;
+}) {
+  const { currentVersion, fKey, isDraft } = props;
+
+  const organizationId = useOrganizationId();
+  const { __ } = useTranslate();
+
+  const [isEditingOwner, setIsEditingOwner] = useState(false);
+  const [isEditingType, setIsEditingType] = useState(false);
+  const [isEditingClassification, setIsEditingClassification] = useState(false);
+
+  const document = useFragment<DocumentLayoutDrawerFragment$key>(fragment, fKey);
+
+  const { control, handleSubmit, reset } = useFormWithSchema(
+    schema,
+    {
+      defaultValues: {
+        ownerId: currentVersion.owner?.id || "",
+        documentType: document.documentType,
+        classification: currentVersion.classification,
+      },
+    },
+  );
+
+  const [updateDocument, isUpdatingDocument]
+    = useMutationWithToasts<DocumentLayoutDrawerMutation>(
+      updateDocumentMutation,
+      {
+        successMessage: __("Document updated successfully."),
+        errorMessage: __("Failed to update document"),
+      },
+    );
+
+  const handleUpdateOwner = async (data: { ownerId: string }) => {
+    await updateDocument({
+      variables: {
+        input: {
+          id: document.id,
+          ownerId: data.ownerId,
+        },
+      },
+      onSuccess: () => {
+        setIsEditingOwner(false);
+      },
+    });
+  };
+
+  const handleUpdateDocumentType = async (data: {
+    documentType: (typeof documentTypes)[number];
+  }) => {
+    await updateDocument({
+      variables: {
+        input: {
+          id: document.id,
+          documentType: data.documentType,
+        },
+      },
+      onSuccess: () => {
+        setIsEditingType(false);
+        loadQuery(
+          coreEnvironment,
+          documentLayoutQuery,
+          { documentId: document.id },
+          { fetchPolicy: "network-only" },
+        );
+      },
+    });
+  };
+
+  const handleUpdateClassification = async (data: {
+    classification: (typeof documentClassifications)[number];
+  }) => {
+    await updateDocument({
+      variables: {
+        input: {
+          id: document.id,
+          classification: data.classification,
+        },
+      },
+      onSuccess: () => {
+        setIsEditingClassification(false);
+        loadQuery(
+          coreEnvironment,
+          documentLayoutQuery,
+          { documentId: document.id },
+          { fetchPolicy: "network-only" },
+        );
+      },
+    });
+  };
+
+  return (
+    <Drawer>
+      <div className="text-base text-txt-primary font-medium mb-4">
+        {__("Properties")}
+      </div>
+      <PropertyRow label={__("Owner")}>
+        {isEditingOwner
+          ? (
+              <EditablePropertyContent
+                onSave={() => void handleSubmit(handleUpdateOwner)()}
+                onCancel={() => {
+                  setIsEditingOwner(false);
+                  reset();
+                }}
+                disabled={isUpdatingDocument}
+              >
+                <PeopleSelectField
+                  name="ownerId"
+                  control={control}
+                  organizationId={organizationId}
+                />
+              </EditablePropertyContent>
+            )
+          : (
+              <ReadOnlyPropertyContent
+                onEdit={() => setIsEditingOwner(true)}
+                canEdit={document.canUpdate}
+              >
+                <Badge variant="highlight" size="md" className="gap-2">
+                  <Avatar name={currentVersion.owner?.fullName ?? ""} />
+                  {currentVersion.owner?.fullName}
+                </Badge>
+              </ReadOnlyPropertyContent>
+            )}
+      </PropertyRow>
+      <PropertyRow label={__("Type")}>
+        {isEditingType
+          ? (
+              <EditablePropertyContent
+                onSave={() => void handleSubmit(handleUpdateDocumentType)()}
+                onCancel={() => {
+                  setIsEditingType(false);
+                  reset();
+                }}
+                disabled={isUpdatingDocument}
+              >
+                <ControlledField
+                  name="documentType"
+                  control={control}
+                  type="select"
+                >
+                  <DocumentTypeOptions />
+                </ControlledField>
+              </EditablePropertyContent>
+            )
+          : (
+              <ReadOnlyPropertyContent
+                onEdit={() => setIsEditingType(true)}
+                canEdit={document.canUpdate}
+              >
+                <div className="text-sm text-txt-secondary">
+                  {getDocumentTypeLabel(__, document.documentType)}
+                </div>
+              </ReadOnlyPropertyContent>
+            )}
+      </PropertyRow>
+      <PropertyRow label={__("Classification")}>
+        {isEditingClassification
+          ? (
+              <EditablePropertyContent
+                onSave={() => void handleSubmit(handleUpdateClassification)()}
+                onCancel={() => {
+                  setIsEditingClassification(false);
+                  reset();
+                }}
+                disabled={isUpdatingDocument}
+              >
+                <ControlledField
+                  name="classification"
+                  control={control}
+                  type="select"
+                >
+                  <DocumentClassificationOptions />
+                </ControlledField>
+              </EditablePropertyContent>
+            )
+          : (
+              <ReadOnlyPropertyContent
+                onEdit={() => setIsEditingClassification(true)}
+                canEdit={document.canUpdate}
+              >
+                <div className="text-sm text-txt-secondary">
+                  {getDocumentClassificationLabel(
+                    __,
+                    currentVersion.classification,
+                  )}
+                </div>
+              </ReadOnlyPropertyContent>
+            )}
+      </PropertyRow>
+      <PropertyRow label={__("Status")}>
+        <Badge
+          variant={isDraft ? "highlight" : "success"}
+          size="md"
+          className="gap-2"
+        >
+          {isDraft ? __("Draft") : __("Published")}
+        </Badge>
+      </PropertyRow>
+      <PropertyRow label={__("Version")}>
+        <div className="text-sm text-txt-secondary">
+          {currentVersion.version}
+        </div>
+      </PropertyRow>
+      <PropertyRow label={__("Last modified")}>
+        <div className="text-sm text-txt-secondary">
+          {formatDate(currentVersion.updatedAt)}
+        </div>
+      </PropertyRow>
+      {currentVersion.publishedAt && (
+        <PropertyRow label={__("Published Date")}>
+          <div className="text-sm text-txt-secondary">
+            {formatDate(currentVersion.publishedAt)}
+          </div>
+        </PropertyRow>
+      )}
+    </Drawer>
+  );
+}
+
+function EditablePropertyContent({
+  children,
+  onSave,
+  onCancel,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onSave: () => void;
+  onCancel: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1">{children}</div>
+      <Button
+        variant="quaternary"
+        icon={IconCheckmark1}
+        onClick={onSave}
+        disabled={disabled}
+      />
+      <Button variant="quaternary" icon={IconCrossLargeX} onClick={onCancel} />
+    </div>
+  );
+}
+
+function ReadOnlyPropertyContent({
+  children,
+  onEdit,
+  canEdit = true,
+}: {
+  children: React.ReactNode;
+  onEdit: () => void;
+  canEdit?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      {children}
+      {canEdit && (
+        <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />
+      )}
+    </div>
+  );
+}

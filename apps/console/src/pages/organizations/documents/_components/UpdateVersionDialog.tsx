@@ -11,15 +11,31 @@ import {
   useToast,
 } from "@probo/ui";
 import { type RefObject, useEffect } from "react";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { DocumentDetailPageDocumentFragment$data } from "#/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
 import type { UpdateVersionDialogCreateMutation } from "#/__generated__/core/UpdateVersionDialogCreateMutation.graphql";
+import type { UpdateVersionDialogFragment$key } from "#/__generated__/core/UpdateVersionDialogFragment.graphql";
 import type { UpdateVersionDialogUpdateMutation } from "#/__generated__/core/UpdateVersionDialogUpdateMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+
+const fragment = graphql`
+  fragment UpdateVersionDialogFragment on Document {
+    id
+    versions(first: 20) @connection(key: "DocumentLayout_versions") {
+      __id
+      edges {
+        node {
+          id
+          status
+          content
+        }
+      }
+    }
+  }
+`;
 
 const createDraftDocument = graphql`
   mutation UpdateVersionDialogCreateMutation(
@@ -49,7 +65,7 @@ const createDraftDocument = graphql`
   }
 `;
 
-const UpdateDocumentMutation = graphql`
+const updateDocumentMutation = graphql`
   mutation UpdateVersionDialogUpdateMutation(
     $input: UpdateDocumentVersionInput!
   ) {
@@ -62,9 +78,8 @@ const UpdateDocumentMutation = graphql`
   }
 `;
 
-type Props = {
-  document: DocumentDetailPageDocumentFragment$data;
-  connectionId: string;
+type UpdateVersionDialogProps = {
+  fKey: UpdateVersionDialogFragment$key;
   ref: RefObject<{ open: () => void } | null>;
 };
 
@@ -72,22 +87,21 @@ const versionSchema = z.object({
   content: z.string(),
 });
 
-export default function UpdateVersionDialog({
-  document,
-  connectionId,
-  ref,
-}: Props) {
+export default function UpdateVersionDialog(props: UpdateVersionDialogProps) {
+  const { fKey, ref } = props;
+
   const { __ } = useTranslate();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
+  const document = useFragment<UpdateVersionDialogFragment$key>(fragment, fKey);
   const version = document.versions.edges[0].node;
-  const isDraft = version?.status === "DRAFT";
+  const isDraft = version.status === "DRAFT";
   const [createDraftDocumentVersion, isCreatingDraft]
     = useMutation<UpdateVersionDialogCreateMutation>(createDraftDocument);
   const [updateDocumentVersion, isUpdating]
     = useMutationWithToasts<UpdateVersionDialogUpdateMutation>(
-      UpdateDocumentMutation,
+      updateDocumentMutation,
       {
         successMessage: __("Document updated successfully."),
         errorMessage: __("Failed to update document"),
@@ -132,7 +146,7 @@ export default function UpdateVersionDialog({
           input: {
             documentID: document.id,
           },
-          connections: [connectionId],
+          connections: [document.versions.__id],
         },
         onCompleted: (createResponse, errors) => {
           if (errors) {

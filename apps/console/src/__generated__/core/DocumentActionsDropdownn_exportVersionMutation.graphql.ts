@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f860e097afe4111c629ecf78d873a84e>>
+ * @generated SignedSource<<02f25af2f023ddc0a964b44c105ea248>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,17 +15,17 @@ export type ExportDocumentVersionPDFInput = {
   withSignatures: boolean;
   withWatermark: boolean;
 };
-export type DocumentDetailPageExportPDFMutation$variables = {
+export type DocumentActionsDropdownn_exportVersionMutation$variables = {
   input: ExportDocumentVersionPDFInput;
 };
-export type DocumentDetailPageExportPDFMutation$data = {
+export type DocumentActionsDropdownn_exportVersionMutation$data = {
   readonly exportDocumentVersionPDF: {
     readonly data: string;
   };
 };
-export type DocumentDetailPageExportPDFMutation = {
-  response: DocumentDetailPageExportPDFMutation$data;
-  variables: DocumentDetailPageExportPDFMutation$variables;
+export type DocumentActionsDropdownn_exportVersionMutation = {
+  response: DocumentActionsDropdownn_exportVersionMutation$data;
+  variables: DocumentActionsDropdownn_exportVersionMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -67,7 +67,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentDetailPageExportPDFMutation",
+    "name": "DocumentActionsDropdownn_exportVersionMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -76,20 +76,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "DocumentDetailPageExportPDFMutation",
+    "name": "DocumentActionsDropdownn_exportVersionMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "4c17d48a790ff5f1617c7db604766b83",
+    "cacheID": "b9228ff1ce940910b277cecf021ebecb",
     "id": null,
     "metadata": {},
-    "name": "DocumentDetailPageExportPDFMutation",
+    "name": "DocumentActionsDropdownn_exportVersionMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentDetailPageExportPDFMutation(\n  $input: ExportDocumentVersionPDFInput!\n) {\n  exportDocumentVersionPDF(input: $input) {\n    data\n  }\n}\n"
+    "text": "mutation DocumentActionsDropdownn_exportVersionMutation(\n  $input: ExportDocumentVersionPDFInput!\n) {\n  exportDocumentVersionPDF(input: $input) {\n    data\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e8854650389c3ebd1020ec278d8be831";
+(node as any).hash = "1bab1476f7c4231736feefd227063c27";
 
 export default node;

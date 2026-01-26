@@ -1,18 +1,12 @@
 import { lazy } from "@probo/react-lazy";
 import {
   type AppRoute,
-  loaderFromQueryLoader,
-  withQueryRef,
 } from "@probo/routes";
 import { Fragment } from "react";
-import { loadQuery } from "react-relay";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 
-import type { DocumentGraphNodeQuery } from "#/__generated__/core/DocumentGraphNodeQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
-import { coreEnvironment } from "#/environments";
-import { documentNodeQuery } from "#/hooks/graph/DocumentGraph";
 
 const documentTabs = (prefix: string) => {
   return [
@@ -66,14 +60,7 @@ export const documentsRoutes = [
   {
     path: "documents/:documentId",
     Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ documentId }) =>
-      loadQuery<DocumentGraphNodeQuery>(coreEnvironment, documentNodeQuery, {
-        documentId: documentId,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("../pages/organizations/documents/DocumentDetailPage")),
-    ),
+    Component: lazy(() => import("#/pages/organizations/documents/DocumentLayoutLoader")),
     children: [...documentTabs(""), ...documentTabs("versions/:versionId/")],
   },
 ] satisfies AppRoute[];

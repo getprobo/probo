@@ -63,7 +63,7 @@ func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (p *DocumentVersions) LoadByDocumentID(
+func (dv *DocumentVersions) LoadByDocumentID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -113,21 +113,21 @@ WHERE
 		return fmt.Errorf("cannot collect document versions: %w", err)
 	}
 
-	*p = documentVersions
+	*dv = documentVersions
 
 	return nil
 }
 
-func (p DocumentVersion) CursorKey(orderBy DocumentVersionOrderField) page.CursorKey {
+func (dv DocumentVersion) CursorKey(orderBy DocumentVersionOrderField) page.CursorKey {
 	switch orderBy {
 	case DocumentVersionOrderFieldCreatedAt:
-		return page.NewCursorKey(p.ID, p.CreatedAt)
+		return page.NewCursorKey(dv.ID, dv.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (p *DocumentVersion) LoadByID(
+func (dv *DocumentVersion) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -173,12 +173,12 @@ LIMIT 1;
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
-	*p = documentVersion
+	*dv = documentVersion
 
 	return nil
 }
 
-func (p DocumentVersion) Insert(
+func (dv DocumentVersion) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -217,18 +217,18 @@ VALUES (
 `
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
-		"id":              p.ID,
-		"organization_id": p.OrganizationID,
-		"document_id":     p.DocumentID,
-		"title":           p.Title,
-		"owner_id":        p.OwnerID,
-		"version_number":  p.VersionNumber,
-		"classification":  p.Classification,
-		"content":         p.Content,
-		"changelog":       p.Changelog,
-		"status":          p.Status,
-		"created_at":      p.CreatedAt,
-		"updated_at":      p.UpdatedAt,
+		"id":              dv.ID,
+		"organization_id": dv.OrganizationID,
+		"document_id":     dv.DocumentID,
+		"title":           dv.Title,
+		"owner_id":        dv.OwnerID,
+		"version_number":  dv.VersionNumber,
+		"classification":  dv.Classification,
+		"content":         dv.Content,
+		"changelog":       dv.Changelog,
+		"status":          dv.Status,
+		"created_at":      dv.CreatedAt,
+		"updated_at":      dv.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -247,7 +247,7 @@ VALUES (
 	return nil
 }
 
-func (p *DocumentVersion) LoadByDocumentIDAndVersionNumber(
+func (dv *DocumentVersion) LoadByDocumentIDAndVersionNumber(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -296,12 +296,12 @@ LIMIT 1;
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
-	*p = documentVersion
+	*dv = documentVersion
 
 	return nil
 }
 
-func (p *DocumentVersion) LoadLatestVersion(
+func (dv *DocumentVersion) LoadLatestVersion(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -347,12 +347,12 @@ LIMIT 1;
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
-	*p = documentVersion
+	*dv = documentVersion
 
 	return nil
 }
 
-func (p *DocumentVersion) LoadLatestPublishedVersion(
+func (dv *DocumentVersion) LoadLatestPublishedVersion(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -400,12 +400,12 @@ LIMIT 1;
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
-	*p = documentVersion
+	*dv = documentVersion
 
 	return nil
 }
 
-func (p DocumentVersion) Update(
+func (dv DocumentVersion) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -427,15 +427,15 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"document_version_id": p.ID,
-		"title":               p.Title,
-		"owner_id":            p.OwnerID,
-		"changelog":           p.Changelog,
-		"status":              p.Status,
-		"content":             p.Content,
-		"published_at":        p.PublishedAt,
-		"classification":      p.Classification,
-		"updated_at":          p.UpdatedAt,
+		"document_version_id": dv.ID,
+		"title":               dv.Title,
+		"owner_id":            dv.OwnerID,
+		"changelog":           dv.Changelog,
+		"status":              dv.Status,
+		"content":             dv.Content,
+		"published_at":        dv.PublishedAt,
+		"classification":      dv.Classification,
+		"updated_at":          dv.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -447,7 +447,7 @@ WHERE %s
 	return nil
 }
 
-func (p DocumentVersion) Delete(
+func (dv DocumentVersion) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -460,7 +460,7 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"document_version_id": p.ID,
+		"document_version_id": dv.ID,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -471,4 +471,37 @@ WHERE %s
 	}
 
 	return nil
+}
+
+func (dv *DocumentVersions) CountByDocumentID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentID gid.GID,
+	filter *DocumentVersionFilter,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	document_versions
+WHERE
+	%s
+	AND document_id = @document_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{"document_id": documentID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
 }

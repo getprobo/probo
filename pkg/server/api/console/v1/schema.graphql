@@ -2889,9 +2889,13 @@ type VendorRiskAssessmentEdge {
     node: VendorRiskAssessment!
 }
 
-type DocumentVersionConnection {
+type DocumentVersionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionConnection"
+    ) {
     edges: [DocumentVersionEdge!]!
     pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
 }
 
 type DocumentVersionEdge {
@@ -4695,10 +4699,7 @@ type DeleteMeasurePayload {
     deletedMeasureId: ID!
 }
 
-type DocumentVersion implements Node
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersion"
-    ) {
+type DocumentVersion implements Node {
     id: ID!
     document: Document! @goField(forceResolver: true)
     status: DocumentStatus!

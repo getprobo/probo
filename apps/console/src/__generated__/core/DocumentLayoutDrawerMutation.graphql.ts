@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7c1bfb7a8cc7cc0f426348c57a17f7c9>>
+ * @generated SignedSource<<c7800005b8fa0b1fed16590751fb1b27>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,10 +21,10 @@ export type UpdateDocumentInput = {
   title?: string | null | undefined;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };
-export type DocumentDetailPageUpdateMutation$variables = {
+export type DocumentLayoutDrawerMutation$variables = {
   input: UpdateDocumentInput;
 };
-export type DocumentDetailPageUpdateMutation$data = {
+export type DocumentLayoutDrawerMutation$data = {
   readonly updateDocument: {
     readonly document: {
       readonly classification: DocumentClassification;
@@ -34,13 +34,12 @@ export type DocumentDetailPageUpdateMutation$data = {
         readonly fullName: string;
         readonly id: string;
       };
-      readonly title: string;
     };
   };
 };
-export type DocumentDetailPageUpdateMutation = {
-  response: DocumentDetailPageUpdateMutation$data;
-  variables: DocumentDetailPageUpdateMutation$variables;
+export type DocumentLayoutDrawerMutation = {
+  response: DocumentLayoutDrawerMutation$data;
+  variables: DocumentLayoutDrawerMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -86,13 +85,6 @@ v2 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "title",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
             "name": "documentType",
             "storageKey": null
           },
@@ -134,7 +126,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentDetailPageUpdateMutation",
+    "name": "DocumentLayoutDrawerMutation",
     "selections": (v2/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -143,20 +135,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "DocumentDetailPageUpdateMutation",
+    "name": "DocumentLayoutDrawerMutation",
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "865056a65394e413822f798f31351341",
+    "cacheID": "968dc4701234cb6c5761eeea9faff752",
     "id": null,
     "metadata": {},
-    "name": "DocumentDetailPageUpdateMutation",
+    "name": "DocumentLayoutDrawerMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentDetailPageUpdateMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      title\n      documentType\n      classification\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
+    "text": "mutation DocumentLayoutDrawerMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      documentType\n      classification\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bd6acddfc137a6bdce42628d05dc9ff6";
+(node as any).hash = "80901db65cb0c486e23b823bd2c16bc0";
 
 export default node;

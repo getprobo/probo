@@ -13,7 +13,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
-import type { DocumentDetailPageDocumentFragment$data } from "#/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentLayoutQuery$data } from "#/__generated__/core/DocumentLayoutQuery.graphql";
 import type { DocumentSignaturesTab_signature$key } from "#/__generated__/core/DocumentSignaturesTab_signature.graphql";
 import type { DocumentSignaturesTab_version$key } from "#/__generated__/core/DocumentSignaturesTab_version.graphql";
 import type { DocumentSignaturesTabRefetchQuery } from "#/__generated__/core/DocumentSignaturesTabRefetchQuery.graphql";
@@ -22,7 +22,7 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { ItemOf, NodeOf } from "#/types";
 
-type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
+type Version = NodeOf<Extract<DocumentLayoutQuery$data["document"], { __typename: "Document" }>["versions"]>;
 
 const versionFragment = graphql`
   fragment DocumentSignaturesTab_version on DocumentVersion

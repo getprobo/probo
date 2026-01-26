@@ -1156,10 +1156,26 @@ type DocumentFilter struct {
 	Query *string `json:"query,omitempty"`
 }
 
-type DocumentVersionConnection struct {
-	Edges    []*DocumentVersionEdge `json:"edges"`
-	PageInfo *PageInfo              `json:"pageInfo"`
+type DocumentVersion struct {
+	ID             gid.GID                             `json:"id"`
+	Document       *Document                           `json:"document"`
+	Status         coredata.DocumentStatus             `json:"status"`
+	Version        int                                 `json:"version"`
+	Content        string                              `json:"content"`
+	Changelog      string                              `json:"changelog"`
+	Title          string                              `json:"title"`
+	Classification coredata.DocumentClassification     `json:"classification"`
+	Owner          *People                             `json:"owner"`
+	Signatures     *DocumentVersionSignatureConnection `json:"signatures"`
+	Signed         bool                                `json:"signed"`
+	PublishedAt    *time.Time                          `json:"publishedAt,omitempty"`
+	CreatedAt      time.Time                           `json:"createdAt"`
+	UpdatedAt      time.Time                           `json:"updatedAt"`
+	Permission     bool                                `json:"permission"`
 }
+
+func (DocumentVersion) IsNode()             {}
+func (this DocumentVersion) GetID() gid.GID { return this.ID }
 
 type DocumentVersionEdge struct {
 	Cursor page.CursorKey   `json:"cursor"`

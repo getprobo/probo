@@ -939,7 +939,7 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}
 
-	return types.NewDocumentVersionConnection(page), nil
+	return types.NewDocumentVersionConnection(page, r, obj.ID), nil
 }
 
 // Controls is the resolver for the controls field.
@@ -1118,6 +1118,32 @@ func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.Documen
 // Permission is the resolver for the permission field.
 func (r *documentVersionResolver) Permission(ctx context.Context, obj *types.DocumentVersion, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *documentVersionConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentVersionConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionEvidenceList); err != nil {
+		return 0, err
+	}
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *documentResolver:
+		filter := &coredata.DocumentVersionFilter{}
+		if obj.Filters != nil {
+			filter = obj.Filters
+		}
+		count, err := prb.Documents.CountVersionsForDocumentID(ctx, obj.ParentID, filter)
+		if err != nil {
+			// TODO no panic use gqlutils.InternalError
+			panic(fmt.Errorf("cannot count tasks: %w", err))
+		}
+		return count, nil
+	}
+
+	// TODO no panic use gqlutils.InternalError
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // DocumentVersion is the resolver for the documentVersion field.
@@ -7156,7 +7182,7 @@ func (r *signableDocumentResolver) Versions(ctx context.Context, obj *types.Sign
 		panic(fmt.Errorf("cannot list signable document versions: %w", err))
 	}
 
-	return types.NewDocumentVersionConnection(page), nil
+	return types.NewDocumentVersionConnection(page, r, obj.ID), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -8522,6 +8548,11 @@ func (r *Resolver) DocumentVersion() schema.DocumentVersionResolver {
 	return &documentVersionResolver{r}
 }
 
+// DocumentVersionConnection returns schema.DocumentVersionConnectionResolver implementation.
+func (r *Resolver) DocumentVersionConnection() schema.DocumentVersionConnectionResolver {
+	return &documentVersionConnectionResolver{r}
+}
+
 // DocumentVersionSignature returns schema.DocumentVersionSignatureResolver implementation.
 func (r *Resolver) DocumentVersionSignature() schema.DocumentVersionSignatureResolver {
 	return &documentVersionSignatureResolver{r}
@@ -8754,6 +8785,7 @@ type datumConnectionResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
 type documentConnectionResolver struct{ *Resolver }
 type documentVersionResolver struct{ *Resolver }
+type documentVersionConnectionResolver struct{ *Resolver }
 type documentVersionSignatureResolver struct{ *Resolver }
 type evidenceResolver struct{ *Resolver }
 type evidenceConnectionResolver struct{ *Resolver }
