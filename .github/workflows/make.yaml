@@ -82,6 +82,44 @@ jobs:
           path: ./
           format: cyclonedx-json
           output-file: sbom.json
+      - name: Cache grype binary
+        uses: actions/cache@v4
+        id: grype-cache
+        with:
+          path: ~/.local/bin/grype
+          key: grype-${{ runner.os }}-v0.97.1
+      - name: Install grype with retry
+        if: steps.grype-cache.outputs.cache-hit != 'true'
+        id: grype-install
+        shell: bash
+        run: |
+          set -euo pipefail
+          GRYPE_VERSION="v0.97.1"
+          GRYPE_DIR="${HOME}/.local/bin"
+          mkdir -p "${GRYPE_DIR}"
+          
+          # Download with retry logic
+          MAX_RETRIES=3
+          RETRY_DELAY=10
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $i of $MAX_RETRIES: Installing grype ${GRYPE_VERSION}..."
+            if curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b "${GRYPE_DIR}" "${GRYPE_VERSION}"; then
+              echo "Grype installed successfully"
+              exit 0
+            fi
+            
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Installation failed, retrying in ${RETRY_DELAY} seconds..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            fi
+          done
+          
+          echo "Failed to install grype after $MAX_RETRIES attempts"
+          exit 1
+      - name: Add grype to PATH
+        run: echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
       - uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
         with:
           path: ./
