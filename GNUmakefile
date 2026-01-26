@@ -28,7 +28,7 @@ GOOS?=
 GO_BASE=	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) go
 GO_BUILD=	$(GO_BASE) build $(LDFLAGS) $(GCFLAGS)
 GO_GENERATE=	$(GO_BASE) generate
-GO_TEST=	$(GO_BASE) test $(TEST_FLAGS)
+GO_TEST=	$(GO_BASE) tool gotestsum -- $(TEST_FLAGS)
 GO_VET=	$(GO_BASE) vet
 
 TEST_FLAGS?=	-race -cover -coverprofile=coverage.out

@@ -132,6 +132,8 @@ jobs:
       - run: "npm ci"
       - run: "make build"
       - run: "make test"
+        env:
+          GOTESTSUM_JUNITFILE: junit.xml
       - run: "make coverage-report"
       - uses: "actions/upload-artifact@v4"
         with:
@@ -139,6 +141,13 @@ jobs:
           path: |
             coverage.out
             coverage.html
+          retention-days: 30
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-results
+          path: junit.xml
           retention-days: 30
       # Trivy ignore does not work for license scanning in Github action
       # - uses: "aquasecurity/trivy-action@0.33.1"
