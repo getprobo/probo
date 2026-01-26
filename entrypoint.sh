@@ -135,6 +135,7 @@ $(echo "${SAML_PRIVATE_KEY:-}" | sed 's/^/        /')
     access-key-id: "${AWS_ACCESS_KEY_ID:-}"
     secret-access-key: "${AWS_SECRET_ACCESS_KEY:-}"
     endpoint: "${AWS_ENDPOINT:-}"
+    use-path-style: ${AWS_USE_PATH_STYLE:-false}
 
   notifications:
     mailer:
