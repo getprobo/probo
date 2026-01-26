@@ -133,7 +133,13 @@ jobs:
       - run: "make build"
       - run: "make test"
         env:
-          GOTESTSUM_JUNITFILE: junit.xml
+          GOTESTSUM_JUNITFILE: "junit.xml"
+      - name: "Upload test results"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "junit-results"
+          path: "junit.xml"
+          retention-days: 30
       - run: "make coverage-report"
       - uses: "actions/upload-artifact@v4"
         with:
@@ -141,13 +147,6 @@ jobs:
           path: |
             coverage.out
             coverage.html
-          retention-days: 30
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: junit-results
-          path: junit.xml
           retention-days: 30
       # Trivy ignore does not work for license scanning in Github action
       # - uses: "aquasecurity/trivy-action@0.33.1"
@@ -203,3 +202,11 @@ jobs:
               yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
           EOF
       - run: "make test-e2e"
+        env:
+          GOTESTSUM_JUNITFILE: "junit.xml"
+      - name: "Upload test results"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "junit-results"
+          path: "junit.xml"
+          retention-days: 30

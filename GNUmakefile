@@ -82,7 +82,7 @@ test-bench: test ## Run benchmark tests
 test-e2e: bin/probod ## Run console e2e tests
 	PROBO_E2E_BINARY=$(CURDIR)/bin/probod \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
-	CGO_ENABLED=1 $(GO) test -count=1 -v ./e2e/console/...
+	CGO_ENABLED=1 GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/...
 
 bin/probod-coverage:
 	CGO_ENABLED=0 $(GO_BUILD) -cover -o $@ $(PROBOD_SRC)
