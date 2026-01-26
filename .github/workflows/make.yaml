@@ -204,11 +204,11 @@ jobs:
           EOF
       - run: "make test-e2e"
         env:
-          GOTESTSUM_JUNITFILE: "junit.xml"
+          GOTESTSUM_JUNITFILE: "junit-e2e.xml"
       - name: "Upload test results"
         uses: "actions/upload-artifact@v4"
         if: "always()"
         with:
-          name: "junit-results"
-          path: "junit.xml"
+          name: "junit-e2e-results"
+          path: "junit-e2e.xml"
           retention-days: 30
