@@ -136,6 +136,7 @@ jobs:
           GOTESTSUM_JUNITFILE: "junit.xml"
       - name: "Upload test results"
         uses: "actions/upload-artifact@v4"
+        if: "always()"
         with:
           name: "junit-results"
           path: "junit.xml"
@@ -206,6 +207,7 @@ jobs:
           GOTESTSUM_JUNITFILE: "junit.xml"
       - name: "Upload test results"
         uses: "actions/upload-artifact@v4"
+        if: "always()"
         with:
           name: "junit-results"
           path: "junit.xml"
