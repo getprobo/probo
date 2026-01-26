@@ -39,7 +39,7 @@ const createDocumentMutation = graphql`
       documentEdge @prependEdge(connections: $connections) {
         node {
           id
-          ...DocumentsPageRowFragment
+          ...DocumentListItemFragment
         }
       }
     }

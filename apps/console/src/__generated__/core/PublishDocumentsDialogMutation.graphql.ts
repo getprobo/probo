@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<032b44ec9c5c4d5fc0281269dad54098>>
+ * @generated SignedSource<<3fb1661c5bda6573c377f516b970643a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,7 +22,7 @@ export type PublishDocumentsDialogMutation$data = {
     readonly documentEdges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentListItemFragment">;
       };
     }>;
   };
@@ -89,7 +89,7 @@ return {
                   {
                     "args": null,
                     "kind": "FragmentSpread",
-                    "name": "DocumentsPageRowFragment"
+                    "name": "DocumentListItemFragment"
                   }
                 ],
                 "storageKey": null
@@ -140,13 +140,6 @@ return {
                     "args": null,
                     "kind": "ScalarField",
                     "name": "title",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "description",
                     "storageKey": null
                   },
                   {
@@ -315,16 +308,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "56634e96a607e273bf269d4720cd75d9",
+    "cacheID": "9e790eaab9b8c776beb9d021942bdf22",
     "id": null,
     "metadata": {},
     "name": "PublishDocumentsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c9d699258bb8638d5474ab5e6b5e4585";
+(node as any).hash = "c28e9ea550947901058300bc4ba8f7f1";
 
 export default node;

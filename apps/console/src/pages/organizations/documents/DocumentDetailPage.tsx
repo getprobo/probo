@@ -76,7 +76,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 import type { NodeOf } from "#/types";
 
-import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
+import UpdateVersionDialog from "./_components/UpdateVersionDialog";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;

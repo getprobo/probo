@@ -31,7 +31,7 @@ const documentsPublishMutation = graphql`
       documentEdges {
         node {
           id
-          ...DocumentsPageRowFragment
+          ...DocumentListItemFragment
         }
       }
     }

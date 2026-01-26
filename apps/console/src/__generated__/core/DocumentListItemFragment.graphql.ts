@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9d93eb8b8aedef57b8a20e267b61bc08>>
+ * @generated SignedSource<<664a9b09aac444c69891219cca1c6b8d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,9 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
-export type DocumentsPageRowFragment$data = {
+export type DocumentListItemFragment$data = {
   readonly canDelete: boolean;
   readonly classification: DocumentClassification;
-  readonly description: string | null | undefined;
   readonly documentType: DocumentType;
   readonly id: string;
   readonly owner: {
@@ -43,11 +42,11 @@ export type DocumentsPageRowFragment$data = {
       };
     }>;
   };
-  readonly " $fragmentType": "DocumentsPageRowFragment";
+  readonly " $fragmentType": "DocumentListItemFragment";
 };
-export type DocumentsPageRowFragment$key = {
-  readonly " $data"?: DocumentsPageRowFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
+export type DocumentListItemFragment$key = {
+  readonly " $data"?: DocumentListItemFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentListItemFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -62,7 +61,7 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "DocumentsPageRowFragment",
+  "name": "DocumentListItemFragment",
   "selections": [
     (v0/*: any*/),
     {
@@ -70,13 +69,6 @@ return {
       "args": null,
       "kind": "ScalarField",
       "name": "title",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "description",
       "storageKey": null
     },
     {
@@ -239,6 +231,6 @@ return {
 };
 })();
 
-(node as any).hash = "4164f76edc42d40eef1efc54194116ec";
+(node as any).hash = "6c4db808e4ec47dbca635feb3ea13e56";
 
 export default node;

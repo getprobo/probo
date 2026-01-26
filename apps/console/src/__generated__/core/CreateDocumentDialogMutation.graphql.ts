@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8a75dcc06cfe213df84407b8855d73c9>>
+ * @generated SignedSource<<766e48d090179d20cc6a7b1d6bc6591f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -31,7 +31,7 @@ export type CreateDocumentDialogMutation$data = {
     readonly documentEdge: {
       readonly node: {
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentListItemFragment">;
       };
     };
   };
@@ -104,7 +104,7 @@ return {
                   {
                     "args": null,
                     "kind": "FragmentSpread",
-                    "name": "DocumentsPageRowFragment"
+                    "name": "DocumentListItemFragment"
                   }
                 ],
                 "storageKey": null
@@ -158,13 +158,6 @@ return {
                     "args": null,
                     "kind": "ScalarField",
                     "name": "title",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "description",
                     "storageKey": null
                   },
                   {
@@ -349,16 +342,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8f0e8730a2b85c51592d45cbf4ad8b1e",
+    "cacheID": "20ca0b6c942e66b92ced0b4869262530",
     "id": null,
     "metadata": {},
     "name": "CreateDocumentDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "19d6bd18594154b918c529d15f7ee8d7";
+(node as any).hash = "30ea1213f809faa45e873b069e27df26";
 
 export default node;

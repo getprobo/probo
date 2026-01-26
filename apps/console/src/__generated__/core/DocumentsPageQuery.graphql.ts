@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8982230c048c28cb211d5368b1ab43a0>>
+ * @generated SignedSource<<fc98d690c8825d5c202355ffd63a4244>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,19 +10,30 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DocumentGraphListQuery$variables = {
+export type DocumentsPageQuery$variables = {
   organizationId: string;
 };
-export type DocumentGraphListQuery$data = {
+export type DocumentsPageQuery$data = {
   readonly organization: {
-    readonly canCreateDocument?: boolean;
-    readonly id: string;
-    readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageListFragment">;
+    readonly __typename: "Organization";
+    readonly canCreateDocument: boolean;
+    readonly documents: {
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly canSendSigningNotifications: boolean;
+        };
+      }>;
+    };
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentListFragment">;
+  } | {
+    // This will never be '%other', but we need some
+    // value in case none of the concrete values match.
+    readonly __typename: "%other";
   };
 };
-export type DocumentGraphListQuery = {
-  response: DocumentGraphListQuery$data;
-  variables: DocumentGraphListQuery$variables;
+export type DocumentsPageQuery = {
+  response: DocumentsPageQuery$data;
+  variables: DocumentsPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -44,7 +55,7 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "id",
+  "name": "__typename",
   "storageKey": null
 },
 v3 = {
@@ -61,33 +72,48 @@ v3 = {
   "storageKey": "permission(action:\"core:document:create\")"
 },
 v4 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "__typename",
-  "storageKey": null
+  "kind": "Literal",
+  "name": "first",
+  "value": 50
 },
-v5 = [
-  {
-    "kind": "Literal",
-    "name": "first",
-    "value": 50
-  },
+v5 = {
+  "direction": "ASC",
+  "field": "TITLE"
+},
+v6 = [
+  (v4/*: any*/),
   {
     "kind": "Literal",
     "name": "orderBy",
-    "value": {
-      "direction": "ASC",
-      "field": "TITLE"
-    }
+    "value": (v5/*: any*/)
   }
-];
+],
+v7 = {
+  "alias": "canSendSigningNotifications",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:document:send-signing-notifications"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:document:send-signing-notifications\")"
+},
+v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentGraphListQuery",
+    "name": "DocumentsPageQuery",
     "selections": [
       {
         "alias": "organization",
@@ -103,44 +129,20 @@ return {
             "selections": [
               (v3/*: any*/),
               {
-                "args": null,
+                "args": [
+                  (v4/*: any*/),
+                  {
+                    "kind": "Literal",
+                    "name": "order",
+                    "value": (v5/*: any*/)
+                  }
+                ],
                 "kind": "FragmentSpread",
-                "name": "DocumentsPageListFragment"
-              }
-            ],
-            "type": "Organization",
-            "abstractKey": null
-          }
-        ],
-        "storageKey": null
-      }
-    ],
-    "type": "Query",
-    "abstractKey": null
-  },
-  "kind": "Request",
-  "operation": {
-    "argumentDefinitions": (v0/*: any*/),
-    "kind": "Operation",
-    "name": "DocumentGraphListQuery",
-    "selections": [
-      {
-        "alias": "organization",
-        "args": (v1/*: any*/),
-        "concreteType": null,
-        "kind": "LinkedField",
-        "name": "node",
-        "plural": false,
-        "selections": [
-          (v4/*: any*/),
-          (v2/*: any*/),
-          {
-            "kind": "InlineFragment",
-            "selections": [
-              (v3/*: any*/),
+                "name": "DocumentListFragment"
+              },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -162,7 +164,72 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v2/*: any*/),
+                          (v7/*: any*/)
+                        ],
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": "documents(first:50,orderBy:{\"direction\":\"ASC\",\"field\":\"TITLE\"})"
+              }
+            ],
+            "type": "Organization",
+            "abstractKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ],
+    "type": "Query",
+    "abstractKey": null
+  },
+  "kind": "Request",
+  "operation": {
+    "argumentDefinitions": (v0/*: any*/),
+    "kind": "Operation",
+    "name": "DocumentsPageQuery",
+    "selections": [
+      {
+        "alias": "organization",
+        "args": (v1/*: any*/),
+        "concreteType": null,
+        "kind": "LinkedField",
+        "name": "node",
+        "plural": false,
+        "selections": [
+          (v2/*: any*/),
+          (v8/*: any*/),
+          {
+            "kind": "InlineFragment",
+            "selections": [
+              (v3/*: any*/),
+              {
+                "alias": null,
+                "args": (v6/*: any*/),
+                "concreteType": "DocumentConnection",
+                "kind": "LinkedField",
+                "name": "documents",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "DocumentEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Document",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v8/*: any*/),
                           {
                             "alias": "canUpdate",
                             "args": [
@@ -190,19 +257,6 @@ return {
                             "storageKey": "permission(action:\"core:document:delete\")"
                           },
                           {
-                            "alias": "canSendSigningNotifications",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:document:send-signing-notifications"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:document:send-signing-notifications\")"
-                          },
-                          {
                             "alias": "canRequestSignatures",
                             "args": [
                               {
@@ -220,13 +274,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "title",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "description",
                             "storageKey": null
                           },
                           {
@@ -258,7 +305,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v2/*: any*/),
+                              (v8/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -299,7 +346,7 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v2/*: any*/),
+                                      (v8/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -344,7 +391,7 @@ return {
                                                 "name": "node",
                                                 "plural": false,
                                                 "selections": [
-                                                  (v2/*: any*/),
+                                                  (v8/*: any*/),
                                                   {
                                                     "alias": null,
                                                     "args": null,
@@ -370,7 +417,8 @@ return {
                             ],
                             "storageKey": "versions(first:1)"
                           },
-                          (v4/*: any*/)
+                          (v2/*: any*/),
+                          (v7/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -440,7 +488,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -459,16 +507,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7c027bc02697b43718813a5bd024985a",
+    "cacheID": "2ff9e1818d86d64d512a54ec9acebb16",
     "id": null,
     "metadata": {},
-    "name": "DocumentGraphListQuery",
+    "name": "DocumentsPageQuery",
     "operationKind": "query",
-    "text": "query DocumentGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      canCreateDocument: permission(action: \"core:document:create\")\n      ...DocumentsPageListFragment\n    }\n  }\n}\n\nfragment DocumentsPageListFragment on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canSendSigningNotifications: permission(action: \"core:document:send-signing-notifications\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateDocument: permission(action: \"core:document:create\")\n      ...DocumentListFragment_1WMmEg\n      documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n        edges {\n          node {\n            canSendSigningNotifications: permission(action: \"core:document:send-signing-notifications\")\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentListFragment_1WMmEg on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "26c7d375cb354649741ce4794612b3e1";
+(node as any).hash = "03658a05617ef4f971ed6b0c2758fa87";
 
 export default node;

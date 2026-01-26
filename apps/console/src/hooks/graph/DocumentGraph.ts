@@ -8,18 +8,6 @@ import type { DocumentGraphSendSigningNotificationsMutation } from "#/__generate
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-export const documentsQuery = graphql`
-  query DocumentGraphListQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) {
-      id
-      ... on Organization {
-        canCreateDocument: permission(action: "core:document:create")
-        ...DocumentsPageListFragment
-      }
-    }
-  }
-`;
-
 export const DocumentsConnectionKey = "DocumentsListQuery_documents";
 
 const deleteDocumentMutation = graphql`

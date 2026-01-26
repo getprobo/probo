@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4531c90194c8da0c1cbd00e5e169ff00>>
+ * @generated SignedSource<<05daa30144e3f6586a379aaffc86a05e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,26 +10,25 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DocumentsPageListFragment$data = {
+export type DocumentListFragment$data = {
   readonly documents: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly canDelete: boolean;
         readonly canRequestSignatures: boolean;
-        readonly canSendSigningNotifications: boolean;
         readonly canUpdate: boolean;
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentListItemFragment">;
       };
     }>;
   };
   readonly id: string;
-  readonly " $fragmentType": "DocumentsPageListFragment";
+  readonly " $fragmentType": "DocumentListFragment";
 };
-export type DocumentsPageListFragment$key = {
-  readonly " $data"?: DocumentsPageListFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageListFragment">;
+export type DocumentListFragment$key = {
+  readonly " $data"?: DocumentListFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentListFragment">;
 };
 
 import DocumentsListQuery_graphql from './DocumentsListQuery.graphql';
@@ -108,7 +107,7 @@ return {
       }
     }
   },
-  "name": "DocumentsPageListFragment",
+  "name": "DocumentListFragment",
   "selections": [
     {
       "alias": "documents",
@@ -168,19 +167,6 @@ return {
                   "storageKey": "permission(action:\"core:document:delete\")"
                 },
                 {
-                  "alias": "canSendSigningNotifications",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "action",
-                      "value": "core:document:send-signing-notifications"
-                    }
-                  ],
-                  "kind": "ScalarField",
-                  "name": "permission",
-                  "storageKey": "permission(action:\"core:document:send-signing-notifications\")"
-                },
-                {
                   "alias": "canRequestSignatures",
                   "args": [
                     {
@@ -196,7 +182,7 @@ return {
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "DocumentsPageRowFragment"
+                  "name": "DocumentListItemFragment"
                 },
                 {
                   "alias": null,
@@ -279,6 +265,6 @@ return {
 };
 })();
 
-(node as any).hash = "0f00d125fc711db9e65d54dcc884a72e";
+(node as any).hash = "496614376a52d4557bcb06057863554e";
 
 export default node;

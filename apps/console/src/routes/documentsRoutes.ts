@@ -8,12 +8,11 @@ import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 
-import type { DocumentGraphListQuery } from "#/__generated__/core/DocumentGraphListQuery.graphql";
 import type { DocumentGraphNodeQuery } from "#/__generated__/core/DocumentGraphNodeQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
-import { documentNodeQuery, documentsQuery } from "#/hooks/graph/DocumentGraph";
+import { documentNodeQuery } from "#/hooks/graph/DocumentGraph";
 
 const documentTabs = (prefix: string) => {
   return [
@@ -62,14 +61,7 @@ export const documentsRoutes = [
   {
     path: "documents",
     Fallback: PageSkeleton,
-    loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<DocumentGraphListQuery>(coreEnvironment, documentsQuery, {
-        organizationId: organizationId,
-      }),
-    ),
-    Component: withQueryRef(
-      lazy(() => import("#/pages/organizations/documents/DocumentsPage")),
-    ),
+    Component: lazy(() => import("#/pages/organizations/documents/DocumentsPageLoader")),
   },
   {
     path: "documents/:documentId",

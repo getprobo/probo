@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ba35b8d51574d7e6b61987743636f5bb>>
+ * @generated SignedSource<<f3ca69e3f5731e73dc9f4268b0507adc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,7 +26,7 @@ export type DocumentsListQuery$variables = {
 };
 export type DocumentsListQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageListFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentListFragment">;
   };
 };
 export type DocumentsListQuery = {
@@ -155,7 +155,7 @@ return {
               }
             ],
             "kind": "FragmentSpread",
-            "name": "DocumentsPageListFragment"
+            "name": "DocumentListFragment"
           }
         ],
         "storageKey": null
@@ -242,19 +242,6 @@ return {
                             "storageKey": "permission(action:\"core:document:delete\")"
                           },
                           {
-                            "alias": "canSendSigningNotifications",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:document:send-signing-notifications"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:document:send-signing-notifications\")"
-                          },
-                          {
                             "alias": "canRequestSignatures",
                             "args": [
                               {
@@ -272,13 +259,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "title",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "description",
                             "storageKey": null
                           },
                           {
@@ -511,16 +491,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c7b8d86af8a704ba0a6451bd3877746f",
+    "cacheID": "c404cb30a5176c7d01cace940923f480",
     "id": null,
     "metadata": {},
     "name": "DocumentsListQuery",
     "operationKind": "query",
-    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentsPageListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentsPageListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canSendSigningNotifications: permission(action: \"core:document:send-signing-notifications\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0f00d125fc711db9e65d54dcc884a72e";
+(node as any).hash = "496614376a52d4557bcb06057863554e";
 
 export default node;
