@@ -163,7 +163,8 @@ func (s VendorService) CountForOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			vendors := coredata.Vendors{}
-			count, err = vendors.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			filter := &coredata.VendorFilter{}
+			count, err = vendors.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count vendors: %w", err)
 			}

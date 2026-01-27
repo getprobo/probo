@@ -23,6 +23,9 @@ export const currentTrustGraphQuery = graphql`
         headquarterAddress
       }
       ...OverviewPageFragment
+      vendors(first: 0) {
+        totalCount
+      }
       audits(first: 50) {
         edges {
           node {

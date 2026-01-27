@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
 )
 
 type VendorService struct {
@@ -81,4 +81,38 @@ func (s VendorService) ListForOrganizationId(
 	}
 
 	return page.NewPage(vendors, cursor), nil
+}
+
+func (s VendorService) CountForTrustCenterId(
+	ctx context.Context,
+	trustCenterID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			trustCenter, _, err := s.svc.TrustCenters.Get(ctx, trustCenterID)
+			if err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			vendors := &coredata.Vendors{}
+			showOnTrustCenter := true
+			var nilSnapshotID *gid.GID = nil
+			filter := coredata.NewVendorFilter(&nilSnapshotID, &showOnTrustCenter)
+			count, err = vendors.CountByOrganizationID(ctx, conn, s.svc.scope, trustCenter.OrganizationID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count vendors: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

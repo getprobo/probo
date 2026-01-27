@@ -254,11 +254,6 @@ type Vendor struct {
 func (Vendor) IsNode()             {}
 func (this Vendor) GetID() gid.GID { return this.ID }
 
-type VendorConnection struct {
-	Edges    []*VendorEdge `json:"edges"`
-	PageInfo *PageInfo     `json:"pageInfo"`
-}
-
 type VendorEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Vendor        `json:"node"`

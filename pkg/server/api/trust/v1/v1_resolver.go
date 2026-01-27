@@ -954,7 +954,7 @@ func (r *trustCenterResolver) Vendors(ctx context.Context, obj *types.TrustCente
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewVendorConnection(vendorPage), nil
+	return types.NewVendorConnection(vendorPage, r, obj.ID), nil
 }
 
 // References is the resolver for the references field.
@@ -1075,6 +1075,22 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 	return logoURL, nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error) {
+	trustService := r.TrustService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *trustCenterResolver:
+		count, err := trustService.Vendors.CountForTrustCenterId(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count vendors: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("not implemented: TotalCount for parent type %T", obj.Resolver))
+}
+
 // Audit returns schema.AuditResolver implementation.
 func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
 
@@ -1109,6 +1125,11 @@ func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 	return &trustCenterReferenceResolver{r}
 }
 
+// VendorConnection returns schema.VendorConnectionResolver implementation.
+func (r *Resolver) VendorConnection() schema.VendorConnectionResolver {
+	return &vendorConnectionResolver{r}
+}
+
 type auditResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
@@ -1119,3 +1140,4 @@ type reportResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
 type trustCenterFileResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }
+type vendorConnectionResolver struct{ *Resolver }

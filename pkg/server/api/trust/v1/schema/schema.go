@@ -57,6 +57,7 @@ type ResolverRoot interface {
 	TrustCenter() TrustCenterResolver
 	TrustCenterFile() TrustCenterFileResolver
 	TrustCenterReference() TrustCenterReferenceResolver
+	VendorConnection() VendorConnectionResolver
 }
 
 type DirectiveRoot struct {
@@ -251,8 +252,9 @@ type ComplexityRoot struct {
 	}
 
 	VendorConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	VendorEdge struct {
@@ -318,6 +320,9 @@ type TrustCenterFileResolver interface {
 }
 type TrustCenterReferenceResolver interface {
 	LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error)
+}
+type VendorConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error)
 }
 
 type executableSchema struct {
@@ -1066,6 +1071,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VendorConnection.PageInfo(childComplexity), true
+	case "VendorConnection.totalCount":
+		if e.complexity.VendorConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.VendorConnection.TotalCount(childComplexity), true
 
 	case "VendorEdge.cursor":
 		if e.complexity.VendorEdge.Cursor == nil {
@@ -1640,9 +1651,13 @@ type Vendor implements Node {
   countries: [CountryCode!]!
 }
 
-type VendorConnection {
+type VendorConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.VendorConnection"
+  ) {
   edges: [VendorEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int! @goField(forceResolver: true)
 }
 
 type VendorEdge {
@@ -4890,6 +4905,8 @@ func (ec *executionContext) fieldContext_TrustCenter_vendors(ctx context.Context
 				return ec.fieldContext_VendorConnection_edges(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_VendorConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_VendorConnection_totalCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorConnection", field.Name)
 		},
@@ -5944,7 +5961,7 @@ func (ec *executionContext) _VendorConnection_pageInfo(ctx context.Context, fiel
 			return obj.PageInfo, nil
 		},
 		nil,
-		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo,
 		true,
 		true,
 	)
@@ -5968,6 +5985,35 @@ func (ec *executionContext) fieldContext_VendorConnection_pageInfo(_ context.Con
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VendorConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.VendorConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VendorConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.VendorConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VendorConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VendorConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10019,13 +10065,49 @@ func (ec *executionContext) _VendorConnection(ctx context.Context, sel ast.Selec
 		case "edges":
 			out.Values[i] = ec._VendorConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "pageInfo":
 			out.Values[i] = ec._VendorConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VendorConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11392,6 +11474,22 @@ func (ec *executionContext) marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGI
 	return res
 }
 
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -11414,6 +11512,10 @@ func (ec *executionContext) marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋp
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v types.PageInfo) graphql.Marshaler {
+	return ec._PageInfo(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *types.PageInfo) graphql.Marshaler {

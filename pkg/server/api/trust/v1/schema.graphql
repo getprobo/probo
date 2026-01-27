@@ -437,9 +437,13 @@ type Vendor implements Node {
   countries: [CountryCode!]!
 }
 
-type VendorConnection {
+type VendorConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.VendorConnection"
+  ) {
   edges: [VendorEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int! @goField(forceResolver: true)
 }
 
 type VendorEdge {
