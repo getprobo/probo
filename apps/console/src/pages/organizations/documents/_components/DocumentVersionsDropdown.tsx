@@ -1,5 +1,6 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Dropdown, IconChevronDown, IconClock } from "@probo/ui";
+import { Suspense } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
@@ -30,8 +31,10 @@ export function DocumentVersionsDropdown(props: {
         </Button>
       )}
     >
-      {queryRef
-        && <DocumentVersionsDropdownMenu currentVersionId={currentVersionId} queryRef={queryRef} />}
+      <Suspense>
+        {queryRef
+          && <DocumentVersionsDropdownMenu currentVersionId={currentVersionId} queryRef={queryRef} />}
+      </Suspense>
     </Dropdown>
   );
 }

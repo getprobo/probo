@@ -1201,18 +1201,14 @@ type DocumentVersionSignature struct {
 func (DocumentVersionSignature) IsNode()             {}
 func (this DocumentVersionSignature) GetID() gid.GID { return this.ID }
 
-type DocumentVersionSignatureConnection struct {
-	Edges    []*DocumentVersionSignatureEdge `json:"edges"`
-	PageInfo *PageInfo                       `json:"pageInfo"`
-}
-
 type DocumentVersionSignatureEdge struct {
 	Cursor page.CursorKey            `json:"cursor"`
 	Node   *DocumentVersionSignature `json:"node"`
 }
 
 type DocumentVersionSignatureFilter struct {
-	States []coredata.DocumentVersionSignatureState `json:"states,omitempty"`
+	States         []coredata.DocumentVersionSignatureState `json:"states,omitempty"`
+	ActiveContract *bool                                    `json:"activeContract,omitempty"`
 }
 
 type DocumentVersionSignatureOrder struct {

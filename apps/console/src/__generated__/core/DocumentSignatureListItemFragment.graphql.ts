@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b5228fc83f8259e864b7af631cc1a0c2>>
+ * @generated SignedSource<<cc067af7afb25c6ce54e3915100c371e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,34 +11,51 @@
 import { ReaderFragment } from 'relay-runtime';
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
-export type DocumentSignaturesTab_signature$data = {
+export type DocumentSignatureListItemFragment$data = {
   readonly canCancel: boolean;
   readonly id: string;
   readonly requestedAt: string;
   readonly signedAt: string | null | undefined;
   readonly signedBy: {
     readonly fullName: string;
-    readonly primaryEmailAddress: string;
   };
   readonly state: DocumentVersionSignatureState;
-  readonly " $fragmentType": "DocumentSignaturesTab_signature";
+  readonly " $fragmentType": "DocumentSignatureListItemFragment";
 };
-export type DocumentSignaturesTab_signature$key = {
-  readonly " $data"?: DocumentSignaturesTab_signature$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_signature">;
+export type DocumentSignatureListItemFragment$key = {
+  readonly " $data"?: DocumentSignatureListItemFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignatureListItemFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "DocumentSignaturesTab_signature",
+  "name": "DocumentSignatureListItemFragment",
   "selections": [
     {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
       "name": "id",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "People",
+      "kind": "LinkedField",
+      "name": "signedBy",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "fullName",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     },
     {
@@ -63,48 +80,23 @@ const node: ReaderFragment = {
       "storageKey": null
     },
     {
-      "alias": null,
-      "args": null,
-      "concreteType": "People",
-      "kind": "LinkedField",
-      "name": "signedBy",
-      "plural": false,
-      "selections": [
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "fullName",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "primaryEmailAddress",
-          "storageKey": null
-        }
-      ],
-      "storageKey": null
-    },
-    {
       "alias": "canCancel",
       "args": [
         {
           "kind": "Literal",
           "name": "action",
-          "value": "core:document-version:request-signature"
+          "value": "core:document-version-signature:cancel"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"core:document-version:request-signature\")"
+      "storageKey": "permission(action:\"core:document-version-signature:cancel\")"
     }
   ],
   "type": "DocumentVersionSignature",
   "abstractKey": null
 };
 
-(node as any).hash = "bbfdd78015e97032862da41aad6beeae";
+(node as any).hash = "59bdf4434147c77415ed636a9b78e154";
 
 export default node;

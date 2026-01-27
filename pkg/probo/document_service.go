@@ -1119,16 +1119,37 @@ func (s *DocumentService) CountVersionsForDocumentID(
 		func(conn pg.Conn) (err error) {
 			documentVersions := &coredata.DocumentVersions{}
 			count, err = documentVersions.CountByDocumentID(ctx, conn, s.svc.scope, documentID, filter)
-			if err != nil {
-				return fmt.Errorf("cannot count document versions: %w", err)
-			}
 
-			return nil
+			return err
 		},
 	)
 
 	if err != nil {
-		return 0, fmt.Errorf("cannot count document versions: %w", err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *DocumentService) CountSignaturesForVersionID(
+	ctx context.Context,
+	documentVersionID gid.GID,
+	filter *coredata.DocumentVersionSignatureFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			documentVersionSignatures := &coredata.DocumentVersionSignatures{}
+			count, err = documentVersionSignatures.CountByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID, filter)
+
+			return err
+		},
+	)
+
+	if err != nil {
+		return 0, err
 	}
 
 	return count, nil

@@ -9,7 +9,7 @@ import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 import { DocumentLayout, documentLayoutQuery } from "./DocumentLayout";
 
 function DocumentLayoutQueryLoader() {
-  const { documentId } = useParams();
+  const { documentId, versionId } = useParams();
   if (!documentId) {
     throw new Error(":documentId missing in route params");
   }
@@ -17,7 +17,11 @@ function DocumentLayoutQueryLoader() {
 
   useEffect(() => {
     if (!queryRef) {
-      loadQuery({ documentId });
+      loadQuery({
+        documentId,
+        versionId: versionId ?? "",
+        versionSpecified: !!versionId,
+      });
     }
   });
 

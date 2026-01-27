@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<51a0ef23951497b2d074fafbda0ea04b>>
+ * @generated SignedSource<<be6672740e1e23819b1d248d7e05d7ad>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,11 +9,8 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type DocumentStatus = "DRAFT" | "PUBLISHED";
-export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
-export type DocumentSignaturesTab_version$data = {
-  readonly canRequestSignature: boolean;
+export type DocumentSignatureList_versionFragment$data = {
   readonly id: string;
   readonly signatures: {
     readonly __id: string;
@@ -21,24 +18,21 @@ export type DocumentSignaturesTab_version$data = {
       readonly node: {
         readonly id: string;
         readonly signedBy: {
-          readonly fullName: string;
           readonly id: string;
-          readonly primaryEmailAddress: string;
         };
-        readonly state: DocumentVersionSignatureState;
-        readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_signature">;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentSignatureListItemFragment">;
       };
     }>;
   };
-  readonly status: DocumentStatus;
-  readonly " $fragmentType": "DocumentSignaturesTab_version";
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturePlaceholder_versionFragment">;
+  readonly " $fragmentType": "DocumentSignatureList_versionFragment";
 };
-export type DocumentSignaturesTab_version$key = {
-  readonly " $data"?: DocumentSignaturesTab_version$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_version">;
+export type DocumentSignatureList_versionFragment$key = {
+  readonly " $data"?: DocumentSignatureList_versionFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignatureList_versionFragment">;
 };
 
-import DocumentSignaturesTabRefetchQuery_graphql from './DocumentSignaturesTabRefetchQuery.graphql';
+import DocumentSignatureListQuery_graphql from './DocumentSignatureListQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
@@ -91,35 +85,19 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": DocumentSignaturesTabRefetchQuery_graphql,
+      "operation": DocumentSignatureListQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "DocumentSignaturesTab_version",
+  "name": "DocumentSignatureList_versionFragment",
   "selections": [
-    (v1/*: any*/),
     {
-      "alias": null,
       "args": null,
-      "kind": "ScalarField",
-      "name": "status",
-      "storageKey": null
-    },
-    {
-      "alias": "canRequestSignature",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "core:document-version:request-signature"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"core:document-version:request-signature\")"
+      "kind": "FragmentSpread",
+      "name": "DocumentSignaturePlaceholder_versionFragment"
     },
     {
       "alias": "signatures",
@@ -155,40 +133,19 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "state",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
                   "concreteType": "People",
                   "kind": "LinkedField",
                   "name": "signedBy",
                   "plural": false,
                   "selections": [
-                    (v1/*: any*/),
-                    {
-                      "alias": null,
-                      "args": null,
-                      "kind": "ScalarField",
-                      "name": "fullName",
-                      "storageKey": null
-                    },
-                    {
-                      "alias": null,
-                      "args": null,
-                      "kind": "ScalarField",
-                      "name": "primaryEmailAddress",
-                      "storageKey": null
-                    }
+                    (v1/*: any*/)
                   ],
                   "storageKey": null
                 },
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "DocumentSignaturesTab_signature"
+                  "name": "DocumentSignatureListItemFragment"
                 },
                 {
                   "alias": null,
@@ -249,13 +206,14 @@ return {
         }
       ],
       "storageKey": null
-    }
+    },
+    (v1/*: any*/)
   ],
   "type": "DocumentVersion",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "9282fd9e9a1aa10a36535863b896283c";
+(node as any).hash = "cc402c3b46eacfb04db1186bbd744f67";
 
 export default node;

@@ -67,6 +67,7 @@ type ResolverRoot interface {
 	DocumentVersion() DocumentVersionResolver
 	DocumentVersionConnection() DocumentVersionConnectionResolver
 	DocumentVersionSignature() DocumentVersionSignatureResolver
+	DocumentVersionSignatureConnection() DocumentVersionSignatureConnectionResolver
 	Evidence() EvidenceResolver
 	EvidenceConnection() EvidenceConnectionResolver
 	File() FileResolver
@@ -767,8 +768,9 @@ type ComplexityRoot struct {
 	}
 
 	DocumentVersionSignatureConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	DocumentVersionSignatureEdge struct {
@@ -2031,6 +2033,9 @@ type DocumentVersionSignatureResolver interface {
 	SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
 
 	Permission(ctx context.Context, obj *types.DocumentVersionSignature, action string) (bool, error)
+}
+type DocumentVersionSignatureConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.DocumentVersionSignatureConnection) (int, error)
 }
 type EvidenceResolver interface {
 	File(ctx context.Context, obj *types.Evidence) (*types.File, error)
@@ -4468,6 +4473,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DocumentVersionSignatureConnection.PageInfo(childComplexity), true
+	case "DocumentVersionSignatureConnection.totalCount":
+		if e.complexity.DocumentVersionSignatureConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignatureConnection.TotalCount(childComplexity), true
 
 	case "DocumentVersionSignatureEdge.cursor":
 		if e.complexity.DocumentVersionSignatureEdge.Cursor == nil {
@@ -15028,9 +15039,13 @@ type DocumentVersion implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type DocumentVersionSignatureConnection {
+type DocumentVersionSignatureConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionSignatureConnection"
+    ) {
     edges: [DocumentVersionSignatureEdge!]!
     pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
 }
 
 type DocumentVersionSignatureEdge {
@@ -15045,6 +15060,7 @@ input DocumentVersionSignatureOrder {
 
 input DocumentVersionSignatureFilter {
     states: [DocumentVersionSignatureState!]
+    activeContract: Boolean
 }
 
 enum DocumentVersionSignatureState
@@ -29457,6 +29473,8 @@ func (ec *executionContext) fieldContext_DocumentVersion_signatures(ctx context.
 				return ec.fieldContext_DocumentVersionSignatureConnection_edges(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_DocumentVersionSignatureConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_DocumentVersionSignatureConnection_totalCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureConnection", field.Name)
 		},
@@ -30199,7 +30217,7 @@ func (ec *executionContext) _DocumentVersionSignatureConnection_pageInfo(ctx con
 			return obj.PageInfo, nil
 		},
 		nil,
-		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
 		true,
 		true,
 	)
@@ -30223,6 +30241,35 @@ func (ec *executionContext) fieldContext_DocumentVersionSignatureConnection_page
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignatureConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DocumentVersionSignatureConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.DocumentVersionSignatureConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignatureConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignatureConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -64805,7 +64852,7 @@ func (ec *executionContext) unmarshalInputDocumentVersionSignatureFilter(ctx con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"states"}
+	fieldsInOrder := [...]string{"states", "activeContract"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -64819,6 +64866,13 @@ func (ec *executionContext) unmarshalInputDocumentVersionSignatureFilter(ctx con
 				return it, err
 			}
 			it.States = data
+		case "activeContract":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("activeContract"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ActiveContract = data
 		}
 	}
 
@@ -76206,13 +76260,49 @@ func (ec *executionContext) _DocumentVersionSignatureConnection(ctx context.Cont
 		case "edges":
 			out.Values[i] = ec._DocumentVersionSignatureConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "pageInfo":
 			out.Values[i] = ec._DocumentVersionSignatureConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersionSignatureConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

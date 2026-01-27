@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0a17c03011fe74b75a90dbeae02ab2ef>>
+ * @generated SignedSource<<f1ba7d8550a4585118c8b9ed260607c4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,18 +12,18 @@ import { ConcreteRequest } from 'relay-runtime';
 export type CancelSignatureRequestInput = {
   documentVersionSignatureId: string;
 };
-export type DocumentSignaturesTab_cancelSignatureMutation$variables = {
+export type DocumentSignatureListItem_cancelSignatureMutation$variables = {
   connections: ReadonlyArray<string>;
   input: CancelSignatureRequestInput;
 };
-export type DocumentSignaturesTab_cancelSignatureMutation$data = {
+export type DocumentSignatureListItem_cancelSignatureMutation$data = {
   readonly cancelSignatureRequest: {
     readonly deletedDocumentVersionSignatureId: string;
   };
 };
-export type DocumentSignaturesTab_cancelSignatureMutation = {
-  response: DocumentSignaturesTab_cancelSignatureMutation$data;
-  variables: DocumentSignaturesTab_cancelSignatureMutation$variables;
+export type DocumentSignatureListItem_cancelSignatureMutation = {
+  response: DocumentSignatureListItem_cancelSignatureMutation$data;
+  variables: DocumentSignatureListItem_cancelSignatureMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -59,7 +59,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentSignaturesTab_cancelSignatureMutation",
+    "name": "DocumentSignatureListItem_cancelSignatureMutation",
     "selections": [
       {
         "alias": null,
@@ -84,7 +84,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "DocumentSignaturesTab_cancelSignatureMutation",
+    "name": "DocumentSignatureListItem_cancelSignatureMutation",
     "selections": [
       {
         "alias": null,
@@ -117,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c57722e2b57faca64eea4950864e034d",
+    "cacheID": "494afd972f44f534cf6f728196717a82",
     "id": null,
     "metadata": {},
-    "name": "DocumentSignaturesTab_cancelSignatureMutation",
+    "name": "DocumentSignatureListItem_cancelSignatureMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentSignaturesTab_cancelSignatureMutation(\n  $input: CancelSignatureRequestInput!\n) {\n  cancelSignatureRequest(input: $input) {\n    deletedDocumentVersionSignatureId\n  }\n}\n"
+    "text": "mutation DocumentSignatureListItem_cancelSignatureMutation(\n  $input: CancelSignatureRequestInput!\n) {\n  cancelSignatureRequest(input: $input) {\n    deletedDocumentVersionSignatureId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9f5d3ff869ec6f91285140285248e824";
+(node as any).hash = "1a98d7aee9dc6758f186e915e1abe073";
 
 export default node;

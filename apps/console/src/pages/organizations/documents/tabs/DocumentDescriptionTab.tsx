@@ -6,7 +6,9 @@ import type { NodeOf } from "#/types";
 
 export default function DocumentDescriptionTab() {
   const { version } = useOutletContext<{
-    version: NodeOf<Extract<DocumentLayoutQuery$data["document"], { __typename: "Document" }>["versions"]>;
+    version: NodeOf<
+      Extract<DocumentLayoutQuery$data["document"], { __typename: "Document" }>["lastVersion"]
+    > | Extract<DocumentLayoutQuery$data["version"], { __typename: "DocumentVersion" }>;
   }>();
   return (
     <div>

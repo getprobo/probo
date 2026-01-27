@@ -45,7 +45,7 @@ const documentTabs = (prefix: string) => {
       Fallback: LinkCardSkeleton,
       Component: lazy(
         () =>
-          import("../pages/organizations/documents/tabs/DocumentSignaturesTab"),
+          import("#/pages/organizations/documents/signatures/DocumentSignaturesPageLoader"),
       ),
     },
   ];

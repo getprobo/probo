@@ -16,14 +16,30 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	DocumentVersionSignatureOrderBy OrderBy[coredata.DocumentVersionSignatureOrderField]
+
+	DocumentVersionSignatureConnection struct {
+		TotalCount int
+		Edges      []*DocumentVersionSignatureEdge
+		PageInfo   PageInfo
+
+		Resolver any
+		ParentID gid.GID
+		Filters  *coredata.DocumentVersionSignatureFilter
+	}
 )
 
-func NewDocumentVersionSignatureConnection(page *page.Page[*coredata.DocumentVersionSignature, coredata.DocumentVersionSignatureOrderField]) *DocumentVersionSignatureConnection {
+func NewDocumentVersionSignatureConnection(
+	page *page.Page[*coredata.DocumentVersionSignature, coredata.DocumentVersionSignatureOrderField],
+	parentType any,
+	parentID gid.GID,
+	filter *coredata.DocumentVersionSignatureFilter,
+) *DocumentVersionSignatureConnection {
 	edges := make([]*DocumentVersionSignatureEdge, len(page.Data))
 	for i, documentVersionSignature := range page.Data {
 		edges[i] = NewDocumentVersionSignatureEdge(documentVersionSignature, page.Cursor.OrderBy.Field)
@@ -31,7 +47,11 @@ func NewDocumentVersionSignatureConnection(page *page.Page[*coredata.DocumentVer
 
 	return &DocumentVersionSignatureConnection{
 		Edges:    edges,
-		PageInfo: NewPageInfo(page),
+		PageInfo: *NewPageInfo(page),
+
+		Resolver: parentType,
+		ParentID: parentID,
+		Filters:  filter,
 	}
 }
 

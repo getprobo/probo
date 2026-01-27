@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<568018897f0db254b4d8c43c05abb7c6>>
+ * @generated SignedSource<<bb1622f78ea11c986acbd844bfc5c463>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,22 +12,23 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 export type DocumentVersionSignatureFilter = {
+  activeContract?: boolean | null | undefined;
   states?: ReadonlyArray<DocumentVersionSignatureState> | null | undefined;
 };
-export type DocumentSignaturesTabRefetchQuery$variables = {
+export type DocumentSignatureListQuery$variables = {
   count?: number | null | undefined;
   cursor?: string | null | undefined;
   id: string;
   signatureFilter?: DocumentVersionSignatureFilter | null | undefined;
 };
-export type DocumentSignaturesTabRefetchQuery$data = {
+export type DocumentSignatureListQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_version">;
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentSignatureList_versionFragment">;
   };
 };
-export type DocumentSignaturesTabRefetchQuery = {
-  response: DocumentSignaturesTabRefetchQuery$data;
-  variables: DocumentSignaturesTabRefetchQuery$variables;
+export type DocumentSignatureListQuery = {
+  response: DocumentSignatureListQuery$data;
+  variables: DocumentSignatureListQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -74,13 +75,6 @@ v6 = {
 },
 v7 = [
   {
-    "kind": "Literal",
-    "name": "action",
-    "value": "core:document-version:request-signature"
-  }
-],
-v8 = [
-  {
     "kind": "Variable",
     "name": "after",
     "variableName": "cursor"
@@ -106,7 +100,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentSignaturesTabRefetchQuery",
+    "name": "DocumentSignatureListQuery",
     "selections": [
       {
         "alias": null,
@@ -135,7 +129,7 @@ return {
               }
             ],
             "kind": "FragmentSpread",
-            "name": "DocumentSignaturesTab_version"
+            "name": "DocumentSignatureList_versionFragment"
           }
         ],
         "storageKey": null
@@ -153,7 +147,7 @@ return {
       (v2/*: any*/)
     ],
     "kind": "Operation",
-    "name": "DocumentSignaturesTabRefetchQuery",
+    "name": "DocumentSignatureListQuery",
     "selections": [
       {
         "alias": null,
@@ -176,15 +170,8 @@ return {
                 "storageKey": null
               },
               {
-                "alias": "canRequestSignature",
-                "args": (v7/*: any*/),
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:document-version:request-signature\")"
-              },
-              {
                 "alias": null,
-                "args": (v8/*: any*/),
+                "args": (v7/*: any*/),
                 "concreteType": "DocumentVersionSignatureConnection",
                 "kind": "LinkedField",
                 "name": "signatures",
@@ -210,13 +197,6 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "kind": "ScalarField",
-                            "name": "state",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
                             "concreteType": "People",
                             "kind": "LinkedField",
                             "name": "signedBy",
@@ -229,15 +209,15 @@ return {
                                 "kind": "ScalarField",
                                 "name": "fullName",
                                 "storageKey": null
-                              },
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "primaryEmailAddress",
-                                "storageKey": null
                               }
                             ],
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "state",
                             "storageKey": null
                           },
                           {
@@ -256,10 +236,16 @@ return {
                           },
                           {
                             "alias": "canCancel",
-                            "args": (v7/*: any*/),
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:document-version-signature:cancel"
+                              }
+                            ],
                             "kind": "ScalarField",
                             "name": "permission",
-                            "storageKey": "permission(action:\"core:document-version:request-signature\")"
+                            "storageKey": "permission(action:\"core:document-version-signature:cancel\")"
                           },
                           (v5/*: any*/)
                         ],
@@ -317,7 +303,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v8/*: any*/),
+                "args": (v7/*: any*/),
                 "filters": [
                   "filter"
                 ],
@@ -336,16 +322,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5f4d3d9043d744d2e35c7c5b3e209a37",
+    "cacheID": "25f679c343e22278c8a3d5e2db9bb3d0",
     "id": null,
     "metadata": {},
-    "name": "DocumentSignaturesTabRefetchQuery",
+    "name": "DocumentSignatureListQuery",
     "operationKind": "query",
-    "text": "query DocumentSignaturesTabRefetchQuery(\n  $count: Int = 1000\n  $cursor: CursorKey\n  $signatureFilter: DocumentVersionSignatureFilter\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentSignaturesTab_version_1vp7QE\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n  canCancel: permission(action: \"core:document-version:request-signature\")\n}\n\nfragment DocumentSignaturesTab_version_1vp7QE on DocumentVersion {\n  id\n  status\n  canRequestSignature: permission(action: \"core:document-version:request-signature\")\n  signatures(first: $count, after: $cursor, filter: $signatureFilter) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query DocumentSignatureListQuery(\n  $count: Int = 1000\n  $cursor: CursorKey\n  $signatureFilter: DocumentVersionSignatureFilter\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentSignatureList_versionFragment_1vp7QE\n    id\n  }\n}\n\nfragment DocumentSignatureListItemFragment on DocumentVersionSignature {\n  id\n  signedBy {\n    fullName\n    id\n  }\n  state\n  signedAt\n  requestedAt\n  canCancel: permission(action: \"core:document-version-signature:cancel\")\n}\n\nfragment DocumentSignatureList_versionFragment_1vp7QE on DocumentVersion {\n  ...DocumentSignaturePlaceholder_versionFragment\n  signatures(first: $count, after: $cursor, filter: $signatureFilter) {\n    edges {\n      node {\n        id\n        signedBy {\n          id\n        }\n        ...DocumentSignatureListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  id\n}\n\nfragment DocumentSignaturePlaceholder_versionFragment on DocumentVersion {\n  id\n  status\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9282fd9e9a1aa10a36535863b896283c";
+(node as any).hash = "cc402c3b46eacfb04db1186bbd744f67";
 
 export default node;

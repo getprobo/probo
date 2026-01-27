@@ -14,57 +14,52 @@ import { DocumentTitleForm } from "./_components/DocumentTitleForm";
 import { DocumentVersionsDropdown } from "./_components/DocumentVersionsDropdown";
 
 export const documentLayoutQuery = graphql`
-  query DocumentLayoutQuery($documentId: ID!) {
+  query DocumentLayoutQuery($documentId: ID! $versionId: ID! $versionSpecified: Boolean!) {
+    # We use this on /documents/:documentId/versions/:versionId
+    version: node(id: $versionId) @include(if: $versionSpecified) {
+      __typename
+      ... on DocumentVersion {
+        id
+        status
+        content # TODO: remove, is used on description tab
+        ...DocumentActionsDropdown_versionFragment
+        ...DocumentLayoutDrawer_versionFragment
+        signatures(first: 0 filter: { activeContract: true }) {
+          totalCount
+        }
+        signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true }) {
+          totalCount
+        }
+      }
+    }
     document: node(id: $documentId) {
       __typename
       ... on Document {
         id
         title
-        classification
-        owner {
-          id
-          fullName
-        }
         canPublish: permission(action: "core:document-version:publish")
         controlInfo: controls(first: 0) {
           totalCount
         }
         ...DocumentTitleFormFragment
-        ...DocumentActionsDropdownFragment
-        ...DocumentLayoutDrawerFragment
+        ...DocumentActionsDropdown_documentFragment
+        ...DocumentLayoutDrawer_documentFragment
+        # TDOO: remove
         ...DocumentControlsTabFragment
-        versions(first: 20) @connection(key: "DocumentLayout_versions") {
-          __id
+        # We use this on /documents/:documentId
+        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
           edges {
             node {
               id
-              content
               status
-              publishedAt
-              version
-              updatedAt
-              classification
-              owner {
-                id
-                fullName
+              content # TODO: remove, is used on description tab
+              ...DocumentActionsDropdown_versionFragment
+              ...DocumentLayoutDrawer_versionFragment
+              signatures(first: 0 filter: { activeContract: true }) {
+                totalCount
               }
-              canDeleteDraft: permission(
-                action: "core:document-version:delete-draft"
-              )
-              ...DocumentSignaturesTab_version
-              signatures(first: 1000)
-                @connection(key: "DocumentDetailPage_signatures", filters: []) {
-                __id
-                edges {
-                  node {
-                    id
-                    state
-                    signedBy {
-                      id
-                    }
-                    ...DocumentSignaturesTab_signature
-                  }
-                }
+              signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true }) {
+                totalCount
               }
             }
           }
@@ -94,17 +89,19 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
 
   const { __ } = useTranslate();
 
-  const { document } = usePreloadedQuery<DocumentLayoutQuery>(documentLayoutQuery, queryRef);
-  if (document.__typename !== "Document") {
+  const { document, version } = usePreloadedQuery<DocumentLayoutQuery>(documentLayoutQuery, queryRef);
+  if (document.__typename !== "Document" || (version && version.__typename !== "DocumentVersion")) {
     throw new Error("invalid node type");
   }
+  const lastVersion = document.lastVersion?.edges[0].node;
 
-  const currentVersion
-    = document.versions.edges.find(v => v.node.id === versionId)?.node
-      ?? document.versions.edges[0].node;
+  if (!version && !lastVersion) {
+    throw new Error("current version not specified");
+  }
+
+  // It is ok to cas as NonNullable here since we know we have either version or lastVersion
+  const currentVersion = version ?? lastVersion as NonNullable<typeof version | typeof lastVersion>;
   const isDraft = currentVersion.status === "DRAFT";
-  const signatures = currentVersion.signatures?.edges?.map(s => s.node) ?? [];
-  const signedSignatures = signatures.filter(s => s.state === "SIGNED");
 
   const [publishDocumentVersion, isPublishing] = useMutationWithToasts(
     publishDocumentVersionMutation,
@@ -153,7 +150,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
               </Button>
             )}
             <DocumentVersionsDropdown currentVersionId={currentVersion.id} />
-            <DocumentActionsDropdownn isDraft={isDraft} fKey={document} currentVersion={currentVersion} />
+            <DocumentActionsDropdownn documentFragmentRef={document} versionFragmentRef={currentVersion} />
           </div>
         </div>
 
@@ -171,18 +168,19 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             <TabLink to={`${urlPrefix}/signatures`}>
               {__("Signatures")}
               <TabBadge>
-                {signedSignatures.length}
+                {currentVersion.signedSignatures.totalCount}
                 /
-                {signatures.length}
+                {currentVersion.signatures.totalCount}
               </TabBadge>
             </TabLink>
           )}
         </Tabs>
 
+        {/* TODO: remove context once control tab is using its own query */}
         <Outlet context={{ document, version: currentVersion }} />
       </div>
 
-      <DocumentLayoutDrawer fKey={document} currentVersion={currentVersion} isDraft={isDraft} />
+      <DocumentLayoutDrawer documentFragmentRef={document} versionFragmentRef={currentVersion} />
     </>
   );
 }

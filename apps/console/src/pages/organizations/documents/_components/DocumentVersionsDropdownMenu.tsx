@@ -1,4 +1,3 @@
-import { DropdownItem } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -41,12 +40,11 @@ export function DocumentVersionsDropdownMenu(props: {
   return (
     <>
       {document.versions.edges.map(({ node: version }) => (
-        <DropdownItem asChild key={version.id}>
-          <DocumentVersionsDropdownItem
-            fKey={version}
-            active={version.id === currentVersionId}
-          />
-        </DropdownItem>
+        <DocumentVersionsDropdownItem
+          key={version.id}
+          fragmentRef={version}
+          active={version.id === currentVersionId}
+        />
       ))}
     </>
   );

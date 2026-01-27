@@ -51,6 +51,7 @@ type (
 
 	DocumentVersionSignaturesWithPeople []*DocumentVersionSignatureWithPeople
 )
+
 func (pvs DocumentVersionSignature) CursorKey(orderBy DocumentVersionSignatureOrderField) page.CursorKey {
 	switch orderBy {
 	case DocumentVersionSignatureOrderFieldCreatedAt:
@@ -446,4 +447,37 @@ SELECT EXISTS (
 	}
 
 	return signed, nil
+}
+
+func (dvs *DocumentVersionSignatures) CountByDocumentVersionID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentVersionID gid.GID,
+	filter *DocumentVersionSignatureFilter,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	document_version_signatures
+WHERE
+	%s
+	AND document_version_id = @document_version_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{"document_version_id": documentVersionID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
 }

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<927b958ffdaa974f5a5054be4638b60d>>
+ * @generated SignedSource<<f22c42dfa1b8b70ebed9f29c56d42069>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,22 +11,22 @@
 import { ReaderFragment } from 'relay-runtime';
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
-export type DocumentLayoutDrawerFragment$data = {
+export type DocumentLayoutDrawer_documentFragment$data = {
   readonly canUpdate: boolean;
   readonly documentType: DocumentType;
   readonly id: string;
-  readonly " $fragmentType": "DocumentLayoutDrawerFragment";
+  readonly " $fragmentType": "DocumentLayoutDrawer_documentFragment";
 };
-export type DocumentLayoutDrawerFragment$key = {
-  readonly " $data"?: DocumentLayoutDrawerFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentLayoutDrawerFragment">;
+export type DocumentLayoutDrawer_documentFragment$key = {
+  readonly " $data"?: DocumentLayoutDrawer_documentFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentLayoutDrawer_documentFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "DocumentLayoutDrawerFragment",
+  "name": "DocumentLayoutDrawer_documentFragment",
   "selections": [
     {
       "alias": null,
@@ -60,6 +60,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "a8f55efdb2682fb35a7bc68f3ef1808a";
+(node as any).hash = "0f2e539cf30c4e116fe81392605b1481";
 
 export default node;

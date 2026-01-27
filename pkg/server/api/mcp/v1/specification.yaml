@@ -3860,6 +3860,9 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentVersionSignatureState"
               description: Signature states
+            active_contract:
+              type: boolean
+              description: Signatory contract status
 
     ListDocumentVersionSignaturesOutput:
       type: object

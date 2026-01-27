@@ -1717,12 +1717,17 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var signatureFilter *coredata.DocumentVersionSignatureFilter
-	if input.Filter != nil && input.Filter.States != nil && len(input.Filter.States) > 0 {
-		signatureFilter = coredata.NewDocumentVersionSignatureFilter(input.Filter.States)
-	} else {
-		signatureFilter = coredata.NewDocumentVersionSignatureFilter(nil)
+	var signatureStates []coredata.DocumentVersionSignatureState
+	var activeContract *bool
+	if input.Filter != nil {
+		if input.Filter.States != nil {
+			signatureStates = input.Filter.States
+		}
+		if input.Filter.ActiveContract != nil {
+			activeContract = input.Filter.ActiveContract
+		}
 	}
+	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract)
 
 	page, err := prb.Documents.ListSignatures(ctx, input.DocumentVersionID, cursor, signatureFilter)
 	if err != nil {

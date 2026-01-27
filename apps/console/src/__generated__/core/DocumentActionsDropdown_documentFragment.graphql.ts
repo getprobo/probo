@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b80ec4401c50c0af90c48812a73b76b5>>
+ * @generated SignedSource<<190e32d0bc7808055f7390730de5efd4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DocumentActionsDropdownFragment$data = {
+export type DocumentActionsDropdown_documentFragment$data = {
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
   readonly id: string;
@@ -20,18 +20,18 @@ export type DocumentActionsDropdownFragment$data = {
     readonly totalCount: number;
   };
   readonly " $fragmentSpreads": FragmentRefs<"UpdateVersionDialogFragment">;
-  readonly " $fragmentType": "DocumentActionsDropdownFragment";
+  readonly " $fragmentType": "DocumentActionsDropdown_documentFragment";
 };
-export type DocumentActionsDropdownFragment$key = {
-  readonly " $data"?: DocumentActionsDropdownFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentActionsDropdownFragment">;
+export type DocumentActionsDropdown_documentFragment$key = {
+  readonly " $data"?: DocumentActionsDropdown_documentFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentActionsDropdown_documentFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "DocumentActionsDropdownFragment",
+  "name": "DocumentActionsDropdown_documentFragment",
   "selections": [
     {
       "alias": null,
@@ -119,6 +119,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "bc3632812ef26d793478c01bd41e7dbe";
+(node as any).hash = "0e6d41c74914e28aea353ddef6bf7385";
 
 export default node;

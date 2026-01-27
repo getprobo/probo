@@ -6,9 +6,9 @@ import { loadQuery, useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { DocumentLayoutDrawerFragment$key } from "#/__generated__/core/DocumentLayoutDrawerFragment.graphql";
+import type { DocumentLayoutDrawer_documentFragment$key } from "#/__generated__/core/DocumentLayoutDrawer_documentFragment.graphql";
+import type { DocumentLayoutDrawer_versionFragment$key } from "#/__generated__/core/DocumentLayoutDrawer_versionFragment.graphql";
 import type { DocumentLayoutDrawerMutation } from "#/__generated__/core/DocumentLayoutDrawerMutation.graphql";
-import type { DocumentLayoutQuery$data } from "#/__generated__/core/DocumentLayoutQuery.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
@@ -17,15 +17,29 @@ import { coreEnvironment } from "#/environments";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import type { NodeOf } from "#/types";
 
 import { documentLayoutQuery } from "../DocumentLayout";
 
-const fragment = graphql`
-  fragment DocumentLayoutDrawerFragment on Document {
+const documentFragment = graphql`
+  fragment DocumentLayoutDrawer_documentFragment on Document {
     id
     documentType
     canUpdate: permission(action: "core:document:update")
+  }
+`;
+
+const versionFragment = graphql`
+  fragment DocumentLayoutDrawer_versionFragment on DocumentVersion {
+    id
+    classification
+    owner {
+      id
+      fullName
+    }
+    version
+    status
+    updatedAt
+    publishedAt
   }
 `;
 
@@ -52,11 +66,10 @@ const schema = z.object({
 });
 
 export function DocumentLayoutDrawer(props: {
-  currentVersion: NodeOf<Extract<DocumentLayoutQuery$data["document"], { __typename: "Document" }>["versions"]>;
-  fKey: DocumentLayoutDrawerFragment$key;
-  isDraft: boolean;
+  documentFragmentRef: DocumentLayoutDrawer_documentFragment$key;
+  versionFragmentRef: DocumentLayoutDrawer_versionFragment$key;
 }) {
-  const { currentVersion, fKey, isDraft } = props;
+  const { documentFragmentRef, versionFragmentRef } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -65,15 +78,18 @@ export function DocumentLayoutDrawer(props: {
   const [isEditingType, setIsEditingType] = useState(false);
   const [isEditingClassification, setIsEditingClassification] = useState(false);
 
-  const document = useFragment<DocumentLayoutDrawerFragment$key>(fragment, fKey);
+  const document = useFragment<DocumentLayoutDrawer_documentFragment$key>(documentFragment, documentFragmentRef);
+  const version = useFragment<DocumentLayoutDrawer_versionFragment$key>(versionFragment, versionFragmentRef);
+
+  const isDraft = version.status === "DRAFT";
 
   const { control, handleSubmit, reset } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        ownerId: currentVersion.owner?.id || "",
+        ownerId: version.owner.id,
         documentType: document.documentType,
-        classification: currentVersion.classification,
+        classification: version.classification,
       },
     },
   );
@@ -174,8 +190,8 @@ export function DocumentLayoutDrawer(props: {
                 canEdit={document.canUpdate}
               >
                 <Badge variant="highlight" size="md" className="gap-2">
-                  <Avatar name={currentVersion.owner?.fullName ?? ""} />
-                  {currentVersion.owner?.fullName}
+                  <Avatar name={version.owner.fullName} />
+                  {version.owner.fullName}
                 </Badge>
               </ReadOnlyPropertyContent>
             )}
@@ -239,7 +255,7 @@ export function DocumentLayoutDrawer(props: {
                 <div className="text-sm text-txt-secondary">
                   {getDocumentClassificationLabel(
                     __,
-                    currentVersion.classification,
+                    version.classification,
                   )}
                 </div>
               </ReadOnlyPropertyContent>
@@ -256,18 +272,18 @@ export function DocumentLayoutDrawer(props: {
       </PropertyRow>
       <PropertyRow label={__("Version")}>
         <div className="text-sm text-txt-secondary">
-          {currentVersion.version}
+          {version.version}
         </div>
       </PropertyRow>
       <PropertyRow label={__("Last modified")}>
         <div className="text-sm text-txt-secondary">
-          {formatDate(currentVersion.updatedAt)}
+          {formatDate(version.updatedAt)}
         </div>
       </PropertyRow>
-      {currentVersion.publishedAt && (
+      {version.publishedAt && (
         <PropertyRow label={__("Published Date")}>
           <div className="text-sm text-txt-secondary">
-            {formatDate(currentVersion.publishedAt)}
+            {formatDate(version.publishedAt)}
           </div>
         </PropertyRow>
       )}

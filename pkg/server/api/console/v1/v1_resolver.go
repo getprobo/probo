@@ -1080,10 +1080,16 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 	}
 
 	var signatureStates []coredata.DocumentVersionSignatureState
-	if filter != nil && filter.States != nil {
-		signatureStates = filter.States
+	var activeContract *bool
+	if filter != nil {
+		if filter.States != nil {
+			signatureStates = filter.States
+		}
+		if filter.ActiveContract != nil {
+			activeContract = filter.ActiveContract
+		}
 	}
-	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates)
+	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract)
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
@@ -1093,7 +1099,7 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 		panic(fmt.Errorf("cannot list document version signatures: %w", err))
 	}
 
-	return types.NewDocumentVersionSignatureConnection(page), nil
+	return types.NewDocumentVersionSignatureConnection(page, r, obj.ID, signatureFilter), nil
 }
 
 // Signed is the resolver for the signed field.
@@ -1122,7 +1128,7 @@ func (r *documentVersionResolver) Permission(ctx context.Context, obj *types.Doc
 
 // TotalCount is the resolver for the totalCount field.
 func (r *documentVersionConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentVersionConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionEvidenceList); err != nil {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionDocumentVersionList); err != nil {
 		return 0, err
 	}
 
@@ -1137,7 +1143,7 @@ func (r *documentVersionConnectionResolver) TotalCount(ctx context.Context, obj 
 		count, err := prb.Documents.CountVersionsForDocumentID(ctx, obj.ParentID, filter)
 		if err != nil {
 			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count tasks: %w", err))
+			panic(fmt.Errorf("cannot count document versions: %w", err))
 		}
 		return count, nil
 	}
@@ -1187,6 +1193,32 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 // Permission is the resolver for the permission field.
 func (r *documentVersionSignatureResolver) Permission(ctx context.Context, obj *types.DocumentVersionSignature, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *documentVersionSignatureConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentVersionSignatureConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionDocumentVersionSignatureList); err != nil {
+		return 0, err
+	}
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *documentVersionResolver:
+		filter := &coredata.DocumentVersionSignatureFilter{}
+		if obj.Filters != nil {
+			filter = obj.Filters
+		}
+		count, err := prb.Documents.CountSignaturesForVersionID(ctx, obj.ParentID, filter)
+		if err != nil {
+			// TODO no panic use gqlutils.InternalError
+			panic(fmt.Errorf("cannot count signatures: %w", err))
+		}
+		return count, nil
+	}
+
+	// TODO no panic use gqlutils.InternalError
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // File is the resolver for the file field.
@@ -1277,14 +1309,14 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 		count, err := prb.Evidences.CountForMeasureID(ctx, obj.ParentID)
 		if err != nil {
 			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count tasks: %w", err))
+			panic(fmt.Errorf("cannot count measure evidence: %w", err))
 		}
 		return count, nil
 	case *taskResolver:
 		count, err := prb.Evidences.CountForTaskID(ctx, obj.ParentID)
 		if err != nil {
 			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count tasks: %w", err))
+			panic(fmt.Errorf("cannot count task evidence: %w", err))
 		}
 		return count, nil
 	}
@@ -8558,6 +8590,11 @@ func (r *Resolver) DocumentVersionSignature() schema.DocumentVersionSignatureRes
 	return &documentVersionSignatureResolver{r}
 }
 
+// DocumentVersionSignatureConnection returns schema.DocumentVersionSignatureConnectionResolver implementation.
+func (r *Resolver) DocumentVersionSignatureConnection() schema.DocumentVersionSignatureConnectionResolver {
+	return &documentVersionSignatureConnectionResolver{r}
+}
+
 // Evidence returns schema.EvidenceResolver implementation.
 func (r *Resolver) Evidence() schema.EvidenceResolver { return &evidenceResolver{r} }
 
@@ -8787,6 +8824,7 @@ type documentConnectionResolver struct{ *Resolver }
 type documentVersionResolver struct{ *Resolver }
 type documentVersionConnectionResolver struct{ *Resolver }
 type documentVersionSignatureResolver struct{ *Resolver }
+type documentVersionSignatureConnectionResolver struct{ *Resolver }
 type evidenceResolver struct{ *Resolver }
 type evidenceConnectionResolver struct{ *Resolver }
 type fileResolver struct{ *Resolver }

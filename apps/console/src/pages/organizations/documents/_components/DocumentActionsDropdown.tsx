@@ -6,23 +6,22 @@ import { loadQuery, useFragment } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { DocumentActionsDropdownFragment$key } from "#/__generated__/core/DocumentActionsDropdownFragment.graphql";
+import type { DocumentActionsDropdown_documentFragment$key } from "#/__generated__/core/DocumentActionsDropdown_documentFragment.graphql";
+import type { DocumentActionsDropdown_versionFragment$key } from "#/__generated__/core/DocumentActionsDropdown_versionFragment.graphql";
 import type { DocumentActionsDropdownn_exportVersionMutation } from "#/__generated__/core/DocumentActionsDropdownn_exportVersionMutation.graphql";
-import type { DocumentLayoutQuery$data } from "#/__generated__/core/DocumentLayoutQuery.graphql";
 import { PdfDownloadDialog, type PdfDownloadDialogRef } from "#/components/documents/PdfDownloadDialog";
 import { coreEnvironment } from "#/environments";
 import { useDeleteDocumentMutation, useDeleteDraftDocumentVersionMutation } from "#/hooks/graph/DocumentGraph";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
-import type { NodeOf } from "#/types";
 
 import { documentLayoutQuery } from "../DocumentLayout";
 
 import UpdateVersionDialog from "./UpdateVersionDialog";
 
-const fragment = graphql`
-  fragment DocumentActionsDropdownFragment on Document {
+const documentFragment = graphql`
+  fragment DocumentActionsDropdown_documentFragment on Document {
     id
     title
     canUpdate: permission(action: "core:document:update")
@@ -32,6 +31,15 @@ const fragment = graphql`
       totalCount
     }
     ...UpdateVersionDialogFragment
+  }
+`;
+
+const versionFragment = graphql`
+  fragment DocumentActionsDropdown_versionFragment on DocumentVersion {
+    id
+    version
+    status
+    canDeleteDraft: permission(action: "core:document-version:delete-draft")
   }
 `;
 
@@ -46,11 +54,10 @@ const exportDocumentVersionMutation = graphql`
 `;
 
 export function DocumentActionsDropdownn(props: {
-  currentVersion: NodeOf<Extract<DocumentLayoutQuery$data["document"], { __typename: "Document" }>["versions"]>;
-  fKey: DocumentActionsDropdownFragment$key;
-  isDraft: boolean;
+  documentFragmentRef: DocumentActionsDropdown_documentFragment$key;
+  versionFragmentRef: DocumentActionsDropdown_versionFragment$key;
 }) {
-  const { currentVersion, fKey, isDraft } = props;
+  const { documentFragmentRef, versionFragmentRef } = props;
 
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
@@ -60,7 +67,11 @@ export function DocumentActionsDropdownn(props: {
   const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
   const confirm = useConfirm();
 
-  const document = useFragment<DocumentActionsDropdownFragment$key>(fragment, fKey);
+  const document = useFragment<DocumentActionsDropdown_documentFragment$key>(documentFragment, documentFragmentRef);
+  const version = useFragment<DocumentActionsDropdown_versionFragment$key>(versionFragment, versionFragmentRef);
+
+  const isDraft = version.status === "DRAFT";
+
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
   const [deleteDraftDocumentVersion, isDeletingDraft]
     = useDeleteDraftDocumentVersionMutation();
@@ -105,7 +116,7 @@ export function DocumentActionsDropdownn(props: {
         new Promise<void>((resolve) => {
           void deleteDraftDocumentVersion({
             variables: {
-              input: { documentVersionId: currentVersion.id },
+              input: { documentVersionId: version.id },
               connections: [document.versions.__id],
             },
             onSuccess() {
@@ -126,7 +137,7 @@ export function DocumentActionsDropdownn(props: {
           __(
             "This will permanently delete the draft version %s of \"%s\". This action cannot be undone.",
           ),
-          currentVersion.version,
+          version.version,
           document.title,
         ),
       },
@@ -139,7 +150,7 @@ export function DocumentActionsDropdownn(props: {
     watermarkEmail?: string;
   }) => {
     const input = {
-      documentVersionId: currentVersion.id,
+      documentVersionId: version.id,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
       ...(options.withWatermark
@@ -156,7 +167,7 @@ export function DocumentActionsDropdownn(props: {
         if (data.exportDocumentVersionPDF) {
           const link = window.document.createElement("a");
           link.href = data.exportDocumentVersionPDF.data;
-          link.download = `${document.title}-v${currentVersion.version}.pdf`;
+          link.download = `${document.title}-v${version.version}.pdf`;
           window.document.body.appendChild(link);
           link.click();
           window.document.body.removeChild(link);
@@ -188,7 +199,7 @@ export function DocumentActionsDropdownn(props: {
         )}
         {isDraft
           && document.versions.totalCount > 1
-          && currentVersion.canDeleteDraft && (
+          && version.canDeleteDraft && (
           <DropdownItem
             onClick={handleDeleteDraft}
             icon={IconTrashCan}
