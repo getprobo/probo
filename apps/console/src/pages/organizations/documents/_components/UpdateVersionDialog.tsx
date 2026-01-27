@@ -20,6 +20,7 @@ import type { UpdateVersionDialogFragment$key } from "#/__generated__/core/Updat
 import type { UpdateVersionDialogUpdateMutation } from "#/__generated__/core/UpdateVersionDialogUpdateMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const fragment = graphql`
   fragment UpdateVersionDialogFragment on Document {
@@ -90,6 +91,7 @@ const versionSchema = z.object({
 export default function UpdateVersionDialog(props: UpdateVersionDialogProps) {
   const { fKey, ref } = props;
 
+  const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
@@ -172,6 +174,7 @@ export default function UpdateVersionDialog(props: UpdateVersionDialogProps) {
               },
               onSuccess: () => {
                 dialogRef.current?.close();
+                window.location.href = `/organizations/${organizationId}/documents/${document.id}`;
               },
             });
           } else {

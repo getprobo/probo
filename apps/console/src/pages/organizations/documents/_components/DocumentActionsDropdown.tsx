@@ -2,7 +2,7 @@ import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { ActionDropdown, DropdownItem, IconArrowDown, IconPencil, IconTrashCan, useConfirm } from "@probo/ui";
 import { use, useRef } from "react";
-import { loadQuery, useFragment } from "react-relay";
+import { useFragment } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
@@ -10,13 +10,10 @@ import type { DocumentActionsDropdown_documentFragment$key } from "#/__generated
 import type { DocumentActionsDropdown_versionFragment$key } from "#/__generated__/core/DocumentActionsDropdown_versionFragment.graphql";
 import type { DocumentActionsDropdownn_exportVersionMutation } from "#/__generated__/core/DocumentActionsDropdownn_exportVersionMutation.graphql";
 import { PdfDownloadDialog, type PdfDownloadDialogRef } from "#/components/documents/PdfDownloadDialog";
-import { coreEnvironment } from "#/environments";
 import { useDeleteDocumentMutation, useDeleteDraftDocumentVersionMutation } from "#/hooks/graph/DocumentGraph";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
-
-import { documentLayoutQuery } from "../DocumentLayout";
 
 import UpdateVersionDialog from "./UpdateVersionDialog";
 
@@ -87,17 +84,13 @@ export function DocumentActionsDropdownn(props: {
   const handleDelete = () => {
     confirm(
       () =>
-        new Promise<void>((resolve) => {
-          void deleteDocument({
-            variables: {
-              input: { documentId: document.id },
-            },
-            onSuccess() {
-              void navigate(`/organizations/${organizationId}/documents`);
-              resolve();
-            },
-            onError: () => resolve(),
-          });
+        deleteDocument({
+          variables: {
+            input: { documentId: document.id },
+          },
+          onSuccess() {
+            void navigate(`/organizations/${organizationId}/documents`);
+          },
         }),
       {
         message: sprintf(
@@ -113,24 +106,14 @@ export function DocumentActionsDropdownn(props: {
   const handleDeleteDraft = () => {
     confirm(
       () =>
-        new Promise<void>((resolve) => {
-          void deleteDraftDocumentVersion({
-            variables: {
-              input: { documentVersionId: version.id },
-              connections: [document.versions.__id],
-            },
-            onSuccess() {
-              loadQuery(
-                coreEnvironment,
-                documentLayoutQuery,
-                { documentId: document.id },
-                { fetchPolicy: "network-only" },
-              );
-
-              resolve();
-            },
-            onError: () => resolve(),
-          });
+        deleteDraftDocumentVersion({
+          variables: {
+            input: { documentVersionId: version.id },
+            connections: [document.versions.__id],
+          },
+          onSuccess() {
+            window.location.href = `/organizations/${organizationId}/documents/${document.id}`;
+          },
         }),
       {
         message: sprintf(

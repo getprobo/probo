@@ -2,7 +2,7 @@ import { documentClassifications, documentTypes, formatDate, getDocumentClassifi
 import { useTranslate } from "@probo/i18n";
 import { Avatar, Badge, Button, Drawer, IconCheckmark1, IconCrossLargeX, IconPencil, PropertyRow } from "@probo/ui";
 import { useState } from "react";
-import { loadQuery, useFragment } from "react-relay";
+import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -13,12 +13,9 @@ import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { coreEnvironment } from "#/environments";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-
-import { documentLayoutQuery } from "../DocumentLayout";
 
 const documentFragment = graphql`
   fragment DocumentLayoutDrawer_documentFragment on Document {
@@ -129,12 +126,6 @@ export function DocumentLayoutDrawer(props: {
       },
       onSuccess: () => {
         setIsEditingType(false);
-        loadQuery(
-          coreEnvironment,
-          documentLayoutQuery,
-          { documentId: document.id },
-          { fetchPolicy: "network-only" },
-        );
       },
     });
   };
@@ -151,12 +142,6 @@ export function DocumentLayoutDrawer(props: {
       },
       onSuccess: () => {
         setIsEditingClassification(false);
-        loadQuery(
-          coreEnvironment,
-          documentLayoutQuery,
-          { documentId: document.id },
-          { fetchPolicy: "network-only" },
-        );
       },
     });
   };
