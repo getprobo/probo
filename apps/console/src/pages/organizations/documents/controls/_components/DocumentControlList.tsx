@@ -1,13 +1,14 @@
+import type { ComponentProps } from "react";
 import { useRefetchableFragment } from "react-relay";
-import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { DocumentControlsTabFragment$key } from "#/__generated__/core/DocumentControlsTabFragment.graphql";
+import type { DocumentControlListFragment$key } from "#/__generated__/core/DocumentControlListFragment.graphql";
+import type { DocumentControlListQuery } from "#/__generated__/core/DocumentControlListQuery.graphql";
 import { LinkedControlsCard } from "#/components/controls/LinkedControlsCard";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 
-export const controlsFragment = graphql`
-  fragment DocumentControlsTabFragment on Document
+const fragment = graphql`
+  fragment DocumentControlListFragment on Document
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 20 }
     after: { type: "CursorKey" }
@@ -16,7 +17,7 @@ export const controlsFragment = graphql`
     order: { type: "ControlOrder", defaultValue: null }
     filter: { type: "ControlFilter", defaultValue: null }
   )
-  @refetchable(queryName: "DocumentControlsTabControlsQuery") {
+  @refetchable(queryName: "DocumentControlListQuery") {
     id
     controls(
       first: $first
@@ -38,7 +39,7 @@ export const controlsFragment = graphql`
 `;
 
 const detachControlMutation = graphql`
-  mutation DocumentControlsTab_detachControlMutation(
+  mutation DocumentControlList_detachControlMutation(
     $input: DeleteControlDocumentMappingInput!
     $connections: [ID!]!
   ) {
@@ -49,7 +50,7 @@ const detachControlMutation = graphql`
 `;
 
 const attachControlMutation = graphql`
-  mutation DocumentControlsTab_attachControlMutation(
+  mutation DocumentControlList_attachControlMutation(
     $input: CreateControlDocumentMappingInput!
     $connections: [ID!]!
   ) {
@@ -64,14 +65,15 @@ const attachControlMutation = graphql`
   }
 `;
 
-export default function DocumentControlsTab() {
-  const { document } = useOutletContext<{
-    document: DocumentControlsTabFragment$key;
-  }>();
-  const [data, refetch] = useRefetchableFragment(controlsFragment, document);
-  const controls = data.controls.edges.map(edge => edge.node);
+export function DocumentControlList(props: { fragmentRef: DocumentControlListFragment$key }) {
+  const { fragmentRef } = props;
+
+  const [document, refetch] = useRefetchableFragment<DocumentControlListQuery, DocumentControlListFragment$key>(
+    fragment,
+    fragmentRef,
+  );
   const incrementOptions = {
-    id: data.id,
+    id: document.id,
     node: "controls(first:0)",
   };
   const [detachControl, isDetaching] = useMutationWithIncrement(
@@ -91,15 +93,16 @@ export default function DocumentControlsTab() {
     },
   );
   const isLoading = isDetaching || isAttaching;
+
   return (
     <LinkedControlsCard
       disabled={isLoading}
-      controls={controls}
-      params={{ documentId: data.id }}
-      connectionId={data.controls.__id}
+      controls={document.controls.edges.map(({ node }) => node)}
+      params={{ documentId: document.id }}
+      connectionId={document.controls.__id}
       onDetach={detachControl}
       onAttach={attachControl}
-      refetch={refetch}
+      refetch={refetch as ComponentProps<typeof LinkedControlsCard>["refetch"]}
     />
   );
 }

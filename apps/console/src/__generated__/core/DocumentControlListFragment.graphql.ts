@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<aad16d17ffa1259b4e99ceb4e583df5f>>
+ * @generated SignedSource<<acc8d9d9960fb61aebcd8297f5e470c8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DocumentControlsTabFragment$data = {
+export type DocumentControlListFragment$data = {
   readonly controls: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
@@ -21,14 +21,14 @@ export type DocumentControlsTabFragment$data = {
     }>;
   };
   readonly id: string;
-  readonly " $fragmentType": "DocumentControlsTabFragment";
+  readonly " $fragmentType": "DocumentControlListFragment";
 };
-export type DocumentControlsTabFragment$key = {
-  readonly " $data"?: DocumentControlsTabFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentControlsTabFragment">;
+export type DocumentControlListFragment$key = {
+  readonly " $data"?: DocumentControlListFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentControlListFragment">;
 };
 
-import DocumentControlsTabControlsQuery_graphql from './DocumentControlsTabControlsQuery.graphql';
+import DocumentControlListQuery_graphql from './DocumentControlListQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
@@ -99,14 +99,14 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": DocumentControlsTabControlsQuery_graphql,
+      "operation": DocumentControlListQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "DocumentControlsTabFragment",
+  "name": "DocumentControlListFragment",
   "selections": [
     (v1/*: any*/),
     {
@@ -230,6 +230,6 @@ return {
 };
 })();
 
-(node as any).hash = "c1b6d5212b3fa33f60c02ddee32d5cea";
+(node as any).hash = "564d18d5d5fb4c71f137e236bc16d138";
 
 export default node;

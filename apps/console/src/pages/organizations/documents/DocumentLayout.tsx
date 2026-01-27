@@ -21,7 +21,6 @@ export const documentLayoutQuery = graphql`
       ... on DocumentVersion {
         id
         status
-        content # TODO: remove, is used on description tab
         ...DocumentActionsDropdown_versionFragment
         ...DocumentLayoutDrawer_versionFragment
         signatures(first: 0 filter: { activeContract: true }) {
@@ -44,15 +43,12 @@ export const documentLayoutQuery = graphql`
         ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_documentFragment
         ...DocumentLayoutDrawer_documentFragment
-        # TDOO: remove
-        ...DocumentControlsTabFragment
         # We use this on /documents/:documentId
         lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
           edges {
             node {
               id
               status
-              content # TODO: remove, is used on description tab
               ...DocumentActionsDropdown_versionFragment
               ...DocumentLayoutDrawer_versionFragment
               signatures(first: 0 filter: { activeContract: true }) {
@@ -176,8 +172,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           )}
         </Tabs>
 
-        {/* TODO: remove context once control tab is using its own query */}
-        <Outlet context={{ document, version: currentVersion }} />
+        <Outlet />
       </div>
 
       <DocumentLayoutDrawer documentFragmentRef={document} versionFragmentRef={currentVersion} />

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5c230fb025256fb7a5281ee5ecd3ccf4>>
+ * @generated SignedSource<<25dfecd5fa953558409d2a4d1daa32c3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,18 +13,18 @@ export type DeleteControlDocumentMappingInput = {
   controlId: string;
   documentId: string;
 };
-export type DocumentControlsTab_detachControlMutation$variables = {
+export type DocumentControlList_detachControlMutation$variables = {
   connections: ReadonlyArray<string>;
   input: DeleteControlDocumentMappingInput;
 };
-export type DocumentControlsTab_detachControlMutation$data = {
+export type DocumentControlList_detachControlMutation$data = {
   readonly deleteControlDocumentMapping: {
     readonly deletedControlId: string;
   };
 };
-export type DocumentControlsTab_detachControlMutation = {
-  response: DocumentControlsTab_detachControlMutation$data;
-  variables: DocumentControlsTab_detachControlMutation$variables;
+export type DocumentControlList_detachControlMutation = {
+  response: DocumentControlList_detachControlMutation$data;
+  variables: DocumentControlList_detachControlMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -60,7 +60,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentControlsTab_detachControlMutation",
+    "name": "DocumentControlList_detachControlMutation",
     "selections": [
       {
         "alias": null,
@@ -85,7 +85,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "DocumentControlsTab_detachControlMutation",
+    "name": "DocumentControlList_detachControlMutation",
     "selections": [
       {
         "alias": null,
@@ -118,16 +118,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "fce801689ab578a47c33a50c60fc4cd7",
+    "cacheID": "5d78356c860e344801d99117b599665d",
     "id": null,
     "metadata": {},
-    "name": "DocumentControlsTab_detachControlMutation",
+    "name": "DocumentControlList_detachControlMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentControlsTab_detachControlMutation(\n  $input: DeleteControlDocumentMappingInput!\n) {\n  deleteControlDocumentMapping(input: $input) {\n    deletedControlId\n  }\n}\n"
+    "text": "mutation DocumentControlList_detachControlMutation(\n  $input: DeleteControlDocumentMappingInput!\n) {\n  deleteControlDocumentMapping(input: $input) {\n    deletedControlId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "39c5b39c08ba37d06f5e0cfedc707a25";
+(node as any).hash = "fc76faa3002641acaf89856a94d37942";
 
 export default node;

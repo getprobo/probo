@@ -29,7 +29,7 @@ const documentTabs = (prefix: string) => {
       Fallback: LinkCardSkeleton,
       Component: lazy(
         () =>
-          import("../pages/organizations/documents/tabs/DocumentDescriptionTab"),
+          import("#/pages/organizations/documents/description/DocumentDescriptionPageLoader"),
       ),
     },
     {
@@ -37,7 +37,7 @@ const documentTabs = (prefix: string) => {
       Fallback: LinkCardSkeleton,
       Component: lazy(
         () =>
-          import("../pages/organizations/documents/tabs/DocumentControlsTab"),
+          import("#/pages/organizations/documents/controls/DocumentControlsPageLoader"),
       ),
     },
     {

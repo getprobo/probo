@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b3e322a9f5ab2b390b1a675d96bbfc55>>
+ * @generated SignedSource<<50f02328ff252b0ce2af4637d8f002c7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -27,7 +27,6 @@ export type DocumentLayoutQuery$data = {
     readonly lastVersion?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
-          readonly content: string;
           readonly id: string;
           readonly signatures: {
             readonly totalCount: number;
@@ -41,7 +40,7 @@ export type DocumentLayoutQuery$data = {
       }>;
     };
     readonly title: string;
-    readonly " $fragmentSpreads": FragmentRefs<"DocumentActionsDropdown_documentFragment" | "DocumentControlsTabFragment" | "DocumentLayoutDrawer_documentFragment" | "DocumentTitleFormFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentActionsDropdown_documentFragment" | "DocumentLayoutDrawer_documentFragment" | "DocumentTitleFormFragment">;
   } | {
     // This will never be '%other', but we need some
     // value in case none of the concrete values match.
@@ -49,7 +48,6 @@ export type DocumentLayoutQuery$data = {
   };
   readonly version?: {
     readonly __typename: "DocumentVersion";
-    readonly content: string;
     readonly id: string;
     readonly signatures: {
       readonly totalCount: number;
@@ -117,28 +115,21 @@ v4 = {
   "storageKey": null
 },
 v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "content",
-  "storageKey": null
-},
-v6 = {
   "kind": "Literal",
   "name": "first",
   "value": 0
 },
-v7 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "totalCount",
   "storageKey": null
 },
-v8 = [
-  (v7/*: any*/)
+v7 = [
+  (v6/*: any*/)
 ],
-v9 = {
+v8 = {
   "alias": null,
   "args": [
     {
@@ -148,16 +139,16 @@ v9 = {
         "activeContract": true
       }
     },
-    (v6/*: any*/)
+    (v5/*: any*/)
   ],
   "concreteType": "DocumentVersionSignatureConnection",
   "kind": "LinkedField",
   "name": "signatures",
   "plural": false,
-  "selections": (v8/*: any*/),
+  "selections": (v7/*: any*/),
   "storageKey": "signatures(filter:{\"activeContract\":true},first:0)"
 },
-v10 = {
+v9 = {
   "alias": "signedSignatures",
   "args": [
     {
@@ -170,19 +161,18 @@ v10 = {
         ]
       }
     },
-    (v6/*: any*/)
+    (v5/*: any*/)
   ],
   "concreteType": "DocumentVersionSignatureConnection",
   "kind": "LinkedField",
   "name": "signatures",
   "plural": false,
-  "selections": (v8/*: any*/),
+  "selections": (v7/*: any*/),
   "storageKey": "signatures(filter:{\"activeContract\":true,\"states\":[\"SIGNED\"]},first:0)"
 },
-v11 = [
+v10 = [
   (v3/*: any*/),
   (v4/*: any*/),
-  (v5/*: any*/),
   {
     "args": null,
     "kind": "FragmentSpread",
@@ -193,24 +183,24 @@ v11 = [
     "kind": "FragmentSpread",
     "name": "DocumentLayoutDrawer_versionFragment"
   },
-  (v9/*: any*/),
-  (v10/*: any*/)
+  (v8/*: any*/),
+  (v9/*: any*/)
 ],
-v12 = [
+v11 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "documentId"
   }
 ],
-v13 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "title",
   "storageKey": null
 },
-v14 = {
+v13 = {
   "alias": "canPublish",
   "args": [
     {
@@ -223,19 +213,19 @@ v14 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:document-version:publish\")"
 },
-v15 = {
+v14 = {
   "alias": "controlInfo",
   "args": [
-    (v6/*: any*/)
+    (v5/*: any*/)
   ],
   "concreteType": "ControlConnection",
   "kind": "LinkedField",
   "name": "controls",
   "plural": false,
-  "selections": (v8/*: any*/),
+  "selections": (v7/*: any*/),
   "storageKey": "controls(first:0)"
 },
-v16 = [
+v15 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -250,61 +240,21 @@ v16 = [
     }
   }
 ],
-v17 = [
+v16 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 20
   }
 ],
-v18 = {
-  "kind": "ClientExtension",
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "__id",
-      "storageKey": null
-    }
-  ]
-},
-v19 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "cursor",
-  "storageKey": null
-},
-v20 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "endCursor",
-  "storageKey": null
-},
-v21 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "hasNextPage",
-  "storageKey": null
-},
-v22 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v23 = {
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "version",
   "storageKey": null
 },
-v24 = {
+v18 = {
   "alias": "canDeleteDraft",
   "args": [
     {
@@ -317,14 +267,14 @@ v24 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:document-version:delete-draft\")"
 },
-v25 = {
+v19 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "classification",
   "storageKey": null
 },
-v26 = {
+v20 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -343,14 +293,14 @@ v26 = {
   ],
   "storageKey": null
 },
-v27 = {
+v21 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
 },
-v28 = {
+v22 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -380,7 +330,7 @@ return {
               (v2/*: any*/),
               {
                 "kind": "InlineFragment",
-                "selections": (v11/*: any*/),
+                "selections": (v10/*: any*/),
                 "type": "DocumentVersion",
                 "abstractKey": null
               }
@@ -391,7 +341,7 @@ return {
       },
       {
         "alias": "document",
-        "args": (v12/*: any*/),
+        "args": (v11/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -402,9 +352,9 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
+              (v12/*: any*/),
               (v13/*: any*/),
               (v14/*: any*/),
-              (v15/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -421,18 +371,13 @@ return {
                 "name": "DocumentLayoutDrawer_documentFragment"
               },
               {
-                "args": null,
-                "kind": "FragmentSpread",
-                "name": "DocumentControlsTabFragment"
-              },
-              {
                 "condition": "versionSpecified",
                 "kind": "Condition",
                 "passingValue": false,
                 "selections": [
                   {
                     "alias": "lastVersion",
-                    "args": (v16/*: any*/),
+                    "args": (v15/*: any*/),
                     "concreteType": "DocumentVersionConnection",
                     "kind": "LinkedField",
                     "name": "versions",
@@ -453,7 +398,7 @@ return {
                             "kind": "LinkedField",
                             "name": "node",
                             "plural": false,
-                            "selections": (v11/*: any*/),
+                            "selections": (v10/*: any*/),
                             "storageKey": null
                           }
                         ],
@@ -483,7 +428,7 @@ return {
     "selections": [
       {
         "alias": "document",
-        "args": (v12/*: any*/),
+        "args": (v11/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -494,9 +439,9 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v12/*: any*/),
               (v13/*: any*/),
               (v14/*: any*/),
-              (v15/*: any*/),
               {
                 "alias": "canUpdate",
                 "args": [
@@ -525,14 +470,25 @@ return {
               },
               {
                 "alias": null,
-                "args": (v17/*: any*/),
+                "args": (v16/*: any*/),
                 "concreteType": "DocumentVersionConnection",
                 "kind": "LinkedField",
                 "name": "versions",
                 "plural": false,
                 "selections": [
-                  (v7/*: any*/),
-                  (v18/*: any*/),
+                  (v6/*: any*/),
+                  {
+                    "kind": "ClientExtension",
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "__id",
+                        "storageKey": null
+                      }
+                    ]
+                  },
                   {
                     "alias": null,
                     "args": null,
@@ -551,12 +507,24 @@ return {
                         "selections": [
                           (v3/*: any*/),
                           (v4/*: any*/),
-                          (v5/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "content",
+                            "storageKey": null
+                          },
                           (v2/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v19/*: any*/)
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "cursor",
+                        "storageKey": null
+                      }
                     ],
                     "storageKey": null
                   },
@@ -568,8 +536,20 @@ return {
                     "name": "pageInfo",
                     "plural": false,
                     "selections": [
-                      (v20/*: any*/),
-                      (v21/*: any*/)
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "endCursor",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "hasNextPage",
+                        "storageKey": null
+                      }
                     ],
                     "storageKey": null
                   }
@@ -578,7 +558,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v17/*: any*/),
+                "args": (v16/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "DocumentLayout_versions",
@@ -593,110 +573,13 @@ return {
                 "storageKey": null
               },
               {
-                "alias": null,
-                "args": (v17/*: any*/),
-                "concreteType": "ControlConnection",
-                "kind": "LinkedField",
-                "name": "controls",
-                "plural": false,
-                "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "ControlEdge",
-                    "kind": "LinkedField",
-                    "name": "edges",
-                    "plural": true,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Control",
-                        "kind": "LinkedField",
-                        "name": "node",
-                        "plural": false,
-                        "selections": [
-                          (v3/*: any*/),
-                          (v22/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "sectionTitle",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "Framework",
-                            "kind": "LinkedField",
-                            "name": "framework",
-                            "plural": false,
-                            "selections": [
-                              (v3/*: any*/),
-                              (v22/*: any*/)
-                            ],
-                            "storageKey": null
-                          },
-                          (v2/*: any*/)
-                        ],
-                        "storageKey": null
-                      },
-                      (v19/*: any*/)
-                    ],
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "PageInfo",
-                    "kind": "LinkedField",
-                    "name": "pageInfo",
-                    "plural": false,
-                    "selections": [
-                      (v20/*: any*/),
-                      (v21/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "hasPreviousPage",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "startCursor",
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  (v18/*: any*/)
-                ],
-                "storageKey": "controls(first:20)"
-              },
-              {
-                "alias": null,
-                "args": (v17/*: any*/),
-                "filters": [
-                  "orderBy",
-                  "filter"
-                ],
-                "handle": "connection",
-                "key": "DocumentControlsTab_controls",
-                "kind": "LinkedHandle",
-                "name": "controls"
-              },
-              {
                 "condition": "versionSpecified",
                 "kind": "Condition",
                 "passingValue": false,
                 "selections": [
                   {
                     "alias": "lastVersion",
-                    "args": (v16/*: any*/),
+                    "args": (v15/*: any*/),
                     "concreteType": "DocumentVersionConnection",
                     "kind": "LinkedField",
                     "name": "versions",
@@ -720,15 +603,14 @@ return {
                             "selections": [
                               (v3/*: any*/),
                               (v4/*: any*/),
-                              (v5/*: any*/),
-                              (v23/*: any*/),
-                              (v24/*: any*/),
-                              (v25/*: any*/),
-                              (v26/*: any*/),
-                              (v27/*: any*/),
-                              (v28/*: any*/),
-                              (v9/*: any*/),
-                              (v10/*: any*/)
+                              (v17/*: any*/),
+                              (v18/*: any*/),
+                              (v19/*: any*/),
+                              (v20/*: any*/),
+                              (v21/*: any*/),
+                              (v22/*: any*/),
+                              (v8/*: any*/),
+                              (v9/*: any*/)
                             ],
                             "storageKey": null
                           }
@@ -766,15 +648,14 @@ return {
                 "kind": "InlineFragment",
                 "selections": [
                   (v4/*: any*/),
-                  (v5/*: any*/),
-                  (v23/*: any*/),
-                  (v24/*: any*/),
-                  (v25/*: any*/),
-                  (v26/*: any*/),
-                  (v27/*: any*/),
-                  (v28/*: any*/),
-                  (v9/*: any*/),
-                  (v10/*: any*/)
+                  (v17/*: any*/),
+                  (v18/*: any*/),
+                  (v19/*: any*/),
+                  (v20/*: any*/),
+                  (v21/*: any*/),
+                  (v22/*: any*/),
+                  (v8/*: any*/),
+                  (v9/*: any*/)
                 ],
                 "type": "DocumentVersion",
                 "abstractKey": null
@@ -787,16 +668,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9d915bec70a2a5c1b9924d73e537d3b1",
+    "cacheID": "d59daf2c6257e5a744e20896c646fc38",
     "id": null,
     "metadata": {},
     "name": "DocumentLayoutQuery",
     "operationKind": "query",
-    "text": "query DocumentLayoutQuery(\n  $documentId: ID!\n  $versionId: ID!\n  $versionSpecified: Boolean!\n) {\n  version: node(id: $versionId) @include(if: $versionSpecified) {\n    __typename\n    ... on DocumentVersion {\n      id\n      status\n      content\n      ...DocumentActionsDropdown_versionFragment\n      ...DocumentLayoutDrawer_versionFragment\n      signatures(first: 0, filter: {activeContract: true}) {\n        totalCount\n      }\n      signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n        totalCount\n      }\n    }\n    id\n  }\n  document: node(id: $documentId) {\n    __typename\n    ... on Document {\n      id\n      title\n      canPublish: permission(action: \"core:document-version:publish\")\n      controlInfo: controls(first: 0) {\n        totalCount\n      }\n      ...DocumentTitleFormFragment\n      ...DocumentActionsDropdown_documentFragment\n      ...DocumentLayoutDrawer_documentFragment\n      ...DocumentControlsTabFragment\n      lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) @skip(if: $versionSpecified) {\n        edges {\n          node {\n            id\n            status\n            content\n            ...DocumentActionsDropdown_versionFragment\n            ...DocumentLayoutDrawer_versionFragment\n            signatures(first: 0, filter: {activeContract: true}) {\n              totalCount\n            }\n            signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n              totalCount\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentActionsDropdown_documentFragment on Document {\n  id\n  title\n  canUpdate: permission(action: \"core:document:update\")\n  canDelete: permission(action: \"core:document:delete\")\n  versions(first: 20) {\n    totalCount\n  }\n  ...UpdateVersionDialogFragment\n}\n\nfragment DocumentActionsDropdown_versionFragment on DocumentVersion {\n  id\n  version\n  status\n  canDeleteDraft: permission(action: \"core:document-version:delete-draft\")\n}\n\nfragment DocumentControlsTabFragment on Document {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment DocumentLayoutDrawer_documentFragment on Document {\n  id\n  documentType\n  canUpdate: permission(action: \"core:document:update\")\n}\n\nfragment DocumentLayoutDrawer_versionFragment on DocumentVersion {\n  id\n  classification\n  owner {\n    id\n    fullName\n  }\n  version\n  status\n  updatedAt\n  publishedAt\n}\n\nfragment DocumentTitleFormFragment on Document {\n  id\n  title\n  canUpdate: permission(action: \"core:document:update\")\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment UpdateVersionDialogFragment on Document {\n  id\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        status\n        content\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query DocumentLayoutQuery(\n  $documentId: ID!\n  $versionId: ID!\n  $versionSpecified: Boolean!\n) {\n  version: node(id: $versionId) @include(if: $versionSpecified) {\n    __typename\n    ... on DocumentVersion {\n      id\n      status\n      ...DocumentActionsDropdown_versionFragment\n      ...DocumentLayoutDrawer_versionFragment\n      signatures(first: 0, filter: {activeContract: true}) {\n        totalCount\n      }\n      signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n        totalCount\n      }\n    }\n    id\n  }\n  document: node(id: $documentId) {\n    __typename\n    ... on Document {\n      id\n      title\n      canPublish: permission(action: \"core:document-version:publish\")\n      controlInfo: controls(first: 0) {\n        totalCount\n      }\n      ...DocumentTitleFormFragment\n      ...DocumentActionsDropdown_documentFragment\n      ...DocumentLayoutDrawer_documentFragment\n      lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) @skip(if: $versionSpecified) {\n        edges {\n          node {\n            id\n            status\n            ...DocumentActionsDropdown_versionFragment\n            ...DocumentLayoutDrawer_versionFragment\n            signatures(first: 0, filter: {activeContract: true}) {\n              totalCount\n            }\n            signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n              totalCount\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentActionsDropdown_documentFragment on Document {\n  id\n  title\n  canUpdate: permission(action: \"core:document:update\")\n  canDelete: permission(action: \"core:document:delete\")\n  versions(first: 20) {\n    totalCount\n  }\n  ...UpdateVersionDialogFragment\n}\n\nfragment DocumentActionsDropdown_versionFragment on DocumentVersion {\n  id\n  version\n  status\n  canDeleteDraft: permission(action: \"core:document-version:delete-draft\")\n}\n\nfragment DocumentLayoutDrawer_documentFragment on Document {\n  id\n  documentType\n  canUpdate: permission(action: \"core:document:update\")\n}\n\nfragment DocumentLayoutDrawer_versionFragment on DocumentVersion {\n  id\n  classification\n  owner {\n    id\n    fullName\n  }\n  version\n  status\n  updatedAt\n  publishedAt\n}\n\nfragment DocumentTitleFormFragment on Document {\n  id\n  title\n  canUpdate: permission(action: \"core:document:update\")\n}\n\nfragment UpdateVersionDialogFragment on Document {\n  id\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        status\n        content\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ef2d8e2f721cb77607af7421f76cd695";
+(node as any).hash = "2ae22db6e21db2cade3476a25b912eec";
 
 export default node;

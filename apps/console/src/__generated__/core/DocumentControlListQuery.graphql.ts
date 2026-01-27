@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9b0874e62bfe3cc79cbf2853e7571ae2>>
+ * @generated SignedSource<<cc24dc8755dbcbc3262b52659134b947>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type ControlOrder = {
   direction: OrderDirection;
   field: ControlOrderField;
 };
-export type DocumentControlsTabControlsQuery$variables = {
+export type DocumentControlListQuery$variables = {
   after?: string | null | undefined;
   before?: string | null | undefined;
   filter?: ControlFilter | null | undefined;
@@ -28,14 +28,14 @@ export type DocumentControlsTabControlsQuery$variables = {
   last?: number | null | undefined;
   order?: ControlOrder | null | undefined;
 };
-export type DocumentControlsTabControlsQuery$data = {
+export type DocumentControlListQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"DocumentControlsTabFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentControlListFragment">;
   };
 };
-export type DocumentControlsTabControlsQuery = {
-  response: DocumentControlsTabControlsQuery$data;
-  variables: DocumentControlsTabControlsQuery$variables;
+export type DocumentControlListQuery = {
+  response: DocumentControlListQuery$data;
+  variables: DocumentControlListQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -152,7 +152,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentControlsTabControlsQuery",
+    "name": "DocumentControlListQuery",
     "selections": [
       {
         "alias": null,
@@ -176,7 +176,7 @@ return {
               }
             ],
             "kind": "FragmentSpread",
-            "name": "DocumentControlsTabFragment"
+            "name": "DocumentControlListFragment"
           }
         ],
         "storageKey": null
@@ -197,7 +197,7 @@ return {
       (v4/*: any*/)
     ],
     "kind": "Operation",
-    "name": "DocumentControlsTabControlsQuery",
+    "name": "DocumentControlListQuery",
     "selections": [
       {
         "alias": null,
@@ -348,16 +348,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3640a2f9f03d965c268474fdfb4aa5e0",
+    "cacheID": "b88b4ca4d817fd4cb0e830391b10053a",
     "id": null,
     "metadata": {},
-    "name": "DocumentControlsTabControlsQuery",
+    "name": "DocumentControlListQuery",
     "operationKind": "query",
-    "text": "query DocumentControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment DocumentControlsTabFragment_4cFWzS on Document {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
+    "text": "query DocumentControlListQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentControlListFragment_4cFWzS\n    id\n  }\n}\n\nfragment DocumentControlListFragment_4cFWzS on Document {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c1b6d5212b3fa33f60c02ddee32d5cea";
+(node as any).hash = "564d18d5d5fb4c71f137e236bc16d138";
 
 export default node;

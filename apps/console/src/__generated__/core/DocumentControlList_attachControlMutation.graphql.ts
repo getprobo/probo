@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<aadcc969afca041393632ea2f4b98265>>
+ * @generated SignedSource<<443d3250386ad406f7dc62c35297ed8f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,11 +14,11 @@ export type CreateControlDocumentMappingInput = {
   controlId: string;
   documentId: string;
 };
-export type DocumentControlsTab_attachControlMutation$variables = {
+export type DocumentControlList_attachControlMutation$variables = {
   connections: ReadonlyArray<string>;
   input: CreateControlDocumentMappingInput;
 };
-export type DocumentControlsTab_attachControlMutation$data = {
+export type DocumentControlList_attachControlMutation$data = {
   readonly createControlDocumentMapping: {
     readonly controlEdge: {
       readonly node: {
@@ -28,9 +28,9 @@ export type DocumentControlsTab_attachControlMutation$data = {
     };
   };
 };
-export type DocumentControlsTab_attachControlMutation = {
-  response: DocumentControlsTab_attachControlMutation$data;
-  variables: DocumentControlsTab_attachControlMutation$variables;
+export type DocumentControlList_attachControlMutation = {
+  response: DocumentControlList_attachControlMutation$data;
+  variables: DocumentControlList_attachControlMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -73,7 +73,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentControlsTab_attachControlMutation",
+    "name": "DocumentControlList_attachControlMutation",
     "selections": [
       {
         "alias": null,
@@ -125,7 +125,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "DocumentControlsTab_attachControlMutation",
+    "name": "DocumentControlList_attachControlMutation",
     "selections": [
       {
         "alias": null,
@@ -201,16 +201,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5506b27c88242f338e0d004c27f644de",
+    "cacheID": "b9968838fb5f70316d9245f390a881c8",
     "id": null,
     "metadata": {},
-    "name": "DocumentControlsTab_attachControlMutation",
+    "name": "DocumentControlList_attachControlMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentControlsTab_attachControlMutation(\n  $input: CreateControlDocumentMappingInput!\n) {\n  createControlDocumentMapping(input: $input) {\n    controlEdge {\n      node {\n        id\n        ...LinkedControlsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
+    "text": "mutation DocumentControlList_attachControlMutation(\n  $input: CreateControlDocumentMappingInput!\n) {\n  createControlDocumentMapping(input: $input) {\n    controlEdge {\n      node {\n        id\n        ...LinkedControlsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "273f0d619a2be7df7451e7354c53315a";
+(node as any).hash = "8598ac5c4d0f83519b134549cf6f3353";
 
 export default node;
