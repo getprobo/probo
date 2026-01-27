@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3fb1661c5bda6573c377f516b970643a>>
+ * @generated SignedSource<<96fbfd51b05b496753a0d278d92f2eb4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -53,7 +53,21 @@ v2 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v3 = {
+  "kind": "Literal",
+  "name": "first",
+  "value": 0
+},
+v4 = [
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "totalCount",
+    "storageKey": null
+  }
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -196,12 +210,20 @@ return {
                     "storageKey": null
                   },
                   {
-                    "alias": null,
+                    "alias": "lastVersion",
                     "args": [
                       {
                         "kind": "Literal",
                         "name": "first",
                         "value": 1
+                      },
+                      {
+                        "kind": "Literal",
+                        "name": "orderBy",
+                        "value": {
+                          "direction": "DESC",
+                          "field": "CREATED_AT"
+                        }
                       }
                     ],
                     "concreteType": "DocumentVersionConnection",
@@ -245,47 +267,41 @@ return {
                                 "args": [
                                   {
                                     "kind": "Literal",
-                                    "name": "first",
-                                    "value": 1000
-                                  }
+                                    "name": "filter",
+                                    "value": {
+                                      "activeContract": true
+                                    }
+                                  },
+                                  (v3/*: any*/)
                                 ],
                                 "concreteType": "DocumentVersionSignatureConnection",
                                 "kind": "LinkedField",
                                 "name": "signatures",
                                 "plural": false,
-                                "selections": [
+                                "selections": (v4/*: any*/),
+                                "storageKey": "signatures(filter:{\"activeContract\":true},first:0)"
+                              },
+                              {
+                                "alias": "signedSignatures",
+                                "args": [
                                   {
-                                    "alias": null,
-                                    "args": null,
-                                    "concreteType": "DocumentVersionSignatureEdge",
-                                    "kind": "LinkedField",
-                                    "name": "edges",
-                                    "plural": true,
-                                    "selections": [
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "concreteType": "DocumentVersionSignature",
-                                        "kind": "LinkedField",
-                                        "name": "node",
-                                        "plural": false,
-                                        "selections": [
-                                          (v2/*: any*/),
-                                          {
-                                            "alias": null,
-                                            "args": null,
-                                            "kind": "ScalarField",
-                                            "name": "state",
-                                            "storageKey": null
-                                          }
-                                        ],
-                                        "storageKey": null
-                                      }
-                                    ],
-                                    "storageKey": null
-                                  }
+                                    "kind": "Literal",
+                                    "name": "filter",
+                                    "value": {
+                                      "activeContract": true,
+                                      "states": [
+                                        "SIGNED"
+                                      ]
+                                    }
+                                  },
+                                  (v3/*: any*/)
                                 ],
-                                "storageKey": "signatures(first:1000)"
+                                "concreteType": "DocumentVersionSignatureConnection",
+                                "kind": "LinkedField",
+                                "name": "signatures",
+                                "plural": false,
+                                "selections": (v4/*: any*/),
+                                "storageKey": "signatures(filter:{\"activeContract\":true,\"states\":[\"SIGNED\"]},first:0)"
                               }
                             ],
                             "storageKey": null
@@ -294,7 +310,7 @@ return {
                         "storageKey": null
                       }
                     ],
-                    "storageKey": "versions(first:1)"
+                    "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                   }
                 ],
                 "storageKey": null
@@ -308,12 +324,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9e790eaab9b8c776beb9d021942bdf22",
+    "cacheID": "0ac164af501f3f1bb74483e15b320715",
     "id": null,
     "metadata": {},
     "name": "PublishDocumentsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

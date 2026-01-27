@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f3ca69e3f5731e73dc9f4268b0507adc>>
+ * @generated SignedSource<<582e2fb7616b46350bf9dbce26c62811>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -118,6 +118,20 @@ v13 = [
     "kind": "Variable",
     "name": "orderBy",
     "variableName": "order"
+  }
+],
+v14 = {
+  "kind": "Literal",
+  "name": "first",
+  "value": 0
+},
+v15 = [
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "totalCount",
+    "storageKey": null
   }
 ];
 return {
@@ -302,12 +316,20 @@ return {
                             "storageKey": null
                           },
                           {
-                            "alias": null,
+                            "alias": "lastVersion",
                             "args": [
                               {
                                 "kind": "Literal",
                                 "name": "first",
                                 "value": 1
+                              },
+                              {
+                                "kind": "Literal",
+                                "name": "orderBy",
+                                "value": {
+                                  "direction": "DESC",
+                                  "field": "CREATED_AT"
+                                }
                               }
                             ],
                             "concreteType": "DocumentVersionConnection",
@@ -351,47 +373,41 @@ return {
                                         "args": [
                                           {
                                             "kind": "Literal",
-                                            "name": "first",
-                                            "value": 1000
-                                          }
+                                            "name": "filter",
+                                            "value": {
+                                              "activeContract": true
+                                            }
+                                          },
+                                          (v14/*: any*/)
                                         ],
                                         "concreteType": "DocumentVersionSignatureConnection",
                                         "kind": "LinkedField",
                                         "name": "signatures",
                                         "plural": false,
-                                        "selections": [
+                                        "selections": (v15/*: any*/),
+                                        "storageKey": "signatures(filter:{\"activeContract\":true},first:0)"
+                                      },
+                                      {
+                                        "alias": "signedSignatures",
+                                        "args": [
                                           {
-                                            "alias": null,
-                                            "args": null,
-                                            "concreteType": "DocumentVersionSignatureEdge",
-                                            "kind": "LinkedField",
-                                            "name": "edges",
-                                            "plural": true,
-                                            "selections": [
-                                              {
-                                                "alias": null,
-                                                "args": null,
-                                                "concreteType": "DocumentVersionSignature",
-                                                "kind": "LinkedField",
-                                                "name": "node",
-                                                "plural": false,
-                                                "selections": [
-                                                  (v12/*: any*/),
-                                                  {
-                                                    "alias": null,
-                                                    "args": null,
-                                                    "kind": "ScalarField",
-                                                    "name": "state",
-                                                    "storageKey": null
-                                                  }
-                                                ],
-                                                "storageKey": null
-                                              }
-                                            ],
-                                            "storageKey": null
-                                          }
+                                            "kind": "Literal",
+                                            "name": "filter",
+                                            "value": {
+                                              "activeContract": true,
+                                              "states": [
+                                                "SIGNED"
+                                              ]
+                                            }
+                                          },
+                                          (v14/*: any*/)
                                         ],
-                                        "storageKey": "signatures(first:1000)"
+                                        "concreteType": "DocumentVersionSignatureConnection",
+                                        "kind": "LinkedField",
+                                        "name": "signatures",
+                                        "plural": false,
+                                        "selections": (v15/*: any*/),
+                                        "storageKey": "signatures(filter:{\"activeContract\":true,\"states\":[\"SIGNED\"]},first:0)"
                                       }
                                     ],
                                     "storageKey": null
@@ -400,7 +416,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "versions(first:1)"
+                            "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           },
                           (v11/*: any*/)
                         ],
@@ -491,12 +507,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c404cb30a5176c7d01cace940923f480",
+    "cacheID": "d79ffc90943fa44e309a27784a8c65b8",
     "id": null,
     "metadata": {},
     "name": "DocumentsListQuery",
     "operationKind": "query",
-    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

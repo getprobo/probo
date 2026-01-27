@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<664a9b09aac444c69891219cca1c6b8d>>
+ * @generated SignedSource<<b6234102a57c0c233979c0bc51c2b49c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,36 +12,33 @@ import { ReaderFragment } from 'relay-runtime';
 export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "SECRET";
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
-export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentListItemFragment$data = {
   readonly canDelete: boolean;
   readonly classification: DocumentClassification;
   readonly documentType: DocumentType;
   readonly id: string;
-  readonly owner: {
-    readonly fullName: string;
-    readonly id: string;
-  };
-  readonly title: string;
-  readonly updatedAt: string;
-  readonly versions: {
+  readonly lastVersion: {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
         readonly signatures: {
-          readonly edges: ReadonlyArray<{
-            readonly node: {
-              readonly id: string;
-              readonly state: DocumentVersionSignatureState;
-            };
-          }>;
+          readonly totalCount: number;
+        };
+        readonly signedSignatures: {
+          readonly totalCount: number;
         };
         readonly status: DocumentStatus;
         readonly version: number;
       };
     }>;
   };
+  readonly owner: {
+    readonly fullName: string;
+    readonly id: string;
+  };
+  readonly title: string;
+  readonly updatedAt: string;
   readonly " $fragmentType": "DocumentListItemFragment";
 };
 export type DocumentListItemFragment$key = {
@@ -56,7 +53,21 @@ var v0 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v1 = {
+  "kind": "Literal",
+  "name": "first",
+  "value": 0
+},
+v2 = [
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "totalCount",
+    "storageKey": null
+  }
+];
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
@@ -125,12 +136,20 @@ return {
       "storageKey": null
     },
     {
-      "alias": null,
+      "alias": "lastVersion",
       "args": [
         {
           "kind": "Literal",
           "name": "first",
           "value": 1
+        },
+        {
+          "kind": "Literal",
+          "name": "orderBy",
+          "value": {
+            "direction": "DESC",
+            "field": "CREATED_AT"
+          }
         }
       ],
       "concreteType": "DocumentVersionConnection",
@@ -174,47 +193,41 @@ return {
                   "args": [
                     {
                       "kind": "Literal",
-                      "name": "first",
-                      "value": 1000
-                    }
+                      "name": "filter",
+                      "value": {
+                        "activeContract": true
+                      }
+                    },
+                    (v1/*: any*/)
                   ],
                   "concreteType": "DocumentVersionSignatureConnection",
                   "kind": "LinkedField",
                   "name": "signatures",
                   "plural": false,
-                  "selections": [
+                  "selections": (v2/*: any*/),
+                  "storageKey": "signatures(filter:{\"activeContract\":true},first:0)"
+                },
+                {
+                  "alias": "signedSignatures",
+                  "args": [
                     {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "DocumentVersionSignatureEdge",
-                      "kind": "LinkedField",
-                      "name": "edges",
-                      "plural": true,
-                      "selections": [
-                        {
-                          "alias": null,
-                          "args": null,
-                          "concreteType": "DocumentVersionSignature",
-                          "kind": "LinkedField",
-                          "name": "node",
-                          "plural": false,
-                          "selections": [
-                            (v0/*: any*/),
-                            {
-                              "alias": null,
-                              "args": null,
-                              "kind": "ScalarField",
-                              "name": "state",
-                              "storageKey": null
-                            }
-                          ],
-                          "storageKey": null
-                        }
-                      ],
-                      "storageKey": null
-                    }
+                      "kind": "Literal",
+                      "name": "filter",
+                      "value": {
+                        "activeContract": true,
+                        "states": [
+                          "SIGNED"
+                        ]
+                      }
+                    },
+                    (v1/*: any*/)
                   ],
-                  "storageKey": "signatures(first:1000)"
+                  "concreteType": "DocumentVersionSignatureConnection",
+                  "kind": "LinkedField",
+                  "name": "signatures",
+                  "plural": false,
+                  "selections": (v2/*: any*/),
+                  "storageKey": "signatures(filter:{\"activeContract\":true,\"states\":[\"SIGNED\"]},first:0)"
                 }
               ],
               "storageKey": null
@@ -223,7 +236,7 @@ return {
           "storageKey": null
         }
       ],
-      "storageKey": "versions(first:1)"
+      "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
     }
   ],
   "type": "Document",
@@ -231,6 +244,6 @@ return {
 };
 })();
 
-(node as any).hash = "6c4db808e4ec47dbca635feb3ea13e56";
+(node as any).hash = "6e72b37fa90b7a272ebba38fe80b9f93";
 
 export default node;

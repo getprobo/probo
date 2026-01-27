@@ -2,7 +2,7 @@ import { formatDate, getDocumentClassificationLabel, getDocumentTypeLabel, sprin
 import { useTranslate } from "@probo/i18n";
 import { ActionDropdown, Avatar, Badge, Checkbox, DropdownItem, IconTrashCan, Td, Tr, useConfirm } from "@probo/ui";
 import { useFragment } from "react-relay";
-import { graphql } from "relay-runtime";
+import { type DataID, graphql } from "relay-runtime";
 
 import type { DocumentListItem_deleteMutation } from "#/__generated__/core/DocumentListItem_deleteMutation.graphql";
 import type { DocumentListItemFragment$key } from "#/__generated__/core/DocumentListItemFragment.graphql";
@@ -21,19 +21,17 @@ const fragment = graphql`
       id
       fullName
     }
-    versions(first: 1) {
+    lastVersion: versions(first: 1 orderBy: { field: CREATED_AT direction: DESC }) {
       edges {
         node {
           id
           status
           version
-          signatures(first: 1000) {
-            edges {
-              node {
-                id
-                state
-              }
-            }
+          signatures(first: 0 filter: { activeContract: true }) {
+            totalCount
+          }
+          signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true }) {
+            totalCount
           }
         }
       }
@@ -53,15 +51,15 @@ const deleteDocumentMutation = graphql`
 `;
 
 export function DocumentListItem(props: {
-  fKey: DocumentListItemFragment$key;
-  connectionId: string;
+  fragmentRef: DocumentListItemFragment$key;
+  connectionId: DataID;
   checked: boolean;
   onCheck: () => void;
   hasAnyAction: boolean;
 }) {
   const {
     connectionId,
-    fKey,
+    fragmentRef,
     checked,
     onCheck,
     hasAnyAction,
@@ -70,11 +68,11 @@ export function DocumentListItem(props: {
   const organizationId = useOrganizationId();
   const document = useFragment<DocumentListItemFragment$key>(
     fragment,
-    fKey,
+    fragmentRef,
   );
-  const lastVersion = document.versions.edges?.[0]?.node;
+  const lastVersion = document.lastVersion.edges[0].node;
 
-  const isDraft = lastVersion?.status === "DRAFT";
+  const isDraft = lastVersion.status === "DRAFT";
   const { __ } = useTranslate();
 
   const [deleteDocument] = useMutationWithToasts<DocumentListItem_deleteMutation>(
@@ -85,17 +83,6 @@ export function DocumentListItem(props: {
     },
   );
   const confirm = useConfirm();
-
-  if (!lastVersion) {
-    return null;
-  }
-
-  const signatures
-    = lastVersion.signatures?.edges?.map(edge => edge?.node)?.filter(Boolean)
-      ?? [];
-  const signedCount = signatures.filter(
-    signature => signature.state === "SIGNED",
-  ).length;
 
   const handleDelete = () => {
     confirm(
@@ -148,9 +135,9 @@ export function DocumentListItem(props: {
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>
       <Td className="w-20">
-        {signedCount}
+        {lastVersion.signedSignatures.totalCount}
         /
-        {signatures.length}
+        {lastVersion.signatures.totalCount}
       </Td>
       {hasAnyAction && (
         <Td noLink width={50} className="text-end w-18">

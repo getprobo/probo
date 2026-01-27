@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fc98d690c8825d5c202355ffd63a4244>>
+ * @generated SignedSource<<df4a916b5ff0623fb9be5ac5b4651fac>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -107,7 +107,21 @@ v8 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v9 = {
+  "kind": "Literal",
+  "name": "first",
+  "value": 0
+},
+v10 = [
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "totalCount",
+    "storageKey": null
+  }
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -317,12 +331,20 @@ return {
                             "storageKey": null
                           },
                           {
-                            "alias": null,
+                            "alias": "lastVersion",
                             "args": [
                               {
                                 "kind": "Literal",
                                 "name": "first",
                                 "value": 1
+                              },
+                              {
+                                "kind": "Literal",
+                                "name": "orderBy",
+                                "value": {
+                                  "direction": "DESC",
+                                  "field": "CREATED_AT"
+                                }
                               }
                             ],
                             "concreteType": "DocumentVersionConnection",
@@ -366,47 +388,41 @@ return {
                                         "args": [
                                           {
                                             "kind": "Literal",
-                                            "name": "first",
-                                            "value": 1000
-                                          }
+                                            "name": "filter",
+                                            "value": {
+                                              "activeContract": true
+                                            }
+                                          },
+                                          (v9/*: any*/)
                                         ],
                                         "concreteType": "DocumentVersionSignatureConnection",
                                         "kind": "LinkedField",
                                         "name": "signatures",
                                         "plural": false,
-                                        "selections": [
+                                        "selections": (v10/*: any*/),
+                                        "storageKey": "signatures(filter:{\"activeContract\":true},first:0)"
+                                      },
+                                      {
+                                        "alias": "signedSignatures",
+                                        "args": [
                                           {
-                                            "alias": null,
-                                            "args": null,
-                                            "concreteType": "DocumentVersionSignatureEdge",
-                                            "kind": "LinkedField",
-                                            "name": "edges",
-                                            "plural": true,
-                                            "selections": [
-                                              {
-                                                "alias": null,
-                                                "args": null,
-                                                "concreteType": "DocumentVersionSignature",
-                                                "kind": "LinkedField",
-                                                "name": "node",
-                                                "plural": false,
-                                                "selections": [
-                                                  (v8/*: any*/),
-                                                  {
-                                                    "alias": null,
-                                                    "args": null,
-                                                    "kind": "ScalarField",
-                                                    "name": "state",
-                                                    "storageKey": null
-                                                  }
-                                                ],
-                                                "storageKey": null
-                                              }
-                                            ],
-                                            "storageKey": null
-                                          }
+                                            "kind": "Literal",
+                                            "name": "filter",
+                                            "value": {
+                                              "activeContract": true,
+                                              "states": [
+                                                "SIGNED"
+                                              ]
+                                            }
+                                          },
+                                          (v9/*: any*/)
                                         ],
-                                        "storageKey": "signatures(first:1000)"
+                                        "concreteType": "DocumentVersionSignatureConnection",
+                                        "kind": "LinkedField",
+                                        "name": "signatures",
+                                        "plural": false,
+                                        "selections": (v10/*: any*/),
+                                        "storageKey": "signatures(filter:{\"activeContract\":true,\"states\":[\"SIGNED\"]},first:0)"
                                       }
                                     ],
                                     "storageKey": null
@@ -415,7 +431,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "versions(first:1)"
+                            "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           },
                           (v2/*: any*/),
                           (v7/*: any*/)
@@ -507,12 +523,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2ff9e1818d86d64d512a54ec9acebb16",
+    "cacheID": "be5d2e7f4a87fba4bf56e605bd849d7d",
     "id": null,
     "metadata": {},
     "name": "DocumentsPageQuery",
     "operationKind": "query",
-    "text": "query DocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateDocument: permission(action: \"core:document:create\")\n      ...DocumentListFragment_1WMmEg\n      documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n        edges {\n          node {\n            canSendSigningNotifications: permission(action: \"core:document:send-signing-notifications\")\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentListFragment_1WMmEg on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateDocument: permission(action: \"core:document:create\")\n      ...DocumentListFragment_1WMmEg\n      documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n        edges {\n          node {\n            canSendSigningNotifications: permission(action: \"core:document:send-signing-notifications\")\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentListFragment_1WMmEg on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

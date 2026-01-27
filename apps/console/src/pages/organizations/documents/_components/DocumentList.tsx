@@ -254,7 +254,7 @@ export function DocumentList(props: {
                 checked={selection.includes(document.id)}
                 onCheck={() => toggle(document.id)}
                 key={document.id}
-                fKey={document}
+                fragmentRef={document}
                 connectionId={connectionId}
                 hasAnyAction={hasAnyAction}
               />
