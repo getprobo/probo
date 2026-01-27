@@ -94,7 +94,7 @@ export default function DocumentsPage(props: {
             <Button
               icon={IconBell2}
               variant="secondary"
-              onClick={void handleSendSigningNotifications}
+              onClick={() => void handleSendSigningNotifications()}
             >
               {__("Send signing notifications")}
             </Button>
