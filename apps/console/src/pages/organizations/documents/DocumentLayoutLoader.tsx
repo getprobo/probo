@@ -31,9 +31,11 @@ function DocumentLayoutQueryLoader() {
 }
 
 export default function DocumentLayoutLoader() {
+  const { documentId, versionId } = useParams();
+
   return (
     <CoreRelayProvider>
-      <Suspense fallback={<PageSkeleton />}>
+      <Suspense key={`${documentId}-${versionId}`} fallback={<PageSkeleton />}>
         <DocumentLayoutQueryLoader />
       </Suspense>
     </CoreRelayProvider>

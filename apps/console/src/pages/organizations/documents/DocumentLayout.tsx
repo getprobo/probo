@@ -149,7 +149,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
                 {__("Publish")}
               </Button>
             )}
-            <DocumentVersionsDropdown currentVersionId={currentVersion.id} />
+            <DocumentVersionsDropdown />
             <DocumentActionsDropdownn documentFragmentRef={document} versionFragmentRef={currentVersion} />
           </div>
         </div>

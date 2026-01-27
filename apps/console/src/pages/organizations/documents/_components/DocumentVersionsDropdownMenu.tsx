@@ -6,7 +6,7 @@ import type { DocumentVersionsDropdownMenuQuery } from "#/__generated__/core/Doc
 import { DocumentVersionsDropdownItem } from "./DocumentVersionsDropdownItem";
 
 export const documentVersionsDropdownMenuQuery = graphql`
-  query DocumentVersionsDropdownMenuQuery($documentId: ID!) {
+  query DocumentVersionsDropdownMenuQuery($documentId: ID! $versionId: ID! $versionSpecified: Boolean!) {
     document: node(id: $documentId) {
       __typename
       ... on Document {
@@ -18,24 +18,41 @@ export const documentVersionsDropdownMenuQuery = graphql`
             }
           }
         }
+        # We use this on /documents/:documentId
+        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    }
+    # We use this on /documents/:documentId/versions/:versionId
+    version: node(id: $versionId) @include(if: $versionSpecified) {
+      __typename
+      ... on DocumentVersion {
+        id
       }
     }
   }
 `;
 
 export function DocumentVersionsDropdownMenu(props: {
-  currentVersionId: string;
   queryRef: PreloadedQuery<DocumentVersionsDropdownMenuQuery>;
 }) {
-  const { currentVersionId, queryRef } = props;
+  const { queryRef } = props;
 
-  const { document } = usePreloadedQuery<DocumentVersionsDropdownMenuQuery>(
+  const { document, version } = usePreloadedQuery<DocumentVersionsDropdownMenuQuery>(
     documentVersionsDropdownMenuQuery,
     queryRef,
   );
-  if (document.__typename !== "Document") {
+  if (document.__typename !== "Document" || (version && version.__typename !== "DocumentVersion")) {
     throw new Error("invalid type for node");
   }
+
+  const lastVersion = document.lastVersion?.edges[0].node;
+  const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
 
   return (
     <>
@@ -43,7 +60,7 @@ export function DocumentVersionsDropdownMenu(props: {
         <DocumentVersionsDropdownItem
           key={version.id}
           fragmentRef={version}
-          active={version.id === currentVersionId}
+          active={version.id === currentVersion.id}
         />
       ))}
     </>
