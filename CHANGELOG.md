@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.11] - 2026-01-27
+
+### Added
+
+- CI Test analytics with junit results format
+- CI performance improvements with caching
+- Extend dependabot to all dependencies
+
+### Fixed
+
+- AWS path style s3 option for Docker image entrypoint
+- Console signatures counts
+- Console signatures requests notifications
+
 ## [0.116.10] - 2026-01-23
 
 ### Added
