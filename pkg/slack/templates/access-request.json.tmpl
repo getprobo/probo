@@ -1,11 +1,11 @@
 {
-  "text": "New Trust Center Access Request",
+  "text": "New Compliance Page Access Request",
   "blocks": [
     {
       "type": "header",
       "text": {
         "type": "plain_text",
-        "text": "🔒 New Trust Center Access Request"
+        "text": "🔒 New Compliance Page Access Request"
       }
     },
     {
@@ -46,7 +46,7 @@
             "type": "plain_text",
             "text": "View Requests"
           },
-          "url": "https://{{.Domain}}/organizations/{{.OrganizationID}}/trust-center/access"
+          "url": "https://{{.Domain}}/organizations/{{.OrganizationID}}/compliance-page/access"
         }
       ]
     }{{if .Documents}},
@@ -70,7 +70,7 @@
         {
           "type": "mrkdwn",
           {{if eq .Status "GRANTED"}}
-          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access|✓ Granted>"
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/compliance-page/access|✓ Granted>"
           {{else if eq .Status "REJECTED"}}
           "text": "✗ Rejected"
           {{else if eq .Status "REVOKED"}}
@@ -139,7 +139,7 @@
         {
           "type": "mrkdwn",
           {{if eq .Status "GRANTED"}}
-          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access|✓ Granted>"
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/compliance-page/access|✓ Granted>"
           {{else if eq .Status "REJECTED"}}
           "text": "✗ Rejected"
           {{else if eq .Status "REVOKED"}}
@@ -203,12 +203,12 @@
       "fields": [
         {
           "type": "mrkdwn",
-          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/files|{{jsonEscape .Name}}>{{if .Category}} ({{jsonEscape .Category}}){{end}}"
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/compliance-page/files|{{jsonEscape .Name}}>{{if .Category}} ({{jsonEscape .Category}}){{end}}"
         },
         {
           "type": "mrkdwn",
           {{if eq .Status "GRANTED"}}
-          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access|✓ Granted>"
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/compliance-page/access|✓ Granted>"
           {{else if eq .Status "REJECTED"}}
           "text": "✗ Rejected"
           {{else if eq .Status "REVOKED"}}
