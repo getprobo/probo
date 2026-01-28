@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<17aba6dd50ebba280c11c963a4adede3>>
+ * @generated SignedSource<<b6be9a950f88b30b167bada9075ece11>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,22 +10,14 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type TrustCenterAccessGraph_accesses$data = {
+export type CompliancePageAccessListFragment$data = {
   readonly accesses: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly cursor: string;
       readonly node: {
-        readonly active: boolean;
-        readonly activeCount: number;
-        readonly canDelete: boolean;
-        readonly canUpdate: boolean;
-        readonly createdAt: string;
-        readonly email: string;
-        readonly hasAcceptedNonDisclosureAgreement: boolean;
         readonly id: string;
-        readonly name: string;
-        readonly pendingRequestCount: number;
+        readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAccessListItemFragment">;
       };
     }>;
     readonly pageInfo: {
@@ -36,14 +28,14 @@ export type TrustCenterAccessGraph_accesses$data = {
     };
   };
   readonly id: string;
-  readonly " $fragmentType": "TrustCenterAccessGraph_accesses";
+  readonly " $fragmentType": "CompliancePageAccessListFragment";
 };
-export type TrustCenterAccessGraph_accesses$key = {
-  readonly " $data"?: TrustCenterAccessGraph_accesses$data;
-  readonly " $fragmentSpreads": FragmentRefs<"TrustCenterAccessGraph_accesses">;
+export type CompliancePageAccessListFragment$key = {
+  readonly " $data"?: CompliancePageAccessListFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAccessListFragment">;
 };
 
-import TrustCenterAccessGraphPaginationQuery_graphql from './TrustCenterAccessGraphPaginationQuery.graphql';
+import CompliancePageAccessListQuery_graphql from './CompliancePageAccessListQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
@@ -59,20 +51,30 @@ v1 = {
 return {
   "argumentDefinitions": [
     {
-      "kind": "RootArgument",
-      "name": "count"
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "after"
     },
     {
-      "kind": "RootArgument",
-      "name": "cursor"
+      "defaultValue": 10,
+      "kind": "LocalArgument",
+      "name": "first"
+    },
+    {
+      "defaultValue": {
+        "direction": "DESC",
+        "field": "CREATED_AT"
+      },
+      "kind": "LocalArgument",
+      "name": "order"
     }
   ],
   "kind": "Fragment",
   "metadata": {
     "connection": [
       {
-        "count": "count",
-        "cursor": "cursor",
+        "count": "first",
+        "cursor": "after",
         "direction": "forward",
         "path": (v0/*: any*/)
       }
@@ -80,8 +82,8 @@ return {
     "refetch": {
       "connection": {
         "forward": {
-          "count": "count",
-          "cursor": "cursor"
+          "count": "first",
+          "cursor": "after"
         },
         "backward": null,
         "path": (v0/*: any*/)
@@ -89,30 +91,27 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": TrustCenterAccessGraphPaginationQuery_graphql,
+      "operation": CompliancePageAccessListQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "TrustCenterAccessGraph_accesses",
+  "name": "CompliancePageAccessListFragment",
   "selections": [
     {
       "alias": "accesses",
       "args": [
         {
-          "kind": "Literal",
+          "kind": "Variable",
           "name": "orderBy",
-          "value": {
-            "direction": "DESC",
-            "field": "CREATED_AT"
-          }
+          "variableName": "order"
         }
       ],
       "concreteType": "TrustCenterAccessConnection",
       "kind": "LinkedField",
-      "name": "__TrustCenterAccessGraph_accesses_connection",
+      "name": "__CompliancePageAccessList_accesses_connection",
       "plural": false,
       "selections": [
         {
@@ -179,79 +178,9 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
-                  "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "email",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "name",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "active",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "hasAcceptedNonDisclosureAgreement",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "pendingRequestCount",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "activeCount",
-                  "storageKey": null
-                },
-                {
-                  "alias": "canUpdate",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "action",
-                      "value": "core:trust-center-access:update"
-                    }
-                  ],
-                  "kind": "ScalarField",
-                  "name": "permission",
-                  "storageKey": "permission(action:\"core:trust-center-access:update\")"
-                },
-                {
-                  "alias": "canDelete",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "action",
-                      "value": "core:trust-center-access:delete"
-                    }
-                  ],
-                  "kind": "ScalarField",
-                  "name": "permission",
-                  "storageKey": "permission(action:\"core:trust-center-access:delete\")"
+                  "kind": "FragmentSpread",
+                  "name": "CompliancePageAccessListItemFragment"
                 },
                 {
                   "alias": null,
@@ -279,7 +208,7 @@ return {
           ]
         }
       ],
-      "storageKey": "__TrustCenterAccessGraph_accesses_connection(orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+      "storageKey": null
     },
     (v1/*: any*/)
   ],
@@ -288,6 +217,6 @@ return {
 };
 })();
 
-(node as any).hash = "7d69d885bc80ed04776bafa53157590e";
+(node as any).hash = "51879d3ed361c46e313f58abaaac04d9";
 
 export default node;

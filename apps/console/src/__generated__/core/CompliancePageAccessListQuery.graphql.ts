@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0a06a583c9eafcd4b26a4ec7415ca88b>>
+ * @generated SignedSource<<3c657b1368adbcba6300b5b94eff92f2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,99 +10,124 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type TrustCenterAccessGraphPaginationQuery$variables = {
-  count?: number | null | undefined;
-  cursor?: string | null | undefined;
-  id: string;
+export type OrderDirection = "ASC" | "DESC";
+export type TrustCenterAccessOrderField = "CREATED_AT";
+export type TrustCenterAccessOrder = {
+  direction: OrderDirection;
+  field: TrustCenterAccessOrderField;
 };
-export type TrustCenterAccessGraphPaginationQuery$data = {
+export type CompliancePageAccessListQuery$variables = {
+  after?: string | null | undefined;
+  first?: number | null | undefined;
+  id: string;
+  order?: TrustCenterAccessOrder | null | undefined;
+};
+export type CompliancePageAccessListQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"TrustCenterAccessGraph_accesses">;
+    readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAccessListFragment">;
   };
 };
-export type TrustCenterAccessGraphPaginationQuery = {
-  response: TrustCenterAccessGraphPaginationQuery$data;
-  variables: TrustCenterAccessGraphPaginationQuery$variables;
+export type CompliancePageAccessListQuery = {
+  response: CompliancePageAccessListQuery$data;
+  variables: CompliancePageAccessListQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "count"
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "after"
+},
+v1 = {
+  "defaultValue": 10,
+  "kind": "LocalArgument",
+  "name": "first"
+},
+v2 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "id"
+},
+v3 = {
+  "defaultValue": {
+    "direction": "DESC",
+    "field": "CREATED_AT"
   },
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "cursor"
-  },
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "id"
-  }
-],
-v1 = [
+  "kind": "LocalArgument",
+  "name": "order"
+},
+v4 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "id"
   }
 ],
-v2 = {
+v5 = {
+  "kind": "Variable",
+  "name": "after",
+  "variableName": "after"
+},
+v6 = {
+  "kind": "Variable",
+  "name": "first",
+  "variableName": "first"
+},
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v9 = [
+  (v5/*: any*/),
+  (v6/*: any*/),
   {
     "kind": "Variable",
-    "name": "after",
-    "variableName": "cursor"
-  },
-  {
-    "kind": "Variable",
-    "name": "first",
-    "variableName": "count"
-  },
-  {
-    "kind": "Literal",
     "name": "orderBy",
-    "value": {
-      "direction": "DESC",
-      "field": "CREATED_AT"
-    }
+    "variableName": "order"
   }
 ];
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/),
+      (v2/*: any*/),
+      (v3/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterAccessGraphPaginationQuery",
+    "name": "CompliancePageAccessListQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": (v4/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
           {
-            "args": null,
+            "args": [
+              (v5/*: any*/),
+              (v6/*: any*/),
+              {
+                "kind": "Variable",
+                "name": "order",
+                "variableName": "order"
+              }
+            ],
             "kind": "FragmentSpread",
-            "name": "TrustCenterAccessGraph_accesses"
+            "name": "CompliancePageAccessListFragment"
           }
         ],
         "storageKey": null
@@ -113,26 +138,31 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/),
+      (v3/*: any*/),
+      (v2/*: any*/)
+    ],
     "kind": "Operation",
-    "name": "TrustCenterAccessGraphPaginationQuery",
+    "name": "CompliancePageAccessListQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": (v4/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
-          (v3/*: any*/),
+          (v7/*: any*/),
+          (v8/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v9/*: any*/),
                 "concreteType": "TrustCenterAccessConnection",
                 "kind": "LinkedField",
                 "name": "accesses",
@@ -200,14 +230,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "email",
-                            "storageKey": null
-                          },
+                          (v8/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -219,14 +242,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "active",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "hasAcceptedNonDisclosureAgreement",
+                            "name": "email",
                             "storageKey": null
                           },
                           {
@@ -240,7 +256,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "pendingRequestCount",
+                            "name": "active",
                             "storageKey": null
                           },
                           {
@@ -248,6 +264,20 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "activeCount",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "pendingRequestCount",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "hasAcceptedNonDisclosureAgreement",
                             "storageKey": null
                           },
                           {
@@ -276,7 +306,7 @@ return {
                             "name": "permission",
                             "storageKey": "permission(action:\"core:trust-center-access:delete\")"
                           },
-                          (v2/*: any*/)
+                          (v7/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -300,12 +330,12 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v9/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
                 "handle": "connection",
-                "key": "TrustCenterAccessGraph_accesses",
+                "key": "CompliancePageAccessList_accesses",
                 "kind": "LinkedHandle",
                 "name": "accesses"
               }
@@ -319,16 +349,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "650290081ecafbf348f371c1becf15e3",
+    "cacheID": "75c843f8501c2e5bd2c1422f7cf35b5f",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterAccessGraphPaginationQuery",
+    "name": "CompliancePageAccessListQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphPaginationQuery(\n  $count: Int\n  $cursor: CursorKey\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TrustCenterAccessGraph_accesses\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        pendingRequestCount\n        activeCount\n        canUpdate: permission(action: \"core:trust-center-access:update\")\n        canDelete: permission(action: \"core:trust-center-access:delete\")\n        __typename\n      }\n    }\n  }\n  id\n}\n"
+    "text": "query CompliancePageAccessListQuery(\n  $after: CursorKey = null\n  $first: Int = 10\n  $order: TrustCenterAccessOrder = {field: CREATED_AT, direction: DESC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageAccessListFragment_gOVF5\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment_gOVF5 on TrustCenter {\n  accesses(first: $first, after: $after, orderBy: $order) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  active\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n  canDelete: permission(action: \"core:trust-center-access:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7d69d885bc80ed04776bafa53157590e";
+(node as any).hash = "51879d3ed361c46e313f58abaaac04d9";
 
 export default node;

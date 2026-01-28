@@ -1,37 +1,55 @@
 import { formatDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import {
-  Button,
-  IconCheckmark1,
-  IconCrossLargeX,
-  IconPencil,
-  IconTrashCan,
-  Td,
-  Tr,
-} from "@probo/ui";
+import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, IconTrashCan, Td, Tr } from "@probo/ui";
 import { useCallback, useState } from "react";
+import { useFragment } from "react-relay";
+import { type DataID, graphql } from "relay-runtime";
 
-import type { TrustCenterAccessGraph_accesses$data } from "#/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
-import { deleteTrustCenterAccessMutation } from "#/hooks/graph/TrustCenterAccessGraph";
+import type { CompliancePageAccessListItem_deleteMutation } from "#/__generated__/core/CompliancePageAccessListItem_deleteMutation.graphql";
+import type { CompliancePageAccessListItemFragment$key } from "#/__generated__/core/CompliancePageAccessListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-import type { NodeOf } from "#/types";
+import { TrustCenterAccessEditDialog } from "#/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessEditDialog";
 
-import { TrustCenterAccessEditDialog } from "./TrustCenterAccessEditDialog";
+const fragment = graphql`
+  fragment CompliancePageAccessListItemFragment on TrustCenterAccess {
+    id
+    name
+    email
+    createdAt
+    active
+    activeCount
+    pendingRequestCount
+    hasAcceptedNonDisclosureAgreement
+    canUpdate: permission(action: "core:trust-center-access:update")
+    canDelete: permission(action: "core:trust-center-access:delete")
+  }
+`;
 
-interface TrustCenterAccessItemProps {
-  access: NodeOf<TrustCenterAccessGraph_accesses$data["accesses"]>;
-  connectionId?: string;
+const deleteCompliancePageAccessMutation = graphql`
+  mutation CompliancePageAccessListItem_deleteMutation(
+    $input: DeleteTrustCenterAccessInput!
+    $connections: [ID!]!
+  ) {
+    deleteTrustCenterAccess(input: $input) {
+      deletedTrustCenterAccessId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export function CompliancePageAccessListItem(props: {
+  connectionId: DataID;
+  fragmentRef: CompliancePageAccessListItemFragment$key;
   dialogOpen: boolean;
-}
-
-export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
-  const { access, connectionId, dialogOpen: initialDialogOpen } = props;
+}) {
+  const { connectionId, fragmentRef, dialogOpen: initialDialogOpen } = props;
 
   const { __ } = useTranslate();
   const [dialogOpen, setDialogOpen] = useState<boolean>(initialDialogOpen);
 
-  const [deleteInvitation, isDeleting] = useMutationWithToasts(
-    deleteTrustCenterAccessMutation,
+  const access = useFragment<CompliancePageAccessListItemFragment$key>(fragment, fragmentRef);
+
+  const [deleteInvitation, isDeleting] = useMutationWithToasts<CompliancePageAccessListItem_deleteMutation>(
+    deleteCompliancePageAccessMutation,
     {
       successMessage: __("Access deleted successfully"),
       errorMessage: __("Failed to delete access"),
@@ -43,7 +61,7 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
       await deleteInvitation({
         variables: {
           input: { id },
-          connections: connectionId ? [connectionId] : [],
+          connections: [connectionId],
         },
       });
     },

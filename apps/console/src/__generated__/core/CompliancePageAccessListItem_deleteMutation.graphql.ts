@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ed4ab6c79b848843012fc091a7eb325c>>
+ * @generated SignedSource<<25c74b1d91584c785476f8eb07a6db6a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,18 +12,18 @@ import { ConcreteRequest } from 'relay-runtime';
 export type DeleteTrustCenterAccessInput = {
   id: string;
 };
-export type TrustCenterAccessGraphDeleteMutation$variables = {
+export type CompliancePageAccessListItem_deleteMutation$variables = {
   connections: ReadonlyArray<string>;
   input: DeleteTrustCenterAccessInput;
 };
-export type TrustCenterAccessGraphDeleteMutation$data = {
+export type CompliancePageAccessListItem_deleteMutation$data = {
   readonly deleteTrustCenterAccess: {
     readonly deletedTrustCenterAccessId: string;
   };
 };
-export type TrustCenterAccessGraphDeleteMutation = {
-  response: TrustCenterAccessGraphDeleteMutation$data;
-  variables: TrustCenterAccessGraphDeleteMutation$variables;
+export type CompliancePageAccessListItem_deleteMutation = {
+  response: CompliancePageAccessListItem_deleteMutation$data;
+  variables: CompliancePageAccessListItem_deleteMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -59,7 +59,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterAccessGraphDeleteMutation",
+    "name": "CompliancePageAccessListItem_deleteMutation",
     "selections": [
       {
         "alias": null,
@@ -84,7 +84,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "TrustCenterAccessGraphDeleteMutation",
+    "name": "CompliancePageAccessListItem_deleteMutation",
     "selections": [
       {
         "alias": null,
@@ -117,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3f55c9ce5cac2874b769ec994977367a",
+    "cacheID": "10030545f3bff35111fd9eae0c57d351",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterAccessGraphDeleteMutation",
+    "name": "CompliancePageAccessListItem_deleteMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphDeleteMutation(\n  $input: DeleteTrustCenterAccessInput!\n) {\n  deleteTrustCenterAccess(input: $input) {\n    deletedTrustCenterAccessId\n  }\n}\n"
+    "text": "mutation CompliancePageAccessListItem_deleteMutation(\n  $input: DeleteTrustCenterAccessInput!\n) {\n  deleteTrustCenterAccess(input: $input) {\n    deletedTrustCenterAccessId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0d0a44eb6db912eeb533d24718c49b35";
+(node as any).hash = "ed9591cbfdafb0ac1ea26b820a4dbf93";
 
 export default node;
