@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Remove query params from compliange page sidebar website displayed URLs
+- Compliance page vite dev server proxies graphQL API calls to go server port
 
 ## [0.116.11] - 2026-01-27
 
