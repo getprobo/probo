@@ -6,47 +6,6 @@ import type { TrustCenterReferenceGraphUpdateMutation } from "#/__generated__/co
 import type { TrustCenterReferenceGraphUpdateRankMutation } from "#/__generated__/core/TrustCenterReferenceGraphUpdateRankMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
-export const trustCenterReferencesQuery = graphql`
-  query TrustCenterReferenceGraphQuery($trustCenterId: ID!) {
-    node(id: $trustCenterId) {
-      __typename
-      ... on TrustCenter {
-        id
-        references(first: 100, orderBy: { field: RANK, direction: ASC })
-          @connection(key: "TrustCenterReferencesSection_references")
-          @required(action: THROW) {
-          __id
-          pageInfo {
-            hasNextPage
-            hasPreviousPage
-            startCursor
-            endCursor
-          }
-          edges @required(action: THROW) {
-            cursor
-            node {
-              id
-              name
-              description
-              websiteUrl
-              logoUrl
-              rank
-              createdAt
-              updatedAt
-              canUpdate: permission(
-                action: "core:trust-center-reference:update"
-              )
-              canDelete: permission(
-                action: "core:trust-center-reference:delete"
-              )
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
 export const createTrustCenterReferenceMutation = graphql`
   mutation TrustCenterReferenceGraphCreateMutation(
     $input: CreateTrustCenterReferenceInput!
