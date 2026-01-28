@@ -1,4 +1,4 @@
-import { domain, formatError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -109,7 +109,7 @@ export function OrganizationSidebar({
               rel="noopener noreferrer"
             >
               <span className="text-txt-info hover:underline ">
-                {domain(trustCenter.organization.websiteUrl)}
+                {new URL(trustCenter.organization.websiteUrl).host}
               </span>
             </a>
           </BusinessInfo>

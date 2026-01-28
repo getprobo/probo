@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Remove query params from compliange page sidebar website displayed URLs
+
 ## [0.116.11] - 2026-01-27
 
 ### Added

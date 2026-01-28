@@ -1,5 +1,5 @@
 export { objectKeys, objectEntries, cleanFormData } from "./object";
-export { sprintf, faviconUrl, slugify, domain } from "./string";
+export { sprintf, faviconUrl, slugify } from "./string";
 export {
   getCustomDomainStatusBadgeLabel,
   getCustomDomainStatusBadgeVariant,
