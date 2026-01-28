@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<43d75c2e4c035f883790d1d854b60bfc>>
+ * @generated SignedSource<<94259096753f254d67dba23309f3c17b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -70,7 +70,7 @@ v5 = [
   {
     "kind": "Literal",
     "name": "first",
-    "value": 1000
+    "value": 100
   }
 ];
 return {
@@ -290,7 +290,7 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "trustCenterFiles(first:1000)"
+                "storageKey": "trustCenterFiles(first:100)"
               },
               {
                 "alias": null,
@@ -312,12 +312,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "115af8c7555ab3ab0277f16c8ec7ea6d",
+    "cacheID": "dfdca184d1fbe4ccaeddda2c71e86958",
     "id": null,
     "metadata": {},
     "name": "CompliancePageFilesPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageFilesPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateTrustCenterFile: permission(action: \"core:trust-center-file:create\")\n    }\n    ...CompliancePageFileListFragment\n    id\n  }\n}\n\nfragment CompliancePageFileListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageFileListItem_compliancePageFragment\n    id\n  }\n  trustCenterFiles(first: 1000) {\n    edges {\n      node {\n        id\n        ...CompliancePageFileListItem_fileFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment CompliancePageFileListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n\nfragment CompliancePageFileListItem_fileFragment on TrustCenterFile {\n  id\n  name\n  category\n  fileUrl\n  trustCenterVisibility\n  createdAt\n  canUpdate: permission(action: \"core:trust-center-file:update\")\n  canDelete: permission(action: \"core:trust-center-file:delete\")\n}\n"
+    "text": "query CompliancePageFilesPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateTrustCenterFile: permission(action: \"core:trust-center-file:create\")\n    }\n    ...CompliancePageFileListFragment\n    id\n  }\n}\n\nfragment CompliancePageFileListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageFileListItem_compliancePageFragment\n    id\n  }\n  trustCenterFiles(first: 100) {\n    edges {\n      node {\n        id\n        ...CompliancePageFileListItem_fileFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment CompliancePageFileListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n\nfragment CompliancePageFileListItem_fileFragment on TrustCenterFile {\n  id\n  name\n  category\n  fileUrl\n  trustCenterVisibility\n  createdAt\n  canUpdate: permission(action: \"core:trust-center-file:update\")\n  canDelete: permission(action: \"core:trust-center-file:delete\")\n}\n"
   }
 };
 })();

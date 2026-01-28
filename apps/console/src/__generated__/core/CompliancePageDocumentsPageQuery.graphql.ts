@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d8855e4115fa54daf8305e6427c8e519>>
+ * @generated SignedSource<<ccda9818c715d1b77b33d0114c235cb4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -127,7 +127,7 @@ return {
                   {
                     "kind": "Literal",
                     "name": "first",
-                    "value": 1000
+                    "value": 100
                   }
                 ],
                 "concreteType": "DocumentConnection",
@@ -235,7 +235,7 @@ return {
                     "storageKey": null
                   }
                 ],
-                "storageKey": "documents(first:1000)"
+                "storageKey": "documents(first:100)"
               }
             ],
             "type": "Organization",
@@ -248,12 +248,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "675dc82aa65110e99b4ddc51992999c3",
+    "cacheID": "a094d511faa776c9e8d68f53933b3937",
     "id": null,
     "metadata": {},
     "name": "CompliancePageDocumentsPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageDocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...CompliancePageDocumentListFragment\n    id\n  }\n}\n\nfragment CompliancePageDocumentListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageDocumentListItem_compliancePageFragment\n    id\n  }\n  documents(first: 1000) {\n    edges {\n      node {\n        id\n        ...CompliancePageDocumentListItem_documentFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageDocumentListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n\nfragment CompliancePageDocumentListItem_documentFragment on Document {\n  id\n  documentType\n  title\n  trustCenterVisibility\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "query CompliancePageDocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...CompliancePageDocumentListFragment\n    id\n  }\n}\n\nfragment CompliancePageDocumentListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageDocumentListItem_compliancePageFragment\n    id\n  }\n  documents(first: 100) {\n    edges {\n      node {\n        id\n        ...CompliancePageDocumentListItem_documentFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageDocumentListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n\nfragment CompliancePageDocumentListItem_documentFragment on Document {\n  id\n  documentType\n  title\n  trustCenterVisibility\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
   }
 };
 })();

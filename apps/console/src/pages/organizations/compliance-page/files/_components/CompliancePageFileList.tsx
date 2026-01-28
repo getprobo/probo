@@ -1,6 +1,5 @@
-import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, IconChevronDown, Table, Tbody, Td, Th, Thead, Tr, useDialogRef } from "@probo/ui";
+import { Table, Tbody, Td, Th, Thead, Tr, useDialogRef } from "@probo/ui";
 import { useCallback, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -17,7 +16,7 @@ const fragment = graphql`
     compliancePage: trustCenter @required(action: THROW) {
       ...CompliancePageFileListItem_compliancePageFragment
     }
-    trustCenterFiles(first: 1000)
+    trustCenterFiles(first: 100)
       @connection(key: "CompliancePageFileList_trustCenterFiles") {
       __id
       edges {
@@ -40,9 +39,6 @@ export function CompliancePageFileList(props: { fragmentRef: CompliancePageFileL
     compliancePage,
     trustCenterFiles: files,
   } = useFragment<CompliancePageFileListFragment$key>(fragment, fragmentRef);
-
-  const [limit, setLimit] = useState<number | null>(100);
-  const showMoreButton = limit !== null && files.edges.length > limit;
 
   const [editingFile, setEditingFile] = useState<
     CompliancePageFileListItem_fileFragment$data | null>(null);
@@ -87,16 +83,6 @@ export function CompliancePageFileList(props: { fragmentRef: CompliancePageFileL
           ))}
         </Tbody>
       </Table>
-      {showMoreButton && (
-        <Button
-          variant="tertiary"
-          onClick={() => setLimit(null)}
-          className="mt-3 mx-auto"
-          icon={IconChevronDown}
-        >
-          {sprintf(__("Show %s more"), files.edges.length - limit)}
-        </Button>
-      )}
 
       {editingFile
         && (

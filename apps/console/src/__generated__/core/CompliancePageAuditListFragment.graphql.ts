@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0bf1290a489f4685a6057509b9eaed9c>>
+ * @generated SignedSource<<e625c06ddb883a0e59e945eeda97f519>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -61,7 +61,7 @@ const node: ReaderFragment = {
         {
           "kind": "Literal",
           "name": "first",
-          "value": 1000
+          "value": 100
         }
       ],
       "concreteType": "AuditConnection",
@@ -104,13 +104,13 @@ const node: ReaderFragment = {
           "storageKey": null
         }
       ],
-      "storageKey": "audits(first:1000)"
+      "storageKey": "audits(first:100)"
     }
   ],
   "type": "Organization",
   "abstractKey": null
 };
 
-(node as any).hash = "d307c5c23d18357bc09c1115989dd734";
+(node as any).hash = "b66fddcbd57e4fd5af9f2a91663cb65b";
 
 export default node;

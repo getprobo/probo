@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9b92fdee29c65d57e35647e37f427be9>>
+ * @generated SignedSource<<109bdc23095ddd764ac63f68d9185ab1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -134,7 +134,7 @@ return {
                   {
                     "kind": "Literal",
                     "name": "first",
-                    "value": 1000
+                    "value": 100
                   }
                 ],
                 "concreteType": "AuditConnection",
@@ -201,7 +201,7 @@ return {
                     "storageKey": null
                   }
                 ],
-                "storageKey": "audits(first:1000)"
+                "storageKey": "audits(first:100)"
               }
             ],
             "type": "Organization",
@@ -214,12 +214,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4efa36568b452a0075ed29fe7f5ed279",
+    "cacheID": "ebb26dedba5dbbae4d46bcd3a41b201d",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAuditsPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageAuditsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...CompliancePageAuditListFragment\n    id\n  }\n}\n\nfragment CompliancePageAuditListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageAuditListItem_compliancePageFragment\n    id\n  }\n  audits(first: 1000) {\n    edges {\n      node {\n        id\n        ...CompliancePageAuditListItem_auditFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAuditListItem_auditFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validUntil\n  state\n  trustCenterVisibility\n}\n\nfragment CompliancePageAuditListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n"
+    "text": "query CompliancePageAuditsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...CompliancePageAuditListFragment\n    id\n  }\n}\n\nfragment CompliancePageAuditListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageAuditListItem_compliancePageFragment\n    id\n  }\n  audits(first: 100) {\n    edges {\n      node {\n        id\n        ...CompliancePageAuditListItem_auditFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAuditListItem_auditFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validUntil\n  state\n  trustCenterVisibility\n}\n\nfragment CompliancePageAuditListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n"
   }
 };
 })();

@@ -1,7 +1,5 @@
-import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, IconChevronDown, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
-import { useState } from "react";
+import { Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -14,7 +12,7 @@ const fragment = graphql`
     compliancePage: trustCenter @required(action: THROW) {
       ...CompliancePageAuditListItem_compliancePageFragment
     }
-    audits(first: 1000) {
+    audits(first: 100) {
       edges {
         node {
           id
@@ -29,11 +27,8 @@ export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAudi
   const { fragmentRef } = props;
 
   const { __ } = useTranslate();
-  const [limit, setLimit] = useState<number | null>(100);
 
   const { audits, compliancePage } = useFragment<CompliancePageAuditListFragment$key>(fragment, fragmentRef);
-
-  const showMoreButton = limit !== null && audits.edges.length > limit;
 
   return (
     <div className="space-y-[10px]">
@@ -64,16 +59,6 @@ export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAudi
           ))}
         </Tbody>
       </Table>
-      {showMoreButton && (
-        <Button
-          variant="tertiary"
-          onClick={() => setLimit(null)}
-          className="mt-3 mx-auto"
-          icon={IconChevronDown}
-        >
-          {sprintf(__("Show %s more"), audits.edges.length - limit)}
-        </Button>
-      )}
     </div>
   );
 }
