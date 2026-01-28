@@ -19,6 +19,11 @@ export const compliancePageRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/compliance-page/references/CompliancePageReferencesPageLoader")),
       },
+      {
+        path: "audits",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("#/pages/organizations/compliance-page/audits/CompliancePageAuditsPageLoader")),
+      },
     ],
   },
 ];

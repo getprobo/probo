@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1f16f6e36a9d4a8de63d4e6f8e3d4c88>>
+ * @generated SignedSource<<4286fb5d45f1d4d8dba035c29219ab34>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,21 +20,19 @@ export type UpdateAuditInput = {
   validFrom?: string | null | undefined;
   validUntil?: string | null | undefined;
 };
-export type TrustCenterAuditGraphUpdateMutation$variables = {
+export type CompliancePageAuditListItem_updateAuditVisibilityMutation$variables = {
   input: UpdateAuditInput;
 };
-export type TrustCenterAuditGraphUpdateMutation$data = {
+export type CompliancePageAuditListItem_updateAuditVisibilityMutation$data = {
   readonly updateAudit: {
     readonly audit: {
-      readonly id: string;
-      readonly trustCenterVisibility: TrustCenterVisibility;
-      readonly " $fragmentSpreads": FragmentRefs<"TrustCenterAuditsCardFragment">;
+      readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAuditListItem_auditFragment">;
     };
   };
 };
-export type TrustCenterAuditGraphUpdateMutation = {
-  response: TrustCenterAuditGraphUpdateMutation$data;
-  variables: TrustCenterAuditGraphUpdateMutation$variables;
+export type CompliancePageAuditListItem_updateAuditVisibilityMutation = {
+  response: CompliancePageAuditListItem_updateAuditVisibilityMutation$data;
+  variables: CompliancePageAuditListItem_updateAuditVisibilityMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -63,13 +61,6 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "trustCenterVisibility",
-  "storageKey": null
-},
-v4 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 };
@@ -78,7 +69,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterAuditGraphUpdateMutation",
+    "name": "CompliancePageAuditListItem_updateAuditVisibilityMutation",
     "selections": [
       {
         "alias": null,
@@ -96,12 +87,10 @@ return {
             "name": "audit",
             "plural": false,
             "selections": [
-              (v2/*: any*/),
-              (v3/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
-                "name": "TrustCenterAuditsCardFragment"
+                "name": "CompliancePageAuditListItem_auditFragment"
               }
             ],
             "storageKey": null
@@ -117,7 +106,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "TrustCenterAuditGraphUpdateMutation",
+    "name": "CompliancePageAuditListItem_updateAuditVisibilityMutation",
     "selections": [
       {
         "alias": null,
@@ -137,7 +126,6 @@ return {
             "selections": [
               (v2/*: any*/),
               (v3/*: any*/),
-              (v4/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -146,16 +134,9 @@ return {
                 "name": "framework",
                 "plural": false,
                 "selections": [
-                  (v4/*: any*/),
+                  (v3/*: any*/),
                   (v2/*: any*/)
                 ],
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "validFrom",
                 "storageKey": null
               },
               {
@@ -176,7 +157,7 @@ return {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "createdAt",
+                "name": "trustCenterVisibility",
                 "storageKey": null
               }
             ],
@@ -188,16 +169,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "70742901eeb45d5e00e4e61d83b2f828",
+    "cacheID": "4363d4bbf56cf55359dc0a1ff19e1dbf",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterAuditGraphUpdateMutation",
+    "name": "CompliancePageAuditListItem_updateAuditVisibilityMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAuditGraphUpdateMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      id\n      trustCenterVisibility\n      ...TrustCenterAuditsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n"
+    "text": "mutation CompliancePageAuditListItem_updateAuditVisibilityMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      ...CompliancePageAuditListItem_auditFragment\n      id\n    }\n  }\n}\n\nfragment CompliancePageAuditListItem_auditFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validUntil\n  state\n  trustCenterVisibility\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c958ccce67f79bb75593e9fcb31ee9d8";
+(node as any).hash = "6868ffa86e630bac03c87aa363dc59e2";
 
 export default node;

@@ -30,13 +30,6 @@ export const trustCenterRoutes = [
     ),
     children: [
       {
-        path: "audits",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("#/pages/organizations/trustCenter/TrustCenterAuditsTab"),
-        ),
-      },
-      {
         path: "documents",
         Fallback: LinkCardSkeleton,
         Component: lazy(

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<28248f2dbdad48cc6cfec3b35ce4c22f>>
+ * @generated SignedSource<<7de15e098b76ab6e91a10160c60c6c69>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,8 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
-export type TrustCenterAuditsCardFragment$data = {
-  readonly createdAt: string;
+export type CompliancePageAuditListItem_auditFragment$data = {
   readonly framework: {
     readonly name: string;
   };
@@ -21,13 +20,12 @@ export type TrustCenterAuditsCardFragment$data = {
   readonly name: string | null | undefined;
   readonly state: AuditState;
   readonly trustCenterVisibility: TrustCenterVisibility;
-  readonly validFrom: string | null | undefined;
   readonly validUntil: string | null | undefined;
-  readonly " $fragmentType": "TrustCenterAuditsCardFragment";
+  readonly " $fragmentType": "CompliancePageAuditListItem_auditFragment";
 };
-export type TrustCenterAuditsCardFragment$key = {
-  readonly " $data"?: TrustCenterAuditsCardFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"TrustCenterAuditsCardFragment">;
+export type CompliancePageAuditListItem_auditFragment$key = {
+  readonly " $data"?: CompliancePageAuditListItem_auditFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAuditListItem_auditFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -42,7 +40,7 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "TrustCenterAuditsCardFragment",
+  "name": "CompliancePageAuditListItem_auditFragment",
   "selections": [
     {
       "alias": null,
@@ -68,13 +66,6 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "validFrom",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "validUntil",
       "storageKey": null
     },
@@ -91,13 +82,6 @@ return {
       "kind": "ScalarField",
       "name": "trustCenterVisibility",
       "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "createdAt",
-      "storageKey": null
     }
   ],
   "type": "Audit",
@@ -105,6 +89,6 @@ return {
 };
 })();
 
-(node as any).hash = "c0f615fcad79ad39f60b48daacabdbbd";
+(node as any).hash = "495e75c50400e856ba08ed9f5840da67";
 
 export default node;

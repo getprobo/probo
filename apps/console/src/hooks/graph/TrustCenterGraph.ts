@@ -40,14 +40,6 @@ export const trustCenterQuery = graphql`
             }
           }
         }
-        audits(first: 100) {
-          edges {
-            node {
-              id
-              ...TrustCenterAuditsCardFragment
-            }
-          }
-        }
         vendors(first: 100) {
           edges {
             node {
