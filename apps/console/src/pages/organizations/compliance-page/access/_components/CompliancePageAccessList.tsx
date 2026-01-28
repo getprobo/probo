@@ -57,8 +57,6 @@ export function CompliancePageAccessList(props: {
     fragmentRef,
   );
 
-  console.log(accesses.__id);
-
   return accesses.edges.length === 0
     ? (
         <Table>
