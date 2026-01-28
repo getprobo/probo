@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f788919caaf846a6a1bdc81f19841823>>
+ * @generated SignedSource<<883f3a053aa51e1c94ad7c75a2fb91d2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,18 +12,18 @@ import { ConcreteRequest } from 'relay-runtime';
 export type DeleteTrustCenterFileInput = {
   id: string;
 };
-export type TrustCenterFileGraphDeleteMutation$variables = {
+export type DeleteCompliancePageFileDialogMutation$variables = {
   connections: ReadonlyArray<string>;
   input: DeleteTrustCenterFileInput;
 };
-export type TrustCenterFileGraphDeleteMutation$data = {
+export type DeleteCompliancePageFileDialogMutation$data = {
   readonly deleteTrustCenterFile: {
     readonly deletedTrustCenterFileId: string;
   };
 };
-export type TrustCenterFileGraphDeleteMutation = {
-  response: TrustCenterFileGraphDeleteMutation$data;
-  variables: TrustCenterFileGraphDeleteMutation$variables;
+export type DeleteCompliancePageFileDialogMutation = {
+  response: DeleteCompliancePageFileDialogMutation$data;
+  variables: DeleteCompliancePageFileDialogMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -59,7 +59,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterFileGraphDeleteMutation",
+    "name": "DeleteCompliancePageFileDialogMutation",
     "selections": [
       {
         "alias": null,
@@ -84,7 +84,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "TrustCenterFileGraphDeleteMutation",
+    "name": "DeleteCompliancePageFileDialogMutation",
     "selections": [
       {
         "alias": null,
@@ -117,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ad78a064da9b58291653f8283012ffc6",
+    "cacheID": "d3d7dcdb4201d8f3eeaa66973545bed0",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterFileGraphDeleteMutation",
+    "name": "DeleteCompliancePageFileDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterFileGraphDeleteMutation(\n  $input: DeleteTrustCenterFileInput!\n) {\n  deleteTrustCenterFile(input: $input) {\n    deletedTrustCenterFileId\n  }\n}\n"
+    "text": "mutation DeleteCompliancePageFileDialogMutation(\n  $input: DeleteTrustCenterFileInput!\n) {\n  deleteTrustCenterFile(input: $input) {\n    deletedTrustCenterFileId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "26c1ce69e74f3a4a39d060b38afbe3e0";
+(node as any).hash = "1bf5628f93e3ec6ee240290f5aaf5761";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f9b0d1c5f1852bef8797dcf34920e519>>
+ * @generated SignedSource<<e798de547d8804086770073da5d19f76>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
-export type TrustCenterFilesCardFragment$data = {
+export type CompliancePageFileListItem_fileFragment$data = {
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
   readonly category: string;
@@ -20,19 +20,18 @@ export type TrustCenterFilesCardFragment$data = {
   readonly id: string;
   readonly name: string;
   readonly trustCenterVisibility: TrustCenterVisibility;
-  readonly updatedAt: string;
-  readonly " $fragmentType": "TrustCenterFilesCardFragment";
+  readonly " $fragmentType": "CompliancePageFileListItem_fileFragment";
 };
-export type TrustCenterFilesCardFragment$key = {
-  readonly " $data"?: TrustCenterFilesCardFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"TrustCenterFilesCardFragment">;
+export type CompliancePageFileListItem_fileFragment$key = {
+  readonly " $data"?: CompliancePageFileListItem_fileFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"CompliancePageFileListItem_fileFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "TrustCenterFilesCardFragment",
+  "name": "CompliancePageFileListItem_fileFragment",
   "selections": [
     {
       "alias": null,
@@ -77,13 +76,6 @@ const node: ReaderFragment = {
       "storageKey": null
     },
     {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "updatedAt",
-      "storageKey": null
-    },
-    {
       "alias": "canUpdate",
       "args": [
         {
@@ -114,6 +106,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "7b9e482868fc5d815923fbefdbafc8bb";
+(node as any).hash = "0e5caf3d8c62ca0cd3ed8b37787e2b86";
 
 export default node;
