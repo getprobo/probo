@@ -129,6 +129,7 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
                             window.open(
                               organization.compliancePage.ndaFileUrl,
                               "_blank",
+                              "noopener,noreferrer",
                             );
                           }
                         }}
@@ -149,7 +150,7 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
               )
             : (
                 <>
-                  {organization.compliancePage?.canUpdate
+                  {organization.compliancePage?.canUploadNDA
                     ? (
                         <Dropzone
                           description={__("Upload PDF files up to 10MB")}
