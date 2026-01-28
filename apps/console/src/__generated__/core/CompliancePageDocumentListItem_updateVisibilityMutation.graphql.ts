@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<383c2d6a9d25911bb5df8c148a8a3e51>>
+ * @generated SignedSource<<499820c9df6a66e5a4969b593e6f257c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,21 +22,19 @@ export type UpdateDocumentInput = {
   title?: string | null | undefined;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };
-export type TrustCenterDocumentGraphUpdateMutation$variables = {
+export type CompliancePageDocumentListItem_updateVisibilityMutation$variables = {
   input: UpdateDocumentInput;
 };
-export type TrustCenterDocumentGraphUpdateMutation$data = {
+export type CompliancePageDocumentListItem_updateVisibilityMutation$data = {
   readonly updateDocument: {
     readonly document: {
-      readonly id: string;
-      readonly trustCenterVisibility: TrustCenterVisibility;
-      readonly " $fragmentSpreads": FragmentRefs<"TrustCenterDocumentsCardFragment">;
+      readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDocumentListItem_documentFragment">;
     };
   };
 };
-export type TrustCenterDocumentGraphUpdateMutation = {
-  response: TrustCenterDocumentGraphUpdateMutation$data;
-  variables: TrustCenterDocumentGraphUpdateMutation$variables;
+export type CompliancePageDocumentListItem_updateVisibilityMutation = {
+  response: CompliancePageDocumentListItem_updateVisibilityMutation$data;
+  variables: CompliancePageDocumentListItem_updateVisibilityMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -60,20 +58,13 @@ v2 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-},
-v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "trustCenterVisibility",
-  "storageKey": null
 };
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterDocumentGraphUpdateMutation",
+    "name": "CompliancePageDocumentListItem_updateVisibilityMutation",
     "selections": [
       {
         "alias": null,
@@ -91,12 +82,10 @@ return {
             "name": "document",
             "plural": false,
             "selections": [
-              (v2/*: any*/),
-              (v3/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
-                "name": "TrustCenterDocumentsCardFragment"
+                "name": "CompliancePageDocumentListItem_documentFragment"
               }
             ],
             "storageKey": null
@@ -112,7 +101,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "TrustCenterDocumentGraphUpdateMutation",
+    "name": "CompliancePageDocumentListItem_updateVisibilityMutation",
     "selections": [
       {
         "alias": null,
@@ -131,7 +120,13 @@ return {
             "plural": false,
             "selections": [
               (v2/*: any*/),
-              (v3/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "documentType",
+                "storageKey": null
+              },
               {
                 "alias": null,
                 "args": null,
@@ -143,23 +138,24 @@ return {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "createdAt",
+                "name": "trustCenterVisibility",
                 "storageKey": null
               },
               {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "documentType",
-                "storageKey": null
-              },
-              {
-                "alias": null,
+                "alias": "lastVersion",
                 "args": [
                   {
                     "kind": "Literal",
                     "name": "first",
                     "value": 1
+                  },
+                  {
+                    "kind": "Literal",
+                    "name": "orderBy",
+                    "value": {
+                      "direction": "DESC",
+                      "field": "CREATED_AT"
+                    }
                   }
                 ],
                 "concreteType": "DocumentVersionConnection",
@@ -198,7 +194,7 @@ return {
                     "storageKey": null
                   }
                 ],
-                "storageKey": "versions(first:1)"
+                "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
               }
             ],
             "storageKey": null
@@ -209,16 +205,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "04cb2a4e83386dfffce8c12eae320cfe",
+    "cacheID": "f72f0dd5039dbfeaa609b7914308c0fe",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterDocumentGraphUpdateMutation",
+    "name": "CompliancePageDocumentListItem_updateVisibilityMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterDocumentGraphUpdateMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      trustCenterVisibility\n      ...TrustCenterDocumentsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "mutation CompliancePageDocumentListItem_updateVisibilityMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      ...CompliancePageDocumentListItem_documentFragment\n      id\n    }\n  }\n}\n\nfragment CompliancePageDocumentListItem_documentFragment on Document {\n  id\n  documentType\n  title\n  trustCenterVisibility\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "293896dbfec4de53d0fe30a2462f833b";
+(node as any).hash = "3f49f1e719ba93bc8cc69c483d50e225";
 
 export default node;

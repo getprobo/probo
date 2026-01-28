@@ -32,14 +32,6 @@ export const trustCenterQuery = graphql`
           )
           canCreateAccess: permission(action: "core:trust-center-access:create")
         }
-        documents(first: 100) {
-          edges {
-            node {
-              id
-              ...TrustCenterDocumentsCardFragment
-            }
-          }
-        }
         vendors(first: 100) {
           edges {
             node {
@@ -55,17 +47,6 @@ export const trustCenterQuery = graphql`
             node {
               id
               ...TrustCenterFilesCardFragment
-            }
-          }
-        }
-        slackConnections(first: 100) {
-          edges {
-            node {
-              id
-              channel
-              channelId
-              createdAt
-              updatedAt
             }
           }
         }

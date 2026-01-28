@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1135bf3b786a26466e2763cbeecb7b5b>>
+ * @generated SignedSource<<d8855e4115fa54daf8305e6427c8e519>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,25 +10,17 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type TrustCenterDocumentGraphQuery$variables = {
+export type CompliancePageDocumentsPageQuery$variables = {
   organizationId: string;
 };
-export type TrustCenterDocumentGraphQuery$data = {
+export type CompliancePageDocumentsPageQuery$data = {
   readonly organization: {
-    readonly documents?: {
-      readonly edges: ReadonlyArray<{
-        readonly node: {
-          readonly id: string;
-          readonly " $fragmentSpreads": FragmentRefs<"TrustCenterDocumentsCardFragment">;
-        };
-      }>;
-    };
-    readonly id?: string;
+    readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDocumentListFragment">;
   };
 };
-export type TrustCenterDocumentGraphQuery = {
-  response: TrustCenterDocumentGraphQuery$data;
-  variables: TrustCenterDocumentGraphQuery$variables;
+export type CompliancePageDocumentsPageQuery = {
+  response: CompliancePageDocumentsPageQuery$data;
+  variables: CompliancePageDocumentsPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -52,20 +44,13 @@ v2 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-},
-v3 = [
-  {
-    "kind": "Literal",
-    "name": "first",
-    "value": 100
-  }
-];
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterDocumentGraphQuery",
+    "name": "CompliancePageDocumentsPageQuery",
     "selections": [
       {
         "alias": "organization",
@@ -76,51 +61,9 @@ return {
         "plural": false,
         "selections": [
           {
-            "kind": "InlineFragment",
-            "selections": [
-              (v2/*: any*/),
-              {
-                "alias": null,
-                "args": (v3/*: any*/),
-                "concreteType": "DocumentConnection",
-                "kind": "LinkedField",
-                "name": "documents",
-                "plural": false,
-                "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "DocumentEdge",
-                    "kind": "LinkedField",
-                    "name": "edges",
-                    "plural": true,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Document",
-                        "kind": "LinkedField",
-                        "name": "node",
-                        "plural": false,
-                        "selections": [
-                          (v2/*: any*/),
-                          {
-                            "args": null,
-                            "kind": "FragmentSpread",
-                            "name": "TrustCenterDocumentsCardFragment"
-                          }
-                        ],
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  }
-                ],
-                "storageKey": "documents(first:100)"
-              }
-            ],
-            "type": "Organization",
-            "abstractKey": null
+            "args": null,
+            "kind": "FragmentSpread",
+            "name": "CompliancePageDocumentListFragment"
           }
         ],
         "storageKey": null
@@ -133,7 +76,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "TrustCenterDocumentGraphQuery",
+    "name": "CompliancePageDocumentsPageQuery",
     "selections": [
       {
         "alias": "organization",
@@ -150,13 +93,43 @@ return {
             "name": "__typename",
             "storageKey": null
           },
-          (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
+                "alias": "compliancePage",
+                "args": null,
+                "concreteType": "TrustCenter",
+                "kind": "LinkedField",
+                "name": "trustCenter",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": "canUpdate",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:trust-center:update"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:trust-center:update\")"
+                  },
+                  (v2/*: any*/)
+                ],
+                "storageKey": null
+              },
+              {
                 "alias": null,
-                "args": (v3/*: any*/),
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "first",
+                    "value": 1000
+                  }
+                ],
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -183,21 +156,14 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "title",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "documentType",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "title",
                             "storageKey": null
                           },
                           {
@@ -208,12 +174,20 @@ return {
                             "storageKey": null
                           },
                           {
-                            "alias": null,
+                            "alias": "lastVersion",
                             "args": [
                               {
                                 "kind": "Literal",
                                 "name": "first",
                                 "value": 1
+                              },
+                              {
+                                "kind": "Literal",
+                                "name": "orderBy",
+                                "value": {
+                                  "direction": "DESC",
+                                  "field": "CREATED_AT"
+                                }
                               }
                             ],
                             "concreteType": "DocumentVersionConnection",
@@ -252,7 +226,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "versions(first:1)"
+                            "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           }
                         ],
                         "storageKey": null
@@ -261,28 +235,29 @@ return {
                     "storageKey": null
                   }
                 ],
-                "storageKey": "documents(first:100)"
+                "storageKey": "documents(first:1000)"
               }
             ],
             "type": "Organization",
             "abstractKey": null
-          }
+          },
+          (v2/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "1df18b182ace4562ffa876b7e8073a22",
+    "cacheID": "675dc82aa65110e99b4ddc51992999c3",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterDocumentGraphQuery",
+    "name": "CompliancePageDocumentsPageQuery",
     "operationKind": "query",
-    "text": "query TrustCenterDocumentGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "query CompliancePageDocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...CompliancePageDocumentListFragment\n    id\n  }\n}\n\nfragment CompliancePageDocumentListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageDocumentListItem_compliancePageFragment\n    id\n  }\n  documents(first: 1000) {\n    edges {\n      node {\n        id\n        ...CompliancePageDocumentListItem_documentFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageDocumentListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n\nfragment CompliancePageDocumentListItem_documentFragment on Document {\n  id\n  documentType\n  title\n  trustCenterVisibility\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f4e34ac09a2b56c2298bc319d9701f4d";
+(node as any).hash = "d81c7a5da1810d0e8d7fadb5b8a3766a";
 
 export default node;

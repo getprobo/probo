@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ef7a2d6e28f14d4b48c27c6db864b876>>
+ * @generated SignedSource<<112e917e3fb881859a56b794f07ce7e7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,13 +13,10 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
-export type TrustCenterDocumentsCardFragment$data = {
-  readonly createdAt: string;
+export type CompliancePageDocumentListItem_documentFragment$data = {
   readonly documentType: DocumentType;
   readonly id: string;
-  readonly title: string;
-  readonly trustCenterVisibility: TrustCenterVisibility;
-  readonly versions: {
+  readonly lastVersion: {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
@@ -27,11 +24,13 @@ export type TrustCenterDocumentsCardFragment$data = {
       };
     }>;
   };
-  readonly " $fragmentType": "TrustCenterDocumentsCardFragment";
+  readonly title: string;
+  readonly trustCenterVisibility: TrustCenterVisibility;
+  readonly " $fragmentType": "CompliancePageDocumentListItem_documentFragment";
 };
-export type TrustCenterDocumentsCardFragment$key = {
-  readonly " $data"?: TrustCenterDocumentsCardFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"TrustCenterDocumentsCardFragment">;
+export type CompliancePageDocumentListItem_documentFragment$key = {
+  readonly " $data"?: CompliancePageDocumentListItem_documentFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDocumentListItem_documentFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -46,23 +45,9 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "TrustCenterDocumentsCardFragment",
+  "name": "CompliancePageDocumentListItem_documentFragment",
   "selections": [
     (v0/*: any*/),
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "title",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "createdAt",
-      "storageKey": null
-    },
     {
       "alias": null,
       "args": null,
@@ -74,16 +59,31 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "trustCenterVisibility",
+      "name": "title",
       "storageKey": null
     },
     {
       "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "trustCenterVisibility",
+      "storageKey": null
+    },
+    {
+      "alias": "lastVersion",
       "args": [
         {
           "kind": "Literal",
           "name": "first",
           "value": 1
+        },
+        {
+          "kind": "Literal",
+          "name": "orderBy",
+          "value": {
+            "direction": "DESC",
+            "field": "CREATED_AT"
+          }
         }
       ],
       "concreteType": "DocumentVersionConnection",
@@ -122,7 +122,7 @@ return {
           "storageKey": null
         }
       ],
-      "storageKey": "versions(first:1)"
+      "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
     }
   ],
   "type": "Document",
@@ -130,6 +130,6 @@ return {
 };
 })();
 
-(node as any).hash = "a90715444be8a289eae6615ce44e244d";
+(node as any).hash = "ab2b10ffbd76c59d1a3facab0f794402";
 
 export default node;
