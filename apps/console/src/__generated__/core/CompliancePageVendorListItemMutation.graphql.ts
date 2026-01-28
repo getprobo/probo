@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c0dfdaac2c2c1c873c8104a45b6077ac>>
+ * @generated SignedSource<<4374d6a33690e83fc1bb684baf5b05c4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -35,21 +35,21 @@ export type UpdateVendorInput = {
   trustPageUrl?: string | null | undefined;
   websiteUrl?: string | null | undefined;
 };
-export type TrustCenterVendorGraphUpdateMutation$variables = {
+export type CompliancePageVendorListItemMutation$variables = {
   input: UpdateVendorInput;
 };
-export type TrustCenterVendorGraphUpdateMutation$data = {
+export type CompliancePageVendorListItemMutation$data = {
   readonly updateVendor: {
     readonly vendor: {
       readonly id: string;
       readonly showOnTrustCenter: boolean;
-      readonly " $fragmentSpreads": FragmentRefs<"TrustCenterVendorsCardFragment">;
+      readonly " $fragmentSpreads": FragmentRefs<"CompliancePageVendorListItem_vendorFragment">;
     };
   };
 };
-export type TrustCenterVendorGraphUpdateMutation = {
-  response: TrustCenterVendorGraphUpdateMutation$data;
-  variables: TrustCenterVendorGraphUpdateMutation$variables;
+export type CompliancePageVendorListItemMutation = {
+  response: CompliancePageVendorListItemMutation$data;
+  variables: CompliancePageVendorListItemMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -86,7 +86,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterVendorGraphUpdateMutation",
+    "name": "CompliancePageVendorListItemMutation",
     "selections": [
       {
         "alias": null,
@@ -109,7 +109,7 @@ return {
               {
                 "args": null,
                 "kind": "FragmentSpread",
-                "name": "TrustCenterVendorsCardFragment"
+                "name": "CompliancePageVendorListItem_vendorFragment"
               }
             ],
             "storageKey": null
@@ -125,7 +125,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "TrustCenterVendorGraphUpdateMutation",
+    "name": "CompliancePageVendorListItemMutation",
     "selections": [
       {
         "alias": null,
@@ -149,13 +149,6 @@ return {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "name",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
                 "name": "category",
                 "storageKey": null
               },
@@ -163,14 +156,7 @@ return {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "description",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "createdAt",
+                "name": "name",
                 "storageKey": null
               },
               {
@@ -195,16 +181,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b2d05d661624daec04a081aebf2dd4e2",
+    "cacheID": "20e9056d9d5d98f50940d4a0c4ff67df",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterVendorGraphUpdateMutation",
+    "name": "CompliancePageVendorListItemMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterVendorGraphUpdateMutation(\n  $input: UpdateVendorInput!\n) {\n  updateVendor(input: $input) {\n    vendor {\n      id\n      showOnTrustCenter\n      ...TrustCenterVendorsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n  canUpdate: permission(action: \"core:vendor:update\")\n}\n"
+    "text": "mutation CompliancePageVendorListItemMutation(\n  $input: UpdateVendorInput!\n) {\n  updateVendor(input: $input) {\n    vendor {\n      id\n      showOnTrustCenter\n      ...CompliancePageVendorListItem_vendorFragment\n    }\n  }\n}\n\nfragment CompliancePageVendorListItem_vendorFragment on Vendor {\n  id\n  category\n  name\n  showOnTrustCenter\n  canUpdate: permission(action: \"core:vendor:update\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2b4395821fcfbd30bb06448db5429289";
+(node as any).hash = "27c5e5e0d77dfbbd57480d6c49d0d87a";
 
 export default node;

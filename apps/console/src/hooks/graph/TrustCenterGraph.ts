@@ -32,14 +32,6 @@ export const trustCenterQuery = graphql`
           )
           canCreateAccess: permission(action: "core:trust-center-access:create")
         }
-        vendors(first: 100) {
-          edges {
-            node {
-              id
-              ...TrustCenterVendorsCardFragment
-            }
-          }
-        }
       }
     }
   }
