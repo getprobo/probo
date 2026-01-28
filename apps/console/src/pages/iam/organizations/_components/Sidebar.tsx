@@ -198,18 +198,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
         />
       )}
       {organization.canGetTrustCenter && (
-        <>
-          <SidebarItem
-            label={__("Compliance Page")}
-            icon={IconShield}
-            to={`${prefix}/compliance-page`}
-          />
-          <SidebarItem
-            label={__("Trust Center")}
-            icon={IconShield}
-            to={`${prefix}/trust-center`}
-          />
-        </>
+        <SidebarItem
+          label={__("Compliance Page")}
+          icon={IconShield}
+          to={`${prefix}/compliance-page`}
+        />
       )}
       {organization.canUpdateOrganization && (
         <SidebarItem

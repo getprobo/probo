@@ -3,41 +3,7 @@ import { graphql } from "relay-runtime";
 import type { TrustCenterGraphUpdateMutation } from "#/__generated__/core/TrustCenterGraphUpdateMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
-export const trustCenterQuery = graphql`
-  query TrustCenterGraphQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) {
-      ... on Organization {
-        id
-        name
-        canCreateTrustCenterFile: permission(
-          action: "core:trust-center-file:create"
-        )
-        customDomain {
-          id
-          domain
-        }
-        trustCenter {
-          id
-          active
-          ndaFileName
-          ndaFileUrl
-          createdAt
-          updatedAt
-          canUpdate: permission(action: "core:trust-center:update")
-          canGetNDA: permission(action: "core:trust-center:get-nda")
-          canUploadNDA: permission(action: "core:trust-center:upload-nda")
-          canDeleteNDA: permission(action: "core:trust-center:delete-nda")
-          canCreateReference: permission(
-            action: "core:trust-center-reference:create"
-          )
-          canCreateAccess: permission(action: "core:trust-center-access:create")
-        }
-      }
-    }
-  }
-`;
-
-export const updateTrustCenterMutation = graphql`
+const updateTrustCenterMutation = graphql`
   mutation TrustCenterGraphUpdateMutation($input: UpdateTrustCenterInput!) {
     updateTrustCenter(input: $input) {
       trustCenter {
@@ -59,7 +25,7 @@ export function useUpdateTrustCenterMutation() {
   );
 }
 
-export const uploadTrustCenterNDAMutation = graphql`
+const uploadTrustCenterNDAMutation = graphql`
   mutation TrustCenterGraphUploadNDAMutation(
     $input: UploadTrustCenterNDAInput!
   ) {
@@ -80,7 +46,7 @@ export function useUploadTrustCenterNDAMutation() {
   });
 }
 
-export const deleteTrustCenterNDAMutation = graphql`
+const deleteTrustCenterNDAMutation = graphql`
   mutation TrustCenterGraphDeleteNDAMutation(
     $input: DeleteTrustCenterNDAInput!
   ) {
