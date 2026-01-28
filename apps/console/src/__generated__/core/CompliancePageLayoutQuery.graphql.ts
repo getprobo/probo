@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6b8fb96ca82a23677b5a8d4b22b1685f>>
+ * @generated SignedSource<<7000743fa590bee3bbcf0a18def47ed0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type CompliancePageLayoutQuery$variables = {
 export type CompliancePageLayoutQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
-    readonly trustCenter: {
+    readonly compliancePage: {
       readonly active: boolean;
     } | null | undefined;
   } | {
@@ -85,7 +85,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "alias": null,
+                "alias": "compliancePage",
                 "args": null,
                 "concreteType": "TrustCenter",
                 "kind": "LinkedField",
@@ -126,7 +126,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "alias": null,
+                "alias": "compliancePage",
                 "args": null,
                 "concreteType": "TrustCenter",
                 "kind": "LinkedField",
@@ -149,16 +149,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dca289c0f586e539bfee9c68ccd14e37",
+    "cacheID": "4bbef5c143ac18fe30a6639af67368ba",
     "id": null,
     "metadata": {},
     "name": "CompliancePageLayoutQuery",
     "operationKind": "query",
-    "text": "query CompliancePageLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      trustCenter {\n        active\n        id\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query CompliancePageLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        active\n        id\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0134cd2bfcc281c33161c3693172af0c";
+(node as any).hash = "29df1368a1d61815d82c172c94f1ca5e";
 
 export default node;

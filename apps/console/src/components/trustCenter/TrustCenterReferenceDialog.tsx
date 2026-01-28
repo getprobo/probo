@@ -13,6 +13,7 @@ import {
 import { forwardRef, type ReactNode, useImperativeHandle, useState } from "react";
 import { z } from "zod";
 
+import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
 import {
   useCreateTrustCenterReferenceMutation,
   useUpdateTrustCenterReferenceMutation,
@@ -30,15 +31,7 @@ type ReferenceFormData = z.infer<typeof referenceSchema>;
 
 export type TrustCenterReferenceDialogRef = {
   openCreate: (trustCenterId: string, connectionId: string) => void;
-  openEdit: (reference: Reference) => void;
-};
-
-type Reference = {
-  id: string;
-  name: string;
-  description?: string | null;
-  websiteUrl: string;
-  rank: number;
+  openEdit: (reference: CompliancePageReferenceListItemFragment$data) => void;
 };
 
 export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogRef, { children?: ReactNode }>(
@@ -48,7 +41,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
     const [mode, setMode] = useState<"create" | "edit">("create");
     const [trustCenterId, setTrustCenterId] = useState<string>("");
     const [connectionId, setConnectionId] = useState<string>("");
-    const [editReference, setEditReference] = useState<Reference | null>(null);
+    const [editReference, setEditReference] = useState<CompliancePageReferenceListItemFragment$data | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
     const [createReference, isCreating] = useCreateTrustCenterReferenceMutation();
@@ -79,7 +72,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
         });
         dialogRef.current?.open();
       },
-      openEdit: (reference: Reference) => {
+      openEdit: (reference: CompliancePageReferenceListItemFragment$data) => {
         setMode("edit");
         setEditReference(reference);
         setUploadedFile(null);

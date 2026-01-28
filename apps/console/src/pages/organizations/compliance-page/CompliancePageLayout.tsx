@@ -13,7 +13,7 @@ export const compliancePageLayoutQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        trustCenter {
+        compliancePage: trustCenter {
           active
         }
       }
@@ -42,8 +42,8 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
           "Configure your public compliance page to showcase your security and compliance posture.",
         )}
       >
-        <Badge variant={organization.trustCenter?.active ? "success" : "danger"}>
-          {organization.trustCenter?.active ? __("Active") : __("Inactive")}
+        <Badge variant={organization.compliancePage?.active ? "success" : "danger"}>
+          {organization.compliancePage?.active ? __("Active") : __("Inactive")}
         </Badge>
       </PageHeader>
 
@@ -52,9 +52,9 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
           <IconSettingsGear2 className="size-4" />
           {__("Overview")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/compliance-page/trust-by`}>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/references`}>
           <IconCheckmark1 className="size-4" />
-          {__("Trusted by")}
+          {__("References")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/audits`}>
           <IconMedal className="size-4" />

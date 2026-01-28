@@ -14,6 +14,11 @@ export const compliancePageRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/compliance-page/overview/CompliancePageOverviewPageLoader")),
       },
+      {
+        path: "references",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("#/pages/organizations/compliance-page/references/CompliancePageReferencesPageLoader")),
+      },
     ],
   },
 ];
