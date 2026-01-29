@@ -150,6 +150,110 @@ func (c *Connectors) LoadAllByOrganizationIDWithoutDecryptedConnection(
 	return c.loadAllByOrganizationID(ctx, conn, scope, organizationID)
 }
 
+func (c *Connector) LoadByID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	connectorID gid.GID,
+	encryptionKey cipher.EncryptionKey,
+) error {
+	if err := c.LoadMetadataByID(ctx, conn, scope, connectorID); err != nil {
+		return err
+	}
+
+	// Decrypt the connection
+	if len(c.EncryptedConnection) > 0 {
+		decryptedConnection, err := cipher.Decrypt(c.EncryptedConnection, encryptionKey)
+		if err != nil {
+			return fmt.Errorf("cannot decrypt connection: %w", err)
+		}
+
+		c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
+		if err != nil {
+			return fmt.Errorf("cannot unmarshal connection: %w", err)
+		}
+
+		c.populateSlackSettings()
+	}
+
+	return nil
+}
+
+// LoadMetadataByID loads connector metadata without decrypting the connection.
+// Use this when you only need provider, organization, or other metadata.
+func (c *Connector) LoadMetadataByID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	connectorID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    settings,
+    encrypted_connection,
+    created_at,
+    updated_at
+FROM
+    connectors
+WHERE
+    %s
+    AND id = @id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": connectorID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	loadedConnector, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Connector])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect connector row: %w", err)
+	}
+
+	*c = loadedConnector
+
+	return nil
+}
+
+func (c *Connector) Delete(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+DELETE FROM connectors
+WHERE %s AND id = @id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": c.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete connector: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (c *Connector) Insert(
 	ctx context.Context,
 	conn pg.Conn,

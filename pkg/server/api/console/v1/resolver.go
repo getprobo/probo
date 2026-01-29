@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -76,7 +77,7 @@ func NewMux(
 
 		r.Get("/connectors/initiate", func(w http.ResponseWriter, r *http.Request) {
 			provider := r.URL.Query().Get("provider")
-			if provider != "SLACK" {
+			if provider != "SLACK" && provider != "GOOGLE_WORKSPACE" {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
 				return
 			}
@@ -118,9 +119,15 @@ func NewMux(
 				panic(fmt.Errorf("cannot initiate connector: %w", err))
 			}
 
-			// Allow external redirects for Slack OAuth only for now
-			slackSafeRedirect := &saferedirect.SafeRedirect{AllowedHost: "slack.com"}
-			slackSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
+			// Allow external redirects for OAuth providers
+			var oauthSafeRedirect *saferedirect.SafeRedirect
+			switch provider {
+			case "SLACK":
+				oauthSafeRedirect = &saferedirect.SafeRedirect{AllowedHost: "slack.com"}
+			case "GOOGLE_WORKSPACE":
+				oauthSafeRedirect = &saferedirect.SafeRedirect{AllowedHost: "accounts.google.com"}
+			}
+			oauthSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
 		})
 
 		r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
@@ -134,6 +141,8 @@ func NewMux(
 			switch provider {
 			case "SLACK":
 				connectorProvider = coredata.ConnectorProviderSlack
+			case "GOOGLE_WORKSPACE":
+				connectorProvider = coredata.ConnectorProviderGoogleWorkspace
 			default:
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
 				return
@@ -145,16 +154,14 @@ func NewMux(
 				return
 			}
 
-			connection, organizationID, err := connectorRegistry.Complete(r.Context(), provider, r)
+			connection, organizationID, continueURL, err := connectorRegistry.Complete(r.Context(), provider, r)
 			if err != nil {
 				panic(fmt.Errorf("cannot complete connector: %w", err))
 			}
 
-			continueURL := r.URL.Query().Get("continue")
-
 			svc := proboSvc.WithTenant(organizationID.TenantID())
 
-			_, err = svc.Connectors.Create(
+			connector, err := svc.Connectors.Create(
 				r.Context(),
 				probo.CreateConnectorRequest{
 					OrganizationID: *organizationID,
@@ -167,12 +174,22 @@ func NewMux(
 				panic(fmt.Errorf("cannot create or update connector: %w", err))
 			}
 
-			if continueURL != "" {
-				safeRedirect.Redirect(w, r, continueURL, "/", http.StatusSeeOther)
-			} else {
-				redirectURL := baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
-				safeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
+			// Append connector_id to the redirect URL so frontend can create the bridge
+			redirectURL := continueURL
+			if redirectURL == "" {
+				redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
 			}
+
+			parsedURL, err := url.Parse(redirectURL)
+			if err != nil {
+				logger.ErrorCtx(r.Context(), "cannot parse redirect URL", log.Error(err))
+				parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
+			}
+			q := parsedURL.Query()
+			q.Set("connector_id", connector.ID.String())
+			parsedURL.RawQuery = q.Encode()
+
+			safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
 		})
 	})
 

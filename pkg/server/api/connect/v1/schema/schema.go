@@ -47,6 +47,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Connector() ConnectorResolver
 	Identity() IdentityResolver
 	Invitation() InvitationResolver
 	InvitationConnection() InvitationConnectionResolver
@@ -60,6 +61,7 @@ type ResolverRoot interface {
 	Query() QueryResolver
 	SAMLConfiguration() SAMLConfigurationResolver
 	SAMLConfigurationConnection() SAMLConfigurationConnectionResolver
+	SCIMBridge() SCIMBridgeResolver
 	SCIMConfiguration() SCIMConfigurationResolver
 	SCIMEvent() SCIMEventResolver
 	SCIMEventConnection() SCIMEventConnectionResolver
@@ -89,6 +91,14 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
+	Connector struct {
+		CreatedAt  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
+		Provider   func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+	}
+
 	CreateOrganizationPayload struct {
 		MembershipEdge func(childComplexity int) int
 		Organization   func(childComplexity int) int
@@ -104,6 +114,7 @@ type ComplexityRoot struct {
 	}
 
 	CreateSCIMConfigurationPayload struct {
+		ScimBridge        func(childComplexity int) int
 		ScimConfiguration func(childComplexity int) int
 		Token             func(childComplexity int) int
 	}
@@ -365,7 +376,19 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	SCIMBridge struct {
+		Connector         func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Permission        func(childComplexity int, action string) int
+		ScimConfiguration func(childComplexity int) int
+		State             func(childComplexity int) int
+		Type              func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+	}
+
 	SCIMConfiguration struct {
+		Bridge       func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
 		EndpointURL  func(childComplexity int) int
 		Events       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SCIMEventOrderBy) int
@@ -456,6 +479,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type ConnectorResolver interface {
+	Permission(ctx context.Context, obj *types.Connector, action string) (bool, error)
+}
 type IdentityResolver interface {
 	Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
 	PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error)
@@ -546,10 +572,17 @@ type SAMLConfigurationResolver interface {
 type SAMLConfigurationConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (*int, error)
 }
+type SCIMBridgeResolver interface {
+	ScimConfiguration(ctx context.Context, obj *types.SCIMBridge) (*types.SCIMConfiguration, error)
+	Connector(ctx context.Context, obj *types.SCIMBridge) (*types.Connector, error)
+
+	Permission(ctx context.Context, obj *types.SCIMBridge, action string) (bool, error)
+}
 type SCIMConfigurationResolver interface {
 	EndpointURL(ctx context.Context, obj *types.SCIMConfiguration) (string, error)
 
 	Organization(ctx context.Context, obj *types.SCIMConfiguration) (*types.Organization, error)
+	Bridge(ctx context.Context, obj *types.SCIMConfiguration) (*types.SCIMBridge, error)
 	Events(ctx context.Context, obj *types.SCIMConfiguration, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SCIMEventOrderBy) (*types.SCIMEventConnection, error)
 	Permission(ctx context.Context, obj *types.SCIMConfiguration, action string) (bool, error)
 }
@@ -623,6 +656,42 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ChangePasswordPayload.Success(childComplexity), true
 
+	case "Connector.createdAt":
+		if e.complexity.Connector.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Connector.CreatedAt(childComplexity), true
+	case "Connector.id":
+		if e.complexity.Connector.ID == nil {
+			break
+		}
+
+		return e.complexity.Connector.ID(childComplexity), true
+	case "Connector.permission":
+		if e.complexity.Connector.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Connector_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Connector.Permission(childComplexity, args["action"].(string)), true
+	case "Connector.provider":
+		if e.complexity.Connector.Provider == nil {
+			break
+		}
+
+		return e.complexity.Connector.Provider(childComplexity), true
+	case "Connector.updatedAt":
+		if e.complexity.Connector.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Connector.UpdatedAt(childComplexity), true
+
 	case "CreateOrganizationPayload.membershipEdge":
 		if e.complexity.CreateOrganizationPayload.MembershipEdge == nil {
 			break
@@ -656,6 +725,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateSAMLConfigurationPayload.SamlConfigurationEdge(childComplexity), true
 
+	case "CreateSCIMConfigurationPayload.scimBridge":
+		if e.complexity.CreateSCIMConfigurationPayload.ScimBridge == nil {
+			break
+		}
+
+		return e.complexity.CreateSCIMConfigurationPayload.ScimBridge(childComplexity), true
 	case "CreateSCIMConfigurationPayload.scimConfiguration":
 		if e.complexity.CreateSCIMConfigurationPayload.ScimConfiguration == nil {
 			break
@@ -1831,6 +1906,66 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SAMLConfigurationEdge.Node(childComplexity), true
 
+	case "SCIMBridge.connector":
+		if e.complexity.SCIMBridge.Connector == nil {
+			break
+		}
+
+		return e.complexity.SCIMBridge.Connector(childComplexity), true
+	case "SCIMBridge.createdAt":
+		if e.complexity.SCIMBridge.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.SCIMBridge.CreatedAt(childComplexity), true
+	case "SCIMBridge.id":
+		if e.complexity.SCIMBridge.ID == nil {
+			break
+		}
+
+		return e.complexity.SCIMBridge.ID(childComplexity), true
+	case "SCIMBridge.permission":
+		if e.complexity.SCIMBridge.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_SCIMBridge_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.SCIMBridge.Permission(childComplexity, args["action"].(string)), true
+	case "SCIMBridge.scimConfiguration":
+		if e.complexity.SCIMBridge.ScimConfiguration == nil {
+			break
+		}
+
+		return e.complexity.SCIMBridge.ScimConfiguration(childComplexity), true
+	case "SCIMBridge.state":
+		if e.complexity.SCIMBridge.State == nil {
+			break
+		}
+
+		return e.complexity.SCIMBridge.State(childComplexity), true
+	case "SCIMBridge.type":
+		if e.complexity.SCIMBridge.Type == nil {
+			break
+		}
+
+		return e.complexity.SCIMBridge.Type(childComplexity), true
+	case "SCIMBridge.updatedAt":
+		if e.complexity.SCIMBridge.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.SCIMBridge.UpdatedAt(childComplexity), true
+
+	case "SCIMConfiguration.bridge":
+		if e.complexity.SCIMConfiguration.Bridge == nil {
+			break
+		}
+
+		return e.complexity.SCIMConfiguration.Bridge(childComplexity), true
 	case "SCIMConfiguration.createdAt":
 		if e.complexity.SCIMConfiguration.CreatedAt == nil {
 			break
@@ -2622,6 +2757,8 @@ type SCIMConfiguration implements Node {
   updatedAt: Datetime!
   organization: Organization @goField(forceResolver: true)
 
+  bridge: SCIMBridge @goField(forceResolver: true)
+
   events(
     first: Int
     after: CursorKey
@@ -2633,6 +2770,50 @@ type SCIMConfiguration implements Node {
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)
+}
+
+type SCIMBridge implements Node {
+  id: ID!
+  state: SCIMBridgeState!
+  scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
+  connector: Connector @goField(forceResolver: true)
+  type: SCIMBridgeType!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type Connector implements Node {
+  id: ID!
+  provider: ConnectorProvider!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+enum ConnectorProvider
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ConnectorProvider") {
+  SLACK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSlack")
+  GOOGLE_WORKSPACE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace")
+}
+
+enum SCIMBridgeType
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMBridgeType") {
+  GOOGLE_WORKSPACE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeTypeGoogleWorkspace")
+}
+
+enum SCIMBridgeState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMBridgeState") {
+  PENDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStatePending")
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateActive")
+  FAILED @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateFailed")
 }
 
 type SCIMEvent implements Node {
@@ -3121,6 +3302,7 @@ type DeleteSAMLConfigurationPayload {
 
 input CreateSCIMConfigurationInput {
   organizationId: ID!
+  connectorId: ID
 }
 
 input DeleteSCIMConfigurationInput {
@@ -3135,6 +3317,7 @@ input RegenerateSCIMTokenInput {
 
 type CreateSCIMConfigurationPayload {
   scimConfiguration: SCIMConfiguration!
+  scimBridge: SCIMBridge
   token: String!
 }
 
@@ -3201,6 +3384,17 @@ func (ec *executionContext) dir_session_args(ctx context.Context, rawArgs map[st
 		return nil, err
 	}
 	args["required"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Connector_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -3823,6 +4017,17 @@ func (ec *executionContext) field_SAMLConfiguration_permission_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_SCIMBridge_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_SCIMConfiguration_events_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4112,6 +4317,181 @@ func (ec *executionContext) fieldContext_ChangePasswordPayload_success(_ context
 	return fc, nil
 }
 
+func (ec *executionContext) _Connector_id(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Connector_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Connector_provider(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_provider,
+		func(ctx context.Context) (any, error) {
+			return obj.Provider, nil
+		},
+		nil,
+		ec.marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Connector_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ConnectorProvider does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Connector_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Connector_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Connector_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Connector_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Connector_permission(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Connector().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Connector_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Connector_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateOrganizationPayload_organization(ctx context.Context, field graphql.CollectedField, obj *types.CreateOrganizationPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4343,12 +4723,61 @@ func (ec *executionContext) fieldContext_CreateSCIMConfigurationPayload_scimConf
 				return ec.fieldContext_SCIMConfiguration_updatedAt(ctx, field)
 			case "organization":
 				return ec.fieldContext_SCIMConfiguration_organization(ctx, field)
+			case "bridge":
+				return ec.fieldContext_SCIMConfiguration_bridge(ctx, field)
 			case "events":
 				return ec.fieldContext_SCIMConfiguration_events(ctx, field)
 			case "permission":
 				return ec.fieldContext_SCIMConfiguration_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SCIMConfiguration", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateSCIMConfigurationPayload_scimBridge(ctx context.Context, field graphql.CollectedField, obj *types.CreateSCIMConfigurationPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateSCIMConfigurationPayload_scimBridge,
+		func(ctx context.Context) (any, error) {
+			return obj.ScimBridge, nil
+		},
+		nil,
+		ec.marshalOSCIMBridge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMBridge,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateSCIMConfigurationPayload_scimBridge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateSCIMConfigurationPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SCIMBridge_id(ctx, field)
+			case "state":
+				return ec.fieldContext_SCIMBridge_state(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_SCIMBridge_scimConfiguration(ctx, field)
+			case "connector":
+				return ec.fieldContext_SCIMBridge_connector(ctx, field)
+			case "type":
+				return ec.fieldContext_SCIMBridge_type(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SCIMBridge_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SCIMBridge_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_SCIMBridge_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMBridge", field.Name)
 		},
 	}
 	return fc, nil
@@ -8007,6 +8436,8 @@ func (ec *executionContext) fieldContext_Mutation_createSCIMConfiguration(ctx co
 			switch field.Name {
 			case "scimConfiguration":
 				return ec.fieldContext_CreateSCIMConfigurationPayload_scimConfiguration(ctx, field)
+			case "scimBridge":
+				return ec.fieldContext_CreateSCIMConfigurationPayload_scimBridge(ctx, field)
 			case "token":
 				return ec.fieldContext_CreateSCIMConfigurationPayload_token(ctx, field)
 			}
@@ -8626,6 +9057,8 @@ func (ec *executionContext) fieldContext_Organization_scimConfiguration(_ contex
 				return ec.fieldContext_SCIMConfiguration_updatedAt(ctx, field)
 			case "organization":
 				return ec.fieldContext_SCIMConfiguration_organization(ctx, field)
+			case "bridge":
+				return ec.fieldContext_SCIMConfiguration_bridge(ctx, field)
 			case "events":
 				return ec.fieldContext_SCIMConfiguration_events(ctx, field)
 			case "permission":
@@ -9731,6 +10164,8 @@ func (ec *executionContext) fieldContext_RegenerateSCIMTokenPayload_scimConfigur
 				return ec.fieldContext_SCIMConfiguration_updatedAt(ctx, field)
 			case "organization":
 				return ec.fieldContext_SCIMConfiguration_organization(ctx, field)
+			case "bridge":
+				return ec.fieldContext_SCIMConfiguration_bridge(ctx, field)
 			case "events":
 				return ec.fieldContext_SCIMConfiguration_events(ctx, field)
 			case "permission":
@@ -10727,6 +11162,298 @@ func (ec *executionContext) fieldContext_SAMLConfigurationEdge_cursor(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _SCIMBridge_id(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMBridge_state(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_state,
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		ec.marshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type SCIMBridgeState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMBridge_scimConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_scimConfiguration,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.SCIMBridge().ScimConfiguration(ctx, obj)
+		},
+		nil,
+		ec.marshalOSCIMConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMConfiguration,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_scimConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SCIMConfiguration_id(ctx, field)
+			case "endpointUrl":
+				return ec.fieldContext_SCIMConfiguration_endpointUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SCIMConfiguration_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SCIMConfiguration_updatedAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_SCIMConfiguration_organization(ctx, field)
+			case "bridge":
+				return ec.fieldContext_SCIMConfiguration_bridge(ctx, field)
+			case "events":
+				return ec.fieldContext_SCIMConfiguration_events(ctx, field)
+			case "permission":
+				return ec.fieldContext_SCIMConfiguration_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMConfiguration", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMBridge_connector(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_connector,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.SCIMBridge().Connector(ctx, obj)
+		},
+		nil,
+		ec.marshalOConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐConnector,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_connector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Connector_id(ctx, field)
+			case "provider":
+				return ec.fieldContext_Connector_provider(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Connector_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Connector_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Connector_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Connector", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMBridge_type(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalNSCIMBridgeType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type SCIMBridgeType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMBridge_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMBridge_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMBridge_permission(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.SCIMBridge().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_SCIMBridge_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SCIMConfiguration_id(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10901,6 +11628,53 @@ func (ec *executionContext) fieldContext_SCIMConfiguration_organization(_ contex
 				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMConfiguration_bridge(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMConfiguration_bridge,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.SCIMConfiguration().Bridge(ctx, obj)
+		},
+		nil,
+		ec.marshalOSCIMBridge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMBridge,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMConfiguration_bridge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMConfiguration",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SCIMBridge_id(ctx, field)
+			case "state":
+				return ec.fieldContext_SCIMBridge_state(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_SCIMBridge_scimConfiguration(ctx, field)
+			case "connector":
+				return ec.fieldContext_SCIMBridge_connector(ctx, field)
+			case "type":
+				return ec.fieldContext_SCIMBridge_type(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SCIMBridge_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SCIMBridge_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_SCIMBridge_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMBridge", field.Name)
 		},
 	}
 	return fc, nil
@@ -14191,7 +14965,7 @@ func (ec *executionContext) unmarshalInputCreateSCIMConfigurationInput(ctx conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId"}
+	fieldsInOrder := [...]string{"organizationId", "connectorId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14205,6 +14979,13 @@ func (ec *executionContext) unmarshalInputCreateSCIMConfigurationInput(ctx conte
 				return it, err
 			}
 			it.OrganizationID = data
+		case "connectorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("connectorId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConnectorID = data
 		}
 	}
 
@@ -15177,6 +15958,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._SCIMConfiguration(ctx, sel, obj)
+	case types.SCIMBridge:
+		return ec._SCIMBridge(ctx, sel, &obj)
+	case *types.SCIMBridge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SCIMBridge(ctx, sel, obj)
 	case types.SAMLConfiguration:
 		return ec._SAMLConfiguration(ctx, sel, &obj)
 	case *types.SAMLConfiguration:
@@ -15226,6 +16014,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Identity(ctx, sel, obj)
+	case types.Connector:
+		return ec._Connector(ctx, sel, &obj)
+	case *types.Connector:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Connector(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -15396,6 +16191,96 @@ func (ec *executionContext) _ChangePasswordPayload(ctx context.Context, sel ast.
 	return out
 }
 
+var connectorImplementors = []string{"Connector", "Node"}
+
+func (ec *executionContext) _Connector(ctx context.Context, sel ast.SelectionSet, obj *types.Connector) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, connectorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Connector")
+		case "id":
+			out.Values[i] = ec._Connector_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "provider":
+			out.Values[i] = ec._Connector_provider(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._Connector_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Connector_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Connector_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createOrganizationPayloadImplementors = []string{"CreateOrganizationPayload"}
 
 func (ec *executionContext) _CreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateOrganizationPayload) graphql.Marshaler {
@@ -15536,6 +16421,8 @@ func (ec *executionContext) _CreateSCIMConfigurationPayload(ctx context.Context,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "scimBridge":
+			out.Values[i] = ec._CreateSCIMConfigurationPayload_scimBridge(ctx, field, obj)
 		case "token":
 			out.Values[i] = ec._CreateSCIMConfigurationPayload_token(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18363,6 +19250,167 @@ func (ec *executionContext) _SAMLConfigurationEdge(ctx context.Context, sel ast.
 	return out
 }
 
+var sCIMBridgeImplementors = []string{"SCIMBridge", "Node"}
+
+func (ec *executionContext) _SCIMBridge(ctx context.Context, sel ast.SelectionSet, obj *types.SCIMBridge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sCIMBridgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SCIMBridge")
+		case "id":
+			out.Values[i] = ec._SCIMBridge_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "state":
+			out.Values[i] = ec._SCIMBridge_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "scimConfiguration":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMBridge_scimConfiguration(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "connector":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMBridge_connector(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "type":
+			out.Values[i] = ec._SCIMBridge_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._SCIMBridge_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._SCIMBridge_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMBridge_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var sCIMConfigurationImplementors = []string{"SCIMConfiguration", "Node"}
 
 func (ec *executionContext) _SCIMConfiguration(ctx context.Context, sel ast.SelectionSet, obj *types.SCIMConfiguration) graphql.Marshaler {
@@ -18435,6 +19483,39 @@ func (ec *executionContext) _SCIMConfiguration(ctx context.Context, sel ast.Sele
 					}
 				}()
 				res = ec._SCIMConfiguration_organization(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "bridge":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMConfiguration_bridge(ctx, field, obj)
 				return res
 			}
 
@@ -19744,6 +20825,34 @@ func (ec *executionContext) unmarshalNChangePasswordInput2goᚗproboᚗincᚋpro
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx context.Context, v any) (coredata.ConnectorProvider, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx context.Context, sel ast.SelectionSet, v coredata.ConnectorProvider) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider = map[string]coredata.ConnectorProvider{
+		"SLACK":            coredata.ConnectorProviderSlack,
+		"GOOGLE_WORKSPACE": coredata.ConnectorProviderGoogleWorkspace,
+	}
+	marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider = map[coredata.ConnectorProvider]string{
+		coredata.ConnectorProviderSlack:           "SLACK",
+		coredata.ConnectorProviderGoogleWorkspace: "GOOGLE_WORKSPACE",
+	}
+)
+
 func (ec *executionContext) unmarshalNCreateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateOrganizationInput(ctx context.Context, v any) (types.CreateOrganizationInput, error) {
 	res, err := ec.unmarshalInputCreateOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -20458,6 +21567,62 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState(ctx context.Context, v any) (coredata.SCIMBridgeState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState(ctx context.Context, sel ast.SelectionSet, v coredata.SCIMBridgeState) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState = map[string]coredata.SCIMBridgeState{
+		"PENDING": coredata.SCIMBridgeStatePending,
+		"ACTIVE":  coredata.SCIMBridgeStateActive,
+		"FAILED":  coredata.SCIMBridgeStateFailed,
+	}
+	marshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState = map[coredata.SCIMBridgeState]string{
+		coredata.SCIMBridgeStatePending: "PENDING",
+		coredata.SCIMBridgeStateActive:  "ACTIVE",
+		coredata.SCIMBridgeStateFailed:  "FAILED",
+	}
+)
+
+func (ec *executionContext) unmarshalNSCIMBridgeType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeType(ctx context.Context, v any) (coredata.SCIMBridgeType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNSCIMBridgeType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeType[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSCIMBridgeType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeType(ctx context.Context, sel ast.SelectionSet, v coredata.SCIMBridgeType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNSCIMBridgeType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeType[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNSCIMBridgeType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeType = map[string]coredata.SCIMBridgeType{
+		"GOOGLE_WORKSPACE": coredata.SCIMBridgeTypeGoogleWorkspace,
+	}
+	marshalNSCIMBridgeType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeType = map[coredata.SCIMBridgeType]string{
+		coredata.SCIMBridgeTypeGoogleWorkspace: "GOOGLE_WORKSPACE",
+	}
+)
+
 func (ec *executionContext) marshalNSCIMConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMConfiguration(ctx context.Context, sel ast.SelectionSet, v *types.SCIMConfiguration) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -21058,6 +22223,13 @@ func (ec *executionContext) marshalOChangePasswordPayload2ᚖgoᚗproboᚗincᚋ
 	return ec._ChangePasswordPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐConnector(ctx context.Context, sel ast.SelectionSet, v *types.Connector) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Connector(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOCreateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateOrganizationPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -21162,6 +22334,24 @@ func (ec *executionContext) marshalOForgotPasswordPayload2ᚖgoᚗproboᚗincᚋ
 		return graphql.Null
 	}
 	return ec._ForgotPasswordPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, v any) (*gid.GID, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := gid1.UnmarshalGIDScalar(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, sel ast.SelectionSet, v *gid.GID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := gid1.MarshalGIDScalar(*v)
+	return res
 }
 
 func (ec *executionContext) marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐIdentity(ctx context.Context, sel ast.SelectionSet, v *types.Identity) graphql.Marshaler {
@@ -21348,6 +22538,13 @@ func (ec *executionContext) marshalOSAMLConfigurationConnection2ᚖgoᚗproboᚗ
 		return graphql.Null
 	}
 	return ec._SAMLConfigurationConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSCIMBridge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMBridge(ctx context.Context, sel ast.SelectionSet, v *types.SCIMBridge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SCIMBridge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSCIMConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMConfiguration(ctx context.Context, sel ast.SelectionSet, v *types.SCIMConfiguration) graphql.Marshaler {

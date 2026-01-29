@@ -1296,6 +1296,30 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 				return fmt.Errorf("cannot reset membership sources: %w", err)
 			}
 
+			// Delete SCIM bridge and its connector if they exist
+			bridge := &coredata.SCIMBridge{}
+			err = bridge.LoadBySCIMConfigurationID(ctx, tx, scope, configID)
+			if err != nil && err != coredata.ErrResourceNotFound {
+				return fmt.Errorf("cannot load SCIM bridge: %w", err)
+			}
+
+			if err == nil {
+				// Bridge exists, delete connector if it has one
+				if bridge.ConnectorID != nil {
+					connector := &coredata.Connector{ID: *bridge.ConnectorID}
+					err = connector.Delete(ctx, tx, scope)
+					if err != nil && err != coredata.ErrResourceNotFound {
+						return fmt.Errorf("cannot delete connector: %w", err)
+					}
+				}
+
+				// Delete the bridge
+				err = bridge.Delete(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot delete SCIM bridge: %w", err)
+				}
+			}
+
 			err = config.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete SCIM configuration: %w", err)
@@ -1590,4 +1614,294 @@ func (s OrganizationService) GetOrganization(ctx context.Context, organizationID
 	}
 
 	return organization, nil
+}
+
+func (s OrganizationService) GetSCIMBridgeByID(ctx context.Context, bridgeID gid.GID) (*coredata.SCIMBridge, error) {
+	var (
+		scope  = coredata.NewScopeFromObjectID(bridgeID)
+		bridge = &coredata.SCIMBridge{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := bridge.LoadByID(ctx, conn, scope, bridgeID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSCIMBridgeNotFoundError(bridgeID)
+				}
+
+				return fmt.Errorf("cannot load SCIM bridge: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bridge, nil
+}
+
+func (s OrganizationService) GetConnectorByID(ctx context.Context, connectorID gid.GID) (*coredata.Connector, error) {
+	var (
+		scope     = coredata.NewScopeFromObjectID(connectorID)
+		connector = &coredata.Connector{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := connector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewConnectorNotFoundError(connectorID)
+				}
+
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return connector, nil
+}
+
+// GetConnectorMetadataByID returns connector metadata without decrypting the connection.
+// Use this when you only need provider, organization, or other metadata fields.
+func (s OrganizationService) GetConnectorMetadataByID(ctx context.Context, connectorID gid.GID) (*coredata.Connector, error) {
+	var (
+		scope     = coredata.NewScopeFromObjectID(connectorID)
+		connector = &coredata.Connector{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := connector.LoadMetadataByID(ctx, conn, scope, connectorID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewConnectorNotFoundError(connectorID)
+				}
+
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return connector, nil
+}
+
+func (s OrganizationService) GetSCIMBridgeByOrganizationID(ctx context.Context, organizationID gid.GID) (*coredata.SCIMBridge, error) {
+	var (
+		scope  = coredata.NewScopeFromObjectID(organizationID)
+		bridge = &coredata.SCIMBridge{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := bridge.LoadByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return nil // No bridge found, not an error
+				}
+
+				return fmt.Errorf("cannot load SCIM bridge: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// If bridge ID is empty, no bridge was found
+	if bridge.ID == (gid.GID{}) {
+		return nil, nil
+	}
+
+	return bridge, nil
+}
+
+func (s OrganizationService) LinkConnectorToSCIMBridge(
+	ctx context.Context,
+	bridgeID gid.GID,
+	connectorID gid.GID,
+) (*coredata.SCIMBridge, error) {
+	var (
+		scope  = coredata.NewScopeFromObjectID(bridgeID)
+		bridge = &coredata.SCIMBridge{}
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			err := bridge.LoadByID(ctx, tx, scope, bridgeID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSCIMBridgeNotFoundError(bridgeID)
+				}
+				return fmt.Errorf("cannot load SCIM bridge: %w", err)
+			}
+
+			// Update the bridge with the connector ID
+			bridge.ConnectorID = &connectorID
+			bridge.State = coredata.SCIMBridgeStateActive
+			bridge.UpdatedAt = time.Now()
+
+			if err := bridge.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update SCIM bridge: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bridge, nil
+}
+
+func (s OrganizationService) CreateSCIMBridge(
+	ctx context.Context,
+	organizationID gid.GID,
+	scimConfigurationID gid.GID,
+	connectorID gid.GID,
+) (*coredata.SCIMBridge, error) {
+	var (
+		scope  = coredata.NewScopeFromObjectID(organizationID)
+		now    = time.Now()
+		bridge *coredata.SCIMBridge
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			organization := &coredata.Organization{}
+			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewOrganizationNotFoundError(organizationID)
+				}
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			config := &coredata.SCIMConfiguration{}
+			err = config.LoadByID(ctx, tx, scope, scimConfigurationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return scim.NewSCIMConfigurationNotFoundError(scimConfigurationID)
+				}
+				return fmt.Errorf("cannot load SCIM configuration: %w", err)
+			}
+
+			if config.OrganizationID != organizationID {
+				return scim.NewSCIMConfigurationNotFoundError(scimConfigurationID)
+			}
+
+			// Load and validate the connector (metadata only, no decryption needed)
+			existingConnector := &coredata.Connector{}
+			err = existingConnector.LoadMetadataByID(ctx, tx, scope, connectorID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewConnectorNotFoundError(connectorID)
+				}
+
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			// Verify connector belongs to the same organization
+			if existingConnector.OrganizationID != organizationID {
+				return NewConnectorNotFoundError(connectorID)
+			}
+
+			// Map connector provider to bridge type
+			var bridgeType coredata.SCIMBridgeType
+			switch existingConnector.Provider {
+			case coredata.ConnectorProviderGoogleWorkspace:
+				bridgeType = coredata.SCIMBridgeTypeGoogleWorkspace
+			default:
+				return fmt.Errorf("connector provider %s is not supported for SCIM bridge", existingConnector.Provider)
+			}
+
+			bridge = &coredata.SCIMBridge{
+				ID:                  gid.New(organizationID.TenantID(), coredata.SCIMBridgeEntityType),
+				OrganizationID:      organizationID,
+				ScimConfigurationID: scimConfigurationID,
+				ConnectorID:         &connectorID,
+				Type:                bridgeType,
+				State:               coredata.SCIMBridgeStateActive, // Active immediately since connector already exists
+				CreatedAt:           now,
+				UpdatedAt:           now,
+			}
+
+			if err := bridge.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert SCIM bridge: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bridge, nil
+}
+
+func (s OrganizationService) DeleteSCIMBridge(ctx context.Context, organizationID gid.GID, bridgeID gid.GID) error {
+	var (
+		scope  = coredata.NewScopeFromObjectID(organizationID)
+		bridge = &coredata.SCIMBridge{}
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			organization := &coredata.Organization{}
+			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if err := bridge.LoadByID(ctx, tx, scope, bridgeID); err != nil {
+				return fmt.Errorf("cannot load SCIM bridge: %w", err)
+			}
+
+			if bridge.OrganizationID != organizationID {
+				return NewSCIMBridgeNotFoundError(bridgeID)
+			}
+
+			if err := bridge.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete SCIM bridge: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

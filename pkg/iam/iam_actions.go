@@ -77,4 +77,12 @@ const (
 	// SCIM Event actions
 	ActionSCIMEventList = "iam:scim-event:list"
 	ActionSCIMEventGet  = "iam:scim-event:get"
+
+	// SCIM Bridge actions
+	ActionSCIMBridgeGet    = "iam:scim-bridge:get"
+	ActionSCIMBridgeCreate = "iam:scim-bridge:create"
+	ActionSCIMBridgeDelete = "iam:scim-bridge:delete"
+
+	// Connector actions
+	ActionConnectorGet = "iam:connector:get"
 )

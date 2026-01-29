@@ -20,9 +20,20 @@ import type { SCIMConfigurationRegenerateTokenMutation } from "#/__generated__/i
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const SCIMConfigurationFragment = graphql`
-  fragment SCIMConfigurationFragment on SCIMConfiguration {
-    id
-    endpointUrl
+  fragment SCIMConfigurationFragment on Organization {
+    canCreateSCIMConfiguration: permission(
+      action: "iam:scim-configuration:create"
+    )
+    canDeleteSCIMConfiguration: permission(
+      action: "iam:scim-configuration:delete"
+    )
+    scimConfiguration {
+      id
+      endpointUrl
+      bridge {
+        id
+      }
+    }
   }
 `;
 
@@ -75,15 +86,19 @@ const regenerateSCIMTokenMutation = graphql`
 `;
 
 export function SCIMConfiguration(props: {
-  fKey: SCIMConfigurationFragment$key | null;
-  canCreate: boolean;
-  canDelete: boolean;
+  fKey: SCIMConfigurationFragment$key;
 }) {
-  const { canCreate, canDelete, fKey } = props;
+  const { fKey } = props;
 
   const organizationId = useOrganizationId();
 
-  const scimConfiguration = useFragment(SCIMConfigurationFragment, fKey);
+  const organization = useFragment<SCIMConfigurationFragment$key>(SCIMConfigurationFragment, fKey);
+  const {
+    canCreateSCIMConfiguration: canCreate,
+    canDeleteSCIMConfiguration: canDelete,
+    scimConfiguration,
+  } = organization;
+  const hasIdentityProvider = !!scimConfiguration?.bridge;
   const { __ } = useTranslate();
   const { toast } = useToast();
 
@@ -117,7 +132,7 @@ export function SCIMConfiguration(props: {
             variant: "error",
             title: __("Error"),
             description: formatError(
-              __("SCIM configuration creation failed"),
+              __("Manual SCIM configuration failed"),
               e,
             ),
           });
@@ -128,7 +143,7 @@ export function SCIMConfiguration(props: {
           setToken(response.createSCIMConfiguration.token);
         }
         toast({
-          title: __("SCIM Configuration Created"),
+          title: __("Manual SCIM Configured"),
           description: __(
             "Copy the bearer token now. It will not be shown again.",
           ),
@@ -159,7 +174,7 @@ export function SCIMConfiguration(props: {
         deleteDialogRef.current?.close();
         setToken(null);
         toast({
-          title: __("SCIM Configuration Deleted"),
+          title: __("Manual SCIM Configuration Deleted"),
           description: __(
             "All SCIM-provisioned memberships have been changed to manual source.",
           ),
@@ -218,14 +233,18 @@ export function SCIMConfiguration(props: {
   };
 
   if (!scimConfiguration) {
+    if (hasIdentityProvider) {
+      return null;
+    }
+
     return (
       <Card padded>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-medium">{__("SCIM is not configured")}</h3>
+            <h3 className="font-medium">{__("Manual SCIM is not configured")}</h3>
             <p className="text-sm text-txt-secondary mt-1">
               {__(
-                "Enable SCIM to automatically provision users from your identity provider.",
+                "Generate a SCIM endpoint and bearer token to configure your identity provider manually.",
               )}
             </p>
           </div>
@@ -250,10 +269,10 @@ export function SCIMConfiguration(props: {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium">{__("SCIM Provisioning Active")}</h3>
+              <h3 className="font-medium">{__("Manual SCIM Active")}</h3>
               <p className="text-sm text-txt-secondary">
                 {__(
-                  "Automatic user provisioning is enabled for this organization.",
+                  "Use these credentials to configure SCIM in your identity provider.",
                 )}
               </p>
             </div>
@@ -328,17 +347,17 @@ export function SCIMConfiguration(props: {
 
       <Dialog
         ref={deleteDialogRef}
-        title={__("Delete SCIM Configuration")}
+        title={__("Delete Manual SCIM Configuration")}
         onClose={() => deleteDialogRef.current?.close()}
       >
         <div className="p-4 space-y-4">
           <p>
             {__(
-              "Are you sure you want to delete the SCIM configuration? This will:",
+              "Are you sure you want to delete the manual SCIM configuration? This will:",
             )}
           </p>
           <ul className="list-disc list-inside text-sm space-y-1">
-            <li>{__("Disable automatic user provisioning")}</li>
+            <li>{__("Disable manual SCIM provisioning")}</li>
             <li>
               {__("Change all SCIM-provisioned memberships to manual source")}
             </li>

@@ -60,6 +60,17 @@ type ChangePasswordPayload struct {
 	Success bool `json:"success"`
 }
 
+type Connector struct {
+	ID         gid.GID                    `json:"id"`
+	Provider   coredata.ConnectorProvider `json:"provider"`
+	CreatedAt  time.Time                  `json:"createdAt"`
+	UpdatedAt  time.Time                  `json:"updatedAt"`
+	Permission bool                       `json:"permission"`
+}
+
+func (Connector) IsNode()             {}
+func (this Connector) GetID() gid.GID { return this.ID }
+
 type CreateOrganizationInput struct {
 	Name               string          `json:"name"`
 	LogoFile           *graphql.Upload `json:"logoFile,omitempty"`
@@ -96,11 +107,13 @@ type CreateSAMLConfigurationPayload struct {
 }
 
 type CreateSCIMConfigurationInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
+	OrganizationID gid.GID  `json:"organizationId"`
+	ConnectorID    *gid.GID `json:"connectorId,omitempty"`
 }
 
 type CreateSCIMConfigurationPayload struct {
 	ScimConfiguration *SCIMConfiguration `json:"scimConfiguration"`
+	ScimBridge        *SCIMBridge        `json:"scimBridge,omitempty"`
 	Token             string             `json:"token"`
 }
 
@@ -396,12 +409,27 @@ type SAMLConfigurationEdge struct {
 	Cursor page.CursorKey     `json:"cursor"`
 }
 
+type SCIMBridge struct {
+	ID                gid.GID                  `json:"id"`
+	State             coredata.SCIMBridgeState `json:"state"`
+	ScimConfiguration *SCIMConfiguration       `json:"scimConfiguration,omitempty"`
+	Connector         *Connector               `json:"connector,omitempty"`
+	Type              coredata.SCIMBridgeType  `json:"type"`
+	CreatedAt         time.Time                `json:"createdAt"`
+	UpdatedAt         time.Time                `json:"updatedAt"`
+	Permission        bool                     `json:"permission"`
+}
+
+func (SCIMBridge) IsNode()             {}
+func (this SCIMBridge) GetID() gid.GID { return this.ID }
+
 type SCIMConfiguration struct {
 	ID           gid.GID              `json:"id"`
 	EndpointURL  string               `json:"endpointUrl"`
 	CreatedAt    time.Time            `json:"createdAt"`
 	UpdatedAt    time.Time            `json:"updatedAt"`
 	Organization *Organization        `json:"organization,omitempty"`
+	Bridge       *SCIMBridge          `json:"bridge,omitempty"`
 	Events       *SCIMEventConnection `json:"events,omitempty"`
 	Permission   bool                 `json:"permission"`
 }

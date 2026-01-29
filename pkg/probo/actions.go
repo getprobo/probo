@@ -278,6 +278,10 @@ const (
 	// SlackConnection actions
 	ActionSlackConnectionList = "core:slack-connection:list"
 
+	// Connector actions (generic)
+	ActionConnectorList   = "core:connector:list"
+	ActionConnectorDelete = "core:connector:delete"
+
 	// DataProtectionImpactAssessment actions
 	ActionDataProtectionImpactAssessmentList   = "core:data-protection-impact-assessment:list"
 	ActionDataProtectionImpactAssessmentGet    = "core:data-protection-impact-assessment:get"

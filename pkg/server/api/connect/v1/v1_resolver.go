@@ -27,6 +27,11 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
+// Permission is the resolver for the permission field.
+func (r *connectorResolver) Permission(ctx context.Context, obj *types.Connector, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Memberships is the resolver for the memberships field.
 func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipList); err != nil {
@@ -1119,10 +1124,24 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.CreateSCIMConfigurationPayload{
+	var bridge *types.SCIMBridge
+
+	if input.ConnectorID != nil {
+		scimBridge, err := r.iam.OrganizationService.CreateSCIMBridge(ctx, input.OrganizationID, config.ID, *input.ConnectorID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot create scim bridge", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+		bridge = types.NewSCIMBridge(scimBridge)
+	}
+
+	payload := &types.CreateSCIMConfigurationPayload{
 		ScimConfiguration: types.NewSCIMConfiguration(config),
+		ScimBridge:        bridge,
 		Token:             token,
-	}, nil
+	}
+
+	return payload, nil
 }
 
 // DeleteSCIMConfiguration is the resolver for the deleteSCIMConfiguration field.
@@ -1578,6 +1597,63 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 	return nil, gqlutils.Internal(ctx)
 }
 
+// ScimConfiguration is the resolver for the scimConfiguration field.
+func (r *sCIMBridgeResolver) ScimConfiguration(ctx context.Context, obj *types.SCIMBridge) (*types.SCIMConfiguration, error) {
+	if err := r.authorize(ctx, obj.ScimConfiguration.ID, iam.ActionSCIMConfigurationGet); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.SCIMConfiguration{
+			ID: obj.ScimConfiguration.ID,
+		}, nil
+	}
+
+	scimConfiguration, err := r.iam.GetSCIMConfiguration(ctx, obj.ScimConfiguration.ID)
+	if err != nil {
+		var errNoSCIMConfigurationFound *iam.ErrNoSCIMConfigurationFound
+		if errors.As(err, &errNoSCIMConfigurationFound) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return types.NewSCIMConfiguration(scimConfiguration), nil
+}
+
+// Connector is the resolver for the connector field.
+func (r *sCIMBridgeResolver) Connector(ctx context.Context, obj *types.SCIMBridge) (*types.Connector, error) {
+	if obj.Connector == nil {
+		return nil, nil
+	}
+
+	// Authorize based on the SCIM configuration (connector accessed via bridge is a sub-resource)
+	if err := r.authorize(ctx, obj.ScimConfiguration.ID, iam.ActionSCIMConfigurationGet); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Connector{
+			ID: obj.Connector.ID,
+		}, nil
+	}
+
+	// Use metadata-only loading since we don't need the encrypted connection data
+	connector, err := r.iam.OrganizationService.GetConnectorMetadataByID(ctx, obj.Connector.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewConnector(connector), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *sCIMBridgeResolver) Permission(ctx context.Context, obj *types.SCIMBridge, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // EndpointURL is the resolver for the endpointUrl field.
 func (r *sCIMConfigurationResolver) EndpointURL(ctx context.Context, obj *types.SCIMConfiguration) (string, error) {
 	return r.baseURL.WithPath("/api/connect/v1/scim/2.0").MustString(), nil
@@ -1607,6 +1683,31 @@ func (r *sCIMConfigurationResolver) Organization(ctx context.Context, obj *types
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// Bridge is the resolver for the bridge field.
+func (r *sCIMConfigurationResolver) Bridge(ctx context.Context, obj *types.SCIMConfiguration) (*types.SCIMBridge, error) {
+
+	if obj.Bridge == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet); err != nil {
+		return nil, err
+	}
+
+	bridge, err := r.iam.OrganizationService.GetSCIMBridgeByID(ctx, obj.Bridge.ID)
+	if err != nil {
+		var errSCIMBridgeNotFound *iam.ErrSCIMBridgeNotFound
+		if errors.As(err, &errSCIMBridgeNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get scim bridge", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewSCIMBridge(bridge), nil
 }
 
 // Events is the resolver for the events field.
@@ -1734,6 +1835,9 @@ func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.S
 	return nil, gqlutils.Internal(ctx)
 }
 
+// Connector returns schema.ConnectorResolver implementation.
+func (r *Resolver) Connector() schema.ConnectorResolver { return &connectorResolver{r} }
+
 // Identity returns schema.IdentityResolver implementation.
 func (r *Resolver) Identity() schema.IdentityResolver { return &identityResolver{r} }
 
@@ -1785,6 +1889,9 @@ func (r *Resolver) SAMLConfigurationConnection() schema.SAMLConfigurationConnect
 	return &sAMLConfigurationConnectionResolver{r}
 }
 
+// SCIMBridge returns schema.SCIMBridgeResolver implementation.
+func (r *Resolver) SCIMBridge() schema.SCIMBridgeResolver { return &sCIMBridgeResolver{r} }
+
 // SCIMConfiguration returns schema.SCIMConfigurationResolver implementation.
 func (r *Resolver) SCIMConfiguration() schema.SCIMConfigurationResolver {
 	return &sCIMConfigurationResolver{r}
@@ -1806,6 +1913,7 @@ func (r *Resolver) SessionConnection() schema.SessionConnectionResolver {
 	return &sessionConnectionResolver{r}
 }
 
+type connectorResolver struct{ *Resolver }
 type identityResolver struct{ *Resolver }
 type invitationResolver struct{ *Resolver }
 type invitationConnectionResolver struct{ *Resolver }
@@ -1819,6 +1927,7 @@ type personalAPIKeyConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type sAMLConfigurationResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }
+type sCIMBridgeResolver struct{ *Resolver }
 type sCIMConfigurationResolver struct{ *Resolver }
 type sCIMEventResolver struct{ *Resolver }
 type sCIMEventConnectionResolver struct{ *Resolver }

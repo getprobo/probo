@@ -38,17 +38,19 @@ import (
 
 type (
 	OAuth2Connector struct {
-		ClientID     string
-		ClientSecret string
-		RedirectURI  string
-		Scopes       []string
-		AuthURL      string
-		TokenURL     string
+		ClientID        string
+		ClientSecret    string
+		RedirectURI     string
+		Scopes          []string
+		AuthURL         string
+		TokenURL        string
+		ExtraAuthParams map[string]string // Optional: extra params for auth URL (e.g., access_type=offline for Google)
 	}
 
 	OAuth2State struct {
 		OrganizationID string `json:"oid"`
 		Provider       string `json:"provider"`
+		ContinueURL    string `json:"continue,omitempty"`
 	}
 
 	OAuth2Connection struct {
@@ -73,21 +75,30 @@ func (c *OAuth2Connector) Initiate(ctx context.Context, provider string, organiz
 		OrganizationID: organizationID.String(),
 		Provider:       provider,
 	}
+	if r != nil {
+		if continueURL := r.URL.Query().Get("continue"); continueURL != "" {
+			stateData.ContinueURL = continueURL
+		}
+	}
+	return c.InitiateWithState(ctx, stateData, r)
+}
+
+// InitiateWithState generates an OAuth2 authorization URL with a custom state.
+// This allows callers to include additional context (like SCIMBridgeID) in the state.
+func (c *OAuth2Connector) InitiateWithState(ctx context.Context, stateData OAuth2State, r *http.Request) (string, error) {
 	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL, stateData)
 	if err != nil {
 		return "", fmt.Errorf("cannot create state token: %w", err)
 	}
 
+	// Build redirect URI with provider (fixed per provider, so can be registered in OAuth console)
 	redirectURI := c.RedirectURI
 	redirectURIParsed, err := url.Parse(redirectURI)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse redirect URI: %w", err)
 	}
 	q := redirectURIParsed.Query()
-	q.Set("provider", provider)
-	if continueURL := r.URL.Query().Get("continue"); continueURL != "" {
-		q.Set("continue", continueURL)
-	}
+	q.Set("provider", stateData.Provider)
 	redirectURIParsed.RawQuery = q.Encode()
 	redirectURI = redirectURIParsed.String()
 
@@ -97,6 +108,11 @@ func (c *OAuth2Connector) Initiate(ctx context.Context, provider string, organiz
 	authCodeQuery.Set("redirect_uri", redirectURI)
 	authCodeQuery.Set("response_type", "code")
 	authCodeQuery.Set("scope", strings.Join(c.Scopes, " "))
+
+	// Add any extra auth params (e.g., access_type=offline, prompt=consent for Google)
+	for k, v := range c.ExtraAuthParams {
+		authCodeQuery.Set(k, v)
+	}
 
 	u, err := url.Parse(c.AuthURL)
 	if err != nil {
@@ -108,7 +124,23 @@ func (c *OAuth2Connector) Initiate(ctx context.Context, provider string, organiz
 	return u.String(), nil
 }
 
-func (c *OAuth2Connector) Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, error) {
+func (c *OAuth2Connector) Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, string, error) {
+	conn, state, err := c.CompleteWithState(ctx, r)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	organizationID, err := gid.ParseGID(state.OrganizationID)
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("cannot parse organization ID: %w", err)
+	}
+
+	return conn, &organizationID, state.ContinueURL, nil
+}
+
+// CompleteWithState completes the OAuth2 flow and returns the full state.
+// This allows callers to access additional context (like SCIMBridgeID) from the state.
+func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request) (Connection, *OAuth2State, error) {
 	provider := r.URL.Query().Get("provider")
 	if provider == "" {
 		return nil, nil, fmt.Errorf("missing provider in query parameters")
@@ -138,6 +170,7 @@ func (c *OAuth2Connector) Complete(ctx context.Context, r *http.Request) (Connec
 		return nil, nil, fmt.Errorf("cannot parse organization ID: %w", err)
 	}
 
+	// Build redirect URI with provider (must match what was sent to auth endpoint)
 	redirectURI := c.RedirectURI
 	redirectURIParsed, err := url.Parse(redirectURI)
 	if err != nil {
@@ -145,9 +178,6 @@ func (c *OAuth2Connector) Complete(ctx context.Context, r *http.Request) (Connec
 	}
 	q := redirectURIParsed.Query()
 	q.Set("provider", provider)
-	if continueURL := r.URL.Query().Get("continue"); continueURL != "" {
-		q.Set("continue", continueURL)
-	}
 	redirectURIParsed.RawQuery = q.Encode()
 	redirectURI = redirectURIParsed.String()
 
@@ -191,10 +221,11 @@ func (c *OAuth2Connector) Complete(ctx context.Context, r *http.Request) (Connec
 	}
 
 	if provider == SlackProvider {
-		return ParseSlackTokenResponse(body, oauth2Conn, organizationID)
+		conn, _, err := ParseSlackTokenResponse(body, oauth2Conn, organizationID)
+		return conn, &payload.Data, err
 	}
 
-	return &oauth2Conn, &organizationID, nil
+	return &oauth2Conn, &payload.Data, nil
 }
 
 func (c *OAuth2Connection) Type() ProtocolType {

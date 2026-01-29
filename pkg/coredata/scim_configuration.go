@@ -32,6 +32,7 @@ type (
 	SCIMConfiguration struct {
 		ID             gid.GID   `db:"id"`
 		OrganizationID gid.GID   `db:"organization_id"`
+		BridgeID       *gid.GID  `db:"bridge_id"`
 		HashedToken    []byte    `db:"hashed_token"`
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
@@ -70,18 +71,31 @@ func (s *SCIMConfiguration) LoadByID(
 	configID gid.GID,
 ) error {
 	q := `
+WITH scim_config AS (
+    SELECT
+        id,
+        organization_id,
+        hashed_token,
+        created_at,
+        updated_at
+    FROM
+        iam_scim_configurations
+    WHERE
+        %s
+        AND id = @id
+    LIMIT 1
+)
 SELECT
-    id,
-    organization_id,
-    hashed_token,
-    created_at,
-    updated_at
+    sc.id,
+    sc.organization_id,
+    b.id AS bridge_id,
+    sc.hashed_token,
+    sc.created_at,
+    sc.updated_at
 FROM
-    iam_scim_configurations
-WHERE
-    %s
-    AND id = @id
-LIMIT 1;
+    scim_config sc
+LEFT JOIN
+    iam_scim_bridges b ON b.scim_configuration_id = sc.id;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -115,18 +129,31 @@ func (s *SCIMConfiguration) LoadByOrganizationID(
 	organizationID gid.GID,
 ) error {
 	q := `
+WITH scim_config AS (
+    SELECT
+        id,
+        organization_id,
+        hashed_token,
+        created_at,
+        updated_at
+    FROM
+        iam_scim_configurations
+    WHERE
+        %s
+        AND organization_id = @organization_id
+    LIMIT 1
+)
 SELECT
-    id,
-    organization_id,
-    hashed_token,
-    created_at,
-    updated_at
+    sc.id,
+    sc.organization_id,
+    b.id AS bridge_id,
+    sc.hashed_token,
+    sc.created_at,
+    sc.updated_at
 FROM
-    iam_scim_configurations
-WHERE
-    %s
-    AND organization_id = @organization_id
-LIMIT 1;
+    scim_config sc
+LEFT JOIN
+    iam_scim_bridges b ON b.scim_configuration_id = sc.id;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -159,17 +186,30 @@ func (s *SCIMConfiguration) LoadByHashedToken(
 	hashedToken []byte,
 ) error {
 	q := `
+WITH scim_config AS (
+    SELECT
+        id,
+        organization_id,
+        hashed_token,
+        created_at,
+        updated_at
+    FROM
+        iam_scim_configurations
+    WHERE
+        hashed_token = @hashed_token
+    LIMIT 1
+)
 SELECT
-    id,
-    organization_id,
-    hashed_token,
-    created_at,
-    updated_at
+    sc.id,
+    sc.organization_id,
+    b.id AS bridge_id,
+    sc.hashed_token,
+    sc.created_at,
+    sc.updated_at
 FROM
-    iam_scim_configurations
-WHERE
-    hashed_token = @hashed_token
-LIMIT 1;
+    scim_config sc
+LEFT JOIN
+    iam_scim_bridges b ON b.scim_configuration_id = sc.id;
 `
 
 	args := pgx.StrictNamedArgs{"hashed_token": hashedToken}

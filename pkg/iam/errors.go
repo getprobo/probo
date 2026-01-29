@@ -357,3 +357,23 @@ func NewNoSCIMConfigurationFoundError(organizationID gid.GID) error {
 func (e ErrNoSCIMConfigurationFound) Error() string {
 	return fmt.Sprintf("SCIM configuration not found for organization %q", e.OrganizationID)
 }
+
+type ErrSCIMBridgeNotFound struct{ BridgeID gid.GID }
+
+func NewSCIMBridgeNotFoundError(bridgeID gid.GID) error {
+	return &ErrSCIMBridgeNotFound{BridgeID: bridgeID}
+}
+
+func (e ErrSCIMBridgeNotFound) Error() string {
+	return fmt.Sprintf("SCIM bridge %q not found", e.BridgeID)
+}
+
+type ErrConnectorNotFound struct{ ConnectorID gid.GID }
+
+func NewConnectorNotFoundError(connectorID gid.GID) error {
+	return &ErrConnectorNotFound{ConnectorID: connectorID}
+}
+
+func (e ErrConnectorNotFound) Error() string {
+	return fmt.Sprintf("connector %q not found", e.ConnectorID)
+}

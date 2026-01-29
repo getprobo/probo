@@ -107,7 +107,7 @@ probod:
       key-type: "EC256"
 
   connectors:
-    - provider: "slack"
+    - provider: "SLACK"
       protocol: "oauth2"
       config:
         client-id: "slack-client-id"
@@ -121,3 +121,18 @@ probod:
           - "incoming-webhook"
       settings:
         signing-secret: "this-is-not-a-secret-for-slack-signing"
+    - provider: "GOOGLE_WORKSPACE"
+      protocol: "oauth2"
+      config:
+        client-id: "google-workspace-client-id"
+        client-secret: "thisisnotasecret"
+        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
+        auth-url: "https://accounts.google.com/o/oauth2/v2/auth"
+        token-url: "https://oauth2.googleapis.com/token"
+        scopes:
+          - "https://www.googleapis.com/auth/admin.directory.user.readonly"
+          - "https://www.googleapis.com/auth/admin.directory.userschema.readonly"
+          - "https://www.googleapis.com/auth/admin.directory.group.member.readonly"
+        extra-auth-params:
+          access_type: "offline"
+          prompt: "consent"
