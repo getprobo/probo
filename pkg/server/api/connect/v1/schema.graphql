@@ -347,6 +347,8 @@ type SCIMConfiguration implements Node {
   updatedAt: Datetime!
   organization: Organization @goField(forceResolver: true)
 
+  bridge: SCIMBridge @goField(forceResolver: true)
+
   events(
     first: Int
     after: CursorKey
@@ -358,6 +360,50 @@ type SCIMConfiguration implements Node {
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)
+}
+
+type SCIMBridge implements Node {
+  id: ID!
+  state: SCIMBridgeState!
+  scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
+  connector: Connector @goField(forceResolver: true)
+  type: SCIMBridgeType!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type Connector implements Node {
+  id: ID!
+  provider: ConnectorProvider!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+enum ConnectorProvider
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ConnectorProvider") {
+  SLACK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSlack")
+  GOOGLE_WORKSPACE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace")
+}
+
+enum SCIMBridgeType
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMBridgeType") {
+  GOOGLE_WORKSPACE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeTypeGoogleWorkspace")
+}
+
+enum SCIMBridgeState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMBridgeState") {
+  PENDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStatePending")
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateActive")
+  FAILED @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateFailed")
 }
 
 type SCIMEvent implements Node {
@@ -846,6 +892,7 @@ type DeleteSAMLConfigurationPayload {
 
 input CreateSCIMConfigurationInput {
   organizationId: ID!
+  connectorId: ID
 }
 
 input DeleteSCIMConfigurationInput {
@@ -860,6 +907,7 @@ input RegenerateSCIMTokenInput {
 
 type CreateSCIMConfigurationPayload {
   scimConfiguration: SCIMConfiguration!
+  scimBridge: SCIMBridge
   token: String!
 }
 

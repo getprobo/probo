@@ -12,25 +12,29 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package types
+package coredata
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
+type (
+	SCIMBridgeOrderField string
 )
 
-func NewSCIMConfiguration(scimConfiguration *coredata.SCIMConfiguration) *SCIMConfiguration {
-	var bridge *SCIMBridge
-	if scimConfiguration.BridgeID != nil {
-		bridge = &SCIMBridge{
-			ID: *scimConfiguration.BridgeID,
-		}
-	}
+const (
+	SCIMBridgeOrderFieldCreatedAt SCIMBridgeOrderField = "CREATED_AT"
+)
 
-	return &SCIMConfiguration{
-		ID:           scimConfiguration.ID,
-		Organization: &Organization{ID: scimConfiguration.OrganizationID},
-		Bridge:       bridge,
-		CreatedAt:    scimConfiguration.CreatedAt,
-		UpdatedAt:    scimConfiguration.UpdatedAt,
-	}
+func (p SCIMBridgeOrderField) Column() string {
+	return string(p)
+}
+
+func (p SCIMBridgeOrderField) String() string {
+	return string(p)
+}
+
+func (p SCIMBridgeOrderField) MarshalText() ([]byte, error) {
+	return []byte(p.String()), nil
+}
+
+func (p *SCIMBridgeOrderField) UnmarshalText(text []byte) error {
+	*p = SCIMBridgeOrderField(text)
+	return nil
 }

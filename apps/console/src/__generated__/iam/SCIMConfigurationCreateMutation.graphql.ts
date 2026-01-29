@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<481d9c3c647c11a95d68ff7e4a489a24>>
+ * @generated SignedSource<<29e2f3791be9e59a1c61033e31eb0134>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,6 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type CreateSCIMConfigurationInput = {
+  connectorId?: string | null | undefined;
   organizationId: string;
 };
 export type SCIMConfigurationCreateMutation$variables = {
