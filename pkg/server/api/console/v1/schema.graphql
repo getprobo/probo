@@ -1562,6 +1562,8 @@ input VendorFilter {
 type TrustCenter implements Node {
     id: ID!
     active: Boolean!
+    logoFileUrl: String @goField(forceResolver: true)
+    darkLogoFileUrl: String @goField(forceResolver: true)
     ndaFileName: String
     ndaFileUrl: String @goField(forceResolver: true)
     createdAt: Datetime!

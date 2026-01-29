@@ -7577,6 +7577,40 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// LogoFileURL is the resolver for the logoFileUrl field.
+func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	logoURL, err := prb.TrustCenters.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		// TODO no panic use gqlutils.InternalError
+		panic(fmt.Errorf("cannot generate logo url: %w", err))
+	}
+
+	return logoURL, nil
+}
+
+// DarkLogoFileURL is the resolver for the darkLogoFileUrl field.
+func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	logoURL, err := prb.TrustCenters.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		// TODO no panic use gqlutils.InternalError
+		panic(fmt.Errorf("cannot generate logo url: %w", err))
+	}
+
+	return logoURL, nil
+}
+
 // NdaFileURL is the resolver for the ndaFileUrl field.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
 	hasPermission, err := r.Resolver.Permission(ctx, obj, probo.ActionTrustCenterGetNda)
