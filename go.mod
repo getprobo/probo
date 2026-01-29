@@ -1,6 +1,6 @@
 module go.probo.inc/probo
 
-go 1.25.5
+go 1.25.6
 
 require (
 	codeberg.org/miekg/dns v0.6.2
