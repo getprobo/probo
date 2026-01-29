@@ -655,6 +655,9 @@ func (s *OrganizationService) CreateOrganization(
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
+
+				organization.LogoFileID = &logoFile.ID
+				trustCenter.LogoFileID = &logoFile.ID
 			}
 
 			if horizontalLogoFile != nil {
@@ -662,6 +665,8 @@ func (s *OrganizationService) CreateOrganization(
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
+
+				organization.HorizontalLogoFileID = &horizontalLogoFile.ID
 			}
 
 			err = membership.Insert(ctx, tx, scope)
@@ -734,6 +739,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		tenantID           = organizationID.TenantID()
 		scope              = coredata.NewScopeFromObjectID(organizationID)
 		organization       = &coredata.Organization{}
+		compliancePage     = &coredata.TrustCenter{}
 	)
 
 	// TODO: s3 upload happen before we validate the tenantID
@@ -851,12 +857,25 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			}
 
 			if logoFile != nil {
-				err := logoFile.Insert(ctx, tx, scope)
-				if err != nil {
+				if err := logoFile.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
 
 				organization.LogoFileID = &logoFile.ID
+
+				// Auto set the compliance page org logo in case it wasn't already specified
+				if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+					return fmt.Errorf("cannot load compliance page: %w", err)
+				}
+
+				if compliancePage.LogoFileID == nil {
+					compliancePage.LogoFileID = &logoFile.ID
+					compliancePage.UpdatedAt = now
+
+					if err := compliancePage.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update compliance page: %w", err)
+					}
+				}
 			}
 
 			if horizontalLogoFile != nil {
@@ -864,6 +883,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
+
 				organization.HorizontalLogoFileID = &horizontalLogoFile.ID
 			}
 

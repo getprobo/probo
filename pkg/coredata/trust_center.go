@@ -35,6 +35,8 @@ type (
 		TenantID                     gid.TenantID `db:"tenant_id"`
 		Active                       bool         `db:"active"`
 		Slug                         string       `db:"slug"`
+		LogoFileID                   *gid.GID     `db:"logo_file_id"`
+		DarkLogoFileID               *gid.GID     `db:"dark_logo_file_id"`
 		NonDisclosureAgreementFileID *gid.GID     `db:"non_disclosure_agreement_file_id"`
 		CreatedAt                    time.Time    `db:"created_at"`
 		UpdatedAt                    time.Time    `db:"updated_at"`
@@ -77,6 +79,8 @@ SELECT
 	id,
 	organization_id,
 	tenant_id,
+	logo_file_id,
+	dark_logo_file_id,
 	active,
 	slug,
 	non_disclosure_agreement_file_id,
@@ -125,6 +129,8 @@ SELECT
 	id,
 	organization_id,
 	tenant_id,
+	logo_file_id,
+	dark_logo_file_id,
 	active,
 	slug,
 	non_disclosure_agreement_file_id,
@@ -173,6 +179,8 @@ SELECT
 	id,
 	organization_id,
 	tenant_id,
+	logo_file_id,
+	dark_logo_file_id,
 	active,
 	slug,
 	non_disclosure_agreement_file_id,
@@ -216,6 +224,8 @@ INSERT INTO trust_centers (
 	id,
 	organization_id,
 	tenant_id,
+	logo_file_id,
+	dark_logo_file_id,
 	active,
 	slug,
 	non_disclosure_agreement_file_id,
@@ -225,6 +235,8 @@ INSERT INTO trust_centers (
 	@id,
 	@organization_id,
 	@tenant_id,
+	@logo_file_id,
+	@dark_logo_file_id,
 	@active,
 	@slug,
 	@non_disclosure_agreement_file_id,
@@ -237,6 +249,8 @@ INSERT INTO trust_centers (
 		"id":                               tc.ID,
 		"organization_id":                  tc.OrganizationID,
 		"tenant_id":                        tc.TenantID,
+		"logo_file_id":                     tc.LogoFileID,
+		"dark_logo_file_id":                tc.DarkLogoFileID,
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
@@ -268,6 +282,8 @@ UPDATE trust_centers
 SET
 	active = @active,
 	slug = @slug,
+	logo_file_id = @logo_file_id,
+	dark_logo_file_id = @dark_logo_file_id,
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
 	updated_at = @updated_at
 WHERE
@@ -279,6 +295,8 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                               tc.ID,
+		"logo_file_id":                     tc.LogoFileID,
+		"dark_logo_file_id":                tc.DarkLogoFileID,
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
