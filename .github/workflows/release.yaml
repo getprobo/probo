@@ -20,13 +20,13 @@ jobs:
       image-digest: ${{ steps.image.outputs.digest }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: "1.25.6"
           cache: true
@@ -71,7 +71,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: "ghcr.io/getprobo/probo:${{ github.ref_name }}"
           format: "sarif"
@@ -88,14 +88,14 @@ jobs:
           sarif_file: "trivy-results.sarif"
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
+        uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 #v0.22.1
         with:
           path: ./
           format: cyclonedx-json
           output-file: sbom.json
 
       - name: Run vulnerability scan
-        uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
+        uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 #v7.3.1
         with:
           path: ./
           fail-build: true
@@ -114,13 +114,13 @@ jobs:
           echo "hashes=$(cat checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@v1
+        uses: actions/attest-sbom@v3
         with:
           subject-path: "dist/*.tar.gz, dist/*.zip"
           sbom-path: "sbom.json"
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: "dist/*.tar.gz, dist/*.zip"
 
@@ -133,14 +133,14 @@ jobs:
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Attest Docker image SBOM
-        uses: actions/attest-sbom@v1
+        uses: actions/attest-sbom@v3
         with:
           subject-name: "ghcr.io/getprobo/probo"
           subject-digest: ${{ steps.image.outputs.digest }}
           sbom-path: "sbom.json"
 
       - name: Upload SBOM as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom
           path: |
@@ -155,12 +155,12 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -175,13 +175,13 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           npm --workspace @probo/n8n-nodes-probo version "$VERSION" --no-git-tag-version
 
-      - uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
+      - uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 #v0.22.1
         with:
           path: ./packages/n8n-node
           format: cyclonedx-json
           output-file: packages/n8n-node/sbom.json
 
-      - uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
+      - uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 #v7.3.1
         with:
           path: ./packages/n8n-node
           fail-build: true
@@ -199,16 +199,16 @@ jobs:
       - run: npm --workspace @probo/n8n-nodes-probo publish --access public --dry-run
       - run: npm --workspace @probo/n8n-nodes-probo publish --access public
 
-      - uses: actions/attest-sbom@v1
+      - uses: actions/attest-sbom@v3
         with:
           subject-path: "packages/n8n-node/dist/**"
           sbom-path: "packages/n8n-node/sbom.json"
 
-      - uses: actions/attest-build-provenance@v1
+      - uses: actions/attest-build-provenance@v3
         with:
           subject-path: "packages/n8n-node/dist/**"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: npm-sbom
           path: |
