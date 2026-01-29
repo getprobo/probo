@@ -95,10 +95,18 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 		obj.ID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check document access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
-		return false, nil
+		if errors.Is(err, trust.ErrMembershipNotFound) {
+			return false, nil
+		}
+		if errors.Is(err, trust.ErrMembershipInactive) {
+			return false, nil
+		}
+		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+			return false, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot check document access", log.Error(err))
+		return false, gqlutils.Internal(ctx)
 	}
 
 	return documentAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
@@ -820,10 +828,18 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 		obj.ID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check report access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
-		return false, nil
+		if errors.Is(err, trust.ErrMembershipNotFound) {
+			return false, nil
+		}
+		if errors.Is(err, trust.ErrMembershipInactive) {
+			return false, nil
+		}
+		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+			return false, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot check report access", log.Error(err))
+		return false, gqlutils.Internal(ctx)
 	}
 
 	return reportAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
@@ -1028,10 +1044,18 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 		obj.ID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check trust center file access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
-		return false, nil
+		if errors.Is(err, trust.ErrMembershipNotFound) {
+			return false, nil
+		}
+		if errors.Is(err, trust.ErrMembershipInactive) {
+			return false, nil
+		}
+		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+			return false, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot check trust center file access", log.Error(err))
+		return false, gqlutils.Internal(ctx)
 	}
 
 	return fileAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil

@@ -157,6 +157,10 @@ LIMIT 1;
 
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect trust center document access: %w", err)
 	}
 
@@ -207,6 +211,10 @@ LIMIT 1;
 
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect trust center document access: %w", err)
 	}
 
@@ -1037,6 +1045,7 @@ func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndTrustCenterFi
 	q := `
 SELECT
     id,
+    organization_id,
     trust_center_access_id,
     document_id,
     report_id,
@@ -1068,6 +1077,10 @@ LIMIT 1;
 
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect trust center document access: %w", err)
 	}
 

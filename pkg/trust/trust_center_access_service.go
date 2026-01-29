@@ -295,16 +295,24 @@ func (s TrustCenterAccessService) LoadDocumentAccess(
 		access := &coredata.TrustCenterAccess{}
 		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
 		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrMembershipNotFound
+			}
+
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
 		if !access.Active {
-			return fmt.Errorf("trust center access is not active")
+			return ErrMembershipInactive
 		}
 
 		documentAccess = &coredata.TrustCenterDocumentAccess{}
 		err = documentAccess.LoadByTrustCenterAccessIDAndDocumentID(ctx, conn, s.svc.scope, access.ID, documentID)
 		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrDocumentAccessNotFound
+			}
+
 			return fmt.Errorf("cannot load document access: %w", err)
 		}
 
@@ -330,16 +338,24 @@ func (s TrustCenterAccessService) LoadReportAccess(
 		access := &coredata.TrustCenterAccess{}
 		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
 		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrMembershipNotFound
+			}
+
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
 		if !access.Active {
-			return fmt.Errorf("trust center access is not active")
+			return ErrMembershipInactive
 		}
 
 		reportAccess = &coredata.TrustCenterDocumentAccess{}
 		err = reportAccess.LoadByTrustCenterAccessIDAndReportID(ctx, conn, s.svc.scope, access.ID, reportID)
 		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrDocumentAccessNotFound
+			}
+
 			return fmt.Errorf("cannot load report access: %w", err)
 		}
 
@@ -365,16 +381,24 @@ func (s TrustCenterAccessService) LoadTrustCenterFileAccess(
 		access := &coredata.TrustCenterAccess{}
 		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
 		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrMembershipNotFound
+			}
+
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
 		if !access.Active {
-			return fmt.Errorf("trust center access is not active")
+			return ErrMembershipInactive
 		}
 
 		fileAccess = &coredata.TrustCenterDocumentAccess{}
 		err = fileAccess.LoadByTrustCenterAccessIDAndTrustCenterFileID(ctx, conn, s.svc.scope, access.ID, trustCenterFileID)
 		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrDocumentAccessNotFound
+			}
+
 			return fmt.Errorf("cannot load trust center file access: %w", err)
 		}
 

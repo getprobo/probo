@@ -17,7 +17,9 @@ package trust
 import "errors"
 
 var (
-	ErrCustomDomainNotFound = errors.New("custom domain not found")
-	ErrPageNotFound         = errors.New("page not found")
-	ErrMembershipNotFound   = errors.New("membership not found")
+	ErrCustomDomainNotFound   = errors.New("custom domain not found")
+	ErrPageNotFound           = errors.New("page not found")
+	ErrMembershipNotFound     = errors.New("membership not found")
+	ErrMembershipInactive     = errors.New("membership inactive")
+	ErrDocumentAccessNotFound = errors.New("document access not found")
 )
