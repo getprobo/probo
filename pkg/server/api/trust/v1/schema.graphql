@@ -491,6 +491,8 @@ type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
+  logoFileUrl: String @goField(forceResolver: true)
+  darkLogoFileUrl: String @goField(forceResolver: true)
   ndaFileName: String
   ndaFileUrl: String @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)

@@ -185,10 +185,12 @@ type ComplexityRoot struct {
 	TrustCenter struct {
 		Active                            func(childComplexity int) int
 		Audits                            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		DarkLogoFileURL                   func(childComplexity int) int
 		Documents                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		HasAcceptedNonDisclosureAgreement func(childComplexity int) int
 		ID                                func(childComplexity int) int
 		IsViewerMember                    func(childComplexity int) int
+		LogoFileURL                       func(childComplexity int) int
 		NdaFileName                       func(childComplexity int) int
 		NdaFileURL                        func(childComplexity int) int
 		Organization                      func(childComplexity int) int
@@ -304,6 +306,9 @@ type ReportResolver interface {
 	HasUserRequestedAccess(ctx context.Context, obj *types.Report) (bool, error)
 }
 type TrustCenterResolver interface {
+	LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
+	DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
+
 	NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	IsViewerMember(ctx context.Context, obj *types.TrustCenter) (bool, error)
@@ -790,6 +795,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.Audits(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+	case "TrustCenter.darkLogoFileUrl":
+		if e.complexity.TrustCenter.DarkLogoFileURL == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.DarkLogoFileURL(childComplexity), true
 	case "TrustCenter.documents":
 		if e.complexity.TrustCenter.Documents == nil {
 			break
@@ -819,6 +830,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.IsViewerMember(childComplexity), true
+	case "TrustCenter.logoFileUrl":
+		if e.complexity.TrustCenter.LogoFileURL == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.LogoFileURL(childComplexity), true
 	case "TrustCenter.ndaFileName":
 		if e.complexity.TrustCenter.NdaFileName == nil {
 			break
@@ -1705,6 +1722,8 @@ type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
+  logoFileUrl: String @goField(forceResolver: true)
+  darkLogoFileUrl: String @goField(forceResolver: true)
   ndaFileName: String
   ndaFileUrl: String @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
@@ -4213,6 +4232,10 @@ func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_active(ctx, field)
 			case "slug":
 				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "logoFileUrl":
+				return ec.fieldContext_TrustCenter_logoFileUrl(ctx, field)
+			case "darkLogoFileUrl":
+				return ec.fieldContext_TrustCenter_darkLogoFileUrl(ctx, field)
 			case "ndaFileName":
 				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
 			case "ndaFileUrl":
@@ -4614,6 +4637,64 @@ func (ec *executionContext) fieldContext_TrustCenter_slug(_ context.Context, fie
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_logoFileUrl(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_logoFileUrl,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.TrustCenter().LogoFileURL(ctx, obj)
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_logoFileUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_darkLogoFileUrl(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_darkLogoFileUrl,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.TrustCenter().DarkLogoFileURL(ctx, obj)
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_darkLogoFileUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -9204,6 +9285,72 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "logoFileUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_logoFileUrl(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "darkLogoFileUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_darkLogoFileUrl(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "ndaFileName":
 			out.Values[i] = ec._TrustCenter_ndaFileName(ctx, field, obj)
 		case "ndaFileUrl":

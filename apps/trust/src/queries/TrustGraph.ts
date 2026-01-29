@@ -12,13 +12,14 @@ export const currentTrustGraphQuery = graphql`
       slug
       isViewerMember
       hasAcceptedNonDisclosureAgreement
+      logoFileUrl
+      darkLogoFileUrl
       ndaFileName
       ndaFileUrl
       organization {
         name
         description
         websiteUrl
-        logoUrl
         email
         headquarterAddress
       }

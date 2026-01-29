@@ -140,3 +140,79 @@ func (s TrustCenterService) GenerateNDAFileURL(
 
 	return presignedReq.URL, nil
 }
+
+func (s TrustCenterService) GenerateLogoURL(
+	ctx context.Context,
+	compliancePageID gid.GID,
+	expiresIn time.Duration,
+) (*string, error) {
+	compliancePage, _, err := s.Get(ctx, compliancePageID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get compliance page: %w", err)
+	}
+
+	if compliancePage.LogoFileID == nil {
+		return nil, nil
+	}
+
+	url, err := s.generateFileURL(ctx, *compliancePage.LogoFileID, expiresIn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate file URL: %w", err)
+	}
+
+	return url, nil
+}
+
+func (s TrustCenterService) GenerateDarkLogoURL(
+	ctx context.Context,
+	compliancePageID gid.GID,
+	expiresIn time.Duration,
+) (*string, error) {
+	compliancePage, _, err := s.Get(ctx, compliancePageID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get compliance page: %w", err)
+	}
+
+	if compliancePage.DarkLogoFileID == nil {
+		return nil, nil
+	}
+
+	url, err := s.generateFileURL(ctx, *compliancePage.DarkLogoFileID, expiresIn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate file URL: %w", err)
+	}
+
+	return url, nil
+}
+
+func (s TrustCenterService) generateFileURL(ctx context.Context, fileID gid.GID, expiresIn time.Duration) (*string, error) {
+	file := &coredata.File{}
+	if err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return file.LoadByID(ctx, conn, s.svc.scope, fileID)
+		},
+	); err != nil {
+		return nil, fmt.Errorf("cannot load file: %w", err)
+	}
+
+	presignClient := s3.NewPresignClient(s.svc.s3)
+
+	encodedFilename := url.QueryEscape(file.FileName)
+	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
+		encodedFilename, encodedFilename)
+
+	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket:                     aws.String(s.svc.bucket),
+		Key:                        aws.String(file.FileKey),
+		ResponseCacheControl:       aws.String("max-age=3600, public"),
+		ResponseContentDisposition: aws.String(contentDisposition),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = expiresIn
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot presign GetObject request: %w", err)
+	}
+
+	return &presignedReq.URL, nil
+}

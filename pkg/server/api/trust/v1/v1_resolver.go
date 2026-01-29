@@ -871,6 +871,20 @@ func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.
 	return true, nil
 }
 
+// LogoFileURL is the resolver for the logoFileUrl field.
+func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	return trustService.TrustCenters.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
+// DarkLogoFileURL is the resolver for the darkLogoFileUrl field.
+func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	return trustService.TrustCenters.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
 // NdaFileURL is the resolver for the ndaFileUrl field.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
