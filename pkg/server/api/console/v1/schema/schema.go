@@ -1063,6 +1063,7 @@ type ComplexityRoot struct {
 		UpdateTransferImpactAssessment           func(childComplexity int, input types.UpdateTransferImpactAssessmentInput) int
 		UpdateTrustCenter                        func(childComplexity int, input types.UpdateTrustCenterInput) int
 		UpdateTrustCenterAccess                  func(childComplexity int, input types.UpdateTrustCenterAccessInput) int
+		UpdateTrustCenterBrand                   func(childComplexity int, input types.UpdateTrustCenterBrandInput) int
 		UpdateTrustCenterFile                    func(childComplexity int, input types.UpdateTrustCenterFileInput) int
 		UpdateTrustCenterReference               func(childComplexity int, input types.UpdateTrustCenterReferenceInput) int
 		UpdateVendor                             func(childComplexity int, input types.UpdateVendorInput) int
@@ -1701,6 +1702,10 @@ type ComplexityRoot struct {
 		TrustCenterAccess func(childComplexity int) int
 	}
 
+	UpdateTrustCenterBrandPayload struct {
+		TrustCenter func(childComplexity int) int
+	}
+
 	UpdateTrustCenterFilePayload struct {
 		TrustCenterFile func(childComplexity int) int
 	}
@@ -2089,6 +2094,7 @@ type MutationResolver interface {
 	UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error)
 	UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error)
 	DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error)
+	UpdateTrustCenterBrand(ctx context.Context, input types.UpdateTrustCenterBrandInput) (*types.UpdateTrustCenterBrandPayload, error)
 	CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error)
 	UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error)
 	DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error)
@@ -6457,6 +6463,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateTrustCenterAccess(childComplexity, args["input"].(types.UpdateTrustCenterAccessInput)), true
+	case "Mutation.updateTrustCenterBrand":
+		if e.complexity.Mutation.UpdateTrustCenterBrand == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateTrustCenterBrand_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateTrustCenterBrand(childComplexity, args["input"].(types.UpdateTrustCenterBrandInput)), true
 	case "Mutation.updateTrustCenterFile":
 		if e.complexity.Mutation.UpdateTrustCenterFile == nil {
 			break
@@ -9188,6 +9205,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateTrustCenterAccessPayload.TrustCenterAccess(childComplexity), true
 
+	case "UpdateTrustCenterBrandPayload.trustCenter":
+		if e.complexity.UpdateTrustCenterBrandPayload.TrustCenter == nil {
+			break
+		}
+
+		return e.complexity.UpdateTrustCenterBrandPayload.TrustCenter(childComplexity), true
+
 	case "UpdateTrustCenterFilePayload.trustCenterFile":
 		if e.complexity.UpdateTrustCenterFilePayload.TrustCenterFile == nil {
 			break
@@ -10209,6 +10233,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateTaskInput,
 		ec.unmarshalInputUpdateTransferImpactAssessmentInput,
 		ec.unmarshalInputUpdateTrustCenterAccessInput,
+		ec.unmarshalInputUpdateTrustCenterBrandInput,
 		ec.unmarshalInputUpdateTrustCenterFileInput,
 		ec.unmarshalInputUpdateTrustCenterInput,
 		ec.unmarshalInputUpdateTrustCenterReferenceInput,
@@ -13399,6 +13424,9 @@ type Mutation {
     deleteTrustCenterNDA(
         input: DeleteTrustCenterNDAInput!
     ): DeleteTrustCenterNDAPayload!
+    updateTrustCenterBrand(
+        input: UpdateTrustCenterBrandInput!
+    ): UpdateTrustCenterBrandPayload!
     # Trust Center Access CRUD mutations
     createTrustCenterAccess(
         input: CreateTrustCenterAccessInput!
@@ -13771,6 +13799,12 @@ input UploadTrustCenterNDAInput {
 
 input DeleteTrustCenterNDAInput {
     trustCenterId: ID!
+}
+
+input UpdateTrustCenterBrandInput {
+    trustCenterId: ID!
+    logoFile: Upload @goField(omittable: true)
+    darkLogoFile: Upload @goField(omittable: true)
 }
 
 input CreateTrustCenterAccessInput {
@@ -14633,6 +14667,10 @@ type UploadTrustCenterNDAPayload {
 }
 
 type DeleteTrustCenterNDAPayload {
+    trustCenter: TrustCenter!
+}
+
+type UpdateTrustCenterBrandPayload {
     trustCenter: TrustCenter!
 }
 
@@ -17674,6 +17712,17 @@ func (ec *executionContext) field_Mutation_updateTrustCenterAccess_args(ctx cont
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateTrustCenterAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterAccessInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateTrustCenterBrand_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateTrustCenterBrandInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterBrandInput)
 	if err != nil {
 		return nil, err
 	}
@@ -33512,6 +33561,51 @@ func (ec *executionContext) fieldContext_Mutation_deleteTrustCenterNDA(ctx conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteTrustCenterNDA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateTrustCenterBrand(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateTrustCenterBrand,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateTrustCenterBrand(ctx, fc.Args["input"].(types.UpdateTrustCenterBrandInput))
+		},
+		nil,
+		ec.marshalNUpdateTrustCenterBrandPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterBrandPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateTrustCenterBrand(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "trustCenter":
+				return ec.fieldContext_UpdateTrustCenterBrandPayload_trustCenter(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateTrustCenterBrandPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateTrustCenterBrand_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -54304,6 +54398,61 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterAccessPayload_trustCen
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateTrustCenterBrandPayload_trustCenter(ctx context.Context, field graphql.CollectedField, obj *types.UpdateTrustCenterBrandPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateTrustCenterBrandPayload_trustCenter,
+		func(ctx context.Context) (any, error) {
+			return obj.TrustCenter, nil
+		},
+		nil,
+		ec.marshalNTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateTrustCenterBrandPayload_trustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateTrustCenterBrandPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenter_id(ctx, field)
+			case "active":
+				return ec.fieldContext_TrustCenter_active(ctx, field)
+			case "logoFileUrl":
+				return ec.fieldContext_TrustCenter_logoFileUrl(ctx, field)
+			case "darkLogoFileUrl":
+				return ec.fieldContext_TrustCenter_darkLogoFileUrl(ctx, field)
+			case "ndaFileName":
+				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+			case "ndaFileUrl":
+				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TrustCenter_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TrustCenter_updatedAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_TrustCenter_organization(ctx, field)
+			case "accesses":
+				return ec.fieldContext_TrustCenter_accesses(ctx, field)
+			case "references":
+				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenter_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateTrustCenterFilePayload_trustCenterFile(ctx context.Context, field graphql.CollectedField, obj *types.UpdateTrustCenterFilePayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -67961,6 +68110,47 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterAccessInput(ctx conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateTrustCenterBrandInput(ctx context.Context, obj any) (types.UpdateTrustCenterBrandInput, error) {
+	var it types.UpdateTrustCenterBrandInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"trustCenterId", "logoFile", "darkLogoFile"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "trustCenterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterID = data
+		case "logoFile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logoFile"))
+			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogoFile = graphql.OmittableOf(data)
+		case "darkLogoFile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("darkLogoFile"))
+			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DarkLogoFile = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateTrustCenterFileInput(ctx context.Context, obj any) (types.UpdateTrustCenterFileInput, error) {
 	var it types.UpdateTrustCenterFileInput
 	asMap := map[string]any{}
@@ -78429,6 +78619,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateTrustCenterBrand":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateTrustCenterBrand(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createTrustCenterAccess":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createTrustCenterAccess(ctx, field)
@@ -87095,6 +87292,45 @@ func (ec *executionContext) _UpdateTrustCenterAccessPayload(ctx context.Context,
 			out.Values[i] = graphql.MarshalString("UpdateTrustCenterAccessPayload")
 		case "trustCenterAccess":
 			out.Values[i] = ec._UpdateTrustCenterAccessPayload_trustCenterAccess(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateTrustCenterBrandPayloadImplementors = []string{"UpdateTrustCenterBrandPayload"}
+
+func (ec *executionContext) _UpdateTrustCenterBrandPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateTrustCenterBrandPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateTrustCenterBrandPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateTrustCenterBrandPayload")
+		case "trustCenter":
+			out.Values[i] = ec._UpdateTrustCenterBrandPayload_trustCenter(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -97539,6 +97775,25 @@ func (ec *executionContext) marshalNUpdateTrustCenterAccessPayload2ᚖgoᚗprobo
 		return graphql.Null
 	}
 	return ec._UpdateTrustCenterAccessPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateTrustCenterBrandInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterBrandInput(ctx context.Context, v any) (types.UpdateTrustCenterBrandInput, error) {
+	res, err := ec.unmarshalInputUpdateTrustCenterBrandInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateTrustCenterBrandPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterBrandPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateTrustCenterBrandPayload) graphql.Marshaler {
+	return ec._UpdateTrustCenterBrandPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateTrustCenterBrandPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterBrandPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateTrustCenterBrandPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateTrustCenterBrandPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateTrustCenterFileInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterFileInput(ctx context.Context, v any) (types.UpdateTrustCenterFileInput, error) {

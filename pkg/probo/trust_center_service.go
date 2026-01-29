@@ -48,6 +48,12 @@ type (
 		File          io.Reader
 		FileName      string
 	}
+
+	UpdateTrustCenterBrandRequest struct {
+		TrustCenterID gid.GID
+		LogoFile      **FileUpload
+		DarkLogoFile  **FileUpload
+	}
 )
 
 func (utcr *UpdateTrustCenterRequest) Validate() error {
@@ -302,6 +308,132 @@ func (s TrustCenterService) DeleteNDA(
 	return trustCenter, nil, nil
 }
 
+func (s TrustCenterService) UpdateTrustCenterBrand(
+	ctx context.Context,
+	req *UpdateTrustCenterBrandRequest,
+) (*coredata.TrustCenter, *coredata.File, error) {
+	var trustCenter *coredata.TrustCenter
+	var ndaFile *coredata.File
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			trustCenter = &coredata.TrustCenter{}
+			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			now := time.Now()
+
+			if req.LogoFile != nil {
+				if *req.LogoFile == nil {
+					trustCenter.LogoFileID = nil
+				} else {
+					file, err := s.uploadFile(ctx, conn, *req.LogoFile, "trust-center-logo", trustCenter)
+					if err != nil {
+						return fmt.Errorf("cannot upload logo file: %w", err)
+					}
+					trustCenter.LogoFileID = &file.ID
+				}
+			}
+
+			if req.DarkLogoFile != nil {
+				if *req.DarkLogoFile == nil {
+					trustCenter.DarkLogoFileID = nil
+				} else {
+					file, err := s.uploadFile(ctx, conn, *req.DarkLogoFile, "trust-center-dark-logo", trustCenter)
+					if err != nil {
+						return fmt.Errorf("cannot upload dark logo file: %w", err)
+					}
+					trustCenter.DarkLogoFileID = &file.ID
+				}
+			}
+
+			trustCenter.UpdatedAt = now
+
+			if err := trustCenter.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update trust center: %w", err)
+			}
+
+			if trustCenter.NonDisclosureAgreementFileID != nil {
+				ndaFile = &coredata.File{}
+				if err := ndaFile.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+					return fmt.Errorf("cannot load nda file: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return trustCenter, ndaFile, nil
+}
+
+func (s TrustCenterService) uploadFile(
+	ctx context.Context,
+	conn pg.Conn,
+	fileUpload *FileUpload,
+	fileType string,
+	trustCenter *coredata.TrustCenter,
+) (*coredata.File, error) {
+	objectKey, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate object key: %w", err)
+	}
+
+	mimeType := fileUpload.ContentType
+	if mimeType == "" {
+		mimeType = mime.TypeByExtension(filepath.Ext(fileUpload.Filename))
+	}
+
+	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      &s.svc.bucket,
+		Key:         aws.String(objectKey.String()),
+		Body:        fileUpload.Content,
+		ContentType: &mimeType,
+		Metadata: map[string]string{
+			"type":            fileType,
+			"trust-center-id": trustCenter.ID.String(),
+			"organization-id": trustCenter.OrganizationID.String(),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload file to S3: %w", err)
+	}
+
+	headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.svc.bucket),
+		Key:    aws.String(objectKey.String()),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get object metadata: %w", err)
+	}
+
+	now := time.Now()
+	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+
+	file := &coredata.File{
+		ID:         fileID,
+		BucketName: s.svc.bucket,
+		MimeType:   mimeType,
+		FileName:   fileUpload.Filename,
+		FileKey:    objectKey.String(),
+		FileSize:   *headOutput.ContentLength,
+		CreatedAt:  now,
+		UpdatedAt:  now,
+	}
+
+	if err := file.Insert(ctx, conn, s.svc.scope); err != nil {
+		return nil, fmt.Errorf("cannot insert file: %w", err)
+	}
+
+	return file, nil
+}
+
 func (s TrustCenterService) GenerateNDAFileURL(
 	ctx context.Context,
 	trustCenterID gid.GID,
@@ -421,7 +553,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 		return nil, err
 	}
 
-	if compliancePage.LogoFileID == nil {
+	if compliancePage.DarkLogoFileID == nil {
 		return nil, nil
 	}
 

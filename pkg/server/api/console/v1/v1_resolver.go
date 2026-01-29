@@ -1789,6 +1789,61 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 	}, nil
 }
 
+// UpdateTrustCenterBrand is the resolver for the updateTrustCenterBrand field.
+func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input types.UpdateTrustCenterBrandInput) (*types.UpdateTrustCenterBrandPayload, error) {
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterUpdate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	req := &probo.UpdateTrustCenterBrandRequest{
+		TrustCenterID: input.TrustCenterID,
+	}
+
+	if input.LogoFile.IsSet() {
+		logoFile := input.LogoFile.Value()
+		if logoFile == nil {
+			var nilFile *probo.FileUpload
+			req.LogoFile = &nilFile
+		} else {
+			fileUpload := &probo.FileUpload{
+				Content:     logoFile.File,
+				Filename:    logoFile.Filename,
+				Size:        logoFile.Size,
+				ContentType: logoFile.ContentType,
+			}
+			req.LogoFile = &fileUpload
+		}
+	}
+
+	if input.DarkLogoFile.IsSet() {
+		darkLogoFile := input.DarkLogoFile.Value()
+		if darkLogoFile == nil {
+			var nilFile *probo.FileUpload
+			req.DarkLogoFile = &nilFile
+		} else {
+			fileUpload := &probo.FileUpload{
+				Content:     darkLogoFile.File,
+				Filename:    darkLogoFile.Filename,
+				Size:        darkLogoFile.Size,
+				ContentType: darkLogoFile.ContentType,
+			}
+			req.DarkLogoFile = &fileUpload
+		}
+	}
+
+	trustCenter, file, err := prb.TrustCenters.UpdateTrustCenterBrand(ctx, req)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update trust center brand", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateTrustCenterBrandPayload{
+		TrustCenter: types.NewTrustCenter(trustCenter, file),
+	}, nil
+}
+
 // CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.
 func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error) {
 	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterAccessCreate); err != nil {

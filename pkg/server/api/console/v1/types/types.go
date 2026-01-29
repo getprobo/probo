@@ -2266,6 +2266,16 @@ type UpdateTrustCenterAccessPayload struct {
 	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
 }
 
+type UpdateTrustCenterBrandInput struct {
+	TrustCenterID gid.GID                            `json:"trustCenterId"`
+	LogoFile      graphql.Omittable[*graphql.Upload] `json:"logoFile,omitempty"`
+	DarkLogoFile  graphql.Omittable[*graphql.Upload] `json:"darkLogoFile,omitempty"`
+}
+
+type UpdateTrustCenterBrandPayload struct {
+	TrustCenter *TrustCenter `json:"trustCenter"`
+}
+
 type UpdateTrustCenterFileInput struct {
 	ID                    gid.GID                         `json:"id"`
 	Name                  *string                         `json:"name,omitempty"`
