@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.13] - 2026-01-30
+
+### Fixed
+
+- Misplaced dependabot.yaml file is making CI fail
+
 ## [0.116.12] - 2026-01-29
 
 ### Changed
