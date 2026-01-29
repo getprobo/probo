@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<be7955648260f44b4b42a2b342db2b05>>
+ * @generated SignedSource<<6ae7a5c203ff61690408ec2753fe2f11>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,17 @@ export type CompliancePageBrandPageQuery$variables = {
 };
 export type CompliancePageBrandPageQuery$data = {
   readonly organization: {
-    readonly compliancePage?: {
+    readonly __typename: "Organization";
+    readonly compliancePage: {
+      readonly canUpdate: boolean;
       readonly darkLogoFileUrl: string | null | undefined;
+      readonly id: string;
       readonly logoFileUrl: string | null | undefined;
-    } | null | undefined;
+    };
+  } | {
+    // This will never be '%other', but we need some
+    // value in case none of the concrete values match.
+    readonly __typename: "%other";
   };
 };
 export type CompliancePageBrandPageQuery = {
@@ -44,21 +51,53 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "logoFileUrl",
+  "name": "__typename",
   "storageKey": null
 },
 v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "darkLogoFileUrl",
+  "name": "id",
   "storageKey": null
 },
 v4 = {
-  "alias": null,
+  "alias": "compliancePage",
   "args": null,
-  "kind": "ScalarField",
-  "name": "id",
+  "concreteType": "TrustCenter",
+  "kind": "LinkedField",
+  "name": "trustCenter",
+  "plural": false,
+  "selections": [
+    (v3/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "logoFileUrl",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "darkLogoFileUrl",
+      "storageKey": null
+    },
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:trust-center:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:trust-center:update\")"
+    }
+  ],
   "storageKey": null
 };
 return {
@@ -76,21 +115,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
+          (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
-                "alias": "compliancePage",
-                "args": null,
-                "concreteType": "TrustCenter",
-                "kind": "LinkedField",
-                "name": "trustCenter",
-                "plural": false,
-                "selections": [
-                  (v2/*: any*/),
-                  (v3/*: any*/)
-                ],
-                "storageKey": null
+                "kind": "RequiredField",
+                "field": (v4/*: any*/),
+                "action": "THROW"
               }
             ],
             "type": "Organization",
@@ -117,51 +149,32 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          },
+          (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
-              {
-                "alias": "compliancePage",
-                "args": null,
-                "concreteType": "TrustCenter",
-                "kind": "LinkedField",
-                "name": "trustCenter",
-                "plural": false,
-                "selections": [
-                  (v2/*: any*/),
-                  (v3/*: any*/),
-                  (v4/*: any*/)
-                ],
-                "storageKey": null
-              }
+              (v4/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
           },
-          (v4/*: any*/)
+          (v3/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "17e4be042ed0e09a4b299d38f33dff32",
+    "cacheID": "a0e24c6bb927ff34274492952df0346b",
     "id": null,
     "metadata": {},
     "name": "CompliancePageBrandPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageBrandPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        logoFileUrl\n        darkLogoFileUrl\n        id\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query CompliancePageBrandPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        logoFileUrl\n        darkLogoFileUrl\n        canUpdate: permission(action: \"core:trust-center:update\")\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3364d36a8dd77d39d00d50f451a027a7";
+(node as any).hash = "3d2d6ef82bb9cf232aad738c906b8a54";
 
 export default node;
