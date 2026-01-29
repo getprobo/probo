@@ -71,9 +71,17 @@ func NewProvisioner(
 func (p *Provisioner) Run(ctx context.Context) error {
 	p.logger.InfoCtx(ctx, "certificate provisioner starting", log.Duration("interval", p.interval))
 
-	if err := p.checkPendingDomains(ctx); err != nil {
-		p.logger.ErrorCtx(ctx, "initial check failed", log.Error(err))
-	}
+	func() {
+		defer func() {
+			if rec := recover(); rec != nil {
+				p.logger.ErrorCtx(ctx, "panic recovered in initial provisioner check",
+					log.String("panic", fmt.Sprintf("%v", rec)))
+			}
+		}()
+		if err := p.checkPendingDomains(ctx); err != nil {
+			p.logger.ErrorCtx(ctx, "initial check failed", log.Error(err))
+		}
+	}()
 
 	ticker := time.NewTicker(p.interval)
 	defer ticker.Stop()
@@ -84,9 +92,17 @@ func (p *Provisioner) Run(ctx context.Context) error {
 			p.logger.InfoCtx(ctx, "certificate provisioner shutting down")
 			return ctx.Err()
 		case <-ticker.C:
-			if err := p.checkPendingDomains(ctx); err != nil {
-				p.logger.ErrorCtx(ctx, "periodic check failed", log.Error(err))
-			}
+			func() {
+				defer func() {
+					if rec := recover(); rec != nil {
+						p.logger.ErrorCtx(ctx, "panic recovered in certificate provisioner",
+							log.String("panic", fmt.Sprintf("%v", rec)))
+					}
+				}()
+				if err := p.checkPendingDomains(ctx); err != nil {
+					p.logger.ErrorCtx(ctx, "periodic check failed", log.Error(err))
+				}
+			}()
 		}
 	}
 }
