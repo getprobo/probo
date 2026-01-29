@@ -4,10 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.12] - 2026-01-29
+
 ### Changed
 
+- Do not display trust center subprocessors tab when there are none
 - Remove query params from compliange page sidebar website displayed URLs
+- Refactor trust center pages to make them more maintainable
+- Rename Trust Center to Compliance Page on displayed wording
 - Compliance page vite dev server proxies graphQL API calls to go server port
+
+### Fixed
+
+- Add noreferrer noopener to compliance page open link from console
 
 ## [0.116.11] - 2026-01-27
 
