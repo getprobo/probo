@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.14] - 2026-01-30
+
+### Fixed
+
+- Slack compliance page access display name empty case
+- Compliance page API file access check fix + granular error handling
+
+### Security
+
+- Upgrade go to 1.25.6
+
 ## [0.116.13] - 2026-01-30
 
 ### Fixed
