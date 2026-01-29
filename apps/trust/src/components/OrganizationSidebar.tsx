@@ -77,11 +77,11 @@ export function OrganizationSidebar({
   return (
     <Card className="p-6 relative overflow-hidden border-b border-border-low isolate">
       <div className="h-21 bg-[#044E4114] absolute top-0 left-0 right-0 -z-1"></div>
-      {trustCenter.organization.logoUrl
+      {trustCenter.logoFileUrl
         ? (
             <img
               alt=""
-              src={trustCenter.organization.logoUrl}
+              src={trustCenter.logoFileUrl}
               className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1"
             />
           )
