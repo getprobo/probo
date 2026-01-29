@@ -13,7 +13,7 @@
       "elements": [
         {
           "type": "mrkdwn",
-          "text": "👤 Requested by *{{jsonEscape .RequesterName}}* <{{jsonEscape .RequesterEmail}}>"
+          "text": "👤 Requested by {{if .RequesterName}}*{{jsonEscape .RequesterName}}* {{end}}{{if .RequesterName}}<{{end}}{{jsonEscape .RequesterEmail}}{{if .RequesterName}}>{{end}}"
         }
       ]
     },
