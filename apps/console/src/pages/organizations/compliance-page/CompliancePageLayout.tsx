@@ -1,6 +1,6 @@
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Badge, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPeopleAdd, IconSettingsGear2, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
+import { Badge, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPencil, IconPeopleAdd, IconSettingsGear2, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 import { graphql } from "relay-runtime";
@@ -51,6 +51,10 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
         <TabLink to={`/organizations/${organizationId}/compliance-page`} end>
           <IconSettingsGear2 className="size-4" />
           {__("Overview")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/brand`}>
+          <IconPencil className="size-4" />
+          {__("Brand")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/domain`}>
           <IconStore className="size-4" />

@@ -23,6 +23,11 @@ export const compliancePageRoutes = [
         ),
       },
       {
+        path: "brand",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("#/pages/organizations/compliance-page/brand/CompliancePageBrandPageLoader")),
+      },
+      {
         path: "references",
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("#/pages/organizations/compliance-page/references/CompliancePageReferencesPageLoader")),
