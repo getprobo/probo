@@ -3,36 +3,34 @@ import { Button, Card, IconPlusLarge } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DomainSettingsPageQuery } from "#/__generated__/core/DomainSettingsPageQuery.graphql";
+import type { CompliancePageDomainPageQuery } from "#/__generated__/core/CompliancePageDomainPageQuery.graphql";
 
-import { DomainCard } from "./_components/DomainCard";
-import { NewDomainDialog } from "./_components/NewDomainDialog";
+import { CompliancePageDomainCard } from "./_components/CompliancePageDomainCard";
+import { NewCompliancePageDomainDialog } from "./_components/NewCompliancePageDomainDialog";
 
-export const domainSettingsPageQuery = graphql`
-  query DomainSettingsPageQuery($organizationId: ID!) {
+export const compliancePageDomainPageQuery = graphql`
+  query CompliancePageDomainPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        id
         canCreateCustomDomain: permission(action: "core:custom-domain:create")
         customDomain {
-          domain
-          ...DomainCardFragment
+          ...CompliancePageDomainCardFragment
         }
       }
     }
   }
 `;
 
-export function DomainSettingsPage(props: {
-  queryRef: PreloadedQuery<DomainSettingsPageQuery>;
+export function CompliancePageDomainPage(props: {
+  queryRef: PreloadedQuery<CompliancePageDomainPageQuery>;
 }) {
   const { queryRef } = props;
 
   const { __ } = useTranslate();
 
-  const { organization } = usePreloadedQuery<DomainSettingsPageQuery>(
-    domainSettingsPageQuery,
+  const { organization } = usePreloadedQuery<CompliancePageDomainPageQuery>(
+    compliancePageDomainPageQuery,
     queryRef,
   );
   if (organization.__typename !== "Organization") {
@@ -44,7 +42,7 @@ export function DomainSettingsPage(props: {
       <h2 className="text-base font-medium">{__("Custom Domain")}</h2>
       {organization.customDomain
         ? (
-            <DomainCard fKey={organization.customDomain} />
+            <CompliancePageDomainCard fKey={organization.customDomain} />
           )
         : (
             <Card padded>
@@ -59,9 +57,9 @@ export function DomainSettingsPage(props: {
                 </p>
                 <div className="flex justify-center">
                   {organization.canCreateCustomDomain && (
-                    <NewDomainDialog>
+                    <NewCompliancePageDomainDialog>
                       <Button icon={IconPlusLarge}>{__("Add Domain")}</Button>
-                    </NewDomainDialog>
+                    </NewCompliancePageDomainDialog>
                   )}
                 </div>
               </div>

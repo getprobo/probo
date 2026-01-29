@@ -12,23 +12,23 @@ import {
 import { type PropsWithChildren, useState } from "react";
 import { graphql } from "relay-runtime";
 
-import type { DeleteDomainDialogMutation } from "#/__generated__/core/DeleteDomainDialogMutation.graphql";
+import type { DeleteCompliancePageDomainDialogMutation } from "#/__generated__/core/DeleteCompliancePageDomainDialogMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const deleteCustomDomainMutation = graphql`
-  mutation DeleteDomainDialogMutation($input: DeleteCustomDomainInput!) {
+  mutation DeleteCompliancePageDomainDialogMutation($input: DeleteCustomDomainInput!) {
     deleteCustomDomain(input: $input) {
       deletedCustomDomainId
     }
   }
 `;
 
-type DeleteDomainDialogProps = PropsWithChildren<{
+type DeleteCompliancePageDomainDialogProps = PropsWithChildren<{
   domain: string;
 }>;
 
-export function DeleteDomainDialog(props: DeleteDomainDialogProps) {
+export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDomainDialogProps) {
   const { children, domain } = props;
 
   const organizationId = useOrganizationId();
@@ -37,7 +37,7 @@ export function DeleteDomainDialog(props: DeleteDomainDialogProps) {
   const [inputValue, setInputValue] = useState("");
 
   const [deleteCustomDomain, isDeleting]
-    = useMutationWithToasts<DeleteDomainDialogMutation>(
+    = useMutationWithToasts<DeleteCompliancePageDomainDialogMutation>(
       deleteCustomDomainMutation,
       {
         successMessage: __("Domain deleted successfully"),

@@ -15,10 +15,10 @@ import type { PropsWithChildren } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DomainDialogFragment$key } from "#/__generated__/core/DomainDialogFragment.graphql";
+import type { CompliancePageDomainDialogFragment$key } from "#/__generated__/core/CompliancePageDomainDialogFragment.graphql";
 
 const fragment = graphql`
-  fragment DomainDialogFragment on CustomDomain {
+  fragment CompliancePageDomainDialogFragment on CustomDomain {
     sslStatus
     domain
     dnsRecords {
@@ -28,15 +28,13 @@ const fragment = graphql`
       ttl
       purpose
     }
-    createdAt
-    updatedAt
     sslExpiresAt
   }
 `;
 
-type DomainDialogProps = PropsWithChildren<{ fKey: DomainDialogFragment$key }>;
+type CompliancePageDomainDialogProps = PropsWithChildren<{ fKey: CompliancePageDomainDialogFragment$key }>;
 
-export function DomainDialog(props: DomainDialogProps) {
+export function CompliancePageDomainDialog(props: CompliancePageDomainDialogProps) {
   const { children, fKey } = props;
 
   const { __ } = useTranslate();
@@ -52,7 +50,7 @@ export function DomainDialog(props: DomainDialogProps) {
     });
   };
 
-  const domain = useFragment<DomainDialogFragment$key>(fragment, fKey);
+  const domain = useFragment<CompliancePageDomainDialogFragment$key>(fragment, fKey);
 
   return (
     <Dialog

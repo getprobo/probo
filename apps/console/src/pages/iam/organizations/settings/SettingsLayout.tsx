@@ -4,7 +4,6 @@ import {
   IconLock,
   IconPeopleAdd,
   IconSettingsGear2,
-  IconStore,
   PageHeader,
   TabLink,
   Tabs,
@@ -29,10 +28,6 @@ export default function SettingsLayout() {
         <TabLink to={`/organizations/${organizationId}/settings/members`}>
           <IconPeopleAdd size={20} />
           {__("Members")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/domain`}>
-          <IconStore size={20} />
-          {__("Domain")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/settings/saml-sso`}>
           <IconLock size={20} />

@@ -7,26 +7,26 @@ import { Badge, Button, Card } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DomainCardFragment$key } from "#/__generated__/core/DomainCardFragment.graphql";
+import type { CompliancePageDomainCardFragment$key } from "#/__generated__/core/CompliancePageDomainCardFragment.graphql";
 
-import { DeleteDomainDialog } from "./DeleteDomainDialog";
-import { DomainDialog } from "./DomainDialog";
+import { CompliancePageDomainDialog } from "./CompliancePageDomainDialog";
+import { DeleteCompliancePageDomainDialog } from "./DeleteCompliancePageDomainDialog";
 
 const fragment = graphql`
-  fragment DomainCardFragment on CustomDomain {
+  fragment CompliancePageDomainCardFragment on CustomDomain {
     domain
     sslStatus
     canDelete: permission(action: "core:custom-domain:delete")
-    ...DomainDialogFragment
+    ...CompliancePageDomainDialogFragment
   }
 `;
 
-export function DomainCard(props: { fKey: DomainCardFragment$key }) {
+export function CompliancePageDomainCard(props: { fKey: CompliancePageDomainCardFragment$key }) {
   const { fKey } = props;
 
   const { __ } = useTranslate();
 
-  const domain = useFragment<DomainCardFragment$key>(fragment, fKey);
+  const domain = useFragment<CompliancePageDomainCardFragment$key>(fragment, fKey);
 
   return (
     <Card>
@@ -49,14 +49,14 @@ export function DomainCard(props: { fKey: DomainCardFragment$key }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <DomainDialog fKey={domain}>
+            <CompliancePageDomainDialog fKey={domain}>
               <Button variant="secondary">{__("View Details")}</Button>
-            </DomainDialog>
+            </CompliancePageDomainDialog>
 
             {domain.canDelete && (
-              <DeleteDomainDialog domain={domain.domain}>
+              <DeleteCompliancePageDomainDialog domain={domain.domain}>
                 <Button variant="danger">{__("Delete")}</Button>
-              </DeleteDomainDialog>
+              </DeleteCompliancePageDomainDialog>
             )}
           </div>
         </div>
