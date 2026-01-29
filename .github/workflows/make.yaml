@@ -17,11 +17,11 @@ jobs:
       id-token: "write"
       security-events: "write"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: "actions/setup-go@v5"
+      - uses: "actions/setup-go@v6"
         with:
           go-version: "1.25.6"
           cache: true
@@ -35,13 +35,13 @@ jobs:
       - uses: "docker/setup-buildx-action@v3"
       - uses: "sigstore/cosign-installer@v3"
       - name: Cache Trivy database
-        uses: "actions/cache@v4"
+        uses: "actions/cache@v5"
         with:
           path: ~/.cache/trivy
           key: trivy-db-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             trivy-db-${{ runner.os }}-
-      - uses: "anchore/sbom-action/download-syft@da167eac915b4e86f08b264dbdbc867b61be6f0c" # v0.20.5
+      - uses: "anchore/sbom-action/download-syft@deef08a0db64bfad603422135db61477b16cef56" # v0.22.1
       - uses: "goreleaser/goreleaser-action@v6"
         with:
           distribution: "goreleaser"
@@ -51,7 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Scan Docker image with Trivy
         if: github.ref == 'refs/heads/main'
-        uses: "aquasecurity/trivy-action@0.28.0"
+        uses: "aquasecurity/trivy-action@0.33.1"
         with:
           image-ref: "ghcr.io/getprobo/probo:latest-amd64"
           format: "sarif"
@@ -63,7 +63,7 @@ jobs:
           cache-dir: ~/.cache/trivy
       - name: Scan Docker image with Trivy
         if: github.ref != 'refs/heads/main'
-        uses: "aquasecurity/trivy-action@0.28.0"
+        uses: "aquasecurity/trivy-action@0.33.1"
         with:
           image-ref: "ghcr.io/getprobo/probo:latest-amd64"
           format: "table"
@@ -77,13 +77,13 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: "trivy-results.sarif"
-      - uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
+      - uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 #v0.22.1
         with:
           path: ./
           format: cyclonedx-json
           output-file: sbom.json
       - name: Cache grype binary
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: grype-cache
         with:
           path: ~/.local/bin/grype
@@ -120,7 +120,7 @@ jobs:
           exit 1
       - name: Add grype to PATH
         run: echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
-      - uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
+      - uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 #v7.3.1
         with:
           path: ./
           fail-build: true
@@ -133,10 +133,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           submodules: recursive
-      - uses: "actions/setup-go@v5"
+      - uses: "actions/setup-go@v6"
         with:
           go-version: "1.25.6"
           cache: true
@@ -155,10 +155,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           submodules: recursive
-      - uses: "actions/setup-go@v5"
+      - uses: "actions/setup-go@v6"
         with:
           go-version: "1.25.6"
           cache: true
@@ -173,14 +173,14 @@ jobs:
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"
       - name: "Upload test results"
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v6"
         if: "always()"
         with:
           name: "junit-results"
           path: "junit.xml"
           retention-days: 30
       - run: "make coverage-report"
-      - uses: "actions/upload-artifact@v4"
+      - uses: "actions/upload-artifact@v6"
         with:
           name: "coverage-reports"
           path: |
@@ -203,10 +203,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           submodules: recursive
-      - uses: "actions/setup-go@v5"
+      - uses: "actions/setup-go@v6"
         with:
           go-version: "1.25.6"
           cache: true
@@ -244,7 +244,7 @@ jobs:
         env:
           GOTESTSUM_JUNITFILE: "junit-e2e.xml"
       - name: "Upload test results"
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v6"
         if: "always()"
         with:
           name: "junit-e2e-results"
