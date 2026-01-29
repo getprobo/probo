@@ -34,7 +34,7 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
     if (!organization.compliancePage?.id) {
       toast({
         title: __("Error"),
-        description: __("Trust center not found"),
+        description: __("Compliance page not found"),
         variant: "error",
       });
       return;
@@ -62,7 +62,7 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
     if (!organization.compliancePage?.id) {
       toast({
         title: __("Error"),
-        description: __("Trust center not found"),
+        description: __("Compliance page not found"),
         variant: "error",
       });
       return;
@@ -96,7 +96,7 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
             ? (
                 <p className="text-sm text-txt-tertiary">
                   {__(
-                    "Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center",
+                    "Upload a Non-Disclosure Agreement that visitors must accept before accessing your compliance page",
                   )}
                 </p>
               )
@@ -116,7 +116,7 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
                       </div>
                       <p className="text-xs text-txt-tertiary">
                         {__(
-                          "Visitors will need to accept this NDA before accessing your trust center",
+                          "Visitors will need to accept this NDA before accessing your compliance page",
                         )}
                       </p>
                     </div>

@@ -2,7 +2,7 @@ Probo
 
 Hi {{.FullName}},
 
-Your access request to the following files in {{.OrganizationName}}'s Trust Center has been rejected:
+Your access request to the following files in {{.OrganizationName}}'s compliance page has been rejected:
 
 {{range .FileNames}}
 - {{.}}

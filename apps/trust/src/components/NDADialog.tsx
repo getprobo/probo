@@ -85,7 +85,7 @@ export function NDADialog({
           <p className="text-txt-secondary">
             {sprintf(
               __(
-                "Access to %s Trust Center documents requires signing a Non-Disclosure Agreement (NDA). Please review the agreement below. Once signed, you’ll receive immediate access to the requested documents.",
+                "Access to %s compliance page documents requires signing a Non-Disclosure Agreement (NDA). Please review the agreement below. Once signed, you’ll receive immediate access to the requested documents.",
               ),
               organizationName,
             )}

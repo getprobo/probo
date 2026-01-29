@@ -54,7 +54,7 @@ export function DomainSettingsPage(props: {
                 </h3>
                 <p className="text-txt-tertiary mb-4">
                   {__(
-                    "Add your own domain to make your trust center more professional",
+                    "Add your own domain to make your compliance page more professional",
                   )}
                 </p>
                 <div className="flex justify-center">

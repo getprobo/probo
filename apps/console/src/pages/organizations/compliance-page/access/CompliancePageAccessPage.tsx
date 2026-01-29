@@ -49,7 +49,7 @@ export function CompliancePageAccessPage(props: { queryRef: PreloadedQuery<Compl
           <h3 className="text-base font-medium">{__("External Access")}</h3>
           <p className="text-sm text-txt-tertiary">
             {__(
-              "Manage who can access your trust center with time-limited tokens",
+              "Manage who can access your compliance page",
             )}
           </p>
         </div>

@@ -10,17 +10,17 @@ import EmailLayout, {
 export const TrustCenterAccess = () => {
   return (
     <EmailLayout
-      subject={`Trust Center Access Invitation - ${"{{.OrganizationName}}"}`}
+      subject={`Compliance Page Access Invitation - ${"{{.OrganizationName}}"}`}
     >
       <Text style={bodyText}>
         You have been granted access to{" "}
-        <strong>{"{{.OrganizationName}}"}</strong>'s Trust Center! Click the
+        <strong>{"{{.OrganizationName}}"}</strong>'s compliance page! Click the
         button below to access it:
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href={"{{.AccessUrl}}"}>
-          Access Trust Center
+          Access Compliance Page
         </Button>
       </Section>
     </EmailLayout>

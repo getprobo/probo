@@ -44,7 +44,7 @@ export function CompliancePageStatusSection(props: {
     if (!organization.compliancePage?.id) {
       toast({
         title: __("Error"),
-        description: __("Trust center not found"),
+        description: __("Compliance page not found"),
         variant: "error",
       });
       return;
@@ -63,7 +63,7 @@ export function CompliancePageStatusSection(props: {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium">{__("Trust Center Status")}</h2>
+        <h2 className="text-base font-medium">{__("Compliance Page Status")}</h2>
         {isUpdating && <Spinner />}
       </div>
       <Card padded className="space-y-4">
@@ -72,7 +72,7 @@ export function CompliancePageStatusSection(props: {
             <h3 className="font-medium">{__("Activate Compliance Page")}</h3>
             <p className="text-sm text-txt-tertiary">
               {__(
-                "Make your Compliance Page publicly accessible to build customer confidence",
+                "Make your compliance page publicly accessible to build customer confidence",
               )}
             </p>
           </div>
@@ -88,7 +88,7 @@ export function CompliancePageStatusSection(props: {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium text-accent-dark">
-                  {__("Your Compliance Page is live!")}
+                  {__("Your compliance page is live!")}
                 </h4>
                 <p className="text-sm text-accent-dark mt-1">
                   {__("Your customers can now access your compliance page at:")}
@@ -116,11 +116,11 @@ export function CompliancePageStatusSection(props: {
         {!organization.compliancePage?.active && (
           <div className="mt-4 p-4 bg-tertiary rounded-lg border border-border-solid">
             <h4 className="font-medium text-txt-secondary">
-              {__("Compliance Page is inactive")}
+              {__("Compliance page is inactive")}
             </h4>
             <p className="text-sm text-txt-tertiary mt-1">
               {__(
-                "Your Compliance Page is currently not accessible to the public. Enable it to start sharing your compliance status.",
+                "Your compliance page is currently not accessible to the public. Enable it to start sharing your compliance status.",
               )}
             </p>
           </div>

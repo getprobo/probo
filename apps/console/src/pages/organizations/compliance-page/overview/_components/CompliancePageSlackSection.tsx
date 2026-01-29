@@ -64,7 +64,7 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
                           )}
                         </>
                       )
-                    : __("Manage your trust center access with slack")}
+                    : __("Manage your compliance page access with slack")}
                 </p>
               </div>
               {slackConnection.createdAt

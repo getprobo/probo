@@ -57,7 +57,7 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
       : __("Invalid Access Link");
     const description = isExpiredToken
       ? __(
-          "This access link has expired. Trust center access links are valid for 7 days for security reasons.",
+          "This access link has expired. Compliance page access links are valid for 7 days for security reasons.",
         )
       : __(
           "This access link is not valid. It may have been revoked or the link might be incorrect.",

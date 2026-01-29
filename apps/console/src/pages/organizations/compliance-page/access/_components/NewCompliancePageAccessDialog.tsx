@@ -92,7 +92,7 @@ export function NewCompliancePageAccessDialog(props: {
         <DialogContent padded className="space-y-6">
           <div>
             <p className="text-txt-secondary text-sm mb-4">
-              {__("Give a person access to your trust center")}
+              {__("Give a person access to your compliance page")}
             </p>
 
             <Field

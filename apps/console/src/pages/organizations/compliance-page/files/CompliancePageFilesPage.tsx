@@ -41,7 +41,7 @@ export function CompliancePageFilesPage(props: {
         <div>
           <h3 className="text-base font-medium">{__("Files")}</h3>
           <p className="text-sm text-txt-tertiary">
-            {__("Upload and manage files for your trust center")}
+            {__("Upload and manage files for your compliance page")}
           </p>
         </div>
         {organization.canCreateTrustCenterFile && (

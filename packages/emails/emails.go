@@ -35,8 +35,8 @@ const (
 	subjectDocumentSigning                   = "Action Required – Please review and sign %s compliance documents"
 	subjectDocumentExport                    = "Your document export is ready"
 	subjectFrameworkExport                   = "Your framework export is ready"
-	subjectTrustCenterAccess                 = "Trust Center Access Invitation - %s"
-	subjectTrustCenterDocumentAccessRejected = "Trust Center Document Access Rejected - %s"
+	subjectTrustCenterAccess                 = "Compliance Page Access Invitation - %s"
+	subjectTrustCenterDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
 	subjectMagicLink                         = "Connect to Probo"
 )
 

@@ -19,8 +19,8 @@ export function useUpdateTrustCenterMutation() {
   return useMutationWithToasts<TrustCenterGraphUpdateMutation>(
     updateTrustCenterMutation,
     {
-      successMessage: "Trust center updated successfully",
-      errorMessage: "Failed to update trust center",
+      successMessage: "Compliance Page updated successfully",
+      errorMessage: "Failed to update compliance page",
     },
   );
 }

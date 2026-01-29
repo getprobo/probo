@@ -2,7 +2,7 @@ Probo
 
 Hi {{.FullName}},
 
-You have been granted access to {{.OrganizationName}}'s Trust Center! Click the link below to access it:
+You have been granted access to {{.OrganizationName}}'s compliance page! Click the link below to access it:
 
 {{.AccessUrl}}
 
