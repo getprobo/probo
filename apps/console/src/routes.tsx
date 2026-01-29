@@ -209,13 +209,6 @@ const routes = [
             ),
           },
           {
-            path: "domain",
-            Component: lazy(
-              () =>
-                import("./pages/organizations/settings/DomainSettingsPageLoader"),
-            ),
-          },
-          {
             path: "saml-sso",
             Component: lazy(
               () =>

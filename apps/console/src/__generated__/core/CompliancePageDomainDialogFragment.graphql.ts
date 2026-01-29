@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1d007308b8b70962ddfe217cf3534dab>>
+ * @generated SignedSource<<f6ec917cebddcf0a29c1399862127d2b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,8 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 export type SSLStatus = "ACTIVE" | "EXPIRED" | "FAILED" | "PENDING" | "PROVISIONING" | "RENEWING";
 import { FragmentRefs } from "relay-runtime";
-export type DomainDialogFragment$data = {
-  readonly createdAt: string;
+export type CompliancePageDomainDialogFragment$data = {
   readonly dnsRecords: ReadonlyArray<{
     readonly name: string;
     readonly purpose: string;
@@ -23,19 +22,18 @@ export type DomainDialogFragment$data = {
   readonly domain: string;
   readonly sslExpiresAt: string | null | undefined;
   readonly sslStatus: SSLStatus;
-  readonly updatedAt: string;
-  readonly " $fragmentType": "DomainDialogFragment";
+  readonly " $fragmentType": "CompliancePageDomainDialogFragment";
 };
-export type DomainDialogFragment$key = {
-  readonly " $data"?: DomainDialogFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DomainDialogFragment">;
+export type CompliancePageDomainDialogFragment$key = {
+  readonly " $data"?: CompliancePageDomainDialogFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDomainDialogFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "DomainDialogFragment",
+  "name": "CompliancePageDomainDialogFragment",
   "selections": [
     {
       "alias": null,
@@ -101,20 +99,6 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "createdAt",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "updatedAt",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "sslExpiresAt",
       "storageKey": null
     }
@@ -123,6 +107,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "0aec5615023dde2d23901fec9e43ed9b";
+(node as any).hash = "0275b6b52781473cb3dac5a631488e2f";
 
 export default node;
