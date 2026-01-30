@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -59,6 +60,8 @@ type (
 	}
 )
 
+const maxBrandFileSize = 5 * 1024 * 1024 // 5MB
+
 func (utcr *UpdateTrustCenterRequest) Validate() error {
 	v := validator.New()
 
@@ -76,6 +79,29 @@ func (utcndar *UploadTrustCenterNDARequest) Validate() error {
 	v.Check(utcndar.FileName, "file_name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
+}
+
+func (req *UpdateTrustCenterBrandRequest) Validate() error {
+	fv := filevalidation.NewValidator(
+		filevalidation.WithCategories(filevalidation.CategoryImage),
+		filevalidation.WithMaxFileSize(maxBrandFileSize),
+	)
+
+	if req.LogoFile != nil && *req.LogoFile != nil {
+		logoFile := *req.LogoFile
+		if err := fv.Validate(logoFile.Filename, logoFile.ContentType, logoFile.Size); err != nil {
+			return fmt.Errorf("invalid logo file: %w", err)
+		}
+	}
+
+	if req.DarkLogoFile != nil && *req.DarkLogoFile != nil {
+		darkLogoFile := *req.DarkLogoFile
+		if err := fv.Validate(darkLogoFile.Filename, darkLogoFile.ContentType, darkLogoFile.Size); err != nil {
+			return fmt.Errorf("invalid dark logo file: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s TrustCenterService) Get(
@@ -315,6 +341,10 @@ func (s TrustCenterService) UpdateTrustCenterBrand(
 	ctx context.Context,
 	req *UpdateTrustCenterBrandRequest,
 ) (*coredata.TrustCenter, *coredata.File, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	var trustCenter *coredata.TrustCenter
 	var ndaFile *coredata.File
 
