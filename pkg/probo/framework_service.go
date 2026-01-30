@@ -800,9 +800,9 @@ func (s FrameworkService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
-			subject, textBody, htmlBody, err := emails.RenderFrameworkExport(
-				s.svc.baseURL,
-				recipientName,
+			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName)
+
+			subject, textBody, htmlBody, err := emailPresenter.RenderFrameworkExport(
 				downloadURL,
 			)
 			if err != nil {

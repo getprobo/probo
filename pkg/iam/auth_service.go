@@ -23,7 +23,6 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
@@ -64,8 +63,11 @@ type (
 	}
 
 	SendMagicLinkRequest struct {
-		Email   mail.Addr
-		BaseURL *baseurl.URLBuilder
+		Email          mail.Addr
+		URLPath        string
+		OrganizationID gid.GID
+		// If users tries to connect to compliance page, we must brand the emails accordingly
+		CompliancePageID *gid.GID
 	}
 
 	PasswordResetData struct {
@@ -276,16 +278,6 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 		return fmt.Errorf("cannot generate password reset token: %w", err)
 	}
 
-	base, err := baseurl.Parse(s.baseURL)
-	if err != nil {
-		return fmt.Errorf("cannot parse base URL: %w", err)
-	}
-
-	resetPasswordUrl := base.
-		WithPath("/auth/reset-password").
-		WithQuery("token", token).
-		MustString()
-
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -298,10 +290,11 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			subject, textBody, htmlBody, err := emails.RenderPasswordReset(
-				s.baseURL,
-				identity.FullName,
-				resetPasswordUrl,
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+
+			subject, textBody, htmlBody, err := emailPresenter.RenderPasswordReset(
+				"/auth/reset-password",
+				token,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render password reset email: %w", err)
@@ -413,24 +406,9 @@ func (s AuthService) CreateIdentityWithPassword(
 		return nil, nil, fmt.Errorf("cannot generate confirmation token: %w", err)
 	}
 
-	base, err := baseurl.Parse(s.baseURL)
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot parse base URL: %w", err)
-	}
+	emailPresenter := emails.NewPresenter(s.baseURL, req.FullName)
 
-	confirmationUrl, err := base.
-		WithPath("/auth/verify-email").
-		WithQuery("token", confirmationToken).
-		String()
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot build confirmation URL: %w", err)
-	}
-
-	subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
-		s.baseURL,
-		req.FullName,
-		confirmationUrl,
-	)
+	subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail("/auth/verify-email", confirmationToken)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot render confirmation email: %w", err)
 	}
@@ -560,10 +538,6 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 		return fmt.Errorf("cannot generate magic link token: %w", err)
 	}
 
-	magicLinkURL := req.BaseURL.
-		WithQuery("token", tokenString).
-		MustString()
-
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -579,9 +553,9 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 
 			fullName := req.Email.Username()
 			identity := &coredata.Identity{}
+			organization := &coredata.Organization{}
 
-			err := identity.LoadByEmail(ctx, tx, req.Email)
-			if err == nil {
+			if err := identity.LoadByEmail(ctx, tx, req.Email); err == nil {
 				if identity.FullName != "" {
 					fullName = identity.FullName
 				}
@@ -591,11 +565,25 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				}
 			}
 
-			subject, textBody, htmlBody, err := emails.RenderMagicLink(
-				s.baseURL,
-				fullName,
-				magicLinkURL,
+			if err := organization.LoadByID(ctx, tx, coredata.NewNoScope(), req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			emailPresenterCfg := emails.DefaultPresenterConfig(s.baseURL)
+			if req.CompliancePageID != nil {
+				var err error
+				emailPresenterCfg, err = s.CompliancePageService.EmailPresenterConfig(ctx, *req.CompliancePageID)
+				if err != nil {
+					return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
+				}
+			}
+
+			emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName)
+
+			subject, textBody, htmlBody, err := emailPresenter.RenderMagicLink(
+				req.URLPath,
 				s.magicLinkTokenValidity,
+				organization.Name,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render magic link email: %w", err)

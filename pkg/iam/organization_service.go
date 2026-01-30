@@ -24,7 +24,6 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
@@ -465,21 +464,12 @@ func (s *OrganizationService) InviteMember(
 				return fmt.Errorf("cannot generate invitation token: %w", err)
 			}
 
-			baseurl, err := baseurl.Parse(s.baseURL)
-			if err != nil {
-				return fmt.Errorf("cannot parse base URL: %w", err)
-			}
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
 
-			invitationURL := baseurl.WithPath("/auth/signup-from-invitation").
-				WithQuery("token", invitationToken).
-				WithQuery("fullName", invitation.FullName).
-				MustString()
-
-			subject, textBody, htmlBody, err := emails.RenderInvitation(
-				s.baseURL,
-				invitation.FullName,
+			subject, textBody, htmlBody, err := emailPresenter.RenderInvitation(
+				"/auth/signup-from-invitation",
+				invitationToken,
 				organization.Name,
-				invitationURL,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render invitation email: %w", err)
