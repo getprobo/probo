@@ -120,7 +120,11 @@ export function OrganizationSidebar({
         )}
         {trustCenter.organization.email && (
           <BusinessInfo label={__("Contact")}>
-            {trustCenter.organization.email}
+            <a href={`mailto:${trustCenter.organization.email}`}>
+              <span className="text-txt-info hover:underline ">
+                {trustCenter.organization.email}
+              </span>
+            </a>
           </BusinessInfo>
         )}
         {trustCenter.organization.headquarterAddress && (
