@@ -1,6 +1,6 @@
 Probo
 
-Hi {{.FullName}},
+Hi {{.RecipientFullName}},
 
 You have been granted access to {{.OrganizationName}}'s compliance page! Click the link below to access it:
 

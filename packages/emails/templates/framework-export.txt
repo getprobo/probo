@@ -1,6 +1,6 @@
 Probo
 
-Hi {{.FullName}},
+Hi {{.RecipientFullName}},
 
 Your framework export has been completed successfully. Click the link below to download it:
 

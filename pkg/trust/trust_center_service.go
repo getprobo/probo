@@ -288,7 +288,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 
 		// If logo exists, then we will brand the emails with the org as a sender
 
-		presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, logoFile, 1*time.Hour)
+		presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, logoFile, 7*24*time.Hour)
 		if err != nil {
 			return emailPresenterCfg, fmt.Errorf("cannot generate file URL: %w", err)
 		}

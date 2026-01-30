@@ -153,7 +153,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 
 		// If logo exists, then we will brand the emails with the org as a sender
 
-		presignedURL, err := s.fm.GenerateFileUrl(ctx, logoFile, 1*time.Hour)
+		presignedURL, err := s.fm.GenerateFileUrl(ctx, logoFile, 7*24*time.Hour)
 		if err != nil {
 			return emailPresenterCfg, fmt.Errorf("cannot generate file URL: %w", err)
 		}

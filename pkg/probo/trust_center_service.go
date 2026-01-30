@@ -420,14 +420,15 @@ func (s TrustCenterService) uploadFile(
 	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
 
 	file := &coredata.File{
-		ID:         fileID,
-		BucketName: s.svc.bucket,
-		MimeType:   mimeType,
-		FileName:   fileUpload.Filename,
-		FileKey:    objectKey.String(),
-		FileSize:   *headOutput.ContentLength,
-		CreatedAt:  now,
-		UpdatedAt:  now,
+		ID:             fileID,
+		OrganizationID: trustCenter.OrganizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       mimeType,
+		FileName:       fileUpload.Filename,
+		FileKey:        objectKey.String(),
+		FileSize:       *headOutput.ContentLength,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if err := file.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -638,7 +639,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 			return emailPresenterCfg, nil
 		}
 
-		presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, logoFile, 1*time.Hour)
+		presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, logoFile, 7*24*time.Hour)
 		if err != nil {
 			return emailPresenterCfg, fmt.Errorf("cannot generate file URL: %w", err)
 		}

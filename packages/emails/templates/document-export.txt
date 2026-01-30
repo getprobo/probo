@@ -1,6 +1,6 @@
 Probo
 
-Hi {{.FullName}},
+Hi {{.RecipientFullName}},
 
 Your document export has been completed successfully. Click the link below to download it:
 

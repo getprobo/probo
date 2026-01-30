@@ -1,8 +1,8 @@
 Probo
 
-Hi {{.FullName}},
+Hi {{.RecipientFullName}},
 
-Please use this link to connect to Probo:
+Please use this link to connect to {{.OrganizationName}}'s Compliance Page:
 
 {{.MagicLinkURL}}
 

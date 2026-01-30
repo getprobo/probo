@@ -100,7 +100,7 @@ export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDoma
           variant="danger"
           icon={IconTrashCan}
           onClick={() => void handleDeleteDomain()}
-          disabled={isDeleting}
+          disabled={isDeleting || inputValue !== domain}
         >
           {isDeleting ? __("Deleting...") : __("Delete Domain")}
         </Button>
