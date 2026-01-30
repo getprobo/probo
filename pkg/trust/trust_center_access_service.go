@@ -466,14 +466,8 @@ func (s *TrustCenterAccessService) GrantByIDs(
 }
 
 func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess) error {
-	trustCenter := &coredata.TrustCenter{}
-
-	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID); err != nil {
-		return fmt.Errorf("cannot load trust center: %w", err)
-	}
-
 	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID); err != nil {
+	if err := organization.LoadByID(ctx, tx, s.svc.scope, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
@@ -484,7 +478,7 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 		return fmt.Errorf("cannot update trust center access with expiration: %w", err)
 	}
 
-	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
+	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, access.TrustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
@@ -569,13 +563,8 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	reportIDs []gid.GID,
 	fileIDs []gid.GID,
 ) error {
-	trustCenter := &coredata.TrustCenter{}
-	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID); err != nil {
-		return fmt.Errorf("cannot load trust center: %w", err)
-	}
-
 	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID); err != nil {
+	if err := organization.LoadByID(ctx, tx, s.svc.scope, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
@@ -608,7 +597,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 		}
 	}
 
-	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
+	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, access.TrustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
