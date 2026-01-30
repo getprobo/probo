@@ -12,7 +12,6 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { VerifyMagicLinkPageMutation } from "./__generated__/VerifyMagicLinkPageMutation.graphql";
-import { AuthLayout } from "./AuthLayout";
 
 const verifyMagicLinkMutation = graphql`
   mutation VerifyMagicLinkPageMutation($input: VerifyMagicLinkInput!) {
@@ -87,39 +86,37 @@ export default function VerifyMagicLinkPagePageMutation() {
   });
 
   return (
-    <AuthLayout>
-      <div className="space-y-6 w-full max-w-md mx-auto">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">{__("Email Confirmation")}</h1>
-          <p className="text-txt-tertiary">
-            {__("Confirm your email address to complete registration")}
-          </p>
-        </div>
-
-        <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-          <Field
-            label={__("Confirmation Token")}
-            type="text"
-            placeholder={__("Enter your confirmation token")}
-            {...form.register("token")}
-            error={form.formState.errors.token?.message}
-            disabled={form.formState.isSubmitting}
-            help={__(
-              "The token has been automatically filled from the URL if available",
-            )}
-          />
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={form.formState.isSubmitting}
-          >
-            {form.formState.isSubmitting
-              ? __("Confirming...")
-              : __("Confirm Email")}
-          </Button>
-        </form>
+    <div className="space-y-6 w-full max-w-md mx-auto">
+      <div className="space-y-2 text-center">
+        <h1 className="text-3xl font-bold">{__("Email Confirmation")}</h1>
+        <p className="text-txt-tertiary">
+          {__("Confirm your email address to complete registration")}
+        </p>
       </div>
-    </AuthLayout>
+
+      <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
+        <Field
+          label={__("Confirmation Token")}
+          type="text"
+          placeholder={__("Enter your confirmation token")}
+          {...form.register("token")}
+          error={form.formState.errors.token?.message}
+          disabled={form.formState.isSubmitting}
+          help={__(
+            "The token has been automatically filled from the URL if available",
+          )}
+        />
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={form.formState.isSubmitting}
+        >
+          {form.formState.isSubmitting
+            ? __("Confirming...")
+            : __("Confirm Email")}
+        </Button>
+      </form>
+    </div>
   );
 }
