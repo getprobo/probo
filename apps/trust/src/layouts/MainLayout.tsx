@@ -1,3 +1,4 @@
+import { useFavicon, useSystemTheme } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Logo, TabLink, Tabs } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -19,9 +20,14 @@ export function MainLayout(props: Props) {
   const data = usePreloadedQuery(currentTrustGraphQuery, props.queryRef);
   const trustCenter = data.currentTrustCenter;
 
+  const theme = useSystemTheme();
+
+  useFavicon(theme === "dark" ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl) : trustCenter?.logoFileUrl);
+
   if (!trustCenter) {
     return null;
   }
+
   const showNDADialog
     = trustCenter.isViewerMember
       && !trustCenter.hasAcceptedNonDisclosureAgreement

@@ -201,7 +201,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 		return nil, err
 	}
 
-	if compliancePage.LogoFileID == nil {
+	if compliancePage.DarkLogoFileID == nil {
 		return nil, nil
 	}
 

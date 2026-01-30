@@ -882,7 +882,7 @@ func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustC
 func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	return trustService.TrustCenters.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	return trustService.TrustCenters.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
 }
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
