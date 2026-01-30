@@ -257,7 +257,7 @@ func (p *Presenter) RenderTrustCenterDocumentAccessRejected(
 	return fmt.Sprintf(subjectTrustCenterDocumentAccessRejected, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderMagicLink(magicLinkUrlPath string, tokenDuration time.Duration, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderMagicLink(magicLinkUrlPath string, tokenString string, tokenDuration time.Duration, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		PresenterVariables
 		MagicLinkURL      string
@@ -265,7 +265,7 @@ func (p *Presenter) RenderMagicLink(magicLinkUrlPath string, tokenDuration time.
 		OrganizationName  string
 	}{
 		PresenterVariables: p.variables,
-		MagicLinkURL:       baseurl.MustParse(p.variables.BaseURL).WithPath(magicLinkUrlPath).MustString(),
+		MagicLinkURL:       baseurl.MustParse(p.variables.BaseURL).WithPath(magicLinkUrlPath).WithQuery("token", tokenString).MustString(),
 		DurationInMinutes:  int(tokenDuration.Minutes()),
 		OrganizationName:   organizationName,
 	}

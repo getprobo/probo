@@ -211,7 +211,7 @@ export function OrganizationForm(props: {
           <Label>{__("Organization logo")}</Label>
           <div className="flex w-max items-center gap-4">
             <Avatar
-              className="bg-transparent"
+              className={logoPreview || organization.logoUrl ? "bg-transparent" : undefined}
               src={logoPreview || organization.logoUrl}
               name={organization.name}
               size="xl"

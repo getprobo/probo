@@ -593,8 +593,8 @@ func (s *OrganizationService) CreateOrganization(
 		var (
 			fileID      = gid.New(tenantID, coredata.FileEntityType)
 			objectKey   = uuid.MustNewV7()
-			filename    = req.LogoFile.Filename
-			contentType = req.LogoFile.ContentType
+			filename    = req.HorizontalLogoFile.Filename
+			contentType = req.HorizontalLogoFile.ContentType
 			now         = time.Now()
 		)
 
@@ -604,7 +604,7 @@ func (s *OrganizationService) CreateOrganization(
 			MimeType:   contentType,
 			FileName:   filename,
 			FileKey:    objectKey.String(),
-			FileSize:   req.LogoFile.Size,
+			FileSize:   req.HorizontalLogoFile.Size,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}

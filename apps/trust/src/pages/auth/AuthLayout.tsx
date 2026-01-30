@@ -39,10 +39,10 @@ export function AuthLayout(props: { queryRef: PreloadedQuery<AuthLayoutQuery> })
                 <img
                   alt=""
                   src={logoFileUrl}
-                  className="size-110 rounded-2xl"
+                  className="size-[440px] rounded-2xl"
                 />
               )
-            : <Logo withPicto className="w-110" />}
+            : <Logo withPicto className="w-[440px]" />}
         </div>
       </div>
     </div>

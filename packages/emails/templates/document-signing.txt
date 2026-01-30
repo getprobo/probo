@@ -1,6 +1,6 @@
 Probo
 
-Hi {{.FullName}},
+Hi {{.RecipientFullName}},
 
 You're receiving this message because your company, {{.OrganizationName}}, has shared a new compliance document that requires your review and signature.
 

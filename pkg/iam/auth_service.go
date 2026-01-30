@@ -582,6 +582,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderMagicLink(
 				req.URLPath,
+				tokenString,
 				s.magicLinkTokenValidity,
 				organization.Name,
 			)

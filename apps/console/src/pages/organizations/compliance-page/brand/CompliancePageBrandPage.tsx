@@ -7,6 +7,7 @@ import {
   IconTrashCan,
   Label,
   Spinner,
+  useToast,
 } from "@probo/ui";
 import { type ChangeEventHandler, useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -46,7 +47,9 @@ const updateTrustCenterBrandMutation = graphql`
 
 export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<CompliancePageBrandPageQuery> }) {
   const { queryRef } = props;
+
   const { __ } = useTranslate();
+  const { toast } = useToast();
 
   const { organization } = usePreloadedQuery<CompliancePageBrandPageQuery>(compliancePageBrandPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
@@ -81,6 +84,15 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: __("File size too large"),
+        description: __("The file size is too large. Please upload a file smaller than 5MB."),
+        variant: "error",
+      });
+      return;
+    }
+
     processLogoFile(file, setLogoPreview);
 
     void updateBrand({
@@ -102,6 +114,15 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
   const handleDarkLogoChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: __("File size too large"),
+        description: __("The file size is too large. Please upload a file smaller than 5MB."),
+        variant: "error",
+      });
+      return;
+    }
 
     processLogoFile(file, setDarkLogoPreview);
 
