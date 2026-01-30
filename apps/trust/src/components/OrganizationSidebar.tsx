@@ -1,4 +1,5 @@
 import { formatError } from "@probo/helpers";
+import { useSystemTheme } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -36,6 +37,9 @@ export function OrganizationSidebar({
   const { __ } = useTranslate();
   const isAuthenticated = !!use(Viewer);
   const { toast } = useToast();
+  const theme = useSystemTheme();
+
+  const logoFileUrl = theme === "dark" ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl) : trustCenter?.logoFileUrl;
 
   const [requestAllAccesses, isRequestingAccess]
     = useMutation<OrganizationSidebar_requestAllAccessesMutation>(
@@ -77,11 +81,11 @@ export function OrganizationSidebar({
   return (
     <Card className="p-6 relative overflow-hidden border-b border-border-low isolate">
       <div className="h-21 bg-[#044E4114] absolute top-0 left-0 right-0 -z-1"></div>
-      {trustCenter.logoFileUrl
+      {logoFileUrl
         ? (
             <img
               alt=""
-              src={trustCenter.logoFileUrl}
+              src={logoFileUrl}
               className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1"
             />
           )
