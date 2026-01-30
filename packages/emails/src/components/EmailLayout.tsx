@@ -11,7 +11,7 @@ import {
   Text,
 } from '@react-email/components';
 import * as React from 'react';
-import { ProboLogo } from './ProboLogo';
+import { Logo } from './Logo';
 
 interface EmailLayoutProps {
   subject: string;
@@ -33,19 +33,19 @@ export const EmailLayout = ({
         <Container style={container}>
           <Section style={content}>
             <Section style={logoSection}>
-              <Link href="https://www.getprobo.com">
-                <ProboLogo />
+              <Link href="{{.SenderCompanyWebsiteURL}}">
+                <Logo />
               </Link>
             </Section>
 
-            <Text style={text}>Hi {'{{.FullName}}'},</Text>
+            <Text style={text}>Hi {'{{.RecipientFullName}}'},</Text>
 
             {children}
           </Section>
 
           <Section style={footerSection}>
             <Text style={footerAddress}>
-              Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US
+              {"{{.SenderCompanyHeadquarterAddress}}"}
             </Text>
           </Section>
         </Container>

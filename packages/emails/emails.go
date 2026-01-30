@@ -21,14 +21,73 @@ import (
 	htmltemplate "html/template"
 	texttemplate "text/template"
 	"time"
+
+	"go.probo.inc/probo/pkg/baseurl"
 )
 
 //go:embed dist
 var Templates embed.FS
 
-const (
-	logoURLPath = "/logos/probo.png"
+type (
+	PresenterConfig struct {
+		BaseURL                         string
+		SenderCompanyName               string
+		SenderCompanyWebsiteURL         string
+		SenderCompanyLogoURL            string
+		SenderCompanyHeadquarterAddress string
+	}
 
+	PresenterVariables struct {
+		// Static variables
+		BaseURL                         string
+		SenderCompanyName               string
+		SenderCompanyWebsiteURL         string
+		SenderCompanyLogoURL            string
+		SenderCompanyHeadquarterAddress string
+
+		// Common variables
+		RecipientFullName string
+		// Not to confuse with the SenderCompanyName, which is the brand of the product being used
+		OrganizationName string
+	}
+
+	Presenter struct {
+		variables PresenterVariables
+	}
+)
+
+func DefaultPresenterConfig(baseURL string) PresenterConfig {
+	return PresenterConfig{
+		BaseURL:                         baseURL,
+		SenderCompanyName:               "Probo",
+		SenderCompanyWebsiteURL:         "https://www.getprobo.com",
+		SenderCompanyLogoURL:            baseurl.MustParse(baseURL).WithPath("/logos/probo.png").MustString(),
+		SenderCompanyHeadquarterAddress: "Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US",
+	}
+}
+
+func NewPresenterFromConfig(cfg PresenterConfig, fullName string) *Presenter {
+	return &Presenter{
+		variables: PresenterVariables{
+			BaseURL:                         cfg.BaseURL,
+			SenderCompanyName:               cfg.SenderCompanyName,
+			SenderCompanyWebsiteURL:         cfg.SenderCompanyWebsiteURL,
+			SenderCompanyLogoURL:            cfg.SenderCompanyLogoURL,
+			SenderCompanyHeadquarterAddress: cfg.SenderCompanyHeadquarterAddress,
+
+			RecipientFullName: fullName,
+		},
+	}
+}
+
+func NewPresenter(baseURL string, fullName string) *Presenter {
+	return NewPresenterFromConfig(
+		DefaultPresenterConfig(baseURL),
+		fullName,
+	)
+}
+
+const (
 	subjectConfirmEmail                      = "Confirm your email address"
 	subjectPasswordReset                     = "Reset your password"
 	subjectInvitation                        = "Invitation to join %s on Probo"
@@ -37,7 +96,7 @@ const (
 	subjectFrameworkExport                   = "Your framework export is ready"
 	subjectTrustCenterAccess                 = "Compliance Page Access Invitation - %s"
 	subjectTrustCenterDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
-	subjectMagicLink                         = "Connect to Probo"
+	subjectMagicLink                         = "Connect to %s"
 )
 
 var (
@@ -61,154 +120,158 @@ var (
 	magicLinkTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/magic-link.txt.tmpl"))
 )
 
-func RenderConfirmEmail(baseURL, fullName, confirmationUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderConfirmEmail(confirmationURLPath string, confirmationTokenParam string) (subject string, textBody string, htmlBody *string, err error) {
+	confirmationUrl := baseurl.
+		MustParse(p.variables.BaseURL).
+		WithPath(confirmationURLPath).
+		WithQuery("token", confirmationTokenParam).
+		MustString()
+
 	data := struct {
-		FullName        string
+		PresenterVariables
 		ConfirmationUrl string
-		LogoURL         string
 	}{
-		FullName:        fullName,
-		ConfirmationUrl: confirmationUrl,
-		LogoURL:         baseURL + logoURLPath,
+		PresenterVariables: p.variables,
+		ConfirmationUrl:    confirmationUrl,
 	}
 
 	textBody, htmlBody, err = renderEmail(confirmEmailTextTemplate, confirmEmailHTMLTemplate, data)
 	return subjectConfirmEmail, textBody, htmlBody, err
 }
 
-func RenderPasswordReset(baseURL, fullName, resetUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderPasswordReset(resetPasswordURLPath string, resetPasswordToken string) (subject string, textBody string, htmlBody *string, err error) {
+	resetUrl := baseurl.
+		MustParse(p.variables.BaseURL).
+		WithPath(resetPasswordURLPath).
+		WithQuery("token", resetPasswordToken).
+		MustString()
+
 	data := struct {
-		FullName string
+		PresenterVariables
 		ResetUrl string
-		LogoURL  string
 	}{
-		FullName: fullName,
-		ResetUrl: resetUrl,
-		LogoURL:  baseURL + logoURLPath,
+		PresenterVariables: p.variables,
+		ResetUrl:           resetUrl,
 	}
 
 	textBody, htmlBody, err = renderEmail(passwordResetTextTemplate, passwordResetHTMLTemplate, data)
 	return subjectPasswordReset, textBody, htmlBody, err
 }
 
-func RenderInvitation(baseURL, fullName, organizationName, invitationUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderInvitation(invitationURLPath string, invitationToken string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+	invitationURL := baseurl.
+		MustParse(p.variables.BaseURL).
+		WithPath(invitationURLPath).
+		WithQuery("token", invitationToken).
+		WithQuery("fullName", p.variables.RecipientFullName).
+		MustString()
+
 	data := struct {
-		FullName         string
-		OrganizationName string
+		PresenterVariables
 		InvitationUrl    string
-		LogoURL          string
+		OrganizationName string
 	}{
-		FullName:         fullName,
-		OrganizationName: organizationName,
-		InvitationUrl:    invitationUrl,
-		LogoURL:          baseURL + logoURLPath,
+		PresenterVariables: p.variables,
+		InvitationUrl:      invitationURL,
+		OrganizationName:   organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(invitationTextTemplate, invitationHTMLTemplate, data)
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
 }
 
-func RenderDocumentSigning(baseURL, fullName, organizationName, signingUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderDocumentSigning(signinURLPath string, token string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+	signingURL := baseurl.MustParse(p.variables.BaseURL).
+		WithPath(signinURLPath).
+		WithQuery("token", token).
+		MustString()
+
 	data := struct {
-		FullName         string
-		OrganizationName string
+		PresenterVariables
 		SigningUrl       string
-		LogoURL          string
+		OrganizationName string
 	}{
-		FullName:         fullName,
-		OrganizationName: organizationName,
-		SigningUrl:       signingUrl,
-		LogoURL:          baseURL + logoURLPath,
+		PresenterVariables: p.variables,
+		SigningUrl:         signingURL,
+		OrganizationName:   organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentSigningTextTemplate, documentSigningHTMLTemplate, data)
 	return fmt.Sprintf(subjectDocumentSigning, organizationName), textBody, htmlBody, err
 }
 
-func RenderDocumentExport(baseURL, fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderDocumentExport(downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
-		FullName    string
+		PresenterVariables
 		DownloadUrl string
-		LogoURL     string
 	}{
-		FullName:    fullName,
-		DownloadUrl: downloadUrl,
-		LogoURL:     baseURL + logoURLPath,
+		PresenterVariables: p.variables,
+		DownloadUrl:        downloadUrl,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentExportTextTemplate, documentExportHTMLTemplate, data)
 	return subjectDocumentExport, textBody, htmlBody, err
 }
 
-func RenderFrameworkExport(baseURL, fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderFrameworkExport(downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
-		FullName    string
+		PresenterVariables
 		DownloadUrl string
-		LogoURL     string
 	}{
-		FullName:    fullName,
-		DownloadUrl: downloadUrl,
-		LogoURL:     baseURL + logoURLPath,
+		PresenterVariables: p.variables,
+		DownloadUrl:        downloadUrl,
 	}
 
 	textBody, htmlBody, err = renderEmail(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
-func RenderTrustCenterAccess(baseURL, fullName, organizationName, accessUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderTrustCenterAccess(organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
-		FullName         string
+		PresenterVariables
 		OrganizationName string
-		AccessUrl        string
-		LogoURL          string
 	}{
-		FullName:         fullName,
-		OrganizationName: organizationName,
-		AccessUrl:        accessUrl,
-		LogoURL:          baseURL + logoURLPath,
+		PresenterVariables: p.variables,
+		OrganizationName:   organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)
 	return fmt.Sprintf(subjectTrustCenterAccess, organizationName), textBody, htmlBody, err
 }
 
-func RenderTrustCenterDocumentAccessRejected(
-	baseURL string,
-	fullName string,
-	organizationName string,
+func (p *Presenter) RenderTrustCenterDocumentAccessRejected(
 	fileNames []string,
+	organizationName string,
 ) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
-		FullName         string
-		OrganizationName string
-		LogoURL          string
+		PresenterVariables
 		FileNames        []string
+		OrganizationName string
 	}{
-		FullName:         fullName,
-		OrganizationName: organizationName,
-		LogoURL:          baseURL + logoURLPath,
-		FileNames:        fileNames,
+		PresenterVariables: p.variables,
+		FileNames:          fileNames,
+		OrganizationName:   organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterDocumentAccessRejectedTextTemplate, trustCenterDocumentAccessRejectedHTMLTemplate, data)
 	return fmt.Sprintf(subjectTrustCenterDocumentAccessRejected, organizationName), textBody, htmlBody, err
 }
 
-func RenderMagicLink(baseURL, fullName, magicLinkUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderMagicLink(magicLinkUrlPath string, tokenDuration time.Duration, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
-		FullName          string
+		PresenterVariables
 		MagicLinkURL      string
-		LogoURL           string
 		DurationInMinutes int
+		OrganizationName  string
 	}{
-		FullName:          fullName,
-		MagicLinkURL:      magicLinkUrl,
-		LogoURL:           baseURL + logoURLPath,
-		DurationInMinutes: int(tokenDuration.Minutes()),
+		PresenterVariables: p.variables,
+		MagicLinkURL:       baseurl.MustParse(p.variables.BaseURL).WithPath(magicLinkUrlPath).MustString(),
+		DurationInMinutes:  int(tokenDuration.Minutes()),
+		OrganizationName:   organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(magicLinkTextTemplate, magicLinkHTMLTemplate, data)
-	return subjectMagicLink, textBody, htmlBody, err
+	return fmt.Sprintf(subjectMagicLink, organizationName), textBody, htmlBody, err
 }
 
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {

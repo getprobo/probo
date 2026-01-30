@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -161,39 +160,11 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	organization, err := r.iam.OrganizationService.GetOrganization(ctx, trustCenter.OrganizationID)
-	if err != nil {
-		var errNotFound *iam.ErrOrganizationNotFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "organization not found")
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	customDomain, err := r.trust.GetCustomDomainByOrganizationID(ctx, organization.ID)
-	if err != nil && !errors.Is(err, trust.ErrCustomDomainNotFound) {
-		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
 	req := &iam.SendMagicLinkRequest{
-		Email: input.Email,
-	}
-
-	if customDomain != nil {
-		baseURL, err := baseurl.Parse(fmt.Sprintf("https://%s", customDomain.Domain))
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot parse custom domain url", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		req.BaseURL = baseURL.WithPath("/verify-magic-link")
-	} else {
-		req.BaseURL = r.baseURL.WithPath(
-			fmt.Sprintf("/trust/%s/verify-magic-link", trustCenter.ID.String()),
-		)
+		Email:            input.Email,
+		CompliancePageID: &trustCenter.ID,
+		OrganizationID:   trustCenter.OrganizationID,
+		URLPath:          "verify-magic-link",
 	}
 
 	if err := r.iam.AuthService.SendMagicLink(ctx, req); err != nil {

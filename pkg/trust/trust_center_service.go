@@ -16,10 +16,13 @@ package trust
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -215,4 +218,93 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 	}
 
 	return &presignedURL, nil
+}
+
+func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, compliancePageID gid.GID) (emails.PresenterConfig, error) {
+	var (
+		compliancePage    = &coredata.TrustCenter{}
+		organization      = &coredata.Organization{}
+		customDomain      *coredata.CustomDomain
+		logoFile          = &coredata.File{}
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.baseURL)
+	)
+
+	scope := coredata.NewScopeFromObjectID(compliancePageID)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
+			}
+
+			if compliancePage.LogoFileID != nil {
+				if err := logoFile.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
+					return fmt.Errorf("cannot load logoFile: %w", err)
+				}
+			}
+
+			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			customDomain = &coredata.CustomDomain{}
+			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, s.svc.encryptionKey, organization.ID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load custom domain: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return emailPresenterCfg, err
+	}
+
+	parsedBaseURL, err := url.Parse(s.svc.baseURL)
+	if err != nil {
+		return emailPresenterCfg, fmt.Errorf("cannot parse base URL: %w", err)
+	}
+
+	baseURL := url.URL{
+		Scheme: parsedBaseURL.Scheme,
+		Host:   parsedBaseURL.Host,
+		Path:   "/trust/" + compliancePage.Slug,
+	}
+
+	if customDomain != nil && customDomain.SSLStatus == coredata.CustomDomainSSLStatusActive {
+		baseURL.Host = customDomain.Domain
+		baseURL.Scheme = "https"
+		baseURL.Path = ""
+	}
+
+	emailPresenterCfg.BaseURL = baseURL.String()
+
+	if compliancePage.LogoFileID != nil {
+		if logoFile.FileKey == "" {
+			return emailPresenterCfg, nil
+		}
+
+		// If logo exists, then we will brand the emails with the org as a sender
+
+		presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, logoFile, 1*time.Hour)
+		if err != nil {
+			return emailPresenterCfg, fmt.Errorf("cannot generate file URL: %w", err)
+		}
+
+		emailPresenterCfg.SenderCompanyLogoURL = presignedURL
+
+		emailPresenterCfg.SenderCompanyName = organization.Name
+
+		if organization.WebsiteURL != nil {
+			emailPresenterCfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
+		}
+
+		if organization.HeadquarterAddress != nil {
+			emailPresenterCfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
+		}
+	}
+
+	return emailPresenterCfg, nil
 }

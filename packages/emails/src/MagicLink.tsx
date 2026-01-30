@@ -10,11 +10,11 @@ import EmailLayout, {
 export const MagicLink = () => {
   return (
     <EmailLayout subject="Probo Magic Link">
-      <Text style={bodyText}>Please use this link to connect to Probo:</Text>
+      <Text style={bodyText}>{"Please use this link to connect to {{.OrganizationName}}'s Compliance Page:"}</Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href={"{{.MagicLinkURL}}"}>
-          Connect to Probo
+          Connect
         </Button>
       </Section>
 

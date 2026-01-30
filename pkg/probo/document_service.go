@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -544,25 +543,12 @@ func (s *DocumentService) SendSigningNotifications(
 					return fmt.Errorf("cannot create signing request token: %w", err)
 				}
 
-				baseURLParsed, err := url.Parse(s.svc.baseURL)
-				if err != nil {
-					return fmt.Errorf("cannot parse base URL: %w", err)
-				}
+				emailPresenter := emails.NewPresenter(s.svc.baseURL, people.FullName)
 
-				signRequestURL := url.URL{
-					Scheme: baseURLParsed.Scheme,
-					Host:   baseURLParsed.Host,
-					Path:   "/documents/signing-requests",
-					RawQuery: url.Values{
-						"token": []string{token},
-					}.Encode(),
-				}
-
-				subject, textBody, htmlBody, err := emails.RenderDocumentSigning(
-					s.svc.baseURL,
-					people.FullName,
+				subject, textBody, htmlBody, err := emailPresenter.RenderDocumentSigning(
+					"/documents/signing-requests",
+					token,
 					organization.Name,
-					signRequestURL.String(),
 				)
 				if err != nil {
 					return fmt.Errorf("cannot render signing request email: %w", err)
@@ -1837,9 +1823,9 @@ func (s *DocumentService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
-			subject, textBody, htmlBody, err := emails.RenderDocumentExport(
-				s.svc.baseURL,
-				recipientName,
+			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName)
+
+			subject, textBody, htmlBody, err := emailPresenter.RenderDocumentExport(
 				downloadURL,
 			)
 			if err != nil {

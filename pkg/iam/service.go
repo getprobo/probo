@@ -41,14 +41,15 @@ type (
 		privateKey                 *rsa.PrivateKey
 		logger                     *log.Logger
 
-		AccountService      *AccountService
-		OrganizationService *OrganizationService
-		SessionService      *SessionService
-		AuthService         *AuthService
-		SAMLService         *saml.Service
-		SCIMService         *scim.Service
-		APIKeyService       *APIKeyService
-		Authorizer          *Authorizer
+		AccountService        *AccountService
+		OrganizationService   *OrganizationService
+		CompliancePageService *CompliancePageService
+		SessionService        *SessionService
+		AuthService           *AuthService
+		SAMLService           *saml.Service
+		SCIMService           *scim.Service
+		APIKeyService         *APIKeyService
+		Authorizer            *Authorizer
 
 		samlDomainVerifier *SAMLDomainVerifier
 	}
@@ -118,6 +119,7 @@ func NewService(
 
 	svc.AccountService = NewAccountService(svc)
 	svc.OrganizationService = NewOrganizationService(svc)
+	svc.CompliancePageService = NewCompliancePageService(svc)
 	svc.SessionService = NewSessionService(svc)
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)
