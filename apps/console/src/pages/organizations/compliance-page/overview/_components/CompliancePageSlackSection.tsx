@@ -44,46 +44,49 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
               className="flex items-center gap-3"
             >
               <div>
-                <img src={`/${slackConnection.id.toLowerCase()}.png`} alt="" />
+                <img src="/slack.png" alt="" />
               </div>
               <div className="mr-auto">
                 <h3 className="text-base font-semibold">Slack</h3>
                 <p className="text-sm text-txt-tertiary">
-                  {slackConnection.createdAt
-                    ? (
-                        <>
-                          {sprintf(
-                            __("Connected on %s"),
-                            dateTimeFormat(slackConnection.createdAt),
-                          )}
-                          {slackConnection.channel && (
-                            <>
-                              {" • "}
-                              {sprintf(__("Channel: %s"), slackConnection.channel)}
-                            </>
-                          )}
-                        </>
-                      )
-                    : __("Manage your compliance page access with slack")}
+                  {sprintf(
+                    __("Connected on %s"),
+                    dateTimeFormat(slackConnection.createdAt),
+                  )}
+                  {slackConnection.channel && (
+                    <>
+                      {" • "}
+                      {sprintf(__("Channel: %s"), slackConnection.channel)}
+                    </>
+                  )}
                 </p>
               </div>
-              {slackConnection.createdAt
-                ? (
-                    <div>
-                      <Badge variant="success" size="md">
-                        {__("Connected")}
-                      </Badge>
-                    </div>
-                  )
-                : (
-                    organization.compliancePage?.canUpdate && (
-                      <Button variant="secondary" asChild>
-                        <a href={getSlackConnectionUrl(organizationId)}>{__("Connect")}</a>
-                      </Button>
-                    )
-                  )}
+              <div>
+                <Badge variant="success" size="md">
+                  {__("Connected")}
+                </Badge>
+              </div>
             </Card>
           ))}
+          {organization.compliancePage?.canUpdate && organization.slackConnections.edges.length === 0 && (
+            <Card
+              padded
+              className="flex items-center gap-3"
+            >
+              <div>
+                <img src="/slack.png" alt="" />
+              </div>
+              <div className="mr-auto">
+                <h3 className="text-base font-semibold">Slack</h3>
+                <p className="text-sm text-txt-tertiary">
+                  {__("Manage your compliance page access with slack")}
+                </p>
+              </div>
+              <Button variant="secondary" asChild>
+                <a href={getSlackConnectionUrl(organizationId)}>{__("Connect")}</a>
+              </Button>
+            </Card>
+          )}
         </div>
       </Card>
     </div>
