@@ -1562,6 +1562,8 @@ input VendorFilter {
 type TrustCenter implements Node {
     id: ID!
     active: Boolean!
+    logoFileUrl: String @goField(forceResolver: true)
+    darkLogoFileUrl: String @goField(forceResolver: true)
     ndaFileName: String
     ndaFileUrl: String @goField(forceResolver: true)
     createdAt: Datetime!
@@ -3069,6 +3071,9 @@ type Mutation {
     deleteTrustCenterNDA(
         input: DeleteTrustCenterNDAInput!
     ): DeleteTrustCenterNDAPayload!
+    updateTrustCenterBrand(
+        input: UpdateTrustCenterBrandInput!
+    ): UpdateTrustCenterBrandPayload!
     # Trust Center Access CRUD mutations
     createTrustCenterAccess(
         input: CreateTrustCenterAccessInput!
@@ -3441,6 +3446,12 @@ input UploadTrustCenterNDAInput {
 
 input DeleteTrustCenterNDAInput {
     trustCenterId: ID!
+}
+
+input UpdateTrustCenterBrandInput {
+    trustCenterId: ID!
+    logoFile: Upload @goField(omittable: true)
+    darkLogoFile: Upload @goField(omittable: true)
 }
 
 input CreateTrustCenterAccessInput {
@@ -4303,6 +4314,10 @@ type UploadTrustCenterNDAPayload {
 }
 
 type DeleteTrustCenterNDAPayload {
+    trustCenter: TrustCenter!
+}
+
+type UpdateTrustCenterBrandPayload {
     trustCenter: TrustCenter!
 }
 

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ad1c20b90e9f5335bbcd703dc4e19963>>
+ * @generated SignedSource<<f31f58950034fd90764103d8c1e24f30>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,27 +10,25 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DomainSettingsPageQuery$variables = {
+export type CompliancePageDomainPageQuery$variables = {
   organizationId: string;
 };
-export type DomainSettingsPageQuery$data = {
+export type CompliancePageDomainPageQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
     readonly canCreateCustomDomain: boolean;
     readonly customDomain: {
-      readonly domain: string;
-      readonly " $fragmentSpreads": FragmentRefs<"DomainCardFragment">;
+      readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDomainCardFragment">;
     } | null | undefined;
-    readonly id: string;
   } | {
     // This will never be '%other', but we need some
     // value in case none of the concrete values match.
     readonly __typename: "%other";
   };
 };
-export type DomainSettingsPageQuery = {
-  response: DomainSettingsPageQuery$data;
-  variables: DomainSettingsPageQuery$variables;
+export type CompliancePageDomainPageQuery = {
+  response: CompliancePageDomainPageQuery$data;
+  variables: CompliancePageDomainPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -56,13 +54,6 @@ v2 = {
   "storageKey": null
 },
 v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-},
-v4 = {
   "alias": "canCreateCustomDomain",
   "args": [
     {
@@ -75,11 +66,11 @@ v4 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:custom-domain:create\")"
 },
-v5 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "domain",
+  "name": "id",
   "storageKey": null
 };
 return {
@@ -87,7 +78,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DomainSettingsPageQuery",
+    "name": "CompliancePageDomainPageQuery",
     "selections": [
       {
         "alias": "organization",
@@ -102,7 +93,6 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
-              (v4/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -111,11 +101,10 @@ return {
                 "name": "customDomain",
                 "plural": false,
                 "selections": [
-                  (v5/*: any*/),
                   {
                     "args": null,
                     "kind": "FragmentSpread",
-                    "name": "DomainCardFragment"
+                    "name": "CompliancePageDomainCardFragment"
                   }
                 ],
                 "storageKey": null
@@ -135,7 +124,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "DomainSettingsPageQuery",
+    "name": "CompliancePageDomainPageQuery",
     "selections": [
       {
         "alias": "organization",
@@ -146,11 +135,10 @@ return {
         "plural": false,
         "selections": [
           (v2/*: any*/),
-          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
-              (v4/*: any*/),
+              (v3/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -159,7 +147,13 @@ return {
                 "name": "customDomain",
                 "plural": false,
                 "selections": [
-                  (v5/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "domain",
+                    "storageKey": null
+                  },
                   {
                     "alias": null,
                     "args": null,
@@ -230,47 +224,34 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "createdAt",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "updatedAt",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "sslExpiresAt",
                     "storageKey": null
                   },
-                  (v3/*: any*/)
+                  (v4/*: any*/)
                 ],
                 "storageKey": null
               }
             ],
             "type": "Organization",
             "abstractKey": null
-          }
+          },
+          (v4/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "36529612fbe4366a7344b405031da1d1",
+    "cacheID": "f916852f512fa1e1b06d73c608acad3a",
     "id": null,
     "metadata": {},
-    "name": "DomainSettingsPageQuery",
+    "name": "CompliancePageDomainPageQuery",
     "operationKind": "query",
-    "text": "query DomainSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateCustomDomain: permission(action: \"core:custom-domain:create\")\n      customDomain {\n        domain\n        ...DomainCardFragment\n        id\n      }\n    }\n    id\n  }\n}\n\nfragment DomainCardFragment on CustomDomain {\n  domain\n  sslStatus\n  canDelete: permission(action: \"core:custom-domain:delete\")\n  ...DomainDialogFragment\n}\n\nfragment DomainDialogFragment on CustomDomain {\n  sslStatus\n  domain\n  dnsRecords {\n    type\n    name\n    value\n    ttl\n    purpose\n  }\n  createdAt\n  updatedAt\n  sslExpiresAt\n}\n"
+    "text": "query CompliancePageDomainPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateCustomDomain: permission(action: \"core:custom-domain:create\")\n      customDomain {\n        ...CompliancePageDomainCardFragment\n        id\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageDomainCardFragment on CustomDomain {\n  domain\n  sslStatus\n  canDelete: permission(action: \"core:custom-domain:delete\")\n  ...CompliancePageDomainDialogFragment\n}\n\nfragment CompliancePageDomainDialogFragment on CustomDomain {\n  sslStatus\n  domain\n  dnsRecords {\n    type\n    name\n    value\n    ttl\n    purpose\n  }\n  sslExpiresAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "75275e2fc7e7156cdf3059b8f0d4f60d";
+(node as any).hash = "86eb03a06b0217c125eadf8cf661e384";
 
 export default node;

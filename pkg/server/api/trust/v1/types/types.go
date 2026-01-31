@@ -174,6 +174,8 @@ type TrustCenter struct {
 	ID                                gid.GID                         `json:"id"`
 	Active                            bool                            `json:"active"`
 	Slug                              string                          `json:"slug"`
+	LogoFileURL                       *string                         `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL                   *string                         `json:"darkLogoFileUrl,omitempty"`
 	NdaFileName                       *string                         `json:"ndaFileName,omitempty"`
 	NdaFileURL                        *string                         `json:"ndaFileUrl,omitempty"`
 	Organization                      *Organization                   `json:"organization"`

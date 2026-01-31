@@ -24,7 +24,6 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
@@ -97,6 +96,28 @@ type (
 		Email    mail.Addr
 		FullName string
 		Role     coredata.MembershipRole
+	}
+)
+
+var (
+	proboVendor = struct {
+		Name                 string
+		Description          string
+		LegalName            string
+		HeadquarterAddress   string
+		WebsiteURL           string
+		PrivacyPolicyURL     string
+		TermsOfServiceURL    string
+		SubprocessorsListURL string
+	}{
+		Name:                 "Probo",
+		Description:          "Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no vendor lock-in.",
+		LegalName:            "Probo Inc.",
+		HeadquarterAddress:   "490 Post St, Suite 640,San Francisco, CA 94102, United States",
+		WebsiteURL:           "https://www.getprobo.com/",
+		PrivacyPolicyURL:     "https://www.getprobo.com/privacy",
+		TermsOfServiceURL:    "https://www.getprobo.com/terms",
+		SubprocessorsListURL: "https://www.getprobo.com/subprocessors",
 	}
 )
 
@@ -443,21 +464,12 @@ func (s *OrganizationService) InviteMember(
 				return fmt.Errorf("cannot generate invitation token: %w", err)
 			}
 
-			baseurl, err := baseurl.Parse(s.baseURL)
-			if err != nil {
-				return fmt.Errorf("cannot parse base URL: %w", err)
-			}
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
 
-			invitationURL := baseurl.WithPath("/auth/signup-from-invitation").
-				WithQuery("token", invitationToken).
-				WithQuery("fullName", invitation.FullName).
-				MustString()
-
-			subject, textBody, htmlBody, err := emails.RenderInvitation(
-				s.baseURL,
-				invitation.FullName,
+			subject, textBody, htmlBody, err := emailPresenter.RenderInvitation(
+				"/auth/signup-from-invitation",
+				invitationToken,
 				organization.Name,
-				invitationURL,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render invitation email: %w", err)
@@ -581,8 +593,8 @@ func (s *OrganizationService) CreateOrganization(
 		var (
 			fileID      = gid.New(tenantID, coredata.FileEntityType)
 			objectKey   = uuid.MustNewV7()
-			filename    = req.LogoFile.Filename
-			contentType = req.LogoFile.ContentType
+			filename    = req.HorizontalLogoFile.Filename
+			contentType = req.HorizontalLogoFile.ContentType
 			now         = time.Now()
 		)
 
@@ -592,7 +604,7 @@ func (s *OrganizationService) CreateOrganization(
 			MimeType:   contentType,
 			FileName:   filename,
 			FileKey:    objectKey.String(),
-			FileSize:   req.LogoFile.Size,
+			FileSize:   req.HorizontalLogoFile.Size,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
@@ -633,6 +645,9 @@ func (s *OrganizationService) CreateOrganization(
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
+
+				organization.LogoFileID = &logoFile.ID
+				trustCenter.LogoFileID = &logoFile.ID
 			}
 
 			if horizontalLogoFile != nil {
@@ -640,6 +655,8 @@ func (s *OrganizationService) CreateOrganization(
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
+
+				organization.HorizontalLogoFileID = &horizontalLogoFile.ID
 			}
 
 			err = membership.Insert(ctx, tx, scope)
@@ -668,6 +685,28 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert trust center: %w", err)
 			}
 
+			proboData := &coredata.Vendor{
+				ID:                   gid.New(scope.GetTenantID(), coredata.VendorEntityType),
+				TenantID:             organization.TenantID,
+				OrganizationID:       organization.ID,
+				Name:                 proboVendor.Name,
+				Description:          &proboVendor.Description,
+				Category:             coredata.VendorCategorySecurity,
+				HeadquarterAddress:   &proboVendor.HeadquarterAddress,
+				LegalName:            &proboVendor.LegalName,
+				WebsiteURL:           &proboVendor.WebsiteURL,
+				PrivacyPolicyURL:     &proboVendor.PrivacyPolicyURL,
+				TermsOfServiceURL:    &proboVendor.TermsOfServiceURL,
+				SubprocessorsListURL: &proboVendor.SubprocessorsListURL,
+				ShowOnTrustCenter:    false,
+				CreatedAt:            now,
+				UpdatedAt:            now,
+			}
+
+			if err := proboData.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert vendor: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -690,6 +729,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		tenantID           = organizationID.TenantID()
 		scope              = coredata.NewScopeFromObjectID(organizationID)
 		organization       = &coredata.Organization{}
+		compliancePage     = &coredata.TrustCenter{}
 	)
 
 	// TODO: s3 upload happen before we validate the tenantID
@@ -807,12 +847,25 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			}
 
 			if logoFile != nil {
-				err := logoFile.Insert(ctx, tx, scope)
-				if err != nil {
+				if err := logoFile.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
 
 				organization.LogoFileID = &logoFile.ID
+
+				// Auto set the compliance page org logo in case it wasn't already specified
+				if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+					return fmt.Errorf("cannot load compliance page: %w", err)
+				}
+
+				if compliancePage.LogoFileID == nil {
+					compliancePage.LogoFileID = &logoFile.ID
+					compliancePage.UpdatedAt = now
+
+					if err := compliancePage.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update compliance page: %w", err)
+					}
+				}
 			}
 
 			if horizontalLogoFile != nil {
@@ -820,6 +873,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
+
 				organization.HorizontalLogoFileID = &horizontalLogoFile.ID
 			}
 

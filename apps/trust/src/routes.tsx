@@ -1,10 +1,11 @@
+import { lazy } from "@probo/react-lazy";
 import {
   type AppRoute,
   loaderFromQueryLoader,
   routeFromAppRoute,
   withQueryRef,
 } from "@probo/routes";
-import { Fragment, lazy } from "react";
+import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { createBrowserRouter, redirect, useRouteError } from "react-router";
 
@@ -34,12 +35,17 @@ function ErrorBoundary() {
 
 const routes = [
   {
-    path: "/connect",
-    Component: lazy(() => import("./pages/auth/ConnectPageLoader")),
-  },
-  {
-    path: "/verify-magic-link",
-    Component: lazy(() => import("./pages/auth/VerifyMagicLinkPage")),
+    Component: lazy(() => import("#/pages/auth/AuthLayoutLoader")),
+    children: [
+      {
+        path: "/connect",
+        Component: lazy(() => import("#/pages/auth/ConnectPageLoader")),
+      },
+      {
+        path: "/verify-magic-link",
+        Component: lazy(() => import("#/pages/auth/VerifyMagicLinkPage")),
+      },
+    ],
   },
   {
     path: "/",

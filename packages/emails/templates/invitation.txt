@@ -1,6 +1,6 @@
 Probo
 
-Hi {{.FullName}},
+Hi {{.RecipientFullName}},
 
 You have been invited to join organization {{.OrganizationName}} on Probo. Click the link below to accept the invitation:
 

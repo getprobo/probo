@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d78dfc5b8db81e410f3f606fb91cd137>>
+ * @generated SignedSource<<2884e6469123701242f24cd275f8551b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,10 @@ export type CreateCustomDomainInput = {
   domain: string;
   organizationId: string;
 };
-export type NewDomainDialogMutation$variables = {
+export type NewCompliancePageDomainDialogMutation$variables = {
   input: CreateCustomDomainInput;
 };
-export type NewDomainDialogMutation$data = {
+export type NewCompliancePageDomainDialogMutation$data = {
   readonly createCustomDomain: {
     readonly customDomain: {
       readonly canDelete: boolean;
@@ -37,9 +37,9 @@ export type NewDomainDialogMutation$data = {
     };
   };
 };
-export type NewDomainDialogMutation = {
-  response: NewDomainDialogMutation$data;
-  variables: NewDomainDialogMutation$variables;
+export type NewCompliancePageDomainDialogMutation = {
+  response: NewCompliancePageDomainDialogMutation$data;
+  variables: NewCompliancePageDomainDialogMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -186,7 +186,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "NewDomainDialogMutation",
+    "name": "NewCompliancePageDomainDialogMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -195,20 +195,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "NewDomainDialogMutation",
+    "name": "NewCompliancePageDomainDialogMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "39d421d36a6418d0ee687d43b9d7a7ee",
+    "cacheID": "6f012080388b3c7dfd3bfc8c69b5d549",
     "id": null,
     "metadata": {},
-    "name": "NewDomainDialogMutation",
+    "name": "NewCompliancePageDomainDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation NewDomainDialogMutation(\n  $input: CreateCustomDomainInput!\n) {\n  createCustomDomain(input: $input) {\n    customDomain {\n      id\n      domain\n      sslStatus\n      dnsRecords {\n        type\n        name\n        value\n        ttl\n        purpose\n      }\n      createdAt\n      updatedAt\n      sslExpiresAt\n      canDelete: permission(action: \"core:custom-domain:delete\")\n    }\n  }\n}\n"
+    "text": "mutation NewCompliancePageDomainDialogMutation(\n  $input: CreateCustomDomainInput!\n) {\n  createCustomDomain(input: $input) {\n    customDomain {\n      id\n      domain\n      sslStatus\n      dnsRecords {\n        type\n        name\n        value\n        ttl\n        purpose\n      }\n      createdAt\n      updatedAt\n      sslExpiresAt\n      canDelete: permission(action: \"core:custom-domain:delete\")\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "37ef764ab4f78a6898f06d00374347ee";
+(node as any).hash = "7a1b76dbca18a3a0dbd2b1123e324b99";
 
 export default node;

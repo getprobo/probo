@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -401,45 +400,9 @@ func (s TrustCenterAccessService) Delete(
 }
 
 func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess) error {
-	trustCenter := &coredata.TrustCenter{}
-
-	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID); err != nil {
-		return fmt.Errorf("cannot load trust center: %w", err)
-	}
-
 	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID); err != nil {
+	if err := organization.LoadByID(ctx, tx, s.svc.scope, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
-	}
-
-	baseURLParsed, err := url.Parse(s.svc.baseURL)
-	if err != nil {
-		return fmt.Errorf("cannot parse base URL: %w", err)
-	}
-
-	hostname := baseURLParsed.Host
-	scheme := baseURLParsed.Scheme
-	path := "/trust/" + trustCenter.Slug
-
-	if organization.CustomDomainID != nil {
-		customDomain, err := s.svc.CustomDomains.GetOrganizationCustomDomain(ctx, organization.ID)
-		if err != nil {
-			return fmt.Errorf("cannot load custom domain: %w", err)
-		}
-
-		if customDomain == nil || customDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
-			return fmt.Errorf("custom domain is not active")
-		}
-
-		hostname = customDomain.Domain
-		scheme = "https"
-		path = ""
-	}
-
-	accessURL := url.URL{
-		Scheme: scheme,
-		Host:   hostname,
-		Path:   path,
 	}
 
 	now := time.Now()
@@ -449,30 +412,21 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Con
 		return fmt.Errorf("cannot update trust center access with expiration: %w", err)
 	}
 
-	return s.sendTrustCenterAccessEmail(ctx, tx, access.Name, access.Email, organization.Name, accessURL.String())
-}
+	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, access.TrustCenterID)
+	if err != nil {
+		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
+	}
 
-func (s TrustCenterAccessService) sendTrustCenterAccessEmail(
-	ctx context.Context,
-	tx pg.Conn,
-	name string,
-	email mail.Addr,
-	companyName string,
-	accessURL string,
-) error {
-	subject, textBody, htmlBody, err := emails.RenderTrustCenterAccess(
-		s.svc.baseURL,
-		name,
-		companyName,
-		accessURL,
-	)
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, access.Name)
+
+	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(organization.Name)
 	if err != nil {
 		return fmt.Errorf("cannot render trust center access email: %w", err)
 	}
 
 	accessEmail := coredata.NewEmail(
-		name,
-		email,
+		access.Name,
+		access.Email,
 		subject,
 		textBody,
 		htmlBody,

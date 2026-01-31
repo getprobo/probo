@@ -1841,16 +1841,18 @@ type TransferImpactAssessmentFilter struct {
 }
 
 type TrustCenter struct {
-	ID           gid.GID                         `json:"id"`
-	Active       bool                            `json:"active"`
-	NdaFileName  *string                         `json:"ndaFileName,omitempty"`
-	NdaFileURL   *string                         `json:"ndaFileUrl,omitempty"`
-	CreatedAt    time.Time                       `json:"createdAt"`
-	UpdatedAt    time.Time                       `json:"updatedAt"`
-	Organization *Organization                   `json:"organization"`
-	Accesses     *TrustCenterAccessConnection    `json:"accesses"`
-	References   *TrustCenterReferenceConnection `json:"references"`
-	Permission   bool                            `json:"permission"`
+	ID              gid.GID                         `json:"id"`
+	Active          bool                            `json:"active"`
+	LogoFileURL     *string                         `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL *string                         `json:"darkLogoFileUrl,omitempty"`
+	NdaFileName     *string                         `json:"ndaFileName,omitempty"`
+	NdaFileURL      *string                         `json:"ndaFileUrl,omitempty"`
+	CreatedAt       time.Time                       `json:"createdAt"`
+	UpdatedAt       time.Time                       `json:"updatedAt"`
+	Organization    *Organization                   `json:"organization"`
+	Accesses        *TrustCenterAccessConnection    `json:"accesses"`
+	References      *TrustCenterReferenceConnection `json:"references"`
+	Permission      bool                            `json:"permission"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -2262,6 +2264,16 @@ type UpdateTrustCenterAccessInput struct {
 
 type UpdateTrustCenterAccessPayload struct {
 	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
+}
+
+type UpdateTrustCenterBrandInput struct {
+	TrustCenterID gid.GID                            `json:"trustCenterId"`
+	LogoFile      graphql.Omittable[*graphql.Upload] `json:"logoFile,omitempty"`
+	DarkLogoFile  graphql.Omittable[*graphql.Upload] `json:"darkLogoFile,omitempty"`
+}
+
+type UpdateTrustCenterBrandPayload struct {
+	TrustCenter *TrustCenter `json:"trustCenter"`
 }
 
 type UpdateTrustCenterFileInput struct {

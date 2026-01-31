@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ab516d36b92795ed8d94d69153957f93>>
+ * @generated SignedSource<<0e36707d7a08e91112f9f44e787b4844>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,23 +11,23 @@
 import { ReaderFragment } from 'relay-runtime';
 export type SSLStatus = "ACTIVE" | "EXPIRED" | "FAILED" | "PENDING" | "PROVISIONING" | "RENEWING";
 import { FragmentRefs } from "relay-runtime";
-export type DomainCardFragment$data = {
+export type CompliancePageDomainCardFragment$data = {
   readonly canDelete: boolean;
   readonly domain: string;
   readonly sslStatus: SSLStatus;
-  readonly " $fragmentSpreads": FragmentRefs<"DomainDialogFragment">;
-  readonly " $fragmentType": "DomainCardFragment";
+  readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDomainDialogFragment">;
+  readonly " $fragmentType": "CompliancePageDomainCardFragment";
 };
-export type DomainCardFragment$key = {
-  readonly " $data"?: DomainCardFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DomainCardFragment">;
+export type CompliancePageDomainCardFragment$key = {
+  readonly " $data"?: CompliancePageDomainCardFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDomainCardFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "DomainCardFragment",
+  "name": "CompliancePageDomainCardFragment",
   "selections": [
     {
       "alias": null,
@@ -59,13 +59,13 @@ const node: ReaderFragment = {
     {
       "args": null,
       "kind": "FragmentSpread",
-      "name": "DomainDialogFragment"
+      "name": "CompliancePageDomainDialogFragment"
     }
   ],
   "type": "CustomDomain",
   "abstractKey": null
 };
 
-(node as any).hash = "91cc7871d5ac257f2540568a9a10ce0f";
+(node as any).hash = "db079748369f6103bb263de4e8921c76";
 
 export default node;

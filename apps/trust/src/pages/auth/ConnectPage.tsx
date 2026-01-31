@@ -14,7 +14,6 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import type { ConnectPageMutation } from "./__generated__/ConnectPageMutation.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
-import { AuthLayout } from "./AuthLayout";
 
 export const connectPageQuery = graphql`
   query ConnectPageQuery {
@@ -126,49 +125,47 @@ export function ConnectPage(props: {
   });
 
   return (
-    <AuthLayout>
-      <div className="space-y-6 w-full max-w-md mx-auto">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">
-            {__(`Connect to ${organization.name}'s compliance page`)}
-          </h1>
-          <p className="text-txt-tertiary">
+    <div className="space-y-6 w-full max-w-md mx-auto">
+      <div className="space-y-2 text-center">
+        <h1 className="text-3xl font-bold">
+          {__(`Connect to ${organization.name}'s compliance page`)}
+        </h1>
+        <p className="text-txt-tertiary">
+          {__(
+            "Enter your email address to connect with a magic link and start requesting access to documents",
+          )}
+        </p>
+      </div>
+
+      <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
+        <Field
+          label={__("Email")}
+          placeholder="john.doe@acme.com"
+          {...register("email")}
+          type="email"
+          error={formState.errors.email?.message}
+        />
+
+        {magicLinkSent && (
+          <p className="text-txt-primary text-sm">
             {__(
-              "Enter your email address to connect with a magic link and start requesting access to documents",
+              "Magic Link Sent! Check your emails and use the link to connect.",
             )}
           </p>
-        </div>
+        )}
 
-        <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-          <Field
-            label={__("Email")}
-            placeholder="john.doe@acme.com"
-            {...register("email")}
-            type="email"
-            error={formState.errors.email?.message}
-          />
-
-          {magicLinkSent && (
-            <p className="text-txt-primary text-sm">
-              {__(
-                "Magic Link Sent! Check your emails and use the link to connect.",
-              )}
-            </p>
-          )}
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={formState.isSubmitting || (magicLinkSent && timer !== 0)}
-          >
-            {magicLinkSent
-              ? timer === 0
-                ? __("Resend Link")
-                : `${__("Resend Link in")} ${timer}s`
-              : __("Send Magic Link")}
-          </Button>
-        </form>
-      </div>
-    </AuthLayout>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={formState.isSubmitting || (magicLinkSent && timer !== 0)}
+        >
+          {magicLinkSent
+            ? timer === 0
+              ? __("Resend Link")
+              : `${__("Resend Link in")} ${timer}s`
+            : __("Send Magic Link")}
+        </Button>
+      </form>
+    </div>
   );
 }

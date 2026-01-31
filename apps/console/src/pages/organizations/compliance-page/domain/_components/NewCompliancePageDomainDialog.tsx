@@ -12,13 +12,13 @@ import type { PropsWithChildren } from "react";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { NewDomainDialogMutation } from "#/__generated__/core/NewDomainDialogMutation.graphql";
+import type { NewCompliancePageDomainDialogMutation } from "#/__generated__/core/NewCompliancePageDomainDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const createCustomDomainMutation = graphql`
-  mutation NewDomainDialogMutation($input: CreateCustomDomainInput!) {
+  mutation NewCompliancePageDomainDialogMutation($input: CreateCustomDomainInput!) {
     createCustomDomain(input: $input) {
       customDomain {
         id
@@ -50,7 +50,7 @@ const schema = z.object({
     ),
 });
 
-export function NewDomainDialog(props: PropsWithChildren) {
+export function NewCompliancePageDomainDialog(props: PropsWithChildren) {
   const { children } = props;
 
   const organizationId = useOrganizationId();
@@ -67,7 +67,7 @@ export function NewDomainDialog(props: PropsWithChildren) {
   );
 
   const [createCustomDomain, isCreating]
-    = useMutationWithToasts<NewDomainDialogMutation>(createCustomDomainMutation, {
+    = useMutationWithToasts<NewCompliancePageDomainDialogMutation>(createCustomDomainMutation, {
       successMessage: __(
         "Domain added successfully. Configure the DNS records to verify and activate your domain.",
       ),

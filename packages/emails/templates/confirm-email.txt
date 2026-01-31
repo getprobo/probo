@@ -1,6 +1,6 @@
 Probo
 
-Hi {{.FullName}},
+Hi {{.RecipientFullName}},
 
 Thanks for joining Probo! Please confirm your email address by clicking the link below:
 

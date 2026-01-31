@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -27,7 +28,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -49,7 +52,15 @@ type (
 		File          io.Reader
 		FileName      string
 	}
+
+	UpdateTrustCenterBrandRequest struct {
+		TrustCenterID gid.GID
+		LogoFile      **FileUpload
+		DarkLogoFile  **FileUpload
+	}
 )
+
+const maxBrandFileSize = 5 * 1024 * 1024 // 5MB
 
 func (utcr *UpdateTrustCenterRequest) Validate() error {
 	v := validator.New()
@@ -68,6 +79,29 @@ func (utcndar *UploadTrustCenterNDARequest) Validate() error {
 	v.Check(utcndar.FileName, "file_name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
+}
+
+func (req *UpdateTrustCenterBrandRequest) Validate() error {
+	fv := filevalidation.NewValidator(
+		filevalidation.WithCategories(filevalidation.CategoryImage),
+		filevalidation.WithMaxFileSize(maxBrandFileSize),
+	)
+
+	if req.LogoFile != nil && *req.LogoFile != nil {
+		logoFile := *req.LogoFile
+		if err := fv.Validate(logoFile.Filename, logoFile.ContentType, logoFile.Size); err != nil {
+			return fmt.Errorf("invalid logo file: %w", err)
+		}
+	}
+
+	if req.DarkLogoFile != nil && *req.DarkLogoFile != nil {
+		darkLogoFile := *req.DarkLogoFile
+		if err := fv.Validate(darkLogoFile.Filename, darkLogoFile.ContentType, darkLogoFile.Size); err != nil {
+			return fmt.Errorf("invalid dark logo file: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s TrustCenterService) Get(
@@ -303,6 +337,137 @@ func (s TrustCenterService) DeleteNDA(
 	return trustCenter, nil, nil
 }
 
+func (s TrustCenterService) UpdateTrustCenterBrand(
+	ctx context.Context,
+	req *UpdateTrustCenterBrandRequest,
+) (*coredata.TrustCenter, *coredata.File, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
+	var trustCenter *coredata.TrustCenter
+	var ndaFile *coredata.File
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			trustCenter = &coredata.TrustCenter{}
+			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			now := time.Now()
+
+			if req.LogoFile != nil {
+				if *req.LogoFile == nil {
+					trustCenter.LogoFileID = nil
+				} else {
+					file, err := s.uploadFile(ctx, conn, *req.LogoFile, "trust-center-logo", trustCenter)
+					if err != nil {
+						return fmt.Errorf("cannot upload logo file: %w", err)
+					}
+					trustCenter.LogoFileID = &file.ID
+				}
+			}
+
+			if req.DarkLogoFile != nil {
+				if *req.DarkLogoFile == nil {
+					trustCenter.DarkLogoFileID = nil
+				} else {
+					file, err := s.uploadFile(ctx, conn, *req.DarkLogoFile, "trust-center-dark-logo", trustCenter)
+					if err != nil {
+						return fmt.Errorf("cannot upload dark logo file: %w", err)
+					}
+					trustCenter.DarkLogoFileID = &file.ID
+				}
+			}
+
+			trustCenter.UpdatedAt = now
+
+			if err := trustCenter.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update trust center: %w", err)
+			}
+
+			if trustCenter.NonDisclosureAgreementFileID != nil {
+				ndaFile = &coredata.File{}
+				if err := ndaFile.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+					return fmt.Errorf("cannot load nda file: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return trustCenter, ndaFile, nil
+}
+
+func (s TrustCenterService) uploadFile(
+	ctx context.Context,
+	conn pg.Conn,
+	fileUpload *FileUpload,
+	fileType string,
+	trustCenter *coredata.TrustCenter,
+) (*coredata.File, error) {
+	objectKey, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate object key: %w", err)
+	}
+
+	mimeType := fileUpload.ContentType
+	if mimeType == "" {
+		mimeType = mime.TypeByExtension(filepath.Ext(fileUpload.Filename))
+	}
+
+	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      &s.svc.bucket,
+		Key:         aws.String(objectKey.String()),
+		Body:        fileUpload.Content,
+		ContentType: &mimeType,
+		Metadata: map[string]string{
+			"type":            fileType,
+			"trust-center-id": trustCenter.ID.String(),
+			"organization-id": trustCenter.OrganizationID.String(),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload file to S3: %w", err)
+	}
+
+	headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.svc.bucket),
+		Key:    aws.String(objectKey.String()),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get object metadata: %w", err)
+	}
+
+	now := time.Now()
+	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+
+	file := &coredata.File{
+		ID:             fileID,
+		OrganizationID: trustCenter.OrganizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       mimeType,
+		FileName:       fileUpload.Filename,
+		FileKey:        objectKey.String(),
+		FileSize:       *headOutput.ContentLength,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	if err := file.Insert(ctx, conn, s.svc.scope); err != nil {
+		return nil, fmt.Errorf("cannot insert file: %w", err)
+	}
+
+	return file, nil
+}
+
 func (s TrustCenterService) GenerateNDAFileURL(
 	ctx context.Context,
 	trustCenterID gid.GID,
@@ -338,23 +503,189 @@ func (s TrustCenterService) GenerateNDAFileURL(
 		return nil, nil
 	}
 
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	encodedFilename := url.QueryEscape(file.FileName)
-	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
-		encodedFilename, encodedFilename)
-
-	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     aws.String(s.svc.bucket),
-		Key:                        aws.String(file.FileKey),
-		ResponseCacheControl:       aws.String("max-age=3600, public"),
-		ResponseContentDisposition: aws.String(contentDisposition),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = expiresIn
-	})
+	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
 	if err != nil {
-		return nil, fmt.Errorf("cannot presign GetObject request: %w", err)
+		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedReq.URL, nil
+	return &presignedURL, nil
+}
+
+func (s TrustCenterService) GenerateLogoURL(
+	ctx context.Context,
+	compliancePageID gid.GID,
+	expiresIn time.Duration,
+) (*string, error) {
+	file := &coredata.File{}
+	compliancePage := &coredata.TrustCenter{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := compliancePage.LoadByID(ctx, conn, s.svc.scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
+			}
+
+			if compliancePage.LogoFileID == nil {
+				return nil
+			}
+
+			if err := file.LoadByID(ctx, conn, s.svc.scope, *compliancePage.LogoFileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if compliancePage.LogoFileID == nil {
+		return nil, nil
+	}
+
+	if file.FileKey == "" {
+		return nil, nil
+	}
+
+	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate file URL: %w", err)
+	}
+
+	return &presignedURL, nil
+}
+
+func (s TrustCenterService) GenerateDarkLogoURL(
+	ctx context.Context,
+	compliancePageID gid.GID,
+	expiresIn time.Duration,
+) (*string, error) {
+	file := &coredata.File{}
+	compliancePage := &coredata.TrustCenter{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := compliancePage.LoadByID(ctx, conn, s.svc.scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
+			}
+
+			if compliancePage.DarkLogoFileID == nil {
+				return nil
+			}
+
+			if err := file.LoadByID(ctx, conn, s.svc.scope, *compliancePage.DarkLogoFileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if compliancePage.DarkLogoFileID == nil {
+		return nil, nil
+	}
+
+	if file.FileKey == "" {
+		return nil, nil
+	}
+
+	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate file URL: %w", err)
+	}
+
+	return &presignedURL, nil
+}
+
+func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, compliancePageID gid.GID) (emails.PresenterConfig, error) {
+	var (
+		compliancePage    = &coredata.TrustCenter{}
+		organization      = &coredata.Organization{}
+		customDomain      *coredata.CustomDomain
+		logoFile          = &coredata.File{}
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.baseURL)
+	)
+
+	scope := coredata.NewScopeFromObjectID(compliancePageID)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load compliance page: %w", err)
+			}
+
+			if compliancePage.LogoFileID != nil {
+				if err := logoFile.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
+					return fmt.Errorf("cannot load logoFile: %w", err)
+				}
+			}
+
+			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			customDomain = &coredata.CustomDomain{}
+			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, s.svc.encryptionKey, organization.ID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load custom domain: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return emailPresenterCfg, err
+	}
+
+	parsedBaseURL, err := url.Parse(s.svc.baseURL)
+	if err != nil {
+		return emailPresenterCfg, fmt.Errorf("cannot parse base URL: %w", err)
+	}
+
+	baseURL := url.URL{
+		Scheme: parsedBaseURL.Scheme,
+		Host:   parsedBaseURL.Host,
+		Path:   "/trust/" + compliancePage.Slug,
+	}
+
+	if customDomain != nil && customDomain.SSLStatus == coredata.CustomDomainSSLStatusActive {
+		baseURL.Host = customDomain.Domain
+		baseURL.Scheme = "https"
+		baseURL.Path = ""
+	}
+
+	emailPresenterCfg.BaseURL = baseURL.String()
+
+	if compliancePage.LogoFileID != nil {
+		if logoFile.FileKey == "" {
+			return emailPresenterCfg, nil
+		}
+
+		presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, logoFile, 7*24*time.Hour)
+		if err != nil {
+			return emailPresenterCfg, fmt.Errorf("cannot generate file URL: %w", err)
+		}
+
+		emailPresenterCfg.SenderCompanyLogoURL = presignedURL
+
+		emailPresenterCfg.SenderCompanyName = organization.Name
+
+		if organization.WebsiteURL != nil {
+			emailPresenterCfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
+		}
+
+		if organization.HeadquarterAddress != nil {
+			emailPresenterCfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
+		}
+	}
+
+	return emailPresenterCfg, nil
 }

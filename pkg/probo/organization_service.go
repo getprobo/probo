@@ -27,30 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/validator"
-)
-
-var (
-	proboVendor = struct {
-		Name                 string
-		Description          string
-		LegalName            string
-		HeadquarterAddress   string
-		WebsiteURL           string
-		PrivacyPolicyURL     string
-		TermsOfServiceURL    string
-		SubprocessorsListURL string
-	}{
-		Name:                 "Probo",
-		Description:          "Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no vendor lock-in.",
-		LegalName:            "Probo Inc.",
-		HeadquarterAddress:   "490 Post St, Suite 640,San Francisco, CA 94102, United States",
-		WebsiteURL:           "https://www.getprobo.com/",
-		PrivacyPolicyURL:     "https://www.getprobo.com/privacy",
-		TermsOfServiceURL:    "https://www.getprobo.com/terms",
-		SubprocessorsListURL: "https://www.getprobo.com/subprocessors",
-	}
 )
 
 type (
@@ -110,71 +87,6 @@ func (uocr *UpdateOrganizationContextRequest) Validate() error {
 	v.Check(uocr.Summary, "summary", validator.SafeText(30_000))
 
 	return v.Error()
-}
-
-func (s OrganizationService) Create(
-	ctx context.Context,
-	req CreateOrganizationRequest,
-) (*coredata.Organization, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	now := time.Now()
-	organizationID := gid.New(s.svc.scope.GetTenantID(), coredata.OrganizationEntityType)
-
-	organization := &coredata.Organization{
-		ID:        organizationID,
-		TenantID:  organizationID.TenantID(),
-		Name:      req.Name,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			if err := organization.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert organization: %w", err)
-			}
-
-			trustCenter := &coredata.TrustCenter{
-				ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterEntityType),
-				OrganizationID: organization.ID,
-				TenantID:       organization.TenantID,
-				Active:         false,
-				Slug:           slug.Make(organization.Name),
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
-			if err := trustCenter.Insert(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert trust center: %w", err)
-			}
-
-			organizationContext := &coredata.OrganizationContext{
-				OrganizationID: organization.ID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
-			if err := organizationContext.Insert(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert organization context: %w", err)
-			}
-
-			if err := s.createProboVendor(ctx, tx, organization, now); err != nil {
-				return fmt.Errorf("cannot create Probo vendor: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return organization, nil
 }
 
 func (s OrganizationService) Get(
@@ -561,30 +473,4 @@ func (s OrganizationService) DeleteHorizontalLogo(
 	}
 
 	return organization, nil
-}
-
-func (s OrganizationService) createProboVendor(ctx context.Context, tx pg.Conn, organization *coredata.Organization, now time.Time) error {
-	proboData := &coredata.Vendor{
-		ID:                   gid.New(s.svc.scope.GetTenantID(), coredata.VendorEntityType),
-		TenantID:             organization.TenantID,
-		OrganizationID:       organization.ID,
-		Name:                 proboVendor.Name,
-		Description:          &proboVendor.Description,
-		Category:             coredata.VendorCategorySecurity,
-		HeadquarterAddress:   &proboVendor.HeadquarterAddress,
-		LegalName:            &proboVendor.LegalName,
-		WebsiteURL:           &proboVendor.WebsiteURL,
-		PrivacyPolicyURL:     &proboVendor.PrivacyPolicyURL,
-		TermsOfServiceURL:    &proboVendor.TermsOfServiceURL,
-		SubprocessorsListURL: &proboVendor.SubprocessorsListURL,
-		ShowOnTrustCenter:    false,
-		CreatedAt:            now,
-		UpdatedAt:            now,
-	}
-
-	if err := proboData.Insert(ctx, tx, s.svc.scope); err != nil {
-		return fmt.Errorf("cannot insert trust center: %w", err)
-	}
-
-	return nil
 }

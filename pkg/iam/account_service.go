@@ -22,7 +22,6 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
@@ -86,16 +85,6 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 		return fmt.Errorf("cannot generate confirmation token: %w", err)
 	}
 
-	base, err := baseurl.Parse(s.baseURL)
-	if err != nil {
-		return fmt.Errorf("cannot parse base URL: %w", err)
-	}
-
-	confirmationUrl := base.
-		WithPath("/auth/verify-email").
-		WithQuery("token", confirmationToken).
-		MustString()
-
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -127,11 +116,9 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
-			subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
-				s.baseURL,
-				identity.FullName,
-				confirmationUrl,
-			)
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+
+			subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail("/auth/verify-email", confirmationToken)
 			if err != nil {
 				return fmt.Errorf("cannot render confirmation email: %w", err)
 			}
