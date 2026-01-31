@@ -12,25 +12,17 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package types
+// Package provider defines the interface for identity providers that can be
+// used as a source of truth for SCIM synchronization.
+package provider
 
 import (
-	"go.probo.inc/probo/pkg/coredata"
+	"context"
+
+	"go.probo.inc/probo/pkg/scimbridge/scim"
 )
 
-func NewSCIMConfiguration(scimConfiguration *coredata.SCIMConfiguration) *SCIMConfiguration {
-	var bridge *SCIMBridge
-	if scimConfiguration.BridgeID != nil {
-		bridge = &SCIMBridge{
-			ID: *scimConfiguration.BridgeID,
-		}
-	}
-
-	return &SCIMConfiguration{
-		ID:           scimConfiguration.ID,
-		Organization: &Organization{ID: scimConfiguration.OrganizationID},
-		Bridge:       bridge,
-		CreatedAt:    scimConfiguration.CreatedAt,
-		UpdatedAt:    scimConfiguration.UpdatedAt,
-	}
+type Provider interface {
+	Name() string
+	ListUsers(ctx context.Context) ([]scim.User, error)
 }

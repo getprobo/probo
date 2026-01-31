@@ -14,23 +14,25 @@
 
 package types
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
-)
+import "go.probo.inc/probo/pkg/coredata"
 
-func NewSCIMConfiguration(scimConfiguration *coredata.SCIMConfiguration) *SCIMConfiguration {
-	var bridge *SCIMBridge
-	if scimConfiguration.BridgeID != nil {
-		bridge = &SCIMBridge{
-			ID: *scimConfiguration.BridgeID,
+func NewSCIMBridge(bridge *coredata.SCIMBridge) *SCIMBridge {
+	var connector *Connector
+	if bridge.ConnectorID != nil {
+		connector = &Connector{
+			ID: *bridge.ConnectorID,
 		}
 	}
 
-	return &SCIMConfiguration{
-		ID:           scimConfiguration.ID,
-		Organization: &Organization{ID: scimConfiguration.OrganizationID},
-		Bridge:       bridge,
-		CreatedAt:    scimConfiguration.CreatedAt,
-		UpdatedAt:    scimConfiguration.UpdatedAt,
+	return &SCIMBridge{
+		ID:    bridge.ID,
+		State: bridge.State,
+		ScimConfiguration: &SCIMConfiguration{
+			ID: bridge.ScimConfigurationID,
+		},
+		Connector: connector,
+		Type:      bridge.Type,
+		CreatedAt: bridge.CreatedAt,
+		UpdatedAt: bridge.UpdatedAt,
 	}
 }

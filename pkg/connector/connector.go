@@ -28,7 +28,7 @@ type (
 
 	Connector interface {
 		Initiate(ctx context.Context, provider string, organizationID gid.GID, r *http.Request) (string, error)
-		Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, error)
+		Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, string, error) // returns: connection, organizationID, continueURL, error
 	}
 
 	Connection interface {

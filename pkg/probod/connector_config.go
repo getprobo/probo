@@ -32,12 +32,13 @@ type (
 	}
 
 	connectorConfigOAuth2 struct {
-		ClientID     string   `json:"client-id"`
-		ClientSecret string   `json:"client-secret"`
-		RedirectURI  string   `json:"redirect-uri"`
-		AuthURL      string   `json:"auth-url"`
-		TokenURL     string   `json:"token-url"`
-		Scopes       []string `json:"scopes"`
+		ClientID        string            `json:"client-id"`
+		ClientSecret    string            `json:"client-secret"`
+		RedirectURI     string            `json:"redirect-uri"`
+		AuthURL         string            `json:"auth-url"`
+		TokenURL        string            `json:"token-url"`
+		Scopes          []string          `json:"scopes"`
+		ExtraAuthParams map[string]string `json:"extra-auth-params,omitempty"`
 	}
 )
 
@@ -85,12 +86,13 @@ func (c *connectorConfig) UnmarshalJSON(data []byte) error {
 		}
 
 		oauth2Connector := connector.OAuth2Connector{
-			ClientID:     config.ClientID,
-			ClientSecret: config.ClientSecret,
-			RedirectURI:  config.RedirectURI,
-			AuthURL:      config.AuthURL,
-			TokenURL:     config.TokenURL,
-			Scopes:       config.Scopes,
+			ClientID:        config.ClientID,
+			ClientSecret:    config.ClientSecret,
+			RedirectURI:     config.RedirectURI,
+			AuthURL:         config.AuthURL,
+			TokenURL:        config.TokenURL,
+			Scopes:          config.Scopes,
+			ExtraAuthParams: config.ExtraAuthParams,
 		}
 
 		c.Config = &oauth2Connector

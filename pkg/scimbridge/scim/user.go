@@ -12,25 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package types
+package scim
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
-)
+type User struct {
+	ID          string `json:"id,omitempty"`
+	UserName    string `json:"userName"`
+	DisplayName string `json:"displayName"`
+	GivenName   string `json:"-"`
+	FamilyName  string `json:"-"`
+	Active      bool   `json:"active"`
+}
 
-func NewSCIMConfiguration(scimConfiguration *coredata.SCIMConfiguration) *SCIMConfiguration {
-	var bridge *SCIMBridge
-	if scimConfiguration.BridgeID != nil {
-		bridge = &SCIMBridge{
-			ID: *scimConfiguration.BridgeID,
-		}
-	}
-
-	return &SCIMConfiguration{
-		ID:           scimConfiguration.ID,
-		Organization: &Organization{ID: scimConfiguration.OrganizationID},
-		Bridge:       bridge,
-		CreatedAt:    scimConfiguration.CreatedAt,
-		UpdatedAt:    scimConfiguration.UpdatedAt,
-	}
+type ListResponse struct {
+	Schemas      []string `json:"schemas"`
+	TotalResults int      `json:"totalResults"`
+	StartIndex   int      `json:"startIndex"`
+	ItemsPerPage int      `json:"itemsPerPage"`
+	Resources    []User   `json:"Resources"`
 }

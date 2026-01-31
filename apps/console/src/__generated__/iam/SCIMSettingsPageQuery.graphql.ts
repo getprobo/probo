@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5507ea6452d9065f29d74bf685ea3777>>
+ * @generated SignedSource<<8e3a5e8f3e57e3097149f28537f50e31>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,12 +16,15 @@ export type SCIMSettingsPageQuery$variables = {
 export type SCIMSettingsPageQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
-    readonly canCreateSCIMConfiguration: boolean;
-    readonly canDeleteSCIMConfiguration: boolean;
     readonly id: string;
     readonly scimConfiguration: {
-      readonly " $fragmentSpreads": FragmentRefs<"SCIMConfigurationFragment" | "SCIMEventListFragment">;
+      readonly bridge: {
+        readonly id: string;
+      } | null | undefined;
+      readonly id: string;
+      readonly " $fragmentSpreads": FragmentRefs<"SCIMEventListFragment">;
     } | null | undefined;
+    readonly " $fragmentSpreads": FragmentRefs<"ConnectorListFragment" | "SCIMConfigurationFragment">;
   } | {
     // This will never be '%other', but we need some
     // value in case none of the concrete values match.
@@ -63,32 +66,13 @@ v3 = {
   "storageKey": null
 },
 v4 = {
-  "alias": "canCreateSCIMConfiguration",
-  "args": [
-    {
-      "kind": "Literal",
-      "name": "action",
-      "value": "iam:scim-configuration:create"
-    }
-  ],
+  "alias": null,
+  "args": null,
   "kind": "ScalarField",
-  "name": "permission",
-  "storageKey": "permission(action:\"iam:scim-configuration:create\")"
+  "name": "createdAt",
+  "storageKey": null
 },
-v5 = {
-  "alias": "canDeleteSCIMConfiguration",
-  "args": [
-    {
-      "kind": "Literal",
-      "name": "action",
-      "value": "iam:scim-configuration:delete"
-    }
-  ],
-  "kind": "ScalarField",
-  "name": "permission",
-  "storageKey": "permission(action:\"iam:scim-configuration:delete\")"
-},
-v6 = [
+v5 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -117,8 +101,6 @@ return {
               "kind": "InlineFragment",
               "selections": [
                 (v3/*: any*/),
-                (v4/*: any*/),
-                (v5/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -127,10 +109,18 @@ return {
                   "name": "scimConfiguration",
                   "plural": false,
                   "selections": [
+                    (v3/*: any*/),
                     {
+                      "alias": null,
                       "args": null,
-                      "kind": "FragmentSpread",
-                      "name": "SCIMConfigurationFragment"
+                      "concreteType": "SCIMBridge",
+                      "kind": "LinkedField",
+                      "name": "bridge",
+                      "plural": false,
+                      "selections": [
+                        (v3/*: any*/)
+                      ],
+                      "storageKey": null
                     },
                     {
                       "args": null,
@@ -139,6 +129,16 @@ return {
                     }
                   ],
                   "storageKey": null
+                },
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "SCIMConfigurationFragment"
+                },
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "ConnectorListFragment"
                 }
               ],
               "type": "Organization",
@@ -172,8 +172,6 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
-              (v4/*: any*/),
-              (v5/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -186,13 +184,38 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "endpointUrl",
+                    "concreteType": "SCIMBridge",
+                    "kind": "LinkedField",
+                    "name": "bridge",
+                    "plural": false,
+                    "selections": [
+                      (v3/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Connector",
+                        "kind": "LinkedField",
+                        "name": "connector",
+                        "plural": false,
+                        "selections": [
+                          (v3/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "provider",
+                            "storageKey": null
+                          },
+                          (v4/*: any*/)
+                        ],
+                        "storageKey": null
+                      }
+                    ],
                     "storageKey": null
                   },
                   {
                     "alias": null,
-                    "args": (v6/*: any*/),
+                    "args": (v5/*: any*/),
                     "concreteType": "SCIMEventConnection",
                     "kind": "LinkedField",
                     "name": "events",
@@ -250,13 +273,7 @@ return {
                                 "name": "ipAddress",
                                 "storageKey": null
                               },
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "createdAt",
-                                "storageKey": null
-                              },
+                              (v4/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -346,15 +363,48 @@ return {
                   },
                   {
                     "alias": null,
-                    "args": (v6/*: any*/),
+                    "args": (v5/*: any*/),
                     "filters": null,
                     "handle": "connection",
                     "key": "SCIMEventListFragment_events",
                     "kind": "LinkedHandle",
                     "name": "events"
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "endpointUrl",
+                    "storageKey": null
                   }
                 ],
                 "storageKey": null
+              },
+              {
+                "alias": "canCreateSCIMConfiguration",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "iam:scim-configuration:create"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"iam:scim-configuration:create\")"
+              },
+              {
+                "alias": "canDeleteSCIMConfiguration",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "iam:scim-configuration:delete"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"iam:scim-configuration:delete\")"
               }
             ],
             "type": "Organization",
@@ -366,16 +416,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "89bcad16c50ccf4ef4afd0345b02fe4a",
+    "cacheID": "eabd000a44bc720b07342557eedac872",
     "id": null,
     "metadata": {},
     "name": "SCIMSettingsPageQuery",
     "operationKind": "query",
-    "text": "query SCIMSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateSCIMConfiguration: permission(action: \"iam:scim-configuration:create\")\n      canDeleteSCIMConfiguration: permission(action: \"iam:scim-configuration:delete\")\n      scimConfiguration {\n        ...SCIMConfigurationFragment\n        ...SCIMEventListFragment\n        id\n      }\n    }\n    id\n  }\n}\n\nfragment SCIMConfigurationFragment on SCIMConfiguration {\n  id\n  endpointUrl\n}\n\nfragment SCIMEventListFragment on SCIMConfiguration {\n  events(first: 20) {\n    edges {\n      node {\n        id\n        ...SCIMEventListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SCIMEventListItemFragment on SCIMEvent {\n  id\n  method\n  path\n  statusCode\n  errorMessage\n  ipAddress\n  createdAt\n  membership {\n    id\n    profile {\n      fullName\n      id\n    }\n  }\n}\n"
+    "text": "query SCIMSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      scimConfiguration {\n        id\n        bridge {\n          id\n        }\n        ...SCIMEventListFragment\n      }\n      ...SCIMConfigurationFragment\n      ...ConnectorListFragment\n    }\n    id\n  }\n}\n\nfragment ConnectorListFragment on Organization {\n  scimConfiguration {\n    ...GoogleWorkspaceConnectorFragment\n    id\n  }\n}\n\nfragment GoogleWorkspaceConnectorFragment on SCIMConfiguration {\n  id\n  bridge {\n    connector {\n      id\n      provider\n      createdAt\n    }\n    id\n  }\n}\n\nfragment SCIMConfigurationFragment on Organization {\n  canCreateSCIMConfiguration: permission(action: \"iam:scim-configuration:create\")\n  canDeleteSCIMConfiguration: permission(action: \"iam:scim-configuration:delete\")\n  scimConfiguration {\n    id\n    endpointUrl\n    bridge {\n      id\n    }\n  }\n}\n\nfragment SCIMEventListFragment on SCIMConfiguration {\n  events(first: 20) {\n    edges {\n      node {\n        id\n        ...SCIMEventListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SCIMEventListItemFragment on SCIMEvent {\n  id\n  method\n  path\n  statusCode\n  errorMessage\n  ipAddress\n  createdAt\n  membership {\n    id\n    profile {\n      fullName\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "051cceb15c9eaf30694189c259b6d715";
+(node as any).hash = "9db69676a14d2a6c4062fee58ce728e1";
 
 export default node;

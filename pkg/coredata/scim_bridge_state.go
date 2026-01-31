@@ -19,46 +19,42 @@ import (
 	"fmt"
 )
 
-type ConnectorProvider string
+type SCIMBridgeState string
 
 const (
-	ConnectorProviderSlack           ConnectorProvider = "SLACK"
-	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
+	SCIMBridgeStatePending SCIMBridgeState = "PENDING"
+	SCIMBridgeStateActive  SCIMBridgeState = "ACTIVE"
+	SCIMBridgeStateFailed  SCIMBridgeState = "FAILED"
 )
 
-func ConnectorProviders() []ConnectorProvider {
-	return []ConnectorProvider{
-		ConnectorProviderSlack,
-		ConnectorProviderGoogleWorkspace,
-	}
+func (s SCIMBridgeState) String() string {
+	return string(s)
 }
 
-func (cp ConnectorProvider) String() string {
-	return string(cp)
-}
-
-func (cp *ConnectorProvider) Scan(value any) error {
-	var s string
+func (s *SCIMBridgeState) Scan(value any) error {
+	var str string
 	switch v := value.(type) {
 	case string:
-		s = v
+		str = v
 	case []byte:
-		s = string(v)
+		str = string(v)
 	default:
-		return fmt.Errorf("unsupported type for ConnectorProvider: %T", value)
+		return fmt.Errorf("unsupported type for SCIMBridgeState: %T", value)
 	}
 
-	switch s {
-	case "SLACK":
-		*cp = ConnectorProviderSlack
-	case "GOOGLE_WORKSPACE":
-		*cp = ConnectorProviderGoogleWorkspace
+	switch str {
+	case "PENDING":
+		*s = SCIMBridgeStatePending
+	case "ACTIVE":
+		*s = SCIMBridgeStateActive
+	case "FAILED":
+		*s = SCIMBridgeStateFailed
 	default:
-		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
+		return fmt.Errorf("invalid SCIMBridgeState value: %q", str)
 	}
 	return nil
 }
 
-func (cp ConnectorProvider) Value() (driver.Value, error) {
-	return cp.String(), nil
+func (s SCIMBridgeState) Value() (driver.Value, error) {
+	return s.String(), nil
 }

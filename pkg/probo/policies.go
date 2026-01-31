@@ -76,7 +76,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionSnapshotGet, ActionSnapshotList,
 		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
-		ActionSlackConnectionList,
+		ActionSlackConnectionList, ActionConnectorList,
 		ActionRightsRequestGet, ActionRightsRequestList,
 		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,

@@ -12,25 +12,43 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package types
+package coredata
 
 import (
-	"go.probo.inc/probo/pkg/coredata"
+	"database/sql/driver"
+	"fmt"
 )
 
-func NewSCIMConfiguration(scimConfiguration *coredata.SCIMConfiguration) *SCIMConfiguration {
-	var bridge *SCIMBridge
-	if scimConfiguration.BridgeID != nil {
-		bridge = &SCIMBridge{
-			ID: *scimConfiguration.BridgeID,
-		}
+type SCIMBridgeType string
+
+const (
+	SCIMBridgeTypeGoogleWorkspace SCIMBridgeType = "GOOGLE_WORKSPACE"
+)
+
+func (t SCIMBridgeType) String() string {
+	return string(t)
+}
+
+func (t *SCIMBridgeType) Scan(value any) error {
+	var str string
+	switch v := value.(type) {
+	case string:
+		str = v
+	case []byte:
+		str = string(v)
+	default:
+		return fmt.Errorf("unsupported type for SCIMBridgeType: %T", value)
 	}
 
-	return &SCIMConfiguration{
-		ID:           scimConfiguration.ID,
-		Organization: &Organization{ID: scimConfiguration.OrganizationID},
-		Bridge:       bridge,
-		CreatedAt:    scimConfiguration.CreatedAt,
-		UpdatedAt:    scimConfiguration.UpdatedAt,
+	switch str {
+	case "GOOGLE_WORKSPACE":
+		*t = SCIMBridgeTypeGoogleWorkspace
+	default:
+		return fmt.Errorf("invalid SCIMBridgeType value: %q", str)
 	}
+	return nil
+}
+
+func (t SCIMBridgeType) Value() (driver.Value, error) {
+	return t.String(), nil
 }

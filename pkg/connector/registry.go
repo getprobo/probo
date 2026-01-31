@@ -65,10 +65,10 @@ func (cr *ConnectorRegistry) Initiate(ctx context.Context, provider string, orga
 	return connector.Initiate(ctx, provider, organizationID, r)
 }
 
-func (cr *ConnectorRegistry) Complete(ctx context.Context, provider string, r *http.Request) (Connection, *gid.GID, error) {
+func (cr *ConnectorRegistry) Complete(ctx context.Context, provider string, r *http.Request) (Connection, *gid.GID, string, error) {
 	connector, err := cr.Get(provider)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot complete connector: %w", err)
+		return nil, nil, "", fmt.Errorf("cannot complete connector: %w", err)
 	}
 
 	return connector.Complete(ctx, r)
