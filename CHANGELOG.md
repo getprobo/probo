@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.116.15] - 2026-01-31
+
+### Fixed
+
+- Console slack connection placeholder display fix
+
 ## [0.116.14] - 2026-01-30
 
 ### Fixed
