@@ -1739,47 +1739,6 @@ func (s OrganizationService) GetSCIMBridgeByOrganizationID(ctx context.Context, 
 	return bridge, nil
 }
 
-func (s OrganizationService) LinkConnectorToSCIMBridge(
-	ctx context.Context,
-	bridgeID gid.GID,
-	connectorID gid.GID,
-) (*coredata.SCIMBridge, error) {
-	var (
-		scope  = coredata.NewScopeFromObjectID(bridgeID)
-		bridge = &coredata.SCIMBridge{}
-	)
-
-	err := s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			err := bridge.LoadByID(ctx, tx, scope, bridgeID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewSCIMBridgeNotFoundError(bridgeID)
-				}
-				return fmt.Errorf("cannot load SCIM bridge: %w", err)
-			}
-
-			// Update the bridge with the connector ID
-			bridge.ConnectorID = &connectorID
-			bridge.State = coredata.SCIMBridgeStateActive
-			bridge.UpdatedAt = time.Now()
-
-			if err := bridge.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update SCIM bridge: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return bridge, nil
-}
-
 func (s OrganizationService) CreateSCIMBridge(
 	ctx context.Context,
 	organizationID gid.GID,
