@@ -22,9 +22,11 @@ import (
 type SCIMBridgeState string
 
 const (
-	SCIMBridgeStatePending SCIMBridgeState = "PENDING"
-	SCIMBridgeStateActive  SCIMBridgeState = "ACTIVE"
-	SCIMBridgeStateFailed  SCIMBridgeState = "FAILED"
+	SCIMBridgeStatePending  SCIMBridgeState = "PENDING"
+	SCIMBridgeStateActive   SCIMBridgeState = "ACTIVE"
+	SCIMBridgeStateSyncing  SCIMBridgeState = "SYNCING"
+	SCIMBridgeStateFailed   SCIMBridgeState = "FAILED"
+	SCIMBridgeStateDisabled SCIMBridgeState = "DISABLED"
 )
 
 func (s SCIMBridgeState) String() string {
@@ -47,8 +49,12 @@ func (s *SCIMBridgeState) Scan(value any) error {
 		*s = SCIMBridgeStatePending
 	case "ACTIVE":
 		*s = SCIMBridgeStateActive
+	case "SYNCING":
+		*s = SCIMBridgeStateSyncing
 	case "FAILED":
 		*s = SCIMBridgeStateFailed
+	case "DISABLED":
+		*s = SCIMBridgeStateDisabled
 	default:
 		return fmt.Errorf("invalid SCIMBridgeState value: %q", str)
 	}

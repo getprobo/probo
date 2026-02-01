@@ -80,6 +80,7 @@ type (
 		OpenAI        openaiConfig         `json:"openai"`
 		ChromeDPAddr  string               `json:"chrome-dp-addr"`
 		CustomDomains customDomainsConfig  `json:"custom-domains"`
+		SCIMBridge    scimBridgeConfig     `json:"scim-bridge"`
 	}
 
 	trustCenterConfig struct {
@@ -162,6 +163,10 @@ func New() *Implm {
 					Email:     "admin@getprobo.com",
 					KeyType:   "EC256",
 				},
+			},
+			SCIMBridge: scimBridgeConfig{
+				SyncInterval: 60, // 15 minutes
+				PollInterval: 30, // 30 seconds
 			},
 		},
 	}
@@ -300,14 +305,18 @@ func (impl *Implm) Run(
 			SessionDuration:                time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,
 			Bucket:                         impl.cfg.AWS.Bucket,
 			TokenSecret:                    impl.cfg.Auth.Cookie.Secret,
-			BaseURL:                        impl.cfg.BaseURL.String(),
+			BaseURL:                        impl.cfg.BaseURL,
 			EncryptionKey:                  impl.cfg.EncryptionKey,
 			Certificate:                    samlCert,
 			PrivateKey:                     samlKey,
 			Logger:                         l.Named("iam"),
 			TracerProvider:                 tp,
+			Registerer:                     r,
+			ConnectorRegistry:              defaultConnectorRegistry,
 			DomainVerificationInterval:     impl.cfg.Auth.SAML.DomainVerificationInterval(),
 			DomainVerificationResolverAddr: impl.cfg.Auth.SAML.DomainVerificationResolverAddr,
+			SCIMBridgeSyncInterval:         time.Duration(impl.cfg.SCIMBridge.SyncInterval) * time.Second,
+			SCIMBridgePollInterval:         time.Duration(impl.cfg.SCIMBridge.PollInterval) * time.Second,
 		},
 	)
 	if err != nil {

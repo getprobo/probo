@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
@@ -58,14 +61,18 @@ type (
 		SessionDuration                time.Duration
 		Bucket                         string
 		TokenSecret                    string
-		BaseURL                        string
+		BaseURL                        *baseurl.BaseURL
 		EncryptionKey                  cipher.EncryptionKey
 		Certificate                    *x509.Certificate
 		PrivateKey                     *rsa.PrivateKey
 		Logger                         *log.Logger
 		TracerProvider                 trace.TracerProvider
+		Registerer                     prometheus.Registerer
+		ConnectorRegistry              *connector.ConnectorRegistry
 		DomainVerificationInterval     time.Duration
 		DomainVerificationResolverAddr string
+		SCIMBridgeSyncInterval         time.Duration
+		SCIMBridgePollInterval         time.Duration
 	}
 )
 
@@ -84,7 +91,7 @@ func NewService(
 		return nil, fmt.Errorf("token secret is required")
 	}
 
-	if cfg.BaseURL == "" {
+	if cfg.BaseURL == nil {
 		return nil, fmt.Errorf("base URL is required")
 	}
 
@@ -96,7 +103,7 @@ func NewService(
 		pg:                         pgClient,
 		fm:                         fm,
 		hp:                         hp,
-		baseURL:                    cfg.BaseURL,
+		baseURL:                    cfg.BaseURL.String(),
 		tokenSecret:                cfg.TokenSecret,
 		disableSignup:              cfg.DisableSignup,
 		invitationTokenValidity:    cfg.InvitationTokenValidity,
@@ -124,7 +131,17 @@ func NewService(
 	}
 	svc.SAMLService = samlService
 
-	svc.SCIMService = scim.NewService(svc.pg, cfg.Logger.Named("scim"))
+	svc.SCIMService = scim.NewService(svc.pg, cfg.Logger.Named("scim"), scim.ServiceConfig{
+		TracerProvider:    cfg.TracerProvider,
+		Registerer:        cfg.Registerer,
+		EncryptionKey:     cfg.EncryptionKey,
+		ConnectorRegistry: cfg.ConnectorRegistry,
+		BridgeRunner: scim.BridgeRunnerConfig{
+			Interval:     cfg.SCIMBridgeSyncInterval,
+			PollInterval: cfg.SCIMBridgePollInterval,
+			BaseURL:      cfg.BaseURL,
+		},
+	})
 
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
 		pgClient,
@@ -142,6 +159,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 	g.Go(func() error { return s.SAMLService.Run(ctx) })
 	g.Go(func() error { return s.samlDomainVerifier.Run(ctx) })
+	g.Go(func() error { return s.SCIMService.Run(ctx) })
 
 	return g.Wait()
 }

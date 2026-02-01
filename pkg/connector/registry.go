@@ -73,3 +73,26 @@ func (cr *ConnectorRegistry) Complete(ctx context.Context, provider string, r *h
 
 	return connector.Complete(ctx, r)
 }
+
+// GetOAuth2RefreshConfig returns the OAuth2 refresh configuration for a provider.
+// Returns nil if the provider is not found or is not an OAuth2 connector.
+func (cr *ConnectorRegistry) GetOAuth2RefreshConfig(provider string) *OAuth2RefreshConfig {
+	cr.RLock()
+	defer cr.RUnlock()
+
+	connector, ok := cr.connectors[provider]
+	if !ok {
+		return nil
+	}
+
+	oauth2Connector, ok := connector.(*OAuth2Connector)
+	if !ok {
+		return nil
+	}
+
+	return &OAuth2RefreshConfig{
+		ClientID:     oauth2Connector.ClientID,
+		ClientSecret: oauth2Connector.ClientSecret,
+		TokenURL:     oauth2Connector.TokenURL,
+	}
+}

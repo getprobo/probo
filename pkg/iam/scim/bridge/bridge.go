@@ -14,46 +14,43 @@
 
 // Package scimbridge provides a bridge for synchronizing users from identity
 // providers to SCIM-compliant systems.
-package scimbridge
+package bridge
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	"go.gearno.de/kit/log"
-
-	"go.probo.inc/probo/pkg/scimbridge/provider"
-	"go.probo.inc/probo/pkg/scimbridge/scim"
+	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
+	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
 )
 
 type (
-	Syncer struct {
+	Bridge struct {
 		provider    provider.Provider
-		scimClient  *scim.Client
+		scimClient  *scimclient.Client
 		forceUpdate bool
 		dryRun      bool
-		logger      *log.Logger
 	}
 
-	Option func(*Syncer)
+	Option func(*Bridge)
 )
 
 func WithDryRun(dryRun bool) Option {
-	return func(s *Syncer) {
+	return func(s *Bridge) {
 		s.dryRun = dryRun
 	}
 }
 
 func WithForceUpdate(forceUpdate bool) Option {
-	return func(s *Syncer) {
+	return func(s *Bridge) {
 		s.forceUpdate = forceUpdate
 	}
 }
 
-func NewSyncer(logger *log.Logger, provider provider.Provider, scimClient *scim.Client, opts ...Option) *Syncer {
-	s := &Syncer{
-		logger:     logger,
+func NewBridge(provider provider.Provider, scimClient *scimclient.Client, opts ...Option) *Bridge {
+	s := &Bridge{
 		provider:   provider,
 		scimClient: scimClient,
 	}
@@ -65,37 +62,26 @@ func NewSyncer(logger *log.Logger, provider provider.Provider, scimClient *scim.
 	return s
 }
 
-func (s *Syncer) Run(ctx context.Context) (created, updated, deactivated, skipped, errors int, err error) {
-	s.logger.InfoCtx(ctx, "starting SCIM bridge sync",
-		log.String("provider", s.provider.Name()),
-		log.Bool("dry_run", s.dryRun),
-		log.Bool("force_update", s.forceUpdate),
-	)
-
+func (s *Bridge) Run(ctx context.Context) (created, updated, deactivated, skipped int, err error) {
 	providerUsers, err := s.provider.ListUsers(ctx)
 	if err != nil {
-		return 0, 0, 0, 0, 0, fmt.Errorf("cannot list provider users: %w", err)
+		return 0, 0, 0, 0, fmt.Errorf("cannot list provider users: %w", err)
 	}
-	s.logger.InfoCtx(ctx, "fetched users from provider",
-		log.String("provider", s.provider.Name()),
-		log.Int("count", len(providerUsers)),
-	)
 
 	scimUsers, err := s.scimClient.ListUsers(ctx)
 	if err != nil {
-		return 0, 0, 0, 0, 0, fmt.Errorf("cannot list scim users: %w", err)
+		return 0, 0, 0, 0, fmt.Errorf("cannot list scim users: %w", err)
 	}
-	s.logger.InfoCtx(ctx, "fetched existing SCIM users",
-		log.Int("count", len(scimUsers)),
-	)
 
-	scimUsersByEmail := make(map[string]*scim.User)
+	scimUsersByEmail := make(map[string]*scimclient.User)
 	for i := range scimUsers {
 		email := strings.ToLower(scimUsers[i].UserName)
 		scimUsersByEmail[email] = &scimUsers[i]
 	}
 
 	providerEmails := make(map[string]bool)
+
+	var errs []error
 
 	for _, pu := range providerUsers {
 		email := strings.ToLower(pu.UserName)
@@ -105,11 +91,7 @@ func (s *Syncer) Run(ctx context.Context) (created, updated, deactivated, skippe
 		if !exists {
 			if !s.dryRun {
 				if err := s.scimClient.CreateUser(ctx, &pu); err != nil {
-					s.logger.ErrorCtx(ctx, "cannot create user",
-						log.String("email", pu.UserName),
-						log.Error(err),
-					)
-					errors++
+					errs = append(errs, fmt.Errorf("cannot create user %q: %w", pu.UserName, err))
 					continue
 				}
 			}
@@ -127,11 +109,7 @@ func (s *Syncer) Run(ctx context.Context) (created, updated, deactivated, skippe
 			if needsUpdate {
 				if !s.dryRun {
 					if err := s.scimClient.UpdateUser(ctx, existingSCIM.ID, &pu); err != nil {
-						s.logger.ErrorCtx(ctx, "cannot update user",
-							log.String("email", pu.UserName),
-							log.Error(err),
-						)
-						errors++
+						errs = append(errs, fmt.Errorf("cannot update user %q: %w", pu.UserName, err))
 						continue
 					}
 				}
@@ -153,24 +131,12 @@ func (s *Syncer) Run(ctx context.Context) (created, updated, deactivated, skippe
 
 		if !s.dryRun {
 			if err := s.scimClient.DeactivateUser(ctx, scimUser.ID); err != nil {
-				s.logger.ErrorCtx(ctx, "cannot deactivate user",
-					log.String("email", email),
-					log.Error(err),
-				)
-				errors++
+				errs = append(errs, fmt.Errorf("cannot deactivate user %q: %w", email, err))
 				continue
 			}
 		}
 		deactivated++
 	}
 
-	s.logger.InfoCtx(ctx, "sync completed",
-		log.Int("created", created),
-		log.Int("updated", updated),
-		log.Int("deactivated", deactivated),
-		log.Int("skipped", skipped),
-		log.Int("errors", errors),
-	)
-
-	return created, updated, deactivated, skipped, errors, nil
+	return created, updated, deactivated, skipped, errors.Join(errs...)
 }

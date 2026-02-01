@@ -27,10 +27,14 @@ import (
 	"github.com/elimity-com/scim"
 	scimerrors "github.com/elimity-com/scim/errors"
 	"github.com/elimity-com/scim/optional"
+	"github.com/prometheus/client_golang/prometheus"
 	scimfilter "github.com/scim2/filter-parser/v2"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
@@ -38,19 +42,45 @@ import (
 
 type (
 	Service struct {
-		pg     *pg.Client
-		logger *log.Logger
+		pg           *pg.Client
+		logger       *log.Logger
+		bridgeRunner *BridgeRunner
+	}
+
+	ServiceConfig struct {
+		TracerProvider    trace.TracerProvider
+		Registerer        prometheus.Registerer
+		EncryptionKey     cipher.EncryptionKey
+		ConnectorRegistry *connector.ConnectorRegistry
+		BridgeRunner      BridgeRunnerConfig
 	}
 )
 
 func NewService(
 	pg *pg.Client,
 	logger *log.Logger,
+	cfg ServiceConfig,
 ) *Service {
+	bridgeRunner := NewBridgeRunner(
+		pg,
+		logger.Named("bridge-runner"),
+		cfg.TracerProvider,
+		cfg.Registerer,
+		cfg.EncryptionKey,
+		cfg.ConnectorRegistry,
+		cfg.BridgeRunner,
+	)
+
 	return &Service{
-		pg:     pg,
-		logger: logger,
+		pg:           pg,
+		logger:       logger,
+		bridgeRunner: bridgeRunner,
 	}
+}
+
+// Run starts the SCIM service background processes.
+func (s *Service) Run(ctx context.Context) error {
+	return s.bridgeRunner.Run(ctx)
 }
 
 func HashToken(token string) []byte {

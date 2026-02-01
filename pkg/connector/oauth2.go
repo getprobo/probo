@@ -15,7 +15,6 @@
 package connector
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -25,8 +24,10 @@ import (
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/statelesstoken"
+	"golang.org/x/oauth2"
 )
 
 // NOTE: I use client_secret as a salt for the state token, it's an antipattern to
@@ -59,6 +60,13 @@ type (
 		ExpiresAt    time.Time `json:"expires_at"`
 		TokenType    string    `json:"token_type"`
 		Scope        string    `json:"scope,omitempty"`
+	}
+
+	// OAuth2RefreshConfig contains the OAuth2 credentials needed for token refresh.
+	OAuth2RefreshConfig struct {
+		ClientID     string
+		ClientSecret string
+		TokenURL     string
 	}
 )
 
@@ -212,12 +220,28 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		return nil, nil, fmt.Errorf("cannot read token response body: %w", err)
 	}
 
-	var oauth2Conn OAuth2Connection
-	var buf bytes.Buffer
-	buf.Write(body)
-	err = json.NewDecoder(&buf).Decode(&oauth2Conn)
-	if err != nil {
+	// Parse the raw token response (OAuth2 uses expires_in, not expires_at)
+	var rawToken struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    int64  `json:"expires_in"`
+		TokenType    string `json:"token_type"`
+		Scope        string `json:"scope"`
+	}
+	if err := json.Unmarshal(body, &rawToken); err != nil {
 		return nil, nil, fmt.Errorf("cannot decode token response: %w", err)
+	}
+
+	oauth2Conn := OAuth2Connection{
+		AccessToken:  rawToken.AccessToken,
+		RefreshToken: rawToken.RefreshToken,
+		TokenType:    rawToken.TokenType,
+		Scope:        rawToken.Scope,
+	}
+
+	// Convert expires_in (seconds) to expires_at (absolute time)
+	if rawToken.ExpiresIn > 0 {
+		oauth2Conn.ExpiresAt = time.Now().Add(time.Duration(rawToken.ExpiresIn) * time.Second)
 	}
 
 	if provider == SlackProvider {
@@ -232,15 +256,86 @@ func (c *OAuth2Connection) Type() ProtocolType {
 	return ProtocolOAuth2
 }
 
-func (c OAuth2Connection) Client(ctx context.Context) (*http.Client, error) {
+func (c *OAuth2Connection) Client(ctx context.Context) (*http.Client, error) {
+	return c.ClientWithOptions(ctx)
+}
+
+// ClientWithOptions returns an HTTP client with the given options.
+// Use this to add logging and tracing to the HTTP client.
+func (c *OAuth2Connection) ClientWithOptions(ctx context.Context, opts ...httpclient.Option) (*http.Client, error) {
+	transport := &oauth2Transport{
+		token:      c.AccessToken,
+		tokenType:  c.TokenType,
+		underlying: httpclient.DefaultPooledTransport(opts...),
+	}
 	client := &http.Client{
-		Transport: &oauth2Transport{
-			token:      c.AccessToken,
-			tokenType:  c.TokenType,
-			underlying: http.DefaultTransport,
-		},
+		Transport: transport,
 	}
 	return client, nil
+}
+
+// RefreshableClient returns an HTTP client that automatically refreshes the token when expired.
+// It also updates the connection's token fields if a refresh occurs.
+func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2RefreshConfig, opts ...httpclient.Option) (*http.Client, error) {
+	if c.RefreshToken == "" {
+		return c.ClientWithOptions(ctx, opts...)
+	}
+
+	config := &oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Endpoint: oauth2.Endpoint{
+			TokenURL: cfg.TokenURL,
+		},
+	}
+
+	// Determine the token expiry
+	// If ExpiresAt is zero or in the past, set expiry to force a refresh
+	expiry := c.ExpiresAt
+	if expiry.IsZero() || expiry.Before(time.Now()) {
+		// Set expiry to the past to force oauth2 library to refresh
+		expiry = time.Now().Add(-time.Hour)
+	}
+
+	token := &oauth2.Token{
+		AccessToken:  c.AccessToken,
+		RefreshToken: c.RefreshToken,
+		Expiry:       expiry,
+		TokenType:    c.TokenType,
+	}
+
+	// Create an HTTP client with telemetry for the oauth2 library to use
+	// This ensures token refresh requests are also logged
+	baseClient := &http.Client{
+		Transport: httpclient.DefaultPooledTransport(opts...),
+	}
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, baseClient)
+
+	// Create a token source that will automatically refresh when expired
+	tokenSource := config.TokenSource(ctx, token)
+
+	// Get the current (possibly refreshed) token
+	newToken, err := tokenSource.Token()
+	if err != nil {
+		return nil, fmt.Errorf("cannot refresh token: %w", err)
+	}
+
+	// Update the connection with the potentially refreshed token
+	c.AccessToken = newToken.AccessToken
+	c.ExpiresAt = newToken.Expiry
+	c.TokenType = newToken.TokenType
+	if newToken.RefreshToken != "" {
+		c.RefreshToken = newToken.RefreshToken
+	}
+
+	// Return a client with telemetry that uses the refreshed token
+	return &http.Client{
+		Transport: &oauth2Transport{
+			token:      newToken.AccessToken,
+			tokenType:  newToken.TokenType,
+			underlying: httpclient.DefaultPooledTransport(opts...),
+		},
+	}, nil
 }
 
 func (c OAuth2Connection) MarshalJSON() ([]byte, error) {

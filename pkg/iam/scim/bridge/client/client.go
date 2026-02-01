@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package scim
+package scimclient
 
 import (
 	"bytes"
@@ -23,26 +23,45 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"go.gearno.de/kit/httpclient"
 )
 
-type Client struct {
-	endpoint   string
-	token      string
-	httpClient *http.Client
-}
+type (
+	Client struct {
+		endpoint   string
+		token      string
+		httpClient *http.Client
+	}
 
-func NewClient(endpoint, token string) *Client {
+	User struct {
+		ID          string `json:"id,omitempty"`
+		UserName    string `json:"userName"`
+		DisplayName string `json:"displayName"`
+		GivenName   string `json:"-"`
+		FamilyName  string `json:"-"`
+		Active      bool   `json:"active"`
+	}
+
+	Users []User
+
+	ListResponse struct {
+		Schemas      []string `json:"schemas"`
+		TotalResults int      `json:"totalResults"`
+		StartIndex   int      `json:"startIndex"`
+		ItemsPerPage int      `json:"itemsPerPage"`
+		Resources    Users    `json:"Resources"`
+	}
+)
+
+func NewClient(httpClient *http.Client, endpoint, token string) *Client {
 	return &Client{
 		endpoint:   strings.TrimSuffix(endpoint, "/"),
 		token:      token,
-		httpClient: httpclient.DefaultPooledClient(),
+		httpClient: httpClient,
 	}
 }
 
-func (c *Client) ListUsers(ctx context.Context) ([]User, error) {
-	var allUsers []User
+func (c *Client) ListUsers(ctx context.Context) (Users, error) {
+	var allUsers Users
 	startIndex := 1
 	count := 100
 
@@ -64,7 +83,7 @@ func (c *Client) ListUsers(ctx context.Context) ([]User, error) {
 	return allUsers, nil
 }
 
-func (c *Client) listUsersPage(ctx context.Context, startIndex, count int) ([]User, int, error) {
+func (c *Client) listUsersPage(ctx context.Context, startIndex, count int) (Users, int, error) {
 	reqURL := fmt.Sprintf("%s/Users?startIndex=%d&count=%d", c.endpoint, startIndex, count)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)

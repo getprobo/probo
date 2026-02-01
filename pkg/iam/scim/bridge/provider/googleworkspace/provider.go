@@ -13,31 +13,30 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // Package googleworkspace provides a Google Workspace identity provider
-// for SCIM synchronization.
+// for SCIM synchronization using OAuth2.
 package googleworkspace
 
 import (
 	"context"
 	"fmt"
+	"net/http"
 
-	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
 
-	"go.probo.inc/probo/pkg/scimbridge/scim"
+	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
+	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
 )
 
-type (
-	Provider struct {
-		serviceAccountKey []byte
-		adminEmail        string
-	}
-)
+var _ provider.Provider = (*Provider)(nil)
 
-func New(serviceAccountKey []byte, adminEmail string) *Provider {
+type Provider struct {
+	httpClient *http.Client
+}
+
+func New(httpClient *http.Client) *Provider {
 	return &Provider{
-		serviceAccountKey: serviceAccountKey,
-		adminEmail:        adminEmail,
+		httpClient: httpClient,
 	}
 }
 
@@ -45,24 +44,17 @@ func (p *Provider) Name() string {
 	return "google-workspace"
 }
 
-func (p *Provider) ListUsers(ctx context.Context) ([]scim.User, error) {
-	config, err := google.JWTConfigFromJSON(p.serviceAccountKey, admin.AdminDirectoryUserReadonlyScope)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create JWT config: %w", err)
-	}
-
-	config.Subject = p.adminEmail
-
-	adminService, err := admin.NewService(ctx, option.WithHTTPClient(config.Client(ctx)))
+func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
+	adminService, err := admin.NewService(ctx, option.WithHTTPClient(p.httpClient))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create admin service: %w", err)
 	}
 
-	var allUsers []scim.User
+	var allUsers scimclient.Users
 	pageToken := ""
 
 	for {
-		call := adminService.Users.List().Customer("my_customer").MaxResults(500)
+		call := adminService.Users.List().Customer("my_customer").MaxResults(500).Context(ctx)
 		if pageToken != "" {
 			call = call.PageToken(pageToken)
 		}
@@ -75,7 +67,7 @@ func (p *Provider) ListUsers(ctx context.Context) ([]scim.User, error) {
 		for _, u := range resp.Users {
 			allUsers = append(
 				allUsers,
-				scim.User{
+				scimclient.User{
 					UserName:    u.PrimaryEmail,
 					DisplayName: u.Name.FullName,
 					GivenName:   u.Name.GivenName,

@@ -507,6 +507,60 @@ ORDER BY
 	return nil
 }
 
+func (c *Connector) Update(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	encryptionKey cipher.EncryptionKey,
+) error {
+	q := `
+UPDATE connectors
+SET
+    settings = @settings,
+    encrypted_connection = @encrypted_connection,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	if c.Connection == nil {
+		return fmt.Errorf("connection is nil")
+	}
+
+	c.extractSlackSettings()
+
+	connection, err := json.Marshal(c.Connection)
+	if err != nil {
+		return fmt.Errorf("cannot marshal connection: %w", err)
+	}
+
+	encryptedConnection, err := cipher.Encrypt(connection, encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot encrypt connection: %w", err)
+	}
+
+	args := pgx.StrictNamedArgs{
+		"id":                   c.ID,
+		"settings":             c.Settings,
+		"encrypted_connection": encryptedConnection,
+		"updated_at":           c.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err = conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update connector: %w", err)
+	}
+
+	c.EncryptedConnection = encryptedConnection
+	c.populateSlackSettings()
+
+	return nil
+}
+
 func (c *Connectors) decryptConnections(encryptionKey cipher.EncryptionKey) error {
 	for _, cnnctr := range *c {
 		if len(cnnctr.EncryptedConnection) == 0 {

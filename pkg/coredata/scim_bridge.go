@@ -29,18 +29,26 @@ import (
 
 type (
 	SCIMBridge struct {
-		ID                  gid.GID         `db:"id"`
-		OrganizationID      gid.GID         `db:"organization_id"`
-		ScimConfigurationID gid.GID         `db:"scim_configuration_id"`
-		ConnectorID         *gid.GID        `db:"connector_id"`
-		Type                SCIMBridgeType  `db:"type"`
-		State               SCIMBridgeState `db:"state"`
-		CreatedAt           time.Time       `db:"created_at"`
-		UpdatedAt           time.Time       `db:"updated_at"`
+		ID                   gid.GID         `db:"id"`
+		OrganizationID       gid.GID         `db:"organization_id"`
+		ScimConfigurationID  gid.GID         `db:"scim_configuration_id"`
+		ConnectorID          *gid.GID        `db:"connector_id"`
+		Type                 SCIMBridgeType  `db:"type"`
+		State                SCIMBridgeState `db:"state"`
+		LastSyncedAt         *time.Time      `db:"last_synced_at"`
+		NextSyncAt           *time.Time      `db:"next_sync_at"`
+		SyncError            *string         `db:"sync_error"`
+		ConsecutiveFailures  int             `db:"consecutive_failures"`
+		TotalSyncCount       int             `db:"total_sync_count"`
+		TotalFailureCount    int             `db:"total_failure_count"`
+		CreatedAt            time.Time       `db:"created_at"`
+		UpdatedAt            time.Time       `db:"updated_at"`
 	}
 
 	SCIMBridges []*SCIMBridge
 )
+
+var ErrNoSCIMBridgeAvailable = errors.New("no SCIM bridge available for sync")
 
 func (s *SCIMBridge) CursorKey(orderBy SCIMBridgeOrderField) page.CursorKey {
 	switch orderBy {
@@ -79,6 +87,12 @@ SELECT
     connector_id,
     type,
     state,
+    last_synced_at,
+    next_sync_at,
+    sync_error,
+    consecutive_failures,
+    total_sync_count,
+    total_failure_count,
     created_at,
     updated_at
 FROM
@@ -127,6 +141,12 @@ SELECT
     connector_id,
     type,
     state,
+    last_synced_at,
+    next_sync_at,
+    sync_error,
+    consecutive_failures,
+    total_sync_count,
+    total_failure_count,
     created_at,
     updated_at
 FROM
@@ -175,6 +195,12 @@ SELECT
     connector_id,
     type,
     state,
+    last_synced_at,
+    next_sync_at,
+    sync_error,
+    consecutive_failures,
+    total_sync_count,
+    total_failure_count,
     created_at,
     updated_at
 FROM
@@ -223,6 +249,12 @@ INSERT INTO iam_scim_bridges (
     connector_id,
     type,
     state,
+    last_synced_at,
+    next_sync_at,
+    sync_error,
+    consecutive_failures,
+    total_sync_count,
+    total_failure_count,
     created_at,
     updated_at
 ) VALUES (
@@ -233,6 +265,12 @@ INSERT INTO iam_scim_bridges (
     @connector_id,
     @type,
     @state,
+    @last_synced_at,
+    @next_sync_at,
+    @sync_error,
+    @consecutive_failures,
+    @total_sync_count,
+    @total_failure_count,
     @created_at,
     @updated_at
 )
@@ -246,6 +284,12 @@ INSERT INTO iam_scim_bridges (
 		"connector_id":          s.ConnectorID,
 		"type":                  s.Type,
 		"state":                 s.State,
+		"last_synced_at":        s.LastSyncedAt,
+		"next_sync_at":          s.NextSyncAt,
+		"sync_error":            s.SyncError,
+		"consecutive_failures":  s.ConsecutiveFailures,
+		"total_sync_count":      s.TotalSyncCount,
+		"total_failure_count":   s.TotalFailureCount,
 		"created_at":            s.CreatedAt,
 		"updated_at":            s.UpdatedAt,
 	}
@@ -268,6 +312,12 @@ UPDATE iam_scim_bridges
 SET
     connector_id = @connector_id,
     state = @state,
+    last_synced_at = @last_synced_at,
+    next_sync_at = @next_sync_at,
+    sync_error = @sync_error,
+    consecutive_failures = @consecutive_failures,
+    total_sync_count = @total_sync_count,
+    total_failure_count = @total_failure_count,
     updated_at = @updated_at
 WHERE
     %s
@@ -277,10 +327,16 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":           s.ID,
-		"connector_id": s.ConnectorID,
-		"state":        s.State,
-		"updated_at":   s.UpdatedAt,
+		"id":                   s.ID,
+		"connector_id":         s.ConnectorID,
+		"state":                s.State,
+		"last_synced_at":       s.LastSyncedAt,
+		"next_sync_at":         s.NextSyncAt,
+		"sync_error":           s.SyncError,
+		"consecutive_failures": s.ConsecutiveFailures,
+		"total_sync_count":     s.TotalSyncCount,
+		"total_failure_count":  s.TotalFailureCount,
+		"updated_at":           s.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -290,6 +346,63 @@ WHERE
 		return fmt.Errorf("cannot update scim_bridge: %w", err)
 	}
 
+	return nil
+}
+
+func (s *SCIMBridge) LoadNextForSyncSkipLocked(
+	ctx context.Context,
+	conn pg.Conn,
+	staleSyncThreshold time.Duration,
+) error {
+	staleCutoff := time.Now().Add(-staleSyncThreshold)
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    scim_configuration_id,
+    connector_id,
+    type,
+    state,
+    last_synced_at,
+    next_sync_at,
+    sync_error,
+    consecutive_failures,
+    total_sync_count,
+    total_failure_count,
+    created_at,
+    updated_at
+FROM
+    iam_scim_bridges
+WHERE
+    (state IN (@state_active, @state_failed) AND (next_sync_at IS NULL OR next_sync_at <= NOW()))
+    OR (state = @state_syncing AND updated_at < @stale_cutoff)
+ORDER BY
+    next_sync_at ASC NULLS FIRST
+LIMIT 1
+FOR UPDATE SKIP LOCKED
+`
+	args := pgx.StrictNamedArgs{
+		"state_active":  SCIMBridgeStateActive,
+		"state_failed":  SCIMBridgeStateFailed,
+		"state_syncing": SCIMBridgeStateSyncing,
+		"stale_cutoff":  staleCutoff,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query iam_scim_bridges: %w", err)
+	}
+
+	bridge, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SCIMBridge])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoSCIMBridgeAvailable
+		}
+		return fmt.Errorf("cannot collect scim_bridge: %w", err)
+	}
+
+	*s = bridge
 	return nil
 }
 

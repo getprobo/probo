@@ -12,21 +12,17 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package scim
+// Package provider defines the interface for identity providers that can be
+// used as a source of truth for SCIM synchronization.
+package provider
 
-type User struct {
-	ID          string `json:"id,omitempty"`
-	UserName    string `json:"userName"`
-	DisplayName string `json:"displayName"`
-	GivenName   string `json:"-"`
-	FamilyName  string `json:"-"`
-	Active      bool   `json:"active"`
-}
+import (
+	"context"
 
-type ListResponse struct {
-	Schemas      []string `json:"schemas"`
-	TotalResults int      `json:"totalResults"`
-	StartIndex   int      `json:"startIndex"`
-	ItemsPerPage int      `json:"itemsPerPage"`
-	Resources    []User   `json:"Resources"`
+	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
+)
+
+type Provider interface {
+	Name() string
+	ListUsers(ctx context.Context) (scimclient.Users, error)
 }

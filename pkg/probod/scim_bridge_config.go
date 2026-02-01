@@ -12,17 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Package provider defines the interface for identity providers that can be
-// used as a source of truth for SCIM synchronization.
-package provider
+package probod
 
-import (
-	"context"
+type scimBridgeConfig struct {
+	// SyncInterval is the time between sync attempts for each bridge (in seconds).
+	// Default: 900 (15 minutes)
+	SyncInterval int `json:"sync-interval"`
 
-	"go.probo.inc/probo/pkg/scimbridge/scim"
-)
-
-type Provider interface {
-	Name() string
-	ListUsers(ctx context.Context) ([]scim.User, error)
+	// PollInterval is the time between polling for bridges to sync (in seconds).
+	// Default: 30
+	PollInterval int `json:"poll-interval"`
 }
