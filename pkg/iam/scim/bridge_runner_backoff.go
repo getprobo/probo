@@ -34,7 +34,21 @@ func (r *BridgeRunner) calculateBackoff(consecutiveFailures int) time.Duration {
 		return r.cfg.Interval
 	}
 
-	backoff := r.cfg.Interval * time.Duration(1<<consecutiveFailures)
+	// Cap the shift exponent to prevent integer overflow from the shift itself.
+	// Bit 63 is the sign bit, so shifting by 63+ produces negative or zero values.
+	const maxShift = 62
+	shiftAmount := consecutiveFailures
+	if shiftAmount > maxShift {
+		shiftAmount = maxShift
+	}
+
+	backoff := r.cfg.Interval * time.Duration(1<<shiftAmount)
+
+	// Detect multiplication overflow: if result is non-positive or less than the
+	// base interval, overflow occurred. Return MaxBackoff in this case.
+	if backoff <= 0 || backoff < r.cfg.Interval {
+		return r.cfg.MaxBackoff
+	}
 
 	if backoff > r.cfg.MaxBackoff {
 		return r.cfg.MaxBackoff

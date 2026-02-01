@@ -240,7 +240,7 @@ func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		respBody, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("SCIM API error: status %d, body: %s", resp.StatusCode, string(respBody))
 	}

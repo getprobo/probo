@@ -232,11 +232,11 @@ export function SCIMConfiguration(props: {
     });
   };
 
-  if (!scimConfiguration) {
-    if (hasIdentityProvider) {
-      return null;
-    }
+  if (hasIdentityProvider) {
+    return null;
+  }
 
+  if (!scimConfiguration) {
     return (
       <Card padded>
         <div className="flex items-center justify-between">

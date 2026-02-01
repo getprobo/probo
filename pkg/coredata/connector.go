@@ -550,9 +550,13 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err = conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update connector: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	c.EncryptedConnection = encryptedConnection
