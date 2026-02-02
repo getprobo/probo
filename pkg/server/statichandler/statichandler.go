@@ -172,14 +172,8 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("ETag", etag)
-
-	if matchETag := r.Header.Get("If-None-Match"); matchETag != "" {
-		if matchETag == etag {
-			w.WriteHeader(http.StatusNotModified)
-			return
-		}
-	}
+	quotedETag := `"` + etag + `"`
+	w.Header().Set("ETag", quotedETag)
 
 	if strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".css") ||
 		strings.HasSuffix(path, ".png") || strings.HasSuffix(path, ".jpg") ||
