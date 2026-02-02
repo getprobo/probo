@@ -116,7 +116,7 @@ type URLBuilder struct {
 }
 
 // WithPath returns a URLBuilder with the specified path.
-// The path will be properly joined with the base URL's path.
+// The path will be properly joined with the base URL.
 func (b *BaseURL) WithPath(path string) *URLBuilder {
 	if b == nil {
 		return &URLBuilder{err: fmt.Errorf("base URL is nil")}
@@ -137,7 +137,7 @@ func (b *BaseURL) WithPath(path string) *URLBuilder {
 	}
 }
 
-// WithPath returns a URLBuilder with the specified path.
+// AppendPath returns a URLBuilder with the specified path.
 // The path will be properly joined with the base URL's path.
 func (b *BaseURL) AppendPath(path string) *URLBuilder {
 	if b == nil {
