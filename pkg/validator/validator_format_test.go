@@ -80,7 +80,7 @@ func TestHTTPUrl(t *testing.T) {
 		str := "https://example.com"
 		err := HTTPUrl()(&str)
 		if err == nil {
-			t.Error("expected validation error for https")
+			t.Fatal("expected validation error for https")
 		}
 		if err.Message != "URL must use http scheme" {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -149,7 +149,7 @@ func TestHTTPSUrl(t *testing.T) {
 		str := "http://example.com"
 		err := HTTPSUrl()(&str)
 		if err == nil {
-			t.Error("expected validation error for http")
+			t.Fatal("expected validation error for http")
 		}
 		if err.Message != "URL must use https scheme" {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -282,7 +282,7 @@ func TestDomain(t *testing.T) {
 		str := strings.Repeat("a", 254)
 		err := Domain()(&str)
 		if err == nil {
-			t.Error("expected validation error for domain too long")
+			t.Fatal("expected validation error for domain too long")
 		}
 		if err.Message != "domain name too long (max 253 characters)" {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -335,7 +335,7 @@ func TestGID(t *testing.T) {
 	t.Run("invalid - wrong entity type", func(t *testing.T) {
 		err := GID(200)(validGID)
 		if err == nil {
-			t.Error("expected validation error for wrong entity type")
+			t.Fatal("expected validation error for wrong entity type")
 		}
 		if err.Code != ErrorCodeInvalidGID {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidGID, err.Code)
@@ -384,7 +384,7 @@ func TestGID(t *testing.T) {
 	t.Run("non-GID type", func(t *testing.T) {
 		err := GID()(123)
 		if err == nil {
-			t.Error("expected validation error for non-GID type")
+			t.Fatal("expected validation error for non-GID type")
 		}
 		if err.Message != "value must be a GID" {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -394,7 +394,7 @@ func TestGID(t *testing.T) {
 	t.Run("string type not supported", func(t *testing.T) {
 		err := GID()("some-string")
 		if err == nil {
-			t.Error("expected validation error for string type")
+			t.Fatal("expected validation error for string type")
 		}
 		if err.Message != "value must be a GID" {
 			t.Errorf("unexpected error message: %s", err.Message)

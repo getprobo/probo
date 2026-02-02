@@ -106,7 +106,7 @@ func (s FrameworkService) RequestExport(
 	frameworkID gid.GID,
 	recipientEmail mail.Addr,
 	recipientName string,
-) (error, *coredata.ExportJob) {
+) (*coredata.ExportJob, error) {
 	var exportJobID gid.GID
 	exportJob := &coredata.ExportJob{}
 
@@ -146,10 +146,10 @@ func (s FrameworkService) RequestExport(
 	})
 
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
-	return nil, exportJob
+	return exportJob, nil
 }
 
 func (s FrameworkService) Export(
@@ -158,7 +158,7 @@ func (s FrameworkService) Export(
 	file io.Writer,
 ) error {
 	archive := zip.NewWriter(file)
-	defer archive.Close()
+	defer func() { _ = archive.Close() }()
 
 	return s.svc.pg.WithTx(
 		ctx,
@@ -254,17 +254,17 @@ func (s FrameworkService) Export(
 							return fmt.Errorf("cannot load evidence file: %w", err)
 						}
 
-						object, err := s.svc.s3.GetObject(
-							ctx,
-							&s3.GetObjectInput{
-								Bucket: aws.String(s.svc.bucket),
-								Key:    aws.String(evidence_file.FileKey),
-							},
-						)
-						if err != nil {
-							return fmt.Errorf("cannot download evidence: %w", err)
-						}
-						defer object.Body.Close()
+					object, err := s.svc.s3.GetObject(
+						ctx,
+						&s3.GetObjectInput{
+							Bucket: aws.String(s.svc.bucket),
+							Key:    aws.String(evidence_file.FileKey),
+						},
+					)
+					if err != nil {
+						return fmt.Errorf("cannot download evidence: %w", err)
+					}
+					defer func() { _ = object.Body.Close() }()
 
 						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, measure.Name, evidence_file.FileName))
 						if err != nil {
@@ -877,8 +877,8 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 			if err != nil {
 				return fmt.Errorf("cannot create temp file: %w", err)
 			}
-			defer tempFile.Close()
-			defer os.Remove(tempFile.Name())
+			defer func() { _ = tempFile.Close() }()
+			defer func() { _ = os.Remove(tempFile.Name()) }()
 
 			err = s.Export(ctx, frameworkID, tempFile)
 			if err != nil {

@@ -26,9 +26,11 @@ import (
 type GIDScalar = gid.GID
 
 func MarshalGIDScalar(id gid.GID) graphql.Marshaler {
-	return graphql.WriterFunc(func(w io.Writer) {
-		w.Write([]byte(strconv.Quote(id.String())))
-	})
+	return graphql.WriterFunc(
+		func(w io.Writer) {
+			_, _ = w.Write([]byte(strconv.Quote(id.String())))
+		},
+	)
 }
 
 func UnmarshalGIDScalar(v interface{}) (gid.GID, error) {

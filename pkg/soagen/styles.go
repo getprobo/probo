@@ -76,7 +76,7 @@ func applyDataValidation(f *excelize.File, sheetName, col string, row int, valid
 
 	dv := excelize.NewDataValidation(true)
 	dv.Sqref = fmt.Sprintf("%s%d:%s1000", col, row, col) // Apply to reasonable range
-	dv.SetDropList(validation)
+	_ = dv.SetDropList(validation)
 	dv.SetError(excelize.DataValidationErrorStyleStop, "Invalid Input", "Please select from the dropdown list.")
 	if err := f.AddDataValidation(sheetName, dv); err != nil {
 		return fmt.Errorf("cannot add data validation: %w", err)

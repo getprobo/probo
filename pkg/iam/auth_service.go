@@ -499,7 +499,7 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 			// Perform a password comparison even when the identity does not exist to mitigate timing attacks
 			// and prevent revealing account existence.
 			if identity.ID == gid.Nil {
-				s.hp.ComparePasswordAndHash([]byte(password+"qwertyuiop1234567890"), []byte("qwertyuiop1234567890"))
+				_, _ = s.hp.ComparePasswordAndHash([]byte(password+"qwertyuiop1234567890"), []byte("qwertyuiop1234567890"))
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 

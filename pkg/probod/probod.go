@@ -573,7 +573,7 @@ func (impl *Implm) runApiServer(
 
 		l.Info("using proxy protocol", log.Any("trusted-proxies", impl.cfg.Api.ProxyProtocol.TrustedProxies))
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	serverErrCh := make(chan error, 1)
 	go func() {
@@ -725,7 +725,7 @@ func (impl *Implm) runTrustCenterServer(
 			if err != nil {
 				return fmt.Errorf("cannot listen on %q: %w", httpServer.Addr, err)
 			}
-			defer listener.Close()
+			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
 				policy := proxyproto.TrustProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
@@ -807,7 +807,7 @@ func (impl *Implm) runTrustCenterServer(
 			if err != nil {
 				return fmt.Errorf("cannot listen on %q: %w", httpsServer.Addr, err)
 			}
-			defer listener.Close()
+			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
 				policy := proxyproto.TrustProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)

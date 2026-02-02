@@ -111,44 +111,6 @@ func extractAttributeValue(assertion *saml.Assertion, attributeName string) (str
 	return "", fmt.Errorf("attribute %q not found in assertion", attributeName)
 }
 
-func extractEmailFromAssertion(assertion *saml.Assertion) (string, error) {
-	commonEmailAttributes := []string{
-		"email",
-		"Email",
-		"emailAddress",
-		"mail",
-		"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
-		"http://schemas.xmlsoap.org/claims/EmailAddress",
-	}
-
-	for _, attrName := range commonEmailAttributes {
-		email, err := extractAttributeValue(assertion, attrName)
-		if err == nil && email != "" {
-			return email, nil
-		}
-	}
-
-	if assertion.Subject != nil && assertion.Subject.NameID != nil && assertion.Subject.NameID.Value != "" {
-		return assertion.Subject.NameID.Value, nil
-	}
-
-	return "", fmt.Errorf("could not extract email from assertion")
-}
-
-func extractEmailDomain(email string) (string, error) {
-	parts := strings.Split(email, "@")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("invalid email address: %s", email)
-	}
-
-	domain := strings.ToLower(strings.TrimSpace(parts[1]))
-	if domain == "" {
-		return "", fmt.Errorf("empty domain in email address: %s", email)
-	}
-
-	return domain, nil
-}
-
 func mapSAMLRoleToSystemRole(samlRole string) *coredata.MembershipRole {
 	if samlRole != "" && isValidRole(samlRole) {
 		role := coredata.MembershipRole(samlRole)

@@ -35,8 +35,8 @@ type Datum struct {
 	UpdatedAt          time.Time                   `json:"updatedAt"`
 }
 
-func (Datum) IsNode()             {}
-func (this Datum) GetID() gid.GID { return this.ID }
+func (Datum) IsNode()          {}
+func (d Datum) GetID() gid.GID { return d.ID }
 
 type (
 	DatumOrderBy OrderBy[coredata.DatumOrderField]

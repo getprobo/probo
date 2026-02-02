@@ -23,7 +23,7 @@ import (
 
 func GenerateSOAExcel(data SOAData) ([]byte, error) {
 	f := excelize.NewFile()
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	sheetName := "State of Applicability"
 	_, err := f.NewSheet(sheetName)
@@ -155,8 +155,8 @@ func applySOAAutoFilter(f *excelize.File, sheetName string, filterColumns []stri
 func applySOAFinalFormatting(f *excelize.File, sheetName string, dataRowCount int) error {
 	if dataRowCount > 0 {
 		headerRowHeight := 30.0
-		f.SetRowHeight(sheetName, 6, headerRowHeight)
-		f.SetRowHeight(sheetName, 7, headerRowHeight)
+		_ = f.SetRowHeight(sheetName, 6, headerRowHeight)
+		_ = f.SetRowHeight(sheetName, 7, headerRowHeight)
 
 		return f.SetPanes(sheetName, &excelize.Panes{
 			Freeze:      true,
@@ -296,8 +296,8 @@ func writeSingleColumnField(f *excelize.File, sheetName string, row int, excelVa
 	col := colDef.Columns[0]
 	cellRef := fmt.Sprintf("%s%d", col, row)
 
-	f.SetCellValue(sheetName, cellRef, excelValue.Value)
-	f.SetCellStyle(sheetName, cellRef, cellRef, styleID)
+	_ = f.SetCellValue(sheetName, cellRef, excelValue.Value)
+	_ = f.SetCellStyle(sheetName, cellRef, cellRef, styleID)
 
 	if isFirstRow {
 		if err := applyDataValidation(f, sheetName, col, row, excelValue.Validation); err != nil {

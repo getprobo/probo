@@ -87,7 +87,7 @@ func (c *Client) CreateMessage(ctx context.Context, accessToken string, channelI
 	if err != nil {
 		return nil, fmt.Errorf("cannot send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -105,7 +105,7 @@ func (c *Client) CreateMessage(ctx context.Context, accessToken string, channelI
 	}
 
 	if !slackResponse.OK {
-		return nil, fmt.Errorf("Slack API error: %s (channel: %s, response: %s)", slackResponse.Error, channelID, string(responseBody))
+		return nil, fmt.Errorf("slack API error: %s (channel: %s, response: %s)", slackResponse.Error, channelID, string(responseBody))
 	}
 
 	return &slackResponse, nil
@@ -138,7 +138,7 @@ func (c *Client) UpdateInteractiveMessage(ctx context.Context, responseURL strin
 	if err != nil {
 		return fmt.Errorf("cannot send interactive message update request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -161,7 +161,7 @@ func (c *Client) UpdateInteractiveMessage(ctx context.Context, responseURL strin
 			return nil
 		}
 		if slackResponse.Error != "" {
-			return fmt.Errorf("Slack error: %s", slackResponse.Error)
+			return fmt.Errorf("slack error: %s", slackResponse.Error)
 		}
 	}
 
@@ -193,7 +193,7 @@ func (c *Client) UpdateMessage(ctx context.Context, accessToken string, channelI
 	if err != nil {
 		return fmt.Errorf("cannot send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -210,7 +210,7 @@ func (c *Client) UpdateMessage(ctx context.Context, accessToken string, channelI
 	}
 
 	if !slackResponse.OK {
-		return fmt.Errorf("Slack API error: %s", slackResponse.Error)
+		return fmt.Errorf("slack API error: %s", slackResponse.Error)
 	}
 
 	return nil
@@ -238,7 +238,7 @@ func (c *Client) JoinChannel(ctx context.Context, accessToken string, channelID 
 	if err != nil {
 		return fmt.Errorf("cannot send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -264,7 +264,7 @@ func (c *Client) JoinChannel(ctx context.Context, accessToken string, channelID 
 			return fmt.Errorf("cannot join private channel - bot must be invited manually")
 		}
 
-		return fmt.Errorf("Slack API error: %s", slackResponse.Error)
+		return fmt.Errorf("slack API error: %s", slackResponse.Error)
 	}
 
 	return nil

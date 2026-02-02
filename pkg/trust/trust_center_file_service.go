@@ -141,7 +141,7 @@ func (s *TrustCenterFileService) exportFileData(
 	if err != nil {
 		return nil, fmt.Errorf("cannot download file from S3: %w", err)
 	}
-	defer result.Body.Close()
+	defer func() { _ = result.Body.Close() }()
 
 	fileData, err := io.ReadAll(result.Body)
 	if err != nil {

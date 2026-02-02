@@ -75,7 +75,7 @@ var (
 )
 
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	httpserver.RenderJSON(
 		w,
@@ -87,7 +87,7 @@ func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	httpserver.RenderJSON(
 		w,

@@ -56,7 +56,7 @@ func TestNoHTML(t *testing.T) {
 		str := "<script>alert('xss')</script>"
 		err := NoHTML()(&str)
 		if err == nil {
-			t.Error("expected validation error for script tag")
+			t.Fatal("expected validation error for script tag")
 		}
 		if !strings.Contains(err.Message, "HTML tags") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -67,7 +67,7 @@ func TestNoHTML(t *testing.T) {
 		str := "Hello <b>World</b>"
 		err := NoHTML()(&str)
 		if err == nil {
-			t.Error("expected validation error for bold tag")
+			t.Fatal("expected validation error for bold tag")
 		}
 		if !strings.Contains(err.Message, "HTML tags") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -110,7 +110,7 @@ func TestNoHTML(t *testing.T) {
 		str := "5 < 10"
 		err := NoHTML()(&str)
 		if err == nil {
-			t.Error("expected validation error for angle bracket")
+			t.Fatal("expected validation error for angle bracket")
 		}
 		if !strings.Contains(err.Message, "angle brackets") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -169,7 +169,7 @@ func TestNoHTML(t *testing.T) {
 		num := 123
 		err := NoHTML()(&num)
 		if err == nil {
-			t.Error("expected validation error for non-string")
+			t.Fatal("expected validation error for non-string")
 		}
 		if !strings.Contains(err.Message, "must be a string") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -312,7 +312,7 @@ func TestPrintableText(t *testing.T) {
 		str := "test\u202Eexe.txt"
 		err := PrintableText()(&str)
 		if err == nil {
-			t.Error("expected validation error for RLO character")
+			t.Fatal("expected validation error for RLO character")
 		}
 		if !strings.Contains(err.Message, "bidirectional override") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -331,7 +331,7 @@ func TestPrintableText(t *testing.T) {
 		str := "test\u200Btext"
 		err := PrintableText()(&str)
 		if err == nil {
-			t.Error("expected validation error for zero-width space")
+			t.Fatal("expected validation error for zero-width space")
 		}
 		if !strings.Contains(err.Message, "zero-width") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -366,7 +366,7 @@ func TestPrintableText(t *testing.T) {
 		str := "test\x00text"
 		err := PrintableText()(&str)
 		if err == nil {
-			t.Error("expected validation error for null byte")
+			t.Fatal("expected validation error for null byte")
 		}
 		if !strings.Contains(err.Message, "control character") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -409,7 +409,7 @@ func TestPrintableText(t *testing.T) {
 		str := "test\u00ADtext"
 		err := PrintableText()(&str)
 		if err == nil {
-			t.Error("expected validation error for soft hyphen")
+			t.Fatal("expected validation error for soft hyphen")
 		}
 		if !strings.Contains(err.Message, "invisible formatting") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -428,7 +428,7 @@ func TestPrintableText(t *testing.T) {
 		str := "test\uE000text"
 		err := PrintableText()(&str)
 		if err == nil {
-			t.Error("expected validation error for private use area")
+			t.Fatal("expected validation error for private use area")
 		}
 		if !strings.Contains(err.Message, "private use") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -439,7 +439,7 @@ func TestPrintableText(t *testing.T) {
 		str := "test\uFFFDtext"
 		err := PrintableText()(&str)
 		if err == nil {
-			t.Error("expected validation error for replacement character")
+			t.Fatal("expected validation error for replacement character")
 		}
 		if !strings.Contains(err.Message, "replacement character") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -506,7 +506,7 @@ func TestPrintableText(t *testing.T) {
 		num := 123
 		err := PrintableText()(&num)
 		if err == nil {
-			t.Error("expected validation error for non-string")
+			t.Fatal("expected validation error for non-string")
 		}
 		if !strings.Contains(err.Message, "must be a string") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -527,7 +527,7 @@ func TestPrintableText(t *testing.T) {
 		str := "abc\x00def"
 		err := PrintableText()(&str)
 		if err == nil {
-			t.Error("expected validation error")
+			t.Fatal("expected validation error")
 		}
 		if !strings.Contains(err.Message, "position 3") {
 			t.Errorf("expected position 3 in error message, got: %s", err.Message)
@@ -540,7 +540,7 @@ func TestPrintableText(t *testing.T) {
 		str := "abc\x00"
 		err := PrintableText()(&str)
 		if err == nil {
-			t.Error("expected validation error")
+			t.Fatal("expected validation error")
 		}
 		// The null byte is at rune position 3 (after 'a', 'b', 'c')
 		if !strings.Contains(err.Message, "position 3") {
@@ -586,7 +586,7 @@ func TestSafeText(t *testing.T) {
 		str := ""
 		err := SafeText(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for empty string")
+			t.Fatal("expected validation error for empty string")
 		}
 		if !strings.Contains(err.Message, "empty") && !strings.Contains(err.Message, "required") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -597,7 +597,7 @@ func TestSafeText(t *testing.T) {
 		str := "This is a very long string that exceeds the maximum length"
 		err := SafeText(10)(&str)
 		if err == nil {
-			t.Error("expected validation error for exceeding max length")
+			t.Fatal("expected validation error for exceeding max length")
 		}
 		if !strings.Contains(err.Message, "at most") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -608,7 +608,7 @@ func TestSafeText(t *testing.T) {
 		str := "Hello <b>World</b>"
 		err := SafeText(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for HTML tags")
+			t.Fatal("expected validation error for HTML tags")
 		}
 		if !strings.Contains(err.Message, "HTML tags") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -627,7 +627,7 @@ func TestSafeText(t *testing.T) {
 		str := "5 < 10"
 		err := SafeText(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for angle brackets")
+			t.Fatal("expected validation error for angle brackets")
 		}
 		if !strings.Contains(err.Message, "angle brackets") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -638,7 +638,7 @@ func TestSafeText(t *testing.T) {
 		str := "test\x00text"
 		err := SafeText(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for null byte")
+			t.Fatal("expected validation error for null byte")
 		}
 		if !strings.Contains(err.Message, "control character") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -673,7 +673,7 @@ func TestSafeText(t *testing.T) {
 		str := "test\u200Btext"
 		err := SafeText(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for zero-width space")
+			t.Fatal("expected validation error for zero-width space")
 		}
 		if !strings.Contains(err.Message, "zero-width") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -684,7 +684,7 @@ func TestSafeText(t *testing.T) {
 		str := "test\u202Eexe.txt"
 		err := SafeText(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for RLO character")
+			t.Fatal("expected validation error for RLO character")
 		}
 		if !strings.Contains(err.Message, "bidirectional override") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -695,7 +695,7 @@ func TestSafeText(t *testing.T) {
 		str := "test\uE000text"
 		err := SafeText(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for private use area")
+			t.Fatal("expected validation error for private use area")
 		}
 		if !strings.Contains(err.Message, "private use") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -714,7 +714,7 @@ func TestSafeText(t *testing.T) {
 		num := 123
 		err := SafeText(100)(&num)
 		if err == nil {
-			t.Error("expected validation error for non-string")
+			t.Fatal("expected validation error for non-string")
 		}
 		if !strings.Contains(err.Message, "must be a string") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -783,7 +783,7 @@ func TestNoNewLine(t *testing.T) {
 		str := "Line 1\nLine 2"
 		err := NoNewLine()(&str)
 		if err == nil {
-			t.Error("expected validation error for newline")
+			t.Fatal("expected validation error for newline")
 		}
 		if !strings.Contains(err.Message, "newline") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -794,7 +794,7 @@ func TestNoNewLine(t *testing.T) {
 		str := "Line 1\rLine 2"
 		err := NoNewLine()(&str)
 		if err == nil {
-			t.Error("expected validation error for carriage return")
+			t.Fatal("expected validation error for carriage return")
 		}
 		if !strings.Contains(err.Message, "carriage return") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -847,7 +847,7 @@ func TestSafeTextNoNewLine(t *testing.T) {
 		str := "Line 1\nLine 2"
 		err := SafeTextNoNewLine(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for newline")
+			t.Fatal("expected validation error for newline")
 		}
 		if !strings.Contains(err.Message, "newline") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -858,7 +858,7 @@ func TestSafeTextNoNewLine(t *testing.T) {
 		str := "Line 1\rLine 2"
 		err := SafeTextNoNewLine(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for carriage return")
+			t.Fatal("expected validation error for carriage return")
 		}
 		if !strings.Contains(err.Message, "carriage return") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -869,7 +869,7 @@ func TestSafeTextNoNewLine(t *testing.T) {
 		str := ""
 		err := SafeTextNoNewLine(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for empty string")
+			t.Fatal("expected validation error for empty string")
 		}
 		if !strings.Contains(err.Message, "empty") && !strings.Contains(err.Message, "required") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -880,7 +880,7 @@ func TestSafeTextNoNewLine(t *testing.T) {
 		str := "This is a very long string that exceeds the maximum length"
 		err := SafeTextNoNewLine(10)(&str)
 		if err == nil {
-			t.Error("expected validation error for exceeding max length")
+			t.Fatal("expected validation error for exceeding max length")
 		}
 		if !strings.Contains(err.Message, "at most") {
 			t.Errorf("unexpected error message: %s", err.Message)
@@ -891,7 +891,7 @@ func TestSafeTextNoNewLine(t *testing.T) {
 		str := "Hello <b>World</b>"
 		err := SafeTextNoNewLine(100)(&str)
 		if err == nil {
-			t.Error("expected validation error for HTML tags")
+			t.Fatal("expected validation error for HTML tags")
 		}
 		if !strings.Contains(err.Message, "HTML tags") {
 			t.Errorf("unexpected error message: %s", err.Message)

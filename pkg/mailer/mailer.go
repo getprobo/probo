@@ -92,13 +92,13 @@ func (m *Mailer) sendMailWithTimeout(ctx context.Context, to []string, msg []byt
 	if err != nil {
 		return fmt.Errorf("connection error: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	c, err := smtp.NewClient(conn, host)
 	if err != nil {
 		return fmt.Errorf("SMTP client creation error: %w", err)
 	}
-	defer c.Quit()
+	defer func() { _ = c.Quit() }()
 
 	if m.cfg.TLSRequired {
 		if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {

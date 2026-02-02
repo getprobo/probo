@@ -1541,8 +1541,8 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 			if err != nil {
 				return fmt.Errorf("cannot create temp file: %w", err)
 			}
-			defer tempFile.Close()
-			defer os.Remove(tempFile.Name())
+			defer func() { _ = tempFile.Close() }()
+			defer func() { _ = os.Remove(tempFile.Name()) }()
 
 			exportArgs, err := exportJob.GetDocumentExportArguments()
 			if err != nil {

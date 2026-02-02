@@ -40,7 +40,6 @@ type (
 		bucket             string
 		proboSvc           *probo.Service
 		encryptionKey      cipher.EncryptionKey
-		tokenSecret        string
 		slackSigningSecret string
 		baseURL            string
 		iam                *iam.Service
