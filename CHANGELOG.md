@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.117.0] - 2026-02-02
+
+### Added
+
+- Google Workspace to SCIM bridge
+- Compliance page logo branding
+
+### Fixed
+
+- Memberships page conditional display of search input
+
+### Security
+
+- Upgrade go dependencies
+
 ## [0.116.15] - 2026-01-31
 
 ### Fixed
