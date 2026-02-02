@@ -12,6 +12,7 @@ OPENSSL ?=	openssl
 SED ?= sed
 SYFT ?=	syft
 TAIL ?= tail
+ECHO ?= echo
 
 DOCKER_BUILD_FLAGS?=
 DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
@@ -39,8 +40,15 @@ E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 DOCKER_IMAGE_NAME=	ghcr.io/getprobo/probo
 DOCKER_TAG_NAME?=	latest
 
+PROBOD_BIN_EXTRA_DEPS=
 PROBOD_BIN=	bin/probod
 PROBOD_SRC=	cmd/probod/main.go
+
+ifndef SKIP_APPS
+PROBOD_BIN_EXTRA_DEPS += \
+	@probo/console \
+	@probo/trust
+endif
 
 .PHONY: all
 all: build
@@ -156,10 +164,10 @@ bin/probod: pkg/server/api/connect/v1/schema/schema.go \
 	pkg/server/api/trust/v1/v1_resolver.go \
 	pkg/server/api/mcp/v1/server/server.go \
 	pkg/server/api/mcp/v1/types/types.go \
-	@probo/emails \
-	@probo/console \
-	@probo/trust \
-	vet
+	apps/console/dist/index.html \
+	apps/trust/dist/index.html \
+	$(PROBOD_BIN_EXTRA_DEPS) \
+	@probo/emails
 	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
 
 .PHONY: @probo/emails
@@ -177,6 +185,11 @@ bin/probod: pkg/server/api/connect/v1/schema/schema.go \
 @probo/trust:
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
+
+pkg/server/api/connect/v1/schema/schema.go \
+pkg/server/api/connect/v1/types/types.go \
+pkg/server/api/connect/v1/v1_resolver.go: pkg/server/api/connect/v1/gqlgen.yaml pkg/server/api/connect/v1/schema.graphql
+	$(GO_GENERATE) ./pkg/server/api/connect/v1
 
 pkg/server/api/console/v1/schema/schema.go \
 pkg/server/api/console/v1/types/types.go \
@@ -259,3 +272,7 @@ compose/keycloak/probo-realm.json: compose/keycloak/probo-realm.json.tmpl compos
 	-e "s|CERTIFICATE_PLACEHOLDER|$$(awk 'NR==1 {printf "%s", $$0; next} {printf "\\\\n%s", $$0}' compose/keycloak/certs/cert.pem)|g" \
 	-e "s|PRIVATE_KEY_PLACEHOLDER|$$(awk 'NR==1 {printf "%s", $$0; next} {printf "\\\\n%s", $$0}' compose/keycloak/certs/private-key.pem)|g" \
 	$@.tmpl > $@
+
+apps/console/dist/index.html apps/trust/dist/index.html:
+	$(MKDIR) $(dir $@)
+	$(ECHO) dev-server > $@
