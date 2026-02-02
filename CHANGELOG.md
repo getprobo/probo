@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.117.1] - 2026-02-02
+
+### Changed
+
+- Use svg for slack logo
+
+### Fixed
+
+- Missing google logo
+- Missing relay generated files
+
 ## [0.117.0] - 2026-02-02
 
 ### Added
