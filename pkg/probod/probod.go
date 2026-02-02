@@ -563,7 +563,7 @@ func (impl *Implm) runApiServer(
 	}
 
 	if len(impl.cfg.Api.ProxyProtocol.TrustedProxies) > 0 {
-		policy := rejectProxyHeaderFrom(impl.cfg.Api.ProxyProtocol.TrustedProxies...)
+		policy := proxyproto.TrustProxyHeaderFrom(impl.cfg.Api.ProxyProtocol.TrustedProxies...)
 
 		listener = &proxyproto.Listener{
 			Listener:          listener,
@@ -860,35 +860,4 @@ func (impl *Implm) runTrustCenterServer(
 	}
 
 	return ctx.Err()
-}
-
-func rejectProxyHeaderFrom(trustedIPs ...net.IP) proxyproto.ConnPolicyFunc {
-	return func(connOpts proxyproto.ConnPolicyOptions) (proxyproto.Policy, error) {
-		ip, err := ipFromAddr(connOpts.Upstream)
-		if err != nil {
-			return proxyproto.REJECT, err
-		}
-
-		for _, trustedIP := range trustedIPs {
-			if trustedIP.Equal(ip) {
-				return proxyproto.USE, nil
-			}
-		}
-
-		return proxyproto.REJECT, nil
-	}
-}
-
-func ipFromAddr(upstream net.Addr) (net.IP, error) {
-	upstreamString, _, err := net.SplitHostPort(upstream.String())
-	if err != nil {
-		return nil, err
-	}
-
-	upstreamIP := net.ParseIP(upstreamString)
-	if nil == upstreamIP {
-		return nil, fmt.Errorf("proxyproto: invalid IP address")
-	}
-
-	return upstreamIP, nil
 }
