@@ -13,6 +13,7 @@ SED ?= sed
 SYFT ?=	syft
 TAIL ?= tail
 ECHO ?= echo
+GOLINTCMD ?= golangci-lint
 
 DOCKER_BUILD_FLAGS?=
 DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
@@ -54,7 +55,7 @@ endif
 all: build
 
 .PHONY: lint
-lint: vet npm-lint
+lint: vet go-lint npm-lint
 
 .PHONY: vet
 vet: @probo/emails
@@ -63,6 +64,10 @@ vet: @probo/emails
 .PHONY: npm-lint
 npm-lint:
 	$(NPM) run lint
+
+.PHONY: go-lint
+go-lint:
+	$(GOLINTCMD) run ./...
 
 .PHONY: test
 test: CGO_ENABLED=1
