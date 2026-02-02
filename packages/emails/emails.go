@@ -19,6 +19,7 @@ import (
 	"embed"
 	"fmt"
 	htmltemplate "html/template"
+	"net/url"
 	texttemplate "text/template"
 	"time"
 
@@ -39,6 +40,7 @@ type (
 
 	PresenterVariables struct {
 		// Static variables
+		BaseOrigin                      string
 		BaseURL                         string
 		SenderCompanyName               string
 		SenderCompanyWebsiteURL         string
@@ -67,8 +69,15 @@ func DefaultPresenterConfig(baseURL string) PresenterConfig {
 }
 
 func NewPresenterFromConfig(cfg PresenterConfig, fullName string) *Presenter {
+	baseURL := baseurl.MustParse(cfg.BaseURL)
+	baseOrigin := url.URL{
+		Scheme: baseURL.Scheme(),
+		Host:   baseURL.Host(),
+	}
+
 	return &Presenter{
 		variables: PresenterVariables{
+			BaseOrigin:                      baseOrigin.String(),
 			BaseURL:                         cfg.BaseURL,
 			SenderCompanyName:               cfg.SenderCompanyName,
 			SenderCompanyWebsiteURL:         cfg.SenderCompanyWebsiteURL,
