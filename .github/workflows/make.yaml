@@ -147,7 +147,7 @@ jobs:
       - run: "npm i -g npm@11.8.0"
       - run: "npm ci"
       - run: "make build"
-      - run: "npm run lint"
+      - run: "make lint"
 
   test:
     name: "test"
