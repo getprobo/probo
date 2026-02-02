@@ -144,6 +144,9 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          install-only: true
       - run: "npm i -g npm@11.8.0"
       - run: "npm ci"
       - run: "make build"
