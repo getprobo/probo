@@ -1,6 +1,6 @@
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Badge, Button, Card } from "@probo/ui";
+import { Badge, Button, Card, Slack } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -43,8 +43,8 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
               padded
               className="flex items-center gap-3"
             >
-              <div>
-                <img src="/slack.png" alt="" />
+              <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
+                <Slack className="h-6 w-6" />
               </div>
               <div className="mr-auto">
                 <h3 className="text-base font-semibold">Slack</h3>
@@ -73,8 +73,8 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
               padded
               className="flex items-center gap-3"
             >
-              <div>
-                <img src="/slack.png" alt="" />
+              <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
+                <Slack className="h-6 w-6" />
               </div>
               <div className="mr-auto">
                 <h3 className="text-base font-semibold">Slack</h3>

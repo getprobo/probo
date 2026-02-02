@@ -45,6 +45,7 @@ export {
   Row,
   RowButton,
 } from "./Atoms/DataTable/DataTable";
+export * from "./Atoms/Vendors";
 
 // Molecules
 export {
