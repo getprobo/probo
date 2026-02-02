@@ -39,7 +39,7 @@ func TestMinItems(t *testing.T) {
 		items := []string{"a"}
 		err := MinItems(2)(&items)
 		if err == nil {
-			t.Error("expected validation error")
+			t.Fatal("expected validation error")
 		}
 		if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
@@ -84,7 +84,7 @@ func TestMaxItems(t *testing.T) {
 		items := []string{"a", "b", "c", "d"}
 		err := MaxItems(2)(&items)
 		if err == nil {
-			t.Error("expected validation error")
+			t.Fatal("expected validation error")
 		}
 		if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
@@ -113,7 +113,7 @@ func TestUniqueItems(t *testing.T) {
 		items := []string{"a", "b", "a"}
 		err := UniqueItems()(&items)
 		if err == nil {
-			t.Error("expected validation error")
+			t.Fatal("expected validation error")
 		}
 		if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
@@ -156,7 +156,7 @@ func TestUniqueItems(t *testing.T) {
 		items := [][]int{{1, 2}, {3, 4}}
 		err := UniqueItems()(&items)
 		if err == nil {
-			t.Error("expected validation error for non-comparable type")
+			t.Fatal("expected validation error for non-comparable type")
 		}
 		if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
@@ -170,7 +170,7 @@ func TestUniqueItems(t *testing.T) {
 		items := []map[string]int{{"a": 1}, {"b": 2}}
 		err := UniqueItems()(&items)
 		if err == nil {
-			t.Error("expected validation error for non-comparable type")
+			t.Fatal("expected validation error for non-comparable type")
 		}
 		if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
@@ -184,7 +184,7 @@ func TestUniqueItems(t *testing.T) {
 		items := []NonComparable{{Items: []int{1, 2}}, {Items: []int{3, 4}}}
 		err := UniqueItems()(&items)
 		if err == nil {
-			t.Error("expected validation error for non-comparable type")
+			t.Fatal("expected validation error for non-comparable type")
 		}
 		if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
@@ -211,7 +211,7 @@ func TestUniqueItems(t *testing.T) {
 		items := []ComparableStruct{{ID: 1, Name: "a"}, {ID: 2, Name: "b"}, {ID: 1, Name: "a"}}
 		err := UniqueItems()(&items)
 		if err == nil {
-			t.Error("expected validation error for duplicate comparable structs")
+			t.Fatal("expected validation error for duplicate comparable structs")
 		}
 		if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)

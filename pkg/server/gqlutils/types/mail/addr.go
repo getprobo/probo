@@ -26,9 +26,11 @@ import (
 type AddrScalar = mail.Addr
 
 func MarshalAddrScalar(a mail.Addr) graphql.Marshaler {
-	return graphql.WriterFunc(func(w io.Writer) {
-		w.Write([]byte(strconv.Quote(a.String())))
-	})
+	return graphql.WriterFunc(
+		func(w io.Writer) {
+			_, _ = w.Write([]byte(strconv.Quote(a.String())))
+		},
+	)
 }
 
 func UnmarshalAddrScalar(v interface{}) (mail.Addr, error) {

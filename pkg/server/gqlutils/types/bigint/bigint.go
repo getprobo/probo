@@ -26,7 +26,7 @@ type BigIntScalar = int64
 
 func MarshalBigIntScalar(i int64) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		w.Write([]byte(strconv.FormatInt(i, 10)))
+		_, _ = w.Write([]byte(strconv.FormatInt(i, 10)))
 	})
 }
 

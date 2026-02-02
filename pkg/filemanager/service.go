@@ -51,7 +51,7 @@ func (s *Service) GetFileBase64(
 	if err != nil {
 		return "", "", fmt.Errorf("cannot get file from S3: %w", err)
 	}
-	defer result.Body.Close()
+	defer func() { _ = result.Body.Close() }()
 
 	fileData, err := io.ReadAll(result.Body)
 	if err != nil {

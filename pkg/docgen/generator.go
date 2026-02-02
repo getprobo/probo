@@ -29,11 +29,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const (
-	firstPageTOCItems = 21
-	otherPageTOCItems = 28
-)
-
 var (
 	//go:embed template.html
 	htmlTemplateContent string

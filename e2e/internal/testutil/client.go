@@ -30,7 +30,7 @@ import (
 
 func generateUniqueID() string {
 	randomBytes := make([]byte, 4)
-	rand.Read(randomBytes)
+	_, _ = rand.Read(randomBytes)
 	return fmt.Sprintf("%d-%s", time.Now().UnixNano(), hex.EncodeToString(randomBytes))
 }
 

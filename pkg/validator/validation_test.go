@@ -153,7 +153,7 @@ func TestValidationErrors_Methods(t *testing.T) {
 	t.Run("First", func(t *testing.T) {
 		first := errors.First()
 		if first == nil {
-			t.Error("expected first error")
+			t.Fatal("expected first error")
 		}
 		if first.Field != "email" {
 			t.Errorf("expected first field to be 'email', got '%s'", first.Field)

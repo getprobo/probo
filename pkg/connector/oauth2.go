@@ -209,7 +209,7 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot post token URL: %w", err)
 	}
-	defer tokenResp.Body.Close()
+	defer func() { _ = tokenResp.Body.Close() }()
 
 	if tokenResp.StatusCode != http.StatusOK {
 		return nil, nil, fmt.Errorf("token response status: %d", tokenResp.StatusCode)

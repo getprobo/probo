@@ -44,8 +44,8 @@ type (
 	}
 )
 
-func (SignableDocument) IsNode()             {}
-func (this SignableDocument) GetID() gid.GID { return this.ID }
+func (SignableDocument) IsNode()          {}
+func (d SignableDocument) GetID() gid.GID { return d.ID }
 
 func NewSignableDocumentConnection(
 	p *page.Page[*SignableDocument, coredata.DocumentOrderField],

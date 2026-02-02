@@ -127,7 +127,7 @@ func (s ReportService) exportPDFData(
 	if err != nil {
 		return nil, fmt.Errorf("cannot download PDF from S3: %w", err)
 	}
-	defer result.Body.Close()
+	defer func() { _ = result.Body.Close() }()
 
 	pdfData, err := io.ReadAll(result.Body)
 	if err != nil {

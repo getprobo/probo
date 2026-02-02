@@ -73,11 +73,11 @@ func (c SlackConnection) MarshalJSON() ([]byte, error) {
 		WebhookURL   string    `json:"webhook_url,omitempty"`
 	}{
 		Type:         string(ProtocolOAuth2),
-		AccessToken:  c.OAuth2Connection.AccessToken,
-		RefreshToken: c.OAuth2Connection.RefreshToken,
-		ExpiresAt:    c.OAuth2Connection.ExpiresAt,
-		TokenType:    c.OAuth2Connection.TokenType,
-		Scope:        c.OAuth2Connection.Scope,
+		AccessToken:  c.AccessToken,
+		RefreshToken: c.RefreshToken,
+		ExpiresAt:    c.ExpiresAt,
+		TokenType:    c.TokenType,
+		Scope:        c.Scope,
 		WebhookURL:   c.Settings.WebhookURL,
 	})
 }

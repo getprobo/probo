@@ -97,7 +97,7 @@ func (c *Client) listUsersPage(ctx context.Context, startIndex, count int) (User
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot fetch users: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -150,7 +150,7 @@ func (c *Client) CreateUser(ctx context.Context, user *User) error {
 	if err != nil {
 		return fmt.Errorf("cannot create user: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
@@ -198,7 +198,7 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 	if err != nil {
 		return fmt.Errorf("cannot update user: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
@@ -238,7 +238,7 @@ func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
 	if err != nil {
 		return fmt.Errorf("cannot deactivate user: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		respBody, _ := io.ReadAll(resp.Body)

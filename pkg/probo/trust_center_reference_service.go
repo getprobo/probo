@@ -432,7 +432,7 @@ func (s TrustCenterReferenceService) cleanupS3Object(ctx context.Context, s3Key 
 		return
 	}
 
-	s.svc.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
+	_, _ = s.svc.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(s.svc.bucket),
 		Key:    aws.String(s3Key),
 	})

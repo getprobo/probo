@@ -2612,7 +2612,7 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 	identity := authn.IdentityFromContext(ctx)
 
-	exportErr, exportJobID := prb.Frameworks.RequestExport(
+	exportJob, exportErr := prb.Frameworks.RequestExport(
 		ctx,
 		input.FrameworkID,
 		identity.EmailAddress,
@@ -2624,7 +2624,7 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 	}
 
 	return &types.ExportFrameworkPayload{
-		ExportJobID: exportJobID.ID,
+		ExportJobID: exportJob.ID,
 	}, nil
 }
 

@@ -97,7 +97,7 @@ func Setup() {
 		defer cancel()
 		if err := waitForServer(ctx, testEnv.BaseURL, 30*time.Second); err != nil {
 			fmt.Fprintf(os.Stderr, "e2etest: server failed to start: %v\n", err)
-			testEnv.cmd.Process.Kill()
+			_ = testEnv.cmd.Process.Kill()
 			os.Exit(1)
 		}
 	})
@@ -121,7 +121,7 @@ func waitForServer(ctx context.Context, baseURL string, timeout time.Duration) e
 
 		resp, err := client.Do(req)
 		if err == nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			// Any response means server is up
 			return nil
 		}
@@ -138,12 +138,12 @@ func Teardown() {
 	}
 
 	if testEnv.cmd != nil && testEnv.cmd.Process != nil {
-		testEnv.cmd.Process.Signal(syscall.SIGTERM)
+		_ = testEnv.cmd.Process.Signal(syscall.SIGTERM)
 
 		select {
 		case <-testEnv.done:
 		case <-time.After(10 * time.Second):
-			testEnv.cmd.Process.Kill()
+			_ = testEnv.cmd.Process.Kill()
 			<-testEnv.done
 		}
 	}

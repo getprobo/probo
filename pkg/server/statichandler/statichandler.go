@@ -77,7 +77,7 @@ func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions) (*Se
 			if err != nil {
 				return err
 			}
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 
 			_, err = file.Read(content)
 			if err != nil {
@@ -136,11 +136,11 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 
 		w.WriteHeader(http.StatusOK)
-		w.Write(s.indexContent)
+		_, _ = w.Write(s.indexContent)
 		return
 	}
 
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	info, err := f.Stat()
 	if err != nil {
@@ -162,7 +162,7 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Expires", "0")
 
 		w.WriteHeader(http.StatusOK)
-		w.Write(s.indexContent)
+		_, _ = w.Write(s.indexContent)
 		return
 	}
 
@@ -225,7 +225,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.shouldCompressWithGzip(r) {
 		w.Header().Set("Content-Encoding", "gzip")
 		gz := gzip.NewWriter(w)
-		defer gz.Close()
+		defer func() { _ = gz.Close() }()
 
 		gzw := gzipResponseWriter{Writer: gz, ResponseWriter: w}
 		s.ServeSPA(gzw, r)
