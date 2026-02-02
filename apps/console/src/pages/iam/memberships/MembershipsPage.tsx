@@ -105,13 +105,11 @@ export function MembershipsPage(props: {
               ))}
             </div>
           )}
-          {memberships.length > 0 && (
+          {initialMemberships.length > 0 && (
             <div className="space-y-3">
-              {invitations.length > 0 && (
-                <h2 className="text-xl font-semibold">
-                  {__("Your organizations")}
-                </h2>
-              )}
+              <h2 className="text-xl font-semibold">
+                {__("Your organizations")}
+              </h2>
               <div className="w-full">
                 <Input
                   icon={IconMagnifyingGlass}
