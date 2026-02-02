@@ -118,11 +118,7 @@ export function GoogleWorkspaceConnector(props: {
   return (
     <Card padded className="flex items-center gap-3">
       <div className="w-10 h-10 flex items-center justify-center bg-subtle rounded">
-        <img
-          src="/google-workspace.png"
-          alt="Google Workspace"
-          className="w-6 h-6"
-        />
+        <Google className="w-6 h-6" />
       </div>
       <div className="mr-auto">
         <h3 className="font-medium">{__("Google Workspace")}</h3>
