@@ -728,7 +728,7 @@ func (impl *Implm) runTrustCenterServer(
 			defer listener.Close()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy := rejectProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
+				policy := proxyproto.TrustProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
 
 				listener = &proxyproto.Listener{
 					Listener:          listener,
@@ -810,7 +810,7 @@ func (impl *Implm) runTrustCenterServer(
 			defer listener.Close()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy := rejectProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
+				policy := proxyproto.TrustProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
 
 				listener = &proxyproto.Listener{
 					Listener:          listener,
