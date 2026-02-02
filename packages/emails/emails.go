@@ -61,7 +61,7 @@ func DefaultPresenterConfig(baseURL string) PresenterConfig {
 		BaseURL:                         baseURL,
 		SenderCompanyName:               "Probo",
 		SenderCompanyWebsiteURL:         "https://www.getprobo.com",
-		SenderCompanyLogoURL:            baseurl.MustParse(baseURL).WithPath("/logos/probo.png").MustString(),
+		SenderCompanyLogoURL:            baseurl.MustParse(baseURL).AppendPath("/logos/probo.png").MustString(),
 		SenderCompanyHeadquarterAddress: "Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US",
 	}
 }
@@ -123,7 +123,7 @@ var (
 func (p *Presenter) RenderConfirmEmail(confirmationURLPath string, confirmationTokenParam string) (subject string, textBody string, htmlBody *string, err error) {
 	confirmationUrl := baseurl.
 		MustParse(p.variables.BaseURL).
-		WithPath(confirmationURLPath).
+		AppendPath(confirmationURLPath).
 		WithQuery("token", confirmationTokenParam).
 		MustString()
 
@@ -142,7 +142,7 @@ func (p *Presenter) RenderConfirmEmail(confirmationURLPath string, confirmationT
 func (p *Presenter) RenderPasswordReset(resetPasswordURLPath string, resetPasswordToken string) (subject string, textBody string, htmlBody *string, err error) {
 	resetUrl := baseurl.
 		MustParse(p.variables.BaseURL).
-		WithPath(resetPasswordURLPath).
+		AppendPath(resetPasswordURLPath).
 		WithQuery("token", resetPasswordToken).
 		MustString()
 
@@ -161,7 +161,7 @@ func (p *Presenter) RenderPasswordReset(resetPasswordURLPath string, resetPasswo
 func (p *Presenter) RenderInvitation(invitationURLPath string, invitationToken string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	invitationURL := baseurl.
 		MustParse(p.variables.BaseURL).
-		WithPath(invitationURLPath).
+		AppendPath(invitationURLPath).
 		WithQuery("token", invitationToken).
 		WithQuery("fullName", p.variables.RecipientFullName).
 		MustString()
@@ -182,7 +182,7 @@ func (p *Presenter) RenderInvitation(invitationURLPath string, invitationToken s
 
 func (p *Presenter) RenderDocumentSigning(signinURLPath string, token string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	signingURL := baseurl.MustParse(p.variables.BaseURL).
-		WithPath(signinURLPath).
+		AppendPath(signinURLPath).
 		WithQuery("token", token).
 		MustString()
 
@@ -265,7 +265,7 @@ func (p *Presenter) RenderMagicLink(magicLinkUrlPath string, tokenString string,
 		OrganizationName  string
 	}{
 		PresenterVariables: p.variables,
-		MagicLinkURL:       baseurl.MustParse(p.variables.BaseURL).WithPath(magicLinkUrlPath).WithQuery("token", tokenString).MustString(),
+		MagicLinkURL:       baseurl.MustParse(p.variables.BaseURL).AppendPath(magicLinkUrlPath).WithQuery("token", tokenString).MustString(),
 		DurationInMinutes:  int(tokenDuration.Minutes()),
 		OrganizationName:   organizationName,
 	}

@@ -602,7 +602,11 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, access.Name)
+	fullName := access.Name
+	if fullName == "" {
+		fullName = access.Email.Username()
+	}
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterDocumentAccessRejected(
 		fileNames,

@@ -19,7 +19,7 @@ export const TrustCenterAccess = () => {
       </Text>
 
       <Section style={buttonContainer}>
-        <Button style={button} href={"{{.AccessUrl}}"}>
+        <Button style={button} href={"{{.BaseURL}}"}>
           Access Compliance Page
         </Button>
       </Section>

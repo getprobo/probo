@@ -137,6 +137,32 @@ func (b *BaseURL) WithPath(path string) *URLBuilder {
 	}
 }
 
+// WithPath returns a URLBuilder with the specified path.
+// The path will be properly joined with the base URL's path.
+func (b *BaseURL) AppendPath(path string) *URLBuilder {
+	if b == nil {
+		return &URLBuilder{err: fmt.Errorf("base URL is nil")}
+	}
+
+	basePath := strings.TrimSuffix(b.parsed.Path, "/")
+
+	// Ensure path starts with /
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	path = basePath + path
+
+	// Ensure path does not end with /
+	path = strings.TrimSuffix(path, "/")
+
+	return &URLBuilder{
+		base:  b,
+		path:  path,
+		query: make(url.Values),
+	}
+}
+
 // WithQuery adds a query parameter to the URL.
 func (ub *URLBuilder) WithQuery(key, value string) *URLBuilder {
 	if ub.err != nil {
