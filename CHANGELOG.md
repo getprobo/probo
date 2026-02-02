@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.117.2] - 2026-02-02
+
+### Fixed
+
+- Missing logo
+- Static handler cache headers handling
+
 ## [0.117.1] - 2026-02-02
 
 ### Changed
