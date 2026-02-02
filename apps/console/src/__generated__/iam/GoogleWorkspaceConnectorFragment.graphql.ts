@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2beb895d75d5cbcbd64a59387e35c281>>
+ * @generated SignedSource<<3c7c629a3509891b6edc98178a376c2d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,14 +9,12 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type ConnectorProvider = "GOOGLE_WORKSPACE" | "SLACK";
 import { FragmentRefs } from "relay-runtime";
 export type GoogleWorkspaceConnectorFragment$data = {
   readonly bridge: {
     readonly connector: {
       readonly createdAt: string;
       readonly id: string;
-      readonly provider: ConnectorProvider;
     } | null | undefined;
   } | null | undefined;
   readonly id: string;
@@ -63,13 +61,6 @@ return {
               "alias": null,
               "args": null,
               "kind": "ScalarField",
-              "name": "provider",
-              "storageKey": null
-            },
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
               "name": "createdAt",
               "storageKey": null
             }
@@ -85,6 +76,6 @@ return {
 };
 })();
 
-(node as any).hash = "180a97ae989c22060d815280ec2f7b67";
+(node as any).hash = "6ce8b7f55ff2a3d0fad04ad6b452a28a";
 
 export default node;
