@@ -8,4 +8,5 @@ Thanks for joining Probo! Please confirm your email address by clicking the link
 
 If you did not sign up for Probo, please ignore this email.
 
-Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

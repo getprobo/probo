@@ -6,4 +6,5 @@ You have been granted access to {{.OrganizationName}}'s compliance page! Click t
 
 {{.BaseURL}}
 
-Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo
