@@ -1,5 +1,5 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboConnectApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -121,7 +121,7 @@ export async function execute(
 	if (email) input.email = email;
 	if (headquarterAddress) input.headquarterAddress = headquarterAddress;
 
-	const responseData = await proboApiRequest.call(this, query, { input });
+	const responseData = await proboConnectApiRequest.call(this, query, { input });
 
 	return {
 		json: responseData,
