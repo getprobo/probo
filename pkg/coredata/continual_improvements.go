@@ -34,7 +34,7 @@ type (
 		ReferenceID    string                       `db:"reference_id"`
 		Description    *string                      `db:"description"`
 		Source         *string                      `db:"source"`
-		OwnerID        gid.GID                      `db:"owner_id"`
+		OwnerID        gid.GID                      `db:"owner_profile_id"`
 		TargetDate     *time.Time                   `db:"target_date"`
 		Status         ContinualImprovementStatus   `db:"status"`
 		Priority       ContinualImprovementPriority `db:"priority"`

@@ -102,7 +102,7 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cdr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
-	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -115,7 +115,7 @@ func (udr *UpdateDocumentRequest) Validate() error {
 
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
 	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(udr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -395,7 +395,7 @@ func (s *DocumentService) Create(
 	documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 
 	organization := &coredata.Organization{}
-	people := &coredata.People{}
+	owner := &coredata.MembershipProfile{}
 
 	document := &coredata.Document{
 		ID:                    documentID,
@@ -431,12 +431,12 @@ func (s *DocumentService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := people.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load people: %w", err)
+			if err := owner.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
 			document.OrganizationID = organization.ID
-			document.OwnerID = people.ID
+			document.OwnerID = owner.ID
 
 			if err := document.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert document: %w", err)
@@ -519,9 +519,9 @@ func (s *DocumentService) SendSigningNotifications(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			var peoples coredata.Peoples
-			if err := peoples.LoadAwaitingSigning(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot load people: %w", err)
+			var signatories coredata.MembershipProfiles
+			if err := signatories.LoadAwaitingSigning(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot load signatories: %w", err)
 			}
 
 			organization := &coredata.Organization{}
@@ -529,21 +529,21 @@ func (s *DocumentService) SendSigningNotifications(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			for _, people := range peoples {
+			for _, signatory := range signatories {
 				token, err := statelesstoken.NewToken(
 					s.svc.tokenSecret,
 					TokenTypeSigningRequest,
 					time.Hour*24*30,
 					SigningRequestData{
 						OrganizationID: organizationID,
-						PeopleID:       people.ID,
+						PeopleID:       signatory.ID,
 					},
 				)
 				if err != nil {
 					return fmt.Errorf("cannot create signing request token: %w", err)
 				}
 
-				emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, people.FullName)
+				emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, signatory.FullName)
 
 				subject, textBody, htmlBody, err := emailPresenter.RenderDocumentSigning(
 					ctx,
@@ -556,8 +556,9 @@ func (s *DocumentService) SendSigningNotifications(
 				}
 
 				email := coredata.NewEmail(
-					people.FullName,
-					people.PrimaryEmailAddress,
+					signatory.FullName,
+					// FIXME: load email with profile
+					"contact@getprobo.com",
 					subject,
 					textBody,
 					htmlBody,
@@ -620,6 +621,7 @@ func (s *DocumentService) SignDocumentVersionByEmail(
 			}
 
 			people := &coredata.People{}
+			// FIXME: will be done differently
 			if err := people.LoadByEmailAndOrganizationID(ctx, conn, s.svc.scope, userEmail, documentVersion.OrganizationID); err != nil {
 				return fmt.Errorf("cannot find people record for user email in organization %q: %w", documentVersion.OrganizationID, err)
 			}
@@ -790,7 +792,7 @@ func (s *DocumentService) createSignatureRequestInTx(
 	signatoryID gid.GID,
 	ignoreExisting bool,
 ) (*coredata.DocumentVersionSignature, error) {
-	signatory := &coredata.People{}
+	signatory := &coredata.MembershipProfile{}
 	documentVersion := &coredata.DocumentVersion{}
 
 	if err := documentVersion.LoadByID(ctx, tx, s.svc.scope, documentVersionID); err != nil {
@@ -1383,7 +1385,7 @@ func (s *DocumentService) Update(
 	}
 
 	document := &coredata.Document{}
-	people := &coredata.People{}
+	owner := &coredata.MembershipProfile{}
 	now := time.Now()
 
 	err := s.svc.pg.WithTx(
@@ -1414,10 +1416,10 @@ func (s *DocumentService) Update(
 			}
 
 			if req.OwnerID != nil {
-				if err := people.LoadByID(ctx, tx, s.svc.scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner %q: %w", *req.OwnerID, err)
+				if err := owner.LoadByID(ctx, tx, s.svc.scope, *req.OwnerID); err != nil {
+					return fmt.Errorf("cannot load owner profile %q: %w", *req.OwnerID, err)
 				}
-				document.OwnerID = people.ID
+				document.OwnerID = owner.ID
 			}
 
 			document.UpdatedAt = now
@@ -1637,7 +1639,7 @@ func exportDocumentPDF(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	owner := &coredata.People{}
+	owner := &coredata.MembershipProfile{}
 	organization := &coredata.Organization{}
 
 	if err := version.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
@@ -1649,7 +1651,7 @@ func exportDocumentPDF(
 	}
 
 	if err := owner.LoadByID(ctx, conn, scope, document.OwnerID); err != nil {
-		return nil, fmt.Errorf("cannot load document owner: %w", err)
+		return nil, fmt.Errorf("cannot load document owner profile: %w", err)
 	}
 
 	if err := organization.LoadByID(ctx, conn, scope, document.OrganizationID); err != nil {

@@ -75,7 +75,7 @@ func (cpr *CreatePeopleRequest) Validate() error {
 func (upr *UpdatePeopleRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	// v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.Check(upr.Kind, "kind", validator.OneOfSlice(coredata.PeopleKinds()))
 	v.Check(upr.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(upr.PrimaryEmailAddress, "primary_email_address", validator.NotEmpty())
@@ -261,7 +261,7 @@ func (s PeopleService) Create(
 	}
 
 	now := time.Now()
-	peopleID := gid.New(s.svc.scope.GetTenantID(), coredata.PeopleEntityType)
+	peopleID := gid.New(s.svc.scope.GetTenantID(), 8)
 
 	organization := &coredata.Organization{}
 	people := &coredata.People{

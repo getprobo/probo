@@ -32,7 +32,7 @@ type (
 		ID                 gid.GID            `db:"id"`
 		Name               string             `db:"name"`
 		OrganizationID     gid.GID            `db:"organization_id"`
-		OwnerID            gid.GID            `db:"owner_id"`
+		OwnerID            gid.GID            `db:"owner_profile_id"`
 		DataClassification DataClassification `db:"data_classification"`
 		SnapshotID         *gid.GID           `db:"snapshot_id"`
 		SourceID           *gid.GID           `db:"source_id"`

@@ -68,7 +68,7 @@ func (crr *CreateRiskRequest) Validate() error {
 	v.Check(crr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
 	v.Check(crr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
 	v.Check(crr.Treatment, "treatment", validator.Required(), validator.OneOfSlice(coredata.RiskTreatments()))
-	v.Check(crr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(crr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(crr.InherentLikelihood, "inherent_likelihood", validator.Required(), validator.Min(1), validator.Max(5))
 	v.Check(crr.InherentImpact, "inherent_impact", validator.Required(), validator.Min(1), validator.Max(5))
 	v.Check(crr.ResidualLikelihood, "residual_likelihood", validator.Min(1), validator.Max(5))
@@ -86,7 +86,7 @@ func (urr *UpdateRiskRequest) Validate() error {
 	v.Check(urr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(urr.Category, "category", validator.SafeText(TitleMaxLength))
 	v.Check(urr.Treatment, "treatment", validator.OneOfSlice(coredata.RiskTreatments()))
-	v.Check(urr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(urr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(urr.InherentLikelihood, "inherent_likelihood", validator.Min(1), validator.Max(5))
 	v.Check(urr.InherentImpact, "inherent_impact", validator.Min(1), validator.Max(5))
 	v.Check(urr.ResidualLikelihood, "residual_likelihood", validator.Min(1), validator.Max(5))
@@ -419,7 +419,7 @@ func (s RiskService) Create(
 	req CreateRiskRequest,
 ) (*coredata.Risk, error) {
 	now := time.Now()
-	people := coredata.People{}
+	owner := coredata.MembershipProfile{}
 	organization := coredata.Organization{}
 
 	risk := &coredata.Risk{
@@ -458,8 +458,8 @@ func (s RiskService) Create(
 			}
 
 			if req.OwnerID != nil {
-				if err := people.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner: %w", err)
+				if err := owner.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+					return fmt.Errorf("cannot load owner profile: %w", err)
 				}
 			}
 
@@ -537,9 +537,9 @@ func (s RiskService) Update(
 
 			if req.OwnerID != nil {
 				if *req.OwnerID != nil {
-					people := coredata.People{}
-					if err := people.LoadByID(ctx, conn, s.svc.scope, **req.OwnerID); err != nil {
-						return fmt.Errorf("cannot load owner: %w", err)
+					owner := coredata.MembershipProfile{}
+					if err := owner.LoadByID(ctx, conn, s.svc.scope, **req.OwnerID); err != nil {
+						return fmt.Errorf("cannot load owner profile: %w", err)
 					}
 					risk.OwnerID = *req.OwnerID
 				} else {

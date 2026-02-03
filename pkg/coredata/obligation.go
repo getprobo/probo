@@ -36,7 +36,7 @@ type (
 		Requirement            *string          `db:"requirement"`
 		ActionsToBeImplemented *string          `db:"actions_to_be_implemented"`
 		Regulator              *string          `db:"regulator"`
-		OwnerID                gid.GID          `db:"owner_id"`
+		OwnerID                gid.GID          `db:"owner_profile_id"`
 		LastReviewDate         *time.Time       `db:"last_review_date"`
 		DueDate                *time.Time       `db:"due_date"`
 		Status                 ObligationStatus `db:"status"`

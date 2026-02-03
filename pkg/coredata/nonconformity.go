@@ -39,7 +39,7 @@ type (
 		DateIdentified     *time.Time          `db:"date_identified"`
 		RootCause          string              `db:"root_cause"`
 		CorrectiveAction   *string             `db:"corrective_action"`
-		OwnerID            gid.GID             `db:"owner_id"`
+		OwnerID            gid.GID             `db:"owner_profile_id"`
 		DueDate            *time.Time          `db:"due_date"`
 		Status             NonconformityStatus `db:"status"`
 		EffectivenessCheck *string             `db:"effectiveness_check"`

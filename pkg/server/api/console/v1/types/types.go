@@ -1406,7 +1406,7 @@ type Meeting struct {
 	Name         string        `json:"name"`
 	Date         time.Time     `json:"date"`
 	Minutes      *string       `json:"minutes,omitempty"`
-	Attendees    []*People     `json:"attendees"`
+	Attendees    []*Profile    `json:"attendees"`
 	Organization *Organization `json:"organization"`
 	CreatedAt    time.Time     `json:"createdAt"`
 	UpdatedAt    time.Time     `json:"updatedAt"`
@@ -1610,6 +1610,33 @@ type ProcessingActivityEdge struct {
 
 type ProcessingActivityFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
+type Profile struct {
+	ID                       gid.GID             `json:"id"`
+	FullName                 string              `json:"fullName"`
+	EmailAddress             mail.Addr           `json:"email_address"`
+	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses"`
+	Kind                     coredata.PeopleKind `json:"kind"`
+	Position                 *string             `json:"position,omitempty"`
+	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`
+	ContractEndDate          *time.Time          `json:"contractEndDate,omitempty"`
+	CreatedAt                time.Time           `json:"createdAt"`
+	UpdatedAt                time.Time           `json:"updatedAt"`
+	Permission               bool                `json:"permission"`
+}
+
+func (Profile) IsNode()             {}
+func (this Profile) GetID() gid.GID { return this.ID }
+
+type ProfileConnection struct {
+	Edges    []*ProfileEdge `json:"edges"`
+	PageInfo *PageInfo      `json:"pageInfo"`
+}
+
+type ProfileEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Profile       `json:"node"`
 }
 
 type PublishDocumentVersionInput struct {

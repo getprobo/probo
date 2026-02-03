@@ -142,7 +142,7 @@ func (s *DocumentService) exportPDFData(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	owner := &coredata.People{}
+	owner := &coredata.MembershipProfile{}
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
@@ -161,7 +161,7 @@ func (s *DocumentService) exportPDFData(
 			}
 
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, document.OwnerID); err != nil {
-				return fmt.Errorf("cannot load document owner: %w", err)
+				return fmt.Errorf("cannot load document owner profile: %w", err)
 			}
 
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {

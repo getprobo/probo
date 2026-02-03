@@ -69,7 +69,7 @@ func (cnr *CreateNonconformityRequest) Validate() error {
 	v.Check(cnr.AuditID, "audit_id", validator.GID(coredata.AuditEntityType))
 	v.Check(cnr.RootCause, "root_cause", validator.Required(), validator.SafeText(ContentMaxLength))
 	v.Check(cnr.CorrectiveAction, "corrective_action", validator.SafeText(ContentMaxLength))
-	v.Check(cnr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cnr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(cnr.Status, "status", validator.OneOfSlice(coredata.NonconformityStatuses()))
 	v.Check(cnr.EffectivenessCheck, "effectiveness_check", validator.SafeText(ContentMaxLength))
 
@@ -84,7 +84,7 @@ func (unr *UpdateNonconformityRequest) Validate() error {
 	v.Check(unr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(unr.RootCause, "root_cause", validator.SafeText(ContentMaxLength))
 	v.Check(unr.CorrectiveAction, "corrective_action", validator.SafeText(ContentMaxLength))
-	v.Check(unr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(unr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(unr.Status, "status", validator.OneOfSlice(coredata.NonconformityStatuses()))
 	v.Check(unr.EffectivenessCheck, "effectiveness_check", validator.SafeText(ContentMaxLength))
 
@@ -156,9 +156,9 @@ func (s *NonconformityService) Create(
 				}
 			}
 
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner: %w", err)
+			owner := &coredata.MembershipProfile{}
+			if err := owner.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
 			if err := nonconformity.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -209,9 +209,9 @@ func (s *NonconformityService) Update(
 				nonconformity.CorrectiveAction = *req.CorrectiveAction
 			}
 			if req.OwnerID != nil {
-				people := &coredata.People{}
-				if err := people.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner: %w", err)
+				owner := &coredata.MembershipProfile{}
+				if err := owner.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+					return fmt.Errorf("cannot load owner profile: %w", err)
 				}
 				nonconformity.OwnerID = *req.OwnerID
 			}

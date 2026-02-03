@@ -54,7 +54,7 @@ func (cdr *CreateDatumRequest) Validate() error {
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(cdr.DataClassification, "data_classification", validator.Required(), validator.OneOfSlice(coredata.DataClassifications()))
-	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	v.CheckEach(cdr.VendorIDs, "vendor_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
 	})
@@ -68,7 +68,7 @@ func (udr *UpdateDatumRequest) Validate() error {
 	v.Check(udr.ID, "id", validator.Required(), validator.GID(coredata.DatumEntityType))
 	v.Check(udr.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(udr.DataClassification, "data_classification", validator.OneOfSlice(coredata.DataClassifications()))
-	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.CheckEach(udr.VendorIDs, "vendor_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
 	})
@@ -196,9 +196,9 @@ func (s DatumService) Update(
 			datum.DataClassification = *req.DataClassification
 		}
 		if req.OwnerID != nil {
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner: %w", err)
+			owner := &coredata.MembershipProfile{}
+			if err := owner.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 			datum.OwnerID = *req.OwnerID
 		}
@@ -249,9 +249,9 @@ func (s DatumService) Create(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner: %w", err)
+			owner := &coredata.MembershipProfile{}
+			if err := owner.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
 			if err := datum.Insert(ctx, conn, s.svc.scope); err != nil {

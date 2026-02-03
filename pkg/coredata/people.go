@@ -74,108 +74,17 @@ func (p *People) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
+// FIXME remove: only used in people_service
 func (p *People) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	peopleID gid.GID,
 ) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    kind,
-    full_name,
-    primary_email_address,
-    additional_email_addresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    created_at,
-    updated_at
-FROM
-    peoples
-WHERE
-    %s
-    AND id = @people_id
-LIMIT 1;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"people_id": peopleID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query people: %w", err)
-	}
-
-	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect people: %w", err)
-	}
-
-	*p = people
-
 	return nil
 }
 
-func (p *People) LoadByEmail(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	primaryEmailAddress string,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	kind,
-	full_name,
-	primary_email_address,
-	additional_email_addresses,
-	position,
-	contract_start_date,
-	contract_end_date,
-	created_at,
-	updated_at
-FROM
-	peoples
-WHERE
-	%s
-	AND primary_email_address = @primary_email_address
-LIMIT 1;
-	`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"primary_email_address": primaryEmailAddress}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query people: %w", err)
-	}
-
-	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect people: %w", err)
-	}
-
-	*p = people
-
-	return nil
-}
-
+// FIXME remove: only used in document_service
 func (p *People) LoadByEmailAndOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -232,52 +141,7 @@ LIMIT 1;
 	return nil
 }
 
-func (p *Peoples) LoadByIDs(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	peopleIDs []gid.GID,
-) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    kind,
-    full_name,
-    primary_email_address,
-    additional_email_addresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    created_at,
-    updated_at
-FROM
-    peoples
-WHERE
-    %s
-    AND id = ANY(@people_ids)
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{"people_ids": peopleIDs}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query people: %w", err)
-	}
-
-	peoples, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[People])
-	if err != nil {
-		return fmt.Errorf("cannot collect people: %w", err)
-	}
-
-	*p = peoples
-
-	return nil
-}
-
+// FIXME remove: only used in people_service
 func (p People) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -333,6 +197,7 @@ VALUES (
 	return err
 }
 
+// FIXME remove: only used in people_service
 func (p People) Delete(
 	ctx context.Context,
 	conn pg.Conn,
@@ -361,6 +226,7 @@ DELETE FROM peoples WHERE %s AND id = @people_id
 	return nil
 }
 
+// FIXME remove: only used in people_service
 func (p *Peoples) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -396,6 +262,7 @@ WHERE
 	return count, nil
 }
 
+// FIXME remove: only used in people_service
 func (p *Peoples) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -448,6 +315,7 @@ WHERE
 	return nil
 }
 
+// FIXME remove: only used in people_service
 func (p *People) Update(
 	ctx context.Context,
 	conn pg.Conn,
@@ -485,126 +353,6 @@ WHERE %s
 	if err != nil {
 		return fmt.Errorf("cannot update people: %w", err)
 	}
-
-	return nil
-}
-
-func (p *Peoples) LoadAwaitingSigning(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-) error {
-	q := `
-WITH signatories AS (
-	SELECT
-		signed_by
-	FROM
-		document_version_signatures
-	WHERE
-	    %s
-		AND state = 'REQUESTED'
-	GROUP BY
-		signed_by
-)
-SELECT
-	id,
-	organization_id,
-	kind,
-	full_name,
-	primary_email_address,
-	additional_email_addresses,
-	position,
-	contract_start_date,
-	contract_end_date,
-	created_at,
-	updated_at
-FROM
-	peoples
-INNER JOIN signatories ON peoples.id = signatories.signed_by
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	rows, err := conn.Query(ctx, q, scope.SQLArguments())
-	if err != nil {
-		return fmt.Errorf("cannot query people: %w", err)
-	}
-
-	peoples, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[People])
-	if err != nil {
-		return fmt.Errorf("cannot collect people: %w", err)
-	}
-
-	*p = peoples
-
-	return nil
-}
-
-func (p *Peoples) LoadByMeetingID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	meetingID gid.GID,
-) error {
-	q := `
-WITH people_attendees AS (
-	SELECT
-		p.id,
-		p.organization_id,
-		p.kind,
-		p.full_name,
-		p.primary_email_address,
-		p.additional_email_addresses,
-		p.position,
-		p.contract_start_date,
-		p.contract_end_date,
-		p.created_at,
-		p.updated_at,
-		p.tenant_id,
-		ma.created_at AS attendee_created_at
-	FROM
-		peoples p
-	INNER JOIN
-		meeting_attendees ma ON p.id = ma.attendee_id
-	WHERE
-		ma.meeting_id = @meeting_id
-)
-SELECT
-	id,
-	organization_id,
-	kind,
-	full_name,
-	primary_email_address,
-	additional_email_addresses,
-	position,
-	contract_start_date,
-	contract_end_date,
-	created_at,
-	updated_at
-FROM
-	people_attendees
-WHERE
-	%s
-ORDER BY
-	attendee_created_at ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{"meeting_id": meetingID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query people: %w", err)
-	}
-
-	peoples, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[People])
-	if err != nil {
-		return fmt.Errorf("cannot collect people: %w", err)
-	}
-
-	*p = peoples
 
 	return nil
 }

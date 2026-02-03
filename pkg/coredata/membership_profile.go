@@ -40,6 +40,8 @@ type (
 		CreatedAt                time.Time  `db:"created_at"`
 		UpdatedAt                time.Time  `db:"updated_at"`
 	}
+
+	MembershipProfiles []*MembershipProfile
 )
 
 func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
@@ -152,6 +154,167 @@ LIMIT 1;
 	}
 
 	*p = profile
+
+	return nil
+}
+
+func (p *MembershipProfiles) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	profileIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    membership_id,
+    full_name,
+    kind,
+    additionalEmailAddresses,
+    position,
+    contract_start_date,
+    contract_end_date,
+    created_at,
+    updated_at
+FROM
+    iam_membership_profiles
+WHERE
+    %s
+    AND id = ANY(@profile_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"profile_ids": profileIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profiles: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profiles: %w", err)
+	}
+
+	*p = profiles
+
+	return nil
+}
+
+func (p *MembershipProfiles) LoadByMeetingID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	meetingID gid.GID,
+) error {
+	q := `
+WITH attendees AS (
+    SELECT
+        p.id,
+        p.membership_id,
+        p.full_name,
+        p.kind,
+        p.additionalEmailAddresses,
+        p.position,
+        p.contract_start_date,
+        p.contract_end_date,
+        p.created_at,
+        p.updated_at,
+        ma.created_at AS attendee_created_at
+    FROM
+        iam_membership_profiles p
+    INNER JOIN
+        meeting_attendees ma ON p.id = ma.attendee_profile_id
+    WHERE
+        ma.meeting_id = @meeting_id
+)
+SELECT
+    id,
+    organization_id,
+    kind,
+    full_name,
+    additional_email_addresses,
+    position,
+    contract_start_date,
+    contract_end_date,
+    created_at,
+    updated_at
+FROM
+    attendees
+WHERE
+    %s
+ORDER BY
+    attendee_created_at ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"meeting_id": meetingID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profiles: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profiles: %w", err)
+	}
+
+	*p = profiles
+
+	return nil
+}
+
+func (p *MembershipProfiles) LoadAwaitingSigning(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+WITH signatories AS (
+    SELECT
+        signed_by
+    FROM
+        document_version_signatures
+    WHERE
+        %s
+        AND state = 'REQUESTED'
+    GROUP BY
+        signed_by
+)
+SELECT
+    id,
+    organization_id,
+    kind,
+    full_name,
+    additional_email_addresses,
+    position,
+    contract_start_date,
+    contract_end_date,
+    created_at,
+    updated_at
+FROM
+    iam_membership_profiles
+INNER JOIN signatories ON iam_membership_profiles.id = signatories.signed_by_profile_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	rows, err := conn.Query(ctx, q, scope.SQLArguments())
+	if err != nil {
+		return fmt.Errorf("cannot query profiles: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profiles: %w", err)
+	}
+
+	*p = profiles
 
 	return nil
 }

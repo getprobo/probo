@@ -1620,7 +1620,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 }
 
 // Attendees is the resolver for the attendees field.
-func (r *meetingResolver) Attendees(ctx context.Context, obj *types.Meeting) ([]*types.People, error) {
+func (r *meetingResolver) Attendees(ctx context.Context, obj *types.Meeting) ([]*types.Profile, error) {
 	// TODO bug must be paginated
 
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleList); err != nil {
@@ -1636,12 +1636,12 @@ func (r *meetingResolver) Attendees(ctx context.Context, obj *types.Meeting) ([]
 	}
 
 	if len(attendees) == 0 {
-		return []*types.People{}, nil
+		return []*types.Profile{}, nil
 	}
 
-	people := make([]*types.People, len(attendees))
+	people := make([]*types.Profile, len(attendees))
 	for i, attendee := range attendees {
-		people[i] = types.NewPeople(attendee)
+		people[i] = types.NewProfile(attendee)
 	}
 
 	return people, nil
@@ -6595,6 +6595,11 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// Permission is the resolver for the permission field.
+func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, action string) (bool, error) {
+	panic(fmt.Errorf("not implemented: Permission - permission"))
+}
+
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
 	var (
@@ -6612,15 +6617,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 			return types.NewOrganization(organization), nil
-		}
-	case coredata.PeopleEntityType:
-		action = probo.ActionPeopleGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			people, err := prb.Peoples.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewPeople(people), nil
 		}
 	case coredata.VendorEntityType:
 		action = probo.ActionVendorGet
@@ -8769,6 +8765,9 @@ func (r *Resolver) ProcessingActivityConnection() schema.ProcessingActivityConne
 	return &processingActivityConnectionResolver{r}
 }
 
+// Profile returns schema.ProfileResolver implementation.
+func (r *Resolver) Profile() schema.ProfileResolver { return &profileResolver{r} }
+
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
@@ -8943,6 +8942,7 @@ type peopleResolver struct{ *Resolver }
 type peopleConnectionResolver struct{ *Resolver }
 type processingActivityResolver struct{ *Resolver }
 type processingActivityConnectionResolver struct{ *Resolver }
+type profileResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type rightsRequestResolver struct{ *Resolver }

@@ -42,7 +42,7 @@ func (car *CreateAssetRequest) Validate() error {
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(car.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.Amount, "amount", validator.Required(), validator.Min(1))
-	v.Check(car.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(car.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOfSlice(coredata.AssetTypes()))
 	v.Check(car.DataTypesStored, "data_types_stored", validator.Required(), validator.SafeText(ContentMaxLength))
 	v.CheckEach(car.VendorIDs, "vendor_ids", func(index int, item any) {
@@ -58,7 +58,7 @@ func (uar *UpdateAssetRequest) Validate() error {
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AssetEntityType))
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(uar.Amount, "amount", validator.Min(1))
-	v.Check(uar.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(uar.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(uar.AssetType, "asset_type", validator.OneOfSlice(coredata.AssetTypes()))
 	v.Check(uar.DataTypesStored, "data_types_stored", validator.SafeText(ContentMaxLength))
 	v.CheckEach(uar.VendorIDs, "vendor_ids", func(index int, item any) {
@@ -189,9 +189,9 @@ func (s AssetService) Update(
 			asset.Amount = *req.Amount
 		}
 		if req.OwnerID != nil {
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner: %w", err)
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 			asset.OwnerID = *req.OwnerID
 		}
@@ -247,9 +247,9 @@ func (s AssetService) Create(
 	}
 
 	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
-		people := &coredata.People{}
-		if err := people.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
-			return fmt.Errorf("cannot load owner: %w", err)
+		profile := &coredata.MembershipProfile{}
+		if err := profile.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
+			return fmt.Errorf("cannot load owner profile: %w", err)
 		}
 
 		if err := asset.Insert(ctx, conn, s.svc.scope); err != nil {

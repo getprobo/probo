@@ -53,7 +53,7 @@ func (csr *CreateStateOfApplicabilityRequest) Validate() error {
 
 	v.Check(csr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(csr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(csr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(csr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -63,7 +63,7 @@ func (usr *UpdateStateOfApplicabilityRequest) Validate() error {
 
 	v.Check(usr.StateOfApplicabilityID, "state_of_applicability_id", validator.Required(), validator.GID(coredata.StateOfApplicabilityEntityType))
 	v.Check(usr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(usr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(usr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -445,9 +445,9 @@ func (s StateOfApplicabilityService) ExportPDF(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			owner := &coredata.People{}
+			owner := &coredata.MembershipProfile{}
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, stateOfApplicability.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner: %w", err)
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
 			// Load applicability statements

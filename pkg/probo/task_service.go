@@ -62,7 +62,7 @@ func (ctr *CreateTaskRequest) Validate() error {
 	v.Check(ctr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ctr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
-	v.Check(ctr.AssignedToID, "assigned_to_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(ctr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -75,7 +75,7 @@ func (utr *UpdateTaskRequest) Validate() error {
 	v.Check(utr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
-	v.Check(utr.AssignedToID, "assigned_to_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(utr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(utr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
 
 	return v.Error()
@@ -123,9 +123,9 @@ func (s TaskService) Create(
 			}
 
 			if req.AssignedToID != nil {
-				people := &coredata.People{}
-				if err := people.LoadByID(ctx, conn, s.svc.scope, *req.AssignedToID); err != nil {
-					return fmt.Errorf("cannot load assignee: %w", err)
+				assignee := &coredata.MembershipProfile{}
+				if err := assignee.LoadByID(ctx, conn, s.svc.scope, *req.AssignedToID); err != nil {
+					return fmt.Errorf("cannot load assignee profile: %w", err)
 				}
 			}
 
@@ -176,9 +176,9 @@ func (s TaskService) Assign(
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
 			}
 
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, conn, s.svc.scope, assignedToID); err != nil {
-				return fmt.Errorf("cannot load assignee: %w", err)
+			assignee := &coredata.MembershipProfile{}
+			if err := assignee.LoadByID(ctx, conn, s.svc.scope, assignedToID); err != nil {
+				return fmt.Errorf("cannot load assignee profile: %w", err)
 			}
 
 			task.AssignedToID = &assignedToID
@@ -269,9 +269,9 @@ func (s TaskService) Update(
 				if *req.AssignedToID == nil {
 					task.AssignedToID = nil
 				} else {
-					people := &coredata.People{}
-					if err := people.LoadByID(ctx, conn, s.svc.scope, **req.AssignedToID); err != nil {
-						return fmt.Errorf("cannot load assignee: %w", err)
+					assignee := &coredata.MembershipProfile{}
+					if err := assignee.LoadByID(ctx, conn, s.svc.scope, **req.AssignedToID); err != nil {
+						return fmt.Errorf("cannot load assignee profile: %w", err)
 					}
 					task.AssignedToID = *req.AssignedToID
 				}

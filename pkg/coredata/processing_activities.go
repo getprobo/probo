@@ -51,7 +51,7 @@ type (
 		LastReviewDate                       *time.Time                                       `db:"last_review_date"`
 		NextReviewDate                       *time.Time                                       `db:"next_review_date"`
 		Role                                 ProcessingActivityRole                           `db:"role"`
-		DataProtectionOfficerID              *gid.GID                                         `db:"data_protection_officer_id"`
+		DataProtectionOfficerID              *gid.GID                                         `db:"dpo_profile_id"`
 		CreatedAt                            time.Time                                        `db:"created_at"`
 		UpdatedAt                            time.Time                                        `db:"updated_at"`
 	}

@@ -1841,6 +1841,21 @@ type SlackConnectionEdge {
     node: SlackConnection!
 }
 
+type Profile implements Node {
+    id: ID!
+    fullName: String!
+    email_address: EmailAddr!
+    additionalEmailAddresses: [EmailAddr!]!
+    kind: PeopleKind!
+    position: String
+    contractStartDate: Datetime
+    contractEndDate: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
 type People implements Node {
     id: ID!
     fullName: String!
@@ -2234,7 +2249,7 @@ type Meeting implements Node {
     name: String!
     date: Datetime!
     minutes: String
-    attendees: [People!]! @goField(forceResolver: true)
+    attendees: [Profile!]! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -2692,6 +2707,21 @@ type TrustCenterFileConnection
 type TrustCenterFileEdge {
     cursor: CursorKey!
     node: TrustCenterFile!
+}
+
+type ProfileConnection
+    # @goModel(
+    #     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileConnection"
+    # ) {
+    # totalCount: Int! @goField(forceResolver: true)
+    {
+    edges: [ProfileEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ProfileEdge {
+    cursor: CursorKey!
+    node: Profile!
 }
 
 type PeopleConnection

@@ -87,6 +87,7 @@ type ResolverRoot interface {
 	PeopleConnection() PeopleConnectionResolver
 	ProcessingActivity() ProcessingActivityResolver
 	ProcessingActivityConnection() ProcessingActivityConnectionResolver
+	Profile() ProfileResolver
 	Query() QueryResolver
 	Report() ReportResolver
 	RightsRequest() RightsRequestResolver
@@ -1260,6 +1261,30 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Profile struct {
+		AdditionalEmailAddresses func(childComplexity int) int
+		ContractEndDate          func(childComplexity int) int
+		ContractStartDate        func(childComplexity int) int
+		CreatedAt                func(childComplexity int) int
+		EmailAddress             func(childComplexity int) int
+		FullName                 func(childComplexity int) int
+		ID                       func(childComplexity int) int
+		Kind                     func(childComplexity int) int
+		Permission               func(childComplexity int, action string) int
+		Position                 func(childComplexity int) int
+		UpdatedAt                func(childComplexity int) int
+	}
+
+	ProfileConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	ProfileEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	PublishDocumentVersionPayload struct {
 		Document        func(childComplexity int) int
 		DocumentVersion func(childComplexity int) int
@@ -2081,7 +2106,7 @@ type MeasureConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error)
 }
 type MeetingResolver interface {
-	Attendees(ctx context.Context, obj *types.Meeting) ([]*types.People, error)
+	Attendees(ctx context.Context, obj *types.Meeting) ([]*types.Profile, error)
 	Organization(ctx context.Context, obj *types.Meeting) (*types.Organization, error)
 
 	Permission(ctx context.Context, obj *types.Meeting, action string) (bool, error)
@@ -2305,6 +2330,9 @@ type ProcessingActivityResolver interface {
 }
 type ProcessingActivityConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error)
+}
+type ProfileResolver interface {
+	Permission(ctx context.Context, obj *types.Profile, action string) (bool, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
@@ -7594,6 +7622,104 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ProcessingActivityEdge.Node(childComplexity), true
 
+	case "Profile.additionalEmailAddresses":
+		if e.complexity.Profile.AdditionalEmailAddresses == nil {
+			break
+		}
+
+		return e.complexity.Profile.AdditionalEmailAddresses(childComplexity), true
+	case "Profile.contractEndDate":
+		if e.complexity.Profile.ContractEndDate == nil {
+			break
+		}
+
+		return e.complexity.Profile.ContractEndDate(childComplexity), true
+	case "Profile.contractStartDate":
+		if e.complexity.Profile.ContractStartDate == nil {
+			break
+		}
+
+		return e.complexity.Profile.ContractStartDate(childComplexity), true
+	case "Profile.createdAt":
+		if e.complexity.Profile.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Profile.CreatedAt(childComplexity), true
+	case "Profile.email_address":
+		if e.complexity.Profile.EmailAddress == nil {
+			break
+		}
+
+		return e.complexity.Profile.EmailAddress(childComplexity), true
+	case "Profile.fullName":
+		if e.complexity.Profile.FullName == nil {
+			break
+		}
+
+		return e.complexity.Profile.FullName(childComplexity), true
+	case "Profile.id":
+		if e.complexity.Profile.ID == nil {
+			break
+		}
+
+		return e.complexity.Profile.ID(childComplexity), true
+	case "Profile.kind":
+		if e.complexity.Profile.Kind == nil {
+			break
+		}
+
+		return e.complexity.Profile.Kind(childComplexity), true
+	case "Profile.permission":
+		if e.complexity.Profile.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Profile_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Profile.Permission(childComplexity, args["action"].(string)), true
+	case "Profile.position":
+		if e.complexity.Profile.Position == nil {
+			break
+		}
+
+		return e.complexity.Profile.Position(childComplexity), true
+	case "Profile.updatedAt":
+		if e.complexity.Profile.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Profile.UpdatedAt(childComplexity), true
+
+	case "ProfileConnection.edges":
+		if e.complexity.ProfileConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ProfileConnection.Edges(childComplexity), true
+	case "ProfileConnection.pageInfo":
+		if e.complexity.ProfileConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ProfileConnection.PageInfo(childComplexity), true
+
+	case "ProfileEdge.cursor":
+		if e.complexity.ProfileEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ProfileEdge.Cursor(childComplexity), true
+	case "ProfileEdge.node":
+		if e.complexity.ProfileEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ProfileEdge.Node(childComplexity), true
+
 	case "PublishDocumentVersionPayload.document":
 		if e.complexity.PublishDocumentVersionPayload.Document == nil {
 			break
@@ -12194,6 +12320,21 @@ type SlackConnectionEdge {
     node: SlackConnection!
 }
 
+type Profile implements Node {
+    id: ID!
+    fullName: String!
+    email_address: EmailAddr!
+    additionalEmailAddresses: [EmailAddr!]!
+    kind: PeopleKind!
+    position: String
+    contractStartDate: Datetime
+    contractEndDate: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
 type People implements Node {
     id: ID!
     fullName: String!
@@ -12587,7 +12728,7 @@ type Meeting implements Node {
     name: String!
     date: Datetime!
     minutes: String
-    attendees: [People!]! @goField(forceResolver: true)
+    attendees: [Profile!]! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -13045,6 +13186,21 @@ type TrustCenterFileConnection
 type TrustCenterFileEdge {
     cursor: CursorKey!
     node: TrustCenterFile!
+}
+
+type ProfileConnection
+    # @goModel(
+    #     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileConnection"
+    # ) {
+    # totalCount: Int! @goField(forceResolver: true)
+    {
+    edges: [ProfileEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ProfileEdge {
+    cursor: CursorKey!
+    node: Profile!
 }
 
 type PeopleConnection
@@ -18763,6 +18919,17 @@ func (ec *executionContext) field_ProcessingActivity_vendors_args(ctx context.Co
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Profile_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -32972,7 +33139,7 @@ func (ec *executionContext) _Meeting_attendees(ctx context.Context, field graphq
 			return ec.resolvers.Meeting().Attendees(ctx, obj)
 		},
 		nil,
-		ec.marshalNPeople2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeopleᚄ,
+		ec.marshalNProfile2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileᚄ,
 		true,
 		true,
 	)
@@ -32987,29 +33154,29 @@ func (ec *executionContext) fieldContext_Meeting_attendees(_ context.Context, fi
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_People_id(ctx, field)
+				return ec.fieldContext_Profile_id(ctx, field)
 			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "email_address":
+				return ec.fieldContext_Profile_email_address(ctx, field)
 			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
+				return ec.fieldContext_Profile_kind(ctx, field)
 			case "position":
-				return ec.fieldContext_People_position(ctx, field)
+				return ec.fieldContext_Profile_position(ctx, field)
 			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
+				return ec.fieldContext_Profile_contractStartDate(ctx, field)
 			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
+				return ec.fieldContext_Profile_contractEndDate(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
+				return ec.fieldContext_Profile_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
+				return ec.fieldContext_Profile_updatedAt(ctx, field)
 			case "permission":
-				return ec.fieldContext_People_permission(ctx, field)
+				return ec.fieldContext_Profile_permission(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
 	}
 	return fc, nil
@@ -44908,6 +45075,493 @@ func (ec *executionContext) fieldContext_ProcessingActivityEdge_node(_ context.C
 				return ec.fieldContext_ProcessingActivity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_id(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_fullName(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_fullName,
+		func(ctx context.Context) (any, error) {
+			return obj.FullName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_fullName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_email_address(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_email_address,
+		func(ctx context.Context) (any, error) {
+			return obj.EmailAddress, nil
+		},
+		nil,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_email_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type EmailAddr does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_additionalEmailAddresses(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_additionalEmailAddresses,
+		func(ctx context.Context) (any, error) {
+			return obj.AdditionalEmailAddresses, nil
+		},
+		nil,
+		ec.marshalNEmailAddr2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_additionalEmailAddresses(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type EmailAddr does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_kind(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_kind,
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		ec.marshalNPeopleKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐPeopleKind,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type PeopleKind does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_position(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_position,
+		func(ctx context.Context) (any, error) {
+			return obj.Position, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_position(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_contractStartDate(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_contractStartDate,
+		func(ctx context.Context) (any, error) {
+			return obj.ContractStartDate, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_contractStartDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_contractEndDate(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_contractEndDate,
+		func(ctx context.Context) (any, error) {
+			return obj.ContractEndDate, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_contractEndDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_permission(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Profile().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Profile_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProfileConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ProfileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProfileConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNProfileEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProfileConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProfileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ProfileEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ProfileEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProfileEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProfileConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ProfileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProfileConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProfileConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProfileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProfileEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ProfileEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProfileEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProfileEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProfileEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProfileEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ProfileEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProfileEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfile,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProfileEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProfileEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Profile_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "email_address":
+				return ec.fieldContext_Profile_email_address(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_Profile_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_Profile_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_Profile_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_Profile_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Profile_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Profile_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Profile_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
 	}
 	return fc, nil
@@ -69265,6 +69919,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Report(ctx, sel, obj)
+	case types.Profile:
+		return ec._Profile(ctx, sel, &obj)
+	case *types.Profile:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Profile(ctx, sel, obj)
 	case types.ProcessingActivity:
 		return ec._ProcessingActivity(ctx, sel, &obj)
 	case *types.ProcessingActivity:
@@ -82091,6 +82752,205 @@ func (ec *executionContext) _ProcessingActivityEdge(ctx context.Context, sel ast
 			}
 		case "node":
 			out.Values[i] = ec._ProcessingActivityEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var profileImplementors = []string{"Profile", "Node"}
+
+func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, obj *types.Profile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, profileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Profile")
+		case "id":
+			out.Values[i] = ec._Profile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fullName":
+			out.Values[i] = ec._Profile_fullName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "email_address":
+			out.Values[i] = ec._Profile_email_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "additionalEmailAddresses":
+			out.Values[i] = ec._Profile_additionalEmailAddresses(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "kind":
+			out.Values[i] = ec._Profile_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "position":
+			out.Values[i] = ec._Profile_position(ctx, field, obj)
+		case "contractStartDate":
+			out.Values[i] = ec._Profile_contractStartDate(ctx, field, obj)
+		case "contractEndDate":
+			out.Values[i] = ec._Profile_contractEndDate(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._Profile_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Profile_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Profile_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var profileConnectionImplementors = []string{"ProfileConnection"}
+
+func (ec *executionContext) _ProfileConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ProfileConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, profileConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProfileConnection")
+		case "edges":
+			out.Values[i] = ec._ProfileConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ProfileConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var profileEdgeImplementors = []string{"ProfileEdge"}
+
+func (ec *executionContext) _ProfileEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ProfileEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, profileEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProfileEdge")
+		case "cursor":
+			out.Values[i] = ec._ProfileEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._ProfileEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -95230,50 +96090,6 @@ func (ec *executionContext) marshalNPeople2goᚗproboᚗincᚋproboᚋpkgᚋserv
 	return ec._People(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPeople2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeopleᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.People) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPeople2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNPeople2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx context.Context, sel ast.SelectionSet, v *types.People) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -95671,6 +96487,114 @@ var (
 		coredata.ProcessingActivityTransferImpactAssessmentNotNeeded: "NOT_NEEDED",
 	}
 )
+
+func (ec *executionContext) marshalNProfile2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Profile) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfile(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfile(ctx context.Context, sel ast.SelectionSet, v *types.Profile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Profile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProfileEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ProfileEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProfileEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProfileEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileEdge(ctx context.Context, sel ast.SelectionSet, v *types.ProfileEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProfileEdge(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalNPublishDocumentVersionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionInput(ctx context.Context, v any) (types.PublishDocumentVersionInput, error) {
 	res, err := ec.unmarshalInputPublishDocumentVersionInput(ctx, v)

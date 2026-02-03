@@ -29,7 +29,7 @@ type (
 	MeetingAttendee struct {
 		MeetingID      gid.GID   `db:"meeting_id"`
 		OrganizationID gid.GID   `db:"organization_id"`
-		AttendeeID     gid.GID   `db:"attendee_id"`
+		AttendeeID     gid.GID   `db:"attendee_profile_id"`
 		CreatedAt      time.Time `db:"created_at"`
 	}
 

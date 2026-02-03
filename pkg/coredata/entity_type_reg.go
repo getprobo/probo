@@ -31,7 +31,7 @@ const (
 	ConnectorEntityType                        uint16 = 5
 	VendorRiskAssessmentEntityType             uint16 = 6
 	VendorEntityType                           uint16 = 7
-	PeopleEntityType                           uint16 = 8
+	_                                          uint16 = 8 // PeopleEntityType - removed
 	VendorComplianceReportEntityType           uint16 = 9
 	DocumentEntityType                         uint16 = 10
 	IdentityEntityType                         uint16 = 11
@@ -99,8 +99,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &VendorRiskAssessment{ID: id}, true
 	case VendorEntityType:
 		return &Vendor{ID: id}, true
-	case PeopleEntityType:
-		return &People{ID: id}, true
 	case VendorComplianceReportEntityType:
 		return &VendorComplianceReport{ID: id}, true
 	case DocumentEntityType:
