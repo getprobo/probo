@@ -287,7 +287,7 @@ func (s *AccountService) AcceptInvitation(
 				return fmt.Errorf("cannot update invitation: %w", err)
 			}
 
-			// Accept other pending invitations for email in organization
+			// Expire other pending invitations for email in organization
 			invitations := &coredata.Invitations{}
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 			if err := invitations.ExpireByEmailAndOrganization(

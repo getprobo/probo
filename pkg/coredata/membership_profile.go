@@ -24,15 +24,21 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
 	MembershipProfile struct {
-		ID           gid.GID   `db:"id"`
-		MembershipID gid.GID   `db:"membership_id"`
-		FullName     string    `db:"full_name"`
-		CreatedAt    time.Time `db:"created_at"`
-		UpdatedAt    time.Time `db:"updated_at"`
+		ID                       gid.GID    `db:"id"`
+		MembershipID             gid.GID    `db:"membership_id"`
+		FullName                 string     `db:"full_name"`
+		Kind                     PeopleKind `db:"kind"`
+		AdditionalEmailAddresses mail.Addrs `db:"additional_email_addresses"`
+		Position                 *string    `db:"position"`
+		ContractStartDate        *time.Time `db:"contract_start_date"`
+		ContractEndDate          *time.Time `db:"contract_end_date"`
+		CreatedAt                time.Time  `db:"created_at"`
+		UpdatedAt                time.Time  `db:"updated_at"`
 	}
 )
 
@@ -61,12 +67,17 @@ SELECT
     id,
     membership_id,
     full_name,
+    kind,
+    additionalEmailAddresses,
+    position,
+    contract_start_date,
+    contract_end_date,
     created_at,
     updated_at
 FROM
     iam_membership_profiles
 WHERE
-	%s
+    %s
     AND membership_id = @membership_id
 LIMIT 1;
 `
@@ -106,12 +117,17 @@ SELECT
     id,
     membership_id,
     full_name,
+    kind,
+    additionalEmailAddresses,
+    position,
+    contract_start_date,
+    contract_end_date,
     created_at,
     updated_at
 FROM
     iam_membership_profiles
 WHERE
-	%s
+    %s
     AND id = @profile_id
 LIMIT 1;
 `
@@ -151,6 +167,11 @@ INSERT INTO
         id,
         membership_id,
         full_name,
+        kind,
+        additionalEmailAddresses,
+        position,
+        contract_start_date,
+        contract_end_date,
         created_at,
         updated_at
     )
@@ -159,18 +180,28 @@ VALUES (
     @id,
     @membership_id,
     @full_name,
+    @kind,
+    @additionalEmailAddresses,
+    @position,
+    @contract_start_date,
+    @contract_end_date,
     @created_at,
     @updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":     p.ID.TenantID().String(),
-		"id":            p.ID,
-		"membership_id": p.MembershipID,
-		"full_name":     p.FullName,
-		"created_at":    p.CreatedAt,
-		"updated_at":    p.UpdatedAt,
+		"tenant_id":                p.ID.TenantID().String(),
+		"id":                       p.ID,
+		"membership_id":            p.MembershipID,
+		"full_name":                p.FullName,
+		"kind":                     p.Kind,
+		"additionalEmailAddresses": p.AdditionalEmailAddresses,
+		"position":                 p.Position,
+		"contract_start_date":      p.ContractStartDate,
+		"contract_end_date":        p.ContractEndDate,
+		"created_at":               p.CreatedAt,
+		"updated_at":               p.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -191,6 +222,11 @@ UPDATE
     iam_membership_profiles
 SET
     full_name = @full_name,
+    kind = @kind,
+    additionalEmailAddresses = @additionalEmailAddresses,
+    position = @position,
+    contract_start_date = @contract_start_date,
+    contract_end_date = @contract_end_date,
     updated_at = @updated_at
 WHERE
     id = @id
@@ -200,9 +236,14 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":         p.ID,
-		"full_name":  p.FullName,
-		"updated_at": p.UpdatedAt,
+		"id":                       p.ID,
+		"full_name":                p.FullName,
+		"kind":                     p.Kind,
+		"additionalEmailAddresses": p.AdditionalEmailAddresses,
+		"position":                 p.Position,
+		"contract_start_date":      p.ContractStartDate,
+		"contract_end_date":        p.ContractEndDate,
+		"updated_at":               p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

@@ -1852,7 +1852,7 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
-	// TODO: should not create an access nor identity, but send an invitation
+	// TODO: should not create an access nor identity, but send a compliance page invitation
 	identity, err := r.iam.AuthService.LoadOrCreateIdentity(
 		ctx,
 		&iam.LoadOrCreateIdentityRequest{
