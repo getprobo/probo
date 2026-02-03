@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fix n8n node cannot fetch many organizations.
+- Fix SCIM disable all non SCIM members.
 
 ## [0.117.2] - 2026-02-02
 
