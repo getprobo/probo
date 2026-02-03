@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+
+### Fixed
+
+- Fix n8n node cannot fetch many organizations.
+
 ## [0.117.2] - 2026-02-02
 
 ### Fixed
