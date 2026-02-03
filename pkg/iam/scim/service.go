@@ -197,6 +197,7 @@ func (s *Service) CreateUser(
 			// Create membership profile
 			membershipProfile := &coredata.MembershipProfile{
 				ID:           gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
+				IdentityID:   identity.ID,
 				MembershipID: membership.ID,
 				FullName:     fullName,
 				CreatedAt:    now,

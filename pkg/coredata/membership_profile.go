@@ -30,7 +30,9 @@ import (
 type (
 	MembershipProfile struct {
 		ID                       gid.GID    `db:"id"`
+		IdentityID               gid.GID    `db:"identity_id"`
 		MembershipID             gid.GID    `db:"membership_id"`
+		EmailAddress             mail.Addr  `db:"email_address"`
 		FullName                 string     `db:"full_name"`
 		Kind                     PeopleKind `db:"kind"`
 		AdditionalEmailAddresses mail.Addrs `db:"additional_email_addresses"`
@@ -66,21 +68,25 @@ func (p *MembershipProfile) LoadByMembershipID(
 ) error {
 	q := `
 SELECT
-    id,
-    membership_id,
-    full_name,
-    kind,
-    additionalEmailAddresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    created_at,
-    updated_at
+    p.id,
+    p.identity_id,
+    p.membership_id,
+    i.email_address,
+    p.full_name,
+    p.kind,
+    p.additionalEmailAddresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    p.created_at,
+    p.updated_at
 FROM
-    iam_membership_profiles
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
 WHERE
-    %s
-    AND membership_id = @membership_id
+    p.%s
+    AND p.membership_id = @membership_id
 LIMIT 1;
 `
 
@@ -116,21 +122,25 @@ func (p *MembershipProfile) LoadByID(
 ) error {
 	q := `
 SELECT
-    id,
-    membership_id,
-    full_name,
-    kind,
-    additionalEmailAddresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    created_at,
-    updated_at
+    p.id,
+    p.identity_id,
+    p.membership_id,
+    i.email_address,
+    p.full_name,
+    p.kind,
+    p.additionalEmailAddresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    p.created_at,
+    p.updated_at
 FROM
-    iam_membership_profiles
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
 WHERE
-    %s
-    AND id = @profile_id
+    p.%s
+    AND p.id = @profile_id
 LIMIT 1;
 `
 
@@ -166,21 +176,25 @@ func (p *MembershipProfiles) LoadByIDs(
 ) error {
 	q := `
 SELECT
-    id,
-    membership_id,
-    full_name,
-    kind,
-    additionalEmailAddresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    created_at,
-    updated_at
+    p.id,
+    p.identity_id,
+    p.membership_id,
+    i.email_address,
+    p.full_name,
+    p.kind,
+    p.additionalEmailAddresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    p.created_at,
+    p.updated_at
 FROM
-    iam_membership_profiles
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
 WHERE
-    %s
-    AND id = ANY(@profile_ids)
+    p.%s
+    AND p.id = ANY(@profile_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -213,7 +227,9 @@ func (p *MembershipProfiles) LoadByMeetingID(
 WITH attendees AS (
     SELECT
         p.id,
+        p.identity_id,
         p.membership_id,
+        i.email_address,
         p.full_name,
         p.kind,
         p.additionalEmailAddresses,
@@ -225,6 +241,8 @@ WITH attendees AS (
         ma.created_at AS attendee_created_at
     FROM
         iam_membership_profiles p
+    INNER JOIN identities i
+        ON i.id = p.identity_id
     INNER JOIN
         meeting_attendees ma ON p.id = ma.attendee_profile_id
     WHERE
@@ -232,8 +250,10 @@ WITH attendees AS (
 )
 SELECT
     id,
-    organization_id,
+    identity_id,
+    membership_id,
     kind,
+    email_address,
     full_name,
     additional_email_addresses,
     position,
@@ -287,19 +307,23 @@ WITH signatories AS (
         signed_by
 )
 SELECT
-    id,
-    organization_id,
-    kind,
-    full_name,
-    additional_email_addresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    created_at,
-    updated_at
+    p.id,
+    p.identity_id,
+    p.membership_id,
+    p.kind,
+    p.full_name,
+    i.email_address,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    p.created_at,
+    p.updated_at
 FROM
-    iam_membership_profiles
-INNER JOIN signatories ON iam_membership_profiles.id = signatories.signed_by_profile_id
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
+INNER JOIN signatories ON p.id = signatories.signed_by_profile_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -328,6 +352,7 @@ INSERT INTO
     iam_membership_profiles (
         tenant_id,
         id,
+        identity_id,
         membership_id,
         full_name,
         kind,
@@ -341,6 +366,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @id,
+    @identity_id,
     @membership_id,
     @full_name,
     @kind,
@@ -356,6 +382,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":                p.ID.TenantID().String(),
 		"id":                       p.ID,
+		"identity_id":              p.IdentityID,
 		"membership_id":            p.MembershipID,
 		"full_name":                p.FullName,
 		"kind":                     p.Kind,

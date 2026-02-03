@@ -2,6 +2,8 @@
 ALTER TABLE
     iam_membership_profiles
 ADD
+    COLUMN identity_id REFERENCES identities(id) NOT NULL,
+ADD
     COLUMN additional_email_addresses CITEXT [] NOT NULL,
 ADD
     COLUMN kind PEOPLE_KIND NOT NULL,
@@ -11,6 +13,15 @@ ADD
     COLUMN contract_end_date DATE,
 ADD
     COLUMN position TEXT;
+
+UPDATE
+    iam_membership_profiles mp
+SET
+    identity_id = m.identity_id
+FROM
+    iam_memberships m
+WHERE
+    m.id = mp.membership_id;
 
 -- 2. Add profile references to all table referencing peoples
 -- was owner_id, NOT NULL

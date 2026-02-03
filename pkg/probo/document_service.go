@@ -557,8 +557,7 @@ func (s *DocumentService) SendSigningNotifications(
 
 				email := coredata.NewEmail(
 					signatory.FullName,
-					// FIXME: load email with profile
-					"contact@getprobo.com",
+					signatory.EmailAddress,
 					subject,
 					textBody,
 					htmlBody,

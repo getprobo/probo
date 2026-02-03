@@ -267,6 +267,7 @@ func (s *AccountService) AcceptInvitation(
 
 				profile := &coredata.MembershipProfile{
 					ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
+					IdentityID:   identity.ID,
 					MembershipID: membership.ID,
 					FullName:     identity.FullName,
 					CreatedAt:    now,
