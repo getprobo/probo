@@ -294,6 +294,13 @@ func (s *Service) ListUsers(
 		return nil, 0, err
 	}
 
+	// Only return SCIM-managed users. This ensures that:
+	// 1. Users created through other means (manual, SAML) are not deactivated
+	//    when they don't exist in the identity provider.
+	// 2. When a manual user exists in the identity provider but not in the
+	//    SCIM list, CreateUser is called which enrolls them into SCIM management.
+	filter.WithSource(coredata.MembershipSourceSCIM)
+
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	var memberships coredata.Memberships

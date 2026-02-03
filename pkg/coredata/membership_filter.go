@@ -20,9 +20,10 @@ import (
 )
 
 type MembershipFilter struct {
-	email *mail.Addr
-	role  *MembershipRole
-	state *MembershipState
+	email  *mail.Addr
+	role   *MembershipRole
+	state  *MembershipState
+	source *MembershipSource
 }
 
 func NewMembershipFilter() *MembershipFilter {
@@ -56,11 +57,21 @@ func (f *MembershipFilter) State() *MembershipState {
 	return f.state
 }
 
+func (f *MembershipFilter) WithSource(source MembershipSource) *MembershipFilter {
+	f.source = &source
+	return f
+}
+
+func (f *MembershipFilter) Source() *MembershipSource {
+	return f.source
+}
+
 func (f *MembershipFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
-		"filter_email": f.email,
-		"filter_role":  f.role,
-		"filter_state": f.state,
+		"filter_email":  f.email,
+		"filter_role":   f.role,
+		"filter_state":  f.state,
+		"filter_source": f.source,
 	}
 }
 
@@ -84,6 +95,13 @@ AND (
 	CASE
 		WHEN @filter_state::text IS NOT NULL THEN
 			m.state = @filter_state::membership_state
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_source::text IS NOT NULL THEN
+			m.source = @filter_source::text
 		ELSE TRUE
 	END
 )`
