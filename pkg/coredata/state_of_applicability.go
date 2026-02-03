@@ -35,7 +35,7 @@ type (
 		Name           string    `db:"name"`
 		SourceID       *gid.GID  `db:"source_id"`
 		SnapshotID     *gid.GID  `db:"snapshot_id"`
-		OwnerID        gid.GID   `db:"owner_id"`
+		OwnerID        gid.GID   `db:"owner_profile_id"`
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
 	}

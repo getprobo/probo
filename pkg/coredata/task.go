@@ -39,7 +39,7 @@ type (
 		State          TaskState      `db:"state"`
 		ReferenceID    string         `db:"reference_id"`
 		TimeEstimate   *time.Duration `db:"time_estimate"`
-		AssignedToID   *gid.GID       `db:"assigned_to"`
+		AssignedToID   *gid.GID       `db:"assigned_to_profile_id"`
 		Deadline       *time.Time     `db:"deadline"`
 		CreatedAt      time.Time      `db:"created_at"`
 		UpdatedAt      time.Time      `db:"updated_at"`

@@ -45,8 +45,8 @@ type (
 		SubprocessorsListURL          *string        `db:"subprocessors_list_url"`
 		Certifications                []string       `db:"certifications"`
 		Countries                     CountryCodes   `db:"countries"`
-		BusinessOwnerID               *gid.GID       `db:"business_owner_id"`
-		SecurityOwnerID               *gid.GID       `db:"security_owner_id"`
+		BusinessOwnerID               *gid.GID       `db:"business_owner_profile_id"`
+		SecurityOwnerID               *gid.GID       `db:"security_owner_profile_id"`
 		StatusPageURL                 *string        `db:"status_page_url"`
 		TermsOfServiceURL             *string        `db:"terms_of_service_url"`
 		SecurityPageURL               *string        `db:"security_page_url"`

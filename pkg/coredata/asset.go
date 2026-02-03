@@ -34,7 +34,7 @@ type (
 		SourceID        *gid.GID  `db:"source_id"`
 		Name            string    `db:"name"`
 		Amount          int       `db:"amount"`
-		OwnerID         gid.GID   `db:"owner_id"`
+		OwnerID         gid.GID   `db:"owner_profile_id"`
 		OrganizationID  gid.GID   `db:"organization_id"`
 		AssetType       AssetType `db:"asset_type"`
 		DataTypesStored string    `db:"data_types_stored"`

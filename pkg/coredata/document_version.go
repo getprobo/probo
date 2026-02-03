@@ -34,7 +34,7 @@ type (
 		OrganizationID gid.GID                `db:"organization_id"`
 		DocumentID     gid.GID                `db:"document_id"`
 		Title          string                 `db:"title"`
-		OwnerID        gid.GID                `db:"owner_id"`
+		OwnerID        gid.GID                `db:"owner_profile_id"`
 		VersionNumber  int                    `db:"version_number"`
 		Classification DocumentClassification `db:"classification"`
 		Content        string                 `db:"content"`

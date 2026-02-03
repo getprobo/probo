@@ -32,7 +32,7 @@ type (
 	Document struct {
 		ID                      gid.GID                `db:"id"`
 		OrganizationID          gid.GID                `db:"organization_id"`
-		OwnerID                 gid.GID                `db:"owner_id"`
+		OwnerID                 gid.GID                `db:"owner_profile_id"`
 		Title                   string                 `db:"title"`
 		DocumentType            DocumentType           `db:"document_type"`
 		Classification          DocumentClassification `db:"classification"`

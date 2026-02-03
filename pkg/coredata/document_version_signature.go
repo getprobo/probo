@@ -35,7 +35,7 @@ type (
 		OrganizationID    gid.GID                       `json:"-"`
 		DocumentVersionID gid.GID                       `json:"document_version_id"`
 		State             DocumentVersionSignatureState `json:"state"`
-		SignedBy          gid.GID                       `json:"signed_by"`
+		SignedBy          gid.GID                       `json:"signed_by_profile_id"`
 		SignedAt          *time.Time                    `json:"signed_at"`
 		RequestedAt       time.Time                     `json:"requested_at"`
 		CreatedAt         time.Time                     `json:"created_at"`

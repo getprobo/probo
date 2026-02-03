@@ -36,7 +36,7 @@ type (
 		Category           string        `db:"category"`
 		Treatment          RiskTreatment `db:"treatment"`
 		Note               string        `db:"note"`
-		OwnerID            *gid.GID      `db:"owner_id"`
+		OwnerID            *gid.GID      `db:"owner_profile_id"`
 		InherentLikelihood int           `db:"inherent_likelihood"`
 		InherentImpact     int           `db:"inherent_impact"`
 		InherentRiskScore  int           `db:"inherent_risk_score"`
