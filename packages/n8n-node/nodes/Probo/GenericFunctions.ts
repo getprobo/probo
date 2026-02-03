@@ -7,8 +7,15 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError } from 'n8n-workflow';
 
-export async function proboApiRequest(
+type ApiRequestFn = (
 	this: IExecuteFunctions | IHookFunctions,
+	query: string,
+	variables?: IDataObject,
+) => Promise<IDataObject>;
+
+async function proboGraphqlRequest(
+	this: IExecuteFunctions | IHookFunctions,
+	apiPath: string,
 	query: string,
 	variables: IDataObject = {},
 ): Promise<IDataObject> {
@@ -21,7 +28,7 @@ export async function proboApiRequest(
 	const options: IHttpRequestOptions = {
 		method: 'POST',
 		baseURL: `${credentials.server}`,
-		url: '/api/console/v1/graphql',
+		url: apiPath,
 		headers: {
 			Authorization: `Bearer ${credentials.apiKey}`,
 			'Content-Type': 'application/json',
@@ -52,8 +59,25 @@ export async function proboApiRequest(
 	}
 }
 
-export async function proboApiRequestAllItems(
+export async function proboApiRequest(
+	this: IExecuteFunctions | IHookFunctions,
+	query: string,
+	variables: IDataObject = {},
+): Promise<IDataObject> {
+	return proboGraphqlRequest.call(this, '/api/console/v1/graphql', query, variables);
+}
+
+export async function proboConnectApiRequest(
+	this: IExecuteFunctions | IHookFunctions,
+	query: string,
+	variables: IDataObject = {},
+): Promise<IDataObject> {
+	return proboGraphqlRequest.call(this, '/api/connect/v1/graphql', query, variables);
+}
+
+async function proboGraphqlRequestAllItems(
 	this: IExecuteFunctions,
+	requestFn: ApiRequestFn,
 	query: string,
 	variables: IDataObject,
 	getConnection: (response: IDataObject) => IDataObject | undefined,
@@ -80,7 +104,7 @@ export async function proboApiRequestAllItems(
 			requestVariables.after = cursor;
 		}
 
-		const responseData = await proboApiRequest.call(this, query, requestVariables);
+		const responseData = await requestFn.call(this, query, requestVariables);
 		const connection = getConnection(responseData);
 
 		if (connection?.edges) {
@@ -102,4 +126,42 @@ export async function proboApiRequestAllItems(
 	}
 
 	return items;
+}
+
+export async function proboApiRequestAllItems(
+	this: IExecuteFunctions,
+	query: string,
+	variables: IDataObject,
+	getConnection: (response: IDataObject) => IDataObject | undefined,
+	returnAll: boolean = true,
+	limit: number = 0,
+): Promise<IDataObject[]> {
+	return proboGraphqlRequestAllItems.call(
+		this,
+		proboApiRequest,
+		query,
+		variables,
+		getConnection,
+		returnAll,
+		limit,
+	);
+}
+
+export async function proboConnectApiRequestAllItems(
+	this: IExecuteFunctions,
+	query: string,
+	variables: IDataObject,
+	getConnection: (response: IDataObject) => IDataObject | undefined,
+	returnAll: boolean = true,
+	limit: number = 0,
+): Promise<IDataObject[]> {
+	return proboGraphqlRequestAllItems.call(
+		this,
+		proboConnectApiRequest,
+		query,
+		variables,
+		getConnection,
+		returnAll,
+		limit,
+	);
 }

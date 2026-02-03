@@ -1,5 +1,5 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboConnectApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -44,19 +44,21 @@ export async function execute(
 	const query = `
 		query GetOrganizations($first: Int, $after: CursorKey) {
 			viewer {
-				organizations(first: $first, after: $after) {
+				memberships(first: $first, after: $after) {
 					edges {
 						node {
-							id
-							name
-							description
-							websiteUrl
-							email
-							headquarterAddress
-							logoUrl
-							horizontalLogoUrl
-							createdAt
-							updatedAt
+							organization {
+								id
+								name
+								description
+								websiteUrl
+								email
+								headquarterAddress
+								logoUrl
+								horizontalLogoUrl
+								createdAt
+								updatedAt
+							}
 						}
 					}
 					pageInfo {
@@ -68,18 +70,27 @@ export async function execute(
 		}
 	`;
 
-	const organizations = await proboApiRequestAllItems.call(
+	const memberships = await proboConnectApiRequestAllItems.call(
 		this,
 		query,
 		{},
-		(response) => {
+		(response: IDataObject) => {
 			const data = response?.data as IDataObject | undefined;
 			const viewer = data?.viewer as IDataObject | undefined;
-			return viewer?.organizations as IDataObject | undefined;
+			return viewer?.memberships as IDataObject | undefined;
 		},
 		returnAll,
 		limit,
 	);
+
+	const organizationMap = new Map<string, IDataObject>();
+	for (const membership of memberships) {
+		const org = membership.organization as IDataObject | undefined;
+		if (org && org.id) {
+			organizationMap.set(org.id as string, org);
+		}
+	}
+	const organizations = Array.from(organizationMap.values());
 
 	return {
 		json: { organizations },
