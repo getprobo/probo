@@ -7,6 +7,8 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError } from 'n8n-workflow';
 
+import { version } from '../../package.json';
+
 type ApiRequestFn = (
 	this: IExecuteFunctions | IHookFunctions,
 	query: string,
@@ -32,6 +34,7 @@ async function proboGraphqlRequest(
 		headers: {
 			Authorization: `Bearer ${credentials.apiKey}`,
 			'Content-Type': 'application/json',
+			'User-Agent': `probo-n8n-node/${version}`,
 		},
 		body: {
 			query,
