@@ -154,12 +154,9 @@ WITH people_identities AS (
         p.position AS position,
         p.contract_start_date AS contract_start_date,
         p.contract_end_date AS contract_end_date,
-        sc.id IS NOT NULL AS scim
     FROM
         peoples
         JOIN identities i ON i.primary_email_address = p.primary_email_address
-        JOIN organizations o ON o.id = p.organization_id
-        LEFT JOIN iam_scim_configurations sc ON sc.organization_id = o.id
 ),
 people_memberships AS (
     INSERT INTO
@@ -182,7 +179,8 @@ people_memberships AS (
         'EMPLOYEE' :: authz_role,
         'MANUAL',
         CASE
-            WHEN pi.scim THEN 'INACTIVE' :: membership_state
+            WHEN p.contract_end_date IS NOT NULL
+            AND p.contract_end_date <= NOW() THEN 'INACTIVE' :: membership_state
             ELSE 'ACTIVE' :: membership_state
         END,
         NOW(),
