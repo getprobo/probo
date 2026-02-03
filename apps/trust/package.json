@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5174",
     "relay": "find src -type d -name \"__generated__\" -exec rm -rf {} + && npx relay-compiler ./relay.config.json",
     "build": "tsc -b && vite build",
     "lint": "eslint . --concurrency 2",

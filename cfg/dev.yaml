@@ -1,6 +1,6 @@
 unit:
   metrics:
-    addr: "localhost:5173"
+    addr: "localhost:8081"
   tracing:
     addr: "localhost:4317"
     max-batch-size: 512
@@ -37,7 +37,10 @@ probod:
 
     default:
       cors:
-        allowed-origins: ["http://localhost:8080", "http://localhost:5173"]
+        allowed-origins:
+          - "http://localhost:8080"
+          - "http://localhost:5173"
+          - "http://localhost:5174"
       extra-header-fields: {}
     console:
     complaince-page:
@@ -63,16 +66,6 @@ probod:
     password:
       pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
       iterations: 1000000
-
-  trust-auth:
-    cookie-name: "TCT"
-    cookie-domain: "localhost"
-    cookie-duration: 24
-    token-duration: 720
-    report-url-duration: 15
-    token-secret: "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes"
-    scope: "trust_center_readonly"
-    token-type: "trust_center_access"
 
   aws:
     region: "us-east-1"

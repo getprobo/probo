@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5173",
     "relay-clean": "find src -type d -name \"__generated__\" -exec rm -rf {} +",
     "relay-compile": "npx relay-compiler",
     "relay": "npm run relay-clean && npm run relay-compile",
