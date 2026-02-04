@@ -229,7 +229,8 @@ func TestValidateEdgeCases(t *testing.T) {
 			filename:    "empty.txt",
 			contentType: "text/plain",
 			fileSize:    0,
-			shouldError: false,
+			shouldError: true,
+			errorMsg:    "file can't be empty",
 		},
 		{
 			name:        "Exact max file size",
