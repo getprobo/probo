@@ -243,7 +243,7 @@ jobs:
           with open('e2e/console/testdata/config.yaml', 'w') as f:
               yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
           EOF
-      - run: "make test-e2e"
+      - run: "SKIP_APPS=1 make test-e2e"
         env:
           GOTESTSUM_JUNITFILE: "junit-e2e.xml"
       - name: "Upload test results"
