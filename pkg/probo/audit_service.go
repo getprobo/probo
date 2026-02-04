@@ -24,6 +24,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
@@ -88,8 +89,19 @@ func (uarr *UploadAuditReportRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uarr.AuditID, "audit_id", validator.Required(), validator.GID(coredata.AuditEntityType))
+	if err := v.Error(); err != nil {
+		return err
+	}
 
-	return v.Error()
+	fv := filevalidation.NewValidator(
+		filevalidation.WithCategories(filevalidation.CategoryDocument),
+		filevalidation.WithMaxFileSize(25*1024*1024),
+	)
+	if err := fv.Validate(uarr.File.Filename, uarr.File.ContentType, uarr.File.Size); err != nil {
+		return fmt.Errorf("invalid audit report file: %w", err)
+	}
+
+	return nil
 }
 
 func (s AuditService) Get(
@@ -313,6 +325,10 @@ func (s AuditService) UploadReport(
 	ctx context.Context,
 	req UploadAuditReportRequest,
 ) (*coredata.Audit, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	audit := &coredata.Audit{}
 
 	err := s.svc.pg.WithTx(

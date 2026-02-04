@@ -296,8 +296,9 @@ export default function AuditDetailsPage(props: Props) {
                       onDrop={files => void handleUploadFile(files)}
                       accept={{
                         "application/pdf": [".pdf"],
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                      [".docx"],
+                        "application/msword": [".doc"],
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+                        "application/vnd.oasis.opendocument.text": [".odt"],
                       }}
                       maxSize={25}
                     />

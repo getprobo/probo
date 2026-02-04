@@ -17,6 +17,7 @@ package filevalidation
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -162,6 +163,10 @@ func (v *FileValidator) WithMaxFileSize(maxSize int64) *FileValidator {
 
 // Validate validates that the file meets the configured requirements
 func (v *FileValidator) Validate(filename string, contentType string, size int64) error {
+	if size == 0 {
+		return fmt.Errorf("file can't be empty")
+	}
+
 	if size > v.MaxFileSize {
 		return fmt.Errorf("file size exceeds maximum allowed size of %d bytes", v.MaxFileSize)
 	}
@@ -180,13 +185,7 @@ func (v *FileValidator) Validate(filename string, contentType string, size int64
 		return fmt.Errorf("file extension %q is not allowed", ext)
 	}
 
-	validType := false
-	for _, allowedType := range allowedTypes {
-		if contentType == allowedType {
-			validType = true
-			break
-		}
-	}
+	validType := slices.Contains(allowedTypes, contentType)
 
 	if !validType {
 		return fmt.Errorf("content type %q does not match extension %q", contentType, ext)

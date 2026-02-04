@@ -1597,7 +1597,7 @@ func TestAudit_UploadReport_Validation(t *testing.T) {
 
 	frameworkID := factory.NewFramework(owner).WithName("Framework for Upload Validation").Create()
 
-	t.Run("reject non-PDF file", func(t *testing.T) {
+	t.Run("reject non document file", func(t *testing.T) {
 		auditID := factory.NewAudit(owner, frameworkID).WithName("Invalid File Test").Create()
 
 		query := `
@@ -1611,7 +1611,7 @@ func TestAudit_UploadReport_Validation(t *testing.T) {
 		`
 
 		// Try to upload a text file
-		textContent := []byte("This is not a PDF file")
+		textContent := []byte("This is not a document file")
 
 		err := owner.ExecuteWithFile(query, map[string]any{
 			"input": map[string]any{
@@ -1619,14 +1619,14 @@ func TestAudit_UploadReport_Validation(t *testing.T) {
 				"file":    nil,
 			},
 		}, "input.file", testutil.UploadFile{
-			Filename:    "not-a-pdf.txt",
+			Filename:    "not-a-document.txt",
 			ContentType: "text/plain",
 			Content:     textContent,
 		}, nil)
-		require.Error(t, err, "Should reject non-PDF file")
+		require.Error(t, err, "Should reject non-document file")
 	})
 
-	t.Run("reject file with wrong extension but PDF content-type", func(t *testing.T) {
+	t.Run("reject file with wrong extension but document content-type", func(t *testing.T) {
 		auditID := factory.NewAudit(owner, frameworkID).WithName("Wrong Extension Test").Create()
 
 		query := `
@@ -1640,7 +1640,7 @@ func TestAudit_UploadReport_Validation(t *testing.T) {
 		`
 
 		// Try to upload with wrong extension
-		textContent := []byte("Not a real PDF")
+		textContent := []byte("Not a real document")
 
 		err := owner.ExecuteWithFile(query, map[string]any{
 			"input": map[string]any{
