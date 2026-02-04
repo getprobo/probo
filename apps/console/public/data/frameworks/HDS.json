@@ -1,0 +1,165 @@
+{
+  "id": "HDS",
+  "name": "HDS",
+  "logo": {
+    "light": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 60 60\"><path fill=\"#141e12\" d=\"M30,2c15.464,0,28,12.536,28,28,0,15.2969-12.2667,27.7264-27.5,27.9932v.0068h-1v-.0068c-15.2333-.2668-27.5-12.6963-27.5-27.9932C2,14.536,14.536,2,30,2ZM30.5,19h-1V3.0215c-3.1552.2557-6.2307,2.9225-8.6094,7.6308-1.1984,2.3724-2.1827,5.1991-2.8789,8.3477h-1.0224c1.5176-7.0244,4.4443-12.5712,8.0771-15.248-8.9589,2.7676-15.8636,12.8968-16.1543,25.4248h2.0879v1h-2.0957c.0637,12.8247,7.0498,23.2551,16.1621,26.0703-3.8033-2.8028-6.8314-8.7511-8.2803-16.2471h1.0176c.7016,3.5513,1.7629,6.7269,3.0869,9.3477,2.3787,4.7083,5.4542,7.3741,8.6094,7.6298v-16.9775h1v16.9775c3.1553-.2556,6.2317-2.9215,8.6104-7.6298,1.3239-2.6208,2.3845-5.7965,3.0859-9.3477h1.0176c-1.4489,7.4961-4.477,13.4443-8.2803,16.2471,9.1122-2.8154,16.0994-13.2459,16.1631-26.0703h-2.0967v-1h2.0879c-.2908-12.5277-7.1956-22.657-16.1543-25.4248,3.6328,2.6769,6.5595,8.2237,8.0771,15.248h-1.0224c-.696-3.1486-1.6795-5.9754-2.8779-8.3477-2.3787-4.7084-5.4551-7.3752-8.6104-7.6308v15.9785ZM3.002,30.1768c.0736,11.4784,7.3091,21.2549,17.4628,25.0888-7.3915-4.4867-12.5065-14.0267-12.5605-25.0888H3.002ZM52.0918,30.7227c-.2165,10.8304-5.2887,20.1307-12.5596,24.5429,10.1551-3.8332,17.3922-13.6095,17.4658-25.0888h-4.9013l-.0049.5459ZM20.4648,4.7334C10.5021,8.4951,3.349,17.9786,3.0137,29.1768h4.8984c.2458-10.7867,5.3054-20.0445,12.5527-24.4434ZM39.5352,4.7344c7.2471,4.3991,12.3069,13.6561,12.5527,24.4424h4.8984c-.3353-11.1981-7.4886-20.6807-17.4511-24.4424Z\"/><g><polygon fill=\"#141e12\" points=\"22.7599 28.7 18.0742 28.7 18.0742 24.3571 16.5313 24.3571 16.5313 34.5 18.0742 34.5 18.0742 30.1 22.7599 30.1 22.7599 34.5 24.3027 34.5 24.3027 24.3571 22.7599 24.3571 22.7599 28.7\"/><path fill=\"#141e12\" d=\"M43.593,30.4571c-.219-.3904-.5905-.7285-1.1143-1.0142-.5142-.2953-1.2095-.5428-2.0857-.7429-.6571-.1619-1.1666-.3143-1.5285-.4571-.3524-.1429-.6-.3096-.7429-.5-.1333-.2-.2-.4429-.2-.7286,0-.4476.1667-.8048.5-1.0714.3429-.2762.8094-.4142,1.4-.4142.4667,0,.8619.0857,1.1857.2571.3238.1619.581.3953.7714.7.1905.2953.3096.6381.3572,1.0286l1.5857-.0857c-.0762-.6381-.2762-1.2048-.6-1.7-.3143-.4953-.7476-.8857-1.3-1.1714-.5429-.2857-1.2-.4285-1.9714-.4285-.7334,0-1.3619.1238-1.8857.3714-.5239.2476-.9286.5952-1.2143,1.0429-.2762.4381-.4143.9476-.4143,1.5285,0,.5238.1047.9667.3143,1.3286.219.3524.5714.6476,1.0571.8857.4857.2381,1.1333.4572,1.9429.6572.7428.1809,1.3047.3666,1.6857.5571.3905.181.6524.3857.7857.6143.1429.219.2143.4714.2143.7571,0,.3143-.081.581-.2429.8-.1619.2191-.4.3857-.7143.5-.3047.1048-.6762.1572-1.1142.1572-.5048,0-.9381-.081-1.3-.2429-.3524-.1714-.6334-.419-.8429-.7428-.2095-.3334-.3476-.7381-.4143-1.2143l-1.5857.1c.0571.6953.2571,1.3047.6,1.8285.3429.5239.8095.9334,1.4,1.2286.6.2953,1.3048.4429,2.1143.4429.7333,0,1.3762-.1191,1.9286-.3572.5523-.2381.9809-.5762,1.2857-1.0143.3143-.4476.4714-.9714.4714-1.5714,0-.4952-.1096-.9381-.3286-1.3286Z\"/><path fill=\"#141e12\" d=\"M29.7633,24.3571h-3.2571v10.1429h3.3429c1.5619,0,2.7619-.4381,3.6-1.3143.8476-.8762,1.2714-2.1238,1.2714-3.7428,0-1.6286-.4286-2.881-1.2857-3.7572-.8572-.8857-2.081-1.3286-3.6715-1.3286ZM32.2776,32.1857c-.5524.6-1.3905.9-2.5143.9h-1.7142v-7.3143h1.7142c1.1238,0,1.9619.3047,2.5143.9142.5619.6.8429,1.5191.8429,2.7572,0,1.2191-.281,2.1333-.8429,2.7428Z\"/></g></svg>",
+    "dark": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 60 60\"><path fill=\"#eceeec\" d=\"M30,2c15.464,0,28,12.536,28,28,0,15.2969-12.2667,27.7264-27.5,27.9932v.0068h-1v-.0068c-15.2333-.2668-27.5-12.6963-27.5-27.9932C2,14.536,14.536,2,30,2ZM30.5,19h-1V3.0215c-3.1552.2557-6.2307,2.9225-8.6094,7.6308-1.1984,2.3724-2.1827,5.1991-2.8789,8.3477h-1.0224c1.5176-7.0244,4.4443-12.5712,8.0771-15.248-8.9589,2.7676-15.8636,12.8968-16.1543,25.4248h2.0879v1h-2.0957c.0637,12.8247,7.0498,23.2551,16.1621,26.0703-3.8033-2.8028-6.8314-8.7511-8.2803-16.2471h1.0176c.7016,3.5513,1.7629,6.7269,3.0869,9.3477,2.3787,4.7083,5.4542,7.3741,8.6094,7.6298v-16.9775h1v16.9775c3.1553-.2556,6.2317-2.9215,8.6104-7.6298,1.3239-2.6208,2.3845-5.7965,3.0859-9.3477h1.0176c-1.4489,7.4961-4.477,13.4443-8.2803,16.2471,9.1122-2.8154,16.0994-13.2459,16.1631-26.0703h-2.0967v-1h2.0879c-.2908-12.5277-7.1956-22.657-16.1543-25.4248,3.6328,2.6769,6.5595,8.2237,8.0771,15.248h-1.0224c-.696-3.1486-1.6795-5.9754-2.8779-8.3477-2.3787-4.7084-5.4551-7.3752-8.6104-7.6308v15.9785ZM3.002,30.1768c.0736,11.4784,7.3091,21.2549,17.4628,25.0888-7.3915-4.4867-12.5065-14.0267-12.5605-25.0888H3.002ZM52.0918,30.7227c-.2165,10.8304-5.2887,20.1307-12.5596,24.5429,10.1551-3.8332,17.3922-13.6095,17.4658-25.0888h-4.9013l-.0049.5459ZM20.4648,4.7334C10.5021,8.4951,3.349,17.9786,3.0137,29.1768h4.8984c.2458-10.7867,5.3054-20.0445,12.5527-24.4434ZM39.5352,4.7344c7.2471,4.3991,12.3069,13.6561,12.5527,24.4424h4.8984c-.3353-11.1981-7.4886-20.6807-17.4511-24.4424Z\"/><g><polygon fill=\"#eceeec\" points=\"22.7599 28.7 18.0742 28.7 18.0742 24.3571 16.5313 24.3571 16.5313 34.5 18.0742 34.5 18.0742 30.1 22.7599 30.1 22.7599 34.5 24.3027 34.5 24.3027 24.3571 22.7599 24.3571 22.7599 28.7\"/><path fill=\"#eceeec\" d=\"M43.593,30.4571c-.219-.3904-.5905-.7285-1.1143-1.0142-.5142-.2953-1.2095-.5428-2.0857-.7429-.6571-.1619-1.1666-.3143-1.5285-.4571-.3524-.1429-.6-.3096-.7429-.5-.1333-.2-.2-.4429-.2-.7286,0-.4476.1667-.8048.5-1.0714.3429-.2762.8094-.4142,1.4-.4142.4667,0,.8619.0857,1.1857.2571.3238.1619.581.3953.7714.7.1905.2953.3096.6381.3572,1.0286l1.5857-.0857c-.0762-.6381-.2762-1.2048-.6-1.7-.3143-.4953-.7476-.8857-1.3-1.1714-.5429-.2857-1.2-.4285-1.9714-.4285-.7334,0-1.3619.1238-1.8857.3714-.5239.2476-.9286.5952-1.2143,1.0429-.2762.4381-.4143.9476-.4143,1.5285,0,.5238.1047.9667.3143,1.3286.219.3524.5714.6476,1.0571.8857.4857.2381,1.1333.4572,1.9429.6572.7428.1809,1.3047.3666,1.6857.5571.3905.181.6524.3857.7857.6143.1429.219.2143.4714.2143.7571,0,.3143-.081.581-.2429.8-.1619.2191-.4.3857-.7143.5-.3047.1048-.6762.1572-1.1142.1572-.5048,0-.9381-.081-1.3-.2429-.3524-.1714-.6334-.419-.8429-.7428-.2095-.3334-.3476-.7381-.4143-1.2143l-1.5857.1c.0571.6953.2571,1.3047.6,1.8285.3429.5239.8095.9334,1.4,1.2286.6.2953,1.3048.4429,2.1143.4429.7333,0,1.3762-.1191,1.9286-.3572.5523-.2381.9809-.5762,1.2857-1.0143.3143-.4476.4714-.9714.4714-1.5714,0-.4952-.1096-.9381-.3286-1.3286Z\"/><path fill=\"#eceeec\" d=\"M29.7633,24.3571h-3.2571v10.1429h3.3429c1.5619,0,2.7619-.4381,3.6-1.3143.8476-.8762,1.2714-2.1238,1.2714-3.7428,0-1.6286-.4286-2.881-1.2857-3.7572-.8572-.8857-2.081-1.3286-3.6715-1.3286ZM32.2776,32.1857c-.5524.6-1.3905.9-2.5143.9h-1.7142v-7.3143h1.7142c1.1238,0,1.9619.3047,2.5143.9142.5619.6.8429,1.5191.8429,2.7572,0,1.2191-.281,2.1333-.8429,2.7428Z\"/></g></svg>"
+  },
+  "controls": [
+    {
+      "id": "HDS-EXI-01",
+      "name": "Conditions d'attribution - Certification de l'Hébergeur",
+      "description": "La certification d'un Hébergeur nécessite :\n• Qu'il ait mis en œuvre un Système de Management de la Sécurité de l'Information (SMSI) certifié selon la norme ISO 27001, complétée des exigences définies au chapitre 5 ;\n• Que le domaine d'application de ce SMSI couvre l'ensemble des activités d'hébergement de données de santé de l'Hébergeur ;\n• Que les contrats conclus avec ses clients répondent aux exigences définies au chapitre 6 ;\n• Qu'il respecte les exigences relatives à la souveraineté définies au chapitre 7 ;\n• Qu'il communique à ses clients la présentation des garanties formalisée conformément au chapitre 8."
+    },
+    {
+      "id": "HDS-EXI-02",
+      "name": "Contexte de l'organisation - Compréhension de l'organisation et de son contexte",
+      "description": "Dans la détermination de ses enjeux externes et internes, l'Hébergeur doit prendre en compte le fait que sa mission lui impose la protection des DSCP qui lui sont confiées par ses clients."
+    },
+    {
+      "id": "HDS-EXI-03",
+      "name": "Contexte de l'organisation - Compréhension des besoins et attentes des parties intéressées",
+      "description": "Dans la détermination des exigences des parties intéressées, l'Hébergeur doit prendre en compte le cadre juridique applicable en matière de protection des DSCP."
+    },
+    {
+      "id": "HDS-EXI-04",
+      "name": "Contexte de l'organisation - Détermination du domaine d'application du SMSI",
+      "description": "Le domaine d'application du SMSI doit comprendre l'ensemble des traitements de DSCP assurés par l'Hébergeur.\nIl doit couvrir tous les moyens et processus de traitement des DSCP, notamment les sauvegardes et les transferts de supports matériels de l'information."
+    },
+    {
+      "id": "HDS-EXI-05",
+      "name": "Planification - Appréciation des risques",
+      "description": "Lors de l'appréciation des risques, l'Hébergeur doit a minima envisager les événements suivants :\nA. Défaillance des supports matériels de l'information due à des menaces physiques et environnementales.\nB. Perte de contrôle de supports matériels de l'information, notamment à l'occasion :\n   a. De copie des DSCP sur des supports portables ;\n   b. De matérialisation éventuelle sous format documents papier ;\n   c. De réallocation des espaces de stockage.\nC. Dégradation, compromission ou rupture d'un flux d'information interne ou externe sous la responsabilité de l'Hébergeur.\nD. Défaillance de la maîtrise des accès attribués, que ce soit aux personnels sous le contrôle de l'organisation ou à ceux désignés par ses clients :\n   a. Attribution, modification et retrait des droits d'accès ;\n   b. Distribution des moyens d'identification électroniques ;\n   c. Traçabilité et imputabilité des accès ;\n   d. Accès occasionnels lors des audits et tests d'intrusion.\nE. Défaillance de la maîtrise des interventions, qu'elles soient à l'initiative de l'organisation ou commanditées par un client.\nF. Usages imprévus du service, par maladresse ou malveillance.\nG. Défaillances matérielles ou logicielles, avec incapacité à respecter les engagements de continuité ou de reprise d'activité.\nH. Sujétion de l'Hébergeur ou des éventuels sous-traitants à des législations extra-européennes pouvant entraîner une violation des DSCP."
+    },
+    {
+      "id": "HDS-EXI-06",
+      "name": "Planification - Traitement des risques (Sous-traitance)",
+      "description": "En cas de recours à la sous-traitance, l'Hébergeur doit s'assurer qu'il maîtrise les changements des mesures techniques et organisationnelles de ses sous-traitants permettant de traiter les risques identifiés."
+    },
+    {
+      "id": "HDS-EXI-07",
+      "name": "Planification - Traitement des risques (Langue française)",
+      "description": "Afin de réduire les risques d'usage imprévu du système, l'Hébergeur doit s'assurer que :\n• Les interfaces proposées aux clients sont disponibles au moins en langue française ;\n• Le support de premier niveau est au moins en langue française."
+    },
+    {
+      "id": "HDS-EXI-08",
+      "name": "Planification - Déclaration d'applicabilité",
+      "description": "La déclaration d'applicabilité doit être disponible en langue française pour les auditeurs qui en feront la demande."
+    },
+    {
+      "id": "HDS-EXI-09",
+      "name": "Planification - Objectifs de sécurité de l'information",
+      "description": "Les objectifs de sécurité de l'information établis par l'Hébergeur doivent intégrer la protection des DSCP qui lui sont confiées par ses clients et comporter le respect des obligations du RGPD."
+    },
+    {
+      "id": "HDS-EXI-10",
+      "name": "Supports - Sensibilisation",
+      "description": "Les personnels travaillant pour l'Hébergeur doivent être sensibilisés à la criticité en termes de disponibilité, de confidentialité et d'intégrité des DSCP hébergées.\nCette exigence s'applique également au personnel des sous-traitants éventuels de l'Hébergeur."
+    },
+    {
+      "id": "HDS-EXI-11",
+      "name": "Supports - Communication (Points de contact)",
+      "description": "L'Hébergeur doit :\n• Maintenir une liste des points de contact pour chacun des clients. Ce point de contact doit être en mesure de désigner à l'Hébergeur un professionnel de santé habilité à accéder aux DSCP lorsque cela est nécessaire ;\n• Être en capacité de transmettre sans délai cette liste à l'autorité compétente sur demande, notamment en cas de suspension ou de retrait de la certification."
+    },
+    {
+      "id": "HDS-EXI-12",
+      "name": "Supports - Communication (Certificats)",
+      "description": "L'Hébergeur doit communiquer à ses clients :\n• Une copie du certificat de conformité HDS. Cette copie constitue une garantie pour le Client de l'Hébergeur du respect des exigences de conformité ;\n• Le certificat de ses sous-traitants participant à l'activité d'hébergement lorsqu'ils sont certifiés HDS."
+    },
+    {
+      "id": "HDS-EXI-13",
+      "name": "Fonctionnement - Planification et contrôle opérationnels",
+      "description": "L'Hébergeur doit planifier et contrôler la répartition des responsabilités en termes de sécurité de l'information entre l'Hébergeur et son client."
+    },
+    {
+      "id": "HDS-EXI-14",
+      "name": "Fonctionnement - Traitement des risques (Certification sous-traitant)",
+      "description": "En cas de recours à un sous-traitant certifié pour la réalisation de tout ou partie du service d'hébergement, l'Hébergeur doit prévoir une procédure permettant d'encadrer le risque de perte ou de suspension de la certification du sous-traitant."
+    },
+    {
+      "id": "HDS-EXI-15",
+      "name": "Évaluation de la performance - Surveillance et vérification",
+      "description": "L'Hébergeur doit permettre au client d'effectuer les vérifications suivantes du niveau de sécurité proposé :\n• Si l'Hébergeur met à la disposition du client des ressources qui lui sont spécifiques, le client peut réaliser ou mandater des audits de sécurité technique sur ces seules ressources spécifiques. L'organisation assiste le client ou son intervenant mandaté dans le maintien de la sécurité de l'information durant ces audits ;\n• Sur demande du client, l'Hébergeur doit lui communiquer la synthèse managériale d'un rapport d'audit technique portant sur les ressources mutualisées dans le cadre du service. Cet audit doit être réalisé par un auditeur indépendant et dater de moins de trois ans ;\n• L'Hébergeur doit permettre au client de consulter les traces d'accès aux DSCP portées par des ressources spécifiques ou auxdites ressources par les personnels sous son contrôle ;\n• L'Hébergeur doit définir les modalités permettant à son client de consulter son dernier rapport d'audit de certification HDS."
+    },
+    {
+      "id": "HDS-EXI-16",
+      "name": "Évaluation de la performance - Audit interne",
+      "description": "Les audits internes effectués par l'Hébergeur doivent comprendre a minima :\n• Un audit permettant de déterminer si le SMSI est conforme aux exigences du présent référentiel et est efficacement mis en œuvre et maintenu ;\n• Un audit des traces des accès par les personnes opérant pour le compte de l'organisation aux DSCP ou aux systèmes utilisés pour leur traitement."
+    },
+    {
+      "id": "HDS-EXI-17",
+      "name": "Relations contractuelles - Certificat de conformité",
+      "description": "Conformément au 1° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit comporter une clause mentionnant l'indication du périmètre du certificat de conformité obtenu par l'Hébergeur, ainsi que ses dates de délivrance et de renouvellement."
+    },
+    {
+      "id": "HDS-EXI-18",
+      "name": "Relations contractuelles - Description des prestations réalisées",
+      "description": "Conformément au 2° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit comporter une clause relative à la description des prestations réalisées, comprenant le contenu des services et résultats attendus notamment aux fins de garantir la disponibilité, l'intégrité, la confidentialité et l'auditabilité des données hébergées."
+    },
+    {
+      "id": "HDS-EXI-19",
+      "name": "Relations contractuelles - Respect des droits des personnes concernées",
+      "description": "Conformément au 4° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit comporter une clause relative aux mesures mises en œuvre pour garantir le respect des droits des personnes concernées par les données de santé. Cette clause doit notamment comporter les mentions suivantes :\n• Les modalités d'exercice des droits d'accès, de rectification, de limitation, d'opposition, d'effacement et de portabilité des données (lorsqu'ils sont applicables) ;\n• Les modalités de signalement au responsable de traitement d'une violation des données à caractère personnel ;\n• Les modalités de conduite des audits par le délégué à la protection des données."
+    },
+    {
+      "id": "HDS-EXI-20",
+      "name": "Relations contractuelles - Désignation d'un référent contractuel",
+      "description": "Conformément au 5° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit comporter une clause mentionnant le référent contractuel du client de l'Hébergeur à contacter pour le traitement des incidents ayant un impact sur les données de santé hébergées."
+    },
+    {
+      "id": "HDS-EXI-21",
+      "name": "Relations contractuelles - Indicateurs de qualité et de performance",
+      "description": "Conformément au 6° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit comporter une clause précisant les indicateurs de qualité et de performance permettant la vérification du niveau de service annoncé, le niveau garanti, la périodicité de leur mesure, ainsi que l'existence ou l'absence de pénalités applicables au non-respect de ceux-ci."
+    },
+    {
+      "id": "HDS-EXI-22",
+      "name": "Relations contractuelles - Recours à la sous-traitance",
+      "description": "Conformément au 7° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit prévoir une information sur les conditions de recours à d'éventuels prestataires techniques externes et les engagements de l'Hébergeur pour que ce recours assure un niveau de protection équivalent de garantie au regard des obligations pesant sur l'Hébergeur, dans le respect de l'article 28.4 du RGPD."
+    },
+    {
+      "id": "HDS-EXI-23",
+      "name": "Relations contractuelles - Accès aux données de santé à caractère personnel hébergées",
+      "description": "Conformément au 8° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit décrire les modalités retenues pour encadrer les accès aux données de santé à caractère personnel hébergées."
+    },
+    {
+      "id": "HDS-EXI-24",
+      "name": "Relations contractuelles - Modifications ou évolutions techniques",
+      "description": "Conformément au 9° de l'article R.1111-11 du CSP, le contrat d'hébergement doit préciser les obligations de l'Hébergeur à l'égard de son Client en cas de modifications ou d'évolutions techniques introduites par lui ou imposées par le cadre légal applicable.\nLe contrat d'hébergement doit en outre prévoir l'accord préalable du Client dans le cas où ces modifications ou évolutions introduites par l'Hébergeur ne respectent pas :\n• Les niveaux de service tels que requis au chapitre 6.5 ;\n• Les garanties définies aux chapitres 6.2 et 6.9."
+    },
+    {
+      "id": "HDS-EXI-25",
+      "name": "Relations contractuelles - Garanties",
+      "description": "Conformément au 10° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit prévoir une information sur les garanties et les procédures mises en place par l'Hébergeur permettant de couvrir toute défaillance éventuelle de sa part."
+    },
+    {
+      "id": "HDS-EXI-26",
+      "name": "Relations contractuelles - Interdiction liée au traitement des données hébergées",
+      "description": "Conformément au 11° de l'article R.1111-11 du CSP, le contrat d'hébergement conclu entre l'Hébergeur et son Client doit rappeler l'interdiction pour l'Hébergeur d'utiliser les données de santé hébergées à d'autres fins que l'exécution de l'activité d'hébergement de données de santé."
+    },
+    {
+      "id": "HDS-EXI-27",
+      "name": "Relations contractuelles - Réversibilité",
+      "description": "Conformément aux 12° à 14° de l'article R.1111-11 du CSP, une clause relative à la réversibilité doit en présenter les modalités à la fin de la prestation ou en cas d'arrêt anticipé de la prestation quel qu'en soit le motif, avec a minima :\n• L'engagement de restitution de la totalité des informations confiées au titre de la prestation ;\n• L'engagement de destruction de toute copie de ces informations à l'issue de la restitution ;\n• Les modalités de calcul des coûts et délais pour la restitution des copies ;\n• Les formats de restitution, lisibles et exploitables à des fins de portabilité des données de santé, et le cas échéant les modalités permettant le déplacement des machines virtuelles/conteneurs."
+    },
+    {
+      "id": "HDS-EXI-28",
+      "name": "Souveraineté des données - Stockage dans l'EEE",
+      "description": "Quelle que soit l'activité d'hébergement de DSCP proposée au Client par l'Hébergeur ou l'un de ses sous-traitants, et dès lors que celle-ci implique un stockage de DSCP, alors l'Hébergeur ou ses sous-traitants doivent stocker ces DSCP exclusivement au sein de l'Espace Économique Européen (EEE), sans préjudice des cas d'accès à distance visée à l'exigence n°29. L'Hébergeur documente et communique au Client la localisation de ce stockage."
+    },
+    {
+      "id": "HDS-EXI-29",
+      "name": "Souveraineté des données - Accès à distance hors EEE",
+      "description": "Lorsque la prestation proposée par l'Hébergeur ou l'un de ses sous-traitants implique un accès à distance depuis un pays qui ne fait pas partie de l'Espace Économique Européen (EEE), cet accès doit être fondé sur une décision d'adéquation de la Commission adoptée en vertu de l'article 45 du RGPD ou, à défaut, sur l'une des garanties appropriées prévues à l'article 46 du règlement.\nDans ce dernier cas, l'hébergeur informe son client de l'absence de décision d'adéquation, d'une part, et des garanties appropriées au sens de l'article 46 du RGPD mises en place pour encadrer cet accès à distance, d'autre part.\nL'hébergeur indique au client et documente les garanties appropriées mises en place, ainsi que le cas échéant, tout autre mesure permettant d'assurer un niveau de protection des données équivalent à celui garanti par le droit de l'Union Européenne.\nS'agissant des mesures supplémentaires, l'hébergeur doit tenir compte des recommandations du comité européen de la protection des données 01/2020 sur les mesures qui complètent les instruments de transfert destinés à garantir le respect du niveau de protection des données à caractère personnel de l'UE (version 2.0, adoptée le 18 juin 2021)."
+    },
+    {
+      "id": "HDS-EXI-30",
+      "name": "Souveraineté des données - Législation pays tiers",
+      "description": "Lorsque l'Hébergeur, ou l'un de ses sous-traitants intervenant dans la prestation d'hébergement, est soumis à la législation d'un pays tiers n'assurant pas un niveau de protection adéquat au sens de l'article 45 du RGPD, l'Hébergeur doit indiquer dans le contrat qui le lie à son client et porter à la connaissance de l'organisme certificateur :\n• La liste des réglementations extra-européennes en vertu desquelles l'Hébergeur, ou l'un de ses sous-traitants intervenant dans la prestation d'hébergement, serait tenu de permettre un accès non autorisé par le droit de l'Union aux DSCP, au sens de l'article 48 du RGPD ;\n• Les mesures mises en œuvre par l'Hébergeur pour atténuer les risques d'accès non autorisé aux DSCP induits par ces réglementations extra-européennes ;\n• La description des risques résiduels d'accès non autorisés aux DSCP via des réglementations extra-européennes qui demeureraient malgré ces mesures.\nS'agissant de ces mesures mises en œuvre pour atténuer les risques d'accès, l'hébergeur tient compte des lignes directrices du comité européen de la protection des données 01/2020 (version 2.0, adoptée le 18 juin 2021)."
+    },
+    {
+      "id": "HDS-EXI-31",
+      "name": "Souveraineté des données - Publication cartographie des transferts",
+      "description": "L'Hébergeur doit rendre publiques et mettre à jour la cartographie des transferts des DSCP vers un pays n'appartenant pas à l'Espace Économique Européen y compris les accès distants éventuels mentionnés à l'exigence n°29 ainsi que la description des risques d'accès non autorisé visés par l'exigence n°30. Les modalités d'information du public doivent prendre la forme suivante :\n• Dans le cas où l'activité certifiée bénéficie d'une qualification SecNumCloud (version 3.2), l'Hébergeur doit communiquer l'information suivante : « Aucun risque d'accès imposé par la législation d'un pays tiers en violation du droit de l'Union » ;\n• Dans le cas où l'activité certifiée ne bénéficie pas d'une qualification SecNumCloud (version 3.2) et ne comporte pas de transfert de DSCP vers un pays n'appartenant pas à l'Espace Économique Européen, l'Hébergeur doit communiquer l'information suivante : « Aucun transfert de données de santé à caractère personnel vers un pays tiers à l'espace économique européen » ;\n• Dans le cas où l'activité certifiée ne bénéficie pas d'une qualification SecNumCloud (version 3.2) et comporte un ou plusieurs transferts de DSCP vers un pays n'appartenant pas à l'Espace Économique Européen ou un risque d'accès non autorisé visé par l'exigence n°30, l'Hébergeur doit communiquer les informations figurant dans le tableau fourni au chapitre 8.\nL'Hébergeur doit mettre ces informations à la disposition du public de manière lisible sur une page dédiée d'un site internet accessible et communiquer l'URL de la page à l'organisme certificateur. Cette URL a vocation à être publiée dans la liste des hébergeurs certifiés sur le site de l'ANS."
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import { TwentyOneCFRPart11 } from "../../Atoms/Frameworks/21CFRPart11";
 import { CCPA } from "../../Atoms/Frameworks/CCPA";
 import { DORA } from "../../Atoms/Frameworks/DORA";
 import { GDPR } from "../../Atoms/Frameworks/GDPR";
+import { HDS } from "../../Atoms/Frameworks/HDS";
 import { HIPAA } from "../../Atoms/Frameworks/HIPAA";
 import { ISO27001 } from "../../Atoms/Frameworks/ISO27001";
 import { ISO27701 } from "../../Atoms/Frameworks/ISO27701";
@@ -76,6 +77,12 @@ const availableFrameworks = [
     name: "21 CFR Part 11",
     logo: <TwentyOneCFRPart11 className="size-8" />,
     description: "21 CFR Part 11",
+  },
+  {
+    id: "HDS",
+    name: "HDS",
+    logo: <HDS className="size-8" />,
+    description: "Hébergement de Données de Santé",
   },
 ];
 
