@@ -2,6 +2,7 @@ import { useTranslate } from "@probo/i18n";
 
 import { Button } from "../../Atoms/Button/Button";
 import { Dropdown, DropdownItem } from "../../Atoms/Dropdown/Dropdown";
+import { TwentyOneCFRPart11 } from "../../Atoms/Frameworks/21CFRPart11";
 import { CCPA } from "../../Atoms/Frameworks/CCPA";
 import { DORA } from "../../Atoms/Frameworks/DORA";
 import { GDPR } from "../../Atoms/Frameworks/GDPR";
@@ -69,6 +70,12 @@ const availableFrameworks = [
     logo: <ISO42001 className="size-8" />,
     description:
             "Information technology, artificial intelligence, management system",
+  },
+  {
+    id: "21CFR-part11",
+    name: "21 CFR Part 11",
+    logo: <TwentyOneCFRPart11 className="size-8" />,
+    description: "21 CFR Part 11",
   },
 ];
 
