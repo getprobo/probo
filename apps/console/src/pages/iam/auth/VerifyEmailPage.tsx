@@ -111,7 +111,7 @@ export default function VerifyEmailPage() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-xs h-10 mx-auto mt-6"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting

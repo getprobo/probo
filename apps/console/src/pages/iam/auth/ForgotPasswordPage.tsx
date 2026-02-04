@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-xs h-10 mx-auto mt-6"
               disabled={formState.isSubmitting}
             >
               {formState.isSubmitting

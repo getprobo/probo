@@ -122,7 +122,7 @@ export default function SignUpFromInvitationPage() {
           error={formState.errors.password?.message}
         />
 
-        <Button type="submit" className="w-full" disabled={formState.isLoading}>
+        <Button type="submit" className="w-xs h-10 mx-auto mt-6" disabled={formState.isLoading}>
           {formState.isLoading
             ? __("Creating account...")
             : __("Create account")}

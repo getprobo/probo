@@ -67,7 +67,7 @@ export default function PasswordSignInPage() {
   };
 
   return (
-    <form className="space-y-4" onSubmit={handlePasswordLogin}>
+    <form className="space-y-6 w-full max-w-md mx-auto" onSubmit={handlePasswordLogin}>
       <Link
         to="/auth/login"
         className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
@@ -83,24 +83,26 @@ export default function PasswordSignInPage() {
         {__("Enter your email and password")}
       </p>
 
-      <Field
-        required
-        placeholder={__("Email")}
-        name="email"
-        type="email"
-        label={__("Email")}
-        autoFocus
-      />
+      <div className="space-y-4">
+        <Field
+          required
+          placeholder={__("Email")}
+          name="email"
+          type="email"
+          label={__("Email")}
+          autoFocus
+        />
 
-      <Field
-        required
-        placeholder={__("Password")}
-        name="password"
-        type="password"
-        label={__("Password")}
-      />
+        <Field
+          required
+          placeholder={__("Password")}
+          name="password"
+          type="password"
+          label={__("Password")}
+        />
+      </div>
 
-      <Button className="w-full" disabled={isSigningIn}>
+      <Button className="w-xs h-10 mx-auto mt-6" disabled={isSigningIn}>
         {isSigningIn ? __("Logging in...") : __("Login")}
       </Button>
 

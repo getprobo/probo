@@ -94,7 +94,7 @@ export default function VerifyMagicLinkPagePageMutation() {
         </p>
       </div>
 
-      <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
+      <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
         <Field
           label={__("Confirmation Token")}
           type="text"
@@ -109,7 +109,7 @@ export default function VerifyMagicLinkPagePageMutation() {
 
         <Button
           type="submit"
-          className="w-full"
+          className="w-xs h-10 mx-auto"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting

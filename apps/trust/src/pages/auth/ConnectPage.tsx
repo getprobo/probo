@@ -128,7 +128,7 @@ export function ConnectPage(props: {
     <div className="space-y-6 w-full max-w-md mx-auto">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">
-          {__(`Connect to ${organization.name}'s compliance page`)}
+          {__("Connect to Compliance Page")}
         </h1>
         <p className="text-txt-tertiary">
           {__(
@@ -137,7 +137,7 @@ export function ConnectPage(props: {
         </p>
       </div>
 
-      <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
+      <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
         <Field
           label={__("Email")}
           placeholder="john.doe@acme.com"
@@ -156,7 +156,7 @@ export function ConnectPage(props: {
 
         <Button
           type="submit"
-          className="w-full"
+          className="w-xs h-10 mx-auto"
           disabled={formState.isSubmitting || (magicLinkSent && timer !== 0)}
         >
           {magicLinkSent

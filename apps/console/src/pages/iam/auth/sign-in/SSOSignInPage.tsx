@@ -37,7 +37,7 @@ export default function SSOSignInPage() {
 
   return (
     <>
-      <form className="space-y-4" onSubmit={handleSSOCheck}>
+      <form className="space-y-6 w-full max-w-md mx-auto" onSubmit={handleSSOCheck}>
         <Link
           to="/auth/login"
           className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
@@ -62,7 +62,7 @@ export default function SSOSignInPage() {
           autoFocus
         />
 
-        <Button className="w-full" disabled={checking}>
+        <Button className="w-xs h-10 mx-auto mt-6" disabled={checking}>
           {checking ? __("Checking...") : __("Continue with SSO")}
         </Button>
 

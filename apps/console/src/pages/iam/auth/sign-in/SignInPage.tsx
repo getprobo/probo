@@ -6,7 +6,7 @@ export default function SignInPage() {
   const { __ } = useTranslate();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 w-full max-w-md mx-auto">
       <h1 className="text-center text-2xl font-bold">
         {__("Login to your account")}
       </h1>
@@ -14,7 +14,7 @@ export default function SignInPage() {
         {__("Choose your login method")}
       </p>
 
-      <Button className="w-full" to="/auth/password-login">
+      <Button className="w-xs h-10 mx-auto" to="/auth/password-login">
         {__("Login with Email")}
       </Button>
 
@@ -32,7 +32,7 @@ export default function SignInPage() {
         </div>
       </div>
 
-      <Button variant="secondary" className="w-full" to="/auth/sso-login">
+      <Button variant="secondary" className="w-xs h-10 mx-auto" to="/auth/sso-login">
         {__("Login with SSO")}
       </Button>
 
