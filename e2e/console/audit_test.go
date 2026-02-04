@@ -1456,7 +1456,6 @@ func TestAudit_Ordering(t *testing.T) {
 }
 
 func TestAudit_UploadReport(t *testing.T) {
-	t.Skip("Skipped: requires file storage configuration in test environment")
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -1709,7 +1708,6 @@ func TestAudit_UploadReport_Validation(t *testing.T) {
 }
 
 func TestAudit_UploadReport_RBAC(t *testing.T) {
-	t.Skip("Skipped: requires file storage configuration in test environment")
 	t.Parallel()
 
 	query := `
@@ -1782,7 +1780,6 @@ func TestAudit_UploadReport_RBAC(t *testing.T) {
 }
 
 func TestAudit_DeleteReport(t *testing.T) {
-	t.Skip("Skipped: requires file storage configuration in test environment")
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -1856,7 +1853,6 @@ func TestAudit_DeleteReport(t *testing.T) {
 }
 
 func TestAudit_DeleteReport_RBAC(t *testing.T) {
-	t.Skip("Skipped: requires file storage configuration in test environment")
 	t.Parallel()
 
 	uploadQuery := `
