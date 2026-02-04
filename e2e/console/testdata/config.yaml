@@ -39,16 +39,6 @@ probod:
       pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
       iterations: 600000
 
-  trust-auth:
-    cookie-name: "TCT"
-    cookie-domain: "localhost"
-    cookie-duration: 24
-    token-duration: 720
-    report-url-duration: 15
-    token-secret: "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes"
-    scope: "trust_center_readonly"
-    token-type: "trust_center_access"
-
   trust-center:
     http-addr: ":10080"
     https-addr: ":10443"
