@@ -16,22 +16,46 @@ package emails
 
 import (
 	"bytes"
+	"context"
 	"embed"
+	"errors"
 	"fmt"
 	htmltemplate "html/template"
+	"io/fs"
+	"mime"
 	"net/url"
+	"path/filepath"
 	texttemplate "text/template"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/filevalidation"
 )
 
 //go:embed dist
 var Templates embed.FS
 
+var (
+	//go:embed assets
+	staticAssets embed.FS
+
+	staticAssetsValidator = filevalidation.NewValidator(
+		filevalidation.WithMaxFileSize(5*1024*1024),
+		filevalidation.WithCategories(
+			filevalidation.CategoryImage,
+			filevalidation.CategoryVideo,
+		),
+	)
+)
+
+type StaticAssetURLs map[string]string
+
 type (
 	PresenterConfig struct {
 		BaseURL                         string
+		PoweredByLogoURL                string
 		SenderCompanyName               string
 		SenderCompanyWebsiteURL         string
 		SenderCompanyLogoURL            string
@@ -40,8 +64,8 @@ type (
 
 	PresenterVariables struct {
 		// Static variables
-		BaseOrigin                      string
 		BaseURL                         string
+		PoweredByLogoURL                string
 		SenderCompanyName               string
 		SenderCompanyWebsiteURL         string
 		SenderCompanyLogoURL            string
@@ -58,27 +82,22 @@ type (
 	}
 )
 
-func DefaultPresenterConfig(baseURL string) PresenterConfig {
+func DefaultPresenterConfig(baseURL string, staticAssetURLs StaticAssetURLs) PresenterConfig {
 	return PresenterConfig{
 		BaseURL:                         baseURL,
+		PoweredByLogoURL:                staticAssetURLs["probo-gray-small.png"],
 		SenderCompanyName:               "Probo",
 		SenderCompanyWebsiteURL:         "https://www.getprobo.com",
-		SenderCompanyLogoURL:            baseurl.MustParse(baseURL).AppendPath("/logos/probo.png").MustString(),
+		SenderCompanyLogoURL:            staticAssetURLs["probo.png"],
 		SenderCompanyHeadquarterAddress: "Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US",
 	}
 }
 
 func NewPresenterFromConfig(cfg PresenterConfig, fullName string) *Presenter {
-	baseURL := baseurl.MustParse(cfg.BaseURL)
-	baseOrigin := url.URL{
-		Scheme: baseURL.Scheme(),
-		Host:   baseURL.Host(),
-	}
-
 	return &Presenter{
 		variables: PresenterVariables{
-			BaseOrigin:                      baseOrigin.String(),
 			BaseURL:                         cfg.BaseURL,
+			PoweredByLogoURL:                cfg.PoweredByLogoURL,
 			SenderCompanyName:               cfg.SenderCompanyName,
 			SenderCompanyWebsiteURL:         cfg.SenderCompanyWebsiteURL,
 			SenderCompanyLogoURL:            cfg.SenderCompanyLogoURL,
@@ -89,11 +108,100 @@ func NewPresenterFromConfig(cfg PresenterConfig, fullName string) *Presenter {
 	}
 }
 
-func NewPresenter(baseURL string, fullName string) *Presenter {
+func NewPresenter(baseURL string, staticAssetURLs StaticAssetURLs, fullName string) *Presenter {
 	return NewPresenterFromConfig(
-		DefaultPresenterConfig(baseURL),
+		DefaultPresenterConfig(baseURL, staticAssetURLs),
 		fullName,
 	)
+}
+
+func GenerateStaticAssetURLs(ctx context.Context, s3Client *s3.Client, bucket string) (StaticAssetURLs, error) {
+	assetURLs := make(map[string]string)
+
+	subFS, err := fs.Sub(staticAssets, "assets")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create subtree file system: %w", err)
+	}
+
+	err = fs.WalkDir(subFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil
+			}
+
+			return fmt.Errorf("cannot get dir entry info: %w", err)
+		}
+
+		ext := filepath.Ext(info.Name())
+		mimeType := mime.TypeByExtension(ext)
+
+		if err := staticAssetsValidator.Validate(info.Name(), mimeType, info.Size()); err != nil {
+			return fmt.Errorf("cannot validate file: %w", err)
+		}
+
+		file, err := subFS.Open(path)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = file.Close() }()
+
+		_, err = s3Client.PutObject(
+			ctx,
+			&s3.PutObjectInput{
+				Bucket: aws.String(bucket),
+				Key:    aws.String(path),
+				Body:   file,
+				Metadata: map[string]string{
+					"type": "static-email-asset",
+				},
+				ContentType: aws.String(mimeType),
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("cannot upload file to S3: %w", err)
+		}
+
+		presignClient := s3.NewPresignClient(s3Client)
+
+		encodedFilename := url.QueryEscape(info.Name())
+		contentDisposition := fmt.Sprintf("attachment; filename=%q; filename*=UTF-8''%s",
+			encodedFilename, encodedFilename)
+
+		presignedReq, err := presignClient.PresignGetObject(
+			ctx,
+			&s3.GetObjectInput{
+				Bucket:                     aws.String(bucket),
+				Key:                        aws.String(path),
+				ResponseCacheControl:       aws.String("max-age=3600, public"),
+				ResponseContentDisposition: &contentDisposition,
+			},
+			func(opts *s3.PresignOptions) {
+				opts.Expires = 7 * 24 * time.Hour
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("cannot presign GetObject request: %w", err)
+		}
+
+		assetURLs[path] = presignedReq.URL
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate asset URLs: %w", err)
+	}
+
+	return assetURLs, nil
 }
 
 const (

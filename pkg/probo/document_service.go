@@ -543,7 +543,7 @@ func (s *DocumentService) SendSigningNotifications(
 					return fmt.Errorf("cannot create signing request token: %w", err)
 				}
 
-				emailPresenter := emails.NewPresenter(s.svc.baseURL, people.FullName)
+				emailPresenter := emails.NewPresenter(s.svc.baseURL, s.svc.emailStaticAssetURLs, people.FullName)
 
 				subject, textBody, htmlBody, err := emailPresenter.RenderDocumentSigning(
 					"/documents/signing-requests",
@@ -1823,7 +1823,7 @@ func (s *DocumentService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName)
+			emailPresenter := emails.NewPresenter(s.svc.baseURL, s.svc.emailStaticAssetURLs, recipientName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderDocumentExport(
 				downloadURL,

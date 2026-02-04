@@ -290,7 +290,7 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, s.emailStaticAssetURLs, identity.FullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderPasswordReset(
 				"/auth/reset-password",
@@ -406,7 +406,7 @@ func (s AuthService) CreateIdentityWithPassword(
 		return nil, nil, fmt.Errorf("cannot generate confirmation token: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenter(s.baseURL, req.FullName)
+	emailPresenter := emails.NewPresenter(s.baseURL, s.emailStaticAssetURLs, req.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail("/auth/verify-email", confirmationToken)
 	if err != nil {
@@ -569,7 +569,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			emailPresenterCfg := emails.DefaultPresenterConfig(s.baseURL)
+			emailPresenterCfg := emails.DefaultPresenterConfig(s.baseURL, s.emailStaticAssetURLs)
 			if req.CompliancePageID != nil {
 				var err error
 				emailPresenterCfg, err = s.CompliancePageService.EmailPresenterConfig(ctx, *req.CompliancePageID)

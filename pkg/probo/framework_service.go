@@ -254,17 +254,17 @@ func (s FrameworkService) Export(
 							return fmt.Errorf("cannot load evidence file: %w", err)
 						}
 
-					object, err := s.svc.s3.GetObject(
-						ctx,
-						&s3.GetObjectInput{
-							Bucket: aws.String(s.svc.bucket),
-							Key:    aws.String(evidence_file.FileKey),
-						},
-					)
-					if err != nil {
-						return fmt.Errorf("cannot download evidence: %w", err)
-					}
-					defer func() { _ = object.Body.Close() }()
+						object, err := s.svc.s3.GetObject(
+							ctx,
+							&s3.GetObjectInput{
+								Bucket: aws.String(s.svc.bucket),
+								Key:    aws.String(evidence_file.FileKey),
+							},
+						)
+						if err != nil {
+							return fmt.Errorf("cannot download evidence: %w", err)
+						}
+						defer func() { _ = object.Body.Close() }()
 
 						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, measure.Name, evidence_file.FileName))
 						if err != nil {
@@ -800,7 +800,7 @@ func (s FrameworkService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName)
+			emailPresenter := emails.NewPresenter(s.svc.baseURL, s.svc.emailStaticAssetURLs, recipientName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderFrameworkExport(
 				downloadURL,

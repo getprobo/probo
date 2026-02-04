@@ -91,7 +91,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		organization      = &coredata.Organization{}
 		customDomain      *coredata.CustomDomain
 		logoFile          = &coredata.File{}
-		emailPresenterCfg = emails.DefaultPresenterConfig(s.baseURL)
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.baseURL, s.emailStaticAssetURLs)
 	)
 
 	scope := coredata.NewScopeFromObjectID(compliancePageID)

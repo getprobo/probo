@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	"go.probo.inc/probo/packages/emails"
 	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -292,11 +293,21 @@ func (impl *Implm) Run(
 		}
 	}
 
+	emailStaticAssetURLs, err := emails.GenerateStaticAssetURLs(
+		ctx,
+		s3Client,
+		impl.cfg.AWS.Bucket,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot generate email static asset URLs: %w", err)
+	}
+
 	iamService, err := iam.NewService(
 		ctx,
 		pgClient,
 		fileManagerService,
 		hp,
+		emailStaticAssetURLs,
 		iam.Config{
 			DisableSignup:                  impl.cfg.Auth.DisableSignup,
 			InvitationTokenValidity:        time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity) * time.Second,
@@ -376,6 +387,7 @@ func (impl *Implm) Run(
 		l.Named("probo"),
 		slackService,
 		iamService,
+		emailStaticAssetURLs,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -393,6 +405,7 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l,
 		slackService,
+		emailStaticAssetURLs,
 	)
 
 	serverHandler, err := server.NewServer(

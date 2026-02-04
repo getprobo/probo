@@ -226,7 +226,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 		organization      = &coredata.Organization{}
 		customDomain      *coredata.CustomDomain
 		logoFile          = &coredata.File{}
-		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.baseURL)
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.baseURL, s.svc.emailStaticAssetURLs)
 	)
 
 	scope := coredata.NewScopeFromObjectID(compliancePageID)

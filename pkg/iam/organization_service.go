@@ -464,7 +464,7 @@ func (s *OrganizationService) InviteMember(
 				return fmt.Errorf("cannot generate invitation token: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, s.emailStaticAssetURLs, identity.FullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderInvitation(
 				"/auth/signup-from-invitation",

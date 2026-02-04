@@ -11,6 +11,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -28,6 +29,7 @@ type (
 		pg                         *pg.Client
 		fm                         *filemanager.Service
 		hp                         *passwdhash.Profile
+		emailStaticAssetURLs       emails.StaticAssetURLs
 		encryptionKey              cipher.EncryptionKey
 		baseURL                    string
 		tokenSecret                string
@@ -82,6 +84,7 @@ func NewService(
 	pgClient *pg.Client,
 	fm *filemanager.Service,
 	hp *passwdhash.Profile,
+	emailStaticAssetURLs emails.StaticAssetURLs,
 	cfg Config,
 ) (*Service, error) {
 	if cfg.Bucket == "" {
@@ -104,6 +107,7 @@ func NewService(
 		pg:                         pgClient,
 		fm:                         fm,
 		hp:                         hp,
+		emailStaticAssetURLs:       emailStaticAssetURLs,
 		baseURL:                    cfg.BaseURL.String(),
 		tokenSecret:                cfg.TokenSecret,
 		disableSignup:              cfg.DisableSignup,

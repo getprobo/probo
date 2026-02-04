@@ -116,7 +116,7 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, s.emailStaticAssetURLs, identity.FullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail("/auth/verify-email", confirmationToken)
 			if err != nil {
