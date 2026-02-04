@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.118.0] - 2026-02-04
+
 ### Added
 
 - Add HDS framework
