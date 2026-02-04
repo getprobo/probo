@@ -27,19 +27,17 @@ export async function execute(
 	const query = `
 		mutation CreateOrganization($input: CreateOrganizationInput!) {
 			createOrganization(input: $input) {
-				organizationEdge {
-					node {
-						id
-						name
-						description
-						websiteUrl
-						email
-						headquarterAddress
-						logoUrl
-						horizontalLogoUrl
-						createdAt
-						updatedAt
-					}
+				organization {
+					id
+					name
+					description
+					websiteUrl
+					email
+					headquarterAddress
+					logoUrl
+					horizontalLogoUrl
+					createdAt
+					updatedAt
 				}
 			}
 		}
