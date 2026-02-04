@@ -24,7 +24,7 @@ services:
     image: "quay.io/minio/minio"
     entrypoint: "sh"
     command: |
-      -c 'mkdir -p /var/lib/minio/probod && minio server --json --console-address :9001 /var/lib/minio'
+      -c 'mkdir -p /var/lib/minio/probod && mkdir -p /var/lib/minio/probod-test && minio server --json --console-address :9001 /var/lib/minio'
     ports:
       - "9000:9000"
       - "9001:9001"
