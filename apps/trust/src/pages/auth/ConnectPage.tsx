@@ -73,7 +73,7 @@ export function ConnectPage(props: {
     };
   }, [magicLinkSent]);
 
-  usePageTitle(__("Connect to Probo"));
+  usePageTitle(__(`Connect to ${organization.name}'s Compliance Page`));
 
   const {
     handleSubmit: handleSubmitWrapper,
@@ -128,7 +128,7 @@ export function ConnectPage(props: {
     <div className="space-y-6 w-full max-w-md mx-auto">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">
-          {__("Connect to Compliance Page")}
+          {__(`Connect to ${organization.name}'s Compliance Page`)}
         </h1>
         <p className="text-txt-tertiary">
           {__(
