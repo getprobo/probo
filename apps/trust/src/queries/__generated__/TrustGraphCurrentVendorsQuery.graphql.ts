@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a3c8818351ece417d86f795d14d5f3f0>>
+ * @generated SignedSource<<185bfb58c14dbcc1d372726d2f435475>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -197,7 +197,7 @@ return {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
-                        "name": "category",
+                        "name": "description",
                         "storageKey": null
                       },
                       {
@@ -205,13 +205,6 @@ return {
                         "args": null,
                         "kind": "ScalarField",
                         "name": "websiteUrl",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "privacyPolicyUrl",
                         "storageKey": null
                       }
                     ],
@@ -229,12 +222,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9fde94112be0665245d50a25fd166d85",
+    "cacheID": "cb54aef75c2c7696abeea7ef139d99ce",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentVendorsQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentVendorsQuery {\n  currentTrustCenter {\n    id\n    organization {\n      name\n      id\n    }\n    vendors(first: 50) {\n      edges {\n        node {\n          id\n          countries\n          ...VendorRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment VendorRowFragment on Vendor {\n  id\n  name\n  category\n  websiteUrl\n  privacyPolicyUrl\n  countries\n}\n"
+    "text": "query TrustGraphCurrentVendorsQuery {\n  currentTrustCenter {\n    id\n    organization {\n      name\n      id\n    }\n    vendors(first: 50) {\n      edges {\n        node {\n          id\n          countries\n          ...VendorRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
   }
 };
 })();

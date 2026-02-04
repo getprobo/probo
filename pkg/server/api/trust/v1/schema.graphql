@@ -431,6 +431,7 @@ enum VendorCategory
 type Vendor implements Node {
   id: ID!
   name: String!
+  description: String
   category: VendorCategory!
   websiteUrl: String
   privacyPolicyUrl: String

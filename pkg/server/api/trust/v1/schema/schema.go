@@ -247,6 +247,7 @@ type ComplexityRoot struct {
 	Vendor struct {
 		Category         func(childComplexity int) int
 		Countries        func(childComplexity int) int
+		Description      func(childComplexity int) int
 		ID               func(childComplexity int) int
 		Name             func(childComplexity int) int
 		PrivacyPolicyURL func(childComplexity int) int
@@ -1051,6 +1052,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Vendor.Countries(childComplexity), true
+	case "Vendor.description":
+		if e.complexity.Vendor.Description == nil {
+			break
+		}
+
+		return e.complexity.Vendor.Description(childComplexity), true
 	case "Vendor.id":
 		if e.complexity.Vendor.ID == nil {
 			break
@@ -1662,6 +1669,7 @@ enum VendorCategory
 type Vendor implements Node {
   id: ID!
   name: String!
+  description: String
   category: VendorCategory!
   websiteUrl: String
   privacyPolicyUrl: String
@@ -5881,6 +5889,35 @@ func (ec *executionContext) fieldContext_Vendor_name(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _Vendor_description(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Vendor_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Vendor_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vendor",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Vendor_category(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6157,6 +6194,8 @@ func (ec *executionContext) fieldContext_VendorEdge_node(_ context.Context, fiel
 				return ec.fieldContext_Vendor_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Vendor_description(ctx, field)
 			case "category":
 				return ec.fieldContext_Vendor_category(ctx, field)
 			case "websiteUrl":
@@ -7976,7 +8015,11 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 		}
 		return ec._Audit(ctx, sel, obj)
 	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
+		if typedObj, ok := obj.(graphql.Marshaler); ok {
+			return typedObj
+		} else {
+			panic(fmt.Errorf("unexpected type %T; non-generated variants of Node must implement graphql.Marshaler", obj))
+		}
 	}
 }
 
@@ -10161,6 +10204,8 @@ func (ec *executionContext) _Vendor(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "description":
+			out.Values[i] = ec._Vendor_description(ctx, field, obj)
 		case "category":
 			out.Values[i] = ec._Vendor_category(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

@@ -247,6 +247,7 @@ type TrustCenterReferenceEdge struct {
 type Vendor struct {
 	ID               gid.GID                 `json:"id"`
 	Name             string                  `json:"name"`
+	Description      *string                 `json:"description,omitempty"`
 	Category         coredata.VendorCategory `json:"category"`
 	WebsiteURL       *string                 `json:"websiteUrl,omitempty"`
 	PrivacyPolicyURL *string                 `json:"privacyPolicyUrl,omitempty"`
