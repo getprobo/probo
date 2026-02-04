@@ -450,27 +450,43 @@ WITH mbr AS (
         identity_id = @identity_id
         AND state = 'ACTIVE'
         AND %s
+),
+r AS (
+    SELECT
+        mbr.id,
+        mbr.identity_id,
+        mbr.organization_id,
+        mbr.role,
+        mbr.source,
+        mbr.state,
+        COALESCE(mp.full_name, i.full_name, '') as full_name,
+        i.email_address,
+        o.name as organization_name,
+        mbr.created_at,
+        mbr.updated_at
+    FROM
+        mbr
+    JOIN
+        identities i ON mbr.identity_id = i.id
+    JOIN
+        organizations o ON mbr.organization_id = o.id
+    LEFT JOIN
+        iam_membership_profiles mp ON mp.membership_id = mbr.id
 )
 SELECT
-    mbr.id,
-    mbr.identity_id,
-    mbr.organization_id,
-    mbr.role,
-    mbr.source,
-    mbr.state,
-    COALESCE(mp.full_name, i.full_name, '') as full_name,
-    i.email_address,
-    o.name as organization_name,
-    mbr.created_at,
-    mbr.updated_at
+    id,
+    identity_id,
+    organization_id,
+    role,
+    source,
+    state,
+    full_name,
+    email_address,
+    organization_name,
+    created_at,
+    updated_at
 FROM
-    mbr
-JOIN
-    identities i ON mbr.identity_id = i.id
-JOIN
-    organizations o ON mbr.organization_id = o.id
-LEFT JOIN
-    iam_membership_profiles mp ON mp.membership_id = mbr.id
+    r
 WHERE
     %s
 `
@@ -521,30 +537,47 @@ WITH m AS (
     WHERE
         organization_id = @organization_id
         AND %s
+),
+r AS (
+    SELECT
+        m.id,
+        m.identity_id,
+        m.organization_id,
+        m.role,
+        m.source,
+        m.state,
+        COALESCE(mp.full_name, i.full_name, '') as full_name,
+        o.name as organization_name,
+        i.email_address,
+        m.created_at,
+        m.updated_at
+    FROM
+        m
+    JOIN
+        identities i ON m.identity_id = i.id
+    JOIN
+        organizations o ON m.organization_id = o.id
+    LEFT JOIN
+        iam_membership_profiles mp ON mp.membership_id = m.id
+    WHERE
+        %s
 )
 SELECT
-    m.id,
-    m.identity_id,
-    m.organization_id,
-    m.role,
-    m.source,
-    m.state,
-    COALESCE(mp.full_name, i.full_name, '') as full_name,
-    o.name as organization_name,
-    i.email_address,
-    m.created_at,
-    m.updated_at
+    id,
+    identity_id,
+    organization_id,
+    role,
+    source,
+    state,
+    full_name,
+    organization_name,
+    email_address,
+    created_at,
+    updated_at
 FROM
-    m
-JOIN
-    identities i ON m.identity_id = i.id
-JOIN
-    organizations o ON m.organization_id = o.id
-LEFT JOIN
-    iam_membership_profiles mp ON mp.membership_id = m.id
+    r
 WHERE
     %s
-    AND %s
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
