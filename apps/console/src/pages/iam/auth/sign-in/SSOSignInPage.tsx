@@ -37,7 +37,7 @@ export default function SSOSignInPage() {
 
   return (
     <>
-      <form className="space-y-6 w-full max-w-md mx-auto" onSubmit={handleSSOCheck}>
+      <form className="space-y-6 w-full max-w-md mx-auto pt-4" onSubmit={handleSSOCheck}>
         <Link
           to="/auth/login"
           className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"

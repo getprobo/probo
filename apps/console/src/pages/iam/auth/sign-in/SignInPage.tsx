@@ -6,7 +6,7 @@ export default function SignInPage() {
   const { __ } = useTranslate();
 
   return (
-    <div className="space-y-6 w-full max-w-md mx-auto">
+    <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <h1 className="text-center text-2xl font-bold">
         {__("Login to your account")}
       </h1>
@@ -18,18 +18,13 @@ export default function SignInPage() {
         {__("Login with Email")}
       </Button>
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border"></div>
-        </div>
-        <div className="relative flex justify-center">
-          <span
-            className="px-4 text-xs uppercase text-txt-secondary"
-            style={{ backgroundColor: "var(--color-level-0)" }}
-          >
-            {__("Or")}
-          </span>
-        </div>
+      <div className="relative my-6 w-full">
+        <div className="w-xs border-t border-border-mid mx-auto" />
+        <span
+          className="px-4 text-xs uppercase text-txt-secondary bg-level-0 absolute top-0 left-1/2 -translate-1/2"
+        >
+          {__("Or")}
+        </span>
       </div>
 
       <Button variant="secondary" className="w-xs h-10 mx-auto" to="/auth/sso-login">

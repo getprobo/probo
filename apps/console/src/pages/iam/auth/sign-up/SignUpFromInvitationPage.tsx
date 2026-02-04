@@ -95,7 +95,7 @@ export default function SignUpFromInvitationPage() {
   };
 
   return (
-    <div className="space-y-6 w-full max-w-md mx-auto">
+    <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">{__("Create your account")}</h1>
         <p className="text-txt-tertiary">
