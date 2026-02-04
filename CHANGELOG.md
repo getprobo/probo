@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.118.1] - 2026-02-04
+
+### Fixed
+
+- Fix column reference "full_name" is ambiguous
+
 ## [0.118.0] - 2026-02-04
 
 ### Added
