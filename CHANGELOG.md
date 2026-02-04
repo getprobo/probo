@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add HDS framework
+- Add 21 CFR Part 11 framework
+
+### Changed
+
+- Serve email static assets from object store
+- Rework the UI of vendor row on compliance page
+- Update auth layout on console and compliance page to remove right panel
+
+### Fixed
+
+- Fix create organization node
+
+### Security
+
+- Fix npm vulnerabilities
+
 ## [0.117.3] - 2026-02-03
 
 ### Fixed
