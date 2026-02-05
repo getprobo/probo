@@ -52,7 +52,8 @@ const (
 	ActionMembershipRoleSetOwner = "iam:membership-role:set-owner"
 
 	// Membership Profile actions
-	ActionMembershipProfileGet = "iam:membership-profile:get"
+	ActionMembershipProfileGet  = "iam:membership-profile:get"
+	ActionMembershipProfileList = "iam:membership-profile:list"
 
 	// Personal API Key actions
 	ActionPersonalAPIKeyCreate = "iam:personal-api-key:create"

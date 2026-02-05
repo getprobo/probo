@@ -146,7 +146,10 @@ var IAMOwnerPolicy = policy.NewPolicy(
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
 	// Full access to membership profiles (scoped to own organization)
-	policy.Allow(ActionMembershipProfileGet).
+	policy.Allow(
+		ActionMembershipProfileGet,
+		ActionMembershipProfileList,
+	).
 		WithSID("full-membership-profile-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
@@ -221,7 +224,10 @@ var IAMAdminPolicy = policy.NewPolicy(
 		),
 
 	// Can view membership profiles (scoped to own organization)
-	policy.Allow(ActionMembershipProfileGet).
+	policy.Allow(
+		ActionMembershipProfileGet,
+		ActionMembershipProfileList,
+	).
 		WithSID("membership-profile-admin-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
@@ -297,7 +303,10 @@ var IAMViewerPolicy = policy.NewPolicy(
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
 	// Can view membership profiles (scoped to own organization)
-	policy.Allow(ActionMembershipProfileGet).
+	policy.Allow(
+		ActionMembershipProfileGet,
+		ActionMembershipProfileList,
+	).
 		WithSID("membership-profile-viewer-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
