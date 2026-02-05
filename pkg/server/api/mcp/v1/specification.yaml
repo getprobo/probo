@@ -43,42 +43,42 @@ components:
           $ref: "#/components/schemas/OrderDirection"
           description: Vendor order direction
 
-    PeopleOrderBy:
+    ProfileOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/PeopleOrderField"
-          description: People order field
+          $ref: "#/components/schemas/ProfileOrderField"
+          description: Profile order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: People order direction
+          description: Profile order direction
 
-    PeopleOrderField:
+    ProfileOrderField:
       type: string
       enum:
         - CREATED_AT
         - FULL_NAME
         - KIND
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.PeopleOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField
 
-    PeopleKind:
+    ProfileKind:
       type: string
       enum:
         - EMPLOYEE
         - CONTRACTOR
         - SERVICE_ACCOUNT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.PeopleKind
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileKind
 
-    People:
+    Profile:
       type: object
       required:
         - id
         - organization_id
         - full_name
-        - primary_email_address
+        - email_address
         - additional_email_addresses
         - kind
         - created_at
@@ -86,14 +86,14 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: People ID
+          description: Profile ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         full_name:
           type: string
           description: Full name
-        primary_email_address:
+        email_address:
           $ref: "#/components/schemas/EmailAddress"
           description: Primary email address
         additional_email_addresses:
@@ -102,8 +102,8 @@ components:
             $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/PeopleKind"
-          description: People kind
+          $ref: "#/components/schemas/ProfileKind"
+          description: Profile kind
         position:
           type:
             - string
@@ -130,7 +130,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListPeopleInput:
+    ListProfilesInput:
       type: object
       required:
         - organization_id
@@ -139,8 +139,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/PeopleOrderBy"
-          description: People order by
+          $ref: "#/components/schemas/ProfileOrderBy"
+          description: Profile order by
         size:
           type: integer
           description: Page size
@@ -152,20 +152,20 @@ components:
           properties:
             exclude_contract_ended:
               type: boolean
-              description: Exclude people with ended contracts
+              description: Exclude profiles with ended contracts
 
-    ListPeopleOutput:
+    ListProfilesOutput:
       type: object
       required:
-        - people
+        - profiles
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        people:
+        profiles:
           type: array
           items:
-            $ref: "#/components/schemas/People"
+            $ref: "#/components/schemas/Profile"
 
     GID:
       type: string
@@ -600,82 +600,34 @@ components:
         vendor:
           $ref: "#/components/schemas/Vendor"
 
-    GetPeopleInput:
+    GetProfileInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: People ID
+          description: Profile ID
 
-    GetPeopleOutput:
+    GetProfileOutput:
       type: object
       required:
-        - people
+        - profile
       properties:
-        people:
-          $ref: "#/components/schemas/People"
+        profile:
+          $ref: "#/components/schemas/Profile"
 
-    AddPeopleInput:
-      type: object
-      required:
-        - organization_id
-        - full_name
-        - primary_email_address
-        - kind
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        full_name:
-          type: string
-          description: Full name
-        primary_email_address:
-          $ref: "#/components/schemas/EmailAddress"
-          description: Primary email address
-        additional_email_addresses:
-          type: array
-          items:
-            $ref: "#/components/schemas/EmailAddress"
-          description: Additional email addresses
-        kind:
-          $ref: "#/components/schemas/PeopleKind"
-          description: People kind
-        position:
-          type: string
-          description: Position
-        contract_start_date:
-          type: string
-          format: date-time
-          description: Contract start date
-        contract_end_date:
-          type: string
-          format: date-time
-          description: Contract end date
-
-    AddPeopleOutput:
-      type: object
-      required:
-        - people
-      properties:
-        people:
-          $ref: "#/components/schemas/People"
-
-    UpdatePeopleInput:
+    UpdateProfileInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: People ID
+          description: Profile ID
         full_name:
           type: string
           description: Full name
-        primary_email_address:
-          $ref: "#/components/schemas/EmailAddress"
-          description: Primary email address
         additional_email_addresses:
           anyOf:
             - type: array
@@ -685,8 +637,8 @@ components:
               description: No additional email addresses
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/PeopleKind"
-          description: People kind
+          $ref: "#/components/schemas/ProfileKind"
+          description: Profile kind
         position:
           type: ["string", "null"]
           description: Position
@@ -702,13 +654,13 @@ components:
           description: Contract end date
           go.probo.inc/mcpgen/omittable: true
 
-    UpdatePeopleOutput:
+    UpdateProfileOutput:
       type: object
       required:
-        - people
+        - profile
       properties:
-        people:
-          $ref: "#/components/schemas/People"
+        profile:
+          $ref: "#/components/schemas/Profile"
 
     RiskOrderField:
       type: string
@@ -4160,7 +4112,7 @@ components:
           description: Document version ID
         signatory_id:
           $ref: "#/components/schemas/GID"
-          description: Signatory ID (People ID)
+          description: Signatory ID (Profile ID)
 
     RequestDocumentVersionSignatureOutput:
       type: object
@@ -4207,15 +4159,15 @@ tools:
       $ref: "#/components/schemas/ListVendorsInput"
     outputSchema:
       $ref: "#/components/schemas/ListVendorsOutput"
-  - name: listPeople
-    description: List all people for the organization
+  - name: listProfiles
+    description: List all profiles for the organization
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListPeopleInput"
+      $ref: "#/components/schemas/ListProfilesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListPeopleOutput"
+      $ref: "#/components/schemas/ListProfilesOutput"
   - name: addVendor
     description: Add a new vendor to the organization
     hints:
@@ -4232,31 +4184,23 @@ tools:
       $ref: "#/components/schemas/UpdateVendorInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateVendorOutput"
-  - name: getPeople
-    description: Get a people by ID
+  - name: getProfile
+    description: Get a profile by ID
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/GetPeopleInput"
+      $ref: "#/components/schemas/GetProfileInput"
     outputSchema:
-      $ref: "#/components/schemas/GetPeopleOutput"
-  - name: addPeople
-    description: Add a new people to the organization
+      $ref: "#/components/schemas/GetProfileOutput"
+  - name: updateProfile
+    description: Update an existing profile
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddPeopleInput"
+      $ref: "#/components/schemas/UpdateProfileInput"
     outputSchema:
-      $ref: "#/components/schemas/AddPeopleOutput"
-  - name: updatePeople
-    description: Update an existing people
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/UpdatePeopleInput"
-    outputSchema:
-      $ref: "#/components/schemas/UpdatePeopleOutput"
+      $ref: "#/components/schemas/UpdateProfileOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:

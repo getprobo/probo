@@ -11,7 +11,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -251,111 +250,6 @@ func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolReques
 	}
 
 	return nil, types.NewUpdateVendorOutput(vendor), nil
-}
-
-func (r *Resolver) ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListPeopleInput) (*mcp.CallToolResult, types.ListPeopleOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionPeopleList)
-
-	prb := r.ProboService(ctx, input.OrganizationID)
-
-	pageOrderBy := page.OrderBy[coredata.PeopleOrderField]{
-		Field:     coredata.PeopleOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.PeopleOrderField]{
-			Field:     input.OrderBy.Field,
-			Direction: input.OrderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-
-	var peopleFilter = coredata.NewPeopleFilter(nil)
-	if input.Filter != nil {
-		peopleFilter = coredata.NewPeopleFilter(input.Filter.ExcludeContractEnded)
-	}
-
-	page, err := prb.Peoples.ListForOrganizationID(ctx, input.OrganizationID, cursor, peopleFilter)
-	if err != nil {
-		panic(fmt.Errorf("cannot list organization people: %w", err))
-	}
-
-	return nil, types.NewListPeopleOutput(page), nil
-}
-
-func (r *Resolver) GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionPeopleGet)
-
-	prb := r.ProboService(ctx, input.ID)
-
-	people, err := prb.Peoples.Get(ctx, input.ID)
-	if err != nil {
-		return nil, types.GetPeopleOutput{}, fmt.Errorf("failed to get people: %w", err)
-	}
-
-	return nil, types.GetPeopleOutput{
-		People: types.NewPeople(people),
-	}, nil
-}
-
-func (r *Resolver) AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddPeopleInput) (*mcp.CallToolResult, types.AddPeopleOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionPeopleCreate)
-
-	svc := r.ProboService(ctx, input.OrganizationID)
-
-	additionalEmails := []mail.Addr{}
-	if input.AdditionalEmailAddresses != nil {
-		additionalEmails = input.AdditionalEmailAddresses
-	}
-
-	people, err := svc.Peoples.Create(
-		ctx,
-		probo.CreatePeopleRequest{
-			OrganizationID:           input.OrganizationID,
-			FullName:                 input.FullName,
-			PrimaryEmailAddress:      input.PrimaryEmailAddress,
-			AdditionalEmailAddresses: additionalEmails,
-			Kind:                     input.Kind,
-			Position:                 input.Position,
-			ContractStartDate:        input.ContractStartDate,
-			ContractEndDate:          input.ContractEndDate,
-		},
-	)
-	if err != nil {
-		return nil, types.AddPeopleOutput{}, fmt.Errorf("failed to create people: %w", err)
-	}
-
-	return nil, types.AddPeopleOutput{
-		People: types.NewPeople(people),
-	}, nil
-}
-
-func (r *Resolver) UpdatePeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdatePeopleInput) (*mcp.CallToolResult, types.UpdatePeopleOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionPeopleUpdate)
-
-	svc := r.ProboService(ctx, input.ID)
-
-	people, err := svc.Peoples.Update(
-		ctx,
-		probo.UpdatePeopleRequest{
-			ID:                       input.ID,
-			FullName:                 input.FullName,
-			PrimaryEmailAddress:      input.PrimaryEmailAddress,
-			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
-			Kind:                     input.Kind,
-			Position:                 UnwrapOmittable(input.Position),
-			ContractStartDate:        UnwrapOmittable(input.ContractStartDate),
-			ContractEndDate:          UnwrapOmittable(input.ContractEndDate),
-		},
-	)
-	if err != nil {
-		panic(fmt.Errorf("cannot update people: %w", err))
-	}
-
-	return nil, types.UpdatePeopleOutput{
-		People: types.NewPeople(people),
-	}, nil
 }
 
 func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error) {
@@ -1932,4 +1826,14 @@ func (r *Resolver) CancelSignatureRequestTool(ctx context.Context, req *mcp.Call
 	return nil, types.CancelSignatureRequestOutput{
 		DeletedDocumentVersionSignatureID: input.DocumentVersionSignatureID,
 	}, nil
+}
+
+func (r *Resolver) ListProfilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListProfilesInput) (*mcp.CallToolResult, types.ListProfilesOutput, error) {
+	return nil, types.ListProfilesOutput{}, fmt.Errorf("listProfiles not implemented")
+}
+func (r *Resolver) GetProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetProfileInput) (*mcp.CallToolResult, types.GetProfileOutput, error) {
+	return nil, types.GetProfileOutput{}, fmt.Errorf("getProfile not implemented")
+}
+func (r *Resolver) UpdateProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProfileInput) (*mcp.CallToolResult, types.UpdateProfileOutput, error) {
+	return nil, types.UpdateProfileOutput{}, fmt.Errorf("updateProfile not implemented")
 }
