@@ -609,7 +609,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 		organization      = &coredata.Organization{}
 		customDomain      *coredata.CustomDomain
 		logoFile          = &coredata.File{}
-		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.baseURL, s.svc.emailStaticAssetURLs)
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.bucket, s.svc.baseURL)
 	)
 
 	scope := coredata.NewScopeFromObjectID(compliancePageID)
@@ -669,12 +669,12 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 			return emailPresenterCfg, nil
 		}
 
-		presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, logoFile, 7*24*time.Hour)
-		if err != nil {
-			return emailPresenterCfg, fmt.Errorf("cannot generate file URL: %w", err)
+		emailPresenterCfg.SenderCompanyLogo = emails.Asset{
+			Name:       logoFile.FileName,
+			ObjectKey:  logoFile.FileKey,
+			BucketName: logoFile.BucketName,
+			MimeType:   logoFile.MimeType,
 		}
-
-		emailPresenterCfg.SenderCompanyLogoURL = presignedURL
 
 		emailPresenterCfg.SenderCompanyName = organization.Name
 

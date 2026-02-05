@@ -23,7 +23,6 @@ import (
 	htmltemplate "html/template"
 	"io/fs"
 	"mime"
-	"net/url"
 	"path/filepath"
 	texttemplate "text/template"
 	"time"
@@ -31,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 )
 
@@ -48,21 +48,28 @@ var (
 			filevalidation.CategoryVideo,
 		),
 	)
+
+	staticAssetsDuration = 7 * 24 * time.Hour
 )
 
-type StaticAssetURLs map[string]string
-
 type (
+	Asset struct {
+		Name       string
+		ObjectKey  string
+		BucketName string
+		MimeType   string
+	}
+
 	PresenterConfig struct {
 		BaseURL                         string
-		PoweredByLogoURL                string
+		PoweredByLogo                   Asset
 		SenderCompanyName               string
 		SenderCompanyWebsiteURL         string
-		SenderCompanyLogoURL            string
+		SenderCompanyLogo               Asset
 		SenderCompanyHeadquarterAddress string
 	}
 
-	PresenterVariables struct {
+	CommonVariables struct {
 		// Static variables
 		BaseURL                         string
 		PoweredByLogoURL                string
@@ -73,54 +80,74 @@ type (
 
 		// Common variables
 		RecipientFullName string
-		// Not to confuse with the SenderCompanyName, which is the brand of the product being used
-		OrganizationName string
 	}
 
 	Presenter struct {
-		variables PresenterVariables
+		fm                *filemanager.Service
+		config            PresenterConfig
+		RecipientFullName string
 	}
 )
 
-func DefaultPresenterConfig(baseURL string, staticAssetURLs StaticAssetURLs) PresenterConfig {
+func (a *Asset) GetObjectKey() string {
+	return a.ObjectKey
+}
+
+func (a *Asset) GetName() string {
+	return a.Name
+}
+
+func (a *Asset) GetBucketName() string {
+	return a.BucketName
+}
+
+func (a *Asset) GetMimeType() string {
+	return a.MimeType
+}
+
+var _ filemanager.File = (*Asset)(nil)
+
+func DefaultPresenterConfig(bucketName string, baseURL string) PresenterConfig {
 	return PresenterConfig{
-		BaseURL:                         baseURL,
-		PoweredByLogoURL:                staticAssetURLs["probo-gray-small.png"],
-		SenderCompanyName:               "Probo",
-		SenderCompanyWebsiteURL:         "https://www.getprobo.com",
-		SenderCompanyLogoURL:            staticAssetURLs["probo.png"],
+		BaseURL: baseURL,
+		PoweredByLogo: Asset{
+			Name:       "probo-gray-small.png",
+			ObjectKey:  "probo-gray-small.png",
+			BucketName: bucketName,
+			MimeType:   "image/png",
+		},
+		SenderCompanyName:       "Probo",
+		SenderCompanyWebsiteURL: "https://www.getprobo.com",
+		SenderCompanyLogo: Asset{
+			Name:       "probo.png",
+			ObjectKey:  "probo.png",
+			BucketName: bucketName,
+			MimeType:   "image/png",
+		},
 		SenderCompanyHeadquarterAddress: "Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US",
 	}
 }
 
-func NewPresenterFromConfig(cfg PresenterConfig, fullName string) *Presenter {
+func NewPresenterFromConfig(fileService *filemanager.Service, cfg PresenterConfig, fullName string) *Presenter {
 	return &Presenter{
-		variables: PresenterVariables{
-			BaseURL:                         cfg.BaseURL,
-			PoweredByLogoURL:                cfg.PoweredByLogoURL,
-			SenderCompanyName:               cfg.SenderCompanyName,
-			SenderCompanyWebsiteURL:         cfg.SenderCompanyWebsiteURL,
-			SenderCompanyLogoURL:            cfg.SenderCompanyLogoURL,
-			SenderCompanyHeadquarterAddress: cfg.SenderCompanyHeadquarterAddress,
-
-			RecipientFullName: fullName,
-		},
+		fm:                fileService,
+		config:            cfg,
+		RecipientFullName: fullName,
 	}
 }
 
-func NewPresenter(baseURL string, staticAssetURLs StaticAssetURLs, fullName string) *Presenter {
+func NewPresenter(fileService *filemanager.Service, bucketName string, baseURL string, fullName string) *Presenter {
 	return NewPresenterFromConfig(
-		DefaultPresenterConfig(baseURL, staticAssetURLs),
+		fileService,
+		DefaultPresenterConfig(bucketName, baseURL),
 		fullName,
 	)
 }
 
-func GenerateStaticAssetURLs(ctx context.Context, s3Client *s3.Client, bucket string) (StaticAssetURLs, error) {
-	assetURLs := make(map[string]string)
-
+func UpdloadStaticAssets(ctx context.Context, s3Client *s3.Client, bucket string) error {
 	subFS, err := fs.Sub(staticAssets, "assets")
 	if err != nil {
-		return nil, fmt.Errorf("cannot create subtree file system: %w", err)
+		return fmt.Errorf("cannot create subtree file system: %w", err)
 	}
 
 	err = fs.WalkDir(subFS, ".", func(path string, d fs.DirEntry, err error) error {
@@ -170,38 +197,14 @@ func GenerateStaticAssetURLs(ctx context.Context, s3Client *s3.Client, bucket st
 			return fmt.Errorf("cannot upload file to S3: %w", err)
 		}
 
-		presignClient := s3.NewPresignClient(s3Client)
-
-		encodedFilename := url.QueryEscape(info.Name())
-		contentDisposition := fmt.Sprintf("attachment; filename=%q; filename*=UTF-8''%s",
-			encodedFilename, encodedFilename)
-
-		presignedReq, err := presignClient.PresignGetObject(
-			ctx,
-			&s3.GetObjectInput{
-				Bucket:                     aws.String(bucket),
-				Key:                        aws.String(path),
-				ResponseCacheControl:       aws.String("max-age=3600, public"),
-				ResponseContentDisposition: &contentDisposition,
-			},
-			func(opts *s3.PresignOptions) {
-				opts.Expires = 7 * 24 * time.Hour
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("cannot presign GetObject request: %w", err)
-		}
-
-		assetURLs[path] = presignedReq.URL
-
 		return nil
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate asset URLs: %w", err)
+		return fmt.Errorf("cannot generate asset URLs: %w", err)
 	}
 
-	return assetURLs, nil
+	return nil
 }
 
 const (
@@ -237,119 +240,175 @@ var (
 	magicLinkTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/magic-link.txt.tmpl"))
 )
 
-func (p *Presenter) RenderConfirmEmail(confirmationURLPath string, confirmationTokenParam string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) getCommonVariables(ctx context.Context) (*CommonVariables, error) {
+	poweredByLogoURL, err := p.fm.GenerateFileUrl(ctx, &p.config.PoweredByLogo, staticAssetsDuration)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate probo logo URL: %w", err)
+	}
+	senderCompanyLogoURL, err := p.fm.GenerateFileUrl(ctx, &p.config.SenderCompanyLogo, staticAssetsDuration)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate sender logo URL: %w", err)
+	}
+
+	return &CommonVariables{
+		BaseURL:                         p.config.BaseURL,
+		PoweredByLogoURL:                poweredByLogoURL,
+		SenderCompanyName:               p.config.SenderCompanyName,
+		SenderCompanyWebsiteURL:         p.config.SenderCompanyWebsiteURL,
+		SenderCompanyLogoURL:            senderCompanyLogoURL,
+		SenderCompanyHeadquarterAddress: p.config.SenderCompanyHeadquarterAddress,
+		RecipientFullName:               p.RecipientFullName,
+	}, nil
+}
+
+func (p *Presenter) RenderConfirmEmail(ctx context.Context, confirmationURLPath string, confirmationTokenParam string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectConfirmEmail, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
 	confirmationUrl := baseurl.
-		MustParse(p.variables.BaseURL).
+		MustParse(vars.BaseURL).
 		AppendPath(confirmationURLPath).
 		WithQuery("token", confirmationTokenParam).
 		MustString()
 
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		ConfirmationUrl string
 	}{
-		PresenterVariables: p.variables,
-		ConfirmationUrl:    confirmationUrl,
+		CommonVariables: vars,
+		ConfirmationUrl: confirmationUrl,
 	}
 
 	textBody, htmlBody, err = renderEmail(confirmEmailTextTemplate, confirmEmailHTMLTemplate, data)
 	return subjectConfirmEmail, textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderPasswordReset(resetPasswordURLPath string, resetPasswordToken string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderPasswordReset(ctx context.Context, resetPasswordURLPath string, resetPasswordToken string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectConfirmEmail, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
 	resetUrl := baseurl.
-		MustParse(p.variables.BaseURL).
+		MustParse(vars.BaseURL).
 		AppendPath(resetPasswordURLPath).
 		WithQuery("token", resetPasswordToken).
 		MustString()
 
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		ResetUrl string
 	}{
-		PresenterVariables: p.variables,
-		ResetUrl:           resetUrl,
+		CommonVariables: vars,
+		ResetUrl:        resetUrl,
 	}
 
 	textBody, htmlBody, err = renderEmail(passwordResetTextTemplate, passwordResetHTMLTemplate, data)
 	return subjectPasswordReset, textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderInvitation(invitationURLPath string, invitationToken string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath string, invitationToken string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectInvitation, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
 	invitationURL := baseurl.
-		MustParse(p.variables.BaseURL).
+		MustParse(vars.BaseURL).
 		AppendPath(invitationURLPath).
 		WithQuery("token", invitationToken).
-		WithQuery("fullName", p.variables.RecipientFullName).
+		WithQuery("fullName", vars.RecipientFullName).
 		MustString()
 
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		InvitationUrl    string
 		OrganizationName string
 	}{
-		PresenterVariables: p.variables,
-		InvitationUrl:      invitationURL,
-		OrganizationName:   organizationName,
+		CommonVariables:  vars,
+		InvitationUrl:    invitationURL,
+		OrganizationName: organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(invitationTextTemplate, invitationHTMLTemplate, data)
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderDocumentSigning(signinURLPath string, token string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
-	signingURL := baseurl.MustParse(p.variables.BaseURL).
+func (p *Presenter) RenderDocumentSigning(ctx context.Context, signinURLPath string, token string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectDocumentSigning, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	signingURL := baseurl.MustParse(vars.BaseURL).
 		AppendPath(signinURLPath).
 		WithQuery("token", token).
 		MustString()
 
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		SigningUrl       string
 		OrganizationName string
 	}{
-		PresenterVariables: p.variables,
-		SigningUrl:         signingURL,
-		OrganizationName:   organizationName,
+		CommonVariables:  vars,
+		SigningUrl:       signingURL,
+		OrganizationName: organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentSigningTextTemplate, documentSigningHTMLTemplate, data)
 	return fmt.Sprintf(subjectDocumentSigning, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderDocumentExport(downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderDocumentExport(ctx context.Context, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectDocumentExport, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		DownloadUrl string
 	}{
-		PresenterVariables: p.variables,
-		DownloadUrl:        downloadUrl,
+		CommonVariables: vars,
+		DownloadUrl:     downloadUrl,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentExportTextTemplate, documentExportHTMLTemplate, data)
 	return subjectDocumentExport, textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderFrameworkExport(downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectFrameworkExport, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		DownloadUrl string
 	}{
-		PresenterVariables: p.variables,
-		DownloadUrl:        downloadUrl,
+		CommonVariables: vars,
+		DownloadUrl:     downloadUrl,
 	}
 
 	textBody, htmlBody, err = renderEmail(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderTrustCenterAccess(organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderTrustCenterAccess(ctx context.Context, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectTrustCenterAccess, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		OrganizationName string
 	}{
-		PresenterVariables: p.variables,
-		OrganizationName:   organizationName,
+		CommonVariables:  vars,
+		OrganizationName: organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)
@@ -357,34 +416,45 @@ func (p *Presenter) RenderTrustCenterAccess(organizationName string) (subject st
 }
 
 func (p *Presenter) RenderTrustCenterDocumentAccessRejected(
+	ctx context.Context,
 	fileNames []string,
 	organizationName string,
 ) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectTrustCenterDocumentAccessRejected, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		FileNames        []string
 		OrganizationName string
 	}{
-		PresenterVariables: p.variables,
-		FileNames:          fileNames,
-		OrganizationName:   organizationName,
+		CommonVariables:  vars,
+		FileNames:        fileNames,
+		OrganizationName: organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterDocumentAccessRejectedTextTemplate, trustCenterDocumentAccessRejectedHTMLTemplate, data)
 	return fmt.Sprintf(subjectTrustCenterDocumentAccessRejected, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderMagicLink(magicLinkUrlPath string, tokenString string, tokenDuration time.Duration, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string, tokenString string, tokenDuration time.Duration, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return subjectMagicLink, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
 	data := struct {
-		PresenterVariables
+		*CommonVariables
 		MagicLinkURL      string
 		DurationInMinutes int
 		OrganizationName  string
 	}{
-		PresenterVariables: p.variables,
-		MagicLinkURL:       baseurl.MustParse(p.variables.BaseURL).AppendPath(magicLinkUrlPath).WithQuery("token", tokenString).MustString(),
-		DurationInMinutes:  int(tokenDuration.Minutes()),
-		OrganizationName:   organizationName,
+		CommonVariables:   vars,
+		MagicLinkURL:      baseurl.MustParse(vars.BaseURL).AppendPath(magicLinkUrlPath).WithQuery("token", tokenString).MustString(),
+		DurationInMinutes: int(tokenDuration.Minutes()),
+		OrganizationName:  organizationName,
 	}
 
 	textBody, htmlBody, err = renderEmail(magicLinkTextTemplate, magicLinkHTMLTemplate, data)

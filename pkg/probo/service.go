@@ -23,7 +23,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
-	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/coredata"
@@ -50,19 +49,18 @@ type ExportService interface {
 
 type (
 	Service struct {
-		pg                   *pg.Client
-		s3                   *s3.Client
-		bucket               string
-		encryptionKey        cipher.EncryptionKey
-		baseURL              string
-		tokenSecret          string
-		agentConfig          agents.Config
-		html2pdfConverter    *html2pdf.Converter
-		acmeService          *certmanager.ACMEService
-		fileManager          *filemanager.Service
-		logger               *log.Logger
-		slack                *slack.Service
-		emailStaticAssetURLs emails.StaticAssetURLs
+		pg                *pg.Client
+		s3                *s3.Client
+		bucket            string
+		encryptionKey     cipher.EncryptionKey
+		baseURL           string
+		tokenSecret       string
+		agentConfig       agents.Config
+		html2pdfConverter *html2pdf.Converter
+		acmeService       *certmanager.ACMEService
+		fileManager       *filemanager.Service
+		logger            *log.Logger
+		slack             *slack.Service
 	}
 
 	TenantService struct {
@@ -75,7 +73,6 @@ type (
 		tokenSecret                       string
 		agent                             *agents.Agent
 		fileManager                       *filemanager.Service
-		emailStaticAssetURLs              emails.StaticAssetURLs
 		Frameworks                        *FrameworkService
 		Measures                          *MeasureService
 		Tasks                             *TaskService
@@ -131,7 +128,6 @@ func NewService(
 	logger *log.Logger,
 	slackService *slack.Service,
 	iamService *iam.Service,
-	emailStaticAssetURLs emails.StaticAssetURLs,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -140,19 +136,18 @@ func NewService(
 	iamService.Authorizer.RegisterPolicySet(ProboPolicySet())
 
 	svc := &Service{
-		pg:                   pgClient,
-		s3:                   s3Client,
-		bucket:               bucket,
-		encryptionKey:        encryptionKey,
-		baseURL:              baseURL,
-		tokenSecret:          tokenSecret,
-		agentConfig:          agentConfig,
-		html2pdfConverter:    html2pdfConverter,
-		acmeService:          acmeService,
-		fileManager:          fileManagerService,
-		logger:               logger,
-		slack:                slackService,
-		emailStaticAssetURLs: emailStaticAssetURLs,
+		pg:                pgClient,
+		s3:                s3Client,
+		bucket:            bucket,
+		encryptionKey:     encryptionKey,
+		baseURL:           baseURL,
+		tokenSecret:       tokenSecret,
+		agentConfig:       agentConfig,
+		html2pdfConverter: html2pdfConverter,
+		acmeService:       acmeService,
+		fileManager:       fileManagerService,
+		logger:            logger,
+		slack:             slackService,
 	}
 
 	return svc, nil
@@ -160,16 +155,15 @@ func NewService(
 
 func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService := &TenantService{
-		pg:                   s.pg,
-		s3:                   s.s3,
-		bucket:               s.bucket,
-		encryptionKey:        s.encryptionKey,
-		baseURL:              s.baseURL,
-		scope:                coredata.NewScope(tenantID),
-		tokenSecret:          s.tokenSecret,
-		agent:                agents.NewAgent(nil, s.agentConfig),
-		fileManager:          s.fileManager,
-		emailStaticAssetURLs: s.emailStaticAssetURLs,
+		pg:            s.pg,
+		s3:            s.s3,
+		bucket:        s.bucket,
+		encryptionKey: s.encryptionKey,
+		baseURL:       s.baseURL,
+		scope:         coredata.NewScope(tenantID),
+		tokenSecret:   s.tokenSecret,
+		agent:         agents.NewAgent(nil, s.agentConfig),
+		fileManager:   s.fileManager,
 	}
 
 	tenantService.Frameworks = &FrameworkService{

@@ -24,12 +24,20 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
-type Service struct {
-	s3Client *s3.Client
-}
+type (
+	Service struct {
+		s3Client *s3.Client
+	}
+
+	File interface {
+		GetObjectKey() string
+		GetName() string
+		GetBucketName() string
+		GetMimeType() string
+	}
+)
 
 func NewService(s3Client *s3.Client) *Service {
 	return &Service{
@@ -39,13 +47,13 @@ func NewService(s3Client *s3.Client) *Service {
 
 func (s *Service) GetFileBase64(
 	ctx context.Context,
-	file *coredata.File,
+	file File,
 ) (base64Data string, mimeType string, err error) {
 	result, err := s.s3Client.GetObject(
 		ctx,
 		&s3.GetObjectInput{
-			Bucket: &file.BucketName,
-			Key:    &file.FileKey,
+			Bucket: aws.String(file.GetBucketName()),
+			Key:    aws.String(file.GetObjectKey()),
 		},
 	)
 	if err != nil {
@@ -59,7 +67,7 @@ func (s *Service) GetFileBase64(
 	}
 
 	if result.ContentType == nil || *result.ContentType == "" {
-		return "", "", fmt.Errorf("no MIME type available for file %s", file.FileKey)
+		return "", "", fmt.Errorf("no MIME type available for file %s", file.GetObjectKey())
 	}
 
 	base64Data = base64.StdEncoding.EncodeToString(fileData)
@@ -89,17 +97,17 @@ func (s *Service) GetFileSize(content io.Reader) (int64, error) {
 
 func (s *Service) PutFile(
 	ctx context.Context,
-	file *coredata.File,
+	file File,
 	content io.Reader,
 	metadata map[string]string,
 ) (int64, error) {
 	_, err := s.s3Client.PutObject(
 		ctx,
 		&s3.PutObjectInput{
-			Bucket:      &file.BucketName,
-			Key:         &file.FileKey,
+			Bucket:      aws.String(file.GetBucketName()),
+			Key:         aws.String(file.GetObjectKey()),
 			Body:        content,
-			ContentType: &file.MimeType,
+			ContentType: aws.String(file.GetMimeType()),
 			Metadata:    metadata,
 		},
 	)
@@ -110,8 +118,8 @@ func (s *Service) PutFile(
 	headOutput, err := s.s3Client.HeadObject(
 		ctx,
 		&s3.HeadObjectInput{
-			Bucket: &file.BucketName,
-			Key:    &file.FileKey,
+			Bucket: aws.String(file.GetBucketName()),
+			Key:    aws.String(file.GetObjectKey()),
 		},
 	)
 	if err != nil {
@@ -123,20 +131,20 @@ func (s *Service) PutFile(
 
 func (s *Service) GenerateFileUrl(
 	ctx context.Context,
-	file *coredata.File,
+	file File,
 	expiresIn time.Duration,
 ) (string, error) {
 	presignClient := s3.NewPresignClient(s.s3Client)
 
-	encodedFilename := url.QueryEscape(file.FileName)
+	encodedFilename := url.QueryEscape(file.GetName())
 	contentDisposition := fmt.Sprintf("attachment; filename=%q; filename*=UTF-8''%s",
 		encodedFilename, encodedFilename)
 
 	presignedReq, err := presignClient.PresignGetObject(
 		ctx,
 		&s3.GetObjectInput{
-			Bucket:                     &file.BucketName,
-			Key:                        &file.FileKey,
+			Bucket:                     aws.String(file.GetBucketName()),
+			Key:                        aws.String(file.GetObjectKey()),
 			ResponseCacheControl:       aws.String("max-age=3600, public"),
 			ResponseContentDisposition: &contentDisposition,
 		},

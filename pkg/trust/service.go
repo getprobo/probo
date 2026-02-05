@@ -22,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -36,19 +35,18 @@ import (
 
 type (
 	Service struct {
-		pg                   *pg.Client
-		s3                   *s3.Client
-		bucket               string
-		proboSvc             *probo.Service
-		encryptionKey        cipher.EncryptionKey
-		slackSigningSecret   string
-		baseURL              string
-		iam                  *iam.Service
-		html2pdfConverter    *html2pdf.Converter
-		fileManager          *filemanager.Service
-		logger               *log.Logger
-		slack                *slack.Service
-		emailStaticAssetURLs emails.StaticAssetURLs
+		pg                 *pg.Client
+		s3                 *s3.Client
+		bucket             string
+		proboSvc           *probo.Service
+		encryptionKey      cipher.EncryptionKey
+		slackSigningSecret string
+		baseURL            string
+		iam                *iam.Service
+		html2pdfConverter  *html2pdf.Converter
+		fileManager        *filemanager.Service
+		logger             *log.Logger
+		slack              *slack.Service
 	}
 
 	TenantService struct {
@@ -63,7 +61,6 @@ type (
 		html2pdfConverter     *html2pdf.Converter
 		fileManager           *filemanager.Service
 		logger                *log.Logger
-		emailStaticAssetURLs  emails.StaticAssetURLs
 		TrustCenters          *TrustCenterService
 		Documents             *DocumentService
 		Audits                *AuditService
@@ -90,38 +87,35 @@ func NewService(
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 	slack *slack.Service,
-	emailStaticAssetURLs emails.StaticAssetURLs,
 ) *Service {
 	return &Service{
-		pg:                   pgClient,
-		s3:                   s3Client,
-		bucket:               bucket,
-		encryptionKey:        encryptionKey,
-		slackSigningSecret:   slackSigningSecret,
-		baseURL:              baseURL,
-		iam:                  iam,
-		html2pdfConverter:    html2pdfConverter,
-		fileManager:          fileManagerService,
-		logger:               logger,
-		slack:                slack,
-		emailStaticAssetURLs: emailStaticAssetURLs,
+		pg:                 pgClient,
+		s3:                 s3Client,
+		bucket:             bucket,
+		encryptionKey:      encryptionKey,
+		slackSigningSecret: slackSigningSecret,
+		baseURL:            baseURL,
+		iam:                iam,
+		html2pdfConverter:  html2pdfConverter,
+		fileManager:        fileManagerService,
+		logger:             logger,
+		slack:              slack,
 	}
 }
 
 func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService := &TenantService{
-		pg:                   s.pg,
-		s3:                   s.s3,
-		bucket:               s.bucket,
-		scope:                coredata.NewScope(tenantID),
-		proboSvc:             s.proboSvc,
-		encryptionKey:        s.encryptionKey,
-		baseURL:              s.baseURL,
-		iam:                  s.iam,
-		html2pdfConverter:    s.html2pdfConverter,
-		fileManager:          s.fileManager,
-		logger:               s.logger,
-		emailStaticAssetURLs: s.emailStaticAssetURLs,
+		pg:                s.pg,
+		s3:                s.s3,
+		bucket:            s.bucket,
+		scope:             coredata.NewScope(tenantID),
+		proboSvc:          s.proboSvc,
+		encryptionKey:     s.encryptionKey,
+		baseURL:           s.baseURL,
+		iam:               s.iam,
+		html2pdfConverter: s.html2pdfConverter,
+		fileManager:       s.fileManager,
+		logger:            s.logger,
 	}
 
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}

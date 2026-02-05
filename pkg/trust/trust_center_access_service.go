@@ -483,9 +483,9 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, access.Name)
+	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, access.Name)
 
-	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(organization.Name)
+	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
 	if err != nil {
 		return fmt.Errorf("cannot render trust center access email: %w", err)
 	}
@@ -606,9 +606,10 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	if fullName == "" {
 		fullName = access.Email.Username()
 	}
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName)
+	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, fullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterDocumentAccessRejected(
+		ctx,
 		fileNames,
 		organization.Name,
 	)

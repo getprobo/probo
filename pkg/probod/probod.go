@@ -293,12 +293,11 @@ func (impl *Implm) Run(
 		}
 	}
 
-	emailStaticAssetURLs, err := emails.GenerateStaticAssetURLs(
+	if err := emails.UpdloadStaticAssets(
 		ctx,
 		s3Client,
 		impl.cfg.AWS.Bucket,
-	)
-	if err != nil {
+	); err != nil {
 		return fmt.Errorf("cannot generate email static asset URLs: %w", err)
 	}
 
@@ -307,7 +306,6 @@ func (impl *Implm) Run(
 		pgClient,
 		fileManagerService,
 		hp,
-		emailStaticAssetURLs,
 		iam.Config{
 			DisableSignup:                  impl.cfg.Auth.DisableSignup,
 			InvitationTokenValidity:        time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity) * time.Second,
@@ -387,7 +385,6 @@ func (impl *Implm) Run(
 		l.Named("probo"),
 		slackService,
 		iamService,
-		emailStaticAssetURLs,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -405,7 +402,6 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l,
 		slackService,
-		emailStaticAssetURLs,
 	)
 
 	serverHandler, err := server.NewServer(

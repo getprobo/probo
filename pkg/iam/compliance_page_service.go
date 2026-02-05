@@ -91,7 +91,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		organization      = &coredata.Organization{}
 		customDomain      *coredata.CustomDomain
 		logoFile          = &coredata.File{}
-		emailPresenterCfg = emails.DefaultPresenterConfig(s.baseURL, s.emailStaticAssetURLs)
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.bucket, s.baseURL)
 	)
 
 	scope := coredata.NewScopeFromObjectID(compliancePageID)
@@ -153,12 +153,12 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 
 		// If logo exists, then we will brand the emails with the org as a sender
 
-		presignedURL, err := s.fm.GenerateFileUrl(ctx, logoFile, 7*24*time.Hour)
-		if err != nil {
-			return emailPresenterCfg, fmt.Errorf("cannot generate file URL: %w", err)
+		emailPresenterCfg.SenderCompanyLogo = emails.Asset{
+			Name:       logoFile.FileName,
+			ObjectKey:  logoFile.FileKey,
+			BucketName: logoFile.BucketName,
+			MimeType:   logoFile.MimeType,
 		}
-
-		emailPresenterCfg.SenderCompanyLogoURL = presignedURL
 
 		emailPresenterCfg.SenderCompanyName = organization.Name
 

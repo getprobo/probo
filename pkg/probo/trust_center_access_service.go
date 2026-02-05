@@ -417,9 +417,9 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Con
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, access.Name)
+	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, access.Name)
 
-	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(organization.Name)
+	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
 	if err != nil {
 		return fmt.Errorf("cannot render trust center access email: %w", err)
 	}
