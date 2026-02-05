@@ -797,6 +797,9 @@ func (impl *Implm) runTrustCenterServer(
 				if errors.As(err, &noSNIErr) {
 					return nil, nil
 				}
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil, nil
+				}
 			}
 			return cert, err
 		},
