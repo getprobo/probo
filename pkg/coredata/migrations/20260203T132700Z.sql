@@ -2,11 +2,11 @@
 ALTER TABLE
     iam_membership_profiles
 ADD
-    COLUMN identity_id REFERENCES identities(id) NOT NULL,
+    COLUMN identity_id TEXT REFERENCES identities(id),
 ADD
-    COLUMN additional_email_addresses CITEXT [] NOT NULL,
+    COLUMN additional_email_addresses CITEXT [],
 ADD
-    COLUMN kind PEOPLE_KIND NOT NULL,
+    COLUMN kind PEOPLE_KIND,
 ADD
     COLUMN contract_start_date DATE,
 ADD
@@ -23,72 +23,79 @@ FROM
 WHERE
     m.id = mp.membership_id;
 
+ALTER TABLE
+    iam_membership_profiles
+ALTER COLUMN
+    identity_id
+SET
+    NOT NULL;
+
 -- 2. Add profile references to all table referencing peoples
 -- was owner_id, NOT NULL
 ALTER TABLE
     assets
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- was owner_id, NOT NULL
 ALTER TABLE
     continual_improvements
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- was owner_id, NOT NULL
 ALTER TABLE
     data
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- was owner_id, NOT NULL
 ALTER TABLE
     document_versions
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- was attendee_id, NOT NULL
 ALTER TABLE
     meeting_attendees
 ADD
-    COLUMN attendee_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE CASCADE;
+    COLUMN attendee_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- was owner_id, NOT NULL
 ALTER TABLE
     nonconformities
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- was owner_id, NOT NULL
 ALTER TABLE
     obligations
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- was owner_id, can be null
 ALTER TABLE
     documents
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id);
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id);
 
 -- was signed_by, NOT NULL
 ALTER TABLE
     document_version_signatures
 ADD
-    COLUMN signed_by_profile_id REFERENCES iam_membership_profiles(id);
+    COLUMN signed_by_profile_id TEXT REFERENCES iam_membership_profiles(id);
 
 -- was data_protection_officer_id, can be null
 ALTER TABLE
     processing_activities
 ADD
-    COLUMN dpo_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    COLUMN dpo_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- was owner_id, can be null
 ALTER TABLE
     risks
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE
 SET
     NULL;
 
@@ -96,13 +103,13 @@ SET
 ALTER TABLE
     states_of_applicability
 ADD
-    COLUMN owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    COLUMN owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 -- was assigned_to, can be null
 ALTER TABLE
     tasks
 ADD
-    COLUMN assigned_to_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE
+    COLUMN assigned_to_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE
 SET
     NULL;
 
@@ -110,7 +117,7 @@ SET
 ALTER TABLE
     vendors
 ADD
-    COLUMN business_owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE
+    COLUMN business_owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE
 SET
     NULL;
 
@@ -118,7 +125,7 @@ SET
 ALTER TABLE
     vendors
 ADD
-    COLUMN security_owner_profile_id REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE
+    COLUMN security_owner_profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE
 SET
     NULL;
 
@@ -142,67 +149,70 @@ SELECT
 FROM
     peoples p ON CONFLICT DO NOTHING;
 
--- 4. Create missing memberships & profiles
+-- 4. Create missing memberships
 WITH people_identities AS (
     SELECT
         i.id AS identity_id,
         p.tenant_id AS tenant_id,
         p.organization_id AS organization_id,
+        p.contract_end_date AS contract_end_date
+    FROM
+        peoples p
+        INNER JOIN identities i ON i.email_address = p.primary_email_address
+)
+INSERT INTO
+    iam_memberships (
+        id,
+        tenant_id,
+        identity_id,
+        organization_id,
+        role,
+        source,
+        state,
+        created_at,
+        updated_at
+    )
+SELECT
+    generate_gid(decode_base64_unpadded(pi.tenant_id), 39),
+    pi.tenant_id,
+    pi.identity_id,
+    pi.organization_id,
+    'EMPLOYEE' :: authz_role,
+    'MANUAL',
+    CASE
+        WHEN pi.contract_end_date IS NOT NULL
+        AND pi.contract_end_date <= NOW() THEN 'INACTIVE' :: membership_state
+        ELSE 'ACTIVE' :: membership_state
+    END,
+    NOW(),
+    NOW()
+FROM
+    people_identities pi ON CONFLICT DO NOTHING;
+
+-- 5. Create missing profiles
+WITH people_memberships AS (
+    SELECT
+        i.id AS identity_id,
+        m.id AS membership_id,
+        p.tenant_id AS tenant_id,
         p.kind AS kind,
         p.full_name AS full_name,
         p.additional_email_addresses AS additional_email_addresses,
         p.position AS position,
         p.contract_start_date AS contract_start_date,
-        p.contract_end_date AS contract_end_date,
+        p.contract_start_date AS contract_end_date
     FROM
-        peoples
-        JOIN identities i ON i.primary_email_address = p.primary_email_address
-),
-people_memberships AS (
-    INSERT INTO
-        iam_memberships (
-            id,
-            tenant_id,
-            identity_id,
-            organization_id,
-            role,
-            source,
-            state,
-            created_at,
-            updated_at
-        )
-    SELECT
-        generate_gid(decode_base64_unpadded(pi.tenant_id), 39),
-        pi.tenant_id,
-        pi.identity_id,
-        pi.organization_id,
-        'EMPLOYEE' :: authz_role,
-        'MANUAL',
-        CASE
-            WHEN p.contract_end_date IS NOT NULL
-            AND p.contract_end_date <= NOW() THEN 'INACTIVE' :: membership_state
-            ELSE 'ACTIVE' :: membership_state
-        END,
-        NOW(),
-        NOW()
-    FROM
-        people_identities pi ON CONFLICT DO NOTHING RETURNING id AS membership_id,
-        pi.identity_id AS identity_id,
-        pi.tenant_id AS tenant_id,
-        pi.organization_id AS organization_id,
-        pi.kind AS kind,
-        pi.full_name AS full_name,
-        pi.additional_email_addresses AS additional_email_addresses,
-        pi.position AS position,
-        pi.contract_start_date AS contract_start_date,
-        pi.contract_end_date AS contract_start_date,
-) -- Create missing profiles
--- Note: we always have a profile for an existing membership (they are created together in the same TX),
--- So it is safe to create the missing profiles from the newly created memberships
+        peoples p
+        INNER JOIN identities i ON i.email_address = p.primary_email_address
+        INNER JOIN iam_memberships m ON m.identity_id = i.id
+    WHERE
+        p.organization_id = m.organization_id
+)
 INSERT INTO
     iam_membership_profiles (
         id,
         tenant_id,
+        identity_id,
         membership_id,
         full_name,
         kind,
@@ -216,6 +226,7 @@ INSERT INTO
 SELECT
     generate_gid(decode_base64_unpadded(pm.tenant_id), 51),
     pm.tenant_id,
+    pm.identity_id,
     pm.membership_id,
     pm.full_name,
     pm.kind,
@@ -228,23 +239,26 @@ SELECT
 FROM
     people_memberships pm ON CONFLICT DO NOTHING;
 
--- 5. Update all profiles from peoples
+-- 6. Update all profiles from peoples
 WITH people_memberships AS (
     SELECT
         m.id AS membership_id,
-        COALESCE(p.additional_email_addresses, [] :: CITEXT),
-        COALESCE(p.kind, 'EMPLOYEE' :: PEOPLE_KIND),
+        COALESCE(
+            p.additional_email_addresses,
+            '{}' :: CITEXT []
+        ) AS additional_email_addresses,
+        COALESCE(p.kind, 'EMPLOYEE' :: PEOPLE_KIND) AS kind,
         p.contract_start_date,
         p.contract_end_date,
-        p.position,
+        p.position
     FROM
         iam_memberships m
-        JOIN identities i ON i.id = m.identity_id
+        INNER JOIN identities i ON i.id = m.identity_id
         LEFT JOIN peoples p ON p.primary_email_address = i.email_address
         AND p.organization_id = m.organization_id
 )
 UPDATE
-    iam_membership_profiles
+    iam_membership_profiles mp
 SET
     additional_email_addresses = pm.additional_email_addresses,
     kind = pm.kind,
@@ -254,18 +268,30 @@ SET
 FROM
     people_memberships pm
 WHERE
-    membership_id = pm.membership_id;
+    mp.membership_id = pm.membership_id;
 
--- 6. Fill new references to profiles (e.g. previous references to peoples)
+ALTER TABLE
+    iam_membership_profiles
+ALTER COLUMN
+    additional_email_addresses
+SET
+    NOT NULL,
+ALTER COLUMN
+    kind
+SET
+    NOT NULL;
+
+-- 7. Fill new references to profiles (e.g. previous references to peoples)
 WITH people_profiles AS (
     SELECT
         mp.id AS membership_profile_id,
         p.id AS people_id
     FROM
         iam_membership_profiles mp
-        JOIN iam_memberships m ON m.id = mp.membership_id
-        JOIN identities i ON i.id = m.identity_id
+        INNER JOIN iam_memberships m ON m.id = mp.membership_id
+        INNER JOIN identities i ON i.id = m.identity_id
         LEFT JOIN peoples p ON p.primary_email_address = i.email_address
+        AND m.organization_id = p.organization_id
 ),
 updated_assets AS (
     UPDATE
@@ -416,7 +442,7 @@ FROM
 WHERE
     v.security_owner_id = pp.people_id;
 
--- 7. Now that references are filled, add the NOT NULL constraints to those who need it
+-- 8. Now that references are filled, add the NOT NULL constraints to those who need it
 ALTER TABLE
     assets
 ALTER COLUMN
@@ -480,11 +506,11 @@ ALTER COLUMN
 SET
     NOT NULL;
 
--- 8. Expire any potential invitation that is now obsolete since we created memberships
+-- 9. Expire any potential invitation that is now obsolete since we created memberships
 ALTER TABLE
     iam_invitations
 ALTER COLUMN
-    email TYPE CITEXT [];
+    email TYPE CITEXT;
 
 WITH people_identities AS (
     SELECT
