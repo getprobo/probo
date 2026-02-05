@@ -26,7 +26,6 @@ import { measureRoutes } from "./routes/measureRoutes";
 import { meetingsRoutes } from "./routes/meetingsRoutes";
 import { nonconformityRoutes } from "./routes/nonconformityRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
-import { peopleRoutes } from "./routes/peopleRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { riskRoutes } from "./routes/riskRoutes";
@@ -217,7 +216,6 @@ const routes = [
           ...riskRoutes,
           ...measureRoutes,
           ...documentsRoutes,
-          ...peopleRoutes,
           ...vendorRoutes,
           ...frameworkRoutes,
           ...taskRoutes,

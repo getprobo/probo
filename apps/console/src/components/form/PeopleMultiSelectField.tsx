@@ -8,7 +8,7 @@ import { usePeople } from "#/hooks/graph/PeopleGraph";
 type Person = {
   id: string;
   fullName: string;
-  primaryEmailAddress?: string | null;
+  emailAddress?: string | null;
 };
 
 type Props<T extends FieldValues = FieldValues> = {
@@ -57,7 +57,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
       allPeople.push({
         id: selectedPerson.id,
         fullName: selectedPerson.fullName,
-        primaryEmailAddress: selectedPerson.primaryEmailAddress ?? "",
+        emailAddress: selectedPerson.emailAddress ?? "",
       });
     }
   });
@@ -107,9 +107,9 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                       />
                       <div className="flex flex-col">
                         <span>{person.fullName}</span>
-                        {person.primaryEmailAddress && (
+                        {person.emailAddress && (
                           <span className="text-xs text-txt-secondary">
-                            {person.primaryEmailAddress}
+                            {person.emailAddress}
                           </span>
                         )}
                       </div>

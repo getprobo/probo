@@ -39,10 +39,10 @@ const versionFragment = graphql`
 
 const peopleFragment = graphql`
   fragment DocumentSignatureList_peopleFragment on Organization  @argumentDefinitions(
-    filter: { type: "PeopleFilter" }
+    filter: { type: "ProfileFilter" }
   ) {
     ...DocumentSignaturePlaceholder_organizationFragment
-    people: peoples(
+    profiles(
       first: 1000
       orderBy: { direction: ASC, field: FULL_NAME }
       filter: $filter
@@ -66,7 +66,7 @@ export function DocumentSignatureList(props: {
 }) {
   const { peopleFragmentRef, selectedStates, versionFragmentRef } = props;
 
-  const { people, ...organization } = useFragment<DocumentSignatureList_peopleFragment$key>(
+  const { profiles, ...organization } = useFragment<DocumentSignatureList_peopleFragment$key>(
     peopleFragment,
     peopleFragmentRef,
   );
@@ -96,8 +96,8 @@ export function DocumentSignatureList(props: {
 
   const filteredPeople
     = selectedStates.length > 0
-      ? people.edges.filter(({ node }) => signatureMap.has(node.id))
-      : people.edges;
+      ? profiles.edges.filter(({ node }) => signatureMap.has(node.id))
+      : profiles.edges;
 
   return (
     <div className="space-y-2 divide-y divide-border-solid">

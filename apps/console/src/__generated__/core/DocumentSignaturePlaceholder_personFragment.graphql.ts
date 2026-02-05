@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5a43f6367b3b03e57c58a1ab616e867b>>
+ * @generated SignedSource<<10302f020070a7ab64ab93115a4b916b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,9 +11,9 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentSignaturePlaceholder_personFragment$data = {
+  readonly emailAddress: string;
   readonly fullName: string;
   readonly id: string;
-  readonly primaryEmailAddress: string;
   readonly " $fragmentType": "DocumentSignaturePlaceholder_personFragment";
 };
 export type DocumentSignaturePlaceholder_personFragment$key = {
@@ -45,14 +45,14 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "primaryEmailAddress",
+      "name": "emailAddress",
       "storageKey": null
     }
   ],
-  "type": "People",
+  "type": "Profile",
   "abstractKey": null
 };
 
-(node as any).hash = "4b77b54fc11c37a0e1c50f4d482b0f18";
+(node as any).hash = "cbbb481145654dbf42e18ca46ec040fb";
 
 export default node;

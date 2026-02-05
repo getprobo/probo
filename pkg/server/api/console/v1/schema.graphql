@@ -1528,7 +1528,7 @@ input RiskFilter {
     snapshotId: ID
 }
 
-input PeopleFilter {
+input ProfileFilter {
     excludeContractEnded: Boolean
 }
 
@@ -1614,6 +1614,15 @@ type Organization implements Node {
     email: String
     headquarterAddress: String
     context: OrganizationContext @goField(forceResolver: true)
+
+    profiles(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+        filter: ProfileFilter
+    ): ProfileConnection! @goField(forceResolver: true)
 
     slackConnections(
         first: Int

@@ -1474,6 +1474,7 @@ type Organization struct {
 	Email                           *string                                   `json:"email,omitempty"`
 	HeadquarterAddress              *string                                   `json:"headquarterAddress,omitempty"`
 	Context                         *OrganizationContext                      `json:"context,omitempty"`
+	Profiles                        *ProfileConnection                        `json:"profiles"`
 	SlackConnections                *SlackConnectionConnection                `json:"slackConnections"`
 	Frameworks                      *FrameworkConnection                      `json:"frameworks"`
 	Controls                        *ControlConnection                        `json:"controls"`
@@ -1516,10 +1517,6 @@ type PageInfo struct {
 	HasPreviousPage bool            `json:"hasPreviousPage"`
 	StartCursor     *page.CursorKey `json:"startCursor,omitempty"`
 	EndCursor       *page.CursorKey `json:"endCursor,omitempty"`
-}
-
-type PeopleFilter struct {
-	ExcludeContractEnded *bool `json:"excludeContractEnded,omitempty"`
 }
 
 type ProcessingActivity struct {
@@ -1586,6 +1583,10 @@ func (this Profile) GetID() gid.GID { return this.ID }
 type ProfileEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Profile       `json:"node"`
+}
+
+type ProfileFilter struct {
+	ExcludeContractEnded *bool `json:"excludeContractEnded,omitempty"`
 }
 
 type PublishDocumentVersionInput struct {

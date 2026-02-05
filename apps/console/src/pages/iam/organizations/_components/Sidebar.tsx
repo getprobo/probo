@@ -8,7 +8,6 @@ import {
   IconClock,
   IconCrossLargeX,
   IconFire3,
-  IconGroup1,
   IconInboxEmpty,
   IconListStack,
   IconLock,
@@ -35,7 +34,6 @@ const fragment = graphql`
         canListMeasures: permission(action: "core:measure:list")
         canListRisks: permission(action: "core:risk:list")
         canListFrameworks: permission(action: "core:framework:list")
-        canListPeople: permission(action: "core:people:list")
         canListVendors: permission(action: "core:vendor:list")
         canListDocuments: permission(action: "core:document:list")
         canListAssets: permission(action: "core:asset:list")
@@ -104,13 +102,6 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Frameworks")}
           icon={IconBank}
           to={`${prefix}/frameworks`}
-        />
-      )}
-      {organization.canListPeople && (
-        <SidebarItem
-          label={__("People")}
-          icon={IconGroup1}
-          to={`${prefix}/people`}
         />
       )}
       {organization.canListVendors && (

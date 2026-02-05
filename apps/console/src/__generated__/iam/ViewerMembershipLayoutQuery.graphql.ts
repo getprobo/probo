@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0f5d74875ad984071d92f1d0e3cfce12>>
+ * @generated SignedSource<<6a26345e6949e02e37f5ab52c4d6fe05>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -386,19 +386,6 @@ return {
                     "storageKey": "permission(action:\"core:framework:list\")"
                   },
                   {
-                    "alias": "canListPeople",
-                    "args": [
-                      {
-                        "kind": "Literal",
-                        "name": "action",
-                        "value": "core:people:list"
-                      }
-                    ],
-                    "kind": "ScalarField",
-                    "name": "permission",
-                    "storageKey": "permission(action:\"core:people:list\")"
-                  },
-                  {
                     "alias": "canListVendors",
                     "args": [
                       {
@@ -618,12 +605,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f380d0fe83b6d660c61c379af4d2eb7d",
+    "cacheID": "6f7fa430d00e6734258bfc03bebb1b29",
     "id": null,
     "metadata": {},
     "name": "ViewerMembershipLayoutQuery",
     "operationKind": "query",
-    "text": "query ViewerMembershipLayoutQuery(\n  $organizationId: ID!\n  $hideSidebar: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...ViewerMembershipDropdownFragment\n      ...SidebarFragment @skip(if: $hideSidebar)\n      viewerMembership {\n        role\n        profile {\n          fullName\n          id\n        }\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    email\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measure:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:framework:list\")\n  canListPeople: permission(action: \"core:people:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n\nfragment ViewerMembershipDropdownFragment on Organization {\n  viewerMembership {\n    identity {\n      email\n      canListAPIKeys: permission(action: \"iam:personal-api-key:list\")\n      id\n    }\n    profile {\n      fullName\n      id\n    }\n    id\n  }\n}\n"
+    "text": "query ViewerMembershipLayoutQuery(\n  $organizationId: ID!\n  $hideSidebar: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...ViewerMembershipDropdownFragment\n      ...SidebarFragment @skip(if: $hideSidebar)\n      viewerMembership {\n        role\n        profile {\n          fullName\n          id\n        }\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    email\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measure:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:framework:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n\nfragment ViewerMembershipDropdownFragment on Organization {\n  viewerMembership {\n    identity {\n      email\n      canListAPIKeys: permission(action: \"iam:personal-api-key:list\")\n      id\n    }\n    profile {\n      fullName\n      id\n    }\n    id\n  }\n}\n"
   }
 };
 })();

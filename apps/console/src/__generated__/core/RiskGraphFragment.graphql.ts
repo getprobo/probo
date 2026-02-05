@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cac11a0f78a2e3980e953f77d040c52a>>
+ * @generated SignedSource<<c09daaec8f366774a1696fb36bad7676>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -210,7 +210,7 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "concreteType": "People",
+                  "concreteType": "Profile",
                   "kind": "LinkedField",
                   "name": "owner",
                   "plural": false,

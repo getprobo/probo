@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3b60ebae6765024147f97c157f6251fe>>
+ * @generated SignedSource<<9d5bb5c52a22efeea7cc554200a7a153>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentSignatureList_peopleFragment$data = {
-  readonly people: {
+  readonly profiles: {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
@@ -45,7 +45,7 @@ const node: ReaderFragment = {
       "name": "DocumentSignaturePlaceholder_organizationFragment"
     },
     {
-      "alias": "people",
+      "alias": null,
       "args": [
         {
           "kind": "Variable",
@@ -66,15 +66,15 @@ const node: ReaderFragment = {
           }
         }
       ],
-      "concreteType": "PeopleConnection",
+      "concreteType": "ProfileConnection",
       "kind": "LinkedField",
-      "name": "peoples",
+      "name": "profiles",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "concreteType": "PeopleEdge",
+          "concreteType": "ProfileEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -82,7 +82,7 @@ const node: ReaderFragment = {
             {
               "alias": null,
               "args": null,
-              "concreteType": "People",
+              "concreteType": "Profile",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -113,6 +113,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "6c0a2b965d1440c2e0fd8ec9ce3c5e85";
+(node as any).hash = "cf9788ef7f8667bb436ef3776618d3f3";
 
 export default node;

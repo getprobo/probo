@@ -5506,6 +5506,11 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 	return types.NewOrganizationContext(orgContext), nil
 }
 
+// Profiles is the resolver for the profiles field.
+func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
+	panic(fmt.Errorf("not implemented: Profiles - profiles"))
+}
+
 // SlackConnections is the resolver for the slackConnections field.
 func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionSlackConnectionList); err != nil {
