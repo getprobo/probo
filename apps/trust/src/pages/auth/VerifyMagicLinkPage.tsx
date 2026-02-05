@@ -1,14 +1,12 @@
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Button, Field, useToast } from "@probo/ui";
-import { useEffect, useRef } from "react";
+import { useToast } from "@probo/ui";
+import { useCallback, useEffect, useRef } from "react";
 import { useMutation } from "react-relay";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { VerifyMagicLinkPageMutation } from "./__generated__/VerifyMagicLinkPageMutation.graphql";
@@ -21,10 +19,6 @@ const verifyMagicLinkMutation = graphql`
   }
 `;
 
-const verifyMagicLinkSchema = z.object({
-  token: z.string().min(1, "Please enter a magic token"),
-});
-
 export default function VerifyMagicLinkPagePageMutation() {
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -33,22 +27,16 @@ export default function VerifyMagicLinkPagePageMutation() {
 
   usePageTitle(__("Verify Magic Link"));
 
-  const form = useFormWithSchema(verifyMagicLinkSchema, {
-    defaultValues: {
-      token: searchParams.get("token") ?? "",
-    },
-  });
-
   const [verifyMagicLink] = useMutation<VerifyMagicLinkPageMutation>(
     verifyMagicLinkMutation,
   );
 
-  const handleSubmit = form.handleSubmit((data) => {
+  const handleVerifyMagicToken = useCallback((token: string) => {
+    if (submittedRef.current) return;
+
     verifyMagicLink({
       variables: {
-        input: {
-          token: data.token.trim(),
-        },
+        input: { token },
       },
       onCompleted: (_, errors) => {
         if (errors) {
@@ -76,47 +64,32 @@ export default function VerifyMagicLinkPagePageMutation() {
         });
       },
     });
-  });
+  }, [__, toast, verifyMagicLink]);
 
   useEffect(() => {
-    if (!submittedRef.current && searchParams.get("token")) {
-      void handleSubmit();
+    const token = searchParams.get("token");
+    if (!submittedRef.current && token) {
+      void handleVerifyMagicToken(token.trim());
       submittedRef.current = true;
     }
-  });
+  }, [handleVerifyMagicToken, searchParams]);
 
   return (
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">{__("Email Confirmation")}</h1>
         <p className="text-txt-tertiary">
-          {__("Confirm your email address to complete registration")}
+          {__("Confirming your email address to complete registration…")}
         </p>
       </div>
-
-      <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
-        <Field
-          label={__("Confirmation Token")}
-          type="text"
-          placeholder={__("Enter your confirmation token")}
-          {...form.register("token")}
-          error={form.formState.errors.token?.message}
-          disabled={form.formState.isSubmitting}
-          help={__(
-            "The token has been automatically filled from the URL if available",
-          )}
-        />
-
-        <Button
-          type="submit"
-          className="w-xs h-10 mx-auto"
-          disabled={form.formState.isSubmitting}
+      <div className="text-center mt-6 text-sm text-txt-secondary">
+        <Link
+          to="/connect"
+          className="underline hover:text-txt-primary"
         >
-          {form.formState.isSubmitting
-            ? __("Confirming...")
-            : __("Confirm Email")}
-        </Button>
-      </form>
+          {__("Go back")}
+        </Link>
+      </div>
     </div>
   );
 }
