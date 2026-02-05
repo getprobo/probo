@@ -144,7 +144,7 @@ func NewPresenter(fileService *filemanager.Service, staticAssetsBucket string, b
 	)
 }
 
-func UpdloadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBucket string) error {
+func UploadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBucket string) error {
 	subFS, err := fs.Sub(staticAssets, "assets")
 	if err != nil {
 		return fmt.Errorf("cannot create subtree file system: %w", err)
@@ -264,7 +264,7 @@ func (p *Presenter) getCommonVariables(ctx context.Context) (*CommonVariables, e
 func (p *Presenter) RenderConfirmEmail(ctx context.Context, confirmationURLPath string, confirmationTokenParam string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectConfirmEmail, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	confirmationUrl := baseurl.
@@ -288,7 +288,7 @@ func (p *Presenter) RenderConfirmEmail(ctx context.Context, confirmationURLPath 
 func (p *Presenter) RenderPasswordReset(ctx context.Context, resetPasswordURLPath string, resetPasswordToken string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectConfirmEmail, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	resetUrl := baseurl.
@@ -312,7 +312,7 @@ func (p *Presenter) RenderPasswordReset(ctx context.Context, resetPasswordURLPat
 func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath string, invitationToken string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectInvitation, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	invitationURL := baseurl.
@@ -339,7 +339,7 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 func (p *Presenter) RenderDocumentSigning(ctx context.Context, signinURLPath string, token string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectDocumentSigning, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	signingURL := baseurl.MustParse(vars.BaseURL).
@@ -364,7 +364,7 @@ func (p *Presenter) RenderDocumentSigning(ctx context.Context, signinURLPath str
 func (p *Presenter) RenderDocumentExport(ctx context.Context, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectDocumentExport, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	data := struct {
@@ -382,7 +382,7 @@ func (p *Presenter) RenderDocumentExport(ctx context.Context, downloadUrl string
 func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectFrameworkExport, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	data := struct {
@@ -400,7 +400,7 @@ func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl strin
 func (p *Presenter) RenderTrustCenterAccess(ctx context.Context, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectTrustCenterAccess, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	data := struct {
@@ -422,7 +422,7 @@ func (p *Presenter) RenderTrustCenterDocumentAccessRejected(
 ) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectTrustCenterDocumentAccessRejected, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	data := struct {
@@ -442,7 +442,7 @@ func (p *Presenter) RenderTrustCenterDocumentAccessRejected(
 func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string, tokenString string, tokenDuration time.Duration, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
-		return subjectMagicLink, textBody, htmlBody, fmt.Errorf("cannot get common variables: %w", err)
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	data := struct {

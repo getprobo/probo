@@ -293,7 +293,7 @@ func (impl *Implm) Run(
 		}
 	}
 
-	if err := emails.UpdloadStaticAssets(
+	if err := emails.UploadStaticAssets(
 		ctx,
 		s3Client,
 		impl.cfg.AWS.Bucket,
