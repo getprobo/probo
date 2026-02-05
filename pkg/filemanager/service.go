@@ -146,6 +146,7 @@ func (s *Service) GenerateFileUrl(
 			Bucket:                     aws.String(file.GetBucketName()),
 			Key:                        aws.String(file.GetObjectKey()),
 			ResponseCacheControl:       aws.String("max-age=3600, public"),
+			ResponseContentType:        aws.String(file.GetMimeType()),
 			ResponseContentDisposition: &contentDisposition,
 		},
 		func(opts *s3.PresignOptions) {
