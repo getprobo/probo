@@ -945,6 +945,23 @@ func (s *OrganizationService) ListMembers(
 	return page.NewPage(memberships, cursor), nil
 }
 
+func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID) (*coredata.MembershipProfile, error) {
+	profile := &coredata.MembershipProfile{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return profile.LoadByID(ctx, conn, coredata.NewScopeFromObjectID(profileID), profileID)
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
 func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Organization, error) {
 	var (
 		scope        = coredata.NewScopeFromObjectID(membershipID)

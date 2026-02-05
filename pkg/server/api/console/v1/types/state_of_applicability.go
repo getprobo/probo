@@ -69,7 +69,7 @@ func NewStateOfApplicability(soa *coredata.StateOfApplicability) *StateOfApplica
 		Organization: &Organization{
 			ID: soa.OrganizationID,
 		},
-		Owner: &People{
+		Owner: &Profile{
 			ID: soa.OwnerID,
 		},
 		Name:       soa.Name,

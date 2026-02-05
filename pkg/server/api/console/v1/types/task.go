@@ -83,7 +83,7 @@ func NewTask(t *coredata.Task) *Task {
 	}
 
 	if t.AssignedToID != nil {
-		node.AssignedTo = &People{
+		node.AssignedTo = &Profile{
 			ID: *t.AssignedToID,
 		}
 	}

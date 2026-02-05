@@ -69,14 +69,14 @@ enum EvidenceState
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested")
 }
 
-enum PeopleKind @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleKind") {
+enum MembershipProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
     EMPLOYEE
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindEmployee")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
     CONTRACTOR
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindContractor")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
     SERVICE_ACCOUNT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.PeopleKindServiceAccount"
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
         )
 }
 
@@ -402,17 +402,17 @@ enum ProcessingActivityRole
 }
 
 # Order Field Enums
-enum PeopleOrderField
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleOrderField") {
+enum ProfileOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField") {
     FULL_NAME
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldFullName"
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldFullName"
         )
     CREATED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldCreatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
         )
-    KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldKind")
+    KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
 }
 
 enum VendorOrderField
@@ -1281,12 +1281,12 @@ enum SnapshotOrderField
 }
 
 # Input Types
-input PeopleOrder
+input ProfileOrder
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleOrderBy"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileOrderBy"
     ) {
     direction: OrderDirection!
-    field: PeopleOrderField!
+    field: ProfileOrderField!
 }
 
 input VendorOrder
@@ -1648,15 +1648,6 @@ type Organization implements Node {
         filter: VendorFilter = { snapshotId: null }
     ): VendorConnection! @goField(forceResolver: true)
 
-    peoples(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: PeopleOrder
-        filter: PeopleFilter
-    ): PeopleConnection! @goField(forceResolver: true)
-
     documents(
         first: Int
         after: CursorKey
@@ -1844,24 +1835,9 @@ type SlackConnectionEdge {
 type Profile implements Node {
     id: ID!
     fullName: String!
-    email_address: EmailAddr!
+    emailAddress: EmailAddr!
     additionalEmailAddresses: [EmailAddr!]!
-    kind: PeopleKind!
-    position: String
-    contractStartDate: Datetime
-    contractEndDate: Datetime
-    createdAt: Datetime!
-    updatedAt: Datetime!
-
-    permission(action: String!): Boolean! @goField(forceResolver: true)
-}
-
-type People implements Node {
-    id: ID!
-    fullName: String!
-    primaryEmailAddress: EmailAddr!
-    additionalEmailAddresses: [EmailAddr!]!
-    kind: PeopleKind!
+    kind: MembershipProfileKind!
     position: String
     contractStartDate: Datetime
     contractEndDate: Datetime
@@ -1917,8 +1893,8 @@ type Vendor implements Node {
         orderBy: VendorRiskAssessmentOrder
     ): VendorRiskAssessmentConnection! @goField(forceResolver: true)
 
-    businessOwner: People @goField(forceResolver: true)
-    securityOwner: People @goField(forceResolver: true)
+    businessOwner: Profile @goField(forceResolver: true)
+    securityOwner: Profile @goField(forceResolver: true)
 
     statusPageUrl: String
     termsOfServiceUrl: String
@@ -2148,7 +2124,7 @@ type Task implements Node {
     state: TaskState!
     timeEstimate: Duration
     deadline: Datetime
-    assignedTo: People @goField(forceResolver: true)
+    assignedTo: Profile @goField(forceResolver: true)
 
     organization: Organization! @goField(forceResolver: true)
     measure: Measure @goField(forceResolver: true)
@@ -2193,7 +2169,7 @@ type Document implements Node {
     classification: DocumentClassification!
     currentPublishedVersion: Int
     trustCenterVisibility: TrustCenterVisibility!
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     versions(
@@ -2263,7 +2239,7 @@ type StateOfApplicability implements Node {
     sourceId: ID
     snapshotId: ID
     organization: Organization @goField(forceResolver: true)
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -2319,7 +2295,7 @@ type Risk implements Node {
     residualRiskScore: Int!
     note: String!
 
-    owner: People @goField(forceResolver: true)
+    owner: Profile @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     measures(
@@ -2401,7 +2377,7 @@ type Nonconformity implements Node {
     dateIdentified: Datetime
     rootCause: String!
     correctiveAction: String
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     dueDate: Datetime
     status: NonconformityStatus!
     effectivenessCheck: String
@@ -2421,7 +2397,7 @@ type Obligation implements Node {
     requirement: String
     actionsToBeImplemented: String
     regulator: String
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     lastReviewDate: Datetime
     dueDate: Datetime
     status: ObligationStatus!
@@ -2440,7 +2416,7 @@ type ContinualImprovement implements Node {
     referenceId: String!
     description: String
     source: String
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     targetDate: Datetime
     status: ContinualImprovementStatus!
     priority: ContinualImprovementPriority!
@@ -2489,7 +2465,7 @@ type ProcessingActivity implements Node {
     lastReviewDate: Datetime
     nextReviewDate: Datetime
     role: ProcessingActivityRole!
-    dataProtectionOfficer: People @goField(forceResolver: true)
+    dataProtectionOfficer: Profile @goField(forceResolver: true)
     vendors(
         first: Int
         after: CursorKey
@@ -2710,11 +2686,10 @@ type TrustCenterFileEdge {
 }
 
 type ProfileConnection
-    # @goModel(
-    #     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileConnection"
-    # ) {
-    # totalCount: Int! @goField(forceResolver: true)
-    {
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
     edges: [ProfileEdge!]!
     pageInfo: PageInfo!
 }
@@ -2722,20 +2697,6 @@ type ProfileConnection
 type ProfileEdge {
     cursor: CursorKey!
     node: Profile!
-}
-
-type PeopleConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [PeopleEdge!]!
-    pageInfo: PageInfo!
-}
-
-type PeopleEdge {
-    cursor: CursorKey!
-    node: People!
 }
 
 type VendorConnection
@@ -3152,10 +3113,6 @@ type Mutation {
         input: DeleteTrustCenterFileInput!
     ): DeleteTrustCenterFilePayload!
 
-    # People mutations
-    createPeople(input: CreatePeopleInput!): CreatePeoplePayload!
-    updatePeople(input: UpdatePeopleInput!): UpdatePeoplePayload!
-    deletePeople(input: DeletePeopleInput!): DeletePeoplePayload!
     # Vendor mutations
     createVendor(input: CreateVendorInput!): CreateVendorPayload!
     updateVendor(input: UpdateVendorInput!): UpdateVendorPayload!
@@ -3655,32 +3612,6 @@ input UpdateVendorServiceInput {
 
 input DeleteVendorServiceInput {
     vendorServiceId: ID!
-}
-
-input CreatePeopleInput {
-    organizationId: ID!
-    fullName: String!
-    primaryEmailAddress: EmailAddr!
-    additionalEmailAddresses: [EmailAddr!]!
-    kind: PeopleKind!
-    position: String
-    contractStartDate: Datetime
-    contractEndDate: Datetime
-}
-
-input UpdatePeopleInput {
-    id: ID!
-    fullName: String
-    primaryEmailAddress: EmailAddr
-    additionalEmailAddresses: [EmailAddr!] @goField(omittable: true)
-    kind: PeopleKind
-    position: String @goField(omittable: true)
-    contractStartDate: Datetime @goField(omittable: true)
-    contractEndDate: Datetime @goField(omittable: true)
-}
-
-input DeletePeopleInput {
-    peopleId: ID!
 }
 
 input CreateFrameworkInput {
@@ -4452,18 +4383,6 @@ type DeleteVendorServicePayload {
     deletedVendorServiceId: ID!
 }
 
-type CreatePeoplePayload {
-    peopleEdge: PeopleEdge!
-}
-
-type UpdatePeoplePayload {
-    people: People!
-}
-
-type DeletePeoplePayload {
-    deletedPeopleId: ID!
-}
-
 type CreateFrameworkPayload {
     frameworkEdge: FrameworkEdge!
 }
@@ -4766,7 +4685,7 @@ type DocumentVersion implements Node {
     changelog: String!
     title: String!
     classification: DocumentClassification!
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
 
     signatures(
         first: Int
@@ -4842,7 +4761,7 @@ type DocumentVersionSignature implements Node {
     id: ID!
     documentVersion: DocumentVersion! @goField(forceResolver: true)
     state: DocumentVersionSignatureState!
-    signedBy: People! @goField(forceResolver: true)
+    signedBy: Profile! @goField(forceResolver: true)
     signedAt: Datetime
     requestedAt: Datetime!
     createdAt: Datetime!
@@ -4988,7 +4907,7 @@ type Asset implements Node {
     snapshotId: ID
     name: String!
     amount: Int!
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     vendors(
         first: Int
         after: CursorKey
@@ -5071,7 +4990,7 @@ type Datum implements Node
     snapshotId: ID
     name: String!
     dataClassification: DataClassification!
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     vendors(
         first: Int
         after: CursorKey

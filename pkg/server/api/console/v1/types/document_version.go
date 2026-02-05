@@ -76,7 +76,7 @@ func NewDocumentVersion(documentVersion *coredata.DocumentVersion) *DocumentVers
 		Document: &Document{
 			ID: documentVersion.DocumentID,
 		},
-		Owner: &People{
+		Owner: &Profile{
 			ID: documentVersion.OwnerID,
 		},
 		Version:        documentVersion.VersionNumber,

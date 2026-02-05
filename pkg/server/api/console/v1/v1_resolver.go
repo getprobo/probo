@@ -84,14 +84,12 @@ func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Contex
 }
 
 // Owner is the resolver for the owner field.
-func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.People, error) {
+func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	owner, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -100,7 +98,7 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Peo
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
-	return types.NewPeople(owner), nil
+	return types.NewProfile(owner), nil
 }
 
 // Vendors is the resolver for the vendors field.
@@ -346,14 +344,12 @@ func (r *continualImprovementResolver) Organization(ctx context.Context, obj *ty
 }
 
 // Owner is the resolver for the owner field.
-func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.ContinualImprovement) (*types.People, error) {
+func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.ContinualImprovement) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -362,7 +358,7 @@ func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.Con
 		panic(fmt.Errorf("cannot get continual improvement owner: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(owner), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -766,14 +762,12 @@ func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx contex
 }
 
 // Owner is the resolver for the owner field.
-func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.People, error) {
+func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -782,7 +776,7 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Peo
 		return nil, fmt.Errorf("cannot get owner: %w", err)
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(owner), nil
 }
 
 // Vendors is the resolver for the vendors field.
@@ -868,15 +862,12 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 }
 
 // Owner is the resolver for the owner field.
-func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.People, error) {
+func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	// Get the owner
-	owner, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -886,7 +877,7 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
-	return types.NewPeople(owner), nil
+	return types.NewProfile(owner), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -1040,14 +1031,12 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 }
 
 // Owner is the resolver for the owner field.
-func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
+func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.DocumentVersion) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	owner, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1057,7 +1046,7 @@ func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.Document
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
-	return types.NewPeople(owner), nil
+	return types.NewProfile(owner), nil
 }
 
 // Signatures is the resolver for the signatures field.
@@ -1170,14 +1159,12 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 }
 
 // SignedBy is the resolver for the signedBy field.
-func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
+func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	people, err := prb.Peoples.Get(ctx, obj.SignedBy.ID)
+	signatory, err := r.iam.OrganizationService.GetProfile(ctx, obj.SignedBy.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1187,7 +1174,7 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(signatory), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -2139,96 +2126,6 @@ func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input type
 
 	return &types.DeleteTrustCenterFilePayload{
 		DeletedTrustCenterFileID: input.ID,
-	}, nil
-}
-
-// CreatePeople is the resolver for the createPeople field.
-func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionPeopleCreate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
-
-	people, err := prb.Peoples.Create(
-		ctx,
-		probo.CreatePeopleRequest{
-			OrganizationID:           input.OrganizationID,
-			FullName:                 input.FullName,
-			PrimaryEmailAddress:      input.PrimaryEmailAddress,
-			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
-			Kind:                     input.Kind,
-			Position:                 input.Position,
-			ContractStartDate:        input.ContractStartDate,
-			ContractEndDate:          input.ContractEndDate,
-		},
-	)
-
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create people: %w", err))
-	}
-
-	return &types.CreatePeoplePayload{
-		PeopleEdge: types.NewPeopleEdge(people, coredata.PeopleOrderFieldFullName),
-	}, nil
-}
-
-// UpdatePeople is the resolver for the updatePeople field.
-func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdatePeopleInput) (*types.UpdatePeoplePayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionPeopleUpdate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.ID.TenantID())
-
-	people, err := prb.Peoples.Update(
-		ctx,
-		probo.UpdatePeopleRequest{
-			ID:                       input.ID,
-			FullName:                 input.FullName,
-			PrimaryEmailAddress:      input.PrimaryEmailAddress,
-			AdditionalEmailAddresses: gqlutils.UnwrapOmittable(input.AdditionalEmailAddresses),
-			Kind:                     input.Kind,
-			Position:                 gqlutils.UnwrapOmittable(input.Position),
-			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
-			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
-		},
-	)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update people: %w", err))
-	}
-
-	return &types.UpdatePeoplePayload{
-		People: types.NewPeople(people),
-	}, nil
-}
-
-// DeletePeople is the resolver for the deletePeople field.
-func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeletePeopleInput) (*types.DeletePeoplePayload, error) {
-	if err := r.authorize(ctx, input.PeopleID, probo.ActionPeopleDelete); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.PeopleID.TenantID())
-
-	err := prb.Peoples.Delete(ctx, input.PeopleID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete people: %w", err))
-	}
-
-	return &types.DeletePeoplePayload{
-		DeletedPeopleID: input.PeopleID,
 	}, nil
 }
 
@@ -5425,14 +5322,12 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 }
 
 // Owner is the resolver for the owner field.
-func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconformity) (*types.People, error) {
+func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconformity) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -5442,7 +5337,7 @@ func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconform
 		panic(fmt.Errorf("cannot get nonconformity owner: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(owner), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -5498,14 +5393,12 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 }
 
 // Owner is the resolver for the owner field.
-func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (*types.People, error) {
+func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -5515,7 +5408,7 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 		panic(fmt.Errorf("cannot get obligation owner: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(owner), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -5738,41 +5631,6 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 	}
 
 	return types.NewVendorConnection(page, r, obj.ID), nil
-}
-
-// Peoples is the resolver for the peoples field.
-func (r *organizationResolver) Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) (*types.PeopleConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.PeopleOrderField]{
-		Field:     coredata.PeopleOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.PeopleOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	var peopleFilter = coredata.NewPeopleFilter(nil)
-	if filter != nil {
-		peopleFilter = coredata.NewPeopleFilter(filter.ExcludeContractEnded)
-	}
-
-	page, err := prb.Peoples.ListForOrganizationID(ctx, obj.ID, cursor, peopleFilter)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization peoples: %w", err))
-	}
-
-	return types.NewPeopleConnection(page, r, obj.ID, peopleFilter), nil
 }
 
 // Documents is the resolver for the documents field.
@@ -6421,34 +6279,6 @@ func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organi
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// Permission is the resolver for the permission field.
-func (r *peopleResolver) Permission(ctx context.Context, obj *types.People, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionPeopleList); err != nil {
-		return 0, err
-	}
-
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-	switch obj.Resolver.(type) {
-	case *organizationResolver:
-		count, err := prb.Peoples.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
-		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count peoples: %w", err))
-		}
-
-		return count, nil
-	}
-
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
-}
-
 // Organization is the resolver for the organization field.
 func (r *processingActivityResolver) Organization(ctx context.Context, obj *types.ProcessingActivity) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -6471,28 +6301,21 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 }
 
 // DataProtectionOfficer is the resolver for the dataProtectionOfficer field.
-func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, obj *types.ProcessingActivity) (*types.People, error) {
+func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, obj *types.ProcessingActivity) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	processingActivity, err := prb.ProcessingActivities.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity: %w", err))
-	}
-
-	if processingActivity.DataProtectionOfficerID == nil {
+	if obj.DataProtectionOfficer == nil {
 		return nil, nil
 	}
 
-	people, err := prb.Peoples.Get(ctx, *processingActivity.DataProtectionOfficerID)
+	dpo, err := r.iam.OrganizationService.GetProfile(ctx, obj.DataProtectionOfficer.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get data protection officer: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(dpo), nil
 }
 
 // Vendors is the resolver for the vendors field.
@@ -6598,6 +6421,11 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 // Permission is the resolver for the permission field.
 func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, action string) (bool, error) {
 	panic(fmt.Errorf("not implemented: Permission - permission"))
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.ProfileConnection) (int, error) {
+	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
 }
 
 // Node is the resolver for the node field.
@@ -7009,18 +6837,16 @@ func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *t
 }
 
 // Owner is the resolver for the owner field.
-func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.People, error) {
+func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	if obj.Owner == nil {
 		return nil, nil
 	}
 
-	owner, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -7030,7 +6856,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
-	return types.NewPeople(owner), nil
+	return types.NewProfile(owner), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -7382,14 +7208,12 @@ func (r *stateOfApplicabilityResolver) Organization(ctx context.Context, obj *ty
 }
 
 // Owner is the resolver for the owner field.
-func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.StateOfApplicability) (*types.People, error) {
+func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.StateOfApplicability) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -7397,7 +7221,7 @@ func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.Sta
 		panic(fmt.Errorf("cannot load owner: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(owner), nil
 }
 
 // ApplicabilityStatements is the resolver for the applicabilityStatements field.
@@ -7451,18 +7275,16 @@ func (r *stateOfApplicabilityConnectionResolver) TotalCount(ctx context.Context,
 }
 
 // AssignedTo is the resolver for the assignedTo field.
-func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.People, error) {
+func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	if obj.AssignedTo == nil {
 		return nil, nil
 	}
 
-	people, err := prb.Peoples.Get(ctx, obj.AssignedTo.ID)
+	assignee, err := r.iam.OrganizationService.GetProfile(ctx, obj.AssignedTo.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -7471,7 +7293,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 		panic(fmt.Errorf("cannot get assigned to: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(assignee), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -8201,27 +8023,16 @@ func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor,
 }
 
 // BusinessOwner is the resolver for the businessOwner field.
-func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
+func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	vendor, err := prb.Vendors.Get(ctx, obj.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		panic(fmt.Errorf("cannot get vendor: %w", err))
-	}
-
-	if vendor.BusinessOwnerID == nil {
+	if obj.BusinessOwner == nil {
 		return nil, nil
 	}
 
-	people, err := prb.Peoples.Get(ctx, *vendor.BusinessOwnerID)
+	businessOwner, err := r.iam.OrganizationService.GetProfile(ctx, obj.BusinessOwner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -8230,31 +8041,20 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 		panic(fmt.Errorf("cannot get business owner: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(businessOwner), nil
 }
 
 // SecurityOwner is the resolver for the securityOwner field.
-func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
+func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	vendor, err := prb.Vendors.Get(ctx, obj.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		panic(fmt.Errorf("cannot get vendor: %w", err))
-	}
-
-	if vendor.SecurityOwnerID == nil {
+	if obj.SecurityOwner == nil {
 		return nil, nil
 	}
 
-	people, err := prb.Peoples.Get(ctx, *vendor.SecurityOwnerID)
+	securityOwner, err := r.iam.OrganizationService.GetProfile(ctx, obj.SecurityOwner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -8263,7 +8063,7 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 		panic(fmt.Errorf("cannot get security owner: %w", err))
 	}
 
-	return types.NewPeople(people), nil
+	return types.NewProfile(securityOwner), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -8747,14 +8547,6 @@ func (r *Resolver) ObligationConnection() schema.ObligationConnectionResolver {
 // Organization returns schema.OrganizationResolver implementation.
 func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
 
-// People returns schema.PeopleResolver implementation.
-func (r *Resolver) People() schema.PeopleResolver { return &peopleResolver{r} }
-
-// PeopleConnection returns schema.PeopleConnectionResolver implementation.
-func (r *Resolver) PeopleConnection() schema.PeopleConnectionResolver {
-	return &peopleConnectionResolver{r}
-}
-
 // ProcessingActivity returns schema.ProcessingActivityResolver implementation.
 func (r *Resolver) ProcessingActivity() schema.ProcessingActivityResolver {
 	return &processingActivityResolver{r}
@@ -8767,6 +8559,11 @@ func (r *Resolver) ProcessingActivityConnection() schema.ProcessingActivityConne
 
 // Profile returns schema.ProfileResolver implementation.
 func (r *Resolver) Profile() schema.ProfileResolver { return &profileResolver{r} }
+
+// ProfileConnection returns schema.ProfileConnectionResolver implementation.
+func (r *Resolver) ProfileConnection() schema.ProfileConnectionResolver {
+	return &profileConnectionResolver{r}
+}
 
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
@@ -8938,11 +8735,10 @@ type nonconformityConnectionResolver struct{ *Resolver }
 type obligationResolver struct{ *Resolver }
 type obligationConnectionResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
-type peopleResolver struct{ *Resolver }
-type peopleConnectionResolver struct{ *Resolver }
 type processingActivityResolver struct{ *Resolver }
 type processingActivityConnectionResolver struct{ *Resolver }
 type profileResolver struct{ *Resolver }
+type profileConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type rightsRequestResolver struct{ *Resolver }
