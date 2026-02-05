@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.118.2] - 2026-02-05
+
+### Fixed
+
+- Noisy TLS errors are filtered from logs
+- Use s3 presigned URLs for email assets
+
+### Changed
+
+- Safer docker ubuntu image version with digest
+- Safer github actions versions with digest
+- Redirect already authenticated user on compliance page home when trying to log in
+
 ## [0.118.1] - 2026-02-04
 
 ### Fixed
