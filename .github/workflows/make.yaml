@@ -31,9 +31,9 @@ jobs:
           cache: "npm"
       - run: "npm i -g npm@11.8.0"
       - run: "npm ci"
-      - uses: "docker/setup-qemu-action@v3"
-      - uses: "docker/setup-buildx-action@v3"
-      - uses: "sigstore/cosign-installer@v3"
+      - uses: "docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130" # v3.7.0
+      - uses: "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f" # v3.12.0
+      - uses: "sigstore/cosign-installer@053f9b74638557590800a301da1ba82351507e2c" # v3.8.1
       - name: Cache Trivy database
         uses: "actions/cache@v5"
         with:
@@ -42,7 +42,7 @@ jobs:
           restore-keys: |
             trivy-db-${{ runner.os }}-
       - uses: "anchore/sbom-action/download-syft@deef08a0db64bfad603422135db61477b16cef56" # v0.22.1
-      - uses: "goreleaser/goreleaser-action@v6"
+      - uses: "goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a" # v6.4.0
         with:
           distribution: "goreleaser"
           version: "~> v2"
@@ -51,7 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Scan Docker image with Trivy
         if: github.ref == 'refs/heads/main'
-        uses: "aquasecurity/trivy-action@0.33.1"
+        uses: "aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8" # 0.33.1
         with:
           image-ref: "ghcr.io/getprobo/probo:latest-amd64"
           format: "sarif"
@@ -63,7 +63,7 @@ jobs:
           cache-dir: ~/.cache/trivy
       - name: Scan Docker image with Trivy
         if: github.ref != 'refs/heads/main'
-        uses: "aquasecurity/trivy-action@0.33.1"
+        uses: "aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8" # 0.33.1
         with:
           image-ref: "ghcr.io/getprobo/probo:latest-amd64"
           format: "table"
@@ -74,7 +74,7 @@ jobs:
           cache-dir: ~/.cache/trivy
       - name: Upload Trivy scan results to GitHub Security tab
         if: github.ref == 'refs/heads/main'
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
         with:
           sarif_file: "trivy-results.sarif"
       - uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 #v0.22.1
@@ -144,7 +144,7 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
-      - uses: golangci/golangci-lint-action@v9
+      - uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
           install-only: true
       - run: "npm i -g npm@11.8.0"
@@ -220,9 +220,9 @@ jobs:
       - run: "npm i -g npm@11.8.0"
       - run: "sudo apt-get install -y mkcert"
       - run: "sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true"
-      - uses: "docker/setup-qemu-action@v3"
-      - uses: "docker/setup-buildx-action@v3"
-      - uses: "docker/setup-compose-action@v1"
+      - uses: "docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130" # v3.7.0
+      - uses: "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f" # v3.12.0
+      - uses: "docker/setup-compose-action@364cc21a5de5b1ee4a7f5f9d3fa374ce0ccde746" # v1.2.0
       - run: "npm ci"
       - run: "make stack-up"
       - run: "make stack-ps"
