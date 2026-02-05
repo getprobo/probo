@@ -45,7 +45,7 @@ func (ma *MeetingAttendees) LoadByMeetingID(
 	q := `
 SELECT
     meeting_id,
-    attendee_id,
+    attendee_profile_id,
     organization_id,
     created_at
 FROM
@@ -87,7 +87,7 @@ func (ma *MeetingAttendees) Merge(
 	q := `
 WITH attendee_ids AS (
 	SELECT
-		unnest(@attendee_ids::text[]) AS attendee_id,
+		unnest(@attendee_ids::text[]) AS attendee_profile_id,
 		@tenant_id AS tenant_id,
 		@meeting_id AS meeting_id,
 		@organization_id AS organization_id,
@@ -97,10 +97,10 @@ MERGE INTO meeting_attendees AS tgt
 USING attendee_ids AS src
 ON tgt.tenant_id = src.tenant_id
 	AND tgt.meeting_id = src.meeting_id
-	AND tgt.attendee_id = src.attendee_id
+	AND tgt.attendee_profile_id = src.attendee_profile_id
 WHEN NOT MATCHED THEN
-	INSERT (tenant_id, meeting_id, attendee_id, organization_id, created_at)
-	VALUES (src.tenant_id, src.meeting_id, src.attendee_id, src.organization_id, src.created_at)
+	INSERT (tenant_id, meeting_id, attendee_profile_id, organization_id, created_at)
+	VALUES (src.tenant_id, src.meeting_id, src.attendee_profile_id, src.organization_id, src.created_at)
 WHEN NOT MATCHED BY SOURCE
 	AND tgt.tenant_id = @tenant_id AND tgt.meeting_id = @meeting_id
 	THEN DELETE

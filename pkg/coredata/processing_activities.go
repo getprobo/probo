@@ -114,7 +114,7 @@ SELECT
 	last_review_date,
 	next_review_date,
 	role,
-	data_protection_officer_id,
+	dpo_profile_id,
 	created_at,
 	updated_at
 FROM
@@ -212,7 +212,7 @@ SELECT
 	last_review_date,
 	next_review_date,
 	role,
-	data_protection_officer_id,
+	dpo_profile_id,
 	created_at,
 	updated_at
 FROM
@@ -277,7 +277,7 @@ SELECT
 	last_review_date,
 	next_review_date,
 	role,
-	data_protection_officer_id,
+	dpo_profile_id,
 	created_at,
 	updated_at
 FROM
@@ -340,7 +340,7 @@ INSERT INTO processing_activities (
 	last_review_date,
 	next_review_date,
 	role,
-	data_protection_officer_id,
+	dpo_profile_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -367,7 +367,7 @@ INSERT INTO processing_activities (
 	@last_review_date,
 	@next_review_date,
 	@role,
-	@data_protection_officer_id,
+	@dpo_profile_id,
 	@created_at,
 	@updated_at
 )
@@ -397,7 +397,7 @@ INSERT INTO processing_activities (
 		"last_review_date":                         p.LastReviewDate,
 		"next_review_date":                         p.NextReviewDate,
 		"role":                                     p.Role,
-		"data_protection_officer_id":               p.DataProtectionOfficerID,
+		"dpo_profile_id":                           p.DataProtectionOfficerID,
 		"created_at":                               p.CreatedAt,
 		"updated_at":                               p.UpdatedAt,
 	}
@@ -436,7 +436,7 @@ SET
 	last_review_date = @last_review_date,
 	next_review_date = @next_review_date,
 	role = @role,
-	data_protection_officer_id = @data_protection_officer_id,
+	dpo_profile_id = @dpo_profile_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -466,7 +466,7 @@ WHERE
 		"last_review_date":                         p.LastReviewDate,
 		"next_review_date":                         p.NextReviewDate,
 		"role":                                     p.Role,
-		"data_protection_officer_id":               p.DataProtectionOfficerID,
+		"dpo_profile_id":                           p.DataProtectionOfficerID,
 		"updated_at":                               p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -549,7 +549,7 @@ INSERT INTO processing_activities (
 	last_review_date,
 	next_review_date,
 	role,
-	data_protection_officer_id,
+	dpo_profile_id,
 	created_at,
 	updated_at
 )
@@ -577,7 +577,7 @@ SELECT
 	par.last_review_date,
 	par.next_review_date,
 	par.role,
-	par.data_protection_officer_id,
+	par.dpo_profile_id,
 	par.created_at,
 	par.updated_at
 FROM processing_activities par
