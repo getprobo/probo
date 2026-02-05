@@ -1,4 +1,5 @@
-FROM ubuntu:24.04
+# ubuntu:24.04 - pinned to digest for reproducibility (2026-02-05)
+FROM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b
 
 LABEL org.opencontainers.image.source="https://github.com/getprobo/probo"
 LABEL org.opencontainers.image.licenses="MIT"
