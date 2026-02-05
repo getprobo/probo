@@ -63,7 +63,7 @@ func NewObligation(cr *coredata.Obligation) *Obligation {
 		Organization: &Organization{
 			ID: cr.OrganizationID,
 		},
-		Owner: &People{
+		Owner: &Profile{
 			ID: cr.OwnerID,
 		},
 		Area:                   cr.Area,

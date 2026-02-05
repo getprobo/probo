@@ -76,7 +76,7 @@ func NewDocumentVersionSignature(documentVersionSignature *coredata.DocumentVers
 		DocumentVersion: &DocumentVersion{
 			ID: documentVersionSignature.DocumentVersionID,
 		},
-		SignedBy: &People{
+		SignedBy: &Profile{
 			ID: documentVersionSignature.SignedBy,
 		},
 		ID:          documentVersionSignature.ID,

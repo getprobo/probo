@@ -86,7 +86,7 @@ func NewRisk(r *coredata.Risk) *Risk {
 	}
 
 	if r.OwnerID != nil {
-		risk.Owner = &People{
+		risk.Owner = &Profile{
 			ID: *r.OwnerID,
 		}
 	}
