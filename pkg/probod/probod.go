@@ -298,7 +298,7 @@ func (impl *Implm) Run(
 		s3Client,
 		impl.cfg.AWS.Bucket,
 	); err != nil {
-		return fmt.Errorf("cannot generate email static asset URLs: %w", err)
+		return fmt.Errorf("cannot upload email static assets: %w", err)
 	}
 
 	iamService, err := iam.NewService(
