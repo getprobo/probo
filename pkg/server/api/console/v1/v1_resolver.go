@@ -85,7 +85,7 @@ func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Contex
 
 // Owner is the resolver for the owner field.
 func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -345,7 +345,7 @@ func (r *continualImprovementResolver) Organization(ctx context.Context, obj *ty
 
 // Owner is the resolver for the owner field.
 func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.ContinualImprovement) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -763,7 +763,7 @@ func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx contex
 
 // Owner is the resolver for the owner field.
 func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -863,7 +863,7 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 // Owner is the resolver for the owner field.
 func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -1032,7 +1032,7 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 
 // Owner is the resolver for the owner field.
 func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.DocumentVersion) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -1160,7 +1160,7 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 
 // SignedBy is the resolver for the signedBy field.
 func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -1610,7 +1610,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 func (r *meetingResolver) Attendees(ctx context.Context, obj *types.Meeting) ([]*types.Profile, error) {
 	// TODO bug must be paginated
 
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleList); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
 		return nil, err
 	}
 
@@ -5313,7 +5313,7 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 
 // Owner is the resolver for the owner field.
 func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconformity) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -5384,7 +5384,7 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 
 // Owner is the resolver for the owner field.
 func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -6292,7 +6292,7 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 
 // DataProtectionOfficer is the resolver for the dataProtectionOfficer field.
 func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, obj *types.ProcessingActivity) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -6828,7 +6828,7 @@ func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -7199,7 +7199,7 @@ func (r *stateOfApplicabilityResolver) Organization(ctx context.Context, obj *ty
 
 // Owner is the resolver for the owner field.
 func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.StateOfApplicability) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -7266,7 +7266,7 @@ func (r *stateOfApplicabilityConnectionResolver) TotalCount(ctx context.Context,
 
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -8014,7 +8014,7 @@ func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor,
 
 // BusinessOwner is the resolver for the businessOwner field.
 func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -8036,7 +8036,7 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 
 // SecurityOwner is the resolver for the securityOwner field.
 func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 

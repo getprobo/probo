@@ -46,7 +46,6 @@ var ViewerPolicy = policy.NewPolicy(
 	).WithSID("org-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionPeopleGet, ActionPeopleList,
 		ActionVendorGet, ActionVendorList,
 		ActionVendorContactGet, ActionVendorContactList,
 		ActionVendorServiceGet, ActionVendorServiceList,
@@ -114,7 +113,6 @@ var AuditorPolicy = policy.NewPolicy(
 	).WithSID("org-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionPeopleGet, ActionPeopleList,
 		ActionVendorGet, ActionVendorList,
 		ActionVendorContactGet, ActionVendorContactList,
 		ActionVendorServiceGet, ActionVendorServiceList,
