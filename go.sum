@@ -265,6 +265,8 @@ go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712 h1:J5ccbcxFuwxe6Oa
 go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712/go.mod h1:fnIIvKO9QnsyLO3ZJLJT3r8KZv/p0FOeT5eZKilYWXg=
 go.gearno.de/kit v0.1.0 h1:2fNvGoPTHBUH05lAFt8SAYlhhPPbFyBv3ED8W1bK39o=
 go.gearno.de/kit v0.1.0/go.mod h1:WI/gQ14O9M6wsKa/HFL4ZH+Q/U0930hYWZRdHHo9Agk=
+go.gearno.de/kit v0.1.1 h1:QuBZCZ/h2Eyh6DjjR6CGjkdsab/ztHz6xUiIk0FeREE=
+go.gearno.de/kit v0.1.1/go.mod h1:WI/gQ14O9M6wsKa/HFL4ZH+Q/U0930hYWZRdHHo9Agk=
 go.gearno.de/x/panicf v0.1.1 h1:E3Cr9NB8Ry2EsvEG/1eHr7kplP3tEjTf5d56dTX64VQ=
 go.gearno.de/x/panicf v0.1.1/go.mod h1:VnB8oF0UefMZcYeD4v+Wk4U5Z1uza7PHLlhT2CbNEbU=
 go.gearno.de/x/ref v0.0.0-20240502200927-d74926fcb14c h1:b8Wwr2owaB6g38tptSk5tekXFSE7RpXsUpaoCO8tQDM=
