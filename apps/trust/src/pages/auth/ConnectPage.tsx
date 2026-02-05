@@ -1,3 +1,4 @@
+import type { GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
@@ -11,6 +12,7 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { ConnectPageMutation } from "./__generated__/ConnectPageMutation.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
@@ -96,8 +98,16 @@ export function ConnectPage(props: {
           email,
         },
       },
-      onCompleted: (_, errors) => {
-        if (errors?.length) {
+      onCompleted: (data, errors: GraphQLError[] | null) => {
+        console.log(data, errors);
+        if (errors) {
+          for (const err of errors) {
+            if (err.extensions?.code === "ALREADY_AUTHENTICATED") {
+              const pathPrefix = getPathPrefix();
+              window.location.href = pathPrefix ? getPathPrefix() : "/";
+              return;
+            }
+          }
           toast({
             title: __("Error"),
             description: __("Cannot send magic link"),

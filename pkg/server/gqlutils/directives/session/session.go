@@ -97,7 +97,7 @@ func Directive(ctx context.Context, obj any, next graphql.Resolver, required Ses
 		}
 	case SessionRequirementNone:
 		if identity != nil {
-			return nil, gqlutils.Invalidf(
+			return nil, gqlutils.AlreadyAuthenticatedf(
 				ctx,
 				"authentication not allowed for this resource/action",
 			)

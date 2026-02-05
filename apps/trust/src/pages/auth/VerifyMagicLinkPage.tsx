@@ -1,4 +1,4 @@
-import { formatError } from "@probo/helpers";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
@@ -38,8 +38,15 @@ export default function VerifyMagicLinkPagePageMutation() {
       variables: {
         input: { token },
       },
-      onCompleted: (_, errors) => {
+      onCompleted: (_, errors: GraphQLError[] | null) => {
         if (errors) {
+          for (const err of errors) {
+            if (err.extensions?.code === "ALREADY_AUTHENTICATED") {
+              const pathPrefix = getPathPrefix();
+              window.location.href = pathPrefix ? getPathPrefix() : "/";
+              return;
+            }
+          }
           toast({
             title: __("Error"),
             description: formatError(__("Failed to connect"), errors),

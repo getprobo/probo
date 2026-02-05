@@ -616,9 +616,9 @@ type Query {
 
 type Mutation {
   sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
-    @session(required: OPTIONAL)
+    @session(required: NONE)
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
-    @session(required: OPTIONAL)
+    @session(required: NONE)
 
   requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT)
 

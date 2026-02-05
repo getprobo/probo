@@ -153,11 +153,6 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 
 // SendMagicLink is the resolver for the sendMagicLink field.
 func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity != nil {
-		return nil, gqlutils.AlreadyAuthenticatedf(ctx, "already authenticated")
-	}
-
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	req := &iam.SendMagicLinkRequest{
