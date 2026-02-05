@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<59393bd95d26b50bb20f933e548497cb>>
+ * @generated SignedSource<<10bf686b430d7a736370638d91ba0b58>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,12 +9,12 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type PeopleKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
+export type MembershipProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 import { FragmentRefs } from "relay-runtime";
 export type PeopleGraphPaginatedFragment$data = {
   readonly canCreatePeople: boolean;
   readonly id: string;
-  readonly peoples: {
+  readonly profiles: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
@@ -23,11 +23,11 @@ export type PeopleGraphPaginatedFragment$data = {
         readonly canUpdate: boolean;
         readonly contractEndDate: string | null | undefined;
         readonly contractStartDate: string | null | undefined;
+        readonly emailAddress: string;
         readonly fullName: string;
         readonly id: string;
-        readonly kind: PeopleKind;
+        readonly kind: MembershipProfileKind;
         readonly position: string | null | undefined;
-        readonly primaryEmailAddress: string;
       };
     }>;
   };
@@ -42,7 +42,7 @@ import PeopleListQuery_graphql from './PeopleListQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
-  "peoples"
+  "profiles"
 ],
 v1 = {
   "alias": null,
@@ -127,15 +127,15 @@ return {
         {
           "kind": "Literal",
           "name": "action",
-          "value": "core:people:create"
+          "value": "iam:membership-profile:create"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"core:people:create\")"
+      "storageKey": "permission(action:\"iam:membership-profile:create\")"
     },
     {
-      "alias": "peoples",
+      "alias": "profiles",
       "args": [
         {
           "kind": "Variable",
@@ -148,15 +148,15 @@ return {
           "variableName": "order"
         }
       ],
-      "concreteType": "PeopleConnection",
+      "concreteType": "ProfileConnection",
       "kind": "LinkedField",
-      "name": "__PeopleGraphPaginatedQuery_peoples_connection",
+      "name": "__PeopleGraphPaginatedQuery_profiles_connection",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "concreteType": "PeopleEdge",
+          "concreteType": "ProfileEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -164,7 +164,7 @@ return {
             {
               "alias": null,
               "args": null,
-              "concreteType": "People",
+              "concreteType": "Profile",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -181,7 +181,7 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "primaryEmailAddress",
+                  "name": "emailAddress",
                   "storageKey": null
                 },
                 {
@@ -225,12 +225,12 @@ return {
                     {
                       "kind": "Literal",
                       "name": "action",
-                      "value": "core:people:delete"
+                      "value": "iam:membership-profile:delete"
                     }
                   ],
                   "kind": "ScalarField",
                   "name": "permission",
-                  "storageKey": "permission(action:\"core:people:delete\")"
+                  "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                 },
                 {
                   "alias": "canUpdate",
@@ -238,12 +238,12 @@ return {
                     {
                       "kind": "Literal",
                       "name": "action",
-                      "value": "core:people:update"
+                      "value": "iam:membership-profile:update"
                     }
                   ],
                   "kind": "ScalarField",
                   "name": "permission",
-                  "storageKey": "permission(action:\"core:people:update\")"
+                  "storageKey": "permission(action:\"iam:membership-profile:update\")"
                 },
                 {
                   "alias": null,
@@ -326,6 +326,6 @@ return {
 };
 })();
 
-(node as any).hash = "199e1751362979bcc7e86e1a90a449d4";
+(node as any).hash = "00fc3c290ab8526c36804176a79760ca";
 
 export default node;

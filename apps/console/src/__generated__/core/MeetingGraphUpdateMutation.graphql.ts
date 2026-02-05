@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f2352b27b79021bcd62b36ef246bc084>>
+ * @generated SignedSource<<c417591e528a7c10a3e5d47fd288cc29>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -101,7 +101,7 @@ v2 = [
           {
             "alias": null,
             "args": null,
-            "concreteType": "People",
+            "concreteType": "Profile",
             "kind": "LinkedField",
             "name": "attendees",
             "plural": true,

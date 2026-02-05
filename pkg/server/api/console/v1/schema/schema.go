@@ -1154,6 +1154,7 @@ type ComplexityRoot struct {
 		Obligations                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
 		Permission                      func(childComplexity int, action string) int
 		ProcessingActivities            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) int
+		Profiles                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) int
 		RightsRequests                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RightsRequestOrderBy) int
 		Risks                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
 		SlackConnections                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
@@ -2240,6 +2241,7 @@ type OrganizationResolver interface {
 	HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error)
 
 	Context(ctx context.Context, obj *types.Organization) (*types.OrganizationContext, error)
+	Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error)
 	SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error)
 	Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error)
 	Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
@@ -7039,6 +7041,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.ProcessingActivities(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityOrderBy), args["filter"].(*types.ProcessingActivityFilter)), true
+	case "Organization.profiles":
+		if e.complexity.Organization.Profiles == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_profiles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.Profiles(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProfileOrderBy), args["filter"].(*types.ProfileFilter)), true
 	case "Organization.rightsRequests":
 		if e.complexity.Organization.RightsRequests == nil {
 			break
@@ -10101,9 +10114,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNonconformityOrder,
 		ec.unmarshalInputObligationFilter,
 		ec.unmarshalInputObligationOrder,
-		ec.unmarshalInputPeopleFilter,
 		ec.unmarshalInputProcessingActivityFilter,
 		ec.unmarshalInputProcessingActivityOrder,
+		ec.unmarshalInputProfileFilter,
 		ec.unmarshalInputProfileOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRequestSignatureInput,
@@ -11779,7 +11792,7 @@ input RiskFilter {
     snapshotId: ID
 }
 
-input PeopleFilter {
+input ProfileFilter {
     excludeContractEnded: Boolean
 }
 
@@ -11865,6 +11878,15 @@ type Organization implements Node {
     email: String
     headquarterAddress: String
     context: OrganizationContext @goField(forceResolver: true)
+
+    profiles(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+        filter: ProfileFilter
+    ): ProfileConnection! @goField(forceResolver: true)
 
     slackConnections(
         first: Int
@@ -18198,6 +18220,42 @@ func (ec *executionContext) field_Organization_processingActivities_args(ctx con
 	return args, nil
 }
 
+func (ec *executionContext) field_Organization_profiles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOProfileFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+
 func (ec *executionContext) field_Organization_rightsRequests_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -20259,6 +20317,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -20706,6 +20766,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -21674,6 +21736,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -22323,6 +22387,8 @@ func (ec *executionContext) fieldContext_Control_organization(_ context.Context,
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -24974,6 +25040,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -25567,6 +25635,8 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_organiza
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -26317,6 +26387,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -28464,6 +28536,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -31289,6 +31363,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -32754,6 +32830,8 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -39443,6 +39521,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -40271,6 +40351,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -41205,6 +41287,55 @@ func (ec *executionContext) fieldContext_Organization_context(_ context.Context,
 			}
 			return nil, fmt.Errorf("no field named %q was found under type OrganizationContext", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_profiles(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_profiles,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Organization().Profiles(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProfileOrderBy), fc.Args["filter"].(*types.ProfileFilter))
+		},
+		nil,
+		ec.marshalNProfileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_profiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_ProfileConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProfileConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ProfileConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProfileConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_profiles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -42791,6 +42922,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -45162,6 +45295,8 @@ func (ec *executionContext) fieldContext_RightsRequest_organization(_ context.Co
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -46184,6 +46319,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -47618,6 +47755,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -48222,6 +48361,8 @@ func (ec *executionContext) fieldContext_StateOfApplicability_organization(_ con
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -48936,6 +49077,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -49549,6 +49692,8 @@ func (ec *executionContext) fieldContext_TransferImpactAssessment_organization(_
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -50313,6 +50458,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -51842,6 +51989,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -54819,6 +54968,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -65175,33 +65326,6 @@ func (ec *executionContext) unmarshalInputObligationOrder(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPeopleFilter(ctx context.Context, obj any) (types.PeopleFilter, error) {
-	var it types.PeopleFilter
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"excludeContractEnded"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "excludeContractEnded":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("excludeContractEnded"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ExcludeContractEnded = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputProcessingActivityFilter(ctx context.Context, obj any) (types.ProcessingActivityFilter, error) {
 	var it types.ProcessingActivityFilter
 	asMap := map[string]any{}
@@ -65257,6 +65381,33 @@ func (ec *executionContext) unmarshalInputProcessingActivityOrder(ctx context.Co
 				return it, err
 			}
 			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputProfileFilter(ctx context.Context, obj any) (types.ProfileFilter, error) {
+	var it types.ProfileFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"excludeContractEnded"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "excludeContractEnded":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("excludeContractEnded"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExcludeContractEnded = data
 		}
 	}
 
@@ -79529,6 +79680,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_context(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "profiles":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_profiles(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -94624,6 +94811,20 @@ func (ec *executionContext) marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋ
 	return ec._Profile(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNProfileConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileConnection(ctx context.Context, sel ast.SelectionSet, v types.ProfileConnection) graphql.Marshaler {
+	return ec._ProfileConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProfileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileConnection(ctx context.Context, sel ast.SelectionSet, v *types.ProfileConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProfileConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNProfileEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ProfileEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -99245,6 +99446,22 @@ func (ec *executionContext) marshalOProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋ
 		return graphql.Null
 	}
 	return ec._Profile(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOProfileFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileFilter(ctx context.Context, v any) (*types.ProfileFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProfileFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileOrderBy(ctx context.Context, v any) (*types.ProfileOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProfileOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐReport(ctx context.Context, sel ast.SelectionSet, v *types.Report) graphql.Marshaler {
