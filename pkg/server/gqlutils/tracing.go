@@ -17,7 +17,6 @@ package gqlutils
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -72,9 +71,12 @@ func (t TracingExtension) InterceptField(ctx context.Context, next graphql.Resol
 }
 
 func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
-	rootSpan := trace.SpanFromContext(ctx)
 	requestContext := graphql.GetOperationContext(ctx)
 	startTime := time.Now()
+
+	rootSpan := trace.SpanFromContext(ctx)
+	spanCtx := ctx
+	var operationSpan trace.Span
 
 	if rootSpan.IsRecording() {
 		tracer := otel.Tracer("graphql-operation")
@@ -83,20 +85,25 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 			operationName = "GraphQL " + requestContext.OperationName
 		}
 
-		var span trace.Span
-		ctx, span = tracer.Start(ctx, operationName)
-		defer span.End()
+		spanCtx, operationSpan = tracer.Start(ctx, operationName)
 
-		span.SetAttributes(
-			attribute.String("graphql.operation_name", strings.ToValidUTF8(requestContext.OperationName, "\uFFFD")),
+		operationSpan.SetAttributes(
+			attribute.String("graphql.operation_name", requestContext.OperationName),
 			attribute.String("graphql.operation_type", string(requestContext.Operation.Operation)),
-			attribute.String("graphql.query", strings.ToValidUTF8(requestContext.RawQuery, "\uFFFD")),
+			attribute.String("graphql.query", requestContext.RawQuery),
 		)
 	}
 
-	handler := next(ctx)
+	handler := next(spanCtx)
 
 	return func(ctx context.Context) *graphql.Response {
+		// gqlgen invokes the response handler with a different ctx than the one
+		// passed to next(...). Re-attach the span so the logger can extract trace_id.
+		if operationSpan != nil {
+			ctx = trace.ContextWithSpan(ctx, operationSpan)
+			defer operationSpan.End()
+		}
+
 		resp := handler(ctx)
 		duration := time.Since(startTime)
 
