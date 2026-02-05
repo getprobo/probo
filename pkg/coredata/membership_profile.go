@@ -384,7 +384,7 @@ VALUES (
     @membership_id,
     @full_name,
     @kind,
-    @additional_email_addresses,
+    COALESCE(@additional_email_addresses, '{}'::CITEXT[]),
     @position,
     @contract_start_date,
     @contract_end_date,
