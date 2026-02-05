@@ -155,7 +155,7 @@ WITH rsks AS (
 		r.name,
 		r.description,
 		r.category,
-		r.owner_id,
+		r.owner_profile_id,
 		p.full_name as owner_full_name,
 		r.treatment,
 		r.note,
@@ -175,7 +175,7 @@ WITH rsks AS (
 	INNER JOIN
 		risks_measures rm ON r.id = rm.risk_id
 	LEFT JOIN
-		peoples p ON r.owner_id = p.id
+		peoples p ON r.owner_profile_id = p.id
 	WHERE
 		rm.measure_id = @measure_id
 )
@@ -185,7 +185,7 @@ SELECT
 	name,
 	description,
 	category,
-	owner_id,
+	owner_profile_id,
 	owner_full_name,
 	treatment,
 	note,
@@ -274,7 +274,7 @@ WITH rsks AS (
 		r.organization_id,
 		r.name,
 		r.description,
-		r.owner_id,
+		r.owner_profile_id,
 		p.full_name as owner_full_name,
 		r.treatment,
 		r.note,
@@ -293,7 +293,7 @@ WITH rsks AS (
 	FROM
 		risks r
 	LEFT JOIN
-		peoples p ON r.owner_id = p.id
+		peoples p ON r.owner_profile_id = p.id
 	WHERE
 		r.organization_id = @organization_id
 )
@@ -302,7 +302,7 @@ SELECT
 	organization_id,
 	name,
 	description,
-	owner_id,
+	owner_profile_id,
 	owner_full_name,
 	treatment,
 	note,
@@ -358,7 +358,7 @@ SELECT
 	name,
 	description,
 	category,
-	owner_id,
+	owner_profile_id,
 	NULL as owner_full_name,
 	treatment,
 	note,
@@ -407,8 +407,8 @@ func (r *Risk) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO risks (id, tenant_id, organization_id, name, description, category, owner_id, treatment, note, inherent_likelihood, inherent_impact, residual_likelihood, residual_impact, created_at, updated_at)
-VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owner_id, @treatment, @note, @inherent_likelihood, @inherent_impact, @residual_likelihood, @residual_impact, @created_at, @updated_at)
+INSERT INTO risks (id, tenant_id, organization_id, name, description, category, owner_profile_id, treatment, note, inherent_likelihood, inherent_impact, residual_likelihood, residual_impact, created_at, updated_at)
+VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owner_profile_id, @treatment, @note, @inherent_likelihood, @inherent_impact, @residual_likelihood, @residual_impact, @created_at, @updated_at)
 `
 
 	args := pgx.StrictNamedArgs{
@@ -418,7 +418,7 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owne
 		"name":                r.Name,
 		"description":         r.Description,
 		"category":            r.Category,
-		"owner_id":            r.OwnerID,
+		"owner_profile_id":    r.OwnerID,
 		"treatment":           r.Treatment,
 		"note":                r.Note,
 		"inherent_likelihood": r.InherentLikelihood,
@@ -443,7 +443,7 @@ UPDATE risks
 SET
 	name = @name,
 	description = @description,
-	owner_id = @owner_id,
+	owner_profile_id = @owner_profile_id,
 	treatment = @treatment,
 	inherent_likelihood = @inherent_likelihood,
 	inherent_impact = @inherent_impact,
@@ -463,7 +463,7 @@ WHERE %s
 		"name":                r.Name,
 		"description":         r.Description,
 		"category":            r.Category,
-		"owner_id":            r.OwnerID,
+		"owner_profile_id":    r.OwnerID,
 		"treatment":           r.Treatment,
 		"note":                r.Note,
 		"inherent_likelihood": r.InherentLikelihood,
@@ -567,7 +567,7 @@ INSERT INTO risks (
 	category,
 	treatment,
 	note,
-	owner_id,
+	owner_profile_id,
 	inherent_likelihood,
 	inherent_impact,
 	residual_likelihood,
@@ -586,7 +586,7 @@ SELECT
 	r.category,
 	r.treatment,
 	r.note,
-	r.owner_id,
+	r.owner_profile_id,
 	r.inherent_likelihood,
 	r.inherent_impact,
 	r.residual_likelihood,

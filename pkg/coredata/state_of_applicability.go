@@ -81,7 +81,7 @@ SELECT
     name,
     source_id,
     snapshot_id,
-    owner_id,
+    owner_profile_id,
     created_at,
     updated_at
 FROM
@@ -130,7 +130,7 @@ SELECT
     name,
     source_id,
     snapshot_id,
-    owner_id,
+    owner_profile_id,
     created_at,
     updated_at
 FROM
@@ -210,7 +210,7 @@ INSERT INTO
         name,
         source_id,
         snapshot_id,
-        owner_id,
+        owner_profile_id,
         created_at,
         updated_at
     )
@@ -221,7 +221,7 @@ VALUES (
     @name,
     @source_id,
     @snapshot_id,
-    @owner_id,
+    @owner_profile_id,
     @created_at,
     @updated_at
 );
@@ -234,7 +234,7 @@ VALUES (
 		"name":                      s.Name,
 		"source_id":                 s.SourceID,
 		"snapshot_id":               s.SnapshotID,
-		"owner_id":                  s.OwnerID,
+		"owner_profile_id":          s.OwnerID,
 		"created_at":                s.CreatedAt,
 		"updated_at":                s.UpdatedAt,
 	}
@@ -262,7 +262,7 @@ func (s *StateOfApplicability) Update(
 UPDATE states_of_applicability
 SET
     name = @name,
-    owner_id = @owner_id,
+    owner_profile_id = @owner_profile_id,
     updated_at = @updated_at
 WHERE
     %s
@@ -274,7 +274,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"state_of_applicability_id": s.ID,
 		"name":                      s.Name,
-		"owner_id":                  s.OwnerID,
+		"owner_profile_id":          s.OwnerID,
 		"updated_at":                s.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -354,7 +354,7 @@ INSERT INTO states_of_applicability (
     name,
     source_id,
     snapshot_id,
-    owner_id,
+    owner_profile_id,
     created_at,
     updated_at
 )
@@ -365,7 +365,7 @@ SELECT
     soa.name,
     soa.id,
     @snapshot_id,
-    soa.owner_id,
+    soa.owner_profile_id,
     soa.created_at,
     soa.updated_at
 FROM states_of_applicability soa

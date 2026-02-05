@@ -85,7 +85,7 @@ func (d *Datum) LoadByID(
 SELECT
 	id,
 	name,
-	owner_id,
+	owner_profile_id,
 	organization_id,
 	data_classification,
 	snapshot_id,
@@ -129,7 +129,7 @@ func (d *Datum) LoadByOwnerID(
 SELECT
 	id,
 	name,
-	owner_id,
+	owner_profile_id,
 	organization_id,
 	data_classification,
 	snapshot_id,
@@ -140,13 +140,13 @@ FROM
 	data
 WHERE
 	%s
-	AND owner_id = @owner_id
+	AND owner_profile_id = @owner_profile_id
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"owner_id": d.OwnerID}
+	args := pgx.StrictNamedArgs{"owner_profile_id": d.OwnerID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -212,7 +212,7 @@ SELECT
 	id,
 	name,
 	organization_id,
-	owner_id,
+	owner_profile_id,
 	data_classification,
 	snapshot_id,
 	source_id,
@@ -259,7 +259,7 @@ INSERT INTO data (
 	id,
 	tenant_id,
 	name,
-	owner_id,
+	owner_profile_id,
 	organization_id,
 	data_classification,
 	snapshot_id,
@@ -270,7 +270,7 @@ INSERT INTO data (
 	@id,
 	@tenant_id,
 	@name,
-	@owner_id,
+	@owner_profile_id,
 	@organization_id,
 	@data_classification,
 	@snapshot_id,
@@ -284,7 +284,7 @@ INSERT INTO data (
 		"id":                  d.ID,
 		"tenant_id":           scope.GetTenantID(),
 		"name":                d.Name,
-		"owner_id":            d.OwnerID,
+		"owner_profile_id":    d.OwnerID,
 		"organization_id":     d.OrganizationID,
 		"data_classification": d.DataClassification,
 		"snapshot_id":         d.SnapshotID,
@@ -310,7 +310,7 @@ func (d *Datum) Update(
 UPDATE data
 SET
 	name = @name,
-	owner_id = @owner_id,
+	owner_profile_id = @owner_profile_id,
 	data_classification = @data_classification,
 	updated_at = @updated_at
 WHERE
@@ -320,7 +320,7 @@ WHERE
 RETURNING
 	id,
 	name,
-	owner_id,
+	owner_profile_id,
 	organization_id,
 	data_classification,
 	snapshot_id,
@@ -334,7 +334,7 @@ RETURNING
 	args := pgx.StrictNamedArgs{
 		"id":                  d.ID,
 		"name":                d.Name,
-		"owner_id":            d.OwnerID,
+		"owner_profile_id":    d.OwnerID,
 		"data_classification": d.DataClassification,
 		"updated_at":          d.UpdatedAt,
 	}
@@ -414,7 +414,7 @@ INSERT INTO data (
 	source_id,
 	name,
 	organization_id,
-	owner_id,
+	owner_profile_id,
 	data_classification,
 	created_at,
 	updated_at
@@ -426,7 +426,7 @@ SELECT
 	d.id,
 	d.name,
 	d.organization_id,
-	d.owner_id,
+	d.owner_profile_id,
 	d.data_classification,
 	d.created_at,
 	d.updated_at
