@@ -78,7 +78,7 @@ type (
 		SenderCompanyLogoURL            string
 		SenderCompanyHeadquarterAddress string
 
-		// Common variables
+		// Other common variables
 		RecipientFullName string
 	}
 
@@ -107,13 +107,13 @@ func (a *Asset) GetMimeType() string {
 
 var _ filemanager.File = (*Asset)(nil)
 
-func DefaultPresenterConfig(bucketName string, baseURL string) PresenterConfig {
+func DefaultPresenterConfig(staticAssetsBucket string, baseURL string) PresenterConfig {
 	return PresenterConfig{
 		BaseURL: baseURL,
 		PoweredByLogo: Asset{
 			Name:       "probo-gray-small.png",
 			ObjectKey:  "probo-gray-small.png",
-			BucketName: bucketName,
+			BucketName: staticAssetsBucket,
 			MimeType:   "image/png",
 		},
 		SenderCompanyName:       "Probo",
@@ -121,7 +121,7 @@ func DefaultPresenterConfig(bucketName string, baseURL string) PresenterConfig {
 		SenderCompanyLogo: Asset{
 			Name:       "probo.png",
 			ObjectKey:  "probo.png",
-			BucketName: bucketName,
+			BucketName: staticAssetsBucket,
 			MimeType:   "image/png",
 		},
 		SenderCompanyHeadquarterAddress: "Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US",
@@ -136,15 +136,15 @@ func NewPresenterFromConfig(fileService *filemanager.Service, cfg PresenterConfi
 	}
 }
 
-func NewPresenter(fileService *filemanager.Service, bucketName string, baseURL string, fullName string) *Presenter {
+func NewPresenter(fileService *filemanager.Service, staticAssetsBucket string, baseURL string, fullName string) *Presenter {
 	return NewPresenterFromConfig(
 		fileService,
-		DefaultPresenterConfig(bucketName, baseURL),
+		DefaultPresenterConfig(staticAssetsBucket, baseURL),
 		fullName,
 	)
 }
 
-func UpdloadStaticAssets(ctx context.Context, s3Client *s3.Client, bucket string) error {
+func UpdloadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBucket string) error {
 	subFS, err := fs.Sub(staticAssets, "assets")
 	if err != nil {
 		return fmt.Errorf("cannot create subtree file system: %w", err)
@@ -184,7 +184,7 @@ func UpdloadStaticAssets(ctx context.Context, s3Client *s3.Client, bucket string
 		_, err = s3Client.PutObject(
 			ctx,
 			&s3.PutObjectInput{
-				Bucket: aws.String(bucket),
+				Bucket: aws.String(staticAssetsBucket),
 				Key:    aws.String(path),
 				Body:   file,
 				Metadata: map[string]string{
