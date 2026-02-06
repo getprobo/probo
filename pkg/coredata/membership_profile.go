@@ -32,6 +32,7 @@ type (
 	MembershipProfile struct {
 		ID                       gid.GID               `db:"id"`
 		IdentityID               gid.GID               `db:"identity_id"`
+		OrganizationID           gid.GID               `db:"organization_id"`
 		MembershipID             gid.GID               `db:"membership_id"`
 		EmailAddress             mail.Addr             `db:"email_address"`
 		FullName                 string                `db:"full_name"`
@@ -84,6 +85,7 @@ func (p *MembershipProfile) LoadByMembershipID(
 SELECT
     p.id,
     p.identity_id,
+    p.organization_id,
     p.membership_id,
     i.email_address,
     p.full_name,
@@ -138,6 +140,7 @@ func (p *MembershipProfile) LoadByID(
 SELECT
     p.id,
     p.identity_id,
+    p.organization_id,
     p.membership_id,
     i.email_address,
     p.full_name,
@@ -192,6 +195,7 @@ func (p *MembershipProfiles) LoadByIDs(
 SELECT
     p.id,
     p.identity_id,
+    p.organization_id,
     p.membership_id,
     i.email_address,
     p.full_name,
@@ -231,6 +235,75 @@ WHERE
 	return nil
 }
 
+func (p *MembershipProfiles) LoadByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[MembershipProfileOrderField],
+	filter *MembershipProfileFilter,
+) error {
+	q := `
+WITH profiles AS (
+    SELECT
+        id,
+        identity_id,
+        organization_id,
+        membership_id,
+        full_name,
+        kind,
+        additional_email_addresses,
+        position,
+        contract_start_date,
+        contract_end_date,
+        created_at,
+        updated_at
+    FROM
+        iam_membership_profiles
+    WHERE
+        %s
+        AND organization_id = @organization_id
+        AND %s
+        AND %s
+)
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    p.membership_id,
+    i.email_address,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    p.created_at,
+    p.updated_at
+FROM profiles p
+INNER JOIN identities i ON i.id = p.identity_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profiles: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profiles: %w", err)
+	}
+
+	*p = profiles
+
+	return nil
+}
+
 func (p *MembershipProfiles) LoadByMeetingID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -243,6 +316,7 @@ WITH attendees AS (
         p.id,
         p.tenant_id,
         p.identity_id,
+        p.organization_id,
         p.membership_id,
         i.email_address,
         p.full_name,
@@ -266,6 +340,7 @@ WITH attendees AS (
 SELECT
     id,
     identity_id,
+    organization_id,
     membership_id,
     kind,
     email_address,
@@ -324,6 +399,7 @@ WITH signatories AS (
 SELECT
     p.id,
     p.identity_id,
+    p.organization_id,
     p.membership_id,
     p.kind,
     p.full_name,
@@ -368,6 +444,7 @@ INSERT INTO
         tenant_id,
         id,
         identity_id,
+        organization_id,
         membership_id,
         full_name,
         kind,
@@ -382,6 +459,7 @@ VALUES (
     @tenant_id,
     @id,
     @identity_id,
+    @organization_id,
     @membership_id,
     @full_name,
     @kind,
@@ -398,6 +476,7 @@ VALUES (
 		"tenant_id":                  p.ID.TenantID().String(),
 		"id":                         p.ID,
 		"identity_id":                p.IdentityID,
+		"organization_id":            p.OrganizationID,
 		"membership_id":              p.MembershipID,
 		"full_name":                  p.FullName,
 		"kind":                       p.Kind,
