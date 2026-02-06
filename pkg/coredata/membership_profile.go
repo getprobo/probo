@@ -117,7 +117,7 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query identity profile: %w", err)
+		return fmt.Errorf("cannot query profile: %w", err)
 	}
 
 	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
@@ -126,7 +126,7 @@ LIMIT 1;
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect identity profile: %w", err)
+		return fmt.Errorf("cannot collect profile: %w", err)
 	}
 
 	*p = profile
@@ -172,7 +172,7 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query identity profile: %w", err)
+		return fmt.Errorf("cannot query profile: %w", err)
 	}
 
 	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
@@ -181,7 +181,67 @@ LIMIT 1;
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect identity profile: %w", err)
+		return fmt.Errorf("cannot collect profile: %w", err)
+	}
+
+	*p = profile
+
+	return nil
+}
+
+func (p *MembershipProfile) LoadByIdentityIDAndOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	identityID gid.GID,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    p.membership_id,
+    i.email_address,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    p.created_at,
+    p.updated_at
+FROM
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
+WHERE
+    p.%s
+    AND p.identity_id = @identity_id
+    AND p.organization_id = @organization_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"identity_id":     identityID,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profile: %w", err)
+	}
+
+	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect profile: %w", err)
 	}
 
 	*p = profile
@@ -494,7 +554,7 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert identity profile: %w", err)
+		return fmt.Errorf("cannot insert profile: %w", err)
 	}
 
 	return nil
@@ -537,7 +597,7 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update identity profile: %w", err)
+		return fmt.Errorf("cannot update profile: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -568,7 +628,7 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete identity profile: %w", err)
+		return fmt.Errorf("cannot delete profile: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {

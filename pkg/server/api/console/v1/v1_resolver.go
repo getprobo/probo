@@ -4094,7 +4094,7 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	identity := authn.IdentityFromContext(ctx)
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
-	documentVersionSignature, err := prb.Documents.SignDocumentVersionByEmail(ctx, input.DocumentVersionID, identity.EmailAddress)
+	documentVersionSignature, err := prb.Documents.SignDocumentVersionByIdentity(ctx, input.DocumentVersionID, identity.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
