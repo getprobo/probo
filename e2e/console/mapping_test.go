@@ -19,7 +19,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -370,7 +369,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
 
 	// Create a document
-	peopleID := factory.NewPeople(owner).WithFullName("Doc Owner").Create()
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 	var createDocumentResult struct {
 		CreateDocument struct {
 			DocumentEdge struct {
@@ -395,7 +394,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Control Mapping",
 			"content":        "Document content",
-			"ownerId":        peopleID,
+			"ownerId":        profileID.String(),
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -760,7 +759,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create a document
-	peopleID := factory.NewPeople(owner).WithFullName("Doc Owner").Create()
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 	var createDocumentResult struct {
 		CreateDocument struct {
 			DocumentEdge struct {
@@ -785,7 +784,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Risk Mapping",
 			"content":        "Document content",
-			"ownerId":        peopleID,
+			"ownerId":        profileID.String(),
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -874,7 +873,7 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create an obligation
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 	var createObligationResult struct {
 		CreateObligation struct {
 			ObligationEdge struct {
@@ -899,7 +898,7 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"area":           "Risk Management",
 			"requirement":    "Obligation for Risk Mapping",
-			"ownerId":        peopleID,
+			"ownerId":        profileID.String(),
 			"status":         "NON_COMPLIANT",
 			"type":           "LEGAL",
 		},

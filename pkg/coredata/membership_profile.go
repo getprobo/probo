@@ -61,7 +61,7 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 }
 
 func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT m.organization_id FROM iam_membership_profiles mp JOIN iam_memberships m ON mp.membership_id = m.id WHERE mp.id = $1 LIMIT 1;`
+	q := `SELECT m.organization_id, mp.identity_id FROM iam_membership_profiles mp JOIN iam_memberships m ON mp.membership_id = m.id WHERE mp.id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
 	if err := conn.QueryRow(ctx, q, p.ID).Scan(&organizationID); err != nil {
@@ -241,6 +241,7 @@ func (p *MembershipProfiles) LoadByMeetingID(
 WITH attendees AS (
     SELECT
         p.id,
+        p.tenant_id,
         p.identity_id,
         p.membership_id,
         i.email_address,
