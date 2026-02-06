@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -132,7 +131,7 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 func (r *Renewer) renewDomain(ctx context.Context, tx pg.Conn, domainID gid.GID) error {
 	domain := &coredata.CustomDomain{}
 	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), r.encryptionKey, domainID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
 

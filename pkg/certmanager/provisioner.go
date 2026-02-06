@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
@@ -227,7 +226,7 @@ func (p *Provisioner) resetStaleDomain(
 ) error {
 	fullDomain := &coredata.CustomDomain{}
 	if err := fullDomain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
 
@@ -276,7 +275,7 @@ func (p *Provisioner) provisionDomainCertificate(
 ) error {
 	domain := &coredata.CustomDomain{}
 	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), p.encryptionKey, domainID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
 
