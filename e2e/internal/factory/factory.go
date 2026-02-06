@@ -92,18 +92,6 @@ func (a Attrs) getBool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
-func (a Attrs) getSlice(key string, defaultVal []string) []string {
-	if a == nil {
-		return defaultVal
-	}
-	if v, ok := a[key]; ok {
-		if slice, ok := v.([]string); ok {
-			return slice
-		}
-	}
-	return defaultVal
-}
-
 func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
