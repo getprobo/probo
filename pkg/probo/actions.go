@@ -117,19 +117,21 @@ const (
 	ActionFrameworkImport                       = "core:framework:import"
 
 	// Control actions
-	ActionControlGet                   = "core:control:get"
-	ActionControlList                  = "core:control:list"
-	ActionControlCreate                = "core:control:create"
-	ActionControlUpdate                = "core:control:update"
-	ActionControlDelete                = "core:control:delete"
-	ActionControlMeasureMappingCreate  = "core:control:create-measure-mapping"
-	ActionControlMeasureMappingDelete  = "core:control:delete-measure-mapping"
-	ActionControlDocumentMappingCreate = "core:control:create-document-mapping"
-	ActionControlDocumentMappingDelete = "core:control:delete-document-mapping"
-	ActionControlAuditMappingCreate    = "core:control:create-audit-mapping"
-	ActionControlAuditMappingDelete    = "core:control:delete-audit-mapping"
-	ActionControlSnapshotMappingCreate = "core:control:create-snapshot-mapping"
-	ActionControlSnapshotMappingDelete = "core:control:delete-snapshot-mapping"
+	ActionControlGet                     = "core:control:get"
+	ActionControlList                    = "core:control:list"
+	ActionControlCreate                  = "core:control:create"
+	ActionControlUpdate                  = "core:control:update"
+	ActionControlDelete                  = "core:control:delete"
+	ActionControlMeasureMappingCreate    = "core:control:create-measure-mapping"
+	ActionControlMeasureMappingDelete    = "core:control:delete-measure-mapping"
+	ActionControlDocumentMappingCreate   = "core:control:create-document-mapping"
+	ActionControlDocumentMappingDelete   = "core:control:delete-document-mapping"
+	ActionControlAuditMappingCreate      = "core:control:create-audit-mapping"
+	ActionControlAuditMappingDelete      = "core:control:delete-audit-mapping"
+	ActionControlSnapshotMappingCreate   = "core:control:create-snapshot-mapping"
+	ActionControlSnapshotMappingDelete   = "core:control:delete-snapshot-mapping"
+	ActionControlObligationMappingCreate = "core:control:create-obligation-mapping"
+	ActionControlObligationMappingDelete = "core:control:delete-obligation-mapping"
 
 	// Measure actions
 	ActionMeasureGet            = "core:measure:get"
@@ -321,8 +323,4 @@ const (
 	ActionApplicabilityStatementCreate = "core:applicability-statement:create"
 	ActionApplicabilityStatementUpdate = "core:applicability-statement:update"
 	ActionApplicabilityStatementDelete = "core:applicability-statement:delete"
-
-	ActionControlObligationMappingList   = "core:control-obligation-mapping:list"
-	ActionControlObligationMappingCreate = "core:control-obligation-mapping:create"
-	ActionControlObligationMappingDelete = "core:control-obligation-mapping:delete"
 )

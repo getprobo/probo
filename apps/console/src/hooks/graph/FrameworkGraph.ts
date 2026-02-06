@@ -130,10 +130,10 @@ export const frameworkControlNodeQuery = graphql`
           action: "core:control:delete-snapshot-mapping"
         )
         canCreateObligationMapping: permission(
-          action: "core:control:obligation-control-mapping:create"
+          action: "core:control:create-obligation-mapping"
         )
         canDeleteObligationMapping: permission(
-          action: "core:control:obligation-control-mapping:delete"
+          action: "core:control:delete-obligation-mapping"
         )
         ...FrameworkControlDialogFragment
         measures(first: 100)
