@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.119.0] - 2026-02-05
+
+### Added
+
+- Add member n8n actions
+
+### Fixed
+
+- Fix controls for CFR framework
+- Fix missing `trace_id` on resolver logs
+
 ## [0.118.2] - 2026-02-05
 
 ### Fixed
