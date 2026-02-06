@@ -61,7 +61,7 @@ func (ccir *CreateContinualImprovementRequest) Validate() error {
 	v.Check(ccir.ReferenceID, "reference_id", validator.SafeText(NameMaxLength))
 	v.Check(ccir.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ccir.Source, "source", validator.SafeText(ContentMaxLength))
-	v.Check(ccir.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(ccir.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(ccir.Status, "status", validator.OneOfSlice(coredata.ContinualImprovementStatuses()))
 	v.Check(ccir.Priority, "priority", validator.OneOfSlice(coredata.ContinualImprovementPriorities()))
 
@@ -75,7 +75,7 @@ func (ucir *UpdateContinualImprovementRequest) Validate() error {
 	v.Check(ucir.ReferenceID, "reference_id", validator.SafeText(NameMaxLength))
 	v.Check(ucir.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ucir.Source, "source", validator.SafeText(ContentMaxLength))
-	v.Check(ucir.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(ucir.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(ucir.Status, "status", validator.OneOfSlice(coredata.ContinualImprovementStatuses()))
 	v.Check(ucir.Priority, "priority", validator.OneOfSlice(coredata.ContinualImprovementPriorities()))
 
@@ -138,9 +138,9 @@ func (s *ContinualImprovementService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			owner := &coredata.People{}
+			owner := &coredata.MembershipProfile{}
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner: %w", err)
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
 			if err := improvement.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -184,9 +184,9 @@ func (s *ContinualImprovementService) Update(
 			}
 
 			if req.OwnerID != nil {
-				owner := &coredata.People{}
+				owner := &coredata.MembershipProfile{}
 				if err := owner.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner: %w", err)
+					return fmt.Errorf("cannot load owner profile: %w", err)
 				}
 				improvement.OwnerID = *req.OwnerID
 			}

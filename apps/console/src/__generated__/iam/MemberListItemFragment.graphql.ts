@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<81a5acfba89528014adf0731f16b9a90>>
+ * @generated SignedSource<<770fb773083cc4f819594e268d9eb0cc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type MembershipSource = "MANUAL" | "SAML" | "SCIM";
 export type MembershipState = "ACTIVE" | "INACTIVE";
+export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 import { FragmentRefs } from "relay-runtime";
 export type MemberListItemFragment$data = {
   readonly canDelete: boolean;
@@ -23,6 +24,9 @@ export type MemberListItemFragment$data = {
   };
   readonly profile: {
     readonly fullName: string;
+    readonly id: string;
+    readonly kind: ProfileKind;
+    readonly position: string | null | undefined;
   };
   readonly role: MembershipRole;
   readonly source: MembershipSource;
@@ -34,19 +38,21 @@ export type MemberListItemFragment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"MemberListItemFragment">;
 };
 
-const node: ReaderFragment = {
+const node: ReaderFragment = (function(){
+var v0 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
+return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
   "name": "MemberListItemFragment",
   "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "id",
-      "storageKey": null
-    },
+    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -78,11 +84,26 @@ const node: ReaderFragment = {
         "name": "profile",
         "plural": false,
         "selections": [
+          (v0/*: any*/),
           {
             "alias": null,
             "args": null,
             "kind": "ScalarField",
             "name": "fullName",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "kind",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "position",
             "storageKey": null
           }
         ],
@@ -149,7 +170,8 @@ const node: ReaderFragment = {
   "type": "Membership",
   "abstractKey": null
 };
+})();
 
-(node as any).hash = "ffa3431077faeeb5e5779975d68c82bb";
+(node as any).hash = "378a4cdc212c16aecae368d41d80739e";
 
 export default node;

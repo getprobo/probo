@@ -54,7 +54,7 @@ func NewAsset(asset *coredata.Asset) *Asset {
 		SnapshotID: asset.SnapshotID,
 		Name:       asset.Name,
 		Amount:     asset.Amount,
-		Owner: &People{
+		Owner: &Profile{
 			ID: asset.OwnerID,
 		},
 		AssetType:       asset.AssetType,

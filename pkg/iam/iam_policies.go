@@ -84,6 +84,18 @@ var IAMSelfManageInvitationPolicy = policy.NewPolicy(
 ).
 	WithDescription("Allows users to view and accept invitations sent to them")
 
+// IAMSelfManageProfilePolicy allows users to view their own profiles.
+var IAMSelfManageProfilePolicy = policy.NewPolicy(
+	"iam:self-manage-profile",
+	"Self-Manage Profiles",
+
+	// Users can view their own profiles
+	policy.Allow(ActionMembershipProfileGet).
+		WithSID("view-own-profiles").
+		When(policy.Equals("principal.id", "resource.identity_id")),
+).
+	WithDescription("Allows users to view their organization profiles")
+
 // IAMSelfManageMembershipPolicy allows users to view their own memberships.
 var IAMSelfManageMembershipPolicy = policy.NewPolicy(
 	"iam:self-manage-membership",
@@ -146,7 +158,11 @@ var IAMOwnerPolicy = policy.NewPolicy(
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
 	// Full access to membership profiles (scoped to own organization)
-	policy.Allow(ActionMembershipProfileGet).
+	policy.Allow(
+		ActionMembershipProfileGet,
+		ActionMembershipProfileList,
+		ActionMembershipProfileUpdate,
+	).
 		WithSID("full-membership-profile-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
@@ -216,7 +232,11 @@ var IAMAdminPolicy = policy.NewPolicy(
 		),
 
 	// Can view membership profiles (scoped to own organization)
-	policy.Allow(ActionMembershipProfileGet).
+	policy.Allow(
+		ActionMembershipProfileGet,
+		ActionMembershipProfileList,
+		ActionMembershipProfileUpdate,
+	).
 		WithSID("membership-profile-admin-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
@@ -292,7 +312,10 @@ var IAMViewerPolicy = policy.NewPolicy(
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
 	// Can view membership profiles (scoped to own organization)
-	policy.Allow(ActionMembershipProfileGet).
+	policy.Allow(
+		ActionMembershipProfileGet,
+		ActionMembershipProfileList,
+	).
 		WithSID("membership-profile-viewer-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 

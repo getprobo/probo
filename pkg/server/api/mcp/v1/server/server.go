@@ -12,12 +12,11 @@ import (
 type ResolverInterface interface {
 	ListOrganizationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListOrganizationsInput) (*mcp.CallToolResult, types.ListOrganizationsOutput, error)
 	ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorsInput) (*mcp.CallToolResult, types.ListVendorsOutput, error)
-	ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListPeopleInput) (*mcp.CallToolResult, types.ListPeopleOutput, error)
+	ListProfilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListProfilesInput) (*mcp.CallToolResult, types.ListProfilesOutput, error)
 	AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorInput) (*mcp.CallToolResult, types.AddVendorOutput, error)
 	UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error)
-	GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error)
-	AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddPeopleInput) (*mcp.CallToolResult, types.AddPeopleOutput, error)
-	UpdatePeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdatePeopleInput) (*mcp.CallToolResult, types.UpdatePeopleOutput, error)
+	GetProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetProfileInput) (*mcp.CallToolResult, types.GetProfileOutput, error)
+	UpdateProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProfileInput) (*mcp.CallToolResult, types.UpdateProfileOutput, error)
 	ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error)
 	GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error)
 	AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error)
@@ -140,16 +139,16 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "listPeople",
-			Description:  "List all people for the organization",
-			InputSchema:  types.ListPeopleToolInputSchema,
-			OutputSchema: types.ListPeopleToolOutputSchema,
+			Name:         "listProfiles",
+			Description:  "List all profiles for the organization",
+			InputSchema:  types.ListProfilesToolInputSchema,
+			OutputSchema: types.ListProfilesToolOutputSchema,
 			Annotations: &mcp.ToolAnnotations{
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
 			},
 		},
-		resolver.ListPeopleTool,
+		resolver.ListProfilesTool,
 	)
 	mcp.AddTool(
 		server,
@@ -174,36 +173,26 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "getPeople",
-			Description:  "Get a people by ID",
-			InputSchema:  types.GetPeopleToolInputSchema,
-			OutputSchema: types.GetPeopleToolOutputSchema,
+			Name:         "getProfile",
+			Description:  "Get a profile by ID",
+			InputSchema:  types.GetProfileToolInputSchema,
+			OutputSchema: types.GetProfileToolOutputSchema,
 			Annotations: &mcp.ToolAnnotations{
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
 			},
 		},
-		resolver.GetPeopleTool,
+		resolver.GetProfileTool,
 	)
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "addPeople",
-			Description:  "Add a new people to the organization",
-			InputSchema:  types.AddPeopleToolInputSchema,
-			OutputSchema: types.AddPeopleToolOutputSchema,
+			Name:         "updateProfile",
+			Description:  "Update an existing profile",
+			InputSchema:  types.UpdateProfileToolInputSchema,
+			OutputSchema: types.UpdateProfileToolOutputSchema,
 		},
-		resolver.AddPeopleTool,
-	)
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:         "updatePeople",
-			Description:  "Update an existing people",
-			InputSchema:  types.UpdatePeopleToolInputSchema,
-			OutputSchema: types.UpdatePeopleToolOutputSchema,
-		},
-		resolver.UpdatePeopleTool,
+		resolver.UpdateProfileTool,
 	)
 	mcp.AddTool(
 		server,

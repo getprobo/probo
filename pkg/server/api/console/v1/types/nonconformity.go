@@ -68,7 +68,7 @@ func NewNonconformity(nr *coredata.Nonconformity) *Nonconformity {
 		Organization: &Organization{
 			ID: nr.OrganizationID,
 		},
-		Owner: &People{
+		Owner: &Profile{
 			ID: nr.OwnerID,
 		},
 		ReferenceID:        nr.ReferenceID,

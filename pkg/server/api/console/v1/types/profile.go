@@ -21,32 +21,32 @@ import (
 )
 
 type (
-	PeopleOrderBy OrderBy[coredata.PeopleOrderField]
+	ProfileOrderBy OrderBy[coredata.MembershipProfileOrderField]
 
-	PeopleConnection struct {
+	ProfileConnection struct {
 		TotalCount int
-		Edges      []*PeopleEdge
+		Edges      []*ProfileEdge
 		PageInfo   PageInfo
 
 		Resolver any
 		ParentID gid.GID
-		Filters  *coredata.PeopleFilter
+		Filters  *coredata.MembershipProfileFilter
 	}
 )
 
-func NewPeopleConnection(
-	p *page.Page[*coredata.People, coredata.PeopleOrderField],
+func NewProfileConnection(
+	p *page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField],
 	parentType any,
 	parentID gid.GID,
-	filters *coredata.PeopleFilter,
-) *PeopleConnection {
-	var edges = make([]*PeopleEdge, len(p.Data))
+	filters *coredata.MembershipProfileFilter,
+) *ProfileConnection {
+	var edges = make([]*ProfileEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewPeopleEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewProfileEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &PeopleConnection{
+	return &ProfileConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -56,24 +56,24 @@ func NewPeopleConnection(
 	}
 }
 
-func NewPeopleEdge(p *coredata.People, orderBy coredata.PeopleOrderField) *PeopleEdge {
-	return &PeopleEdge{
+func NewProfileEdge(p *coredata.MembershipProfile, orderBy coredata.MembershipProfileOrderField) *ProfileEdge {
+	return &ProfileEdge{
 		Cursor: p.CursorKey(orderBy),
-		Node:   NewPeople(p),
+		Node:   NewProfile(p),
 	}
 }
 
-func NewPeople(p *coredata.People) *People {
-	return &People{
-		ID:                       p.ID,
-		FullName:                 p.FullName,
-		PrimaryEmailAddress:      p.PrimaryEmailAddress,
-		AdditionalEmailAddresses: p.AdditionalEmailAddresses,
-		Kind:                     p.Kind,
-		Position:                 p.Position,
-		ContractStartDate:        p.ContractStartDate,
-		ContractEndDate:          p.ContractEndDate,
-		CreatedAt:                p.CreatedAt,
-		UpdatedAt:                p.UpdatedAt,
+func NewProfile(profile *coredata.MembershipProfile) *Profile {
+	return &Profile{
+		ID:                       profile.ID,
+		FullName:                 profile.FullName,
+		EmailAddress:             profile.EmailAddress,
+		AdditionalEmailAddresses: profile.AdditionalEmailAddresses,
+		Kind:                     profile.Kind,
+		Position:                 profile.Position,
+		ContractStartDate:        profile.ContractStartDate,
+		ContractEndDate:          profile.ContractEndDate,
+		CreatedAt:                profile.CreatedAt,
+		UpdatedAt:                profile.UpdatedAt,
 	}
 }

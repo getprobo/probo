@@ -92,18 +92,6 @@ func (a Attrs) getBool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
-func (a Attrs) getSlice(key string, defaultVal []string) []string {
-	if a == nil {
-		return defaultVal
-	}
-	if v, ok := a[key]; ok {
-		if slice, ok := v.([]string); ok {
-			return slice
-		}
-	}
-	return defaultVal
-}
-
 func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -371,48 +359,6 @@ func CreateRisk(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateRisk.RiskEdge.Node.ID
 }
 
-func CreatePeople(c *testutil.Client, attrs ...Attrs) string {
-	c.T.Helper()
-
-	var a Attrs
-	if len(attrs) > 0 {
-		a = attrs[0]
-	}
-
-	const query = `
-		mutation($input: CreatePeopleInput!) {
-			createPeople(input: $input) {
-				peopleEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	input := map[string]any{
-		"organizationId":           c.GetOrganizationID().String(),
-		"fullName":                 a.getString("fullName", SafeName("Person")),
-		"primaryEmailAddress":      a.getString("primaryEmailAddress", SafeEmail()),
-		"additionalEmailAddresses": a.getSlice("additionalEmailAddresses", []string{}),
-		"kind":                     a.getString("kind", "EMPLOYEE"),
-	}
-
-	var result struct {
-		CreatePeople struct {
-			PeopleEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"peopleEdge"`
-		} `json:"createPeople"`
-	}
-
-	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createPeople mutation failed")
-
-	return result.CreatePeople.PeopleEdge.Node.ID
-}
-
 type VendorBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
@@ -605,29 +551,6 @@ func (b *RiskBuilder) WithImpact(impact int) *RiskBuilder {
 
 func (b *RiskBuilder) Create() string {
 	return CreateRisk(b.client, b.attrs)
-}
-
-type PeopleBuilder struct {
-	client *testutil.Client
-	attrs  Attrs
-}
-
-func NewPeople(c *testutil.Client) *PeopleBuilder {
-	return &PeopleBuilder{client: c, attrs: Attrs{}}
-}
-
-func (b *PeopleBuilder) WithFullName(name string) *PeopleBuilder {
-	b.attrs["fullName"] = name
-	return b
-}
-
-func (b *PeopleBuilder) WithKind(kind string) *PeopleBuilder {
-	b.attrs["kind"] = kind
-	return b
-}
-
-func (b *PeopleBuilder) Create() string {
-	return CreatePeople(b.client, b.attrs)
 }
 
 func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string {

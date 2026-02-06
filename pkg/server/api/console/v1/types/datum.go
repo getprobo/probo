@@ -28,7 +28,7 @@ type Datum struct {
 	SnapshotID         *gid.GID                    `json:"snapshotId,omitempty"`
 	Name               string                      `json:"name"`
 	DataClassification coredata.DataClassification `json:"dataClassification"`
-	Owner              *People                     `json:"owner"`
+	Owner              *Profile                    `json:"owner"`
 	Vendors            *VendorConnection           `json:"vendors"`
 	Organization       *Organization               `json:"organization"`
 	CreatedAt          time.Time                   `json:"createdAt"`
@@ -79,7 +79,7 @@ func NewDatum(d *coredata.Datum) *Datum {
 		Organization: &Organization{
 			ID: d.OrganizationID,
 		},
-		Owner: &People{
+		Owner: &Profile{
 			ID: d.OwnerID,
 		},
 		OrganizationID:     d.OrganizationID,

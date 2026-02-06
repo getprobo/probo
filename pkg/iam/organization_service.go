@@ -97,6 +97,16 @@ type (
 		FullName string
 		Role     coredata.MembershipRole
 	}
+
+	UpdateProfileRequest struct {
+		ID                       gid.GID
+		FullName                 string
+		AdditionalEmailAddresses mail.Addrs
+		Kind                     coredata.MembershipProfileKind
+		Position                 **string
+		ContractStartDate        **time.Time
+		ContractEndDate          **time.Time
+	}
 )
 
 var (
@@ -124,6 +134,8 @@ var (
 const (
 	TokenTypeAPIKey = "api_key"
 
+	NameMaxLength    = 100
+	TitleMaxLength   = 1000
 	ContentMaxLength = 5000
 
 	DefaultAttributeEmail     = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
@@ -176,6 +188,22 @@ func (req UpdateOrganizationRequest) Validate() error {
 			return fmt.Errorf("invalid horizontal logo file: %w", err)
 		}
 	}
+
+	return v.Error()
+}
+
+func (upr *UpdateProfileRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(upr.Kind, "kind", validator.OneOfSlice(coredata.PeopleKinds()))
+	v.Check(upr.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
+	v.CheckEach(upr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())
+	})
+	v.Check(upr.Position, "position", validator.SafeText(TitleMaxLength))
+	v.Check(upr.ContractStartDate, "contract_start_date", validator.Before(upr.ContractEndDate))
+	v.Check(upr.ContractEndDate, "contract_end_date", validator.After(upr.ContractStartDate))
 
 	return v.Error()
 }
@@ -504,9 +532,9 @@ func (s *OrganizationService) CreateOrganization(
 	ctx context.Context,
 	identityID gid.GID,
 	req *CreateOrganizationRequest,
-) (*coredata.Organization, error) {
+) (*coredata.Organization, *coredata.Membership, error) {
 	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	var (
@@ -584,7 +612,7 @@ func (s *OrganizationService) CreateOrganization(
 		)
 
 		if err != nil {
-			return nil, fmt.Errorf("cannot upload logo file: %w", err)
+			return nil, nil, fmt.Errorf("cannot upload logo file: %w", err)
 		}
 
 		logoFile.FileSize = fileSize
@@ -621,7 +649,7 @@ func (s *OrganizationService) CreateOrganization(
 		)
 
 		if err != nil {
-			return nil, fmt.Errorf("cannot upload logo file: %w", err)
+			return nil, nil, fmt.Errorf("cannot upload logo file: %w", err)
 		}
 
 		horizontalLogoFile.FileSize = fileSize
@@ -666,11 +694,13 @@ func (s *OrganizationService) CreateOrganization(
 			}
 
 			profile := &coredata.MembershipProfile{
-				ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
-				MembershipID: membership.ID,
-				FullName:     identity.FullName,
-				CreatedAt:    now,
-				UpdatedAt:    now,
+				ID:             gid.New(tenantID, coredata.MembershipProfileEntityType),
+				IdentityID:     identity.ID,
+				OrganizationID: organization.ID,
+				MembershipID:   membership.ID,
+				FullName:       identity.FullName,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			err = profile.Insert(ctx, tx)
@@ -712,10 +742,10 @@ func (s *OrganizationService) CreateOrganization(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot insert organization: %w", err)
+		return nil, nil, fmt.Errorf("cannot insert organization: %w", err)
 	}
 
-	return organization, nil
+	return organization, membership, nil
 }
 
 func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizationID gid.GID, req *UpdateOrganizationRequest) (*coredata.Organization, error) {
@@ -942,6 +972,99 @@ func (s *OrganizationService) ListMembers(
 	}
 
 	return page.NewPage(memberships, cursor), nil
+}
+
+func (s *OrganizationService) UpdateProfile(ctx context.Context, req *UpdateProfileRequest) (*coredata.MembershipProfile, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var (
+		scope   = coredata.NewScopeFromObjectID(req.ID)
+		profile = &coredata.MembershipProfile{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profile.LoadByID(ctx, conn, scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			profile.FullName = req.FullName
+			profile.Kind = req.Kind
+
+			profile.AdditionalEmailAddresses = req.AdditionalEmailAddresses
+
+			profile.Position = *req.Position
+
+			if req.ContractStartDate != nil {
+				profile.ContractStartDate = *req.ContractStartDate
+			}
+
+			if req.ContractEndDate != nil {
+				profile.ContractEndDate = *req.ContractEndDate
+			}
+
+			if profile.ContractStartDate != nil && profile.ContractEndDate != nil {
+				if profile.ContractEndDate.Before(*profile.ContractStartDate) {
+					return fmt.Errorf("contract end date must be after or equal to start date")
+				}
+			}
+
+			profile.UpdatedAt = time.Now()
+
+			return profile.Update(ctx, conn, scope)
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
+func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID) (*coredata.MembershipProfile, error) {
+	profile := &coredata.MembershipProfile{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return profile.LoadByID(ctx, conn, coredata.NewScopeFromObjectID(profileID), profileID)
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
+func (s *OrganizationService) ListProfiles(
+	ctx context.Context,
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.MembershipProfileOrderField],
+	filter *coredata.MembershipProfileFilter,
+) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
+	var (
+		scope    = coredata.NewScopeFromObjectID(organizationID)
+		profiles = coredata.MembershipProfiles{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return profiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(profiles, cursor), nil
 }
 
 func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Organization, error) {

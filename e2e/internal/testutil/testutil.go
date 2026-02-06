@@ -24,6 +24,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"go.gearno.de/kit/log"
 )
 
 var (
@@ -65,7 +67,7 @@ func Setup() {
 			done: make(chan error, 1),
 		}
 
-		cmd := exec.Command(binaryPath, "-cfg-file", configPath)
+		cmd := exec.Command(binaryPath, "-cfg-file", configPath, "-format", log.FormatPretty)
 		if coverDir != "" {
 			cmd.Env = append(os.Environ(), "GOCOVERDIR="+coverDir)
 		} else {

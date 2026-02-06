@@ -55,13 +55,6 @@ const (
 	ActionTrustCenterFileDelete     = "core:trust-center-file:delete"
 	ActionTrustCenterFileCreate     = "core:trust-center-file:create"
 
-	// People actions
-	ActionPeopleGet    = "core:people:get"
-	ActionPeopleList   = "core:people:list"
-	ActionPeopleCreate = "core:people:create"
-	ActionPeopleUpdate = "core:people:update"
-	ActionPeopleDelete = "core:people:delete"
-
 	// Vendor actions
 	ActionVendorList   = "core:vendor:list"
 	ActionVendorGet    = "core:vendor:get"

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f83e7d173f4c2d46a2a6b193e458dee0>>
+ * @generated SignedSource<<e9fedeb822edc0b01bc54ec76a816761>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -180,7 +180,7 @@ v13 = {
             {
               "alias": null,
               "args": null,
-              "concreteType": "People",
+              "concreteType": "Profile",
               "kind": "LinkedField",
               "name": "signedBy",
               "plural": false,
@@ -431,7 +431,7 @@ return {
                 "storageKey": "permission(action:\"core:document-version:request-signature\")"
               },
               {
-                "alias": "people",
+                "alias": null,
                 "args": [
                   (v3/*: any*/),
                   (v8/*: any*/),
@@ -444,15 +444,15 @@ return {
                     }
                   }
                 ],
-                "concreteType": "PeopleConnection",
+                "concreteType": "ProfileConnection",
                 "kind": "LinkedField",
-                "name": "peoples",
+                "name": "profiles",
                 "plural": false,
                 "selections": [
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "PeopleEdge",
+                    "concreteType": "ProfileEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -460,7 +460,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "People",
+                        "concreteType": "Profile",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -471,7 +471,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "primaryEmailAddress",
+                            "name": "emailAddress",
                             "storageKey": null
                           }
                         ],
@@ -481,7 +481,7 @@ return {
                     "storageKey": null
                   }
                 ],
-                "storageKey": "peoples(filter:{\"excludeContractEnded\":true},first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"FULL_NAME\"})"
+                "storageKey": "profiles(filter:{\"excludeContractEnded\":true},first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"FULL_NAME\"})"
               }
             ],
             "type": "Organization",
@@ -588,12 +588,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a14fdbc42e1aa20bbe0dc24680404388",
+    "cacheID": "7aa234078557c0ee417530dcbebba110",
     "id": null,
     "metadata": {},
     "name": "DocumentSignaturesPageQuery",
     "operationKind": "query",
-    "text": "query DocumentSignaturesPageQuery(\n  $documentId: ID!\n  $organizationId: ID!\n  $versionId: ID!\n  $versionSpecified: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...DocumentSignatureList_peopleFragment_4oWXMW\n    id\n  }\n  document: node(id: $documentId) @skip(if: $versionSpecified) {\n    __typename\n    ... on Document {\n      lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            ...DocumentSignatureList_versionFragment\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n  version: node(id: $versionId) @include(if: $versionSpecified) {\n    __typename\n    ...DocumentSignatureList_versionFragment\n    id\n  }\n}\n\nfragment DocumentSignatureListItemFragment on DocumentVersionSignature {\n  id\n  signedBy {\n    fullName\n    id\n  }\n  state\n  signedAt\n  requestedAt\n  canCancel: permission(action: \"core:document-version-signature:cancel\")\n}\n\nfragment DocumentSignatureList_peopleFragment_4oWXMW on Organization {\n  ...DocumentSignaturePlaceholder_organizationFragment\n  people: peoples(first: 1000, orderBy: {direction: ASC, field: FULL_NAME}, filter: {excludeContractEnded: true}) {\n    edges {\n      node {\n        id\n        ...DocumentSignaturePlaceholder_personFragment\n      }\n    }\n  }\n}\n\nfragment DocumentSignatureList_versionFragment on DocumentVersion {\n  ...DocumentSignaturePlaceholder_versionFragment\n  signatures(first: 1000) {\n    edges {\n      node {\n        id\n        signedBy {\n          id\n        }\n        ...DocumentSignatureListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  id\n}\n\nfragment DocumentSignaturePlaceholder_organizationFragment on Organization {\n  canRequestSignature: permission(action: \"core:document-version:request-signature\")\n}\n\nfragment DocumentSignaturePlaceholder_personFragment on People {\n  id\n  fullName\n  primaryEmailAddress\n}\n\nfragment DocumentSignaturePlaceholder_versionFragment on DocumentVersion {\n  id\n  status\n}\n"
+    "text": "query DocumentSignaturesPageQuery(\n  $documentId: ID!\n  $organizationId: ID!\n  $versionId: ID!\n  $versionSpecified: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...DocumentSignatureList_peopleFragment_4oWXMW\n    id\n  }\n  document: node(id: $documentId) @skip(if: $versionSpecified) {\n    __typename\n    ... on Document {\n      lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            ...DocumentSignatureList_versionFragment\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n  version: node(id: $versionId) @include(if: $versionSpecified) {\n    __typename\n    ...DocumentSignatureList_versionFragment\n    id\n  }\n}\n\nfragment DocumentSignatureListItemFragment on DocumentVersionSignature {\n  id\n  signedBy {\n    fullName\n    id\n  }\n  state\n  signedAt\n  requestedAt\n  canCancel: permission(action: \"core:document-version-signature:cancel\")\n}\n\nfragment DocumentSignatureList_peopleFragment_4oWXMW on Organization {\n  ...DocumentSignaturePlaceholder_organizationFragment\n  profiles(first: 1000, orderBy: {direction: ASC, field: FULL_NAME}, filter: {excludeContractEnded: true}) {\n    edges {\n      node {\n        id\n        ...DocumentSignaturePlaceholder_personFragment\n      }\n    }\n  }\n}\n\nfragment DocumentSignatureList_versionFragment on DocumentVersion {\n  ...DocumentSignaturePlaceholder_versionFragment\n  signatures(first: 1000) {\n    edges {\n      node {\n        id\n        signedBy {\n          id\n        }\n        ...DocumentSignatureListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  id\n}\n\nfragment DocumentSignaturePlaceholder_organizationFragment on Organization {\n  canRequestSignature: permission(action: \"core:document-version:request-signature\")\n}\n\nfragment DocumentSignaturePlaceholder_personFragment on Profile {\n  id\n  fullName\n  emailAddress\n}\n\nfragment DocumentSignaturePlaceholder_versionFragment on DocumentVersion {\n  id\n  status\n}\n"
   }
 };
 })();

@@ -69,8 +69,10 @@ export function MemberList(props: { fKey: MemberListFragment$key }) {
         <Tr>
           <SortableTh field="FULL_NAME">{__("Name")}</SortableTh>
           <SortableTh field="EMAIL_ADDRESS">{__("Email")}</SortableTh>
+          <Th>{__("Type")}</Th>
           <SortableTh field="ROLE">{__("Role")}</SortableTh>
           <SortableTh field="CREATED_AT">{__("Joined")}</SortableTh>
+          <Th>{__("Position")}</Th>
           <Th></Th>
         </Tr>
       </Thead>

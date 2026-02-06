@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c17f2f40b3c25f5c333824c70ad168e5>>
+ * @generated SignedSource<<8edb25e86af506197207e5b3b6da6be5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -168,7 +168,7 @@ return {
     {
       "alias": null,
       "args": null,
-      "concreteType": "People",
+      "concreteType": "Profile",
       "kind": "LinkedField",
       "name": "businessOwner",
       "plural": false,
@@ -178,7 +178,7 @@ return {
     {
       "alias": null,
       "args": null,
-      "concreteType": "People",
+      "concreteType": "Profile",
       "kind": "LinkedField",
       "name": "securityOwner",
       "plural": false,

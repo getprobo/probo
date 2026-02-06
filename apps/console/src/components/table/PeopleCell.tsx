@@ -20,7 +20,7 @@ export function PeopleCell(props: Props) {
         filter: { excludeContractEnded: true },
       }}
       items={data =>
-        data.organization?.peoples?.edges.map(edge => edge.node) ?? []}
+        data.organization?.profiles?.edges.map(edge => edge.node) ?? []}
       itemRenderer={({ item }) => (
         <div className="flex gap-2 whitespace-nowrap items-center text-xs">
           <Avatar name={item.fullName} />

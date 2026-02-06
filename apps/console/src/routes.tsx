@@ -16,6 +16,7 @@ import {
 import { PageError } from "./components/PageError";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
+import { userRoutes } from "./pages/iam/organizations/users/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { assetRoutes } from "./routes/assetRoutes";
@@ -28,7 +29,6 @@ import { measureRoutes } from "./routes/measureRoutes";
 import { meetingsRoutes } from "./routes/meetingsRoutes";
 import { nonconformityRoutes } from "./routes/nonconformityRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
-import { peopleRoutes } from "./routes/peopleRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { riskRoutes } from "./routes/riskRoutes";
@@ -202,13 +202,6 @@ const routes = [
             ),
           },
           {
-            path: "members",
-            Component: lazy(
-              () =>
-                import("./pages/iam/organizations/settings/MembersPageLoader"),
-            ),
-          },
-          {
             path: "saml-sso",
             Component: lazy(
               () =>
@@ -224,10 +217,10 @@ const routes = [
           },
         ],
       },
+      ...userRoutes,
       ...riskRoutes,
       ...measureRoutes,
       ...documentsRoutes,
-      ...peopleRoutes,
       ...vendorRoutes,
       ...frameworkRoutes,
       ...taskRoutes,

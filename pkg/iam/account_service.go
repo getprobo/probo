@@ -266,11 +266,13 @@ func (s *AccountService) AcceptInvitation(
 				}
 
 				profile := &coredata.MembershipProfile{
-					ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
-					MembershipID: membership.ID,
-					FullName:     identity.FullName,
-					CreatedAt:    now,
-					UpdatedAt:    now,
+					ID:             gid.New(tenantID, coredata.MembershipProfileEntityType),
+					IdentityID:     identity.ID,
+					OrganizationID: invitation.OrganizationID,
+					MembershipID:   membership.ID,
+					FullName:       identity.FullName,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				if err := profile.Insert(ctx, tx); err != nil {
@@ -287,7 +289,7 @@ func (s *AccountService) AcceptInvitation(
 				return fmt.Errorf("cannot update invitation: %w", err)
 			}
 
-			// Accept other pending invitations for email in organization
+			// Expire other pending invitations for email in organization
 			invitations := &coredata.Invitations{}
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 			if err := invitations.ExpireByEmailAndOrganization(

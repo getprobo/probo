@@ -79,7 +79,6 @@ type (
 		Evidences                         *EvidenceService
 		Organizations                     *OrganizationService
 		Vendors                           *VendorService
-		Peoples                           *PeopleService
 		Documents                         *DocumentService
 		Controls                          *ControlService
 		Risks                             *RiskService
@@ -186,7 +185,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 			),
 		),
 	}
-	tenantService.Peoples = &PeopleService{svc: tenantService}
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Documents = &DocumentService{
 		svc:               tenantService,

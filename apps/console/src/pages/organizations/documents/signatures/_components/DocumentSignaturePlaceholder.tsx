@@ -17,10 +17,10 @@ const organizationFragment = graphql`
 `;
 
 const personFragment = graphql`
-  fragment DocumentSignaturePlaceholder_personFragment on People {
+  fragment DocumentSignaturePlaceholder_personFragment on Profile {
     id
     fullName
-    primaryEmailAddress
+    emailAddress
   }
 `;
 
@@ -83,7 +83,7 @@ export function DocumentSignaturePlaceholder(props: {
           {person.fullName}
         </div>
         <div className="text-xs text-txt-secondary">
-          {person.primaryEmailAddress}
+          {person.emailAddress}
         </div>
       </div>
       {version.status === "PUBLISHED" && canRequestSignature && (

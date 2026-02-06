@@ -15,28 +15,28 @@
 package coredata
 
 type (
-	PeopleOrderField string
+	MembershipProfileOrderField string
 )
 
 const (
-	PeopleOrderFieldCreatedAt PeopleOrderField = "CREATED_AT"
-	PeopleOrderFieldFullName  PeopleOrderField = "FULL_NAME"
-	PeopleOrderFieldKind      PeopleOrderField = "KIND"
+	MembershipProfileOrderFieldCreatedAt MembershipProfileOrderField = "CREATED_AT"
+	MembershipProfileOrderFieldFullName  MembershipProfileOrderField = "FULL_NAME"
+	MembershipProfileOrderFieldKind      MembershipProfileOrderField = "KIND"
 )
 
-func (p PeopleOrderField) Column() string {
+func (p MembershipProfileOrderField) Column() string {
 	return string(p)
 }
 
-func (p PeopleOrderField) String() string {
+func (p MembershipProfileOrderField) String() string {
 	return string(p)
 }
 
-func (p PeopleOrderField) MarshalText() ([]byte, error) {
+func (p MembershipProfileOrderField) MarshalText() ([]byte, error) {
 	return []byte(p.String()), nil
 }
 
-func (p *PeopleOrderField) UnmarshalText(text []byte) error {
-	*p = PeopleOrderField(text)
+func (p *MembershipProfileOrderField) UnmarshalText(text []byte) error {
+	*p = MembershipProfileOrderField(text)
 	return nil
 }
