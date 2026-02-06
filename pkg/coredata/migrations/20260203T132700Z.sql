@@ -138,7 +138,7 @@ ADD
 SET
     NULL;
 
--- 3. Create missing identities
+-- 3. Create missing identities (one row per email to avoid "cannot affect row a second time")
 INSERT INTO
     identities (
         id,
@@ -156,7 +156,19 @@ SELECT
     FALSE,
     p.full_name
 FROM
-    peoples p ON CONFLICT DO NOTHING;
+    (
+        SELECT DISTINCT ON (primary_email_address)
+            primary_email_address,
+            full_name
+        FROM
+            peoples
+        ORDER BY
+            primary_email_address
+    ) p
+ON CONFLICT (email_address) DO
+UPDATE
+SET
+    full_name = EXCLUDED.full_name;
 
 -- 4. Create missing memberships
 WITH people_identities AS (
