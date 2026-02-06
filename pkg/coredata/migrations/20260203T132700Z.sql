@@ -446,12 +446,16 @@ WHERE
 ALTER TABLE
     assets
 ALTER COLUMN
+    owner_id DROP NOT NULL,
+ALTER COLUMN
     owner_profile_id
 SET
     NOT NULL;
 
 ALTER TABLE
     continual_improvements
+ALTER COLUMN
+    owner_id DROP NOT NULL,
 ALTER COLUMN
     owner_profile_id
 SET
@@ -460,6 +464,8 @@ SET
 ALTER TABLE
     data
 ALTER COLUMN
+    owner_id DROP NOT NULL,
+ALTER COLUMN
     owner_profile_id
 SET
     NOT NULL;
@@ -467,19 +473,27 @@ SET
 ALTER TABLE
     document_versions
 ALTER COLUMN
+    owner_id DROP NOT NULL,
+ALTER COLUMN
     owner_profile_id
 SET
     NOT NULL;
 
 ALTER TABLE
-    meeting_attendees
+    meeting_attendees DROP CONSTRAINT meeting_attendees_pkey,
+ALTER COLUMN
+    attendee_id DROP NOT NULL,
 ALTER COLUMN
     attendee_profile_id
 SET
-    NOT NULL;
+    NOT NULL,
+ADD
+    PRIMARY KEY (attendee_profile_id);
 
 ALTER TABLE
     nonconformities
+ALTER COLUMN
+    owner_id DROP NOT NULL,
 ALTER COLUMN
     owner_profile_id
 SET
@@ -488,6 +502,8 @@ SET
 ALTER TABLE
     obligations
 ALTER COLUMN
+    owner_id DROP NOT NULL,
+ALTER COLUMN
     owner_profile_id
 SET
     NOT NULL;
@@ -495,12 +511,16 @@ SET
 ALTER TABLE
     document_version_signatures
 ALTER COLUMN
+    signed_by DROP NOT NULL,
+ALTER COLUMN
     signed_by_profile_id
 SET
     NOT NULL;
 
 ALTER TABLE
     states_of_applicability
+ALTER COLUMN
+    owner_id DROP NOT NULL,
 ALTER COLUMN
     owner_profile_id
 SET

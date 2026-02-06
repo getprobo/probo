@@ -196,8 +196,8 @@ func (s MeetingService) Create(
 			}
 
 			if len(req.AttendeeIDs) > 0 {
-				var attendeePeople coredata.MembershipProfiles
-				if err := attendeePeople.LoadByIDs(ctx, conn, s.svc.scope, req.AttendeeIDs); err != nil {
+				var attendeeProfiles coredata.MembershipProfiles
+				if err := attendeeProfiles.LoadByIDs(ctx, conn, s.svc.scope, req.AttendeeIDs); err != nil {
 					return fmt.Errorf("cannot load attendee profiles: %w", err)
 				}
 

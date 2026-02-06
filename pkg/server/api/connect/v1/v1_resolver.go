@@ -251,7 +251,7 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 
 // Profile is the resolver for the profile field.
 func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -833,7 +833,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 			Size:        input.HorizontalLogoFile.Size,
 		}
 	}
-	organization, err := r.iam.OrganizationService.CreateOrganization(
+	organization, membership, err := r.iam.OrganizationService.CreateOrganization(
 		ctx,
 		identity.ID,
 		&iam.CreateOrganizationRequest{
@@ -848,7 +848,8 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	}
 
 	return &types.CreateOrganizationPayload{
-		Organization: types.NewOrganization(organization),
+		Organization:   types.NewOrganization(organization),
+		MembershipEdge: types.NewMembershipEdge(membership, coredata.MembershipOrderFieldCreatedAt),
 	}, nil
 }
 

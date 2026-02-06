@@ -504,9 +504,9 @@ func (s *OrganizationService) CreateOrganization(
 	ctx context.Context,
 	identityID gid.GID,
 	req *CreateOrganizationRequest,
-) (*coredata.Organization, error) {
+) (*coredata.Organization, *coredata.Membership, error) {
 	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	var (
@@ -584,7 +584,7 @@ func (s *OrganizationService) CreateOrganization(
 		)
 
 		if err != nil {
-			return nil, fmt.Errorf("cannot upload logo file: %w", err)
+			return nil, nil, fmt.Errorf("cannot upload logo file: %w", err)
 		}
 
 		logoFile.FileSize = fileSize
@@ -621,7 +621,7 @@ func (s *OrganizationService) CreateOrganization(
 		)
 
 		if err != nil {
-			return nil, fmt.Errorf("cannot upload logo file: %w", err)
+			return nil, nil, fmt.Errorf("cannot upload logo file: %w", err)
 		}
 
 		horizontalLogoFile.FileSize = fileSize
@@ -713,10 +713,10 @@ func (s *OrganizationService) CreateOrganization(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot insert organization: %w", err)
+		return nil, nil, fmt.Errorf("cannot insert organization: %w", err)
 	}
 
-	return organization, nil
+	return organization, membership, nil
 }
 
 func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizationID gid.GID, req *UpdateOrganizationRequest) (*coredata.Organization, error) {

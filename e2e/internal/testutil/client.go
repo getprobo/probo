@@ -48,6 +48,7 @@ type Client struct {
 	baseURL        string
 	role           TestRole
 	userID         gid.GID
+	profileID      gid.GID
 	organizationID gid.GID
 }
 
@@ -89,7 +90,7 @@ func NewClientInOrg(t testing.TB, role TestRole, ownerClient *Client) *Client {
 		},
 	}
 
-	client.setupTestUserInOrg(ownerClient)
+	client.SetupTestUserInOrg(ownerClient)
 
 	return client
 }
@@ -105,7 +106,7 @@ func (c *Client) setupTestUser() {
 
 	// Create organization (this makes the user an OWNER)
 	orgName := fmt.Sprintf("Test Org %s", uniqueID)
-	c.organizationID = c.createOrganization(orgName)
+	c.organizationID, c.profileID = c.createOrganization(orgName)
 
 	// Assume organization session to use console API
 	c.assumeOrganizationSession()
@@ -116,7 +117,7 @@ func (c *Client) setupTestUser() {
 	}
 }
 
-func (c *Client) setupTestUserInOrg(ownerClient *Client) {
+func (c *Client) SetupTestUserInOrg(ownerClient *Client) {
 	uniqueID := generateUniqueID()
 	email := fmt.Sprintf("test-%s@e2e.probo.test", uniqueID)
 	password := "TestPassword123!"
@@ -129,7 +130,7 @@ func (c *Client) setupTestUserInOrg(ownerClient *Client) {
 	invitationID := ownerClient.inviteMember(email, fullName, coredata.MembershipRole(c.role))
 
 	// New user accepts invitation
-	c.acceptInvitation(invitationID)
+	c.profileID = c.acceptInvitation(invitationID)
 
 	// Assume organization session to use console API
 	c.assumeOrganizationSession()
@@ -167,11 +168,16 @@ func (c *Client) signUp(email, password, fullName string) gid.GID {
 	return userID
 }
 
-func (c *Client) createOrganization(name string) gid.GID {
+func (c *Client) createOrganization(name string) (gid.GID, gid.GID) {
 	const query = `
 		mutation($input: CreateOrganizationInput!) {
 			createOrganization(input: $input) {
 				organization { id }
+				membershipEdge {
+					node {
+						profile { id }
+					}
+				}
 			}
 		}
 	`
@@ -181,6 +187,14 @@ func (c *Client) createOrganization(name string) gid.GID {
 			Organization struct {
 				ID string `json:"id"`
 			} `json:"organization"`
+			MembershipEdge struct {
+				Node struct {
+					ID      string `json:"id"`
+					Profile struct {
+						ID string `json:"id"`
+					} `json:"profile"`
+				} `json:"node"`
+			} `json:"membershipEdge"`
 		} `json:"createOrganization"`
 	}
 
@@ -192,7 +206,10 @@ func (c *Client) createOrganization(name string) gid.GID {
 	orgID, err := gid.ParseGID(result.CreateOrganization.Organization.ID)
 	require.NoError(c.T, err, "cannot parse organization ID")
 
-	return orgID
+	profileID, err := gid.ParseGID(result.CreateOrganization.MembershipEdge.Node.Profile.ID)
+	require.NoError(c.T, err, "cannot parse profile ID")
+
+	return orgID, profileID
 }
 
 func (c *Client) updateOwnMembershipRole(role coredata.MembershipRole) {
@@ -304,23 +321,42 @@ func (c *Client) inviteMember(email, fullName string, role coredata.MembershipRo
 	return invitationID
 }
 
-func (c *Client) acceptInvitation(invitationID gid.GID) {
+func (c *Client) acceptInvitation(invitationID gid.GID) gid.GID {
 	const query = `
 		mutation($input: AcceptInvitationInput!) {
 			acceptInvitation(input: $input) {
 				membershipEdge {
-					node { id }
+					node {
+						profile { id }
+					}
 				}
 			}
 		}
 	`
 
+	var result struct {
+		AcceptInvitation struct {
+			MembershipEdge struct {
+				Node struct {
+					Profile struct {
+						ID string `json:"id"`
+					} `json:"profile"`
+				} `json:"node"`
+			} `json:"membershipEdge"`
+		} `json:"acceptInvitation"`
+	}
+
 	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{
 			"invitationId": invitationID.String(),
 		},
-	}, nil)
+	}, &result)
 	require.NoError(c.T, err, "acceptInvitation mutation failed")
+
+	profileID, err := gid.ParseGID(result.AcceptInvitation.MembershipEdge.Node.Profile.ID)
+	require.NoError(c.T, err, "cannot parse profile ID")
+
+	return profileID
 }
 
 func (c *Client) assumeOrganizationSession() {
@@ -347,6 +383,10 @@ func (c *Client) assumeOrganizationSession() {
 
 func (c *Client) GetUserID() gid.GID {
 	return c.userID
+}
+
+func (c *Client) GetProfileID() gid.GID {
+	return c.profileID
 }
 
 func (c *Client) GetOrganizationID() gid.GID {

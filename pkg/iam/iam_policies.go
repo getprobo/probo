@@ -84,6 +84,18 @@ var IAMSelfManageInvitationPolicy = policy.NewPolicy(
 ).
 	WithDescription("Allows users to view and accept invitations sent to them")
 
+// IAMSelfManageProfilePolicy allows users to view their own profiles.
+var IAMSelfManageProfilePolicy = policy.NewPolicy(
+	"iam:self-manage-profile",
+	"Self-Manage Profiles",
+
+	// Users can view their own profiles
+	policy.Allow(ActionMembershipProfileGet).
+		WithSID("view-own-profiles").
+		When(policy.Equals("principal.id", "resource.identity_id")),
+).
+	WithDescription("Allows users to view their organization profiles")
+
 // IAMSelfManageMembershipPolicy allows users to view their own memberships.
 var IAMSelfManageMembershipPolicy = policy.NewPolicy(
 	"iam:self-manage-membership",

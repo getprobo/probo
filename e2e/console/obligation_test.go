@@ -19,14 +19,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
 func TestObligation_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	query := `
 		mutation CreateObligation($input: CreateObligationInput!) {
@@ -67,7 +66,7 @@ func TestObligation_Create(t *testing.T) {
 			"source":         "GDPR Article 5",
 			"requirement":    "Data must be processed lawfully",
 			"regulator":      "ICO",
-			"ownerId":        peopleID,
+			"ownerId":        profileID.String(),
 			"status":         "NON_COMPLIANT",
 			"type":           "LEGAL",
 		},
@@ -85,7 +84,7 @@ func TestObligation_Create(t *testing.T) {
 func TestObligation_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	// Create an obligation to update
 	createQuery := `
@@ -114,7 +113,7 @@ func TestObligation_Update(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"area":           "Original Area",
-			"ownerId":        peopleID,
+			"ownerId":        profileID.String(),
 			"status":         "NON_COMPLIANT",
 			"type":           "LEGAL",
 		},
@@ -162,7 +161,7 @@ func TestObligation_Update(t *testing.T) {
 func TestObligation_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	// Create an obligation to delete
 	createQuery := `
@@ -191,7 +190,7 @@ func TestObligation_Delete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"area":           "Obligation to Delete",
-			"ownerId":        peopleID,
+			"ownerId":        profileID.String(),
 			"status":         "NON_COMPLIANT",
 			"type":           "LEGAL",
 		},
@@ -226,7 +225,7 @@ func TestObligation_Delete(t *testing.T) {
 func TestObligation_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	// Create multiple obligations
 	areas := []string{"Area A", "Area B", "Area C"}
@@ -257,7 +256,7 @@ func TestObligation_List(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"area":           area,
-				"ownerId":        peopleID,
+				"ownerId":        profileID.String(),
 				"status":         "NON_COMPLIANT",
 				"type":           "LEGAL",
 			},
@@ -310,7 +309,7 @@ func TestObligation_List(t *testing.T) {
 func TestObligation_StatusValues(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	statuses := []string{"NON_COMPLIANT", "PARTIALLY_COMPLIANT", "COMPLIANT"}
 
@@ -344,7 +343,7 @@ func TestObligation_StatusValues(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
 					"area":           "Status Test " + status,
-					"ownerId":        peopleID,
+					"ownerId":        profileID.String(),
 					"status":         status,
 					"type":           "LEGAL",
 				},

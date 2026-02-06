@@ -20,7 +20,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -28,9 +27,8 @@ func TestAsset_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	peopleID := factory.NewPeople(owner).
-		WithFullName("Asset Owner").
-		Create()
+	// TODO: right now we need to invite and accept invite to get new profile.
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	const query = `
 		mutation($input: CreateAssetInput!) {
@@ -73,7 +71,7 @@ func TestAsset_Create(t *testing.T) {
 			"organizationId":  owner.GetOrganizationID().String(),
 			"name":            "Production Database Server",
 			"amount":          5,
-			"ownerId":         peopleID,
+			"ownerId":         profileID.String(),
 			"assetType":       "VIRTUAL",
 			"dataTypesStored": "Customer PII, Financial Records",
 		},
@@ -86,16 +84,15 @@ func TestAsset_Create(t *testing.T) {
 	assert.Equal(t, 5, asset.Amount)
 	assert.Equal(t, "VIRTUAL", asset.AssetType)
 	assert.Equal(t, "Customer PII, Financial Records", asset.DataTypesStored)
-	assert.Equal(t, peopleID, asset.Owner.ID)
+	assert.Equal(t, profileID.String(), asset.Owner.ID)
 }
 
 func TestAsset_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	peopleID := factory.NewPeople(owner).
-		WithFullName("Asset Owner for Update").
-		Create()
+	// TODO: right now we need to invite and accept invite to get new profile.
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	const createQuery = `
 		mutation($input: CreateAssetInput!) {
@@ -124,7 +121,7 @@ func TestAsset_Update(t *testing.T) {
 			"organizationId":  owner.GetOrganizationID().String(),
 			"name":            "Test Asset",
 			"amount":          10,
-			"ownerId":         peopleID,
+			"ownerId":         profileID.String(),
 			"assetType":       "VIRTUAL",
 			"dataTypesStored": "Test data",
 		},
@@ -175,9 +172,8 @@ func TestAsset_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	peopleID := factory.NewPeople(owner).
-		WithFullName("Asset Owner for Delete").
-		Create()
+	// TODO: right now we need to invite and accept invite to get new profile.
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	const createQuery = `
 		mutation($input: CreateAssetInput!) {
@@ -206,7 +202,7 @@ func TestAsset_Delete(t *testing.T) {
 			"organizationId":  owner.GetOrganizationID().String(),
 			"name":            "Asset to delete",
 			"amount":          1,
-			"ownerId":         peopleID,
+			"ownerId":         profileID.String(),
 			"assetType":       "VIRTUAL",
 			"dataTypesStored": "None",
 		},
@@ -241,9 +237,8 @@ func TestAsset_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	peopleID := factory.NewPeople(owner).
-		WithFullName("Asset Owner for List").
-		Create()
+	// TODO: right now we need to invite and accept invite to get new profile.
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	// Create multiple assets
 	for i := 0; i < 3; i++ {
@@ -274,7 +269,7 @@ func TestAsset_List(t *testing.T) {
 				"organizationId":  owner.GetOrganizationID().String(),
 				"name":            fmt.Sprintf("Asset %c", 'A'+i),
 				"amount":          i + 1,
-				"ownerId":         peopleID,
+				"ownerId":         profileID.String(),
 				"assetType":       "VIRTUAL",
 				"dataTypesStored": "Test data",
 			},
@@ -329,9 +324,8 @@ func TestAsset_Types(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	peopleID := factory.NewPeople(owner).
-		WithFullName("Asset Owner for Types").
-		Create()
+	// TODO: right now we need to invite and accept invite to get new profile.
+	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 
 	assetTypes := []string{"PHYSICAL", "VIRTUAL"}
 
@@ -366,7 +360,7 @@ func TestAsset_Types(t *testing.T) {
 					"organizationId":  owner.GetOrganizationID().String(),
 					"name":            "Asset " + assetType,
 					"amount":          1,
-					"ownerId":         peopleID,
+					"ownerId":         profileID.String(),
 					"assetType":       assetType,
 					"dataTypesStored": "Test data",
 				},
