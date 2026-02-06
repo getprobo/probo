@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ff50473cdcfc65676ac6e50da0ecd9f7>>
+ * @generated SignedSource<<de9ca0854fde114ecd6fc68643f999d3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,6 +20,7 @@ export type SidebarFragment$data = {
   readonly canListFrameworks: boolean;
   readonly canListMeasures: boolean;
   readonly canListMeetings: boolean;
+  readonly canListMembers: boolean;
   readonly canListNonconformities: boolean;
   readonly canListObligations: boolean;
   readonly canListProcessingActivities: boolean;
@@ -107,6 +108,19 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "permission",
       "storageKey": "permission(action:\"core:framework:list\")"
+    },
+    {
+      "alias": "canListMembers",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "iam:membership:list"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"iam:membership:list\")"
     },
     {
       "alias": "canListVendors",
@@ -295,6 +309,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "b5d26b301116eb710832a55c425ed168";
+(node as any).hash = "73a632deb40d322a670cd72fd855723f";
 
 export default node;

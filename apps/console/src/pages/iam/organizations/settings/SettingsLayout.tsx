@@ -2,7 +2,6 @@ import { useTranslate } from "@probo/i18n";
 import {
   IconKey,
   IconLock,
-  IconPeopleAdd,
   IconSettingsGear2,
   PageHeader,
   TabLink,
@@ -24,10 +23,6 @@ export default function SettingsLayout() {
         <TabLink to={`/organizations/${organizationId}/settings/general`}>
           <IconSettingsGear2 size={20} />
           {__("General")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/members`}>
-          <IconPeopleAdd size={20} />
-          {__("Members")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/settings/saml-sso`}>
           <IconLock size={20} />

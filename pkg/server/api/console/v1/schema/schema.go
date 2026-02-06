@@ -10347,7 +10347,7 @@ enum EvidenceState
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested")
 }
 
-enum MembershipProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
+enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
     EMPLOYEE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
     CONTRACTOR
@@ -12110,7 +12110,7 @@ type Profile implements Node {
     fullName: String!
     emailAddress: EmailAddr!
     additionalEmailAddresses: [EmailAddr!]!
-    kind: MembershipProfileKind!
+    kind: ProfileKind!
     position: String
     contractStartDate: Datetime
     contractEndDate: Datetime
@@ -44161,7 +44161,7 @@ func (ec *executionContext) _Profile_kind(ctx context.Context, field graphql.Col
 			return obj.Kind, nil
 		},
 		nil,
-		ec.marshalNMembershipProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind,
+		ec.marshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind,
 		true,
 		true,
 	)
@@ -44174,7 +44174,7 @@ func (ec *executionContext) fieldContext_Profile_kind(_ context.Context, field g
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MembershipProfileKind does not have child fields")
+			return nil, errors.New("field of type ProfileKind does not have child fields")
 		},
 	}
 	return fc, nil
@@ -94077,36 +94077,6 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNMembershipProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, v any) (coredata.MembershipProfileKind, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNMembershipProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMembershipProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipProfileKind) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNMembershipProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNMembershipProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[string]coredata.MembershipProfileKind{
-		"EMPLOYEE":        coredata.MembershipProfileKindEmployee,
-		"CONTRACTOR":      coredata.MembershipProfileKindContractor,
-		"SERVICE_ACCOUNT": coredata.MembershipProfileKindServiceAccount,
-	}
-	marshalNMembershipProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[coredata.MembershipProfileKind]string{
-		coredata.MembershipProfileKindEmployee:       "EMPLOYEE",
-		coredata.MembershipProfileKindContractor:     "CONTRACTOR",
-		coredata.MembershipProfileKindServiceAccount: "SERVICE_ACCOUNT",
-	}
-)
-
 func (ec *executionContext) marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -94878,6 +94848,36 @@ func (ec *executionContext) marshalNProfileEdge2ᚖgoᚗproboᚗincᚋproboᚋpk
 	}
 	return ec._ProfileEdge(ctx, sel, v)
 }
+
+func (ec *executionContext) unmarshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, v any) (coredata.MembershipProfileKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipProfileKind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[string]coredata.MembershipProfileKind{
+		"EMPLOYEE":        coredata.MembershipProfileKindEmployee,
+		"CONTRACTOR":      coredata.MembershipProfileKindContractor,
+		"SERVICE_ACCOUNT": coredata.MembershipProfileKindServiceAccount,
+	}
+	marshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[coredata.MembershipProfileKind]string{
+		coredata.MembershipProfileKindEmployee:       "EMPLOYEE",
+		coredata.MembershipProfileKindContractor:     "CONTRACTOR",
+		coredata.MembershipProfileKindServiceAccount: "SERVICE_ACCOUNT",
+	}
+)
 
 func (ec *executionContext) unmarshalNProfileOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileOrderField(ctx context.Context, v any) (coredata.MembershipProfileOrderField, error) {
 	tmp, err := graphql.UnmarshalString(v)
