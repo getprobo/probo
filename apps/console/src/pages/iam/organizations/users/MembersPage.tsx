@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, TabBadge, TabItem, Tabs } from "@probo/ui";
+import { Button, TabBadge, TabItem, Tabs } from "@probo/ui";
 import { useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
@@ -73,7 +73,7 @@ export function MembersPage(props: {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium">{__("Workspace members")}</h2>
+        <h2 className="text-base font-medium">{__("People")}</h2>
         {organization.canInviteUser && (
           <InviteUserDialog
             connectionId={invitationListConnectionId}
@@ -105,20 +105,18 @@ export function MembersPage(props: {
         </TabItem>
       </Tabs>
 
-      <Card>
-        <div className="px-6 pb-6 pt-6">
-          {activeTab === "memberships" && <MemberList fKey={organization} />}
+      <div className="pb-6 pt-6">
+        {activeTab === "memberships" && <MemberList fKey={organization} />}
 
-          {activeTab === "invitations" && (
-            <InvitationList
-              fKey={organization}
-              totalCount={organization.invitations.totalCount ?? 0}
-              totalCountFKey={organization.invitations}
-              onConnectionIdChange={setInvitationListConnectionId}
-            />
-          )}
-        </div>
-      </Card>
+        {activeTab === "invitations" && (
+          <InvitationList
+            fKey={organization}
+            totalCount={organization.invitations.totalCount ?? 0}
+            totalCountFKey={organization.invitations}
+            onConnectionIdChange={setInvitationListConnectionId}
+          />
+        )}
+      </div>
     </div>
   );
 }

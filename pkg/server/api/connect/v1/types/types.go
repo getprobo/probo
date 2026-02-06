@@ -240,11 +240,19 @@ type MembershipEdge struct {
 }
 
 type MembershipProfile struct {
-	ID         gid.GID   `json:"id"`
-	FullName   string    `json:"fullName"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-	Permission bool      `json:"permission"`
+	ID                       gid.GID                        `json:"id"`
+	FullName                 string                         `json:"fullName"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 *string                        `json:"position,omitempty"`
+	ContractStartDate        *time.Time                     `json:"contractStartDate,omitempty"`
+	ContractEndDate          *time.Time                     `json:"contractEndDate,omitempty"`
+	CreatedAt                time.Time                      `json:"createdAt"`
+	UpdatedAt                time.Time                      `json:"updatedAt"`
+	Identity                 *Identity                      `json:"identity,omitempty"`
+	Organization             *Organization                  `json:"organization,omitempty"`
+	MembershipID             gid.GID                        `json:"membershipId"`
+	Permission               bool                           `json:"permission"`
 }
 
 func (MembershipProfile) IsNode()             {}
@@ -543,6 +551,20 @@ type UpdateOrganizationInput struct {
 
 type UpdateOrganizationPayload struct {
 	Organization *Organization `json:"organization,omitempty"`
+}
+
+type UpdateProfileInput struct {
+	ID                       gid.GID                        `json:"id"`
+	FullName                 string                         `json:"fullName"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses,omitempty"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 graphql.Omittable[*string]     `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
+}
+
+type UpdateProfilePayload struct {
+	Profile *MembershipProfile `json:"profile"`
 }
 
 type UpdateSAMLConfigurationInput struct {

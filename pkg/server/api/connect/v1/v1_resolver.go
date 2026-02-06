@@ -349,6 +349,53 @@ func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *type
 	return nil, gqlutils.Internal(ctx)
 }
 
+// Identity is the resolver for the identity field.
+func (r *membershipProfileResolver) Identity(ctx context.Context, obj *types.MembershipProfile) (*types.Identity, error) {
+	if err := r.authorize(
+		ctx,
+		obj.Identity.ID,
+		iam.ActionIdentityGet,
+		authz.WithAttr("organization_id", obj.Organization.ID.String()),
+	); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Identity{
+			ID: obj.Identity.ID,
+		}, nil
+	}
+
+	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get identity for membership", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewIdentity(identity), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *membershipProfileResolver) Organization(ctx context.Context, obj *types.MembershipProfile) (*types.Organization, error) {
+	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Organization{
+			ID: obj.Organization.ID,
+		}, nil
+	}
+
+	organization, err := r.iam.OrganizationService.GetOrganizationForMembership(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get organization for membership", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *membershipProfileResolver) Permission(ctx context.Context, obj *types.MembershipProfile, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -991,6 +1038,34 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 	return &types.DeleteInvitationPayload{DeletedInvitationID: input.InvitationID}, nil
 }
 
+// UpdateProfile is the resolver for the updateProfile field.
+func (r *mutationResolver) UpdateProfile(ctx context.Context, input types.UpdateProfileInput) (*types.UpdateProfilePayload, error) {
+	if err := r.authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate); err != nil {
+		return nil, err
+	}
+
+	profile, err := r.iam.OrganizationService.UpdateProfile(
+		ctx,
+		&iam.UpdateProfileRequest{
+			ID:                       input.ID,
+			FullName:                 input.FullName,
+			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+			Kind:                     input.Kind,
+			Position:                 gqlutils.UnwrapOmittable(input.Position),
+			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
+			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update profile", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateProfilePayload{
+		Profile: types.NewMembershipProfile(profile),
+	}, nil
+}
+
 // UpdateMembership is the resolver for the updateMembership field.
 func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
 	if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); err != nil {
@@ -1493,6 +1568,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewSession(session), nil
+		}
+	case coredata.MembershipProfileEntityType:
+		action = iam.ActionMembershipGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			profile, err := r.iam.OrganizationService.GetProfile(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewMembershipProfile(profile), nil
 		}
 	case coredata.MembershipEntityType:
 		action = iam.ActionMembershipGet

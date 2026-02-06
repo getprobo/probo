@@ -18,9 +18,21 @@ import "go.probo.inc/probo/pkg/coredata"
 
 func NewMembershipProfile(profile *coredata.MembershipProfile) *MembershipProfile {
 	return &MembershipProfile{
-		ID:        profile.ID,
-		FullName:  profile.FullName,
-		CreatedAt: profile.CreatedAt,
-		UpdatedAt: profile.UpdatedAt,
+		ID:                       profile.ID,
+		FullName:                 profile.FullName,
+		AdditionalEmailAddresses: profile.AdditionalEmailAddresses,
+		Kind:                     profile.Kind,
+		Position:                 profile.Position,
+		ContractStartDate:        profile.ContractStartDate,
+		ContractEndDate:          profile.ContractEndDate,
+		CreatedAt:                profile.CreatedAt,
+		UpdatedAt:                profile.UpdatedAt,
+		MembershipID:             profile.MembershipID,
+		Identity: &Identity{
+			ID: profile.IdentityID,
+		},
+		Organization: &Organization{
+			ID: profile.OrganizationID,
+		},
 	}
 }

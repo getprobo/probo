@@ -65,14 +65,18 @@ func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg
 	q := `SELECT m.organization_id, mp.identity_id FROM iam_membership_profiles mp JOIN iam_memberships m ON mp.membership_id = m.id WHERE mp.id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, p.ID).Scan(&organizationID); err != nil {
+	var identityID gid.GID
+	if err := conn.QueryRow(ctx, q, p.ID).Scan(&organizationID, &identityID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
 		return nil, fmt.Errorf("cannot query membership profile authorization attributes: %w", err)
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	return map[string]string{
+		"organization_id": organizationID.String(),
+		"identity_id":     identityID.String(),
+	}, nil
 }
 
 func (p *MembershipProfile) LoadByMembershipID(

@@ -98,6 +98,7 @@ type Mutation {
     @session(required: PRESENT)
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
     @session(required: PRESENT)
+  updateProfile(input: UpdateProfileInput!): UpdateProfilePayload!
   updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
   removeMember(input: RemoveMemberInput!): RemoveMemberPayload
     @session(required: PRESENT)
@@ -176,8 +177,19 @@ type Identity implements Node {
 type MembershipProfile implements Node {
   id: ID!
   fullName: String!
+  additionalEmailAddresses: [EmailAddr!]!
+  kind: ProfileKind!
+  position: String
+  contractStartDate: Datetime
+  contractEndDate: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  identity: Identity @goField(forceResolver: true)
+  organization: Organization @goField(forceResolver: true)
+
+  # TODO: remove when memberships are under profile
+  membershipId: ID!
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -227,6 +239,17 @@ type Organization implements Node {
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)
+}
+
+enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
+  EMPLOYEE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
+  CONTRACTOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
+  SERVICE_ACCOUNT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
+    )
 }
 
 enum MembershipRole
@@ -717,6 +740,16 @@ input InviteMemberInput {
   role: MembershipRole!
 }
 
+input UpdateProfileInput {
+  id: ID!
+  fullName: String!
+  additionalEmailAddresses: [EmailAddr!]
+  kind: ProfileKind!
+  position: String @goField(omittable: true)
+  contractStartDate: Datetime @goField(omittable: true)
+  contractEndDate: Datetime @goField(omittable: true)
+}
+
 input UpdateMembershipInput {
   organizationId: ID!
   membershipId: ID!
@@ -866,6 +899,10 @@ type DeleteOrganizationHorizontalLogoPayload {
 
 type InviteMemberPayload {
   invitationEdge: InvitationEdge!
+}
+
+type UpdateProfilePayload {
+  profile: MembershipProfile!
 }
 
 type UpdateMembershipPayload {

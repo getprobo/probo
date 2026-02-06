@@ -19,7 +19,7 @@ import type { MemberListItemFragment$key } from "#/__generated__/iam/MemberListI
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { EditMemberDialog } from "./EditMemberDialog";
+import { EditMemberDialog } from "../../settings/_components/EditMemberDialog";
 
 const fragment = graphql`
   fragment MemberListItemFragment on Membership {
@@ -28,7 +28,10 @@ const fragment = graphql`
     source
     state
     profile @required(action: THROW) {
+      id
       fullName
+      kind
+      position
     }
     identity @required(action: THROW) {
       email
@@ -103,6 +106,7 @@ export function MemberListItem(props: {
           isRemoving && "opacity-60 pointer-events-none",
           isInactive && "opacity-50",
         )}
+        to={`/organizations/${organizationId}/users/${membership.profile.id}`}
       >
         <Td>
           <div className="flex items-center gap-2">
@@ -116,10 +120,12 @@ export function MemberListItem(props: {
             <Badge variant="info">{membership.source}</Badge>
           </div>
         </Td>
+        <Td>{membership.profile.kind}</Td>
         <Td>
           <Badge>{membership.role}</Badge>
         </Td>
         <Td>{new Date(membership.createdAt).toLocaleDateString()}</Td>
+        <Td>{membership.profile.position}</Td>
         <Td noLink width={160} className="text-end">
           {!isInactive && (
             <div

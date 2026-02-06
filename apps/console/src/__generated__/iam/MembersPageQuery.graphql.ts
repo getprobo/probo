@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<11a6b18e62a7a93fa6c2365a7e3a86f6>>
+ * @generated SignedSource<<9a67aa27afef79bc9334f341f01d986d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -368,8 +368,22 @@ return {
                             "name": "profile",
                             "plural": false,
                             "selections": [
+                              (v10/*: any*/),
                               (v12/*: any*/),
-                              (v10/*: any*/)
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "kind",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "position",
+                                "storageKey": null
+                              }
                             ],
                             "storageKey": null
                           },
@@ -532,12 +546,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "438ac1a112e204b2a9ff30e3b36ec3ae",
+    "cacheID": "761152b197433a0f5f9e0734f98723d8",
     "id": null,
     "metadata": {},
     "name": "MembersPageQuery",
     "operationKind": "query",
-    "text": "query MembersPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canInviteUser: permission(action: \"iam:invitation:create\")\n      ...MemberListFragment_8lnpd\n      members(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n        totalCount\n      }\n      ...InvitationListFragment_1PypFi\n      invitations(first: 20, orderBy: {direction: DESC, field: CREATED_AT}) {\n        totalCount\n        __typename\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationListFragment_1PypFi on Organization {\n  invitations(first: 20, orderBy: {direction: DESC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  expiresAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n\nfragment MemberListFragment_8lnpd on Organization {\n  members(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  source\n  state\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n"
+    "text": "query MembersPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canInviteUser: permission(action: \"iam:invitation:create\")\n      ...MemberListFragment_8lnpd\n      members(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n        totalCount\n      }\n      ...InvitationListFragment_1PypFi\n      invitations(first: 20, orderBy: {direction: DESC, field: CREATED_AT}) {\n        totalCount\n        __typename\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationListFragment_1PypFi on Organization {\n  invitations(first: 20, orderBy: {direction: DESC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  expiresAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n\nfragment MemberListFragment_8lnpd on Organization {\n  members(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  source\n  state\n  profile {\n    id\n    fullName\n    kind\n    position\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n"
   }
 };
 })();
