@@ -31,15 +31,15 @@ import (
 
 type (
 	DocumentVersionSignature struct {
-		ID                gid.GID                       `json:"id"`
-		OrganizationID    gid.GID                       `json:"-"`
-		DocumentVersionID gid.GID                       `json:"document_version_id"`
-		State             DocumentVersionSignatureState `json:"state"`
-		SignedBy          gid.GID                       `json:"signed_by_profile_id"`
-		SignedAt          *time.Time                    `json:"signed_at"`
-		RequestedAt       time.Time                     `json:"requested_at"`
-		CreatedAt         time.Time                     `json:"created_at"`
-		UpdatedAt         time.Time                     `json:"updated_at"`
+		ID                gid.GID                       `json:"id" db:"id"`
+		OrganizationID    gid.GID                       `json:"-" db:"organization_id"`
+		DocumentVersionID gid.GID                       `json:"document_version_id" db:"document_version_id"`
+		State             DocumentVersionSignatureState `json:"state" db:"state"`
+		SignedBy          gid.GID                       `json:"signed_by" db:"signed_by_profile_id"`
+		SignedAt          *time.Time                    `json:"signed_at" db:"signed_at"`
+		RequestedAt       time.Time                     `json:"requested_at" db:"requested_at"`
+		CreatedAt         time.Time                     `json:"created_at" db:"created_at"`
+		UpdatedAt         time.Time                     `json:"updated_at" db:"updated_at"`
 	}
 
 	DocumentVersionSignatures []*DocumentVersionSignature
