@@ -249,7 +249,7 @@ func NewMux(
 			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
 
 			// Get the people to get their email for watermark
-			people, err := svc.Peoples.Get(r.Context(), data.Data.PeopleID)
+			profile, err := iamSvc.OrganizationService.GetProfile(r.Context(), data.Data.PeopleID)
 			if err != nil {
 				http.Error(w, "cannot get user", http.StatusInternalServerError)
 				return
@@ -258,7 +258,7 @@ func NewMux(
 			// Generate PDF with watermark
 			pdfData, err := svc.Documents.ExportPDF(r.Context(), documentVersionID, probo.ExportPDFOptions{
 				WithWatermark:  true,
-				WatermarkEmail: &people.PrimaryEmailAddress,
+				WatermarkEmail: &profile.EmailAddress,
 				WithSignatures: false,
 			})
 			if err != nil {

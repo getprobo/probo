@@ -604,10 +604,10 @@ func (s *DocumentService) SignDocumentVersion(
 	return nil
 }
 
-func (s *DocumentService) SignDocumentVersionByEmail(
+func (s *DocumentService) SignDocumentVersionByIdentity(
 	ctx context.Context,
 	documentVersionID gid.GID,
-	userEmail mail.Addr,
+	identityID gid.GID,
 ) (*coredata.DocumentVersionSignature, error) {
 	var documentVersionSignature *coredata.DocumentVersionSignature
 
@@ -619,14 +619,14 @@ func (s *DocumentService) SignDocumentVersionByEmail(
 				return fmt.Errorf("cannot get document version: %w", err)
 			}
 
-			people := &coredata.People{}
+			profile := &coredata.MembershipProfile{}
 			// FIXME: will be done differently
-			if err := people.LoadByEmailAndOrganizationID(ctx, conn, s.svc.scope, userEmail, documentVersion.OrganizationID); err != nil {
-				return fmt.Errorf("cannot find people record for user email in organization %q: %w", documentVersion.OrganizationID, err)
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, s.svc.scope, identityID, documentVersion.OrganizationID); err != nil {
+				return fmt.Errorf("cannot find profile record for user email in organization %q: %w", documentVersion.OrganizationID, err)
 			}
 
 			var signErr error
-			documentVersionSignature, signErr = s.signDocumentVersionInTx(ctx, conn, documentVersionID, people.ID)
+			documentVersionSignature, signErr = s.signDocumentVersionInTx(ctx, conn, documentVersionID, profile.ID)
 			return signErr
 		},
 	)
