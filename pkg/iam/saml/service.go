@@ -317,12 +317,13 @@ func (s *Service) HandleAssertion(
 				}
 
 				membershipProfile := &coredata.MembershipProfile{
-					ID:           gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
-					IdentityID:   identity.ID,
-					MembershipID: membership.ID,
-					FullName:     fullname,
-					CreatedAt:    now,
-					UpdatedAt:    now,
+					ID:             gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
+					IdentityID:     identity.ID,
+					OrganizationID: config.OrganizationID,
+					MembershipID:   membership.ID,
+					FullName:       fullname,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				err = membershipProfile.Insert(ctx, tx)

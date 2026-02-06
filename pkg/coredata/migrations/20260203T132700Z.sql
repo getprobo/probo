@@ -4,6 +4,8 @@ ALTER TABLE
 ADD
     COLUMN identity_id TEXT REFERENCES identities(id),
 ADD
+    COLUMN organization_id TEXT REFERENCES organizations(id),
+ADD
     COLUMN additional_email_addresses CITEXT [],
 ADD
     COLUMN kind PEOPLE_KIND,
@@ -17,7 +19,8 @@ ADD
 UPDATE
     iam_membership_profiles mp
 SET
-    identity_id = m.identity_id
+    identity_id = m.identity_id,
+    organization_id = m.organization_id
 FROM
     iam_memberships m
 WHERE
@@ -28,7 +31,13 @@ ALTER TABLE
 ALTER COLUMN
     identity_id
 SET
+    NOT NULL,
+ALTER COLUMN
+    organization_id
+SET
     NOT NULL;
+
+CREATE UNIQUE INDEX idx_profiles_identity_id_organization_id ON iam_membership_profiles(identity_id, organization_id);
 
 -- 2. Add profile references to all table referencing peoples
 -- was owner_id, NOT NULL
@@ -193,6 +202,7 @@ FROM
 WITH people_memberships AS (
     SELECT
         i.id AS identity_id,
+        m.organization_id AS organization_id,
         m.id AS membership_id,
         p.tenant_id AS tenant_id,
         p.kind AS kind,
@@ -213,6 +223,7 @@ INSERT INTO
         id,
         tenant_id,
         identity_id,
+        organization_id,
         membership_id,
         full_name,
         kind,
@@ -227,6 +238,7 @@ SELECT
     generate_gid(decode_base64_unpadded(pm.tenant_id), 51),
     pm.tenant_id,
     pm.identity_id,
+    pm.organization_id,
     pm.membership_id,
     pm.full_name,
     pm.kind,

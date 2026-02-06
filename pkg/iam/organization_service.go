@@ -666,12 +666,13 @@ func (s *OrganizationService) CreateOrganization(
 			}
 
 			profile := &coredata.MembershipProfile{
-				ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
-				IdentityID:   identity.ID,
-				MembershipID: membership.ID,
-				FullName:     identity.FullName,
-				CreatedAt:    now,
-				UpdatedAt:    now,
+				ID:             gid.New(tenantID, coredata.MembershipProfileEntityType),
+				IdentityID:     identity.ID,
+				OrganizationID: organization.ID,
+				MembershipID:   membership.ID,
+				FullName:       identity.FullName,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			err = profile.Insert(ctx, tx)
@@ -960,6 +961,31 @@ func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID)
 	}
 
 	return profile, nil
+}
+
+func (s *OrganizationService) ListProfiles(
+	ctx context.Context,
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.MembershipProfileOrderField],
+	filter *coredata.MembershipProfileFilter,
+) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
+	var (
+		scope    = coredata.NewScopeFromObjectID(organizationID)
+		profiles = coredata.MembershipProfiles{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return profiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(profiles, cursor), nil
 }
 
 func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Organization, error) {

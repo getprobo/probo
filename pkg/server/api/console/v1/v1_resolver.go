@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
 // StateOfApplicability is the resolver for the stateOfApplicability field.
@@ -5508,7 +5509,37 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 
 // Profiles is the resolver for the profiles field.
 func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
-	panic(fmt.Errorf("not implemented: Profiles - profiles"))
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ProfileConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	filters := coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded)
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy.Field = coredata.MembershipProfileOrderField(orderBy.Field)
+		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filters)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfileConnection(page, r, obj.ID, filters), nil
 }
 
 // SlackConnections is the resolver for the slackConnections field.
