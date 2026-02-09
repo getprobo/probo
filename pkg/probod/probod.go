@@ -773,7 +773,8 @@ func (impl *Implm) runTrustCenterServer(
 			strings.Contains(msg, "tls: client requested unsupported application protocols") ||
 			strings.Contains(msg, "read: connection reset by peer") ||
 			strings.Contains(msg, "tls: unsupported SSLv2 handshake received") ||
-			strings.Contains(msg, "tls: no cipher suite supported by both client and server")
+			strings.Contains(msg, "tls: no cipher suite supported by both client and server") ||
+			strings.Contains(msg, "tls: received record with version")
 	}
 	httpServerLogger := l.Named("", log.SkipMatch(ignoreTLSHandshakeErrors))
 	httpsServer := httpserver.NewServer(
