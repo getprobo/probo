@@ -5520,7 +5520,10 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 		}, nil
 	}
 
-	filters := coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded)
+	filters := coredata.NewMembershipProfileFilter(nil)
+	if filter != nil {
+		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
 		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
@@ -6456,12 +6459,25 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 
 // Permission is the resolver for the permission field.
 func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, action string) (bool, error) {
-	panic(fmt.Errorf("not implemented: Permission - permission"))
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.ProfileConnection) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
+	if err := r.authorize(ctx, obj.ParentID, iam.ActionMembershipProfileList); err != nil {
+		return 0, err
+	}
+
+	switch obj.Resolver.(type) {
+	case *stateOfApplicabilityResolver:
+		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count profiles: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("not implemented: TotalCount for parent type %T", obj.Resolver))
 }
 
 // Node is the resolver for the node field.

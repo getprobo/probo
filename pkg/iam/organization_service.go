@@ -1069,6 +1069,31 @@ func (s *OrganizationService) ListProfiles(
 	return page.NewPage(profiles, cursor), nil
 }
 
+func (s OrganizationService) CountProfiles(
+	ctx context.Context,
+	organizationID gid.GID,
+) (int, error) {
+	var (
+		scope = coredata.NewScopeFromObjectID(organizationID)
+		count int
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			profiles := coredata.MembershipProfiles{}
+			count, err = profiles.CountByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot count profiles: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return count, err
+}
+
 func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Organization, error) {
 	var (
 		scope        = coredata.NewScopeFromObjectID(membershipID)

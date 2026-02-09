@@ -498,6 +498,41 @@ INNER JOIN signatories ON p.id = signatories.signed_by_profile_id
 	return nil
 }
 
+func (p *MembershipProfiles) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(*)
+FROM
+    iam_membership_profiles
+WHERE
+    %s
+    AND organization_id = @organization_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot query iam_membership_profiles: %w", err)
+	}
+
+	var count int
+	err = rows.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot collect count: %w", err)
+	}
+
+	return count, nil
+}
+
 func (p *MembershipProfile) Insert(
 	ctx context.Context,
 	conn pg.Conn,
