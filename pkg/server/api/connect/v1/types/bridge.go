@@ -30,9 +30,10 @@ func NewSCIMBridge(bridge *coredata.SCIMBridge) *SCIMBridge {
 		ScimConfiguration: &SCIMConfiguration{
 			ID: bridge.ScimConfigurationID,
 		},
-		Connector: connector,
-		Type:      bridge.Type,
-		CreatedAt: bridge.CreatedAt,
-		UpdatedAt: bridge.UpdatedAt,
+		Connector:     connector,
+		Type:          bridge.Type,
+		ExcludedUserNames: bridge.ExcludedUserNames,
+		CreatedAt:     bridge.CreatedAt,
+		UpdatedAt:     bridge.UpdatedAt,
 	}
 }

@@ -180,6 +180,11 @@ var IAMOwnerPolicy = policy.NewPolicy(
 	policy.Allow("iam:scim-event:*").
 		WithSID("full-scim-event-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Allow updating SCIM bridge settings (scoped to own organization)
+	policy.Allow(ActionSCIMBridgeUpdate).
+		WithSID("scim-bridge-update-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Full IAM access for organization owners")
 

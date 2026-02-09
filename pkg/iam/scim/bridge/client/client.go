@@ -248,6 +248,29 @@ func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
 	return nil
 }
 
+func (c *Client) DeleteUser(ctx context.Context, userID string) error {
+	reqURL := fmt.Sprintf("%s/Users/%s", c.endpoint, url.PathEscape(userID))
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, reqURL, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create request: %w", err)
+	}
+
+	c.setHeaders(req)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("cannot delete user: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("SCIM API error: status %d, body: %s", resp.StatusCode, string(respBody))
+	}
+
+	return nil
+}
+
 func (c *Client) setHeaders(req *http.Request) {
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Accept", "application/scim+json")

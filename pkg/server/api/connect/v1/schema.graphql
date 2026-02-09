@@ -124,6 +124,9 @@ type Mutation {
   regenerateSCIMToken(
     input: RegenerateSCIMTokenInput!
   ): RegenerateSCIMTokenPayload @session(required: PRESENT)
+  updateSCIMBridge(
+    input: UpdateSCIMBridgeInput!
+  ): UpdateSCIMBridgePayload @session(required: PRESENT)
 }
 
 type Identity implements Node {
@@ -368,6 +371,7 @@ type SCIMBridge implements Node {
   scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
   connector: Connector @goField(forceResolver: true)
   type: SCIMBridgeType!
+  excludedUserNames: [String!]!
   createdAt: Datetime!
   updatedAt: Datetime!
 
@@ -905,6 +909,12 @@ input RegenerateSCIMTokenInput {
   scimConfigurationId: ID!
 }
 
+input UpdateSCIMBridgeInput {
+  organizationId: ID!
+  scimBridgeId: ID!
+  excludedUserNames: [String!]!
+}
+
 type CreateSCIMConfigurationPayload {
   scimConfiguration: SCIMConfiguration!
   scimBridge: SCIMBridge
@@ -918,4 +928,8 @@ type DeleteSCIMConfigurationPayload {
 type RegenerateSCIMTokenPayload {
   scimConfiguration: SCIMConfiguration!
   token: String!
+}
+
+type UpdateSCIMBridgePayload {
+  scimBridge: SCIMBridge!
 }

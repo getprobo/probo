@@ -415,6 +415,7 @@ type SCIMBridge struct {
 	ScimConfiguration *SCIMConfiguration       `json:"scimConfiguration,omitempty"`
 	Connector         *Connector               `json:"connector,omitempty"`
 	Type              coredata.SCIMBridgeType  `json:"type"`
+	ExcludedUserNames     []string                 `json:"excludedUserNames"`
 	CreatedAt         time.Time                `json:"createdAt"`
 	UpdatedAt         time.Time                `json:"updatedAt"`
 	Permission        bool                     `json:"permission"`
@@ -555,6 +556,16 @@ type UpdateSAMLConfigurationInput struct {
 
 type UpdateSAMLConfigurationPayload struct {
 	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration,omitempty"`
+}
+
+type UpdateSCIMBridgeInput struct {
+	OrganizationID gid.GID  `json:"organizationId"`
+	ScimBridgeID   gid.GID  `json:"scimBridgeId"`
+	ExcludedUserNames  []string `json:"excludedUserNames"`
+}
+
+type UpdateSCIMBridgePayload struct {
+	ScimBridge *SCIMBridge `json:"scimBridge"`
 }
 
 type VerifyEmailInput struct {

@@ -246,6 +246,7 @@ type ComplexityRoot struct {
 		UpdateMembership                 func(childComplexity int, input types.UpdateMembershipInput) int
 		UpdateOrganization               func(childComplexity int, input types.UpdateOrganizationInput) int
 		UpdateSAMLConfiguration          func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
+		UpdateSCIMBridge    func(childComplexity int, input types.UpdateSCIMBridgeInput) int
 		VerifyEmail                      func(childComplexity int, input types.VerifyEmailInput) int
 	}
 
@@ -379,6 +380,7 @@ type ComplexityRoot struct {
 	SCIMBridge struct {
 		Connector         func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
+		ExcludedUserNames     func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Permission        func(childComplexity int, action string) int
 		ScimConfiguration func(childComplexity int) int
@@ -474,6 +476,10 @@ type ComplexityRoot struct {
 		SamlConfiguration func(childComplexity int) int
 	}
 
+	UpdateSCIMBridgePayload struct {
+		ScimBridge func(childComplexity int) int
+	}
+
 	VerifyEmailPayload struct {
 		Success func(childComplexity int) int
 	}
@@ -540,6 +546,7 @@ type MutationResolver interface {
 	CreateSCIMConfiguration(ctx context.Context, input types.CreateSCIMConfigurationInput) (*types.CreateSCIMConfigurationPayload, error)
 	DeleteSCIMConfiguration(ctx context.Context, input types.DeleteSCIMConfigurationInput) (*types.DeleteSCIMConfigurationPayload, error)
 	RegenerateSCIMToken(ctx context.Context, input types.RegenerateSCIMTokenInput) (*types.RegenerateSCIMTokenPayload, error)
+	UpdateSCIMBridge(ctx context.Context, input types.UpdateSCIMBridgeInput) (*types.UpdateSCIMBridgePayload, error)
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
@@ -1415,6 +1422,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateSAMLConfiguration(childComplexity, args["input"].(types.UpdateSAMLConfigurationInput)), true
+	case "Mutation.updateSCIMBridge":
+		if e.complexity.Mutation.UpdateSCIMBridge == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSCIMBridge_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSCIMBridge(childComplexity, args["input"].(types.UpdateSCIMBridgeInput)), true
 	case "Mutation.verifyEmail":
 		if e.complexity.Mutation.VerifyEmail == nil {
 			break
@@ -1918,6 +1936,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SCIMBridge.CreatedAt(childComplexity), true
+	case "SCIMBridge.excludedUserNames":
+		if e.complexity.SCIMBridge.ExcludedUserNames == nil {
+			break
+		}
+
+		return e.complexity.SCIMBridge.ExcludedUserNames(childComplexity), true
 	case "SCIMBridge.id":
 		if e.complexity.SCIMBridge.ID == nil {
 			break
@@ -2264,6 +2288,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateSAMLConfigurationPayload.SamlConfiguration(childComplexity), true
 
+	case "UpdateSCIMBridgePayload.scimBridge":
+		if e.complexity.UpdateSCIMBridgePayload.ScimBridge == nil {
+			break
+		}
+
+		return e.complexity.UpdateSCIMBridgePayload.ScimBridge(childComplexity), true
+
 	case "VerifyEmailPayload.success":
 		if e.complexity.VerifyEmailPayload.Success == nil {
 			break
@@ -2310,6 +2341,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateMembershipInput,
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdateSAMLConfigurationInput,
+		ec.unmarshalInputUpdateSCIMBridgeInput,
 		ec.unmarshalInputVerifyEmailInput,
 	)
 	first := true
@@ -2534,6 +2566,9 @@ type Mutation {
   regenerateSCIMToken(
     input: RegenerateSCIMTokenInput!
   ): RegenerateSCIMTokenPayload @session(required: PRESENT)
+  updateSCIMBridge(
+    input: UpdateSCIMBridgeInput!
+  ): UpdateSCIMBridgePayload @session(required: PRESENT)
 }
 
 type Identity implements Node {
@@ -2778,6 +2813,7 @@ type SCIMBridge implements Node {
   scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
   connector: Connector @goField(forceResolver: true)
   type: SCIMBridgeType!
+  excludedUserNames: [String!]!
   createdAt: Datetime!
   updatedAt: Datetime!
 
@@ -3315,6 +3351,12 @@ input RegenerateSCIMTokenInput {
   scimConfigurationId: ID!
 }
 
+input UpdateSCIMBridgeInput {
+  organizationId: ID!
+  scimBridgeId: ID!
+  excludedUserNames: [String!]!
+}
+
 type CreateSCIMConfigurationPayload {
   scimConfiguration: SCIMConfiguration!
   scimBridge: SCIMBridge
@@ -3328,6 +3370,10 @@ type DeleteSCIMConfigurationPayload {
 type RegenerateSCIMTokenPayload {
   scimConfiguration: SCIMConfiguration!
   token: String!
+}
+
+type UpdateSCIMBridgePayload {
+  scimBridge: SCIMBridge!
 }
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
@@ -3840,6 +3886,17 @@ func (ec *executionContext) field_Mutation_updateSAMLConfiguration_args(ctx cont
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateSCIMBridge_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateSCIMBridgeInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSCIMBridgeInput)
 	if err != nil {
 		return nil, err
 	}
@@ -4770,6 +4827,8 @@ func (ec *executionContext) fieldContext_CreateSCIMConfigurationPayload_scimBrid
 				return ec.fieldContext_SCIMBridge_connector(ctx, field)
 			case "type":
 				return ec.fieldContext_SCIMBridge_type(ctx, field)
+			case "excludedUserNames":
+				return ec.fieldContext_SCIMBridge_excludedUserNames(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SCIMBridge_createdAt(ctx, field)
 			case "updatedAt":
@@ -8586,6 +8645,69 @@ func (ec *executionContext) fieldContext_Mutation_regenerateSCIMToken(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateSCIMBridge(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateSCIMBridge,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateSCIMBridge(ctx, fc.Args["input"].(types.UpdateSCIMBridgeInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.UpdateSCIMBridgePayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.UpdateSCIMBridgePayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOUpdateSCIMBridgePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSCIMBridgePayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateSCIMBridge(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "scimBridge":
+				return ec.fieldContext_UpdateSCIMBridgePayload_scimBridge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateSCIMBridgePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateSCIMBridge_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11337,6 +11459,35 @@ func (ec *executionContext) fieldContext_SCIMBridge_type(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _SCIMBridge_excludedUserNames(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMBridge_excludedUserNames,
+		func(ctx context.Context) (any, error) {
+			return obj.ExcludedUserNames, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMBridge_excludedUserNames(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMBridge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SCIMBridge_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.SCIMBridge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11667,6 +11818,8 @@ func (ec *executionContext) fieldContext_SCIMConfiguration_bridge(_ context.Cont
 				return ec.fieldContext_SCIMBridge_connector(ctx, field)
 			case "type":
 				return ec.fieldContext_SCIMBridge_type(ctx, field)
+			case "excludedUserNames":
+				return ec.fieldContext_SCIMBridge_excludedUserNames(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SCIMBridge_createdAt(ctx, field)
 			case "updatedAt":
@@ -13212,6 +13365,55 @@ func (ec *executionContext) fieldContext_UpdateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfiguration_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateSCIMBridgePayload_scimBridge(ctx context.Context, field graphql.CollectedField, obj *types.UpdateSCIMBridgePayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateSCIMBridgePayload_scimBridge,
+		func(ctx context.Context) (any, error) {
+			return obj.ScimBridge, nil
+		},
+		nil,
+		ec.marshalNSCIMBridge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMBridge,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateSCIMBridgePayload_scimBridge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateSCIMBridgePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SCIMBridge_id(ctx, field)
+			case "state":
+				return ec.fieldContext_SCIMBridge_state(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_SCIMBridge_scimConfiguration(ctx, field)
+			case "connector":
+				return ec.fieldContext_SCIMBridge_connector(ctx, field)
+			case "type":
+				return ec.fieldContext_SCIMBridge_type(ctx, field)
+			case "excludedUserNames":
+				return ec.fieldContext_SCIMBridge_excludedUserNames(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SCIMBridge_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SCIMBridge_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_SCIMBridge_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMBridge", field.Name)
 		},
 	}
 	return fc, nil
@@ -15872,6 +16074,47 @@ func (ec *executionContext) unmarshalInputUpdateSAMLConfigurationInput(ctx conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateSCIMBridgeInput(ctx context.Context, obj any) (types.UpdateSCIMBridgeInput, error) {
+	var it types.UpdateSCIMBridgeInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "scimBridgeId", "excludedUserNames"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "scimBridgeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scimBridgeId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScimBridgeID = data
+		case "excludedUserNames":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("excludedUserNames"))
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExcludedUserNames = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputVerifyEmailInput(ctx context.Context, obj any) (types.VerifyEmailInput, error) {
 	var it types.VerifyEmailInput
 	asMap := map[string]any{}
@@ -17804,6 +18047,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_regenerateSCIMToken(ctx, field)
 			})
+		case "updateSCIMBridge":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateSCIMBridge(ctx, field)
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19350,6 +19597,11 @@ func (ec *executionContext) _SCIMBridge(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "excludedUserNames":
+			out.Values[i] = ec._SCIMBridge_excludedUserNames(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._SCIMBridge_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -20390,6 +20642,45 @@ func (ec *executionContext) _UpdateSAMLConfigurationPayload(ctx context.Context,
 			out.Values[i] = graphql.MarshalString("UpdateSAMLConfigurationPayload")
 		case "samlConfiguration":
 			out.Values[i] = ec._UpdateSAMLConfigurationPayload_samlConfiguration(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateSCIMBridgePayloadImplementors = []string{"UpdateSCIMBridgePayload"}
+
+func (ec *executionContext) _UpdateSCIMBridgePayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateSCIMBridgePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateSCIMBridgePayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateSCIMBridgePayload")
+		case "scimBridge":
+			out.Values[i] = ec._UpdateSCIMBridgePayload_scimBridge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21575,6 +21866,16 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalNSCIMBridge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMBridge(ctx context.Context, sel ast.SelectionSet, v *types.SCIMBridge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SCIMBridge(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState(ctx context.Context, v any) (coredata.SCIMBridgeState, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNSCIMBridgeState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMBridgeState[tmp]
@@ -21886,6 +22187,36 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNUpdateMembershipInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateMembershipInput(ctx context.Context, v any) (types.UpdateMembershipInput, error) {
 	res, err := ec.unmarshalInputUpdateMembershipInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -21912,6 +22243,11 @@ func (ec *executionContext) unmarshalNUpdateOrganizationInput2goᚗproboᚗinc�
 
 func (ec *executionContext) unmarshalNUpdateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationInput(ctx context.Context, v any) (types.UpdateSAMLConfigurationInput, error) {
 	res, err := ec.unmarshalInputUpdateSAMLConfigurationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateSCIMBridgeInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSCIMBridgeInput(ctx context.Context, v any) (types.UpdateSCIMBridgeInput, error) {
+	res, err := ec.unmarshalInputUpdateSCIMBridgeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -22693,6 +23029,13 @@ func (ec *executionContext) marshalOUpdateSAMLConfigurationPayload2ᚖgoᚗprobo
 		return graphql.Null
 	}
 	return ec._UpdateSAMLConfigurationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateSCIMBridgePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSCIMBridgePayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateSCIMBridgePayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateSCIMBridgePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (*graphql.Upload, error) {

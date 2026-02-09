@@ -81,6 +81,7 @@ const (
 	// SCIM Bridge actions
 	ActionSCIMBridgeGet    = "iam:scim-bridge:get"
 	ActionSCIMBridgeCreate = "iam:scim-bridge:create"
+	ActionSCIMBridgeUpdate = "iam:scim-bridge:update"
 	ActionSCIMBridgeDelete = "iam:scim-bridge:delete"
 
 	// Connector actions

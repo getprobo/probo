@@ -27,6 +27,7 @@ import (
 type SyncStats struct {
 	Created     int
 	Updated     int
+	Deleted     int
 	Deactivated int
 	Skipped     int
 }
@@ -104,6 +105,7 @@ func (r *BridgeRunner) transitionToSuccess(
 				log.Duration("sync_duration", duration),
 				log.Int("users_created", stats.Created),
 				log.Int("users_updated", stats.Updated),
+				log.Int("users_deleted", stats.Deleted),
 				log.Int("users_deactivated", stats.Deactivated),
 				log.Int("users_skipped", stats.Skipped),
 			)

@@ -28,10 +28,11 @@ import (
 
 type (
 	Bridge struct {
-		provider    provider.Provider
-		scimClient  *scimclient.Client
-		forceUpdate bool
-		dryRun      bool
+		provider          provider.Provider
+		scimClient        *scimclient.Client
+		excludedUserNames []string
+		forceUpdate       bool
+		dryRun            bool
 	}
 
 	Option func(*Bridge)
@@ -49,6 +50,12 @@ func WithForceUpdate(forceUpdate bool) Option {
 	}
 }
 
+func WithExcludedUserNames(excludedUserNames []string) Option {
+	return func(s *Bridge) {
+		s.excludedUserNames = excludedUserNames
+	}
+}
+
 func NewBridge(provider provider.Provider, scimClient *scimclient.Client, opts ...Option) *Bridge {
 	s := &Bridge{
 		provider:   provider,
@@ -62,15 +69,15 @@ func NewBridge(provider provider.Provider, scimClient *scimclient.Client, opts .
 	return s
 }
 
-func (s *Bridge) Run(ctx context.Context) (created, updated, deactivated, skipped int, err error) {
+func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivated, skipped int, err error) {
 	providerUsers, err := s.provider.ListUsers(ctx)
 	if err != nil {
-		return 0, 0, 0, 0, fmt.Errorf("cannot list provider users: %w", err)
+		return 0, 0, 0, 0, 0, fmt.Errorf("cannot list provider users: %w", err)
 	}
 
 	scimUsers, err := s.scimClient.ListUsers(ctx)
 	if err != nil {
-		return 0, 0, 0, 0, fmt.Errorf("cannot list scim users: %w", err)
+		return 0, 0, 0, 0, 0, fmt.Errorf("cannot list scim users: %w", err)
 	}
 
 	scimUsersByEmail := make(map[string]*scimclient.User)
@@ -125,6 +132,17 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deactivated, skippe
 			continue
 		}
 
+		if s.isExcluded(email) {
+			if !s.dryRun {
+				if err := s.scimClient.DeleteUser(ctx, scimUser.ID); err != nil {
+					errs = append(errs, fmt.Errorf("cannot delete user %q: %w", email, err))
+					continue
+				}
+			}
+			deleted++
+			continue
+		}
+
 		if !scimUser.Active {
 			continue
 		}
@@ -138,5 +156,14 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deactivated, skippe
 		deactivated++
 	}
 
-	return created, updated, deactivated, skipped, errors.Join(errs...)
+	return created, updated, deleted, deactivated, skipped, errors.Join(errs...)
+}
+
+func (s *Bridge) isExcluded(email string) bool {
+	for _, excluded := range s.excludedUserNames {
+		if strings.EqualFold(excluded, email) {
+			return true
+		}
+	}
+	return false
 }

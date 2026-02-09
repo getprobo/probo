@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
@@ -31,17 +32,29 @@ import (
 var _ provider.Provider = (*Provider)(nil)
 
 type Provider struct {
-	httpClient *http.Client
+	httpClient        *http.Client
+	excludedUserNames []string
 }
 
-func New(httpClient *http.Client) *Provider {
+func New(httpClient *http.Client, excludedUserNames []string) *Provider {
 	return &Provider{
-		httpClient: httpClient,
+		httpClient:        httpClient,
+		excludedUserNames: excludedUserNames,
 	}
 }
 
 func (p *Provider) Name() string {
 	return "google-workspace"
+}
+
+func (p *Provider) isExcluded(email string) bool {
+	emailLower := strings.ToLower(email)
+	for _, excluded := range p.excludedUserNames {
+		if strings.ToLower(excluded) == emailLower {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
@@ -65,6 +78,10 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 		}
 
 		for _, u := range resp.Users {
+			if p.isExcluded(u.PrimaryEmail) {
+				continue
+			}
+
 			allUsers = append(
 				allUsers,
 				scimclient.User{

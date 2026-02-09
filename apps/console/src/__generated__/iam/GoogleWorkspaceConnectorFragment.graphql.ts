@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3c7c629a3509891b6edc98178a376c2d>>
+ * @generated SignedSource<<b449429f81b74e6da6c7c6ed523ca0ab>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type GoogleWorkspaceConnectorFragment$data = {
       readonly createdAt: string;
       readonly id: string;
     } | null | undefined;
+    readonly excludedUserNames: ReadonlyArray<string>;
+    readonly id: string;
   } | null | undefined;
   readonly id: string;
   readonly " $fragmentType": "GoogleWorkspaceConnectorFragment";
@@ -48,6 +50,14 @@ return {
       "name": "bridge",
       "plural": false,
       "selections": [
+        (v0/*: any*/),
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "excludedUserNames",
+          "storageKey": null
+        },
         {
           "alias": null,
           "args": null,
@@ -76,6 +86,6 @@ return {
 };
 })();
 
-(node as any).hash = "6ce8b7f55ff2a3d0fad04ad6b452a28a";
+(node as any).hash = "4f3898fca8d93369a46b50227f3df63d";
 
 export default node;

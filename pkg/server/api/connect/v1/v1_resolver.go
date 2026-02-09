@@ -1177,6 +1177,23 @@ func (r *mutationResolver) RegenerateSCIMToken(ctx context.Context, input types.
 	}, nil
 }
 
+// UpdateSCIMBridge is the resolver for the updateSCIMBridge field.
+func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.UpdateSCIMBridgeInput) (*types.UpdateSCIMBridgePayload, error) {
+	if err := r.authorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate); err != nil {
+		return nil, err
+	}
+
+	bridge, err := r.iam.OrganizationService.UpdateSCIMBridge(ctx, input.OrganizationID, input.ScimBridgeID, input.ExcludedUserNames)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update scim bridge excluded user names", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateSCIMBridgePayload{
+		ScimBridge: types.NewSCIMBridge(bridge),
+	}, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {

@@ -67,7 +67,7 @@ func (r *BridgeRunner) doSync(
 		return SyncStats{}, nil, fmt.Errorf("cannot load connector: %w", err)
 	}
 
-	idp, err := r.createProvider(ctx, logger, scimBridge.Type, dbConnector)
+	idp, err := r.createProvider(ctx, logger, scimBridge.Type, dbConnector, scimBridge.ExcludedUserNames)
 	if err != nil {
 		return SyncStats{}, nil, fmt.Errorf("cannot create provider: %w", err)
 	}
@@ -89,8 +89,8 @@ func (r *BridgeRunner) doSync(
 	}
 
 	scimClient := r.createSCIMClient(logger, token)
-	syncer := bridge.NewBridge(idp, scimClient)
-	created, updated, deactivated, skipped, err := syncer.Run(ctx)
+	syncer := bridge.NewBridge(idp, scimClient, bridge.WithExcludedUserNames(scimBridge.ExcludedUserNames))
+	created, updated, deleted, deactivated, skipped, err := syncer.Run(ctx)
 	if err != nil {
 		return SyncStats{}, nil, fmt.Errorf("sync failed: %w", err)
 	}
@@ -98,6 +98,7 @@ func (r *BridgeRunner) doSync(
 	stats := SyncStats{
 		Created:     created,
 		Updated:     updated,
+		Deleted:     deleted,
 		Deactivated: deactivated,
 		Skipped:     skipped,
 	}
@@ -121,10 +122,11 @@ func (r *BridgeRunner) createProvider(
 	logger *log.Logger,
 	bridgeType coredata.SCIMBridgeType,
 	dbConnector *coredata.Connector,
+	excludedUserNames []string,
 ) (provider.Provider, error) {
 	switch bridgeType {
 	case coredata.SCIMBridgeTypeGoogleWorkspace:
-		return r.createGoogleWorkspaceProvider(ctx, logger, dbConnector)
+		return r.createGoogleWorkspaceProvider(ctx, logger, dbConnector, excludedUserNames)
 	default:
 		return nil, fmt.Errorf("unsupported bridge type: %s", bridgeType)
 	}
@@ -134,6 +136,7 @@ func (r *BridgeRunner) createGoogleWorkspaceProvider(
 	ctx context.Context,
 	logger *log.Logger,
 	dbConnector *coredata.Connector,
+	excludedUserNames []string,
 ) (provider.Provider, error) {
 	if dbConnector.Connection == nil {
 		return nil, fmt.Errorf("connector has no connection configured")
@@ -161,7 +164,7 @@ func (r *BridgeRunner) createGoogleWorkspaceProvider(
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client: %w", err)
 		}
-		return googleworkspace.New(httpClient), nil
+		return googleworkspace.New(httpClient, excludedUserNames), nil
 	}
 
 	httpClient, err := oauth2Conn.RefreshableClient(ctx, *refreshCfg, httpClientOpts...)
@@ -169,5 +172,5 @@ func (r *BridgeRunner) createGoogleWorkspaceProvider(
 		return nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
 	}
 
-	return googleworkspace.New(httpClient), nil
+	return googleworkspace.New(httpClient, excludedUserNames), nil
 }

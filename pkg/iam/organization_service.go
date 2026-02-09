@@ -1434,6 +1434,50 @@ func (s OrganizationService) RegenerateSCIMToken(
 	return config, token, nil
 }
 
+func (s OrganizationService) UpdateSCIMBridge(
+	ctx context.Context,
+	organizationID gid.GID,
+	bridgeID gid.GID,
+	excludedUserNames []string,
+) (*coredata.SCIMBridge, error) {
+	bridge := &coredata.SCIMBridge{}
+	scope := coredata.NewScopeFromObjectID(bridgeID)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			err := bridge.LoadByID(ctx, tx, scope, bridgeID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return fmt.Errorf("SCIM bridge not found")
+				}
+
+				return fmt.Errorf("cannot load SCIM bridge: %w", err)
+			}
+
+			if bridge.OrganizationID != organizationID {
+				return fmt.Errorf("SCIM bridge not found")
+			}
+
+			bridge.ExcludedUserNames = excludedUserNames
+			bridge.UpdatedAt = time.Now()
+
+			err = bridge.Update(ctx, tx, scope)
+			if err != nil {
+				return fmt.Errorf("cannot update SCIM bridge: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bridge, nil
+}
+
 func (s OrganizationService) ListSCIMEventsByConfigID(
 	ctx context.Context,
 	scimConfigurationID gid.GID,
@@ -1863,6 +1907,7 @@ func (s OrganizationService) CreateSCIMBridge(
 				ConnectorID:         &connectorID,
 				Type:                bridgeType,
 				State:               coredata.SCIMBridgeStateActive, // Active immediately since connector already exists
+				ExcludedUserNames:       []string{},
 				CreatedAt:           now,
 				UpdatedAt:           now,
 			}

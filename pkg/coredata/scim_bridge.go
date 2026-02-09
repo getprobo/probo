@@ -29,20 +29,21 @@ import (
 
 type (
 	SCIMBridge struct {
-		ID                   gid.GID         `db:"id"`
-		OrganizationID       gid.GID         `db:"organization_id"`
-		ScimConfigurationID  gid.GID         `db:"scim_configuration_id"`
-		ConnectorID          *gid.GID        `db:"connector_id"`
-		Type                 SCIMBridgeType  `db:"type"`
-		State                SCIMBridgeState `db:"state"`
-		LastSyncedAt         *time.Time      `db:"last_synced_at"`
-		NextSyncAt           *time.Time      `db:"next_sync_at"`
-		SyncError            *string         `db:"sync_error"`
-		ConsecutiveFailures  int             `db:"consecutive_failures"`
-		TotalSyncCount       int             `db:"total_sync_count"`
-		TotalFailureCount    int             `db:"total_failure_count"`
-		CreatedAt            time.Time       `db:"created_at"`
-		UpdatedAt            time.Time       `db:"updated_at"`
+		ID                  gid.GID         `db:"id"`
+		OrganizationID      gid.GID         `db:"organization_id"`
+		ScimConfigurationID gid.GID         `db:"scim_configuration_id"`
+		ConnectorID         *gid.GID        `db:"connector_id"`
+		Type                SCIMBridgeType  `db:"type"`
+		State               SCIMBridgeState `db:"state"`
+		ExcludedUserNames   []string        `db:"excluded_user_names"`
+		LastSyncedAt        *time.Time      `db:"last_synced_at"`
+		NextSyncAt          *time.Time      `db:"next_sync_at"`
+		SyncError           *string         `db:"sync_error"`
+		ConsecutiveFailures int             `db:"consecutive_failures"`
+		TotalSyncCount      int             `db:"total_sync_count"`
+		TotalFailureCount   int             `db:"total_failure_count"`
+		CreatedAt           time.Time       `db:"created_at"`
+		UpdatedAt           time.Time       `db:"updated_at"`
 	}
 
 	SCIMBridges []*SCIMBridge
@@ -87,6 +88,7 @@ SELECT
     connector_id,
     type,
     state,
+    excluded_user_names,
     last_synced_at,
     next_sync_at,
     sync_error,
@@ -141,6 +143,7 @@ SELECT
     connector_id,
     type,
     state,
+    excluded_user_names,
     last_synced_at,
     next_sync_at,
     sync_error,
@@ -195,6 +198,7 @@ SELECT
     connector_id,
     type,
     state,
+    excluded_user_names,
     last_synced_at,
     next_sync_at,
     sync_error,
@@ -249,6 +253,7 @@ INSERT INTO iam_scim_bridges (
     connector_id,
     type,
     state,
+    excluded_user_names,
     last_synced_at,
     next_sync_at,
     sync_error,
@@ -265,6 +270,7 @@ INSERT INTO iam_scim_bridges (
     @connector_id,
     @type,
     @state,
+    @excluded_user_names,
     @last_synced_at,
     @next_sync_at,
     @sync_error,
@@ -284,6 +290,7 @@ INSERT INTO iam_scim_bridges (
 		"connector_id":          s.ConnectorID,
 		"type":                  s.Type,
 		"state":                 s.State,
+		"excluded_user_names":   s.ExcludedUserNames,
 		"last_synced_at":        s.LastSyncedAt,
 		"next_sync_at":          s.NextSyncAt,
 		"sync_error":            s.SyncError,
@@ -312,6 +319,7 @@ UPDATE iam_scim_bridges
 SET
     connector_id = @connector_id,
     state = @state,
+    excluded_user_names = @excluded_user_names,
     last_synced_at = @last_synced_at,
     next_sync_at = @next_sync_at,
     sync_error = @sync_error,
@@ -330,6 +338,7 @@ WHERE
 		"id":                   s.ID,
 		"connector_id":         s.ConnectorID,
 		"state":                s.State,
+		"excluded_user_names":  s.ExcludedUserNames,
 		"last_synced_at":       s.LastSyncedAt,
 		"next_sync_at":         s.NextSyncAt,
 		"sync_error":           s.SyncError,
@@ -364,6 +373,7 @@ SELECT
     connector_id,
     type,
     state,
+    excluded_user_names,
     last_synced_at,
     next_sync_at,
     sync_error,
