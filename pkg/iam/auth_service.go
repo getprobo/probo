@@ -472,19 +472,20 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID
 	return session, nil
 }
 
-func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Addr, password string) (*coredata.Identity, *coredata.Session, error) {
+func (s AuthService) CheckCredentials(
+	ctx context.Context,
+	email mail.Addr,
+	password string,
+) (*coredata.Identity, error) {
 	v := validator.New()
 	v.Check(password, "password", PasswordValidator())
 
 	err := v.Error()
 	if err != nil {
-		return nil, nil, NewInvalidPasswordError("invalid password")
+		return nil, NewInvalidPasswordError("invalid password")
 	}
 
-	var (
-		identity = &coredata.Identity{}
-		session  = &coredata.Session{}
-	)
+	identity := &coredata.Identity{}
 
 	err = s.pg.WithTx(
 		ctx,
@@ -513,7 +514,20 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 
-			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
+			return nil
+		},
+	)
+
+	return identity, err
+}
+
+func (s AuthService) OpenSessionWithPassword(ctx context.Context, identityID gid.GID) (*coredata.Session, error) {
+	session := &coredata.Session{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			session = coredata.NewRootSession(identityID, coredata.AuthMethodPassword, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -523,7 +537,11 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 		},
 	)
 
-	return identity, session, err
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
 
 func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkRequest) error {

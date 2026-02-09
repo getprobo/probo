@@ -315,6 +315,93 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 	return childSession, nil
 }
 
+func (s SessionService) OpenPasswordChildSessionForOrganization(
+	ctx context.Context,
+	rootSessionID gid.GID,
+	organizationID gid.GID,
+) (*coredata.Session, *coredata.Membership, error) {
+	var (
+		now          = time.Now()
+		rootSession  = &coredata.Session{}
+		identity     = &coredata.Identity{}
+		membership   = &coredata.Membership{}
+		childSession = &coredata.Session{}
+		scope        = coredata.NewScopeFromObjectID(organizationID)
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			err := rootSession.LoadByID(ctx, tx, rootSessionID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSessionNotFoundError(rootSessionID)
+				}
+				return fmt.Errorf("cannot load session: %w", err)
+			}
+
+			if !rootSession.IsRootSession() {
+				return fmt.Errorf("session %q is not a root session", rootSessionID)
+			}
+
+			if rootSession.ExpireReason != nil || now.After(rootSession.ExpiredAt) {
+				return NewSessionExpiredError(rootSessionID)
+			}
+
+			err = identity.LoadByID(ctx, tx, rootSession.IdentityID)
+			if err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewMembershipNotFoundError(organizationID)
+				}
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.State == coredata.MembershipStateInactive {
+				return NewMembershipInactiveError(membership.ID)
+			}
+
+			tenantID := scope.GetTenantID()
+			childSession = &coredata.Session{
+				ID:              gid.New(tenantID, coredata.SessionEntityType),
+				IdentityID:      rootSession.IdentityID,
+				TenantID:        &tenantID,
+				MembershipID:    &membership.ID,
+				ParentSessionID: &rootSession.ID,
+				AuthMethod:      coredata.AuthMethodPassword,
+				AuthenticatedAt: now,
+				ExpiredAt:       rootSession.ExpiredAt,
+				CreatedAt:       now,
+				UpdatedAt:       now,
+			}
+
+			err = childSession.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert child session: %w", err)
+			}
+
+			// Change root session auth method to password
+			rootSession.UpdatedAt = now
+			rootSession.AuthMethod = coredata.AuthMethodPassword
+
+			if err := rootSession.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update root session: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return childSession, membership, nil
+}
+
 // OpenSAMLChildSessionForOrganization creates a SAML-authenticated child session for the given
 // organization under the provided root session.
 //

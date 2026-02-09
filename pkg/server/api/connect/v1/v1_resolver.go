@@ -356,9 +356,7 @@ func (r *membershipProfileResolver) Permission(ctx context.Context, obj *types.M
 
 // SignIn is the resolver for the signIn field.
 func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) (*types.SignInPayload, error) {
-	// TODO: handle existing session to only open child session and chnage root session auth method to PASSWORD
-
-	identity, session, err := r.iam.AuthService.OpenSessionWithPassword(ctx, input.Email, input.Password)
+	identity, err := r.iam.AuthService.CheckCredentials(ctx, input.Email, input.Password)
 	if err != nil {
 		var errInvalidPassword *iam.ErrInvalidPassword
 		if errors.As(err, &errInvalidPassword) {
@@ -375,8 +373,57 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			}
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot sign in", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot check credentials", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	session := authn.SessionFromContext(ctx)
+
+	switch {
+	case session == nil:
+		var err error
+		session, err = r.iam.AuthService.OpenSessionWithPassword(
+			ctx,
+			identity.ID,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	case session.IdentityID != identity.ID:
+		if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
+			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		session, err = r.iam.AuthService.OpenSessionWithPassword(
+			ctx,
+			identity.ID,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	if input.OrganizationID != nil {
+		var err error
+		session, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
+		if err != nil {
+			var errSessionExpired *iam.ErrSessionExpired
+			var errMembershipNotFound *iam.ErrMembershipNotFound
+			var errMembershipInactive *iam.ErrMembershipInactive
+
+			if errors.As(err, errSessionExpired) {
+				return nil, gqlutils.Unauthenticated(ctx, err)
+			}
+			if errors.As(err, errMembershipNotFound) || errors.As(err, errMembershipInactive) {
+				return nil, gqlutils.Forbidden(ctx, err)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot assume organization", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
 	}
 
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)

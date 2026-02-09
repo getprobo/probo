@@ -626,6 +626,8 @@ type PageInfo {
 }
 
 input SignInInput {
+  # When assuming an org with a password auth method
+  organizationId: ID
   email: EmailAddr!
   password: String!
 }

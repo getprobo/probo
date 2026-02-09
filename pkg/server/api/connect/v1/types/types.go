@@ -485,8 +485,9 @@ type SessionOrder struct {
 }
 
 type SignInInput struct {
-	Email    mail.Addr `json:"email"`
-	Password string    `json:"password"`
+	OrganizationID *gid.GID  `json:"organizationId,omitempty"`
+	Email          mail.Addr `json:"email"`
+	Password       string    `json:"password"`
 }
 
 type SignInPayload struct {
