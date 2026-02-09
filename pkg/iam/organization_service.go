@@ -196,7 +196,7 @@ func (upr *UpdateProfileRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(upr.Kind, "kind", validator.OneOfSlice(coredata.PeopleKinds()))
+	v.Check(upr.Kind, "kind", validator.OneOfSlice(coredata.MembershipProfileKinds()))
 	v.Check(upr.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.CheckEach(upr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())
@@ -996,7 +996,9 @@ func (s *OrganizationService) UpdateProfile(ctx context.Context, req *UpdateProf
 
 			profile.AdditionalEmailAddresses = req.AdditionalEmailAddresses
 
-			profile.Position = *req.Position
+			if req.Position != nil {
+				profile.Position = *req.Position
+			}
 
 			if req.ContractStartDate != nil {
 				profile.ContractStartDate = *req.ContractStartDate

@@ -713,14 +713,14 @@ WITH last_signable_version AS (
 	FROM documents d
 	INNER JOIN document_versions dv ON dv.document_id = d.id
 	INNER JOIN document_version_signatures dvs ON dvs.document_version_id = dv.id
-	INNER JOIN peoples p ON dvs.signed_by = p.id
+	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
 	WHERE d.id = @document_id
 		AND p.primary_email_address = @user_email
 		AND dv.version_number = (
 			SELECT MAX(dv2.version_number)
 			FROM document_versions dv2
 			INNER JOIN document_version_signatures dvs2 ON dvs2.document_version_id = dv2.id
-			INNER JOIN peoples p2 ON dvs2.signed_by = p2.id
+			INNER JOIN iam_membership_profiles p2 ON dvs2.signed_by_profile_id = p2.id
 			WHERE dv2.document_id = d.id
 				AND p2.primary_email_address = @user_email
 		)

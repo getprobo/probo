@@ -74,9 +74,14 @@ func (mpk MembershipProfileKind) String() string {
 }
 
 func (mpk *MembershipProfileKind) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for MembershipProfileKind, expected string got %T", value)
+	var val string
+	switch v := value.(type) {
+	case string:
+		val = v
+	case []byte:
+		val = string(v)
+	default:
+		return fmt.Errorf("unsupported type for MembershipProfileKind: %T", value)
 	}
 
 	return mpk.UnmarshalText([]byte(val))

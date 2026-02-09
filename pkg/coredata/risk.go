@@ -175,7 +175,7 @@ WITH rsks AS (
 	INNER JOIN
 		risks_measures rm ON r.id = rm.risk_id
 	LEFT JOIN
-		peoples p ON r.owner_profile_id = p.id
+		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		rm.measure_id = @measure_id
 )
@@ -293,7 +293,7 @@ WITH rsks AS (
 	FROM
 		risks r
 	LEFT JOIN
-		peoples p ON r.owner_profile_id = p.id
+		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		r.organization_id = @organization_id
 )

@@ -80,7 +80,7 @@ export function MemberList(props: { fKey: MemberListFragment$key }) {
         {membersPagination.data.members.totalCount === 0
           ? (
               <Tr>
-                <Td colSpan={5} className="text-center text-txt-secondary">
+                <Td colSpan={7} className="text-center text-txt-secondary">
                   {__("No members")}
                 </Td>
               </Tr>

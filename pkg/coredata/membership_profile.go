@@ -451,14 +451,14 @@ func (p *MembershipProfiles) LoadAwaitingSigning(
 	q := `
 WITH signatories AS (
     SELECT
-        signed_by
+        signed_by_profile_id
     FROM
         document_version_signatures
     WHERE
         %s
         AND state = 'REQUESTED'
     GROUP BY
-        signed_by
+        signed_by_profile_id
 )
 SELECT
     p.id,

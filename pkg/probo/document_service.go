@@ -462,7 +462,7 @@ func (s *DocumentService) Create(
 func (s *DocumentService) ListSigningRequests(
 	ctx context.Context,
 	organizationID gid.GID,
-	peopleID gid.GID,
+	profileID gid.GID,
 ) ([]map[string]any, error) {
 	q := `
 SELECT
@@ -476,7 +476,7 @@ FROM
 	INNER JOIN organizations o ON o.id = p.organization_id
 WHERE
     p.tenant_id = $1
-	AND pvs.signed_by = $2
+	AND pvs.signed_by_profile_id = $2
 	AND pvs.signed_at IS NULL
 	AND pv.status = 'PUBLISHED'
 	AND pv.version_number = (
@@ -491,7 +491,7 @@ WHERE
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			rows, err := conn.Query(ctx, q, s.svc.scope.GetTenantID(), peopleID)
+			rows, err := conn.Query(ctx, q, s.svc.scope.GetTenantID(), profileID)
 			if err != nil {
 				return fmt.Errorf("cannot query documents: %w", err)
 			}

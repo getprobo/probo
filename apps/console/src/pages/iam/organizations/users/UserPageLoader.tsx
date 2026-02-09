@@ -19,7 +19,7 @@ function UserPageQueryLoader() {
     if (!queryRef) {
       loadQuery({ userId });
     }
-  }, [loadQuery, queryRef, userId]);
+  });
 
   if (!queryRef) return <LinkCardSkeleton />;
 
