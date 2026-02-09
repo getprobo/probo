@@ -536,11 +536,9 @@ func (s SessionService) AssumeOrganizationSession(
 
 			// If child session already exists use it
 			if err := childSession.LoadByRootSessionIDAndMembershipID(ctx, tx, rootSession.IdentityID, membership.ID); err == nil {
-				if childSession.ExpireReason != nil || now.After(childSession.ExpiredAt) {
-					return NewSessionExpiredError(childSession.ID)
+				if childSession.ExpireReason == nil && now.Before(childSession.ExpiredAt) {
+					return nil
 				}
-
-				return nil
 			} else {
 				if err != coredata.ErrResourceNotFound {
 					return fmt.Errorf("cannot load child session: %w", err)
