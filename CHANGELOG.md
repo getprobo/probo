@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.120.0] - 2026-02-09
+
+### Added
+
+- Suport all vendors fields on mcp
+
+### Fixed
+
+- Fix duplicate assessments
+
 ## [0.119.1] - 2026-02-09
 
 ### Security
