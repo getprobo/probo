@@ -264,23 +264,130 @@ components:
         - id
         - name
         - organization_id
+        - category
         - created_at
         - updated_at
       properties:
         id:
           $ref: "#/components/schemas/GID"
           description: Vendor ID
-        name:
-          type: string
-          description: Vendor name
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        name:
+          type: string
+          description: Vendor name
         description:
           type:
             - string
             - "null"
           description: Vendor description
+        category:
+          type: string
+          enum:
+            - ANALYTICS
+            - CLOUD_MONITORING
+            - CLOUD_PROVIDER
+            - COLLABORATION
+            - CUSTOMER_SUPPORT
+            - DATA_STORAGE_AND_PROCESSING
+            - DOCUMENT_MANAGEMENT
+            - EMPLOYEE_MANAGEMENT
+            - ENGINEERING
+            - FINANCE
+            - IDENTITY_PROVIDER
+            - IT
+            - MARKETING
+            - OFFICE_OPERATIONS
+            - OTHER
+            - PASSWORD_MANAGEMENT
+            - PRODUCT_AND_DESIGN
+            - PROFESSIONAL_SERVICES
+            - RECRUITING
+            - SALES
+            - SECURITY
+            - VERSION_CONTROL
+          description: Vendor category
+        headquarter_address:
+          type:
+            - string
+            - "null"
+          description: Headquarter address
+        legal_name:
+          type:
+            - string
+            - "null"
+          description: Legal name
+        website_url:
+          type:
+            - string
+            - "null"
+          description: Website URL
+        privacy_policy_url:
+          type:
+            - string
+            - "null"
+          description: Privacy policy URL
+        service_level_agreement_url:
+          type:
+            - string
+            - "null"
+          description: Service level agreement URL
+        data_processing_agreement_url:
+          type:
+            - string
+            - "null"
+          description: Data processing agreement URL
+        business_associate_agreement_url:
+          type:
+            - string
+            - "null"
+          description: Business associate agreement URL
+        subprocessors_list_url:
+          type:
+            - string
+            - "null"
+          description: Subprocessors list URL
+        certifications:
+          type: array
+          items:
+            type: string
+          description: Certifications
+        countries:
+          type: array
+          items:
+            type: string
+          description: Countries (ISO 3166-1 alpha-2 country codes)
+        business_owner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Business owner ID
+        security_owner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Security owner ID
+        status_page_url:
+          type:
+            - string
+            - "null"
+          description: Status page URL
+        terms_of_service_url:
+          type:
+            - string
+            - "null"
+          description: Terms of service URL
+        security_page_url:
+          type:
+            - string
+            - "null"
+          description: Security page URL
+        trust_page_url:
+          type:
+            - string
+            - "null"
+          description: Trust page URL
         created_at:
           type: string
           format: date-time
@@ -305,14 +412,84 @@ components:
         description:
           type: string
           description: Vendor description
-        created_at:
+        category:
           type: string
-          format: date-time
-          description: Creation timestamp
-        updated_at:
+          enum:
+            - ANALYTICS
+            - CLOUD_MONITORING
+            - CLOUD_PROVIDER
+            - COLLABORATION
+            - CUSTOMER_SUPPORT
+            - DATA_STORAGE_AND_PROCESSING
+            - DOCUMENT_MANAGEMENT
+            - EMPLOYEE_MANAGEMENT
+            - ENGINEERING
+            - FINANCE
+            - IDENTITY_PROVIDER
+            - IT
+            - MARKETING
+            - OFFICE_OPERATIONS
+            - OTHER
+            - PASSWORD_MANAGEMENT
+            - PRODUCT_AND_DESIGN
+            - PROFESSIONAL_SERVICES
+            - RECRUITING
+            - SALES
+            - SECURITY
+            - VERSION_CONTROL
+          description: Vendor category
+        headquarter_address:
           type: string
-          format: date-time
-          description: Update timestamp
+          description: Headquarter address
+        legal_name:
+          type: string
+          description: Legal name
+        website_url:
+          type: string
+          description: Website URL
+        privacy_policy_url:
+          type: string
+          description: Privacy policy URL
+        service_level_agreement_url:
+          type: string
+          description: Service level agreement URL
+        data_processing_agreement_url:
+          type: string
+          description: Data processing agreement URL
+        business_associate_agreement_url:
+          type: string
+          description: Business associate agreement URL
+        subprocessors_list_url:
+          type: string
+          description: Subprocessors list URL
+        certifications:
+          type: array
+          items:
+            type: string
+          description: Certifications
+        countries:
+          type: array
+          items:
+            type: string
+          description: Countries (ISO 3166-1 alpha-2 country codes)
+        business_owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Business owner ID
+        security_owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Security owner ID
+        status_page_url:
+          type: string
+          description: Status page URL
+        terms_of_service_url:
+          type: string
+          description: Terms of service URL
+        security_page_url:
+          type: string
+          description: Security page URL
+        trust_page_url:
+          type: string
+          description: Trust page URL
 
     AddVendorOutput:
       type: object
@@ -336,6 +513,84 @@ components:
         description:
           type: string
           description: Vendor description
+        category:
+          type: string
+          enum:
+            - ANALYTICS
+            - CLOUD_MONITORING
+            - CLOUD_PROVIDER
+            - COLLABORATION
+            - CUSTOMER_SUPPORT
+            - DATA_STORAGE_AND_PROCESSING
+            - DOCUMENT_MANAGEMENT
+            - EMPLOYEE_MANAGEMENT
+            - ENGINEERING
+            - FINANCE
+            - IDENTITY_PROVIDER
+            - IT
+            - MARKETING
+            - OFFICE_OPERATIONS
+            - OTHER
+            - PASSWORD_MANAGEMENT
+            - PRODUCT_AND_DESIGN
+            - PROFESSIONAL_SERVICES
+            - RECRUITING
+            - SALES
+            - SECURITY
+            - VERSION_CONTROL
+          description: Vendor category
+        headquarter_address:
+          type: string
+          description: Headquarter address
+        legal_name:
+          type: string
+          description: Legal name
+        website_url:
+          type: string
+          description: Website URL
+        privacy_policy_url:
+          type: string
+          description: Privacy policy URL
+        service_level_agreement_url:
+          type: string
+          description: Service level agreement URL
+        data_processing_agreement_url:
+          type: string
+          description: Data processing agreement URL
+        business_associate_agreement_url:
+          type: string
+          description: Business associate agreement URL
+        subprocessors_list_url:
+          type: string
+          description: Subprocessors list URL
+        certifications:
+          type: array
+          items:
+            type: string
+          description: Certifications
+        countries:
+          type: array
+          items:
+            type: string
+          description: Countries (ISO 3166-1 alpha-2 country codes)
+        business_owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Business owner ID
+        security_owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Security owner ID
+        status_page_url:
+          type: string
+          description: Status page URL
+        terms_of_service_url:
+          type: string
+          description: Terms of service URL
+        security_page_url:
+          type: string
+          description: Security page URL
+        trust_page_url:
+          type: string
+          description: Trust page URL
 
     UpdateVendorOutput:
       type: object

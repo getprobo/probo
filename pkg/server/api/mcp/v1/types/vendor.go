@@ -20,13 +20,35 @@ import (
 )
 
 func NewVendor(v *coredata.Vendor) *Vendor {
+	countries := make([]string, len(v.Countries))
+	for i, c := range v.Countries {
+		countries[i] = string(c)
+	}
+
 	return &Vendor{
-		Name:           v.Name,
-		ID:             v.ID,
-		OrganizationID: v.OrganizationID,
-		Description:    v.Description,
-		CreatedAt:      v.CreatedAt,
-		UpdatedAt:      v.UpdatedAt,
+		ID:                            v.ID,
+		OrganizationID:                v.OrganizationID,
+		Name:                          v.Name,
+		Description:                   v.Description,
+		Category:                      VendorCategory(v.Category),
+		HeadquarterAddress:            v.HeadquarterAddress,
+		LegalName:                     v.LegalName,
+		WebsiteURL:                    v.WebsiteURL,
+		PrivacyPolicyURL:              v.PrivacyPolicyURL,
+		ServiceLevelAgreementURL:      v.ServiceLevelAgreementURL,
+		DataProcessingAgreementURL:    v.DataProcessingAgreementURL,
+		BusinessAssociateAgreementURL: v.BusinessAssociateAgreementURL,
+		SubprocessorsListURL:          v.SubprocessorsListURL,
+		Certifications:                v.Certifications,
+		Countries:                     countries,
+		BusinessOwnerID:               v.BusinessOwnerID,
+		SecurityOwnerID:               v.SecurityOwnerID,
+		StatusPageURL:                 v.StatusPageURL,
+		TermsOfServiceURL:             v.TermsOfServiceURL,
+		SecurityPageURL:               v.SecurityPageURL,
+		TrustPageURL:                  v.TrustPageURL,
+		CreatedAt:                     v.CreatedAt,
+		UpdatedAt:                     v.UpdatedAt,
 	}
 }
 

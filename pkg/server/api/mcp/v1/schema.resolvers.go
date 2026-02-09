@@ -10,6 +10,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -78,29 +79,43 @@ func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
+	var category *coredata.VendorCategory
+	if input.Category != nil {
+		cat := coredata.VendorCategory(*input.Category)
+		category = &cat
+	}
+
+	var countries coredata.CountryCodes
+	if len(input.Countries) > 0 {
+		countries = make(coredata.CountryCodes, len(input.Countries))
+		for i, c := range input.Countries {
+			countries[i] = coredata.CountryCode(c)
+		}
+	}
+
 	vendor, err := svc.Vendors.Create(
 		ctx,
 		probo.CreateVendorRequest{
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-			Description:    input.Description,
-			// HeadquarterAddress:            input.HeadquarterAddress,
-			// LegalName:                     input.LegalName,
-			// WebsiteURL:                    input.WebsiteURL,
-			// Category:                      input.Category,
-			// PrivacyPolicyURL:              input.PrivacyPolicyURL,
-			// ServiceLevelAgreementURL:      input.ServiceLevelAgreementURL,
-			// DataProcessingAgreementURL:    input.DataProcessingAgreementURL,
-			// BusinessAssociateAgreementURL: input.BusinessAssociateAgreementURL,
-			// SubprocessorsListURL:          input.SubprocessorsListURL,
-			// Certifications:                input.Certifications,
-			// Countries:                     input.Countries,
-			// SecurityPageURL:               input.SecurityPageURL,
-			// TrustPageURL:                  input.TrustPageURL,
-			// TermsOfServiceURL:             input.TermsOfServiceURL,
-			// StatusPageURL:                 input.StatusPageURL,
-			// BusinessOwnerID:               input.BusinessOwnerID,
-			// SecurityOwnerID:               input.SecurityOwnerID,
+			OrganizationID:                input.OrganizationID,
+			Name:                          input.Name,
+			Description:                   input.Description,
+			Category:                      category,
+			HeadquarterAddress:            input.HeadquarterAddress,
+			LegalName:                     input.LegalName,
+			WebsiteURL:                    input.WebsiteURL,
+			PrivacyPolicyURL:              input.PrivacyPolicyURL,
+			ServiceLevelAgreementURL:      input.ServiceLevelAgreementURL,
+			DataProcessingAgreementURL:    input.DataProcessingAgreementURL,
+			BusinessAssociateAgreementURL: input.BusinessAssociateAgreementURL,
+			SubprocessorsListURL:          input.SubprocessorsListURL,
+			Certifications:                input.Certifications,
+			Countries:                     countries,
+			BusinessOwnerID:               input.BusinessOwnerID,
+			SecurityOwnerID:               input.SecurityOwnerID,
+			StatusPageURL:                 input.StatusPageURL,
+			TermsOfServiceURL:             input.TermsOfServiceURL,
+			SecurityPageURL:               input.SecurityPageURL,
+			TrustPageURL:                  input.TrustPageURL,
 		},
 	)
 	if err != nil {
@@ -122,12 +137,113 @@ func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolReques
 		description = &input.Description
 	}
 
+	var headquarterAddress **string
+	if input.HeadquarterAddress != nil {
+		headquarterAddress = &input.HeadquarterAddress
+	}
+
+	var legalName **string
+	if input.LegalName != nil {
+		legalName = &input.LegalName
+	}
+
+	var websiteURL **string
+	if input.WebsiteURL != nil {
+		websiteURL = &input.WebsiteURL
+	}
+
+	var privacyPolicyURL **string
+	if input.PrivacyPolicyURL != nil {
+		privacyPolicyURL = &input.PrivacyPolicyURL
+	}
+
+	var serviceLevelAgreementURL **string
+	if input.ServiceLevelAgreementURL != nil {
+		serviceLevelAgreementURL = &input.ServiceLevelAgreementURL
+	}
+
+	var dataProcessingAgreementURL **string
+	if input.DataProcessingAgreementURL != nil {
+		dataProcessingAgreementURL = &input.DataProcessingAgreementURL
+	}
+
+	var businessAssociateAgreementURL **string
+	if input.BusinessAssociateAgreementURL != nil {
+		businessAssociateAgreementURL = &input.BusinessAssociateAgreementURL
+	}
+
+	var subprocessorsListURL **string
+	if input.SubprocessorsListURL != nil {
+		subprocessorsListURL = &input.SubprocessorsListURL
+	}
+
+	var statusPageURL **string
+	if input.StatusPageURL != nil {
+		statusPageURL = &input.StatusPageURL
+	}
+
+	var termsOfServiceURL **string
+	if input.TermsOfServiceURL != nil {
+		termsOfServiceURL = &input.TermsOfServiceURL
+	}
+
+	var securityPageURL **string
+	if input.SecurityPageURL != nil {
+		securityPageURL = &input.SecurityPageURL
+	}
+
+	var trustPageURL **string
+	if input.TrustPageURL != nil {
+		trustPageURL = &input.TrustPageURL
+	}
+
+	var businessOwnerID **gid.GID
+	if input.BusinessOwnerID != nil {
+		businessOwnerID = &input.BusinessOwnerID
+	}
+
+	var securityOwnerID **gid.GID
+	if input.SecurityOwnerID != nil {
+		securityOwnerID = &input.SecurityOwnerID
+	}
+
+	var category *coredata.VendorCategory
+	if input.Category != nil {
+		cat := coredata.VendorCategory(*input.Category)
+		category = &cat
+	}
+
+	var countries coredata.CountryCodes
+	if len(input.Countries) > 0 {
+		countries = make(coredata.CountryCodes, len(input.Countries))
+		for i, c := range input.Countries {
+			countries[i] = coredata.CountryCode(c)
+		}
+	}
+
 	vendor, err := svc.Vendors.Update(
 		ctx,
 		probo.UpdateVendorRequest{
-			ID:          input.ID,
-			Name:        input.Name,
-			Description: description,
+			ID:                            input.ID,
+			Name:                          input.Name,
+			Description:                   description,
+			Category:                      category,
+			HeadquarterAddress:            headquarterAddress,
+			LegalName:                     legalName,
+			WebsiteURL:                    websiteURL,
+			PrivacyPolicyURL:              privacyPolicyURL,
+			ServiceLevelAgreementURL:      serviceLevelAgreementURL,
+			DataProcessingAgreementURL:    dataProcessingAgreementURL,
+			BusinessAssociateAgreementURL: businessAssociateAgreementURL,
+			SubprocessorsListURL:          subprocessorsListURL,
+			Certifications:                input.Certifications,
+			Countries:                     countries,
+			BusinessOwnerID:               businessOwnerID,
+			SecurityOwnerID:               securityOwnerID,
+			StatusPageURL:                 statusPageURL,
+			TermsOfServiceURL:             termsOfServiceURL,
+			SecurityPageURL:               securityPageURL,
+			TrustPageURL:                  trustPageURL,
 		},
 	)
 	if err != nil {

@@ -3,6 +3,8 @@
 package types
 
 import (
+	"encoding/json"
+	"fmt"
 	"go.probo.inc/mcpgen/mcp"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -39,8 +41,8 @@ var (
 	AddRiskToolOutputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"risk":{"type":"object","properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No owner"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"]}},"required":["risk"]}`)
 	AddTaskToolInputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"deadline":{"type":"string","description":"Deadline","format":"date-time"},"description":{"type":"string","description":"Task description"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"organization_id":{"type":"string","format":"string"},"time_estimate":{"type":"string","description":"A duration"}},"required":["organization_id","name"]}`)
 	AddTaskToolOutputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"task":{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"deadline":{"description":"Deadline","anyOf":[{"type":"string","description":"Deadline","format":"date-time"},{"type":"null","description":"No deadline"}]},"description":{"description":"Task description","anyOf":[{"type":"string","description":"Task description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["TODO","DONE"]},"time_estimate":{"description":"Time estimate","anyOf":[{"type":"string","description":"A duration"},{"type":"null","description":"No time estimate"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","state","created_at","updated_at"]}},"required":["task"]}`)
-	AddVendorToolInputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":"string","description":"Vendor description"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["organization_id","name"]}`)
-	AddVendorToolOutputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"vendor":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","name","organization_id","created_at","updated_at"]}},"required":["vendor"]}`)
+	AddVendorToolInputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"business_associate_agreement_url":{"type":"string","description":"Business associate agreement URL"},"business_owner_id":{"type":"string","format":"string"},"category":{"type":"string","description":"Vendor category","enum":["ANALYTICS","CLOUD_MONITORING","CLOUD_PROVIDER","COLLABORATION","CUSTOMER_SUPPORT","DATA_STORAGE_AND_PROCESSING","DOCUMENT_MANAGEMENT","EMPLOYEE_MANAGEMENT","ENGINEERING","FINANCE","IDENTITY_PROVIDER","IT","MARKETING","OFFICE_OPERATIONS","OTHER","PASSWORD_MANAGEMENT","PRODUCT_AND_DESIGN","PROFESSIONAL_SERVICES","RECRUITING","SALES","SECURITY","VERSION_CONTROL"]},"certifications":{"type":"array","items":{"type":"string"},"description":"Certifications"},"countries":{"type":"array","items":{"type":"string"},"description":"Countries (ISO 3166-1 alpha-2 country codes)"},"data_processing_agreement_url":{"type":"string","description":"Data processing agreement URL"},"description":{"type":"string","description":"Vendor description"},"headquarter_address":{"type":"string","description":"Headquarter address"},"legal_name":{"type":"string","description":"Legal name"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"privacy_policy_url":{"type":"string","description":"Privacy policy URL"},"security_owner_id":{"type":"string","format":"string"},"security_page_url":{"type":"string","description":"Security page URL"},"service_level_agreement_url":{"type":"string","description":"Service level agreement URL"},"status_page_url":{"type":"string","description":"Status page URL"},"subprocessors_list_url":{"type":"string","description":"Subprocessors list URL"},"terms_of_service_url":{"type":"string","description":"Terms of service URL"},"trust_page_url":{"type":"string","description":"Trust page URL"},"website_url":{"type":"string","description":"Website URL"}},"required":["organization_id","name"]}`)
+	AddVendorToolOutputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"vendor":{"type":"object","properties":{"business_associate_agreement_url":{"description":"Business associate agreement URL"},"business_owner_id":{"description":"Business owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"category":{"type":"string","description":"Vendor category","enum":["ANALYTICS","CLOUD_MONITORING","CLOUD_PROVIDER","COLLABORATION","CUSTOMER_SUPPORT","DATA_STORAGE_AND_PROCESSING","DOCUMENT_MANAGEMENT","EMPLOYEE_MANAGEMENT","ENGINEERING","FINANCE","IDENTITY_PROVIDER","IT","MARKETING","OFFICE_OPERATIONS","OTHER","PASSWORD_MANAGEMENT","PRODUCT_AND_DESIGN","PROFESSIONAL_SERVICES","RECRUITING","SALES","SECURITY","VERSION_CONTROL"]},"certifications":{"type":"array","items":{"type":"string"},"description":"Certifications"},"countries":{"type":"array","items":{"type":"string"},"description":"Countries (ISO 3166-1 alpha-2 country codes)"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_processing_agreement_url":{"description":"Data processing agreement URL"},"description":{"description":"Vendor description"},"headquarter_address":{"description":"Headquarter address"},"id":{"type":"string","format":"string"},"legal_name":{"description":"Legal name"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"privacy_policy_url":{"description":"Privacy policy URL"},"security_owner_id":{"description":"Security owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"security_page_url":{"description":"Security page URL"},"service_level_agreement_url":{"description":"Service level agreement URL"},"status_page_url":{"description":"Status page URL"},"subprocessors_list_url":{"description":"Subprocessors list URL"},"terms_of_service_url":{"description":"Terms of service URL"},"trust_page_url":{"description":"Trust page URL"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"website_url":{"description":"Website URL"}},"required":["id","name","organization_id","category","created_at","updated_at"]}},"required":["vendor"]}`)
 	AssignTaskToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"assigned_to_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"}},"required":["id","assigned_to_id"]}`)
 	AssignTaskToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"task":{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"deadline":{"description":"Deadline","anyOf":[{"type":"string","description":"Deadline","format":"date-time"},{"type":"null","description":"No deadline"}]},"description":{"description":"Task description","anyOf":[{"type":"string","description":"Task description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["TODO","DONE"]},"time_estimate":{"description":"Time estimate","anyOf":[{"type":"string","description":"A duration"},{"type":"null","description":"No time estimate"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","state","created_at","updated_at"]}},"required":["task"]}`)
 	CancelSignatureRequestToolInputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"document_version_signature_id":{"type":"string","format":"string"}},"required":["document_version_signature_id"]}`)
@@ -126,7 +128,7 @@ var (
 	ListTasksToolInputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListTasksToolOutputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"description":"Next page cursor","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"tasks":{"type":"array","items":{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"deadline":{"description":"Deadline","anyOf":[{"type":"string","description":"Deadline","format":"date-time"},{"type":"null","description":"No deadline"}]},"description":{"description":"Task description","anyOf":[{"type":"string","description":"Task description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["TODO","DONE"]},"time_estimate":{"description":"Time estimate","anyOf":[{"type":"string","description":"A duration"},{"type":"null","description":"No time estimate"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","state","created_at","updated_at"]},"description":"List of tasks"}},"required":["tasks"]}`)
 	ListVendorsToolInputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","UPDATED_AT","NAME"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
-	ListVendorsToolOutputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"vendors":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","name","organization_id","created_at","updated_at"]}}},"required":["vendors"]}`)
+	ListVendorsToolOutputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"vendors":{"type":"array","items":{"type":"object","properties":{"business_associate_agreement_url":{"description":"Business associate agreement URL"},"business_owner_id":{"description":"Business owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"category":{"type":"string","description":"Vendor category","enum":["ANALYTICS","CLOUD_MONITORING","CLOUD_PROVIDER","COLLABORATION","CUSTOMER_SUPPORT","DATA_STORAGE_AND_PROCESSING","DOCUMENT_MANAGEMENT","EMPLOYEE_MANAGEMENT","ENGINEERING","FINANCE","IDENTITY_PROVIDER","IT","MARKETING","OFFICE_OPERATIONS","OTHER","PASSWORD_MANAGEMENT","PRODUCT_AND_DESIGN","PROFESSIONAL_SERVICES","RECRUITING","SALES","SECURITY","VERSION_CONTROL"]},"certifications":{"type":"array","items":{"type":"string"},"description":"Certifications"},"countries":{"type":"array","items":{"type":"string"},"description":"Countries (ISO 3166-1 alpha-2 country codes)"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_processing_agreement_url":{"description":"Data processing agreement URL"},"description":{"description":"Vendor description"},"headquarter_address":{"description":"Headquarter address"},"id":{"type":"string","format":"string"},"legal_name":{"description":"Legal name"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"privacy_policy_url":{"description":"Privacy policy URL"},"security_owner_id":{"description":"Security owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"security_page_url":{"description":"Security page URL"},"service_level_agreement_url":{"description":"Service level agreement URL"},"status_page_url":{"description":"Status page URL"},"subprocessors_list_url":{"description":"Subprocessors list URL"},"terms_of_service_url":{"description":"Terms of service URL"},"trust_page_url":{"description":"Trust page URL"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"website_url":{"description":"Website URL"}},"required":["id","name","organization_id","category","created_at","updated_at"]}}},"required":["vendors"]}`)
 	PublishDocumentVersionToolInputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"changelog":{"type":"string","description":"Changelog"},"document_id":{"type":"string","format":"string"}},"required":["document_id"]}`)
 	PublishDocumentVersionToolOutputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"document":{"type":"object","properties":{"classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"current_published_version":{"description":"Current published version number"},"document_type":{"type":"string","enum":["OTHER","ISMS","POLICY","PROCEDURE"]},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"title":{"type":"string","description":"Document title"},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","owner_id","title","document_type","classification","trust_center_visibility","created_at","updated_at"]},"document_version":{"type":"object","properties":{"changelog":{"type":"string","description":"Changelog"},"classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"content":{"type":"string","description":"Document content"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"document_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"published_at":{"description":"Published timestamp","format":"date-time"},"status":{"type":"string","enum":["DRAFT","PUBLISHED"]},"title":{"type":"string","description":"Document version title"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"version_number":{"type":"integer","description":"Version number"}},"required":["id","organization_id","document_id","title","owner_id","version_number","classification","content","changelog","status","created_at","updated_at"]}},"required":["document","document_version"]}`)
 	RequestDocumentVersionSignatureToolInputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"document_version_id":{"type":"string","format":"string"},"signatory_id":{"type":"string","format":"string"}},"required":["document_version_id","signatory_id"]}`)
@@ -171,9 +173,309 @@ var (
 	UpdateRiskToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"risk":{"type":"object","properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No owner"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"]}},"required":["risk"]}`)
 	UpdateTaskToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"deadline":{"description":"Deadline","anyOf":[{"type":"string","description":"Deadline","format":"date-time"},{"type":"null","description":"No deadline"}]},"description":{"description":"Task description"},"id":{"type":"string","format":"string"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"state":{"description":"Task state","anyOf":[{"type":"string","enum":["TODO","DONE"]},{"type":"null","description":"No state"}]},"time_estimate":{"description":"Time estimate","anyOf":[{"type":"string","description":"A duration"},{"type":"null","description":"No time estimate"}]}},"required":["id"]}`)
 	UpdateTaskToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"task":{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"deadline":{"description":"Deadline","anyOf":[{"type":"string","description":"Deadline","format":"date-time"},{"type":"null","description":"No deadline"}]},"description":{"description":"Task description","anyOf":[{"type":"string","description":"Task description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["TODO","DONE"]},"time_estimate":{"description":"Time estimate","anyOf":[{"type":"string","description":"A duration"},{"type":"null","description":"No time estimate"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","state","created_at","updated_at"]}},"required":["task"]}`)
-	UpdateVendorToolInputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"description":{"type":"string","description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"}},"required":["id"]}`)
-	UpdateVendorToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"vendor":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","name","organization_id","created_at","updated_at"]}},"required":["vendor"]}`)
+	UpdateVendorToolInputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"business_associate_agreement_url":{"type":"string","description":"Business associate agreement URL"},"business_owner_id":{"type":"string","format":"string"},"category":{"type":"string","description":"Vendor category","enum":["ANALYTICS","CLOUD_MONITORING","CLOUD_PROVIDER","COLLABORATION","CUSTOMER_SUPPORT","DATA_STORAGE_AND_PROCESSING","DOCUMENT_MANAGEMENT","EMPLOYEE_MANAGEMENT","ENGINEERING","FINANCE","IDENTITY_PROVIDER","IT","MARKETING","OFFICE_OPERATIONS","OTHER","PASSWORD_MANAGEMENT","PRODUCT_AND_DESIGN","PROFESSIONAL_SERVICES","RECRUITING","SALES","SECURITY","VERSION_CONTROL"]},"certifications":{"type":"array","items":{"type":"string"},"description":"Certifications"},"countries":{"type":"array","items":{"type":"string"},"description":"Countries (ISO 3166-1 alpha-2 country codes)"},"data_processing_agreement_url":{"type":"string","description":"Data processing agreement URL"},"description":{"type":"string","description":"Vendor description"},"headquarter_address":{"type":"string","description":"Headquarter address"},"id":{"type":"string","format":"string"},"legal_name":{"type":"string","description":"Legal name"},"name":{"type":"string","description":"Vendor name"},"privacy_policy_url":{"type":"string","description":"Privacy policy URL"},"security_owner_id":{"type":"string","format":"string"},"security_page_url":{"type":"string","description":"Security page URL"},"service_level_agreement_url":{"type":"string","description":"Service level agreement URL"},"status_page_url":{"type":"string","description":"Status page URL"},"subprocessors_list_url":{"type":"string","description":"Subprocessors list URL"},"terms_of_service_url":{"type":"string","description":"Terms of service URL"},"trust_page_url":{"type":"string","description":"Trust page URL"},"website_url":{"type":"string","description":"Website URL"}},"required":["id"]}`)
+	UpdateVendorToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"vendor":{"type":"object","properties":{"business_associate_agreement_url":{"description":"Business associate agreement URL"},"business_owner_id":{"description":"Business owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"category":{"type":"string","description":"Vendor category","enum":["ANALYTICS","CLOUD_MONITORING","CLOUD_PROVIDER","COLLABORATION","CUSTOMER_SUPPORT","DATA_STORAGE_AND_PROCESSING","DOCUMENT_MANAGEMENT","EMPLOYEE_MANAGEMENT","ENGINEERING","FINANCE","IDENTITY_PROVIDER","IT","MARKETING","OFFICE_OPERATIONS","OTHER","PASSWORD_MANAGEMENT","PRODUCT_AND_DESIGN","PROFESSIONAL_SERVICES","RECRUITING","SALES","SECURITY","VERSION_CONTROL"]},"certifications":{"type":"array","items":{"type":"string"},"description":"Certifications"},"countries":{"type":"array","items":{"type":"string"},"description":"Countries (ISO 3166-1 alpha-2 country codes)"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_processing_agreement_url":{"description":"Data processing agreement URL"},"description":{"description":"Vendor description"},"headquarter_address":{"description":"Headquarter address"},"id":{"type":"string","format":"string"},"legal_name":{"description":"Legal name"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"privacy_policy_url":{"description":"Privacy policy URL"},"security_owner_id":{"description":"Security owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"security_page_url":{"description":"Security page URL"},"service_level_agreement_url":{"description":"Service level agreement URL"},"status_page_url":{"description":"Status page URL"},"subprocessors_list_url":{"description":"Subprocessors list URL"},"terms_of_service_url":{"description":"Terms of service URL"},"trust_page_url":{"description":"Trust page URL"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"website_url":{"description":"Website URL"}},"required":["id","name","organization_id","category","created_at","updated_at"]}},"required":["vendor"]}`)
 )
+
+// Vendor category
+type AddVendorInputCategory string
+
+const (
+	AddVendorInputCategoryANALYTICS                AddVendorInputCategory = "ANALYTICS"
+	AddVendorInputCategoryCLOUDMONITORING          AddVendorInputCategory = "CLOUD_MONITORING"
+	AddVendorInputCategoryCLOUDPROVIDER            AddVendorInputCategory = "CLOUD_PROVIDER"
+	AddVendorInputCategoryCOLLABORATION            AddVendorInputCategory = "COLLABORATION"
+	AddVendorInputCategoryCUSTOMERSUPPORT          AddVendorInputCategory = "CUSTOMER_SUPPORT"
+	AddVendorInputCategoryDATASTORAGEANDPROCESSING AddVendorInputCategory = "DATA_STORAGE_AND_PROCESSING"
+	AddVendorInputCategoryDOCUMENTMANAGEMENT       AddVendorInputCategory = "DOCUMENT_MANAGEMENT"
+	AddVendorInputCategoryEMPLOYEEMANAGEMENT       AddVendorInputCategory = "EMPLOYEE_MANAGEMENT"
+	AddVendorInputCategoryENGINEERING              AddVendorInputCategory = "ENGINEERING"
+	AddVendorInputCategoryFINANCE                  AddVendorInputCategory = "FINANCE"
+	AddVendorInputCategoryIDENTITYPROVIDER         AddVendorInputCategory = "IDENTITY_PROVIDER"
+	AddVendorInputCategoryIT                       AddVendorInputCategory = "IT"
+	AddVendorInputCategoryMARKETING                AddVendorInputCategory = "MARKETING"
+	AddVendorInputCategoryOFFICEOPERATIONS         AddVendorInputCategory = "OFFICE_OPERATIONS"
+	AddVendorInputCategoryOTHER                    AddVendorInputCategory = "OTHER"
+	AddVendorInputCategoryPASSWORDMANAGEMENT       AddVendorInputCategory = "PASSWORD_MANAGEMENT"
+	AddVendorInputCategoryPRODUCTANDDESIGN         AddVendorInputCategory = "PRODUCT_AND_DESIGN"
+	AddVendorInputCategoryPROFESSIONALSERVICES     AddVendorInputCategory = "PROFESSIONAL_SERVICES"
+	AddVendorInputCategoryRECRUITING               AddVendorInputCategory = "RECRUITING"
+	AddVendorInputCategorySALES                    AddVendorInputCategory = "SALES"
+	AddVendorInputCategorySECURITY                 AddVendorInputCategory = "SECURITY"
+	AddVendorInputCategoryVERSIONCONTROL           AddVendorInputCategory = "VERSION_CONTROL"
+)
+
+// IsValid returns true if the AddVendorInputCategory value is valid
+func (e AddVendorInputCategory) IsValid() bool {
+	switch e {
+	case AddVendorInputCategoryANALYTICS:
+		return true
+	case AddVendorInputCategoryCLOUDMONITORING:
+		return true
+	case AddVendorInputCategoryCLOUDPROVIDER:
+		return true
+	case AddVendorInputCategoryCOLLABORATION:
+		return true
+	case AddVendorInputCategoryCUSTOMERSUPPORT:
+		return true
+	case AddVendorInputCategoryDATASTORAGEANDPROCESSING:
+		return true
+	case AddVendorInputCategoryDOCUMENTMANAGEMENT:
+		return true
+	case AddVendorInputCategoryEMPLOYEEMANAGEMENT:
+		return true
+	case AddVendorInputCategoryENGINEERING:
+		return true
+	case AddVendorInputCategoryFINANCE:
+		return true
+	case AddVendorInputCategoryIDENTITYPROVIDER:
+		return true
+	case AddVendorInputCategoryIT:
+		return true
+	case AddVendorInputCategoryMARKETING:
+		return true
+	case AddVendorInputCategoryOFFICEOPERATIONS:
+		return true
+	case AddVendorInputCategoryOTHER:
+		return true
+	case AddVendorInputCategoryPASSWORDMANAGEMENT:
+		return true
+	case AddVendorInputCategoryPRODUCTANDDESIGN:
+		return true
+	case AddVendorInputCategoryPROFESSIONALSERVICES:
+		return true
+	case AddVendorInputCategoryRECRUITING:
+		return true
+	case AddVendorInputCategorySALES:
+		return true
+	case AddVendorInputCategorySECURITY:
+		return true
+	case AddVendorInputCategoryVERSIONCONTROL:
+		return true
+	}
+	return false
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (e *AddVendorInputCategory) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*e = AddVendorInputCategory(s)
+	if !e.IsValid() {
+		return fmt.Errorf("invalid AddVendorInputCategory value: %q", s)
+	}
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler
+func (e AddVendorInputCategory) MarshalJSON() ([]byte, error) {
+	if !e.IsValid() {
+		return nil, fmt.Errorf("invalid AddVendorInputCategory value: %q", string(e))
+	}
+	return json.Marshal(string(e))
+}
+
+// Vendor category
+type UpdateVendorInputCategory string
+
+const (
+	UpdateVendorInputCategoryANALYTICS                UpdateVendorInputCategory = "ANALYTICS"
+	UpdateVendorInputCategoryCLOUDMONITORING          UpdateVendorInputCategory = "CLOUD_MONITORING"
+	UpdateVendorInputCategoryCLOUDPROVIDER            UpdateVendorInputCategory = "CLOUD_PROVIDER"
+	UpdateVendorInputCategoryCOLLABORATION            UpdateVendorInputCategory = "COLLABORATION"
+	UpdateVendorInputCategoryCUSTOMERSUPPORT          UpdateVendorInputCategory = "CUSTOMER_SUPPORT"
+	UpdateVendorInputCategoryDATASTORAGEANDPROCESSING UpdateVendorInputCategory = "DATA_STORAGE_AND_PROCESSING"
+	UpdateVendorInputCategoryDOCUMENTMANAGEMENT       UpdateVendorInputCategory = "DOCUMENT_MANAGEMENT"
+	UpdateVendorInputCategoryEMPLOYEEMANAGEMENT       UpdateVendorInputCategory = "EMPLOYEE_MANAGEMENT"
+	UpdateVendorInputCategoryENGINEERING              UpdateVendorInputCategory = "ENGINEERING"
+	UpdateVendorInputCategoryFINANCE                  UpdateVendorInputCategory = "FINANCE"
+	UpdateVendorInputCategoryIDENTITYPROVIDER         UpdateVendorInputCategory = "IDENTITY_PROVIDER"
+	UpdateVendorInputCategoryIT                       UpdateVendorInputCategory = "IT"
+	UpdateVendorInputCategoryMARKETING                UpdateVendorInputCategory = "MARKETING"
+	UpdateVendorInputCategoryOFFICEOPERATIONS         UpdateVendorInputCategory = "OFFICE_OPERATIONS"
+	UpdateVendorInputCategoryOTHER                    UpdateVendorInputCategory = "OTHER"
+	UpdateVendorInputCategoryPASSWORDMANAGEMENT       UpdateVendorInputCategory = "PASSWORD_MANAGEMENT"
+	UpdateVendorInputCategoryPRODUCTANDDESIGN         UpdateVendorInputCategory = "PRODUCT_AND_DESIGN"
+	UpdateVendorInputCategoryPROFESSIONALSERVICES     UpdateVendorInputCategory = "PROFESSIONAL_SERVICES"
+	UpdateVendorInputCategoryRECRUITING               UpdateVendorInputCategory = "RECRUITING"
+	UpdateVendorInputCategorySALES                    UpdateVendorInputCategory = "SALES"
+	UpdateVendorInputCategorySECURITY                 UpdateVendorInputCategory = "SECURITY"
+	UpdateVendorInputCategoryVERSIONCONTROL           UpdateVendorInputCategory = "VERSION_CONTROL"
+)
+
+// IsValid returns true if the UpdateVendorInputCategory value is valid
+func (e UpdateVendorInputCategory) IsValid() bool {
+	switch e {
+	case UpdateVendorInputCategoryANALYTICS:
+		return true
+	case UpdateVendorInputCategoryCLOUDMONITORING:
+		return true
+	case UpdateVendorInputCategoryCLOUDPROVIDER:
+		return true
+	case UpdateVendorInputCategoryCOLLABORATION:
+		return true
+	case UpdateVendorInputCategoryCUSTOMERSUPPORT:
+		return true
+	case UpdateVendorInputCategoryDATASTORAGEANDPROCESSING:
+		return true
+	case UpdateVendorInputCategoryDOCUMENTMANAGEMENT:
+		return true
+	case UpdateVendorInputCategoryEMPLOYEEMANAGEMENT:
+		return true
+	case UpdateVendorInputCategoryENGINEERING:
+		return true
+	case UpdateVendorInputCategoryFINANCE:
+		return true
+	case UpdateVendorInputCategoryIDENTITYPROVIDER:
+		return true
+	case UpdateVendorInputCategoryIT:
+		return true
+	case UpdateVendorInputCategoryMARKETING:
+		return true
+	case UpdateVendorInputCategoryOFFICEOPERATIONS:
+		return true
+	case UpdateVendorInputCategoryOTHER:
+		return true
+	case UpdateVendorInputCategoryPASSWORDMANAGEMENT:
+		return true
+	case UpdateVendorInputCategoryPRODUCTANDDESIGN:
+		return true
+	case UpdateVendorInputCategoryPROFESSIONALSERVICES:
+		return true
+	case UpdateVendorInputCategoryRECRUITING:
+		return true
+	case UpdateVendorInputCategorySALES:
+		return true
+	case UpdateVendorInputCategorySECURITY:
+		return true
+	case UpdateVendorInputCategoryVERSIONCONTROL:
+		return true
+	}
+	return false
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (e *UpdateVendorInputCategory) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*e = UpdateVendorInputCategory(s)
+	if !e.IsValid() {
+		return fmt.Errorf("invalid UpdateVendorInputCategory value: %q", s)
+	}
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler
+func (e UpdateVendorInputCategory) MarshalJSON() ([]byte, error) {
+	if !e.IsValid() {
+		return nil, fmt.Errorf("invalid UpdateVendorInputCategory value: %q", string(e))
+	}
+	return json.Marshal(string(e))
+}
+
+// Vendor category
+type VendorCategory string
+
+const (
+	VendorCategoryANALYTICS                VendorCategory = "ANALYTICS"
+	VendorCategoryCLOUDMONITORING          VendorCategory = "CLOUD_MONITORING"
+	VendorCategoryCLOUDPROVIDER            VendorCategory = "CLOUD_PROVIDER"
+	VendorCategoryCOLLABORATION            VendorCategory = "COLLABORATION"
+	VendorCategoryCUSTOMERSUPPORT          VendorCategory = "CUSTOMER_SUPPORT"
+	VendorCategoryDATASTORAGEANDPROCESSING VendorCategory = "DATA_STORAGE_AND_PROCESSING"
+	VendorCategoryDOCUMENTMANAGEMENT       VendorCategory = "DOCUMENT_MANAGEMENT"
+	VendorCategoryEMPLOYEEMANAGEMENT       VendorCategory = "EMPLOYEE_MANAGEMENT"
+	VendorCategoryENGINEERING              VendorCategory = "ENGINEERING"
+	VendorCategoryFINANCE                  VendorCategory = "FINANCE"
+	VendorCategoryIDENTITYPROVIDER         VendorCategory = "IDENTITY_PROVIDER"
+	VendorCategoryIT                       VendorCategory = "IT"
+	VendorCategoryMARKETING                VendorCategory = "MARKETING"
+	VendorCategoryOFFICEOPERATIONS         VendorCategory = "OFFICE_OPERATIONS"
+	VendorCategoryOTHER                    VendorCategory = "OTHER"
+	VendorCategoryPASSWORDMANAGEMENT       VendorCategory = "PASSWORD_MANAGEMENT"
+	VendorCategoryPRODUCTANDDESIGN         VendorCategory = "PRODUCT_AND_DESIGN"
+	VendorCategoryPROFESSIONALSERVICES     VendorCategory = "PROFESSIONAL_SERVICES"
+	VendorCategoryRECRUITING               VendorCategory = "RECRUITING"
+	VendorCategorySALES                    VendorCategory = "SALES"
+	VendorCategorySECURITY                 VendorCategory = "SECURITY"
+	VendorCategoryVERSIONCONTROL           VendorCategory = "VERSION_CONTROL"
+)
+
+// IsValid returns true if the VendorCategory value is valid
+func (e VendorCategory) IsValid() bool {
+	switch e {
+	case VendorCategoryANALYTICS:
+		return true
+	case VendorCategoryCLOUDMONITORING:
+		return true
+	case VendorCategoryCLOUDPROVIDER:
+		return true
+	case VendorCategoryCOLLABORATION:
+		return true
+	case VendorCategoryCUSTOMERSUPPORT:
+		return true
+	case VendorCategoryDATASTORAGEANDPROCESSING:
+		return true
+	case VendorCategoryDOCUMENTMANAGEMENT:
+		return true
+	case VendorCategoryEMPLOYEEMANAGEMENT:
+		return true
+	case VendorCategoryENGINEERING:
+		return true
+	case VendorCategoryFINANCE:
+		return true
+	case VendorCategoryIDENTITYPROVIDER:
+		return true
+	case VendorCategoryIT:
+		return true
+	case VendorCategoryMARKETING:
+		return true
+	case VendorCategoryOFFICEOPERATIONS:
+		return true
+	case VendorCategoryOTHER:
+		return true
+	case VendorCategoryPASSWORDMANAGEMENT:
+		return true
+	case VendorCategoryPRODUCTANDDESIGN:
+		return true
+	case VendorCategoryPROFESSIONALSERVICES:
+		return true
+	case VendorCategoryRECRUITING:
+		return true
+	case VendorCategorySALES:
+		return true
+	case VendorCategorySECURITY:
+		return true
+	case VendorCategoryVERSIONCONTROL:
+		return true
+	}
+	return false
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (e *VendorCategory) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*e = VendorCategory(s)
+	if !e.IsValid() {
+		return fmt.Errorf("invalid VendorCategory value: %q", s)
+	}
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler
+func (e VendorCategory) MarshalJSON() ([]byte, error) {
+	if !e.IsValid() {
+		return nil, fmt.Errorf("invalid VendorCategory value: %q", string(e))
+	}
+	return json.Marshal(string(e))
+}
 
 // AddAssetInput represents the schema
 type AddAssetInput struct {
@@ -485,16 +787,46 @@ type AddTaskOutput struct {
 
 // AddVendorInput represents the schema
 type AddVendorInput struct {
-	// Creation timestamp
-	CreatedAt *time.Time `json:"created_at,omitempty"`
+	// Business associate agreement URL
+	BusinessAssociateAgreementURL *string `json:"business_associate_agreement_url,omitempty"`
+	// Business owner ID
+	BusinessOwnerID *gid.GID `json:"business_owner_id,omitempty"`
+	// Vendor category
+	Category *AddVendorInputCategory `json:"category,omitempty"`
+	// Certifications
+	Certifications []string `json:"certifications,omitempty"`
+	// Countries (ISO 3166-1 alpha-2 country codes)
+	Countries []string `json:"countries,omitempty"`
+	// Data processing agreement URL
+	DataProcessingAgreementURL *string `json:"data_processing_agreement_url,omitempty"`
 	// Vendor description
 	Description *string `json:"description,omitempty"`
+	// Headquarter address
+	HeadquarterAddress *string `json:"headquarter_address,omitempty"`
+	// Legal name
+	LegalName *string `json:"legal_name,omitempty"`
 	// Vendor name
 	Name string `json:"name"`
 	// Organization ID
 	OrganizationID gid.GID `json:"organization_id"`
-	// Update timestamp
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	// Privacy policy URL
+	PrivacyPolicyURL *string `json:"privacy_policy_url,omitempty"`
+	// Security owner ID
+	SecurityOwnerID *gid.GID `json:"security_owner_id,omitempty"`
+	// Security page URL
+	SecurityPageURL *string `json:"security_page_url,omitempty"`
+	// Service level agreement URL
+	ServiceLevelAgreementURL *string `json:"service_level_agreement_url,omitempty"`
+	// Status page URL
+	StatusPageURL *string `json:"status_page_url,omitempty"`
+	// Subprocessors list URL
+	SubprocessorsListURL *string `json:"subprocessors_list_url,omitempty"`
+	// Terms of service URL
+	TermsOfServiceURL *string `json:"terms_of_service_url,omitempty"`
+	// Trust page URL
+	TrustPageURL *string `json:"trust_page_url,omitempty"`
+	// Website URL
+	WebsiteURL *string `json:"website_url,omitempty"`
 }
 
 // AddVendorOutput represents the schema
@@ -2110,12 +2442,46 @@ type UpdateTaskOutput struct {
 
 // UpdateVendorInput represents the schema
 type UpdateVendorInput struct {
+	// Business associate agreement URL
+	BusinessAssociateAgreementURL *string `json:"business_associate_agreement_url,omitempty"`
+	// Business owner ID
+	BusinessOwnerID *gid.GID `json:"business_owner_id,omitempty"`
+	// Vendor category
+	Category *UpdateVendorInputCategory `json:"category,omitempty"`
+	// Certifications
+	Certifications []string `json:"certifications,omitempty"`
+	// Countries (ISO 3166-1 alpha-2 country codes)
+	Countries []string `json:"countries,omitempty"`
+	// Data processing agreement URL
+	DataProcessingAgreementURL *string `json:"data_processing_agreement_url,omitempty"`
 	// Vendor description
 	Description *string `json:"description,omitempty"`
+	// Headquarter address
+	HeadquarterAddress *string `json:"headquarter_address,omitempty"`
 	// Vendor ID
 	ID gid.GID `json:"id"`
+	// Legal name
+	LegalName *string `json:"legal_name,omitempty"`
 	// Vendor name
 	Name *string `json:"name,omitempty"`
+	// Privacy policy URL
+	PrivacyPolicyURL *string `json:"privacy_policy_url,omitempty"`
+	// Security owner ID
+	SecurityOwnerID *gid.GID `json:"security_owner_id,omitempty"`
+	// Security page URL
+	SecurityPageURL *string `json:"security_page_url,omitempty"`
+	// Service level agreement URL
+	ServiceLevelAgreementURL *string `json:"service_level_agreement_url,omitempty"`
+	// Status page URL
+	StatusPageURL *string `json:"status_page_url,omitempty"`
+	// Subprocessors list URL
+	SubprocessorsListURL *string `json:"subprocessors_list_url,omitempty"`
+	// Terms of service URL
+	TermsOfServiceURL *string `json:"terms_of_service_url,omitempty"`
+	// Trust page URL
+	TrustPageURL *string `json:"trust_page_url,omitempty"`
+	// Website URL
+	WebsiteURL *string `json:"website_url,omitempty"`
 }
 
 // UpdateVendorOutput represents the schema
@@ -2125,18 +2491,52 @@ type UpdateVendorOutput struct {
 
 // Vendor represents the schema
 type Vendor struct {
+	// Business associate agreement URL
+	BusinessAssociateAgreementURL *string `json:"business_associate_agreement_url,omitempty"`
+	// Business owner ID
+	BusinessOwnerID *gid.GID `json:"business_owner_id,omitempty"`
+	// Vendor category
+	Category VendorCategory `json:"category"`
+	// Certifications
+	Certifications []string `json:"certifications,omitempty"`
+	// Countries (ISO 3166-1 alpha-2 country codes)
+	Countries []string `json:"countries,omitempty"`
 	// Creation timestamp
 	CreatedAt time.Time `json:"created_at"`
+	// Data processing agreement URL
+	DataProcessingAgreementURL *string `json:"data_processing_agreement_url,omitempty"`
 	// Vendor description
 	Description *string `json:"description,omitempty"`
+	// Headquarter address
+	HeadquarterAddress *string `json:"headquarter_address,omitempty"`
 	// Vendor ID
 	ID gid.GID `json:"id"`
+	// Legal name
+	LegalName *string `json:"legal_name,omitempty"`
 	// Vendor name
 	Name string `json:"name"`
 	// Organization ID
 	OrganizationID gid.GID `json:"organization_id"`
+	// Privacy policy URL
+	PrivacyPolicyURL *string `json:"privacy_policy_url,omitempty"`
+	// Security owner ID
+	SecurityOwnerID *gid.GID `json:"security_owner_id,omitempty"`
+	// Security page URL
+	SecurityPageURL *string `json:"security_page_url,omitempty"`
+	// Service level agreement URL
+	ServiceLevelAgreementURL *string `json:"service_level_agreement_url,omitempty"`
+	// Status page URL
+	StatusPageURL *string `json:"status_page_url,omitempty"`
+	// Subprocessors list URL
+	SubprocessorsListURL *string `json:"subprocessors_list_url,omitempty"`
+	// Terms of service URL
+	TermsOfServiceURL *string `json:"terms_of_service_url,omitempty"`
+	// Trust page URL
+	TrustPageURL *string `json:"trust_page_url,omitempty"`
 	// Update timestamp
 	UpdatedAt time.Time `json:"updated_at"`
+	// Website URL
+	WebsiteURL *string `json:"website_url,omitempty"`
 }
 
 // VendorOrderBy represents the schema
