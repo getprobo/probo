@@ -8,7 +8,11 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [
     react({
-      exclude: ["src/pages/iam/**/*", "src/components/connectors/**/*"],
+      exclude: [
+        "src/hooks/iam/**/*",
+        "src/pages/iam/**/*",
+        "src/components/connectors/**/*",
+      ],
       babel: {
         plugins: [
           [
@@ -22,7 +26,11 @@ export default defineConfig({
       },
     }),
     react({
-      include: ["src/pages/iam/**/*", "src/components/connectors/**/*"],
+      include: [
+        "src/hooks/iam/**/*",
+        "src/pages/iam/**/*",
+        "src/components/connectors/**/*",
+      ],
       babel: {
         plugins: [
           [
