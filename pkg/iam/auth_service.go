@@ -449,7 +449,7 @@ func (s AuthService) CreateIdentityWithPassword(
 	return identity, session, err
 }
 
-func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID, organizationID gid.GID) (*coredata.Session, error) {
+func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID) (*coredata.Session, error) {
 	session := &coredata.Session{}
 
 	err := s.pg.WithTx(

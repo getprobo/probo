@@ -74,7 +74,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case rootSession == nil:
-		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID, membership.OrganizationID)
+		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID)
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
 			h.renderInternalServerError(w, r)
@@ -88,7 +88,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID, membership.OrganizationID)
+		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID)
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
 			h.renderInternalServerError(w, r)
