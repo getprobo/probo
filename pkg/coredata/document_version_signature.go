@@ -423,8 +423,9 @@ SELECT EXISTS (
 	SELECT 1
 	FROM document_version_signatures dvs
 	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+	INNER JOIN identities i ON p.identity_id = i.id
 	WHERE dvs.document_version_id = @document_version_id
-		AND p.primary_email_address = @user_email
+		AND i.email_address = @user_email::CITEXT
 		AND dvs.state = 'SIGNED'
 		AND dvs.tenant_id = @tenant_id
 ) AS signed

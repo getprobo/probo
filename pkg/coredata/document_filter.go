@@ -100,9 +100,10 @@ func (f *DocumentFilter) SQLFragment() string {
 			FROM document_versions dv
 			INNER JOIN document_version_signatures dvs ON dv.id = dvs.document_version_id
 			INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+			INNER JOIN identities i ON p.identity_id = i.id
 			WHERE dv.document_id = documents.id
 				AND dv.status = 'PUBLISHED'
-				AND p.primary_email_address = @user_email::text
+				AND i.email_address = @user_email::CITEXT
 				AND dvs.state IN ('REQUESTED', 'SIGNED')
 		)
 	END
