@@ -5141,7 +5141,12 @@ func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Cont
 
 	dpia, err := prb.DataProtectionImpactAssessments.Create(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot create data protection impact assessment: %w", err))
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create data protection impact assessment", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateDataProtectionImpactAssessmentPayload{
@@ -5213,7 +5218,12 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 
 	tia, err := prb.TransferImpactAssessments.Create(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot create transfer impact assessment: %w", err))
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create transfer impact assessment", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateTransferImpactAssessmentPayload{

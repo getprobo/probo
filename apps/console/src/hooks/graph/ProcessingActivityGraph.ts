@@ -389,6 +389,31 @@ export const createDataProtectionImpactAssessmentMutation = graphql`
         residualRisk
         createdAt
         updatedAt
+        canUpdate: permission(
+          action: "core:data-protection-impact-assessment:update"
+        )
+        canDelete: permission(
+          action: "core:data-protection-impact-assessment:delete"
+        )
+        processingActivity {
+          id
+          dataProtectionImpactAssessment {
+            id
+            description
+            necessityAndProportionality
+            potentialRisk
+            mitigations
+            residualRisk
+            createdAt
+            updatedAt
+            canUpdate: permission(
+              action: "core:data-protection-impact-assessment:update"
+            )
+            canDelete: permission(
+              action: "core:data-protection-impact-assessment:delete"
+            )
+          }
+        }
       }
     }
   }
@@ -521,6 +546,31 @@ export const createTransferImpactAssessmentMutation = graphql`
         supplementaryMeasures
         createdAt
         updatedAt
+        canUpdate: permission(
+          action: "core:transfer-impact-assessment:update"
+        )
+        canDelete: permission(
+          action: "core:transfer-impact-assessment:delete"
+        )
+        processingActivity {
+          id
+          transferImpactAssessment {
+            id
+            dataSubjects
+            legalMechanism
+            transfer
+            localLawRisk
+            supplementaryMeasures
+            createdAt
+            updatedAt
+            canUpdate: permission(
+              action: "core:transfer-impact-assessment:update"
+            )
+            canDelete: permission(
+              action: "core:transfer-impact-assessment:delete"
+            )
+          }
+        }
       }
     }
   }

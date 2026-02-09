@@ -338,6 +338,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
             || undefined,
         });
         setDpiaDeleted(false);
+        setShowDpiaForm(true);
         toast({
           title: __("Success"),
           description: __("DPIA created successfully"),
@@ -388,6 +389,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
           supplementaryMeasures: formData.supplementaryMeasures || undefined,
         });
         setTiaDeleted(false);
+        setShowTiaForm(true);
         toast({
           title: __("Success"),
           description: __("TIA created successfully"),
