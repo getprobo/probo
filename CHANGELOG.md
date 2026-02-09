@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.119.1] - 2026-02-09
+
+### Security
+
+- Upgrade go to 1.25.7
+
 ## [0.119.0] - 2026-02-05
 
 ### Added
