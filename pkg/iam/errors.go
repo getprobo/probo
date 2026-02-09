@@ -183,6 +183,19 @@ func (e ErrInsufficientPermissions) Error() string {
 	return fmt.Sprintf("identity %q does not have sufficient permissions to perform action %s on entity %q", e.IdentityID, e.Action, e.EntityID)
 }
 
+type ErrAssumptionNeeded struct {
+	IdentityID   gid.GID
+	MembershipID gid.GID
+}
+
+func NewAssumptionNeededError(identityID gid.GID, membershipID gid.GID) error {
+	return &ErrAssumptionNeeded{IdentityID: identityID, MembershipID: membershipID}
+}
+
+func (e ErrAssumptionNeeded) Error() string {
+	return fmt.Sprintf("assumption for identity %q needed for membership %q", e.IdentityID, e.MembershipID)
+}
+
 type ErrSessionNotFound struct{ SessionID gid.GID }
 
 func NewSessionNotFoundError(sessionID gid.GID) error {

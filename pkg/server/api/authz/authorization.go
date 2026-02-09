@@ -72,6 +72,11 @@ func NewAuthorizeFunc(
 		}
 
 		if err := svc.Authorizer.Authorize(ctx, params); err != nil {
+			var errAssumptionNeeded *iam.ErrAssumptionNeeded
+			if errors.As(err, &errAssumptionNeeded) {
+				return gqlutils.NotAssuming(ctx, err)
+			}
+
 			var errInsufficientPermissions *iam.ErrInsufficientPermissions
 			if errors.As(err, &errInsufficientPermissions) {
 				return gqlutils.Forbidden(ctx, err)

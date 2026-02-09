@@ -1,6 +1,7 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import {
+  NotAssumingError,
   UnAuthenticatedError,
 } from "@probo/relay";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
@@ -45,6 +46,11 @@ function ErrorBoundary() {
 
   if (error instanceof UnAuthenticatedError) {
     return <Navigate to="/auth/login" />;
+  }
+
+  if (error instanceof NotAssumingError) {
+    // TODO redirect to right URL
+    return <Navigate to="/" />;
   }
 
   return <PageError error={error instanceof Error ? error : new Error("unknown error")} />;

@@ -2,17 +2,17 @@ import { type FetchFunction } from "relay-runtime";
 import {
     InternalServerError,
     UnAuthenticatedError,
-    AuthenticationRequiredError,
     UnauthorizedError,
     ForbiddenError,
+    NotAssumingError,
 } from "./errors";
 import { GraphQLError } from "graphql";
 
 const hasUnauthenticatedError = (error: GraphQLError) =>
     error.extensions?.code == "UNAUTHENTICATED";
 
-const hasAuthenticationRequiredError = (error: GraphQLError) =>
-    error.extensions?.code == "AUTHENTICATION_REQUIRED";
+const hasNotAssumingError = (error: GraphQLError) =>
+    error.extensions?.code == "NOT_ASSUMING";
 
 const hasUnauthorizedError = (error: GraphQLError) =>
     error.extensions?.code == "UNAUTHORIZED";
@@ -83,17 +83,9 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
                 throw new UnAuthenticatedError(unauthenticatedError.message);
             }
 
-            const authRequiredError = errors.find(hasAuthenticationRequiredError);
-            if (authRequiredError?.extensions) {
-                const { redirectUrl, requiresSaml, organizationId, samlConfigId } =
-                    authRequiredError.extensions;
-
-                throw new AuthenticationRequiredError({
-                    redirectUrl: redirectUrl as string,
-                    requiresSaml: requiresSaml as boolean,
-                    organizationId: organizationId as string,
-                    samlConfigId: samlConfigId as string | undefined,
-                });
+            const notAssumingError = errors.find(hasNotAssumingError);
+            if (notAssumingError) {
+                throw new NotAssumingError(notAssumingError.message)
             }
 
             const unauthorizedError = errors.find(hasUnauthorizedError);
