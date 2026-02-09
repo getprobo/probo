@@ -9,12 +9,10 @@ import {
   IconClock,
   IconLock,
 } from "@probo/ui";
-import { useCallback } from "react";
-import { useFragment, useMutation } from "react-relay";
-import { Link, useNavigate } from "react-router";
+import { useFragment } from "react-relay";
+import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { MembershipCard_assumeMutation } from "#/__generated__/iam/MembershipCard_assumeMutation.graphql";
 import type { MembershipCardFragment$key } from "#/__generated__/iam/MembershipCardFragment.graphql";
 
 const fragment = graphql`
@@ -31,34 +29,6 @@ const fragment = graphql`
   }
 `;
 
-const assumeOrganizationSessionMutation = graphql`
-  mutation MembershipCard_assumeMutation(
-    $input: AssumeOrganizationSessionInput!
-  ) {
-    assumeOrganizationSession(input: $input) {
-      result {
-        __typename
-        ... on OrganizationSessionCreated {
-          membership {
-            id
-            lastSession {
-              id
-              expiresAt
-            }
-          }
-        }
-        ... on PasswordRequired {
-          reason
-        }
-        ... on SAMLAuthenticationRequired {
-          reason
-          redirectUrl
-        }
-      }
-    }
-  }
-`;
-
 interface MembershipCardProps {
   fKey: MembershipCardFragment$key;
 }
@@ -66,51 +36,17 @@ interface MembershipCardProps {
 export function MembershipCard(props: MembershipCardProps) {
   const { fKey } = props;
   const { __ } = useTranslate();
-  const navigate = useNavigate();
 
   const { lastSession, organization } = useFragment<MembershipCardFragment$key>(
     fragment,
     fKey,
   );
-  const isAuthenticated = !!lastSession;
+  const isAssuming = !!lastSession;
   const isExpired
     = lastSession && parseDate(lastSession.expiresAt) < new Date();
 
-  const [assumeOrganizationSession]
-    = useMutation<MembershipCard_assumeMutation>(
-      assumeOrganizationSessionMutation,
-    );
-
-  const handleAssumeOrganizationSession = useCallback(() => {
-    assumeOrganizationSession({
-      variables: {
-        input: {
-          organizationId: organization.id,
-        },
-      },
-      onCompleted: ({ assumeOrganizationSession }) => {
-        if (!assumeOrganizationSession) {
-          throw new Error("complete mutation result is empty");
-        }
-
-        const { result } = assumeOrganizationSession;
-
-        switch (result.__typename) {
-          case "PasswordRequired":
-            void navigate("auth/login");
-            break;
-          case "SAMLAuthenticationRequired":
-            window.location.href = result.redirectUrl;
-            break;
-          default:
-            void navigate(`/organizations/${organization.id}`);
-        }
-      },
-    });
-  }, [assumeOrganizationSession, navigate, organization.id]);
-
   const getAuthBadge = () => {
-    if (isAuthenticated) {
+    if (isAssuming) {
       return (
         <Badge variant="success" className="flex items-center gap-1">
           <IconCheckmark1 size={14} />
@@ -149,17 +85,11 @@ export function MembershipCard(props: MembershipCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {isAuthenticated
-            ? (
-                <Link to={`/organizations/${organization.id}`}>
-                  <Button variant="secondary">{__("Start")}</Button>
-                </Link>
-              )
-            : (
-                <Button onClick={handleAssumeOrganizationSession}>
-                  {__("Login")}
-                </Button>
-              )}
+          <Link to={`/organizations/${organization.id}`}>
+            {isAssuming
+              ? <Button variant="secondary">{__("Start")}</Button>
+              : <Button>{__("Login")}</Button>}
+          </Link>
         </div>
       </div>
     </Card>

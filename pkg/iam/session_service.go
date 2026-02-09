@@ -417,8 +417,7 @@ func (s SessionService) AssumeOrganizationSession(
 	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			err := rootSession.LoadByID(ctx, tx, sessionID)
-			if err != nil {
+			if err := rootSession.LoadByID(ctx, tx, sessionID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(sessionID)
 				}
@@ -433,13 +432,11 @@ func (s SessionService) AssumeOrganizationSession(
 				return NewSessionExpiredError(sessionID)
 			}
 
-			err = identity.LoadByID(ctx, tx, rootSession.IdentityID)
-			if err != nil {
+			if err := identity.LoadByID(ctx, tx, rootSession.IdentityID); err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
-			if err != nil {
+			if err := membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
@@ -450,8 +447,21 @@ func (s SessionService) AssumeOrganizationSession(
 				return NewMembershipInactiveError(membership.ID)
 			}
 
+			// If child session already exists use it
+			if err := childSession.LoadByRootSessionIDAndMembershipID(ctx, tx, rootSession.IdentityID, membership.ID); err == nil {
+				if childSession.ExpireReason != nil || now.After(childSession.ExpiredAt) {
+					return NewSessionExpiredError(childSession.ID)
+				}
+
+				return nil
+			} else {
+				if err != coredata.ErrResourceNotFound {
+					return fmt.Errorf("cannot load child session: %w", err)
+				}
+			}
+
 			samlConfig := &coredata.SAMLConfiguration{}
-			err = samlConfig.LoadByOrganizationIDAndEmailDomain(
+			err := samlConfig.LoadByOrganizationIDAndEmailDomain(
 				ctx,
 				tx,
 				scope,

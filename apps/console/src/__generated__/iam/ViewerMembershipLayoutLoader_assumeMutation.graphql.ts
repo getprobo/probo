@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0f048726f7e7371223919d924fa15d54>>
+ * @generated SignedSource<<09963c0483a8416abf9e411f4a0b716b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,10 +13,10 @@ export type ReauthenticationReason = "POLICY_REQUIREMENT" | "SENSITIVE_ACTION" |
 export type AssumeOrganizationSessionInput = {
   organizationId: string;
 };
-export type MembershipCard_assumeMutation$variables = {
+export type ViewerMembershipLayoutLoader_assumeMutation$variables = {
   input: AssumeOrganizationSessionInput;
 };
-export type MembershipCard_assumeMutation$data = {
+export type ViewerMembershipLayoutLoader_assumeMutation$data = {
   readonly assumeOrganizationSession: {
     readonly result: {
       readonly __typename: "OrganizationSessionCreated";
@@ -41,9 +41,9 @@ export type MembershipCard_assumeMutation$data = {
     };
   } | null | undefined;
 };
-export type MembershipCard_assumeMutation = {
-  response: MembershipCard_assumeMutation$data;
-  variables: MembershipCard_assumeMutation$variables;
+export type ViewerMembershipLayoutLoader_assumeMutation = {
+  response: ViewerMembershipLayoutLoader_assumeMutation$data;
+  variables: ViewerMembershipLayoutLoader_assumeMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -171,7 +171,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "MembershipCard_assumeMutation",
+    "name": "ViewerMembershipLayoutLoader_assumeMutation",
     "selections": (v3/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -180,20 +180,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "MembershipCard_assumeMutation",
+    "name": "ViewerMembershipLayoutLoader_assumeMutation",
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "d106c9d8a5a2c3256da2f1f83fb8fde7",
+    "cacheID": "3c73e9c20476f178c97c687dfd90b7e6",
     "id": null,
     "metadata": {},
-    "name": "MembershipCard_assumeMutation",
+    "name": "ViewerMembershipLayoutLoader_assumeMutation",
     "operationKind": "mutation",
-    "text": "mutation MembershipCard_assumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on OrganizationSessionCreated {\n        membership {\n          id\n          lastSession {\n            id\n            expiresAt\n          }\n        }\n      }\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
+    "text": "mutation ViewerMembershipLayoutLoader_assumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on OrganizationSessionCreated {\n        membership {\n          id\n          lastSession {\n            id\n            expiresAt\n          }\n        }\n      }\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7acaa03357731962d7d29eb2c046660a";
+(node as any).hash = "d885b41930ea8c7e5c14cadb7ae40eb3";
 
 export default node;
