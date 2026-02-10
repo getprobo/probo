@@ -33,11 +33,9 @@ const (
 	slackMessageDeduplicationWindow = 7 * 24 * time.Hour
 )
 
-type ErrNoSlackConnector struct{}
-
-func (e ErrNoSlackConnector) Error() string {
-	return "no slack connector found for organization"
-}
+var (
+	ErrNoSlackConnector = errors.New("no slack connector found for organization")
+)
 
 type (
 	SlackMessageService struct {
@@ -214,7 +212,7 @@ func (s *SlackMessageService) QueueSlackNotification(
 		}
 
 		if !hasSlackConnector {
-			return ErrNoSlackConnector{}
+			return ErrNoSlackConnector
 		}
 
 		documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, trustCenterAccess.ID)
