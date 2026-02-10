@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Improve compliance page access management UX
+
 ### Fixed
 
 - Remove noisy error log from slack queue message
