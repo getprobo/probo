@@ -410,6 +410,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		var err error
 		session, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
 		if err != nil {
+			// Here session middleware already took care of expired/nil root session so we only handle membership related errors
 			var errMembershipNotFound *iam.ErrMembershipNotFound
 			var errMembershipInactive *iam.ErrMembershipInactive
 
