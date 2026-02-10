@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -19,8 +19,9 @@ const signInMutation = graphql`
 `;
 
 export default function PasswordSignInPage() {
-  const { __ } = useTranslate();
+  const [searchParams] = useSearchParams();
 
+  const { __ } = useTranslate();
   const { toast } = useToast();
 
   const [signIn, isSigningIn]
@@ -39,6 +40,8 @@ export default function PasswordSignInPage() {
         input: {
           email: emailValue,
           password: passwordValue,
+          // Assume when signing in
+          organizationId: searchParams.get("organizationId"),
         },
       },
       onCompleted: (_, error) => {

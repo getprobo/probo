@@ -65,10 +65,12 @@ export function useAssume(params: UseAssumeParameters) {
         }
 
         const { result } = assumeOrganizationSession;
+        const search = new URLSearchParams();
 
         switch (result.__typename) {
           case "PasswordRequired":
-            void navigate("/auth/login");
+            search.set("organizationId", organizationId);
+            void navigate({ pathname: "/auth/passord-login", search: "?" + search.toString() });
             break;
           case "SAMLAuthenticationRequired":
             window.location.href = result.redirectUrl;
