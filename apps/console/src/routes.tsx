@@ -1,9 +1,5 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
-import {
-  AssumptionRequiredError,
-  UnAuthenticatedError,
-} from "@probo/relay";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { CenteredLayout } from "@probo/ui";
 import { use } from "react";
@@ -11,10 +7,11 @@ import {
   createBrowserRouter,
   Navigate,
   redirect,
-  useRouteError,
 } from "react-router";
 
+import { OrganizationErrorBoundary } from "./components/OrganizationErrorBoundary";
 import { PageError } from "./components/PageError";
+import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
@@ -37,24 +34,6 @@ import { snapshotsRoutes } from "./routes/snapshotsRoutes";
 import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
 import { vendorRoutes } from "./routes/vendorRoutes";
-
-/**
- * Top level error boundary
- */
-function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (error instanceof UnAuthenticatedError) {
-    return <Navigate to="/auth/login" />;
-  }
-
-  if (error instanceof AssumptionRequiredError) {
-    // TODO redirect to right URL
-    return <Navigate to="/" />;
-  }
-
-  return <PageError error={error instanceof Error ? error : new Error("unknown error")} />;
-}
 
 const routes = [
   {
@@ -101,7 +80,7 @@ const routes = [
   },
   {
     path: "/",
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
     children: [
       {
         Component: lazy(() => import("./pages/iam/memberships/ViewerLayoutLoader")),
@@ -136,7 +115,7 @@ const routes = [
   },
   {
     path: "documents/signing-requests",
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
     Component: lazy(
       () => import("./pages/DocumentSigningRequestsPage"),
     ),
@@ -146,7 +125,7 @@ const routes = [
     Component: lazy(
       () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
     ),
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: OrganizationErrorBoundary,
     children: [
       {
         index: true,
@@ -157,7 +136,6 @@ const routes = [
       },
       {
         path: ":documentId",
-        ErrorBoundary: ErrorBoundary,
         Component: lazy(
           () =>
             import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
@@ -170,7 +148,7 @@ const routes = [
     Component: lazy(
       () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
     ),
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: OrganizationErrorBoundary,
     children: [
       {
         path: "",
