@@ -14,11 +14,11 @@ export class InternalServerError extends Error {
   }
 }
 
-export class NotAssumingError extends Error {
+export class AssumptionRequiredError extends Error {
   constructor(message?: string) {
-    super(message ?? "NOT_ASSUMING");
-    this.name = "NotAssumingError";
-    Object.setPrototypeOf(this, NotAssumingError.prototype)
+    super(message ?? "ASSUMPTION_REQUIRED");
+    this.name = "AssumptionRequiredError";
+    Object.setPrototypeOf(this, AssumptionRequiredError.prototype)
   }
 }
 

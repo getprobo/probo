@@ -4,15 +4,15 @@ import {
     UnAuthenticatedError,
     UnauthorizedError,
     ForbiddenError,
-    NotAssumingError,
+    AssumptionRequiredError,
 } from "./errors";
 import { GraphQLError } from "graphql";
 
 const hasUnauthenticatedError = (error: GraphQLError) =>
     error.extensions?.code == "UNAUTHENTICATED";
 
-const hasNotAssumingError = (error: GraphQLError) =>
-    error.extensions?.code == "NOT_ASSUMING";
+const hasAssumptionRequiredError = (error: GraphQLError) =>
+    error.extensions?.code == "ASSUMPTION_REQUIRED";
 
 const hasUnauthorizedError = (error: GraphQLError) =>
     error.extensions?.code == "UNAUTHORIZED";
@@ -83,9 +83,9 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
                 throw new UnAuthenticatedError(unauthenticatedError.message);
             }
 
-            const notAssumingError = errors.find(hasNotAssumingError);
-            if (notAssumingError) {
-                throw new NotAssumingError(notAssumingError.message)
+            const assumptionRequiredError = errors.find(hasAssumptionRequiredError);
+            if (assumptionRequiredError) {
+                throw new AssumptionRequiredError(assumptionRequiredError.message)
             }
 
             const unauthorizedError = errors.find(hasUnauthorizedError);

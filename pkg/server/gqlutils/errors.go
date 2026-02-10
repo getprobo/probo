@@ -52,18 +52,18 @@ func Unauthenticatedf(ctx context.Context, format string, a ...any) *gqlerror.Er
 	return Unauthenticated(ctx, fmt.Errorf(format, a...))
 }
 
-func NotAssuming(ctx context.Context, err error) *gqlerror.Error {
+func AssumptionRequired(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),
 		Path:    graphql.GetPath(ctx),
 		Extensions: map[string]any{
-			"code": "NOT_ASSUMING",
+			"code": "ASSUMPTION_REQUIRED",
 		},
 	}
 }
 
-func NotAssumingf(ctx context.Context, format string, a ...any) *gqlerror.Error {
-	return NotAssuming(ctx, fmt.Errorf(format, a...))
+func AssumptionRequiredf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return AssumptionRequired(ctx, fmt.Errorf(format, a...))
 }
 
 func Forbidden(ctx context.Context, err error) *gqlerror.Error {

@@ -99,7 +99,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 			var errSessionExpired *ErrSessionExpired
 
 			if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
-				return NewAssumptionNeededError(params.Principal, membership.ID)
+				return NewAssumptionRequiredError(params.Principal, membership.ID)
 			}
 
 			return fmt.Errorf("cannot get active child session for membership: %w", err)

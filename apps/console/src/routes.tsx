@@ -1,7 +1,7 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import {
-  NotAssumingError,
+  AssumptionRequiredError,
   UnAuthenticatedError,
 } from "@probo/relay";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
@@ -48,7 +48,7 @@ function ErrorBoundary() {
     return <Navigate to="/auth/login" />;
   }
 
-  if (error instanceof NotAssumingError) {
+  if (error instanceof AssumptionRequiredError) {
     // TODO redirect to right URL
     return <Navigate to="/" />;
   }
