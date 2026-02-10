@@ -127,8 +127,14 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 	@$(TAIL) -n +2 coverage-e2e.out >> coverage-combined.out
 	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
 
+# Build dependencies - conditionally include build-apps unless SKIP_APPS is set
+BUILD_DEPS = bin/probod
+ifndef SKIP_APPS
+	BUILD_DEPS += build-apps
+endif
+
 .PHONY: build
-build: build-apps bin/probod ## Build the complete project with all apps
+build: $(BUILD_DEPS) ## Build the complete project with all apps
 
 .PHONY: build-fast
 build-fast: ## Build just the backend binary without building TypeScript apps (requires dist/ to exist)
