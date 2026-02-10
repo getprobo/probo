@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Remove noisy error log from slack queue message
+
+
 ## [0.120.0] - 2026-02-09
 
 ### Added
