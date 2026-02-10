@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add user exclusion management to the Google Workspace bridge
+
 ### Changed
 
 - Improve compliance page access management UX
