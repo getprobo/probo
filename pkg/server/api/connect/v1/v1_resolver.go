@@ -410,13 +410,9 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		var err error
 		session, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
 		if err != nil {
-			var errSessionExpired *iam.ErrSessionExpired
 			var errMembershipNotFound *iam.ErrMembershipNotFound
 			var errMembershipInactive *iam.ErrMembershipInactive
 
-			if errors.As(err, errSessionExpired) {
-				return nil, gqlutils.Unauthenticated(ctx, err)
-			}
 			if errors.As(err, errMembershipNotFound) || errors.As(err, errMembershipInactive) {
 				return nil, gqlutils.Forbidden(ctx, err)
 			}

@@ -121,118 +121,126 @@ const routes = [
     ),
   },
   {
-    path: "/organizations/:organizationId/employee",
-    Component: lazy(
-      () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
-    ),
-    ErrorBoundary: OrganizationErrorBoundary,
-    children: [
-      {
-        index: true,
-        Component: lazy(
-          () =>
-            import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),
-        ),
-      },
-      {
-        path: ":documentId",
-        Component: lazy(
-          () =>
-            import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
-        ),
-      },
-    ],
-  },
-  {
     path: "/organizations/:organizationId",
-    Component: lazy(
-      () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
-    ),
-    ErrorBoundary: OrganizationErrorBoundary,
     children: [
       {
-        path: "",
-        Component: () => {
-          const { role } = use(CurrentUser);
-          switch (role) {
-            case Role.EMPLOYEE:
-              return <Navigate to="employee" />;
-            case Role.AUDITOR:
-              return <Navigate to="measures" />;
-            default:
-              return <Navigate to="tasks" />;
-          }
-        },
+        path: "assume",
+        Component: lazy(() => import("./pages/iam/organizations/AssumePage")),
       },
       {
-        path: "settings",
-        Fallback: PageSkeleton,
+        path: "employee",
         Component: lazy(
-          () => import("./pages/iam/organizations/settings/SettingsLayout"),
+          () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
         ),
+        ErrorBoundary: OrganizationErrorBoundary,
         children: [
           {
             index: true,
-            loader: () => {
-              // eslint-disable-next-line
-              throw redirect("general");
-            },
-          },
-          {
-            path: "general",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
+                import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),
             ),
           },
           {
-            path: "members",
+            path: ":documentId",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/MembersPageLoader"),
-            ),
-          },
-          {
-            path: "saml-sso",
-            Component: lazy(
-              () =>
-                import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
-            ),
-          },
-          {
-            path: "scim",
-            Component: lazy(
-              () =>
-                import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
+                import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
             ),
           },
         ],
       },
-      ...riskRoutes,
-      ...measureRoutes,
-      ...documentsRoutes,
-      ...peopleRoutes,
-      ...vendorRoutes,
-      ...frameworkRoutes,
-      ...taskRoutes,
-      ...assetRoutes,
-      ...dataRoutes,
-      ...auditRoutes,
-      ...meetingsRoutes,
-      ...nonconformityRoutes,
-      ...obligationRoutes,
-      ...continualImprovementRoutes,
-      ...rightsRequestRoutes,
-      ...processingActivityRoutes,
-      ...statesOfApplicabilityRoutes,
-      ...compliancePageRoutes,
-      ...snapshotsRoutes,
       {
-        path: "*",
-        Component: PageError,
+        Component: lazy(
+          () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
+        ),
+        ErrorBoundary: OrganizationErrorBoundary,
+        children: [
+          {
+            Component: () => {
+              const { role } = use(CurrentUser);
+              switch (role) {
+                case Role.EMPLOYEE:
+                  return <Navigate to="employee" />;
+                case Role.AUDITOR:
+                  return <Navigate to="measures" />;
+                default:
+                  return <Navigate to="tasks" />;
+              }
+            },
+          },
+          {
+            path: "settings",
+            Fallback: PageSkeleton,
+            Component: lazy(
+              () => import("./pages/iam/organizations/settings/SettingsLayout"),
+            ),
+            children: [
+              {
+                index: true,
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("general");
+                },
+              },
+              {
+                path: "general",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
+                ),
+              },
+              {
+                path: "members",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/MembersPageLoader"),
+                ),
+              },
+              {
+                path: "saml-sso",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
+                ),
+              },
+              {
+                path: "scim",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
+                ),
+              },
+            ],
+          },
+          ...riskRoutes,
+          ...measureRoutes,
+          ...documentsRoutes,
+          ...peopleRoutes,
+          ...vendorRoutes,
+          ...frameworkRoutes,
+          ...taskRoutes,
+          ...assetRoutes,
+          ...dataRoutes,
+          ...auditRoutes,
+          ...meetingsRoutes,
+          ...nonconformityRoutes,
+          ...obligationRoutes,
+          ...continualImprovementRoutes,
+          ...rightsRequestRoutes,
+          ...processingActivityRoutes,
+          ...statesOfApplicabilityRoutes,
+          ...compliancePageRoutes,
+          ...snapshotsRoutes,
+          {
+            path: "*",
+            Component: PageError,
+          },
+        ],
       },
     ],
   },
+
   // Fallback URL to the NotFound Page
   {
     path: "*",

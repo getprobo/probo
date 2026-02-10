@@ -15,7 +15,7 @@ export function OrganizationErrorBoundary() {
   }
 
   if (error instanceof AssumptionRequiredError) {
-    return <Navigate to="/auth/login" state={{ from: location.pathname, organizationId }} />;
+    return <Navigate to={`/organizations/${organizationId}/assume`} state={{ from: location.pathname }} />;
   }
 
   return <PageError error={error instanceof Error ? error : new Error("unknown error")} />;
