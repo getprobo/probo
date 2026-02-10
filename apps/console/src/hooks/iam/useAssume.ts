@@ -9,7 +9,7 @@ import type { useAssumeMutation } from "#/__generated__/iam/useAssumeMutation.gr
 import { useOrganizationId } from "../useOrganizationId";
 
 interface UseAssumeParameters {
-  afterAssumePath: string;
+  afterAssumePath?: string;
   onSuccess: () => void;
 }
 
@@ -58,7 +58,7 @@ export function useAssume(params: UseAssumeParameters) {
         if (error instanceof UnAuthenticatedError) {
           const search = new URLSearchParams([
             ["organization-id", organizationId],
-            ["redirect-path", afterAssumePath],
+            ["redirect-path", afterAssumePath ?? window.location.href],
           ]);
 
           void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
@@ -76,7 +76,7 @@ export function useAssume(params: UseAssumeParameters) {
         switch (result.__typename) {
           case "PasswordRequired":
             search.set("organization-id", organizationId);
-            search.set("redirect-path", afterAssumePath);
+            search.set("redirect-path", afterAssumePath ?? window.location.href);
 
             void navigate({ pathname: "/auth/passord-login", search: "?" + search.toString() });
             break;
