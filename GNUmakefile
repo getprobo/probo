@@ -42,13 +42,23 @@ DOCKER_IMAGE_NAME=	ghcr.io/getprobo/probo
 DOCKER_TAG_NAME?=	latest
 
 PROBOD_BIN_EXTRA_DEPS=
+PROBOD_BIN_EXTRA_EMAILS=@probo/emails
 PROBOD_BIN=	bin/probod
 PROBOD_SRC=	cmd/probod/main.go
 
-ifndef SKIP_APPS
-PROBOD_BIN_EXTRA_DEPS += \
-	@probo/console \
-	@probo/trust
+# Skip TypeScript app builds in dev mode (set DEV=1)
+# Note: @probo/emails is always built since it's just email templates (fast)
+ifdef DEV
+	# Dev mode: skip frontend apps
+else
+	ifdef SKIP_APPS
+		# Skip frontend apps but keep emails
+	else
+		# Normal build: include frontend apps
+		PROBOD_BIN_EXTRA_DEPS += \
+			@probo/console \
+			@probo/trust
+	endif
 endif
 
 .PHONY: all
@@ -118,7 +128,11 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
 
 .PHONY: build
-build: bin/probod
+build: build-apps bin/probod ## Build the complete project with all apps
+
+.PHONY: build-fast
+build-fast: ## Build just the backend binary without building TypeScript apps (requires dist/ to exist)
+	DEV=1 $(MAKE) bin/probod
 
 .PHONY: sbom-docker
 sbom-docker: docker-build
@@ -172,24 +186,27 @@ bin/probod: pkg/server/api/connect/v1/schema/schema.go \
 	apps/console/dist/index.html \
 	apps/trust/dist/index.html \
 	$(PROBOD_BIN_EXTRA_DEPS) \
-	@probo/emails
+	$(PROBOD_BIN_EXTRA_EMAILS)
 	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
 
 .PHONY: @probo/emails
-@probo/emails:
+@probo/emails: node_modules
 	$(NPM) --workspace $@ run build
 
 .PHONY: @probo/console
-@probo/console: NODE_ENV=production
+@probo/console: NODE_ENV=production node_modules
 @probo/console:
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 
 .PHONY: @probo/trust
-@probo/trust: NODE_ENV=production
+@probo/trust: NODE_ENV=production node_modules
 @probo/trust:
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
+
+.PHONY: build-apps
+build-apps: @probo/console @probo/trust ## Build console and trust apps
 
 pkg/server/api/connect/v1/schema/schema.go \
 pkg/server/api/connect/v1/types/types.go \
@@ -214,9 +231,17 @@ pkg/server/api/mcp/v1/types/types.go: pkg/server/api/mcp/v1/specification.yaml p
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+node_modules:
+	$(NPM) ci
+
 .PHONY:dev
-dev: ## Start the development server
-	parallel -j 2 --line-buffer ::: "gow -r=false run cmd/probod/main.go" "cd apps/console && npm run dev"
+dev: apps/console/dist/index.html apps/trust/dist/index.html ## Start the development server with hot reload (requires parallel and gow)
+	VITE_DEV_SERVER_CONSOLE=http://localhost:5173 \
+	VITE_DEV_SERVER_TRUST=http://localhost:5174 \
+	DEV=1 parallel -j 3 --line-buffer ::: \
+		"$(shell go env GOPATH)/bin/gow -r=false run cmd/probod/main.go -cfg-file cfg/dev.yaml" \
+		"cd apps/console && npm run dev" \
+		"cd apps/trust && npm run dev"
 
 .PHONY: fmt
 fmt: fmt-go ## Format Go code
@@ -278,6 +303,10 @@ compose/keycloak/probo-realm.json: compose/keycloak/probo-realm.json.tmpl compos
 	-e "s|PRIVATE_KEY_PLACEHOLDER|$$(awk 'NR==1 {printf "%s", $$0; next} {printf "\\\\n%s", $$0}' compose/keycloak/certs/private-key.pem)|g" \
 	$@.tmpl > $@
 
-apps/console/dist/index.html apps/trust/dist/index.html:
+apps/console/dist/index.html:
 	$(MKDIR) $(dir $@)
-	$(ECHO) dev-server > $@
+	@echo '<!DOCTYPE html><html><head><title>Probo Console - Dev Mode</title></head><body><h1>Starting Vite dev server...</h1><p>Run: npm -w @probo/console run dev</p></body></html>' > $@
+
+apps/trust/dist/index.html:
+	$(MKDIR) $(dir $@)
+	@echo '<!DOCTYPE html><html><head><title>Probo Trust - Dev Mode</title></head><body><h1>Starting Vite dev server...</h1><p>Run: npm -w @probo/trust run dev</p></body></html>' > $@
