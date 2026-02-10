@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.121.0] - 2026-02-10
+
 ### Added
 
 - Add user exclusion management to the Google Workspace bridge
