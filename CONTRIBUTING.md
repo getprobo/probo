@@ -51,6 +51,8 @@ Signed-off-by: John Doe <john.doe@example.org>
 - Node.js 22+
 - Docker
 - mkcert (for SSL certificates)
+- parallel (GNU Parallel for process management)
+- gow (Go file watcher for auto-reload)
 
 ### Installation Steps
 

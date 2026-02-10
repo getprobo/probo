@@ -19,6 +19,8 @@ Probo is designed to be accessible, transparent, and community-driven.
 - Node.js 22+
 - Docker
 - mkcert
+- parallel (GNU Parallel for process management)
+- gow (Go file watcher for auto-reload)
 
 ### Quick Start
 
