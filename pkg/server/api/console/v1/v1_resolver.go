@@ -1921,7 +1921,7 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 		&probo.UpdateTrustCenterAccessRequest{
 			ID:                      input.ID,
 			Name:                    input.Name,
-			Active:                  input.Active,
+			State:                   input.State,
 			DocumentAccesses:        documentAccesses,
 			ReportAccesses:          reportAccesses,
 			TrustCenterFileAccesses: fileAccesses,

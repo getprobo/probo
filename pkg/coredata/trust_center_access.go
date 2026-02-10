@@ -32,18 +32,18 @@ import (
 
 type (
 	TrustCenterAccess struct {
-		ID                                        gid.GID         `db:"id"`
-		OrganizationID                            gid.GID         `db:"organization_id"`
-		TenantID                                  gid.TenantID    `db:"tenant_id"`
-		TrustCenterID                             gid.GID         `db:"trust_center_id"`
-		Email                                     mail.Addr       `db:"email"`
-		Name                                      string          `db:"name"`
-		Active                                    bool            `db:"active"`
-		HasAcceptedNonDisclosureAgreement         bool            `db:"has_accepted_non_disclosure_agreement"`
-		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage `db:"has_accepted_non_disclosure_agreement_metadata"`
-		NDAFileID                                 *gid.GID        `db:"nda_file_id"`
-		CreatedAt                                 time.Time       `db:"created_at"`
-		UpdatedAt                                 time.Time       `db:"updated_at"`
+		ID                                        gid.GID                `db:"id"`
+		OrganizationID                            gid.GID                `db:"organization_id"`
+		TenantID                                  gid.TenantID           `db:"tenant_id"`
+		TrustCenterID                             gid.GID                `db:"trust_center_id"`
+		Email                                     mail.Addr              `db:"email"`
+		Name                                      string                 `db:"name"`
+		State                                     TrustCenterAccessState `db:"state"`
+		HasAcceptedNonDisclosureAgreement         bool                   `db:"has_accepted_non_disclosure_agreement"`
+		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage        `db:"has_accepted_non_disclosure_agreement_metadata"`
+		NDAFileID                                 *gid.GID               `db:"nda_file_id"`
+		CreatedAt                                 time.Time              `db:"created_at"`
+		UpdatedAt                                 time.Time              `db:"updated_at"`
 	}
 
 	TrustCenterAccesses []*TrustCenterAccess
@@ -86,7 +86,7 @@ SELECT
 	trust_center_id,
 	email,
 	name,
-	active,
+	state,
 	has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
@@ -139,7 +139,7 @@ SELECT
 	trust_center_id,
 	email,
 	name,
-	active,
+	state,
 	has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
@@ -194,7 +194,7 @@ INSERT INTO trust_center_accesses (
 	trust_center_id,
 	email,
 	name,
-	active,
+	state,
 	has_accepted_non_disclosure_agreement,
 	created_at,
 	updated_at
@@ -205,7 +205,7 @@ INSERT INTO trust_center_accesses (
 	@trust_center_id,
 	@email,
 	@name,
-	@active,
+	@state,
 	@has_accepted_non_disclosure_agreement,
 	@created_at,
 	@updated_at
@@ -219,7 +219,7 @@ INSERT INTO trust_center_accesses (
 		"trust_center_id":                       tca.TrustCenterID,
 		"email":                                 tca.Email,
 		"name":                                  tca.Name,
-		"active":                                tca.Active,
+		"state":                                 tca.State,
 		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
 		"created_at":                            tca.CreatedAt,
 		"updated_at":                            tca.UpdatedAt,
@@ -247,7 +247,7 @@ func (tca *TrustCenterAccess) Update(
 	q := `
 UPDATE trust_center_accesses SET
 	name = @name,
-	active = @active,
+	state = @state,
 	updated_at = @updated_at,
 	has_accepted_non_disclosure_agreement = @has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata = @has_accepted_non_disclosure_agreement_metadata,
@@ -262,7 +262,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                                    tca.ID,
 		"name":                                  tca.Name,
-		"active":                                tca.Active,
+		"state":                                 tca.State,
 		"updated_at":                            tca.UpdatedAt,
 		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
 		"has_accepted_non_disclosure_agreement_metadata": tca.HasAcceptedNonDisclosureAgreementMetadata,
@@ -320,7 +320,7 @@ SELECT
 	trust_center_id,
 	email,
 	name,
-	active,
+	state,
 	has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,

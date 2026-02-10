@@ -615,7 +615,6 @@ type CreateTrustCenterAccessInput struct {
 	TrustCenterID gid.GID   `json:"trustCenterId"`
 	Email         mail.Addr `json:"email"`
 	Name          string    `json:"name"`
-	Active        bool      `json:"active"`
 }
 
 type CreateTrustCenterAccessPayload struct {
@@ -1862,7 +1861,7 @@ type TrustCenterAccess struct {
 	ID                                gid.GID                              `json:"id"`
 	Email                             mail.Addr                            `json:"email"`
 	Name                              string                               `json:"name"`
-	Active                            bool                                 `json:"active"`
+	State                             coredata.TrustCenterAccessState      `json:"state"`
 	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
 	CreatedAt                         time.Time                            `json:"createdAt"`
 	UpdatedAt                         time.Time                            `json:"updatedAt"`
@@ -2256,7 +2255,7 @@ type UpdateTransferImpactAssessmentPayload struct {
 type UpdateTrustCenterAccessInput struct {
 	ID               gid.GID                           `json:"id"`
 	Name             *string                           `json:"name,omitempty"`
-	Active           *bool                             `json:"active,omitempty"`
+	State            *coredata.TrustCenterAccessState  `json:"state,omitempty"`
 	Documents        []*TrustCenterDocumentAccessInput `json:"documents,omitempty"`
 	Reports          []*TrustCenterDocumentAccessInput `json:"reports,omitempty"`
 	TrustCenterFiles []*TrustCenterDocumentAccessInput `json:"trustCenterFiles,omitempty"`

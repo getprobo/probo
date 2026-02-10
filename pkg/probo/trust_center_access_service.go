@@ -49,7 +49,7 @@ type (
 	UpdateTrustCenterAccessRequest struct {
 		ID                      gid.GID
 		Name                    *string
-		Active                  *bool
+		State                   *coredata.TrustCenterAccessState
 		DocumentAccesses        []UpdateTrustCenterDocumentAccessRequest
 		ReportAccesses          []UpdateTrustCenterDocumentAccessRequest
 		TrustCenterFileAccesses []UpdateTrustCenterDocumentAccessRequest
@@ -243,7 +243,7 @@ func (s TrustCenterAccessService) Create(
 				TrustCenterID:                     req.TrustCenterID,
 				Email:                             req.Email,
 				Name:                              req.FullName,
-				Active:                            false,
+				State:                             coredata.TrustCenterAccessStateActive,
 				HasAcceptedNonDisclosureAgreement: false,
 				CreatedAt:                         now,
 				UpdatedAt:                         now,
@@ -286,12 +286,12 @@ func (s TrustCenterAccessService) Update(
 				return fmt.Errorf("cannot load trust center access: %w", err)
 			}
 
-			trustCenterAcessActivated = req.Active != nil && *req.Active && !access.Active
+			trustCenterAcessActivated = req.State != nil && *req.State == coredata.TrustCenterAccessStateActive && access.State != coredata.TrustCenterAccessStateActive
 			if req.Name != nil {
 				access.Name = *req.Name
 			}
-			if req.Active != nil {
-				access.Active = *req.Active
+			if req.State != nil {
+				access.State = *req.State
 			}
 			access.UpdatedAt = now
 

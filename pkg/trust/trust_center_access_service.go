@@ -148,7 +148,7 @@ func (s TrustCenterAccessService) Request(
 					TrustCenterID:                     req.TrustCenterID,
 					Email:                             req.Email,
 					Name:                              req.FullName,
-					Active:                            false,
+					State:                             coredata.TrustCenterAccessStateInactive,
 					HasAcceptedNonDisclosureAgreement: false,
 					CreatedAt:                         now,
 					UpdatedAt:                         now,
@@ -301,7 +301,7 @@ func (s TrustCenterAccessService) LoadDocumentAccess(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		if !access.Active {
+		if access.State != coredata.TrustCenterAccessStateActive {
 			return ErrMembershipInactive
 		}
 
@@ -344,7 +344,7 @@ func (s TrustCenterAccessService) LoadReportAccess(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		if !access.Active {
+		if access.State != coredata.TrustCenterAccessStateActive {
 			return ErrMembershipInactive
 		}
 
@@ -387,7 +387,7 @@ func (s TrustCenterAccessService) LoadTrustCenterFileAccess(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		if !access.Active {
+		if access.State != coredata.TrustCenterAccessStateActive {
 			return ErrMembershipInactive
 		}
 
@@ -430,7 +430,7 @@ func (s *TrustCenterAccessService) GrantByIDs(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		shouldSendEmail := !access.Active
+		shouldSendEmail := access.State != coredata.TrustCenterAccessStateActive
 		now := time.Now()
 
 		if len(documentIDs) > 0 {
@@ -450,7 +450,7 @@ func (s *TrustCenterAccessService) GrantByIDs(
 		}
 
 		if shouldSendEmail {
-			access.Active = true
+			access.State = coredata.TrustCenterAccessStateActive
 			access.UpdatedAt = now
 			if err := access.Update(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update trust center access: %w", err)

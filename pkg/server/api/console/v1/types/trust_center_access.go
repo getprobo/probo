@@ -21,18 +21,6 @@ import (
 
 type TrustCenterAccessOrderBy = OrderBy[coredata.TrustCenterAccessOrderField]
 
-func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
-	return &TrustCenterAccess{
-		ID:                                tca.ID,
-		Email:                             tca.Email,
-		Name:                              tca.Name,
-		Active:                            tca.Active,
-		HasAcceptedNonDisclosureAgreement: tca.HasAcceptedNonDisclosureAgreement,
-		CreatedAt:                         tca.CreatedAt,
-		UpdatedAt:                         tca.UpdatedAt,
-	}
-}
-
 func NewTrustCenterAccessConnection(
 	page *page.Page[*coredata.TrustCenterAccess, coredata.TrustCenterAccessOrderField],
 ) *TrustCenterAccessConnection {
@@ -52,5 +40,17 @@ func NewTrustCenterAccessEdge(tca *coredata.TrustCenterAccess, orderBy coredata.
 	return &TrustCenterAccessEdge{
 		Cursor: tca.CursorKey(orderBy),
 		Node:   NewTrustCenterAccess(tca),
+	}
+}
+
+func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
+	return &TrustCenterAccess{
+		ID:                                tca.ID,
+		Email:                             tca.Email,
+		Name:                              tca.Name,
+		State:                             tca.State,
+		HasAcceptedNonDisclosureAgreement: tca.HasAcceptedNonDisclosureAgreement,
+		CreatedAt:                         tca.CreatedAt,
+		UpdatedAt:                         tca.UpdatedAt,
 	}
 }

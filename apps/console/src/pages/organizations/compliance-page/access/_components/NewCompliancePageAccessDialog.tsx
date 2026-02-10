@@ -64,7 +64,6 @@ export function NewCompliancePageAccessDialog(props: {
           trustCenterId: compliancePageId,
           email: email,
           name: data.name.trim(),
-          active: false,
         },
         connections: connectionId ? [connectionId] : [],
       },

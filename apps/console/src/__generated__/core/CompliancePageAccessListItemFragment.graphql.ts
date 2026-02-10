@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c3f94c9533e0031a201dd75921757748>>
+ * @generated SignedSource<<e5a5b11ba24baf03ee3f94fa65cf3591>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,9 +9,9 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type TrustCenterAccessState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageAccessListItemFragment$data = {
-  readonly active: boolean;
   readonly activeCount: number;
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
@@ -21,6 +21,7 @@ export type CompliancePageAccessListItemFragment$data = {
   readonly id: string;
   readonly name: string;
   readonly pendingRequestCount: number;
+  readonly state: TrustCenterAccessState;
   readonly " $fragmentType": "CompliancePageAccessListItemFragment";
 };
 export type CompliancePageAccessListItemFragment$key = {
@@ -66,7 +67,7 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "active",
+      "name": "state",
       "storageKey": null
     },
     {
@@ -121,6 +122,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "e7120d76d08974b672e2ed1e66bf6cd7";
+(node as any).hash = "4e78486a2c8edc2b5f73fb64dbeb4006";
 
 export default node;

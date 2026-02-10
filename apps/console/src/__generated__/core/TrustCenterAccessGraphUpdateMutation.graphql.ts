@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d0efc00be7fc303cb2c45ae11fe587c7>>
+ * @generated SignedSource<<8060916e92063b503b064a3ce7675e1a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,13 +9,14 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type TrustCenterAccessState = "ACTIVE" | "INACTIVE";
 export type TrustCenterDocumentAccessStatus = "GRANTED" | "REJECTED" | "REQUESTED" | "REVOKED";
 export type UpdateTrustCenterAccessInput = {
-  active?: boolean | null | undefined;
   documents?: ReadonlyArray<TrustCenterDocumentAccessInput> | null | undefined;
   id: string;
   name?: string | null | undefined;
   reports?: ReadonlyArray<TrustCenterDocumentAccessInput> | null | undefined;
+  state?: TrustCenterAccessState | null | undefined;
   trustCenterFiles?: ReadonlyArray<TrustCenterDocumentAccessInput> | null | undefined;
 };
 export type TrustCenterDocumentAccessInput = {
@@ -28,7 +29,6 @@ export type TrustCenterAccessGraphUpdateMutation$variables = {
 export type TrustCenterAccessGraphUpdateMutation$data = {
   readonly updateTrustCenterAccess: {
     readonly trustCenterAccess: {
-      readonly active: boolean;
       readonly activeCount: number;
       readonly createdAt: string;
       readonly email: string;
@@ -36,6 +36,7 @@ export type TrustCenterAccessGraphUpdateMutation$data = {
       readonly id: string;
       readonly name: string;
       readonly pendingRequestCount: number;
+      readonly state: TrustCenterAccessState;
       readonly updatedAt: string;
     };
   };
@@ -101,7 +102,7 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "active",
+            "name": "state",
             "storageKey": null
           },
           {
@@ -164,16 +165,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "1367c160aa881878e5eed860509e7610",
+    "cacheID": "bfc1209ce4d692ddb3692305aff7a33d",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      pendingRequestCount\n      activeCount\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      state\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      pendingRequestCount\n      activeCount\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7e5d2ce261f3e877ef54e5acfbd00bde";
+(node as any).hash = "750e100701bf905c8fff08f3f5155b5b";
 
 export default node;

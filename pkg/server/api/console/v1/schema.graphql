@@ -1175,6 +1175,20 @@ enum TrustCenterAccessOrderField
         )
 }
 
+enum TrustCenterAccessState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessState"
+    ) {
+    ACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessStateActive"
+        )
+    INACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessStateInactive"
+        )
+}
+
 enum TrustCenterDocumentAccessOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessOrderField"
@@ -2572,7 +2586,7 @@ type TrustCenterAccess implements Node {
     id: ID!
     email: EmailAddr!
     name: String!
-    active: Boolean!
+    state: TrustCenterAccessState!
     hasAcceptedNonDisclosureAgreement: Boolean!
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -3458,7 +3472,6 @@ input CreateTrustCenterAccessInput {
     trustCenterId: ID!
     email: EmailAddr!
     name: String!
-    active: Boolean!
 }
 
 input TrustCenterDocumentAccessInput {
@@ -3469,7 +3482,7 @@ input TrustCenterDocumentAccessInput {
 input UpdateTrustCenterAccessInput {
     id: ID!
     name: String
-    active: Boolean
+    state: TrustCenterAccessState
     documents: [TrustCenterDocumentAccessInput!]
     reports: [TrustCenterDocumentAccessInput!]
     trustCenterFiles: [TrustCenterDocumentAccessInput!]

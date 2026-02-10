@@ -1,12 +1,13 @@
 import { formatDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, IconTrashCan, Td, Tr } from "@probo/ui";
+import { ActionDropdown, DropdownItem, IconArchive, IconCheckmark1, IconPencil, IconRotateCw, Td, Tr } from "@probo/ui";
 import { useCallback, useState } from "react";
 import { useFragment } from "react-relay";
-import { type DataID, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
-import type { CompliancePageAccessListItem_deleteMutation } from "#/__generated__/core/CompliancePageAccessListItem_deleteMutation.graphql";
 import type { CompliancePageAccessListItemFragment$key } from "#/__generated__/core/CompliancePageAccessListItemFragment.graphql";
+import type { TrustCenterAccessGraphUpdateMutation } from "#/__generated__/core/TrustCenterAccessGraphUpdateMutation.graphql";
+import { updateTrustCenterAccessMutation } from "#/hooks/graph/TrustCenterAccessGraph";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { TrustCenterAccessEditDialog } from "#/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessEditDialog";
 
@@ -16,79 +17,61 @@ const fragment = graphql`
     name
     email
     createdAt
-    active
+    state
     activeCount
     pendingRequestCount
     hasAcceptedNonDisclosureAgreement
     canUpdate: permission(action: "core:trust-center-access:update")
-    canDelete: permission(action: "core:trust-center-access:delete")
-  }
-`;
-
-const deleteCompliancePageAccessMutation = graphql`
-  mutation CompliancePageAccessListItem_deleteMutation(
-    $input: DeleteTrustCenterAccessInput!
-    $connections: [ID!]!
-  ) {
-    deleteTrustCenterAccess(input: $input) {
-      deletedTrustCenterAccessId @deleteEdge(connections: $connections)
-    }
   }
 `;
 
 export function CompliancePageAccessListItem(props: {
-  connectionId: DataID;
   fragmentRef: CompliancePageAccessListItemFragment$key;
   dialogOpen: boolean;
 }) {
-  const { connectionId, fragmentRef, dialogOpen: initialDialogOpen } = props;
+  const { fragmentRef, dialogOpen: initialDialogOpen } = props;
 
   const { __ } = useTranslate();
   const [dialogOpen, setDialogOpen] = useState<boolean>(initialDialogOpen);
 
   const access = useFragment<CompliancePageAccessListItemFragment$key>(fragment, fragmentRef);
 
-  const [deleteInvitation, isDeleting] = useMutationWithToasts<CompliancePageAccessListItem_deleteMutation>(
-    deleteCompliancePageAccessMutation,
+  const isActive = access.state === "ACTIVE";
+
+  const [updateAccess, isUpdating] = useMutationWithToasts<TrustCenterAccessGraphUpdateMutation>(
+    updateTrustCenterAccessMutation,
     {
-      successMessage: __("Access deleted successfully"),
-      errorMessage: __("Failed to delete access"),
+      successMessage: isActive
+        ? __("Access deactivated successfully")
+        : __("Access activated successfully"),
+      errorMessage: isActive
+        ? __("Failed to deactivate access")
+        : __("Failed to activate access"),
     },
   );
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      await deleteInvitation({
-        variables: {
-          input: { id },
-          connections: [connectionId],
+  const handleToggleState = useCallback(() => {
+    updateAccess({
+      variables: {
+        input: {
+          id: access.id,
+          name: access.name,
+          state: isActive ? "INACTIVE" : "ACTIVE",
         },
-      });
-    },
-    [deleteInvitation, connectionId],
-  );
+      },
+    });
+  }, [updateAccess, access.id, access.name, isActive]);
 
   return (
     <>
       <Tr
         key={access.id}
-        onClick={() => access.canUpdate && setDialogOpen(true)}
-        className="cursor-pointer hover:bg-bg-secondary transition-colors"
+        onClick={() => access.canUpdate && isActive && setDialogOpen(true)}
+        className={`cursor-pointer hover:bg-bg-secondary transition-colors${!isActive ? " opacity-50" : ""}`}
       >
         <Td className="font-medium">{access.name}</Td>
         <Td>{access.email}</Td>
         <Td>{formatDate(access.createdAt)}</Td>
-        <Td>
-          <div className="flex justify-center">
-            {access.active
-              ? (
-                  <IconCheckmark1 size={16} className="text-txt-success" />
-                )
-              : (
-                  <IconCrossLargeX size={16} className="text-txt-danger" />
-                )}
-          </div>
-        </Td>
         <Td className="text-center">{access.activeCount}</Td>
         <Td className="text-center">
           {access.pendingRequestCount > 0 ? access.pendingRequestCount : ""}
@@ -106,25 +89,30 @@ export function CompliancePageAccessListItem(props: {
             onClick={e => e.stopPropagation()}
           >
             {access.canUpdate && (
-              <Button
-                variant="secondary"
-                onClick={() => setDialogOpen(true)}
-                icon={IconPencil}
-              />
-            )}
-            {access.canDelete && (
-              <Button
-                variant="danger"
-                onClick={() => void handleDelete(access.id)}
-                disabled={isDeleting}
-                icon={IconTrashCan}
-              />
+              <ActionDropdown>
+                {isActive && (
+                  <DropdownItem
+                    icon={IconPencil}
+                    onClick={() => setDialogOpen(true)}
+                  >
+                    {__("Edit")}
+                  </DropdownItem>
+                )}
+                <DropdownItem
+                  icon={isActive ? IconArchive : IconRotateCw}
+                  onClick={handleToggleState}
+                  disabled={isUpdating}
+                  variant={isActive ? "danger" : "primary"}
+                >
+                  {isActive ? __("Deactivate") : __("Activate")}
+                </DropdownItem>
+              </ActionDropdown>
             )}
           </div>
         </Td>
       </Tr>
 
-      {access.canUpdate && dialogOpen && (
+      {access.canUpdate && isActive && dialogOpen && (
         <TrustCenterAccessEditDialog
           access={access}
           onClose={() => setDialogOpen(false)}

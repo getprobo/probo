@@ -9,7 +9,7 @@ export const updateTrustCenterAccessMutation = graphql`
         id
         email
         name
-        active
+        state
         hasAcceptedNonDisclosureAgreement
         createdAt
         updatedAt

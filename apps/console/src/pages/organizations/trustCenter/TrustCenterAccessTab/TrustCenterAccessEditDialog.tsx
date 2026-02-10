@@ -6,7 +6,6 @@ import {
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -151,7 +150,7 @@ export function TrustCenterAccessEditForm(
     active: z.boolean(),
   });
   const editForm = useFormWithSchema(editSchema, {
-    defaultValues: { name: access.name, active: access.active },
+    defaultValues: { name: access.name, active: access.state === "ACTIVE" },
   });
 
   const [updateTrustCenterAccess, isUpdating] = useMutationWithToasts(
@@ -196,7 +195,7 @@ export function TrustCenterAccessEditForm(
         input: {
           id: access.id,
           name: data.name.trim(),
-          active: data.active,
+          state: data.active ? "ACTIVE" : "INACTIVE",
           documents,
           reports,
           trustCenterFiles,
@@ -222,20 +221,6 @@ export function TrustCenterAccessEditForm(
             placeholder={__("John Doe")}
           />
 
-          <div className="flex items-center justify-between mt-6">
-            <div>
-              <label className="font-medium text-txt-primary">
-                {__("Active Status")}
-              </label>
-              <p className="text-sm text-txt-secondary">
-                {__("Enable or disable access for this user")}
-              </p>
-            </div>
-            <Checkbox
-              checked={editForm.watch("active")}
-              onChange={checked => editForm.setValue("active", checked)}
-            />
-          </div>
         </div>
 
         <TrustCenterDocumentAccessList

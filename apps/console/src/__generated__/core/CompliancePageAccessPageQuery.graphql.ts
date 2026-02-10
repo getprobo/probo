@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e5353f41022bedfa45f3607edac692d7>>
+ * @generated SignedSource<<2ba5d01d3d1dbb4956627eae14df34ab>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -265,7 +265,7 @@ return {
                                 "alias": null,
                                 "args": null,
                                 "kind": "ScalarField",
-                                "name": "active",
+                                "name": "state",
                                 "storageKey": null
                               },
                               {
@@ -362,12 +362,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "651e7d8df512ab49f09e5b086a488266",
+    "cacheID": "6e4d46f7b3fdff2e4650ea27d96b8c5b",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAccessPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageAccessPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        canCreateAccess: permission(action: \"core:trust-center-access:create\")\n        ...CompliancePageAccessListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment on TrustCenter {\n  accesses(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  active\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n  canDelete: permission(action: \"core:trust-center-access:delete\")\n}\n"
+    "text": "query CompliancePageAccessPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        canCreateAccess: permission(action: \"core:trust-center-access:create\")\n        ...CompliancePageAccessListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment on TrustCenter {\n  accesses(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n  canDelete: permission(action: \"core:trust-center-access:delete\")\n}\n"
   }
 };
 })();

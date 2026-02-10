@@ -1511,7 +1511,6 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenterAccess struct {
-		Active                            func(childComplexity int) int
 		ActiveCount                       func(childComplexity int) int
 		AvailableDocumentAccesses         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) int
 		CreatedAt                         func(childComplexity int) int
@@ -1522,6 +1521,7 @@ type ComplexityRoot struct {
 		Name                              func(childComplexity int) int
 		PendingRequestCount               func(childComplexity int) int
 		Permission                        func(childComplexity int, action string) int
+		State                             func(childComplexity int) int
 		UpdatedAt                         func(childComplexity int) int
 	}
 
@@ -8662,12 +8662,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenter.UpdatedAt(childComplexity), true
 
-	case "TrustCenterAccess.active":
-		if e.complexity.TrustCenterAccess.Active == nil {
-			break
-		}
-
-		return e.complexity.TrustCenterAccess.Active(childComplexity), true
 	case "TrustCenterAccess.activeCount":
 		if e.complexity.TrustCenterAccess.ActiveCount == nil {
 			break
@@ -8738,6 +8732,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterAccess.Permission(childComplexity, args["action"].(string)), true
+	case "TrustCenterAccess.state":
+		if e.complexity.TrustCenterAccess.State == nil {
+			break
+		}
+
+		return e.complexity.TrustCenterAccess.State(childComplexity), true
 	case "TrustCenterAccess.updatedAt":
 		if e.complexity.TrustCenterAccess.UpdatedAt == nil {
 			break
@@ -11528,6 +11528,20 @@ enum TrustCenterAccessOrderField
         )
 }
 
+enum TrustCenterAccessState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessState"
+    ) {
+    ACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessStateActive"
+        )
+    INACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessStateInactive"
+        )
+}
+
 enum TrustCenterDocumentAccessOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessOrderField"
@@ -12925,7 +12939,7 @@ type TrustCenterAccess implements Node {
     id: ID!
     email: EmailAddr!
     name: String!
-    active: Boolean!
+    state: TrustCenterAccessState!
     hasAcceptedNonDisclosureAgreement: Boolean!
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -13811,7 +13825,6 @@ input CreateTrustCenterAccessInput {
     trustCenterId: ID!
     email: EmailAddr!
     name: String!
-    active: Boolean!
 }
 
 input TrustCenterDocumentAccessInput {
@@ -13822,7 +13835,7 @@ input TrustCenterDocumentAccessInput {
 input UpdateTrustCenterAccessInput {
     id: ID!
     name: String
-    active: Boolean
+    state: TrustCenterAccessState
     documents: [TrustCenterDocumentAccessInput!]
     reports: [TrustCenterDocumentAccessInput!]
     trustCenterFiles: [TrustCenterDocumentAccessInput!]
@@ -51094,30 +51107,30 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_name(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterAccess_active(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+func (ec *executionContext) _TrustCenterAccess_state(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_TrustCenterAccess_active,
+		ec.fieldContext_TrustCenterAccess_state,
 		func(ctx context.Context) (any, error) {
-			return obj.Active, nil
+			return obj.State, nil
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_TrustCenterAccess_active(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TrustCenterAccess_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenterAccess",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type TrustCenterAccessState does not have child fields")
 		},
 	}
 	return fc, nil
@@ -51520,8 +51533,8 @@ func (ec *executionContext) fieldContext_TrustCenterAccessEdge_node(_ context.Co
 				return ec.fieldContext_TrustCenterAccess_email(ctx, field)
 			case "name":
 				return ec.fieldContext_TrustCenterAccess_name(ctx, field)
-			case "active":
-				return ec.fieldContext_TrustCenterAccess_active(ctx, field)
+			case "state":
+				return ec.fieldContext_TrustCenterAccess_state(ctx, field)
 			case "hasAcceptedNonDisclosureAgreement":
 				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
 			case "createdAt":
@@ -54373,8 +54386,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterAccessPayload_trustCen
 				return ec.fieldContext_TrustCenterAccess_email(ctx, field)
 			case "name":
 				return ec.fieldContext_TrustCenterAccess_name(ctx, field)
-			case "active":
-				return ec.fieldContext_TrustCenterAccess_active(ctx, field)
+			case "state":
+				return ec.fieldContext_TrustCenterAccess_state(ctx, field)
 			case "hasAcceptedNonDisclosureAgreement":
 				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
 			case "createdAt":
@@ -63154,7 +63167,7 @@ func (ec *executionContext) unmarshalInputCreateTrustCenterAccessInput(ctx conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "email", "name", "active"}
+	fieldsInOrder := [...]string{"trustCenterId", "email", "name"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63182,13 +63195,6 @@ func (ec *executionContext) unmarshalInputCreateTrustCenterAccessInput(ctx conte
 				return it, err
 			}
 			it.Name = data
-		case "active":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("active"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Active = data
 		}
 	}
 
@@ -68055,7 +68061,7 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterAccessInput(ctx conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "active", "documents", "reports", "trustCenterFiles"}
+	fieldsInOrder := [...]string{"id", "name", "state", "documents", "reports", "trustCenterFiles"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -68076,13 +68082,13 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterAccessInput(ctx conte
 				return it, err
 			}
 			it.Name = data
-		case "active":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("active"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		case "state":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+			data, err := ec.unmarshalOTrustCenterAccessState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Active = data
+			it.State = data
 		case "documents":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documents"))
 			data, err := ec.unmarshalOTrustCenterDocumentAccessInput2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessInputᚄ(ctx, v)
@@ -85235,8 +85241,8 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "active":
-			out.Values[i] = ec._TrustCenterAccess_active(ctx, field, obj)
+		case "state":
+			out.Values[i] = ec._TrustCenterAccess_state(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -96901,6 +96907,34 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState(ctx context.Context, v any) (coredata.TrustCenterAccessState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState(ctx context.Context, sel ast.SelectionSet, v coredata.TrustCenterAccessState) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState = map[string]coredata.TrustCenterAccessState{
+		"ACTIVE":   coredata.TrustCenterAccessStateActive,
+		"INACTIVE": coredata.TrustCenterAccessStateInactive,
+	}
+	marshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState = map[coredata.TrustCenterAccessState]string{
+		coredata.TrustCenterAccessStateActive:   "ACTIVE",
+		coredata.TrustCenterAccessStateInactive: "INACTIVE",
+	}
+)
+
 func (ec *executionContext) marshalNTrustCenterDocumentAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccess(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterDocumentAccess) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -100604,6 +100638,36 @@ func (ec *executionContext) unmarshalOTrustCenterAccessOrder2ᚖgoᚗproboᚗinc
 	res, err := ec.unmarshalInputTrustCenterAccessOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
+
+func (ec *executionContext) unmarshalOTrustCenterAccessState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState(ctx context.Context, v any) (*coredata.TrustCenterAccessState, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOTrustCenterAccessState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTrustCenterAccessState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState(ctx context.Context, sel ast.SelectionSet, v *coredata.TrustCenterAccessState) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOTrustCenterAccessState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState[*v])
+	return res
+}
+
+var (
+	unmarshalOTrustCenterAccessState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState = map[string]coredata.TrustCenterAccessState{
+		"ACTIVE":   coredata.TrustCenterAccessStateActive,
+		"INACTIVE": coredata.TrustCenterAccessStateInactive,
+	}
+	marshalOTrustCenterAccessState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState = map[coredata.TrustCenterAccessState]string{
+		coredata.TrustCenterAccessStateActive:   "ACTIVE",
+		coredata.TrustCenterAccessStateInactive: "INACTIVE",
+	}
+)
 
 func (ec *executionContext) unmarshalOTrustCenterDocumentAccessInput2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessInputᚄ(ctx context.Context, v any) ([]*types.TrustCenterDocumentAccessInput, error) {
 	if v == nil {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<953f0fbe58d5428b76797adcd479aa06>>
+ * @generated SignedSource<<8d43c1f38ab045ccce31f220486fcb88>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,6 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type CreateTrustCenterAccessInput = {
-  active: boolean;
   email: string;
   name: string;
   trustCenterId: string;
@@ -182,7 +181,7 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "active",
+                    "name": "state",
                     "storageKey": null
                   },
                   {
@@ -260,12 +259,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "35604e9722512d1d60d70b6bce7d866b",
+    "cacheID": "ed150f3e2ca1f480ae7d18be081dfec1",
     "id": null,
     "metadata": {},
     "name": "NewCompliancePageAccessDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation NewCompliancePageAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  active\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n  canDelete: permission(action: \"core:trust-center-access:delete\")\n}\n"
+    "text": "mutation NewCompliancePageAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n  canDelete: permission(action: \"core:trust-center-access:delete\")\n}\n"
   }
 };
 })();

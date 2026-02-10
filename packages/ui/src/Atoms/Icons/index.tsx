@@ -1,3 +1,4 @@
+export { IconArchive } from "./IconArchive";
 export { IconArrowUp } from "./IconArrowUp";
 export { IconBox } from "./IconBox";
 export { IconBell2 } from "./IconBell2";

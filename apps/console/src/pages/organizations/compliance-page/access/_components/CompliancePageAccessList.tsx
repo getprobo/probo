@@ -77,7 +77,6 @@ export function CompliancePageAccessList(props: {
                 <Th>{__("Name")}</Th>
                 <Th>{__("Email")}</Th>
                 <Th>{__("Date")}</Th>
-                <Th className="text-center">{__("Active")}</Th>
                 <Th className="text-center">{__("Access")}</Th>
                 <Th className="text-center">{__("Requests")}</Th>
                 <Th className="text-center">{__("NDA")}</Th>
@@ -89,7 +88,6 @@ export function CompliancePageAccessList(props: {
                 <CompliancePageAccessListItem
                   key={`${access.id}-${editingAccessId === access.id}`}
                   fragmentRef={access}
-                  connectionId={accesses.__id}
                   dialogOpen={editingAccessId === access.id}
                 />
               ))}

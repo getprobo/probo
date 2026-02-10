@@ -23,6 +23,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
@@ -61,7 +62,7 @@ func NewMembershipMiddleware(trustSvc *trust.Service, logger *log.Logger) func(n
 					return
 				}
 
-				if membership.Active {
+				if membership.State == coredata.TrustCenterAccessStateActive {
 					ctx = context.WithValue(ctx, complianceMembershipKey, membership)
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
