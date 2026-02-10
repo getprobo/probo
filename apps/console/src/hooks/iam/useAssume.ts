@@ -58,7 +58,7 @@ export function useAssume(params: UseAssumeParameters) {
         if (error instanceof UnAuthenticatedError) {
           const search = new URLSearchParams([
             ["organization-id", organizationId],
-            ["redirect-path", afterAssumePath ?? window.location.href],
+            ["redirect-path", afterAssumePath ?? window.location.pathname + window.location.search],
           ]);
 
           void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
@@ -76,7 +76,7 @@ export function useAssume(params: UseAssumeParameters) {
         switch (result.__typename) {
           case "PasswordRequired":
             search.set("organization-id", organizationId);
-            search.set("redirect-path", afterAssumePath ?? window.location.href);
+            search.set("redirect-path", afterAssumePath ?? window.location.pathname + window.location.search);
 
             void navigate({ pathname: "/auth/passord-login", search: "?" + search.toString() });
             break;

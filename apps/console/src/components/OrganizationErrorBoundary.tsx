@@ -11,7 +11,7 @@ export function OrganizationErrorBoundary() {
 
   const search = new URLSearchParams([
     ["organization-id", organizationId],
-    ["redirect-path", window.location.href],
+    ["redirect-path", window.location.pathname + window.location.search],
   ]);
 
   if (error instanceof UnAuthenticatedError) {

@@ -1,9 +1,8 @@
 import { Skeleton } from "@probo/ui";
-import { Suspense, useCallback } from "react";
+import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { ViewerMembershipLayoutQuery } from "#/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
-import { useAssume } from "#/hooks/iam/useAssume";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
@@ -18,16 +17,9 @@ function EmployeeLayoutQueryLoader() {
     viewerMembershipLayoutQuery,
   );
 
-  const onAssumeSuccess = useCallback(
-    () =>
-      loadQuery({
-        organizationId,
-        hideSidebar: false,
-      }),
-    [loadQuery, organizationId],
-  );
-
-  useAssume({ onSuccess: onAssumeSuccess });
+  useEffect(() => {
+    loadQuery({ organizationId, hideSidebar: true });
+  }, [organizationId, loadQuery]);
 
   if (!queryRef) {
     return <Skeleton className="w-full h-screen" />;

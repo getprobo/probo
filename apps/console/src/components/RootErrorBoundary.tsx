@@ -6,7 +6,9 @@ import { PageError } from "./PageError";
 export function RootErrorBoundary() {
   const error = useRouteError();
 
-  const search = new URLSearchParams([["redirect-path", window.location.href]]);
+  const search = new URLSearchParams([
+    ["redirect-path", window.location.pathname + window.location.search],
+  ]);
 
   if (error instanceof UnAuthenticatedError) {
     return <Navigate to={{ pathname: "/auth/login", search: "?" + search.toString() }} />;
