@@ -122,6 +122,7 @@ const routes = [
   },
   {
     path: "/organizations/:organizationId",
+    ErrorBoundary: OrganizationErrorBoundary,
     children: [
       {
         path: "assume",
@@ -132,7 +133,6 @@ const routes = [
         Component: lazy(
           () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
         ),
-        ErrorBoundary: OrganizationErrorBoundary,
         children: [
           {
             index: true,
@@ -154,9 +154,9 @@ const routes = [
         Component: lazy(
           () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
         ),
-        ErrorBoundary: OrganizationErrorBoundary,
         children: [
           {
+            path: "",
             Component: () => {
               const { role } = use(CurrentUser);
               switch (role) {

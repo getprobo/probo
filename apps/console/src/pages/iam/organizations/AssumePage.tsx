@@ -1,23 +1,19 @@
 import { useTranslate } from "@probo/i18n";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import { useAssume } from "#/hooks/iam/useAssume";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import AuthLayout from "../auth/AuthLayout";
 
-interface State {
-  from: string;
-}
-
-export default function AssumePage() {
+function AssumePageInner() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const state = location.state as State;
-
+  const [searchParams] = useSearchParams();
   const { __ } = useTranslate();
 
   useAssume({
-    onSuccess: () => void navigate(state.from),
+    afterAssumePath: searchParams.get("redirect-path") ?? "/",
+    onSuccess: () => void navigate(searchParams.get("redirect-path") ?? "/"),
   });
 
   return (
@@ -31,5 +27,13 @@ export default function AssumePage() {
         </div>
       </div>
     </AuthLayout>
+  );
+}
+
+export default function AssumePage() {
+  return (
+    <IAMRelayProvider>
+      <AssumePageInner />
+    </IAMRelayProvider>
   );
 }

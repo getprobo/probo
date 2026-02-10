@@ -41,7 +41,7 @@ export default function PasswordSignInPage() {
           email: emailValue,
           password: passwordValue,
           // Assume when signing in
-          organizationId: searchParams.get("organizationId"),
+          organizationId: searchParams.get("organization-id"),
         },
       },
       onCompleted: (_, error) => {
@@ -57,7 +57,7 @@ export default function PasswordSignInPage() {
           return;
         }
 
-        window.location.href = "/";
+        window.location.href = searchParams.get("redirect-path") ?? "/";
       },
       onError: (e) => {
         toast({

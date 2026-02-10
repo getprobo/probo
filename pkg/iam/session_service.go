@@ -321,12 +321,11 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 	organizationID gid.GID,
 ) (*coredata.Session, *coredata.Membership, error) {
 	var (
-		now          = time.Now()
-		rootSession  = &coredata.Session{}
-		identity     = &coredata.Identity{}
-		membership   = &coredata.Membership{}
-		childSession = &coredata.Session{}
-		scope        = coredata.NewScopeFromObjectID(organizationID)
+		now         = time.Now()
+		rootSession = &coredata.Session{}
+		identity    = &coredata.Identity{}
+		membership  = &coredata.Membership{}
+		scope       = coredata.NewScopeFromObjectID(organizationID)
 	)
 
 	err := s.pg.WithTx(
@@ -366,7 +365,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 			}
 
 			tenantID := scope.GetTenantID()
-			childSession = &coredata.Session{
+			childSession := &coredata.Session{
 				ID:              gid.New(tenantID, coredata.SessionEntityType),
 				IdentityID:      rootSession.IdentityID,
 				TenantID:        &tenantID,
@@ -399,7 +398,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 		return nil, nil, err
 	}
 
-	return childSession, membership, nil
+	return rootSession, membership, nil
 }
 
 // OpenSAMLChildSessionForOrganization creates a SAML-authenticated child session for the given

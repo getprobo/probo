@@ -9,6 +9,7 @@ import type { useAssumeMutation } from "#/__generated__/iam/useAssumeMutation.gr
 import { useOrganizationId } from "../useOrganizationId";
 
 interface UseAssumeParameters {
+  afterAssumePath: string;
   onSuccess: () => void;
 }
 
@@ -41,7 +42,7 @@ const assumeMutation = graphql`
 `;
 
 export function useAssume(params: UseAssumeParameters) {
-  const { onSuccess } = params;
+  const { afterAssumePath, onSuccess } = params;
 
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
@@ -55,7 +56,12 @@ export function useAssume(params: UseAssumeParameters) {
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
-          void navigate("/auth/login");
+          const search = new URLSearchParams([
+            ["organization-id", organizationId],
+            ["redirect-path", afterAssumePath],
+          ]);
+
+          void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
           return;
         }
       },
@@ -69,7 +75,9 @@ export function useAssume(params: UseAssumeParameters) {
 
         switch (result.__typename) {
           case "PasswordRequired":
-            search.set("organizationId", organizationId);
+            search.set("organization-id", organizationId);
+            search.set("redirect-path", afterAssumePath);
+
             void navigate({ pathname: "/auth/passord-login", search: "?" + search.toString() });
             break;
           case "SAMLAuthenticationRequired":
@@ -80,7 +88,7 @@ export function useAssume(params: UseAssumeParameters) {
         }
       },
     });
-  }, [onSuccess, navigate, assumeOrganizationSession, organizationId]);
+  }, [afterAssumePath, organizationId, onSuccess, navigate, assumeOrganizationSession]);
 
   return;
 }

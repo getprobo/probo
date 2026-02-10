@@ -1,6 +1,7 @@
 import { Skeleton } from "@probo/ui";
 import { Suspense, useCallback } from "react";
 import { useQueryLoader } from "react-relay";
+import { useLocation } from "react-router";
 
 import type { ViewerMembershipLayoutQuery } from "#/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
 import { useAssume } from "#/hooks/iam/useAssume";
@@ -14,6 +15,7 @@ import {
 
 function ViewerMembershipLayoutQueryLoader() {
   const organizationId = useOrganizationId();
+  const location = useLocation();
 
   const [queryRef, loadQuery] = useQueryLoader<ViewerMembershipLayoutQuery>(
     viewerMembershipLayoutQuery,
@@ -28,7 +30,10 @@ function ViewerMembershipLayoutQueryLoader() {
     [loadQuery, organizationId],
   );
 
-  useAssume({ onSuccess: onAssumeSuccess });
+  useAssume({
+    afterAssumePath: location.pathname,
+    onSuccess: onAssumeSuccess,
+  });
 
   if (!queryRef) {
     return <Skeleton className="w-full h-screen" />;
