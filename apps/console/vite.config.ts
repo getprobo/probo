@@ -9,7 +9,6 @@ export default defineConfig({
   plugins: [
     react({
       exclude: [
-        "src/hooks/iam/**/*",
         "src/pages/iam/**/*",
         "src/components/connectors/**/*",
       ],
@@ -27,7 +26,6 @@ export default defineConfig({
     }),
     react({
       include: [
-        "src/hooks/iam/**/*",
         "src/pages/iam/**/*",
         "src/components/connectors/**/*",
       ],

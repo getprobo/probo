@@ -1,20 +1,98 @@
 import { useTranslate } from "@probo/i18n";
+import { UnAuthenticatedError } from "@probo/relay";
+import { useEffect } from "react";
+import { useMutation } from "react-relay";
 import { useNavigate, useSearchParams } from "react-router";
+import { graphql } from "relay-runtime";
 
-import { useAssume } from "#/hooks/iam/useAssume";
+import type { AssumePageMutation } from "#/__generated__/iam/AssumePageMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import AuthLayout from "../auth/AuthLayout";
 
+const assumeMutation = graphql`
+  mutation AssumePageMutation(
+    $input: AssumeOrganizationSessionInput!
+  ) {
+    assumeOrganizationSession(input: $input) {
+      result {
+        __typename
+        ... on OrganizationSessionCreated {
+          membership {
+            id
+            lastSession {
+              id
+              expiresAt
+            }
+          }
+        }
+        ... on PasswordRequired {
+          reason
+        }
+        ... on SAMLAuthenticationRequired {
+          reason
+          redirectUrl
+        }
+      }
+    }
+  }
+`;
+
 function AssumePageInner() {
+  const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { __ } = useTranslate();
 
-  useAssume({
-    afterAssumePath: searchParams.get("redirect-path") ?? "/",
-    onSuccess: () => void navigate(searchParams.get("redirect-path") ?? "/"),
-  });
+  const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
+
+  useEffect(() => {
+    assumeOrganizationSession({
+      variables: {
+        input: { organizationId },
+      },
+      onError: (error) => {
+        if (error instanceof UnAuthenticatedError) {
+          const search = new URLSearchParams([
+            ["organization-id", organizationId],
+            [
+              "redirect-path",
+              searchParams.get("redirect-path") ?? window.location.pathname + window.location.search,
+            ],
+          ]);
+
+          void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
+          return;
+        }
+      },
+      onCompleted: ({ assumeOrganizationSession }) => {
+        if (!assumeOrganizationSession) {
+          throw new Error("complete mutation result is empty");
+        }
+
+        const { result } = assumeOrganizationSession;
+        const search = new URLSearchParams();
+
+        switch (result.__typename) {
+          case "PasswordRequired":
+            search.set("organization-id", organizationId);
+            search.set(
+              "redirect-path",
+              searchParams.get("redirect-path") ?? window.location.pathname + window.location.search,
+            );
+
+            void navigate({ pathname: "/auth/passord-login", search: "?" + search.toString() });
+            break;
+          case "SAMLAuthenticationRequired":
+            window.location.href = result.redirectUrl;
+            break;
+          default:
+            void navigate(searchParams.get("redirect-path") ?? window.location.pathname + window.location.search);
+        }
+      },
+    });
+  }, [organizationId, navigate, assumeOrganizationSession, searchParams]);
 
   return (
     <AuthLayout>

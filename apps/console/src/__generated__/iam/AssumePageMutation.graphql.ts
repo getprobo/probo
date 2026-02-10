@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b5a89cb2acee801ab7d41cf2afb471b6>>
+ * @generated SignedSource<<754086efd418674e8d92f629f7a01736>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,10 +13,10 @@ export type ReauthenticationReason = "POLICY_REQUIREMENT" | "SENSITIVE_ACTION" |
 export type AssumeOrganizationSessionInput = {
   organizationId: string;
 };
-export type useAssumeMutation$variables = {
+export type AssumePageMutation$variables = {
   input: AssumeOrganizationSessionInput;
 };
-export type useAssumeMutation$data = {
+export type AssumePageMutation$data = {
   readonly assumeOrganizationSession: {
     readonly result: {
       readonly __typename: "OrganizationSessionCreated";
@@ -41,9 +41,9 @@ export type useAssumeMutation$data = {
     };
   } | null | undefined;
 };
-export type useAssumeMutation = {
-  response: useAssumeMutation$data;
-  variables: useAssumeMutation$variables;
+export type AssumePageMutation = {
+  response: AssumePageMutation$data;
+  variables: AssumePageMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -171,7 +171,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "useAssumeMutation",
+    "name": "AssumePageMutation",
     "selections": (v3/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -180,20 +180,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "useAssumeMutation",
+    "name": "AssumePageMutation",
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "6c65712730108428976b1d0007ca2993",
+    "cacheID": "cc56faddf33aa8f6b84f139f262647f6",
     "id": null,
     "metadata": {},
-    "name": "useAssumeMutation",
+    "name": "AssumePageMutation",
     "operationKind": "mutation",
-    "text": "mutation useAssumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on OrganizationSessionCreated {\n        membership {\n          id\n          lastSession {\n            id\n            expiresAt\n          }\n        }\n      }\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
+    "text": "mutation AssumePageMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on OrganizationSessionCreated {\n        membership {\n          id\n          lastSession {\n            id\n            expiresAt\n          }\n        }\n      }\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1ccd539abfc276084939857e65421be9";
+(node as any).hash = "e5799d78e6d954273c07db7c022b31e7";
 
 export default node;

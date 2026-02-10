@@ -36,7 +36,6 @@
   },
   "sources": {
     "apps/console/src/pages/iam": "iam",
-    "apps/console/src/hooks/iam": "iam",
     "apps/console/src": "core"
   }
 }
