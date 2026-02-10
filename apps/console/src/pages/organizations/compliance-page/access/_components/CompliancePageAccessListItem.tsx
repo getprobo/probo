@@ -51,7 +51,7 @@ export function CompliancePageAccessListItem(props: {
   );
 
   const handleToggleState = useCallback(() => {
-    updateAccess({
+    void updateAccess({
       variables: {
         input: {
           id: access.id,
