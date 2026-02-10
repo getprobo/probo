@@ -28,12 +28,12 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
@@ -174,15 +174,15 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Tasks = &TaskService{svc: tenantService}
 	tenantService.Evidences = &EvidenceService{
 		svc: tenantService,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(
-				filevalidation.CategoryDocument,
-				filevalidation.CategorySpreadsheet,
-				filevalidation.CategoryPresentation,
-				filevalidation.CategoryData,
-				filevalidation.CategoryText,
-				filevalidation.CategoryImage,
-				filevalidation.CategoryVideo,
+		fileValidator: validator.NewFileValidator(
+			validator.WithCategories(
+				validator.CategoryDocument,
+				validator.CategorySpreadsheet,
+				validator.CategoryPresentation,
+				validator.CategoryData,
+				validator.CategoryText,
+				validator.CategoryImage,
+				validator.CategoryVideo,
 			),
 		),
 	}
@@ -194,16 +194,16 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Organizations = &OrganizationService{
 		svc: tenantService,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(filevalidation.CategoryImage),
+		fileValidator: validator.NewFileValidator(
+			validator.WithCategories(validator.CategoryImage),
 		),
 	}
 	tenantService.Controls = &ControlService{svc: tenantService}
 	tenantService.Risks = &RiskService{svc: tenantService}
 	tenantService.VendorComplianceReports = &VendorComplianceReportService{
 		svc: tenantService,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(filevalidation.CategoryDocument),
+		fileValidator: validator.NewFileValidator(
+			validator.WithCategories(validator.CategoryDocument),
 		),
 	}
 	tenantService.VendorBusinessAssociateAgreements = &VendorBusinessAssociateAgreementService{svc: tenantService}
@@ -221,16 +221,16 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.TrustCenterFiles = &TrustCenterFileService{
 		svc: tenantService,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(
-				filevalidation.CategoryData,
-				filevalidation.CategoryDocument,
-				filevalidation.CategoryImage,
-				filevalidation.CategoryPresentation,
-				filevalidation.CategorySpreadsheet,
-				filevalidation.CategoryText,
+		fileValidator: validator.NewFileValidator(
+			validator.WithCategories(
+				validator.CategoryData,
+				validator.CategoryDocument,
+				validator.CategoryImage,
+				validator.CategoryPresentation,
+				validator.CategorySpreadsheet,
+				validator.CategoryText,
 			),
-			filevalidation.WithMaxFileSize(10*1024*1024), // 10MB
+			validator.WithMaxFileSize(10*1024*1024), // 10MB
 		),
 	}
 	tenantService.Nonconformities = &NonconformityService{svc: tenantService}

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package filevalidation
+package validator
 
 import (
 	"fmt"
@@ -106,9 +106,9 @@ type FileValidator struct {
 	Categories []string
 }
 
-type Option func(v *FileValidator) *FileValidator
+type FileValidatorOption func(v *FileValidator) *FileValidator
 
-func WithCategories(categories ...string) Option {
+func WithCategories(categories ...string) FileValidatorOption {
 	return func(v *FileValidator) *FileValidator {
 		v.Categories = categories
 
@@ -133,7 +133,7 @@ func WithCategories(categories ...string) Option {
 	}
 }
 
-func WithMaxFileSize(maxFileSize int64) Option {
+func WithMaxFileSize(maxFileSize int64) FileValidatorOption {
 	return func(v *FileValidator) *FileValidator {
 		v.MaxFileSize = maxFileSize
 
@@ -141,7 +141,7 @@ func WithMaxFileSize(maxFileSize int64) Option {
 	}
 }
 
-func NewValidator(opts ...Option) *FileValidator {
+func NewFileValidator(opts ...FileValidatorOption) *FileValidator {
 	v := &FileValidator{
 		MaxFileSize:       DefaultMaxFileSize,
 		AllowedMimeTypes:  make(map[string]bool),
@@ -156,7 +156,7 @@ func NewValidator(opts ...Option) *FileValidator {
 }
 
 // WithMaxFileSize sets the maximum file size and returns the validator
-func (v *FileValidator) WithMaxFileSize(maxSize int64) *FileValidator {
+func (v *FileValidator) SetMaxFileSize(maxSize int64) *FileValidator {
 	v.MaxFileSize = maxSize
 	return v
 }

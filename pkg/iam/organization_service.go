@@ -25,7 +25,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/scim"
 	"go.probo.inc/probo/pkg/mail"
@@ -134,7 +133,7 @@ const (
 
 func (req CreateOrganizationRequest) Validate() error {
 	v := validator.New()
-	fv := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryImage))
+	fv := validator.NewFileValidator(validator.WithCategories(validator.CategoryImage))
 
 	if req.LogoFile != nil {
 		err := fv.Validate(req.LogoFile.Filename, req.LogoFile.ContentType, req.LogoFile.Size)
@@ -157,7 +156,7 @@ func (req CreateOrganizationRequest) Validate() error {
 
 func (req UpdateOrganizationRequest) Validate() error {
 	v := validator.New()
-	fv := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryImage))
+	fv := validator.NewFileValidator(validator.WithCategories(validator.CategoryImage))
 
 	v.Check(req.Name, "name", validator.SafeTextNoNewLine(255))
 	v.Check(req.Description, "description", validator.SafeText(ContentMaxLength))
@@ -1907,7 +1906,7 @@ func (s OrganizationService) CreateSCIMBridge(
 				ConnectorID:         &connectorID,
 				Type:                bridgeType,
 				State:               coredata.SCIMBridgeStateActive, // Active immediately since connector already exists
-				ExcludedUserNames:       []string{},
+				ExcludedUserNames:   []string{},
 				CreatedAt:           now,
 				UpdatedAt:           now,
 			}
