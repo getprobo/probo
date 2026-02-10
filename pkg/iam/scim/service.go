@@ -127,7 +127,7 @@ func (s *Service) CreateUser(
 	config *coredata.SCIMConfiguration,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	email, fullName := ParseUserFromAttributes(attributes)
+	email, fullName, active := ParseUserFromAttributes(attributes)
 	if email == "" {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("userName or email is required")
 	}
@@ -137,6 +137,11 @@ func (s *Service) CreateUser(
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("invalid email format")
 	}
 	now := time.Now()
+
+	membershipState := coredata.MembershipStateActive
+	if !active {
+		membershipState = coredata.MembershipStateInactive
+	}
 
 	var membership *coredata.Membership
 
@@ -179,7 +184,7 @@ func (s *Service) CreateUser(
 				OrganizationID: config.OrganizationID,
 				Role:           coredata.MembershipRoleEmployee,
 				Source:         coredata.MembershipSourceSCIM,
-				State:          coredata.MembershipStateActive,
+				State:          membershipState,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
@@ -221,13 +226,9 @@ func (s *Service) CreateUser(
 		} else if err != nil {
 			return fmt.Errorf("cannot load membership: %w", err)
 		} else {
-			// Update existing membership - reactivate if inactive, update source to SCIM
-			wasInactive := membership.State == coredata.MembershipStateInactive
+			// Update existing membership - follow what SCIM tells us
 			membership.Source = coredata.MembershipSourceSCIM
-			membership.State = coredata.MembershipStateActive
-			if wasInactive {
-				membership.Role = coredata.MembershipRoleEmployee
-			}
+			membership.State = membershipState
 			membership.UpdatedAt = now
 
 			err = membership.Update(ctx, tx, scope)
@@ -594,9 +595,15 @@ func (s *Service) createEvent(
 	return event
 }
 
-func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string) {
+func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string, active bool) {
 	userName, _ := attributes["userName"].(string)
 	displayName, _ := attributes["displayName"].(string)
+
+	// Default to active if the attribute is not present.
+	active = true
+	if a, ok := attributes["active"].(bool); ok {
+		active = a
+	}
 
 	var givenName, familyName string
 	if name, ok := attributes["name"].(map[string]any); ok {
@@ -636,7 +643,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 		fullName = userName
 	}
 
-	return email, fullName
+	return email, fullName, active
 }
 
 func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool) {
