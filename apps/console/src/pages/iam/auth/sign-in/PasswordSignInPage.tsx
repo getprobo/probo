@@ -36,6 +36,20 @@ export default function PasswordSignInPage() {
 
     if (!emailValue || !passwordValue) return;
 
+    const continueUrlParam = searchParams.get("continue");
+    let safeContinueUrl: string;
+    if (continueUrlParam) {
+      let continueUrl: URL;
+      try {
+        continueUrl = new URL(continueUrlParam, window.location.origin);
+      } catch {
+        continueUrl = new URL(window.location.origin);
+      }
+      safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
+    } else {
+      safeContinueUrl = window.location.origin;
+    }
+
     signIn({
       variables: {
         input: {
@@ -59,7 +73,7 @@ export default function PasswordSignInPage() {
           return;
         }
 
-        window.location.href = searchParams.get("continue") ?? window.location.origin;
+        window.location.href = safeContinueUrl;
       },
       onError: (e) => {
         toast({

@@ -38,18 +38,25 @@ function AssumePageInner() {
 
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
 
-  const continueUrl = searchParams.get("continue") ?? new URL(`/organizations/${organizationId}`, window.location.origin).toString();
+  const continueUrlParam = searchParams.get("continue");
+  let safeContinueUrl: string;
+  if (continueUrlParam) {
+    const continueUrl = new URL(continueUrlParam);
+    safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
+  } else {
+    safeContinueUrl = window.location.origin + `/organizations/${organizationId}`;
+  }
 
   useEffect(() => {
     assumeOrganizationSession({
       variables: {
-        input: { organizationId, continue: continueUrl },
+        input: { organizationId, continue: safeContinueUrl },
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
           const search = new URLSearchParams([
             ["organization-id", organizationId],
-            ["continue", continueUrl],
+            ["continue", safeContinueUrl],
           ]);
 
           void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
@@ -68,7 +75,7 @@ function AssumePageInner() {
         switch (result.__typename) {
           case "PasswordRequired":
             search.set("organization-id", organizationId);
-            search.set("continue", continueUrl);
+            search.set("continue", safeContinueUrl);
 
             void navigate({ pathname: "/auth/password-login", search: "?" + search.toString() });
             break;
@@ -79,11 +86,11 @@ function AssumePageInner() {
             window.location.href = samlSSOLoginURL.toString();
             break;
           default:
-            window.location.href = continueUrl;
+            window.location.href = safeContinueUrl;
         }
       },
     });
-  }, [organizationId, navigate, assumeOrganizationSession, continueUrl, searchParams]);
+  }, [organizationId, navigate, assumeOrganizationSession, safeContinueUrl, searchParams]);
 
   return (
     <AuthLayout>
