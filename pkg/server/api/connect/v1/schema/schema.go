@@ -3111,6 +3111,7 @@ input ChangeEmailInput {
 
 input AssumeOrganizationSessionInput {
   organizationId: ID!
+  redirectPath: String!
 }
 
 input RevokeSessionInput {
@@ -14930,7 +14931,7 @@ func (ec *executionContext) unmarshalInputAssumeOrganizationSessionInput(ctx con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId"}
+	fieldsInOrder := [...]string{"organizationId", "redirectPath"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14944,6 +14945,13 @@ func (ec *executionContext) unmarshalInputAssumeOrganizationSessionInput(ctx con
 				return it, err
 			}
 			it.OrganizationID = data
+		case "redirectPath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("redirectPath"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RedirectPath = data
 		}
 	}
 

@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
-import { Link, useSearchParams } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -19,6 +19,7 @@ const signInMutation = graphql`
 `;
 
 export default function PasswordSignInPage() {
+  const location = useLocation();
   const [searchParams] = useSearchParams();
 
   const { __ } = useTranslate();
@@ -72,7 +73,7 @@ export default function PasswordSignInPage() {
   return (
     <form className="space-y-6 w-full max-w-md mx-auto pt-4" onSubmit={handlePasswordLogin}>
       <Link
-        to="/auth/login"
+        to={{ pathname: "/auth/login", search: location.search }}
         className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
       >
         <IconChevronLeft size={20} />
@@ -112,7 +113,7 @@ export default function PasswordSignInPage() {
       <div className="text-center mt-6 text-sm text-txt-secondary">
         {__("Don't have an account ?")}
         {" "}
-        <Link to="/auth/register" className="underline hover:text-txt-primary">
+        <Link to={{ pathname: "/auth/register", search: location.search }} className="underline hover:text-txt-primary">
           {__("Register")}
         </Link>
       </div>

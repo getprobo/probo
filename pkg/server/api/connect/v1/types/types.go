@@ -36,6 +36,7 @@ type AcceptInvitationPayload struct {
 
 type AssumeOrganizationSessionInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
+	RedirectPath   string  `json:"redirectPath"`
 }
 
 type AssumeOrganizationSessionPayload struct {

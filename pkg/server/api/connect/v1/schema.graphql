@@ -669,6 +669,7 @@ input ChangeEmailInput {
 
 input AssumeOrganizationSessionInput {
   organizationId: ID!
+  redirectPath: String!
 }
 
 input RevokeSessionInput {

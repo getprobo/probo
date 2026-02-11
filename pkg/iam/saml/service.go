@@ -107,6 +107,7 @@ func (s *Service) GenerateSpMetadata() ([]byte, error) {
 func (s *Service) InitiateLogin(
 	ctx context.Context,
 	configID gid.GID,
+	redirectPath string,
 ) (*url.URL, error) {
 	var (
 		now           = time.Now()
@@ -131,7 +132,7 @@ func (s *Service) InitiateLogin(
 				return NewSAMLDisabledError()
 			}
 
-			sp, err := s.serviceProvider(ctx, config)
+			sp, err := s.serviceProvider(config)
 			if err != nil {
 				return fmt.Errorf("cannot build service provider: %w", err)
 			}
@@ -152,7 +153,11 @@ func (s *Service) InitiateLogin(
 				return fmt.Errorf("cannot insert SAML request: %w", err)
 			}
 
-			redirect, err = req.Redirect(config.ID.String(), sp)
+			relayState := url.Values{}
+			relayState.Add("config-id", config.ID.String())
+			relayState.Add("redirect-path", redirectPath)
+
+			redirect, err = req.Redirect(url.QueryEscape(relayState.Encode()), sp)
 			if err != nil {
 				return fmt.Errorf("cannot generate redirect URL: %w", err)
 			}
@@ -196,7 +201,7 @@ func (s *Service) HandleAssertion(
 				return NewSAMLDisabledError()
 			}
 
-			sp, err := s.serviceProvider(ctx, config)
+			sp, err := s.serviceProvider(config)
 			if err != nil {
 				return fmt.Errorf("cannot create service provider: %w", err)
 			}

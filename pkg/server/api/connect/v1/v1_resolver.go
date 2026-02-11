@@ -680,7 +680,7 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input types.AssumeOrganizationSessionInput) (*types.AssumeOrganizationSessionPayload, error) {
 	rootSession := authn.SessionFromContext(ctx)
 
-	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID)
+	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID, input.RedirectPath)
 	if err != nil {
 		var (
 			errMembershipNotFound         *iam.ErrMembershipNotFound

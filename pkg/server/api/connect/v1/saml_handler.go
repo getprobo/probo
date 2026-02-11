@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
@@ -58,16 +59,34 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 	samlResponse := r.FormValue("SAMLResponse")
 	relayState := r.FormValue("RelayState")
 
-	configID, err := gid.ParseGID(relayState)
+	values, err := url.ParseQuery(relayState)
 	if err != nil {
 		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid relay state"))
 		return
 	}
 
+	configIDStr := values.Get("config-id")
+	if configIDStr == "" {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("missing config ID"))
+		return
+	}
+
+	configID, err := gid.ParseGID(configIDStr)
+	if err != nil {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid config ID"))
+		return
+	}
+
+	redirectPath := values.Get("redirect-path")
+
 	user, membership, err := h.iam.SAMLService.HandleAssertion(ctx, samlResponse, configID)
 	if err != nil {
 		httpserver.RenderError(w, http.StatusUnauthorized, err)
 		return
+	}
+
+	if redirectPath == "" {
+		redirectPath = "/organizations/" + membership.OrganizationID.String()
 	}
 
 	rootSession := authn.SessionFromContext(ctx)
@@ -105,7 +124,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 
 	h.sessionCookie.Set(w, rootSession)
 
-	redirectURL := h.baseURL.WithPath("/organizations/" + membership.OrganizationID.String()).MustString()
+	redirectURL := h.baseURL.WithPath(redirectPath).MustString()
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
@@ -118,13 +137,15 @@ func (h *SAMLHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	redirectPathQueryParam := r.URL.Query().Get("redirect-path")
+
 	samlConfigID, err := gid.ParseGID(samlConfigIDParam)
 	if err != nil {
 		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid SAML config ID"))
 		return
 	}
 
-	url, err := h.iam.SAMLService.InitiateLogin(ctx, samlConfigID)
+	url, err := h.iam.SAMLService.InitiateLogin(ctx, samlConfigID, redirectPathQueryParam)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate SAML login: %w", err))
 	}

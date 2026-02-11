@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4beff809268fb32711cc02699683b623>>
+ * @generated SignedSource<<f829648ef4b9a5c0b8c4d62ac844bca0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 export type ReauthenticationReason = "POLICY_REQUIREMENT" | "SENSITIVE_ACTION" | "SESSION_EXPIRED";
 export type AssumeOrganizationSessionInput = {
   organizationId: string;
+  redirectPath: string;
 };
 export type MembershipsDropdownMenuItem_assumeMutation$variables = {
   input: AssumeOrganizationSessionInput;

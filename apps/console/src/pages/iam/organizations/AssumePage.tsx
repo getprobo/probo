@@ -38,19 +38,18 @@ function AssumePageInner() {
 
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
 
+  const redirectPath = searchParams.get("redirect-path") ?? `/organizations/${organizationId}`;
+
   useEffect(() => {
     assumeOrganizationSession({
       variables: {
-        input: { organizationId },
+        input: { organizationId, redirectPath },
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
           const search = new URLSearchParams([
             ["organization-id", organizationId],
-            [
-              "redirect-path",
-              searchParams.get("redirect-path") ?? window.location.pathname + window.location.search,
-            ],
+            ["redirect-path", redirectPath],
           ]);
 
           void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
@@ -64,26 +63,27 @@ function AssumePageInner() {
 
         const { result } = assumeOrganizationSession;
         const search = new URLSearchParams();
+        let samlSSOLoginURL: URL;
 
         switch (result.__typename) {
           case "PasswordRequired":
             search.set("organization-id", organizationId);
-            search.set(
-              "redirect-path",
-              searchParams.get("redirect-path") ?? window.location.pathname + window.location.search,
-            );
+            search.set("redirect-path", redirectPath);
 
             void navigate({ pathname: "/auth/passord-login", search: "?" + search.toString() });
             break;
           case "SAMLAuthenticationRequired":
-            window.location.href = result.redirectUrl;
+            samlSSOLoginURL = new URL(result.redirectUrl);
+            samlSSOLoginURL.search = "?" + searchParams.toString();
+
+            window.location.href = samlSSOLoginURL.toString();
             break;
           default:
-            void navigate(searchParams.get("redirect-path") ?? window.location.pathname + window.location.search);
+            void navigate(redirectPath);
         }
       },
     });
-  }, [organizationId, navigate, assumeOrganizationSession, searchParams]);
+  }, [organizationId, navigate, assumeOrganizationSession, redirectPath, searchParams]);
 
   return (
     <AuthLayout>

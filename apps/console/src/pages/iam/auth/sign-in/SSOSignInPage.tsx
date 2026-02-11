@@ -6,7 +6,7 @@ import {
   usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SSOSignInPageQuery } from "#/__generated__/iam/SSOSignInPageQuery.graphql";
@@ -18,6 +18,7 @@ const ssoAvailabilityQuery = graphql`
 `;
 
 export default function SSOSignInPage() {
+  const location = useLocation();
   const { __ } = useTranslate();
 
   const [queryRef, loadQuery]
@@ -39,7 +40,7 @@ export default function SSOSignInPage() {
     <>
       <form className="space-y-6 w-full max-w-md mx-auto pt-4" onSubmit={handleSSOCheck}>
         <Link
-          to="/auth/login"
+          to={{ pathname: "/auth/register", search: location.search }}
           className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
         >
           <IconChevronLeft size={20} />
@@ -70,7 +71,7 @@ export default function SSOSignInPage() {
           {__("Don't have an account ?")}
           {" "}
           <Link
-            to="/auth/register"
+            to={{ pathname: "/auth/register", search: location.search }}
             className="underline hover:text-txt-primary"
           >
             {__("Register")}
@@ -96,6 +97,7 @@ function NavigateToSSOLoginURL(props: {
 
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const { ssoLoginURL } = usePreloadedQuery<SSOSignInPageQuery>(
@@ -127,8 +129,11 @@ function NavigateToSSOLoginURL(props: {
       return;
     }
 
-    window.location.href = ssoLoginURL.value;
-  }, [__, navigate, ssoLoginURL, toast]);
+    const url = new URL(ssoLoginURL.value);
+    url.search = "?" + searchParams.toString();
+
+    window.location.href = url.toString();
+  }, [__, navigate, ssoLoginURL, toast, searchParams]);
 
   return null;
 }
