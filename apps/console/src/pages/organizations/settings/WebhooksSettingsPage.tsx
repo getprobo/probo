@@ -1,0 +1,567 @@
+import { useTranslate } from "@probo/i18n";
+import {
+  Button,
+  Card,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  Field,
+  IconPencil,
+  IconPlusLarge,
+  IconSquareBehindSquare2,
+  IconTrashCan,
+  Input,
+  Label,
+  Spinner,
+  useDialogRef,
+  useToast,
+} from "@probo/ui";
+import { useCallback, useState } from "react";
+import { type PreloadedQuery, usePreloadedQuery, useRelayEnvironment } from "react-relay";
+import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
+import { z } from "zod";
+
+import type { WebhooksSettingsPage_createMutation } from "#/__generated__/core/WebhooksSettingsPage_createMutation.graphql";
+import type { WebhooksSettingsPage_deleteMutation } from "#/__generated__/core/WebhooksSettingsPage_deleteMutation.graphql";
+import type { WebhooksSettingsPage_signingSecretQuery } from "#/__generated__/core/WebhooksSettingsPage_signingSecretQuery.graphql";
+import type { WebhooksSettingsPage_updateMutation } from "#/__generated__/core/WebhooksSettingsPage_updateMutation.graphql";
+import type { WebhooksSettingsPageQuery } from "#/__generated__/core/WebhooksSettingsPageQuery.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+
+export const webhooksSettingsPageQuery = graphql`
+  query WebhooksSettingsPageQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        id
+        webhookConfigurations(first: 50)
+          @connection(key: "WebhooksSettingsPage_webhookConfigurations") {
+          edges {
+            node {
+              id
+              endpointUrl
+              selectedEvents
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const createWebhookConfigurationMutation = graphql`
+  mutation WebhooksSettingsPage_createMutation(
+    $input: CreateWebhookConfigurationInput!
+    $connections: [ID!]!
+  ) {
+    createWebhookConfiguration(input: $input) {
+      webhookConfigurationEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          endpointUrl
+          selectedEvents
+        }
+      }
+    }
+  }
+`;
+
+const updateWebhookConfigurationMutation = graphql`
+  mutation WebhooksSettingsPage_updateMutation(
+    $input: UpdateWebhookConfigurationInput!
+  ) {
+    updateWebhookConfiguration(input: $input) {
+      webhookConfiguration {
+        id
+        endpointUrl
+        selectedEvents
+        updatedAt
+      }
+    }
+  }
+`;
+
+const signingSecretQuery = graphql`
+  query WebhooksSettingsPage_signingSecretQuery($webhookConfigurationId: ID!) {
+    node(id: $webhookConfigurationId) {
+      ... on WebhookConfiguration {
+        signingSecret
+      }
+    }
+  }
+`;
+
+const deleteWebhookConfigurationMutation = graphql`
+  mutation WebhooksSettingsPage_deleteMutation(
+    $input: DeleteWebhookConfigurationInput!
+    $connections: [ID!]!
+  ) {
+    deleteWebhookConfiguration(input: $input) {
+      deletedWebhookConfigurationId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+const EVENT_TYPES = [
+  { value: "MEETING_CREATED", label: "meeting:created" },
+  { value: "MEETING_UPDATED", label: "meeting:updated" },
+  { value: "MEETING_DELETED", label: "meeting:deleted" },
+  { value: "VENDOR_CREATED", label: "vendor:created" },
+  { value: "VENDOR_UPDATED", label: "vendor:updated" },
+  { value: "VENDOR_DELETED", label: "vendor:deleted" },
+] as const;
+
+type WebhookEventType = (typeof EVENT_TYPES)[number]["value"];
+
+const WEBHOOK_EVENT_VALUES = EVENT_TYPES.map(e => e.value) as [
+  WebhookEventType,
+  ...WebhookEventType[],
+];
+
+const webhookFormSchema = z.object({
+  endpointUrl: z
+    .string()
+    .min(1, "Endpoint URL is required")
+    .url("Please enter a valid URL")
+    .refine(
+      (val) => {
+        try {
+          const url = new URL(val);
+          return url.protocol === "http:" || url.protocol === "https:";
+        } catch {
+          return false;
+        }
+      },
+      "URL must use http:// or https://",
+    ),
+  selectedEvents: z
+    .array(z.enum(WEBHOOK_EVENT_VALUES))
+    .min(1, "At least one event must be selected"),
+});
+
+type WebhookFormData = z.infer<typeof webhookFormSchema>;
+
+function WebhookFormDialog({
+  mode,
+  initialValues,
+  onSubmit,
+  isSubmitting,
+  trigger,
+}: {
+  mode: "create" | "edit";
+  initialValues?: WebhookFormData;
+  onSubmit: (values: WebhookFormData) => void;
+  isSubmitting: boolean;
+  trigger: React.ReactNode;
+}) {
+  const { __ } = useTranslate();
+  const dialogRef = useDialogRef();
+  const { register, handleSubmit, formState, setValue, watch, reset }
+    = useFormWithSchema(webhookFormSchema, {
+      defaultValues: {
+        endpointUrl: initialValues?.endpointUrl ?? "",
+        selectedEvents: initialValues?.selectedEvents ?? [],
+      },
+    });
+
+  const selectedEvents = watch("selectedEvents");
+
+  const handleToggleEvent = (event: WebhookEventType) => {
+    const current = selectedEvents ?? [];
+    const next = current.includes(event)
+      ? current.filter(e => e !== event)
+      : [...current, event];
+    setValue("selectedEvents", next, { shouldValidate: formState.isSubmitted });
+  };
+
+  const onFormSubmit = (data: WebhookFormData) => {
+    onSubmit(data);
+    dialogRef.current?.close();
+    reset(data);
+  };
+
+  return (
+    <Dialog
+      ref={dialogRef}
+      trigger={trigger}
+      title={
+        mode === "create"
+          ? __("Add Webhook Configuration")
+          : __("Edit Webhook Configuration")
+      }
+      className="max-w-lg"
+    >
+      <form onSubmit={e => void handleSubmit(onFormSubmit)(e)}>
+        <DialogContent padded>
+          <div className="space-y-4">
+            <Field
+              label={__("Endpoint URL")}
+              error={formState.errors.endpointUrl?.message}
+              required
+            >
+              <Input
+                {...register("endpointUrl")}
+                type="url"
+                placeholder={__("https://example.com/webhook")}
+              />
+            </Field>
+            <div>
+              <Label>{__("Events")}</Label>
+              <p className="text-sm text-txt-tertiary mb-2">
+                {__("Select the events that will trigger this webhook.")}
+              </p>
+              <div className="space-y-2">
+                {EVENT_TYPES.map(event => (
+                  <label
+                    key={event.value}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={selectedEvents?.includes(event.value) ?? false}
+                      onChange={() => handleToggleEvent(event.value)}
+                    />
+                    <span className="text-sm font-mono">{event.label}</span>
+                  </label>
+                ))}
+              </div>
+              {formState.errors.selectedEvents?.message && (
+                <p className="text-xs text-red-600 mt-1">
+                  {formState.errors.selectedEvents.message}
+                </p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? <Spinner size={16} />
+              : mode === "create"
+                ? __("Create")
+                : __("Save")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
+  );
+}
+
+export function WebhooksSettingsPage(props: {
+  queryRef: PreloadedQuery<WebhooksSettingsPageQuery>;
+}) {
+  const { queryRef } = props;
+  const { __ } = useTranslate();
+  const { toast } = useToast();
+  const environment = useRelayEnvironment();
+  const deleteDialogRef = useDialogRef();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [revealedSecrets, setRevealedSecrets] = useState<Record<string, string>>({});
+  const [loadingSecrets, setLoadingSecrets] = useState<Set<string>>(new Set());
+
+  const fetchSigningSecret = useCallback(
+    async (webhookConfigurationId: string): Promise<string | null> => {
+      // Return cached secret if already fetched
+      if (revealedSecrets[webhookConfigurationId]) {
+        return revealedSecrets[webhookConfigurationId];
+      }
+
+      setLoadingSecrets(prev => new Set(prev).add(webhookConfigurationId));
+
+      try {
+        const data = await fetchQuery<WebhooksSettingsPage_signingSecretQuery>(
+          environment,
+          signingSecretQuery,
+          { webhookConfigurationId },
+        ).toPromise();
+
+        const secret = data?.node?.signingSecret;
+        if (secret) {
+          setRevealedSecrets(prev => ({ ...prev, [webhookConfigurationId]: secret }));
+          return secret;
+        }
+        return null;
+      } catch {
+        toast({
+          title: __("Error"),
+          description: __("Failed to load signing secret."),
+          variant: "error",
+        });
+        return null;
+      } finally {
+        setLoadingSecrets((prev) => {
+          const next = new Set(prev);
+          next.delete(webhookConfigurationId);
+          return next;
+        });
+      }
+    },
+    [environment, revealedSecrets, toast, __],
+  );
+
+  const toggleRevealSecret = (id: string) => {
+    if (revealedSecrets[id]) {
+      setRevealedSecrets((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    } else {
+      void fetchSigningSecret(id);
+    }
+  };
+
+  const copyToClipboard = async (webhookConfigurationId: string, label: string) => {
+    const secret = await fetchSigningSecret(webhookConfigurationId);
+    if (secret) {
+      void navigator.clipboard.writeText(secret);
+      toast({
+        title: __("Copied to clipboard"),
+        description: label,
+        variant: "success",
+      });
+    }
+  };
+
+  const { organization } = usePreloadedQuery<WebhooksSettingsPageQuery>(
+    webhooksSettingsPageQuery,
+    queryRef,
+  );
+  if (organization.__typename === "%other") {
+    throw new Error("Relay node is not an organization");
+  }
+
+  const [createWebhook, isCreating]
+    = useMutationWithToasts<WebhooksSettingsPage_createMutation>(
+      createWebhookConfigurationMutation,
+      {
+        successMessage: __("Webhook created successfully"),
+        errorMessage: __("Failed to create webhook"),
+      },
+    );
+
+  const [updateWebhook, isUpdating]
+    = useMutationWithToasts<WebhooksSettingsPage_updateMutation>(
+      updateWebhookConfigurationMutation,
+      {
+        successMessage: __("Webhook updated successfully"),
+        errorMessage: __("Failed to update webhook"),
+      },
+    );
+
+  const [deleteWebhook, isDeleting]
+    = useMutationWithToasts<WebhooksSettingsPage_deleteMutation>(
+      deleteWebhookConfigurationMutation,
+      {
+        successMessage: __("Webhook deleted successfully"),
+        errorMessage: __("Failed to delete webhook"),
+      },
+    );
+
+  const webhooks = organization.webhookConfigurations?.edges ?? [];
+
+  const connectionId = ConnectionHandler.getConnectionID(
+    organization.id,
+    "WebhooksSettingsPage_webhookConfigurations",
+  );
+
+  const handleCreate = (values: WebhookFormData) => {
+    void createWebhook({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          endpointUrl: values.endpointUrl,
+          selectedEvents: values.selectedEvents,
+        },
+        connections: [connectionId],
+      },
+    });
+  };
+
+  const handleUpdate = (id: string, values: WebhookFormData) => {
+    void updateWebhook({
+      variables: {
+        input: {
+          id,
+          endpointUrl: values.endpointUrl,
+          selectedEvents: values.selectedEvents,
+        },
+      },
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    void deleteWebhook({
+      variables: {
+        input: {
+          webhookConfigurationId: id,
+        },
+        connections: [connectionId],
+      },
+      onSuccess: () => {
+        setDeletingId(null);
+        deleteDialogRef.current?.close();
+      },
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-medium">{__("Webhook Configurations")}</h2>
+          <p className="text-sm text-txt-tertiary">
+            {__(
+              "Configure webhooks to receive notifications when events occur in your organization.",
+            )}
+          </p>
+        </div>
+        <WebhookFormDialog
+          mode="create"
+          onSubmit={handleCreate}
+          isSubmitting={isCreating}
+          trigger={(
+            <Button icon={IconPlusLarge}>
+              {__("Add Webhook Configuration")}
+            </Button>
+          )}
+        />
+      </div>
+
+      {webhooks.length === 0
+        ? (
+            <Card padded>
+              <div className="text-center py-8">
+                <p className="text-sm text-txt-tertiary">
+                  {__("No webhook configurations yet. Add one to get started.")}
+                </p>
+              </div>
+            </Card>
+          )
+        : (
+            <div className="space-y-3">
+              {webhooks.map(({ node: webhook }) => (
+                <Card key={webhook.id} padded>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div>
+                        <Label>{__("Endpoint URL")}</Label>
+                        <p className="text-sm font-mono text-txt-secondary truncate">
+                          {webhook.endpointUrl}
+                        </p>
+                      </div>
+                      <div>
+                        <Label>{__("Signing Secret")}</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="flex-1 bg-subtle p-2 rounded text-sm font-mono break-all">
+                            {revealedSecrets[webhook.id]
+                              ? revealedSecrets[webhook.id]
+                              : "••••••••••••••••••••••••••••••••"}
+                          </code>
+                          <Button
+                            variant="secondary"
+                            onClick={() => toggleRevealSecret(webhook.id)}
+                            disabled={loadingSecrets.has(webhook.id)}
+                          >
+                            {loadingSecrets.has(webhook.id)
+                              ? <Spinner size={16} />
+                              : revealedSecrets[webhook.id]
+                                ? __("Hide")
+                                : __("Show")}
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => void copyToClipboard(webhook.id, __("Signing Secret"))}
+                            disabled={loadingSecrets.has(webhook.id)}
+                            icon={IconSquareBehindSquare2}
+                            aria-label={__("Copy signing secret")}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>{__("Events")}</Label>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {webhook.selectedEvents.map((event) => {
+                            const eventLabel
+                              = EVENT_TYPES.find(e => e.value === event)?.label ?? event;
+                            return (
+                              <span
+                                key={event}
+                                className="inline-flex items-center rounded-md bg-surface-secondary px-2 py-0.5 text-xs font-mono text-txt-secondary border border-border-solid"
+                              >
+                                {eventLabel}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <WebhookFormDialog
+                        mode="edit"
+                        initialValues={{
+                          endpointUrl: webhook.endpointUrl,
+                          selectedEvents: webhook.selectedEvents as WebhookEventType[],
+                        }}
+                        onSubmit={values => handleUpdate(webhook.id, values)}
+                        isSubmitting={isUpdating}
+                        trigger={(
+                          <Button
+                            variant="secondary"
+                            icon={IconPencil}
+                            aria-label={__("Edit webhook")}
+                          />
+                        )}
+                      />
+                      <Button
+                        variant="quaternary"
+                        icon={IconTrashCan}
+                        aria-label={__("Delete webhook")}
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => {
+                          setDeletingId(webhook.id);
+                          deleteDialogRef.current?.open();
+                        }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+      <Dialog
+        ref={deleteDialogRef}
+        title={__("Delete Webhook")}
+        className="max-w-md"
+      >
+        <DialogContent padded>
+          <p className="text-txt-secondary">
+            {__(
+              "Are you sure you want to delete this webhook configuration?",
+            )}
+          </p>
+          <p className="text-txt-secondary mt-2">
+            {__("This action cannot be undone.")}
+          </p>
+        </DialogContent>
+        <DialogFooter>
+          <Button
+            variant="danger"
+            onClick={() => deletingId && handleDelete(deletingId)}
+            disabled={isDeleting}
+            icon={isDeleting ? Spinner : IconTrashCan}
+          >
+            {isDeleting
+              ? __("Deleting...")
+              : __("Delete")}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+    </div>
+  );
+}

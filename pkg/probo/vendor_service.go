@@ -23,7 +23,9 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
 )
 
 type (
@@ -392,6 +394,10 @@ func (s VendorService) Update(
 				return fmt.Errorf("cannot update vendor: %w", err)
 			}
 
+			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorUpdated, types.NewVendor(vendor)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -427,10 +433,19 @@ func (s VendorService) Delete(
 	ctx context.Context,
 	vendorID gid.GID,
 ) error {
-	vendor := coredata.Vendor{ID: vendorID}
-	return s.svc.pg.WithConn(
+	vendor := &coredata.Vendor{}
+
+	return s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID); err != nil {
+				return fmt.Errorf("cannot load vendor: %w", err)
+			}
+
+			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorDeleted, types.NewVendor(vendor)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
 			return vendor.Delete(ctx, conn, s.svc.scope)
 		},
 	)
@@ -502,6 +517,10 @@ func (s VendorService) Create(
 
 			if err := vendor.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert vendor: %w", err)
+			}
+
+			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeVendorCreated, types.NewVendor(vendor)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil

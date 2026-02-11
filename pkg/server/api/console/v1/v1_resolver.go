@@ -3678,6 +3678,77 @@ func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.Delete
 	}, nil
 }
 
+// CreateWebhookConfiguration is the resolver for the createWebhookConfiguration field.
+func (r *mutationResolver) CreateWebhookConfiguration(ctx context.Context, input types.CreateWebhookConfigurationInput) (*types.CreateWebhookConfigurationPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionWebhookConfigurationCreate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	wc, err := prb.WebhookConfigurations.Create(
+		ctx,
+		probo.CreateWebhookConfigurationRequest{
+			OrganizationID: input.OrganizationID,
+			EndpointURL:    input.EndpointURL,
+			SelectedEvents: input.SelectedEvents,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create webhook configuration", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateWebhookConfigurationPayload{
+		WebhookConfigurationEdge: types.NewWebhookConfigurationEdge(wc, coredata.WebhookConfigurationOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateWebhookConfiguration is the resolver for the updateWebhookConfiguration field.
+func (r *mutationResolver) UpdateWebhookConfiguration(ctx context.Context, input types.UpdateWebhookConfigurationInput) (*types.UpdateWebhookConfigurationPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionWebhookConfigurationUpdate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	wc, err := prb.WebhookConfigurations.Update(
+		ctx,
+		probo.UpdateWebhookConfigurationRequest{
+			WebhookConfigurationID: input.ID,
+			EndpointURL:            input.EndpointURL,
+			SelectedEvents:         input.SelectedEvents,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update webhook configuration", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateWebhookConfigurationPayload{
+		WebhookConfiguration: types.NewWebhookConfiguration(wc),
+	}, nil
+}
+
+// DeleteWebhookConfiguration is the resolver for the deleteWebhookConfiguration field.
+func (r *mutationResolver) DeleteWebhookConfiguration(ctx context.Context, input types.DeleteWebhookConfigurationInput) (*types.DeleteWebhookConfigurationPayload, error) {
+	if err := r.authorize(ctx, input.WebhookConfigurationID, probo.ActionWebhookConfigurationDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.WebhookConfigurationID.TenantID())
+
+	err := prb.WebhookConfigurations.Delete(ctx, input.WebhookConfigurationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete webhook configuration", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteWebhookConfigurationPayload{
+		DeletedWebhookConfigurationID: input.WebhookConfigurationID,
+	}, nil
+}
+
 // CreateStateOfApplicability is the resolver for the createStateOfApplicability field.
 func (r *mutationResolver) CreateStateOfApplicability(ctx context.Context, input types.CreateStateOfApplicabilityInput) (*types.CreateStateOfApplicabilityPayload, error) {
 	if err := r.authorize(ctx, input.OrganizationID, probo.ActionStateOfApplicabilityCreate); err != nil {
@@ -6313,6 +6384,36 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 	return types.NewCustomDomain(domain, r.customDomainCname), nil
 }
 
+// WebhookConfigurations is the resolver for the webhookConfigurations field.
+func (r *organizationResolver) WebhookConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookConfigurationOrderBy) (*types.WebhookConfigurationConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionWebhookConfigurationList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.WebhookConfigurationOrderField]{
+		Field:     coredata.WebhookConfigurationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.WebhookConfigurationOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.WebhookConfigurations.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization webhook configurations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewWebhookConfigurationConnection(page, r, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -6760,6 +6861,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 			return types.NewStateOfApplicability(stateOfApplicability), nil
+		}
+	case coredata.WebhookConfigurationEntityType:
+		action = probo.ActionWebhookConfigurationGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			wc, err := prb.WebhookConfigurations.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewWebhookConfiguration(wc), nil
 		}
 	default:
 	}
@@ -8449,6 +8559,67 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 	}, nil
 }
 
+// Organization is the resolver for the organization field.
+func (r *webhookConfigurationResolver) Organization(ctx context.Context, obj *types.WebhookConfiguration) (*types.Organization, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// SigningSecret is the resolver for the signingSecret field.
+func (r *webhookConfigurationResolver) SigningSecret(ctx context.Context, obj *types.WebhookConfiguration) (string, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	signingSecret, err := prb.WebhookConfigurations.GetSigningSecret(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get signing secret", log.Error(err))
+		return "", gqlutils.Internal(ctx)
+	}
+
+	return signingSecret, nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *webhookConfigurationResolver) Permission(ctx context.Context, obj *types.WebhookConfiguration, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *webhookConfigurationConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookConfigurationConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookConfigurationList); err != nil {
+		return 0, err
+	}
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.WebhookConfigurations.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count webhook configurations", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "unsupported resolver for webhook configuration connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
+}
+
 // ApplicabilityStatement returns schema.ApplicabilityStatementResolver implementation.
 func (r *Resolver) ApplicabilityStatement() schema.ApplicabilityStatementResolver {
 	return &applicabilityStatementResolver{r}
@@ -8751,6 +8922,16 @@ func (r *Resolver) VendorService() schema.VendorServiceResolver { return &vendor
 // Viewer returns schema.ViewerResolver implementation.
 func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 
+// WebhookConfiguration returns schema.WebhookConfigurationResolver implementation.
+func (r *Resolver) WebhookConfiguration() schema.WebhookConfigurationResolver {
+	return &webhookConfigurationResolver{r}
+}
+
+// WebhookConfigurationConnection returns schema.WebhookConfigurationConnectionResolver implementation.
+func (r *Resolver) WebhookConfigurationConnection() schema.WebhookConfigurationConnectionResolver {
+	return &webhookConfigurationConnectionResolver{r}
+}
+
 type applicabilityStatementResolver struct{ *Resolver }
 type applicabilityStatementConnectionResolver struct{ *Resolver }
 type assetResolver struct{ *Resolver }
@@ -8823,3 +9004,5 @@ type vendorDataPrivacyAgreementResolver struct{ *Resolver }
 type vendorRiskAssessmentResolver struct{ *Resolver }
 type vendorServiceResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
+type webhookConfigurationResolver struct{ *Resolver }
+type webhookConfigurationConnectionResolver struct{ *Resolver }

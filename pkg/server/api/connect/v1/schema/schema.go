@@ -2654,6 +2654,7 @@ type Mutation {
   updateSCIMBridge(
     input: UpdateSCIMBridgeInput!
   ): UpdateSCIMBridgePayload @session(required: PRESENT)
+
 }
 
 type Identity implements Node {
@@ -3499,6 +3500,8 @@ type RegenerateSCIMTokenPayload {
 type UpdateSCIMBridgePayload {
   scimBridge: SCIMBridge!
 }
+
+
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
 # Include this schema in your gqlgen configuration to enable session-based access control.

@@ -488,6 +488,16 @@ enum MeetingOrderField
         )
 }
 
+enum WebhookConfigurationOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.WebhookConfigurationOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.WebhookConfigurationOrderFieldCreatedAt"
+        )
+}
+
 enum RiskOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskOrderField") {
     CREATED_AT
@@ -1345,6 +1355,14 @@ input MeetingOrder
     field: MeetingOrderField!
 }
 
+input WebhookConfigurationOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookConfigurationOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: WebhookConfigurationOrderField!
+}
+
 input RiskOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskOrderBy"
@@ -1817,6 +1835,14 @@ type Organization implements Node {
 
     customDomain: CustomDomain @goField(forceResolver: true)
 
+    webhookConfigurations(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: WebhookConfigurationOrder
+    ): WebhookConfigurationConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -2240,6 +2266,48 @@ type Meeting implements Node {
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum WebhookEventType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookEventType") {
+    MEETING_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingCreated")
+    MEETING_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingUpdated")
+    MEETING_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingDeleted")
+    VENDOR_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorCreated")
+    VENDOR_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorUpdated")
+    VENDOR_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorDeleted")
+}
+
+type WebhookConfiguration implements Node {
+    id: ID!
+    organization: Organization @goField(forceResolver: true)
+    endpointUrl: String!
+    signingSecret: String! @goField(forceResolver: true)
+    selectedEvents: [WebhookEventType!]!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type WebhookConfigurationConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookConfigurationConnection"
+    ) {
+    edges: [WebhookConfigurationEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type WebhookConfigurationEdge {
+    cursor: CursorKey!
+    node: WebhookConfiguration!
 }
 
 type StateOfApplicability implements Node {
@@ -3270,6 +3338,16 @@ type Mutation {
     createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
     updateMeeting(input: UpdateMeetingInput!): UpdateMeetingPayload!
     deleteMeeting(input: DeleteMeetingInput!): DeleteMeetingPayload!
+    # WebhookConfiguration mutations
+    createWebhookConfiguration(
+        input: CreateWebhookConfigurationInput!
+    ): CreateWebhookConfigurationPayload!
+    updateWebhookConfiguration(
+        input: UpdateWebhookConfigurationInput!
+    ): UpdateWebhookConfigurationPayload!
+    deleteWebhookConfiguration(
+        input: DeleteWebhookConfigurationInput!
+    ): DeleteWebhookConfigurationPayload!
     # StateOfApplicability mutations
     createStateOfApplicability(
         input: CreateStateOfApplicabilityInput!
@@ -4619,6 +4697,34 @@ type UpdateMeetingPayload {
 
 type DeleteMeetingPayload {
     deletedMeetingId: ID!
+}
+
+input CreateWebhookConfigurationInput {
+    organizationId: ID!
+    endpointUrl: String!
+    selectedEvents: [WebhookEventType!]!
+}
+
+input UpdateWebhookConfigurationInput {
+    id: ID!
+    endpointUrl: String
+    selectedEvents: [WebhookEventType!]
+}
+
+input DeleteWebhookConfigurationInput {
+    webhookConfigurationId: ID!
+}
+
+type CreateWebhookConfigurationPayload {
+    webhookConfigurationEdge: WebhookConfigurationEdge!
+}
+
+type UpdateWebhookConfigurationPayload {
+    webhookConfiguration: WebhookConfiguration!
+}
+
+type DeleteWebhookConfigurationPayload {
+    deletedWebhookConfigurationId: ID!
 }
 
 type CreateStateOfApplicabilityPayload {

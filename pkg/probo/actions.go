@@ -316,4 +316,11 @@ const (
 	ActionApplicabilityStatementCreate = "core:applicability-statement:create"
 	ActionApplicabilityStatementUpdate = "core:applicability-statement:update"
 	ActionApplicabilityStatementDelete = "core:applicability-statement:delete"
+
+	// WebhookConfiguration actions
+	ActionWebhookConfigurationList   = "core:webhook-configuration:list"
+	ActionWebhookConfigurationGet    = "core:webhook-configuration:get"
+	ActionWebhookConfigurationCreate = "core:webhook-configuration:create"
+	ActionWebhookConfigurationUpdate = "core:webhook-configuration:update"
+	ActionWebhookConfigurationDelete = "core:webhook-configuration:delete"
 )

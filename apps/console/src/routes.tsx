@@ -205,6 +205,13 @@ const routes = [
                     import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
                 ),
               },
+              {
+                path: "webhooks",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
+                ),
+              },
             ],
           },
           ...peopleRoutes,
