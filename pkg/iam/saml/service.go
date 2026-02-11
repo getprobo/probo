@@ -153,11 +153,9 @@ func (s *Service) InitiateLogin(
 				return fmt.Errorf("cannot insert SAML request: %w", err)
 			}
 
-			relayState := url.Values{}
-			relayState.Add("config-id", config.ID.String())
-			relayState.Add("redirect-path", redirectPath)
+			relayState := config.ID.String() + redirectPath
 
-			redirect, err = req.Redirect(url.QueryEscape(relayState.Encode()), sp)
+			redirect, err = req.Redirect(relayState, sp)
 			if err != nil {
 				return fmt.Errorf("cannot generate redirect URL: %w", err)
 			}

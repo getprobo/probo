@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
@@ -59,13 +58,12 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 	samlResponse := r.FormValue("SAMLResponse")
 	relayState := r.FormValue("RelayState")
 
-	values, err := url.ParseQuery(relayState)
-	if err != nil {
+	if len(relayState) < gid.EncodedGIDSize {
 		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid relay state"))
 		return
 	}
 
-	configIDStr := values.Get("config-id")
+	configIDStr := relayState[:gid.EncodedGIDSize+1]
 	if configIDStr == "" {
 		httpserver.RenderError(w, http.StatusBadRequest, errors.New("missing config ID"))
 		return
@@ -77,7 +75,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirectPath := values.Get("redirect-path")
+	redirectPath := relayState[gid.EncodedGIDSize+1:]
 
 	user, membership, err := h.iam.SAMLService.HandleAssertion(ctx, samlResponse, configID)
 	if err != nil {

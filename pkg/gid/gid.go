@@ -19,6 +19,8 @@ type (
 
 var (
 	Nil = GID{}
+
+	EncodedGIDSize = base64.RawURLEncoding.EncodedLen(GIDSize)
 )
 
 // ParseGID parses a string representation of a GID
