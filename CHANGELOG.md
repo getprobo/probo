@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.121.1] - 2026-02-11
+
 ### Fixed
 
 - Fix Google Workspace SCIM bridge does not set active state at creation
