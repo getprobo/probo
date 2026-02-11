@@ -40,7 +40,7 @@ export default function SSOSignInPage() {
     <>
       <form className="space-y-6 w-full max-w-md mx-auto pt-4" onSubmit={handleSSOCheck}>
         <Link
-          to={{ pathname: "/auth/register", search: location.search }}
+          to={{ pathname: "/auth/login", search: location.search }}
           className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
         >
           <IconChevronLeft size={20} />

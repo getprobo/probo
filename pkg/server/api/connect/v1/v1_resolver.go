@@ -408,13 +408,13 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 
 	if input.OrganizationID != nil {
 		var err error
-		session, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
+		_, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
 		if err != nil {
 			// Here session middleware already took care of expired/nil root session so we only handle membership related errors
 			var errMembershipNotFound *iam.ErrMembershipNotFound
 			var errMembershipInactive *iam.ErrMembershipInactive
 
-			if errors.As(err, errMembershipNotFound) || errors.As(err, errMembershipInactive) {
+			if errors.As(err, &errMembershipNotFound) || errors.As(err, &errMembershipInactive) {
 				return nil, gqlutils.Forbidden(ctx, err)
 			}
 

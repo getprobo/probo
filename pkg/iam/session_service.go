@@ -321,11 +321,12 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 	organizationID gid.GID,
 ) (*coredata.Session, *coredata.Membership, error) {
 	var (
-		now         = time.Now()
-		rootSession = &coredata.Session{}
-		identity    = &coredata.Identity{}
-		membership  = &coredata.Membership{}
-		scope       = coredata.NewScopeFromObjectID(organizationID)
+		now          = time.Now()
+		rootSession  = &coredata.Session{}
+		identity     = &coredata.Identity{}
+		membership   = &coredata.Membership{}
+		childSession = &coredata.Session{}
+		scope        = coredata.NewScopeFromObjectID(organizationID)
 	)
 
 	err := s.pg.WithTx(
@@ -365,7 +366,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 			}
 
 			tenantID := scope.GetTenantID()
-			childSession := &coredata.Session{
+			childSession = &coredata.Session{
 				ID:              gid.New(tenantID, coredata.SessionEntityType),
 				IdentityID:      rootSession.IdentityID,
 				TenantID:        &tenantID,
@@ -398,7 +399,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 		return nil, nil, err
 	}
 
-	return rootSession, membership, nil
+	return childSession, membership, nil
 }
 
 // OpenSAMLChildSessionForOrganization creates a SAML-authenticated child session for the given
@@ -535,7 +536,7 @@ func (s SessionService) AssumeOrganizationSession(
 			}
 
 			// If child session already exists use it
-			if err := childSession.LoadByRootSessionIDAndMembershipID(ctx, tx, rootSession.IdentityID, membership.ID); err == nil {
+			if err := childSession.LoadByRootSessionIDAndMembershipID(ctx, tx, rootSession.ID, membership.ID); err == nil {
 				if childSession.ExpireReason == nil && now.Before(childSession.ExpiredAt) {
 					return nil
 				}

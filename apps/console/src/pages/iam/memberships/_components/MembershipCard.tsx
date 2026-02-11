@@ -41,9 +41,9 @@ export function MembershipCard(props: MembershipCardProps) {
     fragment,
     fKey,
   );
-  const isAssuming = !!lastSession;
   const isExpired
     = lastSession && parseDate(lastSession.expiresAt) < new Date();
+  const isAssuming = !!lastSession && !isExpired;
 
   const getAuthBadge = () => {
     if (isAssuming) {

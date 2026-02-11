@@ -70,7 +70,7 @@ function AssumePageInner() {
             search.set("organization-id", organizationId);
             search.set("redirect-path", redirectPath);
 
-            void navigate({ pathname: "/auth/passord-login", search: "?" + search.toString() });
+            void navigate({ pathname: "/auth/password-login", search: "?" + search.toString() });
             break;
           case "SAMLAuthenticationRequired":
             samlSSOLoginURL = new URL(result.redirectUrl);
