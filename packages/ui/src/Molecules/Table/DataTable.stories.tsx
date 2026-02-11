@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { fn } from "@storybook/test";
 import { type FC, Fragment, useState } from "react";
+import { fn } from "storybook/test";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 import { CellHead, DataTable, Row } from "../../Atoms/DataTable/DataTable";
