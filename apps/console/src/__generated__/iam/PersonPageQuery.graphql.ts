@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<10ec7c14d725880998dcd5ba2b99004e>>
+ * @generated SignedSource<<a809c0ce9c8f1fdb68a0b2835be99b05>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,11 +10,11 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type UserPageQuery$variables = {
-  userId: string;
+export type PersonPageQuery$variables = {
+  personId: string;
 };
-export type UserPageQuery$data = {
-  readonly user: {
+export type PersonPageQuery$data = {
+  readonly person: {
     readonly __typename: "MembershipProfile";
     readonly canDelete: boolean;
     readonly fullName: string;
@@ -22,16 +22,16 @@ export type UserPageQuery$data = {
       readonly email: string;
     };
     readonly membershipId: string;
-    readonly " $fragmentSpreads": FragmentRefs<"UserFormFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"PersonFormFragment">;
   } | {
     // This will never be '%other', but we need some
     // value in case none of the concrete values match.
     readonly __typename: "%other";
   };
 };
-export type UserPageQuery = {
-  response: UserPageQuery$data;
-  variables: UserPageQuery$variables;
+export type PersonPageQuery = {
+  response: PersonPageQuery$data;
+  variables: PersonPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -39,14 +39,14 @@ var v0 = [
   {
     "defaultValue": null,
     "kind": "LocalArgument",
-    "name": "userId"
+    "name": "personId"
   }
 ],
 v1 = [
   {
     "kind": "Variable",
     "name": "id",
-    "variableName": "userId"
+    "variableName": "personId"
   }
 ],
 v2 = {
@@ -102,12 +102,12 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "UserPageQuery",
+    "name": "PersonPageQuery",
     "selections": [
       {
         "kind": "RequiredField",
         "field": {
-          "alias": "user",
+          "alias": "person",
           "args": (v1/*: any*/),
           "concreteType": null,
           "kind": "LinkedField",
@@ -140,7 +140,7 @@ return {
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "UserFormFragment"
+                  "name": "PersonFormFragment"
                 }
               ],
               "type": "MembershipProfile",
@@ -159,10 +159,10 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "UserPageQuery",
+    "name": "PersonPageQuery",
     "selections": [
       {
-        "alias": "user",
+        "alias": "person",
         "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
@@ -248,16 +248,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9d437c761ed1795dde80f30a63e400fc",
+    "cacheID": "f754630a84c19798f2b0611dba4c6603",
     "id": null,
     "metadata": {},
-    "name": "UserPageQuery",
+    "name": "PersonPageQuery",
     "operationKind": "query",
-    "text": "query UserPageQuery(\n  $userId: ID!\n) {\n  user: node(id: $userId) {\n    __typename\n    ... on MembershipProfile {\n      fullName\n      membershipId\n      identity {\n        email\n        id\n      }\n      canDelete: permission(action: \"iam:membership-profile:delete\")\n      ...UserFormFragment\n    }\n    id\n  }\n}\n\nfragment UserFormFragment on MembershipProfile {\n  id\n  fullName\n  kind\n  position\n  additionalEmailAddresses\n  contractStartDate\n  contractEndDate\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
+    "text": "query PersonPageQuery(\n  $personId: ID!\n) {\n  person: node(id: $personId) {\n    __typename\n    ... on MembershipProfile {\n      fullName\n      membershipId\n      identity {\n        email\n        id\n      }\n      canDelete: permission(action: \"iam:membership-profile:delete\")\n      ...PersonFormFragment\n    }\n    id\n  }\n}\n\nfragment PersonFormFragment on MembershipProfile {\n  id\n  fullName\n  kind\n  position\n  additionalEmailAddresses\n  contractStartDate\n  contractEndDate\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7711b4e7a7463f0134a47017f3e65aca";
+(node as any).hash = "d701ae3a51eb1fed62aec260f42b3c41";
 
 export default node;

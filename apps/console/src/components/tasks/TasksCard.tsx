@@ -262,7 +262,7 @@ function TaskRow(props: TaskRowProps) {
           <div className="text-sm text-txt-secondary ml-auto mr-8">
             <Link
               className="hover:underline"
-              to={`/organizations/${organizationId}/users/${task.assignedTo.id}`}
+              to={`/organizations/${organizationId}/people/${task.assignedTo.id}`}
             >
               {task.assignedTo.fullName}
             </Link>

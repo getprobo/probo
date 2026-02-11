@@ -5,15 +5,15 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { UserPageQuery } from "#/__generated__/iam/UserPageQuery.graphql";
+import type { PersonPageQuery } from "#/__generated__/iam/PersonPageQuery.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { UserForm } from "./_components/UserForm";
+import { PersonForm } from "./_components/PersonForm";
 
-export const userPageQuery = graphql`
-  query UserPageQuery($userId: ID!) {
-    user: node(id: $userId) @required(action: THROW) {
+export const personPageQuery = graphql`
+  query PersonPageQuery($personId: ID!) {
+    person: node(id: $personId) @required(action: THROW) {
       __typename
       ... on MembershipProfile {
         fullName
@@ -22,14 +22,14 @@ export const userPageQuery = graphql`
           email
         }
         canDelete: permission(action: "iam:membership-profile:delete")
-        ...UserFormFragment
+        ...PersonFormFragment
       }
     }
   }
 `;
 
 const removeMemberMutation = graphql`
-  mutation UserPage_removeMutation(
+  mutation PersonPage_removeMutation(
     $input: RemoveMemberInput!
   ) {
     removeMember(input: $input) {
@@ -38,7 +38,7 @@ const removeMemberMutation = graphql`
   }
 `;
 
-export function UserPage(props: { queryRef: PreloadedQuery<UserPageQuery> }) {
+export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> }) {
   const { queryRef } = props;
 
   const organizationId = useOrganizationId();
@@ -46,8 +46,8 @@ export function UserPage(props: { queryRef: PreloadedQuery<UserPageQuery> }) {
   const confirm = useConfirm();
   const navigate = useNavigate();
 
-  const { user } = usePreloadedQuery<UserPageQuery>(userPageQuery, queryRef);
-  if (user.__typename !== "MembershipProfile") {
+  const { person } = usePreloadedQuery<PersonPageQuery>(personPageQuery, queryRef);
+  if (person.__typename !== "MembershipProfile") {
     throw new Error("invalid type for node");
   }
 
@@ -65,19 +65,19 @@ export function UserPage(props: { queryRef: PreloadedQuery<UserPageQuery> }) {
         return removeMembership({
           variables: {
             input: {
-              membershipId: user.membershipId,
+              membershipId: person.membershipId,
               organizationId: organizationId,
             },
           },
           onCompleted: () => {
-            void navigate(`/organizations/${organizationId}/users`);
+            void navigate(`/organizations/${organizationId}/people`);
           },
         });
       },
       {
         message: sprintf(
           __("Are you sure you want to remove %s?"),
-          user.fullName,
+          person.fullName,
         ),
       },
     );
@@ -89,23 +89,23 @@ export function UserPage(props: { queryRef: PreloadedQuery<UserPageQuery> }) {
         items={[
           {
             label: __("People"),
-            to: `/organizations/${organizationId}/users`,
+            to: `/organizations/${organizationId}/people`,
           },
           {
-            label: user.fullName,
+            label: person.fullName,
           },
         ]}
       />
       <div className="flex justify-between">
         <div className="flex items-center gap-6">
-          <Avatar name={user.fullName} size="xl" />
+          <Avatar name={person.fullName} size="xl" />
           <div>
 
-            <div className="text-2xl">{user.fullName}</div>
-            <div className="text-lg text-txt-secondary">{user.identity.email}</div>
+            <div className="text-2xl">{person.fullName}</div>
+            <div className="text-lg text-txt-secondary">{person.identity.email}</div>
           </div>
         </div>
-        {user.canDelete && (
+        {person.canDelete && (
           <ActionDropdown variant="secondary">
             <DropdownItem
               variant="danger"
@@ -119,7 +119,7 @@ export function UserPage(props: { queryRef: PreloadedQuery<UserPageQuery> }) {
         )}
       </div>
 
-      <UserForm fragmentRef={user} />
+      <PersonForm fragmentRef={person} />
     </div>
   );
 };

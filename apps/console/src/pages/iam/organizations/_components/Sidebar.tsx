@@ -110,7 +110,7 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
         <SidebarItem
           label={__("People")}
           icon={IconGroup1}
-          to={`${prefix}/users`}
+          to={`${prefix}/people`}
         />
       )}
       {organization.canListVendors && (

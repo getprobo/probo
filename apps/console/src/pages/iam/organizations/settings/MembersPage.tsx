@@ -73,7 +73,7 @@ export function MembersPage(props: {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium">{__("People")}</h2>
+        <h2 className="text-base font-medium">{__("Members")}</h2>
         {organization.canInviteUser && (
           <InviteUserDialog
             connectionId={invitationListConnectionId}

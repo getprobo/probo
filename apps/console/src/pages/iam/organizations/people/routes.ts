@@ -2,18 +2,18 @@ import { lazy } from "@probo/react-lazy";
 
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 
-export const userRoutes = [
+export const peopleRoutes = [
   {
-    path: "users",
+    path: "people",
     children: [
       {
         index: true,
-        Component: lazy(() => import("#/pages/iam/organizations/users/MembersPageLoader")),
+        Component: lazy(() => import("#/pages/iam/organizations/people/PeoplePageLoader")),
         Fallback: LinkCardSkeleton,
       },
       {
-        path: ":userId",
-        Component: lazy(() => import("#/pages/iam/organizations/users/UserPageLoader")),
+        path: ":personId",
+        Component: lazy(() => import("#/pages/iam/organizations/people/PersonPageLoader")),
         Fallback: LinkCardSkeleton,
       },
     ],

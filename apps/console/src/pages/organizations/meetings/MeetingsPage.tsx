@@ -348,7 +348,7 @@ function MeetingRow({
                   <div key={attendee.id} className="flex gap-2 items-center">
                     <Avatar name={attendee.fullName ?? ""} />
                     <Link
-                      to={`/organizations/${organizationId}/users/${attendee.id}`}
+                      to={`/organizations/${organizationId}/people/${attendee.id}`}
                       onClick={(e) => {
                         e.stopPropagation();
                       }}

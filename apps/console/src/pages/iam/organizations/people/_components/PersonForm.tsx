@@ -5,15 +5,15 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { UserFormFragment$key } from "#/__generated__/iam/UserFormFragment.graphql";
-import type { UserFormMutation } from "#/__generated__/iam/UserFormMutation.graphql";
+import type { PersonFormFragment$key } from "#/__generated__/iam/PersonFormFragment.graphql";
+import type { PersonFormMutation } from "#/__generated__/iam/PersonFormMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { EmailsField } from "#/components/form/EmailsField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const fragment = graphql`
-  fragment UserFormFragment on MembershipProfile {
+  fragment PersonFormFragment on MembershipProfile {
     id
     fullName
     kind
@@ -25,8 +25,8 @@ const fragment = graphql`
   }
 `;
 
-const updateUserMutation = graphql`
-  mutation UserFormMutation($input: UpdateProfileInput!) {
+const updatePersonMutation = graphql`
+  mutation PersonFormMutation($input: UpdateProfileInput!) {
     updateProfile(input: $input) {
       profile {
         id
@@ -48,26 +48,26 @@ const schema = z.object({
   contractEndDate: z.string().optional().nullable(),
 });
 
-export function UserForm(props: { fragmentRef: UserFormFragment$key }) {
+export function PersonForm(props: { fragmentRef: PersonFormFragment$key }) {
   const { fragmentRef } = props;
 
   const { __ } = useTranslate();
 
-  const user = useFragment<UserFormFragment$key>(fragment, fragmentRef);
+  const person = useFragment<PersonFormFragment$key>(fragment, fragmentRef);
 
   const { control, formState, handleSubmit, register, reset }
     = useFormWithSchema(schema, {
       defaultValues: {
-        kind: user.kind,
-        fullName: user.fullName,
-        position: user.position,
-        additionalEmailAddresses: [...user.additionalEmailAddresses],
-        contractStartDate: user.contractStartDate?.split("T")[0] || "",
-        contractEndDate: user.contractEndDate?.split("T")[0] || "",
+        kind: person.kind,
+        fullName: person.fullName,
+        position: person.position,
+        additionalEmailAddresses: [...person.additionalEmailAddresses],
+        contractStartDate: person.contractStartDate?.split("T")[0] || "",
+        contractEndDate: person.contractEndDate?.split("T")[0] || "",
       },
     });
-  const [mutate, isMutating] = useMutationWithToasts<UserFormMutation>(
-    updateUserMutation,
+  const [mutate, isMutating] = useMutationWithToasts<PersonFormMutation>(
+    updatePersonMutation,
     {
       successMessage: __("Member updated successfully."),
       errorMessage: __("Failed to update member"),
@@ -75,7 +75,7 @@ export function UserForm(props: { fragmentRef: UserFormFragment$key }) {
   );
   const onSubmit = handleSubmit(async (data: z.infer<typeof schema>) => {
     const input = {
-      id: user.id,
+      id: person.id,
       fullName: data.fullName,
       additionalEmailAddresses: data.additionalEmailAddresses,
       kind: data.kind,
@@ -101,7 +101,7 @@ export function UserForm(props: { fragmentRef: UserFormFragment$key }) {
           name="kind"
           type="select"
           label={__("Type")}
-          disabled={!user.canUpdate}
+          disabled={!person.canUpdate}
         >
           {getRoles(__).map(role => (
             <Option key={role.value} value={role.value}>
@@ -114,26 +114,26 @@ export function UserForm(props: { fragmentRef: UserFormFragment$key }) {
           {...register("position")}
           type="text"
           placeholder={__("e.g. CEO, CFO, etc.")}
-          disabled={!user.canUpdate}
+          disabled={!person.canUpdate}
         />
         <EmailsField control={control} register={register} />
         <Field label={__("Contract start date")}>
           <Input
             {...register("contractStartDate")}
             type="date"
-            disabled={!user.canUpdate}
+            disabled={!person.canUpdate}
           />
         </Field>
         <Field label={__("Contract end date")}>
           <Input
             {...register("contractEndDate")}
             type="date"
-            disabled={!user.canUpdate}
+            disabled={!person.canUpdate}
           />
         </Field>
       </Card>
       <div className="flex justify-end">
-        {formState.isDirty && user.canUpdate && (
+        {formState.isDirty && person.canUpdate && (
           <Button type="submit" disabled={isMutating}>
             {__("Update")}
           </Button>

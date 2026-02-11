@@ -14,6 +14,7 @@ import { use, useState } from "react";
 import { graphql } from "relay-runtime";
 
 import type { MemberListItemFragment$data } from "#/__generated__/iam/MemberListItemFragment.graphql";
+import type { PeopleListItemFragment$data } from "#/__generated__/iam/PeopleListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
@@ -30,7 +31,7 @@ const updateMembershipMutation = graphql`
 `;
 
 export function EditMemberDialog(props: {
-  membership: MemberListItemFragment$data;
+  membership: MemberListItemFragment$data | PeopleListItemFragment$data;
   onClose: () => void;
 }) {
   const { membership, onClose } = props;
@@ -66,7 +67,7 @@ export function EditMemberDialog(props: {
   };
 
   return (
-    <Dialog defaultOpen={true} onClose={onClose} title={__("Edit Member Role")}>
+    <Dialog defaultOpen={true} onClose={onClose} title={__("Edit Profile")}>
       <form onSubmit={e => void handleUpdateRole(e)}>
         <DialogContent padded className="space-y-6">
           <div>

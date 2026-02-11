@@ -140,7 +140,7 @@ export default function MeetingDetailPage(props: Props) {
               <div key={attendee.id} className="flex gap-2 items-center">
                 <Avatar name={attendee.fullName ?? ""} />
                 <Link
-                  to={`/organizations/${organizationId}/users/${attendee.id}`}
+                  to={`/organizations/${organizationId}/people/${attendee.id}`}
                   className="text-sm hover:underline"
                 >
                   {attendee.fullName}

@@ -15,14 +15,14 @@ import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { MemberListItemFragment$key } from "#/__generated__/iam/MemberListItemFragment.graphql";
+import type { PeopleListItemFragment$key } from "#/__generated__/iam/PeopleListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { EditMemberDialog } from "../../settings/_components/EditMemberDialog";
 
 const fragment = graphql`
-  fragment MemberListItemFragment on Membership {
+  fragment PeopleListItemFragment on Membership {
     id
     role
     source
@@ -43,7 +43,7 @@ const fragment = graphql`
 `;
 
 const removeMemberMutation = graphql`
-  mutation MemberListItem_removeMutation(
+  mutation PeopleListItem_removeMutation(
     $input: RemoveMemberInput!
     $connections: [ID!]!
   ) {
@@ -55,7 +55,7 @@ const removeMemberMutation = graphql`
 
 export function MemberListItem(props: {
   connectionId: string;
-  fKey: MemberListItemFragment$key;
+  fKey: PeopleListItemFragment$key;
   onRefetch: () => void;
 }) {
   const { fKey, connectionId } = props;
@@ -65,7 +65,7 @@ export function MemberListItem(props: {
   const confirm = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const membership = useFragment<MemberListItemFragment$key>(fragment, fKey);
+  const membership = useFragment<PeopleListItemFragment$key>(fragment, fKey);
 
   const isInactive = membership.state === "INACTIVE";
 
@@ -106,7 +106,7 @@ export function MemberListItem(props: {
           isRemoving && "opacity-60 pointer-events-none",
           isInactive && "opacity-50",
         )}
-        to={`/organizations/${organizationId}/users/${membership.profile.id}`}
+        to={`/organizations/${organizationId}/people/${membership.profile.id}`}
       >
         <Td>
           <div className="flex items-center gap-2">

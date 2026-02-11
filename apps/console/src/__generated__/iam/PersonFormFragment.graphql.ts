@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a74d82c45ea0f57774194b3acb02227e>>
+ * @generated SignedSource<<1deba62d68487df7458534fef4bed9ff>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 import { FragmentRefs } from "relay-runtime";
-export type UserFormFragment$data = {
+export type PersonFormFragment$data = {
   readonly additionalEmailAddresses: ReadonlyArray<string>;
   readonly canUpdate: boolean;
   readonly contractEndDate: string | null | undefined;
@@ -20,18 +20,18 @@ export type UserFormFragment$data = {
   readonly id: string;
   readonly kind: ProfileKind;
   readonly position: string | null | undefined;
-  readonly " $fragmentType": "UserFormFragment";
+  readonly " $fragmentType": "PersonFormFragment";
 };
-export type UserFormFragment$key = {
-  readonly " $data"?: UserFormFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"UserFormFragment">;
+export type PersonFormFragment$key = {
+  readonly " $data"?: PersonFormFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"PersonFormFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "UserFormFragment",
+  "name": "PersonFormFragment",
   "selections": [
     {
       "alias": null,
@@ -100,6 +100,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "b7c1eb9f3703338d5d0fb4c5411bf2eb";
+(node as any).hash = "ba9398e81e237b983ce37f05436439ee";
 
 export default node;
