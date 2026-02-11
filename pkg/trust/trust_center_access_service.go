@@ -148,7 +148,7 @@ func (s TrustCenterAccessService) Request(
 					TrustCenterID:                     req.TrustCenterID,
 					Email:                             req.Email,
 					Name:                              req.FullName,
-					State:                             coredata.TrustCenterAccessStateInactive,
+					State:                             coredata.TrustCenterAccessStateActive,
 					HasAcceptedNonDisclosureAgreement: false,
 					CreatedAt:                         now,
 					UpdatedAt:                         now,
