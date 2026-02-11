@@ -107,7 +107,7 @@ func (s *Service) GenerateSpMetadata() ([]byte, error) {
 func (s *Service) InitiateLogin(
 	ctx context.Context,
 	configID gid.GID,
-	redirectPath string,
+	continuePath string,
 ) (*url.URL, error) {
 	var (
 		now           = time.Now()
@@ -153,7 +153,7 @@ func (s *Service) InitiateLogin(
 				return fmt.Errorf("cannot insert SAML request: %w", err)
 			}
 
-			relayState := config.ID.String() + redirectPath
+			relayState := config.ID.String() + url.QueryEscape(continuePath)
 
 			redirect, err = req.Redirect(relayState, sp)
 			if err != nil {

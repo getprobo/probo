@@ -406,6 +406,9 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		}
 	}
 
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
+	r.sessionCookie.Set(w, session)
+
 	if input.OrganizationID != nil {
 		var err error
 		_, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
@@ -415,16 +418,13 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			var errMembershipInactive *iam.ErrMembershipInactive
 
 			if errors.As(err, &errMembershipNotFound) || errors.As(err, &errMembershipInactive) {
-				return nil, gqlutils.Forbidden(ctx, err)
+				return nil, gqlutils.Forbiddenf(ctx, "forbidden")
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot assume organization", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
 	}
-
-	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	r.sessionCookie.Set(w, session)
 
 	return &types.SignInPayload{
 		Identity: types.NewIdentity(identity),
@@ -680,7 +680,7 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input types.AssumeOrganizationSessionInput) (*types.AssumeOrganizationSessionPayload, error) {
 	rootSession := authn.SessionFromContext(ctx)
 
-	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID, input.RedirectPath)
+	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID, input.Continue)
 	if err != nil {
 		var (
 			errMembershipNotFound         *iam.ErrMembershipNotFound

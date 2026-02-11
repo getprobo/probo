@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -21,7 +21,6 @@ const signInMutation = graphql`
 export default function PasswordSignInPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -56,10 +55,11 @@ export default function PasswordSignInPage() {
             ),
             variant: "error",
           });
+          window.location.href = "/";
           return;
         }
 
-        void navigate(searchParams.get("redirect-path") ?? "/");
+        window.location.href = searchParams.get("continue") ?? window.location.origin;
       },
       onError: (e) => {
         toast({
@@ -67,6 +67,7 @@ export default function PasswordSignInPage() {
           description: e.message,
           variant: "error",
         });
+        window.location.href = "/";
       },
     });
   };

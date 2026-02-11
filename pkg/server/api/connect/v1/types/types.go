@@ -36,7 +36,7 @@ type AcceptInvitationPayload struct {
 
 type AssumeOrganizationSessionInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
-	RedirectPath   string  `json:"redirectPath"`
+	Continue       string  `json:"continue"`
 }
 
 type AssumeOrganizationSessionPayload struct {
@@ -416,7 +416,7 @@ type SCIMBridge struct {
 	ScimConfiguration *SCIMConfiguration       `json:"scimConfiguration,omitempty"`
 	Connector         *Connector               `json:"connector,omitempty"`
 	Type              coredata.SCIMBridgeType  `json:"type"`
-	ExcludedUserNames     []string                 `json:"excludedUserNames"`
+	ExcludedUserNames []string                 `json:"excludedUserNames"`
 	CreatedAt         time.Time                `json:"createdAt"`
 	UpdatedAt         time.Time                `json:"updatedAt"`
 	Permission        bool                     `json:"permission"`
@@ -561,9 +561,9 @@ type UpdateSAMLConfigurationPayload struct {
 }
 
 type UpdateSCIMBridgeInput struct {
-	OrganizationID gid.GID  `json:"organizationId"`
-	ScimBridgeID   gid.GID  `json:"scimBridgeId"`
-	ExcludedUserNames  []string `json:"excludedUserNames"`
+	OrganizationID    gid.GID  `json:"organizationId"`
+	ScimBridgeID      gid.GID  `json:"scimBridgeId"`
+	ExcludedUserNames []string `json:"excludedUserNames"`
 }
 
 type UpdateSCIMBridgePayload struct {

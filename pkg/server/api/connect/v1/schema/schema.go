@@ -246,7 +246,7 @@ type ComplexityRoot struct {
 		UpdateMembership                 func(childComplexity int, input types.UpdateMembershipInput) int
 		UpdateOrganization               func(childComplexity int, input types.UpdateOrganizationInput) int
 		UpdateSAMLConfiguration          func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
-		UpdateSCIMBridge    func(childComplexity int, input types.UpdateSCIMBridgeInput) int
+		UpdateSCIMBridge                 func(childComplexity int, input types.UpdateSCIMBridgeInput) int
 		VerifyEmail                      func(childComplexity int, input types.VerifyEmailInput) int
 	}
 
@@ -380,7 +380,7 @@ type ComplexityRoot struct {
 	SCIMBridge struct {
 		Connector         func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
-		ExcludedUserNames     func(childComplexity int) int
+		ExcludedUserNames func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Permission        func(childComplexity int, action string) int
 		ScimConfiguration func(childComplexity int) int
@@ -3111,7 +3111,7 @@ input ChangeEmailInput {
 
 input AssumeOrganizationSessionInput {
   organizationId: ID!
-  redirectPath: String!
+  continue: String!
 }
 
 input RevokeSessionInput {
@@ -14931,7 +14931,7 @@ func (ec *executionContext) unmarshalInputAssumeOrganizationSessionInput(ctx con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "redirectPath"}
+	fieldsInOrder := [...]string{"organizationId", "continue"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14945,13 +14945,13 @@ func (ec *executionContext) unmarshalInputAssumeOrganizationSessionInput(ctx con
 				return it, err
 			}
 			it.OrganizationID = data
-		case "redirectPath":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("redirectPath"))
+		case "continue":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("continue"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.RedirectPath = data
+			it.Continue = data
 		}
 	}
 

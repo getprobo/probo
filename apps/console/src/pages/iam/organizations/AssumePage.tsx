@@ -38,18 +38,18 @@ function AssumePageInner() {
 
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
 
-  const redirectPath = searchParams.get("redirect-path") ?? `/organizations/${organizationId}`;
+  const continueUrl = searchParams.get("continue") ?? new URL(`/organizations/${organizationId}`, window.location.origin).toString();
 
   useEffect(() => {
     assumeOrganizationSession({
       variables: {
-        input: { organizationId, redirectPath },
+        input: { organizationId, continue: continueUrl },
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
           const search = new URLSearchParams([
             ["organization-id", organizationId],
-            ["redirect-path", redirectPath],
+            ["continue", continueUrl],
           ]);
 
           void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
@@ -68,7 +68,7 @@ function AssumePageInner() {
         switch (result.__typename) {
           case "PasswordRequired":
             search.set("organization-id", organizationId);
-            search.set("redirect-path", redirectPath);
+            search.set("continue", continueUrl);
 
             void navigate({ pathname: "/auth/password-login", search: "?" + search.toString() });
             break;
@@ -79,11 +79,11 @@ function AssumePageInner() {
             window.location.href = samlSSOLoginURL.toString();
             break;
           default:
-            void navigate(redirectPath);
+            window.location.href = continueUrl;
         }
       },
     });
-  }, [organizationId, navigate, assumeOrganizationSession, redirectPath, searchParams]);
+  }, [organizationId, navigate, assumeOrganizationSession, continueUrl, searchParams]);
 
   return (
     <AuthLayout>

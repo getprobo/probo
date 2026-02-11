@@ -130,7 +130,7 @@ function NavigateToSSOLoginURL(props: {
     }
 
     const url = new URL(ssoLoginURL.value);
-    url.search = "?" + searchParams.toString();
+    url.search = searchParams.toString();
 
     window.location.href = url.toString();
   }, [__, navigate, ssoLoginURL, toast, searchParams]);

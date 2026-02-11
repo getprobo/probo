@@ -491,7 +491,7 @@ func (s SessionService) AssumeOrganizationSession(
 	ctx context.Context,
 	sessionID gid.GID,
 	organizationID gid.GID,
-	redirectPath string,
+	continueURL string,
 ) (*coredata.Session, *coredata.Membership, error) {
 	var (
 		now          = time.Now()
@@ -549,7 +549,7 @@ func (s SessionService) AssumeOrganizationSession(
 
 			if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyRequired {
 				if rootSession.AuthMethod != coredata.AuthMethodSAML {
-					redirectURL, err := s.SAMLService.InitiateLogin(ctx, samlConfig.ID, redirectPath)
+					redirectURL, err := s.SAMLService.InitiateLogin(ctx, samlConfig.ID, continueURL)
 					if err != nil {
 						return fmt.Errorf("cannot initiate SAML login: %w", err)
 					}
