@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   github-release:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-24.04-64cores"
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
       image-digest: ${{ steps.image.outputs.digest }}
@@ -149,7 +149,7 @@ jobs:
           retention-days: 30
 
   npm-release:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-24.04-64cores"
     permissions:
       contents: read
       id-token: write
