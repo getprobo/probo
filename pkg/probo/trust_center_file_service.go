@@ -28,7 +28,6 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
@@ -37,7 +36,7 @@ import (
 type (
 	TrustCenterFileService struct {
 		svc           *TenantService
-		fileValidator *filevalidation.FileValidator
+		fileValidator *validator.FileValidator
 	}
 
 	CreateTrustCenterFileRequest struct {

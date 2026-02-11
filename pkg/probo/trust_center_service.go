@@ -30,7 +30,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -82,9 +81,9 @@ func (utcndar *UploadTrustCenterNDARequest) Validate() error {
 }
 
 func (req *UpdateTrustCenterBrandRequest) Validate() error {
-	fv := filevalidation.NewValidator(
-		filevalidation.WithCategories(filevalidation.CategoryImage),
-		filevalidation.WithMaxFileSize(maxBrandFileSize),
+	fv := validator.NewFileValidator(
+		validator.WithCategories(validator.CategoryImage),
+		validator.WithMaxFileSize(maxBrandFileSize),
 	)
 
 	if req.LogoFile != nil && *req.LogoFile != nil {

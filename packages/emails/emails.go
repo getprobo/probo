@@ -31,7 +31,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 //go:embed dist
@@ -41,11 +41,11 @@ var (
 	//go:embed assets
 	staticAssets embed.FS
 
-	staticAssetsValidator = filevalidation.NewValidator(
-		filevalidation.WithMaxFileSize(5*1024*1024),
-		filevalidation.WithCategories(
-			filevalidation.CategoryImage,
-			filevalidation.CategoryVideo,
+	staticAssetsValidator = validator.NewFileValidator(
+		validator.WithMaxFileSize(5*1024*1024),
+		validator.WithCategories(
+			validator.CategoryImage,
+			validator.CategoryVideo,
 		),
 	)
 

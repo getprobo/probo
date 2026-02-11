@@ -12,15 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package filevalidation
+package validator
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
 
-func TestNewValidator(t *testing.T) {
+func TestNewFileValidator(t *testing.T) {
 	tests := []struct {
 		name           string
 		categories     []string
@@ -60,7 +59,7 @@ func TestNewValidator(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			v := NewValidator(WithCategories(tc.categories...))
+			v := NewFileValidator(WithCategories(tc.categories...))
 
 			// Test expected mime types are allowed
 			for _, mime := range tc.expectedMimes {
@@ -95,15 +94,15 @@ func TestNewValidator(t *testing.T) {
 }
 
 func TestWithMaxFileSize(t *testing.T) {
-	v := NewValidator()
+	v := NewFileValidator()
 	originalSize := v.MaxFileSize
 
 	// Test changing the max file size
 	newSize := int64(10 * 1024 * 1024) // 10MB
-	v = v.WithMaxFileSize(newSize)
+	v = v.SetMaxFileSize(newSize)
 
 	if v.MaxFileSize != newSize {
-		t.Errorf("Expected max file size to be %d after WithMaxFileSize, got %d", newSize, v.MaxFileSize)
+		t.Errorf("Expected max file size to be %d after SetMaxFileSize, got %d", newSize, v.MaxFileSize)
 	}
 
 	if originalSize == v.MaxFileSize {
@@ -111,7 +110,7 @@ func TestWithMaxFileSize(t *testing.T) {
 	}
 }
 
-func TestValidate(t *testing.T) {
+func TestValidateFile(t *testing.T) {
 	tests := []struct {
 		name        string
 		validator   *FileValidator
@@ -123,7 +122,7 @@ func TestValidate(t *testing.T) {
 	}{
 		{
 			name:        "Valid PDF file",
-			validator:   NewValidator(WithCategories(CategoryDocument)),
+			validator:   NewFileValidator(WithCategories(CategoryDocument)),
 			filename:    "test.pdf",
 			contentType: "application/pdf",
 			fileSize:    1024 * 1024, // 1MB
@@ -131,7 +130,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "File too large",
-			validator:   NewValidator(WithCategories(CategoryDocument)).WithMaxFileSize(1024 * 1024), // 1MB max
+			validator:   NewFileValidator(WithCategories(CategoryDocument)).SetMaxFileSize(1024 * 1024), // 1MB max
 			filename:    "test.pdf",
 			contentType: "application/pdf",
 			fileSize:    2 * 1024 * 1024, // 2MB
@@ -140,7 +139,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Disallowed content type",
-			validator:   NewValidator(WithCategories(CategoryDocument)),
+			validator:   NewFileValidator(WithCategories(CategoryDocument)),
 			filename:    "test.jpg",
 			contentType: "image/jpeg",
 			fileSize:    1024 * 1024,
@@ -149,7 +148,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Missing file extension",
-			validator:   NewValidator(WithCategories(CategoryDocument)),
+			validator:   NewFileValidator(WithCategories(CategoryDocument)),
 			filename:    "testfile",
 			contentType: "application/pdf",
 			fileSize:    1024,
@@ -158,7 +157,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Disallowed file extension",
-			validator:   NewValidator(WithCategories(CategoryDocument)),
+			validator:   NewFileValidator(WithCategories(CategoryDocument)),
 			filename:    "test.exe",
 			contentType: "application/octet-stream",
 			fileSize:    1024,
@@ -167,7 +166,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Content type doesn't match extension",
-			validator:   NewValidator(WithCategories(CategoryImage, CategoryDocument)),
+			validator:   NewFileValidator(WithCategories(CategoryImage, CategoryDocument)),
 			filename:    "test.pdf",
 			contentType: "image/jpeg",
 			fileSize:    1024,
@@ -176,7 +175,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Valid image file",
-			validator:   NewValidator(WithCategories(CategoryImage)),
+			validator:   NewFileValidator(WithCategories(CategoryImage)),
 			filename:    "test.jpg",
 			contentType: "image/jpeg",
 			fileSize:    1024 * 1024,
@@ -184,7 +183,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Valid with multiple categories",
-			validator:   NewValidator(WithCategories(CategoryImage, CategoryDocument)),
+			validator:   NewFileValidator(WithCategories(CategoryImage, CategoryDocument)),
 			filename:    "test.jpg",
 			contentType: "image/jpeg",
 			fileSize:    1024 * 1024,
@@ -213,7 +212,7 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-func TestValidateEdgeCases(t *testing.T) {
+func TestValidateFileEdgeCases(t *testing.T) {
 	tests := []struct {
 		name        string
 		validator   *FileValidator
@@ -225,7 +224,7 @@ func TestValidateEdgeCases(t *testing.T) {
 	}{
 		{
 			name:        "Zero file size",
-			validator:   NewValidator(WithCategories(CategoryText)),
+			validator:   NewFileValidator(WithCategories(CategoryText)),
 			filename:    "empty.txt",
 			contentType: "text/plain",
 			fileSize:    0,
@@ -234,7 +233,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "Exact max file size",
-			validator:   NewValidator(WithCategories(CategoryText)).WithMaxFileSize(1024),
+			validator:   NewFileValidator(WithCategories(CategoryText)).SetMaxFileSize(1024),
 			filename:    "exact.txt",
 			contentType: "text/plain",
 			fileSize:    1024,
@@ -242,7 +241,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "File with uppercase extension",
-			validator:   NewValidator(WithCategories(CategoryDocument)),
+			validator:   NewFileValidator(WithCategories(CategoryDocument)),
 			filename:    "test.PDF",
 			contentType: "application/pdf",
 			fileSize:    1024,
@@ -250,7 +249,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "File with multiple extensions",
-			validator:   NewValidator(),
+			validator:   NewFileValidator(),
 			filename:    "test.tar.gz",
 			contentType: "application/gzip",
 			fileSize:    1024,
@@ -259,7 +258,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "Empty filename",
-			validator:   NewValidator(WithCategories(CategoryText)),
+			validator:   NewFileValidator(WithCategories(CategoryText)),
 			filename:    "",
 			contentType: "text/plain",
 			fileSize:    1024,
@@ -268,7 +267,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "Empty content type",
-			validator:   NewValidator(WithCategories(CategoryText)),
+			validator:   NewFileValidator(WithCategories(CategoryText)),
 			filename:    "test.txt",
 			contentType: "",
 			fileSize:    1024,
@@ -316,7 +315,7 @@ func TestFileCategories(t *testing.T) {
 
 	for _, tc := range categoryTests {
 		t.Run(tc.category, func(t *testing.T) {
-			v := NewValidator(WithCategories(tc.category))
+			v := NewFileValidator(WithCategories(tc.category))
 
 			// Test that the validator accepts files of this category
 			err := v.Validate("test"+tc.validExt, tc.validMimeType, 1024)
@@ -373,16 +372,11 @@ func TestFileTypes(t *testing.T) {
 	}
 }
 
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return strings.Contains(s, substr)
-}
-
 func TestMultipleExtensionsPerMimeType(t *testing.T) {
 	// Test MIME types that have multiple allowed extensions
 	for _, fileType := range FileTypes {
 		if len(fileType.Extensions) > 1 {
-			v := NewValidator(WithCategories(fileType.Category))
+			v := NewFileValidator(WithCategories(fileType.Category))
 
 			// All extensions for this MIME type should be valid
 			for _, ext := range fileType.Extensions {
@@ -408,7 +402,7 @@ func TestExtensionsWithMultipleMimeTypes(t *testing.T) {
 	// Find extensions that have multiple MIME types
 	for ext, mimeTypes := range extToMimes {
 		if len(mimeTypes) > 1 {
-			v := NewValidator(
+			v := NewFileValidator(
 				WithCategories(
 					CategoryData,
 					CategoryDocument,
@@ -432,9 +426,9 @@ func TestExtensionsWithMultipleMimeTypes(t *testing.T) {
 	}
 }
 
-// BenchmarkValidate benchmarks the Validate function
-func BenchmarkValidate(b *testing.B) {
-	v := NewValidator(WithCategories(CategoryDocument))
+// BenchmarkValidateFile benchmarks the Validate function
+func BenchmarkValidateFile(b *testing.B) {
+	v := NewFileValidator(WithCategories(CategoryDocument))
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -442,36 +436,10 @@ func BenchmarkValidate(b *testing.B) {
 	}
 }
 
-// BenchmarkNewValidator benchmarks the NewValidator function
-func BenchmarkNewValidator(b *testing.B) {
+// BenchmarkNewFileValidator benchmarks the NewFileValidator function
+func BenchmarkNewFileValidator(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = NewValidator(WithCategories(CategoryDocument, CategoryImage))
-	}
-}
-
-// TestUtilFunctions tests utility functions
-func TestUtilFunctions(t *testing.T) {
-	// Test contains function
-	testCases := []struct {
-		str      string
-		substr   string
-		expected bool
-	}{
-		{"hello world", "hello", true},
-		{"hello world", "world", true},
-		{"hello world", "goodbye", false},
-		{"hello world", "", true}, // Empty string is always contained
-		{"", "hello", false},      // Empty string contains nothing except empty string
-		{"", "", true},            // Empty string contains empty string
-	}
-
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("contains(%q,%q)", tc.str, tc.substr), func(t *testing.T) {
-			result := contains(tc.str, tc.substr)
-			if result != tc.expected {
-				t.Errorf("contains(%q,%q) = %v; want %v", tc.str, tc.substr, result, tc.expected)
-			}
-		})
+		_ = NewFileValidator(WithCategories(CategoryDocument, CategoryImage))
 	}
 }
 
@@ -498,20 +466,23 @@ func TestValidateCustomAllowedExtensions(t *testing.T) {
 	// Test the content type doesn't match extension path
 	v2 := &FileValidator{
 		MaxFileSize:      DefaultMaxFileSize,
-		AllowedMimeTypes: map[string]bool{"application/pdf": true, "image/jpeg": true, "image/png": true},
+		AllowedMimeTypes: map[string]bool{"application/pdf": true, "image/jpeg": true},
 		AllowedExtensions: map[string][]string{
 			".pdf": {"application/pdf"},
 			".jpg": {"image/jpeg"},
-			".png": {"image/png"},
 		},
 	}
 
-	// This will trigger the content type mismatch path
-	err = v2.Validate("test.jpg", "image/png", 1024)
+	err = v2.Validate("test.pdf", "image/jpeg", 1024)
 	if err == nil {
-		t.Error("Expected error for content type not matching extension, got none")
+		t.Error("Expected error for content type/extension mismatch, got none")
 	}
-	if !contains(err.Error(), "content type \"image/png\" does not match extension \".jpg\"") {
+	if !contains(err.Error(), "does not match extension") {
 		t.Errorf("Unexpected error message: %s", err.Error())
 	}
+}
+
+// Helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
 }
