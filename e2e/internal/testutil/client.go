@@ -339,6 +339,7 @@ func (c *Client) assumeOrganizationSession() {
 	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": c.organizationID.String(),
+			"redirectPath":   "/",
 		},
 	}, nil)
 	require.NoError(c.T, err, "assumeOrganizationSession mutation failed")
