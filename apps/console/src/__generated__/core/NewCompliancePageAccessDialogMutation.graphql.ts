@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8d43c1f38ab045ccce31f220486fcb88>>
+ * @generated SignedSource<<6bb56648c233a0887b8579cb6fa2e9ab>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -217,19 +217,6 @@ return {
                     "kind": "ScalarField",
                     "name": "permission",
                     "storageKey": "permission(action:\"core:trust-center-access:update\")"
-                  },
-                  {
-                    "alias": "canDelete",
-                    "args": [
-                      {
-                        "kind": "Literal",
-                        "name": "action",
-                        "value": "core:trust-center-access:delete"
-                      }
-                    ],
-                    "kind": "ScalarField",
-                    "name": "permission",
-                    "storageKey": "permission(action:\"core:trust-center-access:delete\")"
                   }
                 ],
                 "storageKey": null
@@ -259,12 +246,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ed150f3e2ca1f480ae7d18be081dfec1",
+    "cacheID": "22a7b4c8022edd73d37f5a8ebb5fe57a",
     "id": null,
     "metadata": {},
     "name": "NewCompliancePageAccessDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation NewCompliancePageAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n  canDelete: permission(action: \"core:trust-center-access:delete\")\n}\n"
+    "text": "mutation NewCompliancePageAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
   }
 };
 })();

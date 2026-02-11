@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<19cd995fe2d7406ddfadd5df6f2b2412>>
+ * @generated SignedSource<<431a10def7d71c15412c347717ca5e18>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -293,19 +293,6 @@ return {
                             "name": "permission",
                             "storageKey": "permission(action:\"core:trust-center-access:update\")"
                           },
-                          {
-                            "alias": "canDelete",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:trust-center-access:delete"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:trust-center-access:delete\")"
-                          },
                           (v7/*: any*/)
                         ],
                         "storageKey": null
@@ -349,12 +336,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "27720ebe7c7eee3a27c486be063d9f18",
+    "cacheID": "22c44994c224b90e58e0cdf12cc39c46",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAccessListQuery",
     "operationKind": "query",
-    "text": "query CompliancePageAccessListQuery(\n  $after: CursorKey = null\n  $first: Int = 10\n  $order: TrustCenterAccessOrder = {field: CREATED_AT, direction: DESC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageAccessListFragment_gOVF5\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment_gOVF5 on TrustCenter {\n  accesses(first: $first, after: $after, orderBy: $order) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n  canDelete: permission(action: \"core:trust-center-access:delete\")\n}\n"
+    "text": "query CompliancePageAccessListQuery(\n  $after: CursorKey = null\n  $first: Int = 10\n  $order: TrustCenterAccessOrder = {field: CREATED_AT, direction: DESC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageAccessListFragment_gOVF5\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment_gOVF5 on TrustCenter {\n  accesses(first: $first, after: $after, orderBy: $order) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
   }
 };
 })();
