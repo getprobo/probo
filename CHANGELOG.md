@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Fix Google Workspace SCIM bridge does not set active state at creation
+- Fix compliance page access request was not active by default
+- Fix compliance page request access add non request file to the requested one
+
+### Security
+
+- Update javascript dependencies
+
 ## [0.121.0] - 2026-02-10
 
 ### Added
