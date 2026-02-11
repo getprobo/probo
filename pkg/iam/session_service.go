@@ -535,17 +535,6 @@ func (s SessionService) AssumeOrganizationSession(
 				return NewMembershipInactiveError(membership.ID)
 			}
 
-			// If child session already exists use it
-			if err := childSession.LoadByRootSessionIDAndMembershipID(ctx, tx, rootSession.ID, membership.ID); err == nil {
-				if childSession.ExpireReason == nil && now.Before(childSession.ExpiredAt) {
-					return nil
-				}
-			} else {
-				if err != coredata.ErrResourceNotFound {
-					return fmt.Errorf("cannot load child session: %w", err)
-				}
-			}
-
 			samlConfig := &coredata.SAMLConfiguration{}
 			err := samlConfig.LoadByOrganizationIDAndEmailDomain(
 				ctx,
