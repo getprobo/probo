@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
-import { Link, useLocation, useSearchParams } from "react-router";
+import { Link, matchPath, useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -37,7 +37,7 @@ export default function PasswordSignInPage() {
     if (!emailValue || !passwordValue) return;
 
     const continueUrlParam = searchParams.get("continue");
-    let safeContinueUrl: string;
+    let safeContinueUrl: URL;
     if (continueUrlParam) {
       let continueUrl: URL;
       try {
@@ -45,10 +45,15 @@ export default function PasswordSignInPage() {
       } catch {
         continueUrl = new URL(window.location.origin);
       }
-      safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
+      safeContinueUrl = new URL(continueUrl.pathname + continueUrl.search, window.location.origin);
     } else {
-      safeContinueUrl = window.location.origin;
+      safeContinueUrl = new URL(window.location.origin);
     }
+
+    const match = matchPath(
+      { path: "/organizations/:organizationId", caseSensitive: false, end: false },
+      safeContinueUrl.pathname,
+    );
 
     signIn({
       variables: {
@@ -56,7 +61,7 @@ export default function PasswordSignInPage() {
           email: emailValue,
           password: passwordValue,
           // Assume when signing in
-          organizationId: searchParams.get("organization-id"),
+          organizationId: match && match.params.organizationId,
         },
       },
       onCompleted: (_, error) => {
@@ -73,7 +78,7 @@ export default function PasswordSignInPage() {
           return;
         }
 
-        window.location.href = safeContinueUrl;
+        window.location.href = safeContinueUrl.href;
       },
       onError: (e) => {
         toast({
