@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: "postgres:17.4"
+    image: "postgres:18.1"
     shm_size: "1g"
     command: >
       postgres -c "shared_buffers=4GB"
