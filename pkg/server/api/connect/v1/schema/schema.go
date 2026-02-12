@@ -2719,7 +2719,7 @@ type MembershipProfile implements Node {
   identity: Identity @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
 
-  # TODO: remove when memberships are under profile
+  # FIXME: remove when memberships are under profile
   membershipId: ID!
 
   permission(action: String!): Boolean!

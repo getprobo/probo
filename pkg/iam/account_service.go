@@ -269,7 +269,6 @@ func (s *AccountService) AcceptInvitation(
 					ID:             gid.New(tenantID, coredata.MembershipProfileEntityType),
 					IdentityID:     identity.ID,
 					OrganizationID: invitation.OrganizationID,
-					MembershipID:   membership.ID,
 					FullName:       identity.FullName,
 					CreatedAt:      now,
 					UpdatedAt:      now,
@@ -818,45 +817,6 @@ func (s AccountService) GetMembershipForOrganization(
 	}
 
 	return membership, nil
-}
-
-func (s AccountService) GetProfileForMembership(ctx context.Context, membershipID gid.GID) (*coredata.MembershipProfile, error) {
-	var (
-		scope   = coredata.NewScopeFromObjectID(membershipID)
-		profile = &coredata.MembershipProfile{}
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			membership := &coredata.Membership{}
-			err := membership.LoadByID(ctx, conn, scope, membershipID)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewMembershipNotFoundError(membershipID)
-				}
-
-				return fmt.Errorf("cannot load membership: %w", err)
-			}
-
-			err = profile.LoadByMembershipID(ctx, conn, scope, membershipID)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewProfileNotFoundError(membershipID)
-				}
-
-				return fmt.Errorf("cannot load membership profile: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return profile, nil
 }
 
 func (s AccountService) ListSAMLConfigurationsForEmail(

@@ -697,7 +697,6 @@ func (s *OrganizationService) CreateOrganization(
 				ID:             gid.New(tenantID, coredata.MembershipProfileEntityType),
 				IdentityID:     identity.ID,
 				OrganizationID: organization.ID,
-				MembershipID:   membership.ID,
 				FullName:       identity.FullName,
 				CreatedAt:      now,
 				UpdatedAt:      now,

@@ -33,7 +33,6 @@ type (
 		ID                       gid.GID               `db:"id"`
 		IdentityID               gid.GID               `db:"identity_id"`
 		OrganizationID           gid.GID               `db:"organization_id"`
-		MembershipID             gid.GID               `db:"membership_id"`
 		EmailAddress             mail.Addr             `db:"email_address"`
 		FullName                 string                `db:"full_name"`
 		Kind                     MembershipProfileKind `db:"kind"`
@@ -62,7 +61,7 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 }
 
 func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT m.organization_id, mp.identity_id FROM iam_membership_profiles mp JOIN iam_memberships m ON mp.membership_id = m.id WHERE mp.id = $1 LIMIT 1;`
+	q := `SELECT organization_id, identity_id FROM iam_membership_profiles WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
 	var identityID gid.GID
@@ -70,68 +69,13 @@ func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
-		return nil, fmt.Errorf("cannot query membership profile authorization attributes: %w", err)
+		return nil, fmt.Errorf("cannot query profile authorization attributes: %w", err)
 	}
 
 	return map[string]string{
 		"organization_id": organizationID.String(),
 		"identity_id":     identityID.String(),
 	}, nil
-}
-
-func (p *MembershipProfile) LoadByMembershipID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	membershipID gid.GID,
-) error {
-	q := `
-SELECT
-    p.id,
-    p.identity_id,
-    p.organization_id,
-    p.membership_id,
-    i.email_address,
-    p.full_name,
-    p.kind,
-    p.additional_email_addresses,
-    p.position,
-    p.contract_start_date,
-    p.contract_end_date,
-    p.created_at,
-    p.updated_at
-FROM
-    iam_membership_profiles p
-INNER JOIN identities i
-    ON i.id = p.identity_id
-WHERE
-    p.%s
-    AND p.membership_id = @membership_id
-LIMIT 1;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"membership_id": membershipID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query profile: %w", err)
-	}
-
-	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect profile: %w", err)
-	}
-
-	*p = profile
-
-	return nil
 }
 
 func (p *MembershipProfile) LoadByID(
@@ -145,7 +89,6 @@ SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    p.membership_id,
     i.email_address,
     p.full_name,
     p.kind,
@@ -201,7 +144,6 @@ SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    p.membership_id,
     i.email_address,
     p.full_name,
     p.kind,
@@ -260,7 +202,6 @@ SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    p.membership_id,
     i.email_address,
     p.full_name,
     p.kind,
@@ -313,7 +254,6 @@ WITH profiles AS (
         id,
         identity_id,
         organization_id,
-        membership_id,
         full_name,
         kind,
         additional_email_addresses,
@@ -334,7 +274,6 @@ SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    p.membership_id,
     i.email_address,
     p.full_name,
     p.kind,
@@ -587,7 +526,6 @@ WITH attendees AS (
         p.tenant_id,
         p.identity_id,
         p.organization_id,
-        p.membership_id,
         i.email_address,
         p.full_name,
         p.kind,
@@ -611,7 +549,6 @@ SELECT
     id,
     identity_id,
     organization_id,
-    membership_id,
     kind,
     email_address,
     full_name,
@@ -670,7 +607,6 @@ SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    p.membership_id,
     p.kind,
     p.full_name,
     i.email_address,
@@ -753,7 +689,6 @@ INSERT INTO
         id,
         identity_id,
         organization_id,
-        membership_id,
         full_name,
         kind,
         additional_email_addresses,
@@ -768,7 +703,6 @@ VALUES (
     @id,
     @identity_id,
     @organization_id,
-    @membership_id,
     @full_name,
     @kind,
     COALESCE(@additional_email_addresses, '{}'::CITEXT[]),
@@ -785,7 +719,6 @@ VALUES (
 		"id":                         p.ID,
 		"identity_id":                p.IdentityID,
 		"organization_id":            p.OrganizationID,
-		"membership_id":              p.MembershipID,
 		"full_name":                  p.FullName,
 		"kind":                       p.Kind,
 		"additional_email_addresses": p.AdditionalEmailAddresses,

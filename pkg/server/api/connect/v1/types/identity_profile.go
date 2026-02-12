@@ -27,7 +27,6 @@ func NewMembershipProfile(profile *coredata.MembershipProfile) *MembershipProfil
 		ContractEndDate:          profile.ContractEndDate,
 		CreatedAt:                profile.CreatedAt,
 		UpdatedAt:                profile.UpdatedAt,
-		MembershipID:             profile.MembershipID,
 		Identity: &Identity{
 			ID: profile.IdentityID,
 		},
