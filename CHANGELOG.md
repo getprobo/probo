@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.122.0] - 2026-02-12
+
+### Added
+
+- Redirect to previous location on authentication or assumption needed
+
 ## [0.121.1] - 2026-02-11
 
 ### Fixed
