@@ -16,10 +16,8 @@ function PersonPageQueryLoader() {
   const [queryRef, loadQuery] = useQueryLoader<PersonPageQuery>(personPageQuery);
 
   useEffect(() => {
-    if (!queryRef) {
-      loadQuery({ personId });
-    }
-  });
+    loadQuery({ personId });
+  }, [personId, loadQuery]);
 
   if (!queryRef) return <LinkCardSkeleton />;
 

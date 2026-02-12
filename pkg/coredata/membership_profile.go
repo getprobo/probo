@@ -503,6 +503,7 @@ func (p *MembershipProfiles) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *MembershipProfileFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -511,13 +512,15 @@ FROM
     iam_membership_profiles
 WHERE
     %s
+	AND %s
     AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

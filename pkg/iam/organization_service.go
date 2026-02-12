@@ -1072,6 +1072,7 @@ func (s *OrganizationService) ListProfiles(
 func (s OrganizationService) CountProfiles(
 	ctx context.Context,
 	organizationID gid.GID,
+	filter *coredata.MembershipProfileFilter,
 ) (int, error) {
 	var (
 		scope = coredata.NewScopeFromObjectID(organizationID)
@@ -1082,7 +1083,7 @@ func (s OrganizationService) CountProfiles(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			profiles := coredata.MembershipProfiles{}
-			count, err = profiles.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = profiles.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count profiles: %w", err)
 			}
@@ -2057,7 +2058,7 @@ func (s OrganizationService) CreateSCIMBridge(
 				ConnectorID:         &connectorID,
 				Type:                bridgeType,
 				State:               coredata.SCIMBridgeStateActive, // Active immediately since connector already exists
-				ExcludedUserNames:       []string{},
+				ExcludedUserNames:   []string{},
 				CreatedAt:           now,
 				UpdatedAt:           now,
 			}
