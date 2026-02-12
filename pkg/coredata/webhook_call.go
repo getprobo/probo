@@ -18,11 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -38,6 +40,83 @@ type (
 
 	WebhookCalls []*WebhookCall
 )
+
+func (w WebhookCall) CursorKey(orderBy WebhookCallOrderField) page.CursorKey {
+	switch orderBy {
+	case WebhookCallOrderFieldCreatedAt:
+		return page.NewCursorKey(w.ID, w.CreatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (w *WebhookCalls) LoadByConfigurationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	webhookConfigurationID gid.GID,
+	cursor *page.Cursor[WebhookCallOrderField],
+) error {
+	q := `
+SELECT
+    id,
+    webhook_event_id,
+    webhook_configuration_id,
+    endpoint_url,
+    status,
+    response,
+    created_at
+FROM
+    webhook_calls
+WHERE
+    %s
+    AND webhook_configuration_id = @webhook_configuration_id
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"webhook_configuration_id": webhookConfigurationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query webhook calls: %w", err)
+	}
+
+	calls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[WebhookCall])
+	if err != nil {
+		return fmt.Errorf("cannot collect webhook calls: %w", err)
+	}
+
+	*w = calls
+	return nil
+}
+
+func (w *WebhookCalls) CountByConfigurationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	webhookConfigurationID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(*)
+FROM webhook_calls
+WHERE %s
+    AND webhook_configuration_id = @webhook_configuration_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"webhook_configuration_id": webhookConfigurationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count webhook calls: %w", err)
+	}
+
+	return count, nil
+}
 
 func (w *WebhookCall) Insert(
 	ctx context.Context,

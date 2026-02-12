@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ddaaa2d60cc045e841daaa3be6428cf2>>
+ * @generated SignedSource<<cc57c5db0d6374e4941bb0d4f1fb73c2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,6 +20,9 @@ export type WebhooksSettingsPageQuery$data = {
     readonly webhookConfigurations: {
       readonly edges: ReadonlyArray<{
         readonly node: {
+          readonly calls: {
+            readonly totalCount: number;
+          };
           readonly endpointUrl: string;
           readonly id: string;
           readonly selectedEvents: ReadonlyArray<WebhookEventType>;
@@ -97,6 +100,30 @@ v4 = [
             "kind": "ScalarField",
             "name": "selectedEvents",
             "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "first",
+                "value": 0
+              }
+            ],
+            "concreteType": "WebhookCallConnection",
+            "kind": "LinkedField",
+            "name": "calls",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "totalCount",
+                "storageKey": null
+              }
+            ],
+            "storageKey": "calls(first:0)"
           },
           (v2/*: any*/)
         ],
@@ -238,7 +265,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e6aa5c6b8142b654e2a3b7bebec59f83",
+    "cacheID": "97b7c454586fe958e456fa7929b46686",
     "id": null,
     "metadata": {
       "connection": [
@@ -255,11 +282,11 @@ return {
     },
     "name": "WebhooksSettingsPageQuery",
     "operationKind": "query",
-    "text": "query WebhooksSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      webhookConfigurations(first: 50) {\n        edges {\n          node {\n            id\n            endpointUrl\n            selectedEvents\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query WebhooksSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      webhookConfigurations(first: 50) {\n        edges {\n          node {\n            id\n            endpointUrl\n            selectedEvents\n            calls(first: 0) {\n              totalCount\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2a68dcb3a875a982b7d8300aa72c012b";
+(node as any).hash = "58012f55644dae31fe5e18c2c1e193a7";
 
 export default node;

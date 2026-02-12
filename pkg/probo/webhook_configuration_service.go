@@ -261,6 +261,58 @@ func (s WebhookConfigurationService) GetSigningSecret(
 	return wc.DecryptSigningSecret(s.svc.encryptionKey)
 }
 
+func (s WebhookConfigurationService) ListCallsForConfigurationID(
+	ctx context.Context,
+	webhookConfigurationID gid.GID,
+	cursor *page.Cursor[coredata.WebhookCallOrderField],
+) (*page.Page[*coredata.WebhookCall, coredata.WebhookCallOrderField], error) {
+	var calls coredata.WebhookCalls
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := calls.LoadByConfigurationID(ctx, conn, s.svc.scope, webhookConfigurationID, cursor); err != nil {
+				return fmt.Errorf("cannot load webhook calls: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(calls, cursor), nil
+}
+
+func (s WebhookConfigurationService) CountCallsForConfigurationID(
+	ctx context.Context,
+	webhookConfigurationID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			calls := &coredata.WebhookCalls{}
+			count, err = calls.CountByConfigurationID(ctx, conn, s.svc.scope, webhookConfigurationID)
+
+			if err != nil {
+				return fmt.Errorf("cannot count webhook calls: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s WebhookConfigurationService) Delete(
 	ctx context.Context,
 	webhookConfigurationID gid.GID,

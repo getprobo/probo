@@ -2293,6 +2293,14 @@ type WebhookConfiguration implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
 
+    calls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: WebhookCallOrder
+    ): WebhookCallConnection! @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
@@ -2308,6 +2316,56 @@ type WebhookConfigurationConnection
 type WebhookConfigurationEdge {
     cursor: CursorKey!
     node: WebhookConfiguration!
+}
+
+enum WebhookCallStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookCallStatus") {
+    SUCCEEDED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookCallStatusSucceeded")
+    FAILED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookCallStatusFailed")
+}
+
+enum WebhookCallOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.WebhookCallOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.WebhookCallOrderFieldCreatedAt"
+        )
+}
+
+input WebhookCallOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookCallOrderBy"
+    ) {
+    field: WebhookCallOrderField!
+    direction: OrderDirection!
+}
+
+type WebhookCall implements Node {
+    id: ID!
+    webhookEventId: ID!
+    webhookConfigurationId: ID!
+    endpointUrl: String!
+    status: WebhookCallStatus!
+    response: String
+    createdAt: Datetime!
+}
+
+type WebhookCallConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookCallConnection"
+    ) {
+    edges: [WebhookCallEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type WebhookCallEdge {
+    cursor: CursorKey!
+    node: WebhookCall!
 }
 
 type StateOfApplicability implements Node {
