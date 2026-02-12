@@ -157,15 +157,14 @@ SELECT
     p.full_name
 FROM
     (
-        SELECT DISTINCT ON (primary_email_address)
-            primary_email_address,
+        SELECT
+            DISTINCT ON (primary_email_address) primary_email_address,
             full_name
         FROM
             peoples
         ORDER BY
             primary_email_address
-    ) p
-ON CONFLICT (email_address) DO
+    ) p ON CONFLICT (email_address) DO
 UPDATE
 SET
     full_name = EXCLUDED.full_name;
@@ -510,7 +509,25 @@ ALTER COLUMN
 ALTER COLUMN
     attendee_profile_id
 SET
-    NOT NULL,
+    NOT NULL;
+
+WITH duplicates AS (
+    SELECT
+        meeting_id,
+        attendee_profile_id,
+        ROW_NUMBER() OVER (PARTITION BY meeting_id, attendee_profile_id) AS rn
+    FROM
+        meeting_attendees
+)
+DELETE FROM
+    meeting_attendees ma USING duplicates d
+WHERE
+    ma.meeting_id = d.meeting_id
+    AND ma.attendee_profile_id = d.attendee_profile_id
+    AND d.rn > 1;
+
+ALTER TABLE
+    meeting_attendees
 ADD
     PRIMARY KEY (meeting_id, attendee_profile_id);
 
