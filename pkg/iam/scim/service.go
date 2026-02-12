@@ -199,7 +199,6 @@ func (s *Service) CreateUser(
 				ID:             gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
 				IdentityID:     identity.ID,
 				OrganizationID: config.OrganizationID,
-				MembershipID:   membership.ID,
 				FullName:       fullName,
 				CreatedAt:      now,
 				UpdatedAt:      now,
@@ -461,7 +460,7 @@ func (s *Service) updateUser(
 			}
 
 			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByMembershipID(ctx, tx, scope, membershipID); err == nil {
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, membership.IdentityID, membership.OrganizationID); err == nil {
 				if fullName != "" {
 					profile.FullName = fullName
 					profile.UpdatedAt = now
