@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4122c968a27fbbea7a81d2a87bbc4bc3>>
+ * @generated SignedSource<<ed684165adeff8bdea5a363804ec858f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -62,7 +62,7 @@ v4 = {
 },
 v5 = {
   "defaultValue": {
-    "direction": "ASC",
+    "direction": "DESC",
     "field": "CREATED_AT"
   },
   "kind": "LocalArgument",
@@ -359,16 +359,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "af2ddd3fd12ff396d6e19fa1e630b614",
+    "cacheID": "fa35a507d94c15f0839f276dc42dfd89",
     "id": null,
     "metadata": {},
     "name": "InvitationListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query InvitationListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...InvitationListFragment_16fISc\n    id\n  }\n}\n\nfragment InvitationListFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n"
+    "text": "query InvitationListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: DESC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...InvitationListFragment_16fISc\n    id\n  }\n}\n\nfragment InvitationListFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "224d655216572cb18f193cdfcae64172";
+(node as any).hash = "5ff19da7145701e33a81275e009c56f7";
 
 export default node;

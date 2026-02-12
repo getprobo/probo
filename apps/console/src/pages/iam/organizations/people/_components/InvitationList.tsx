@@ -22,7 +22,7 @@ const fragment = graphql`
     first: { type: "Int", defaultValue: 20 }
     order: {
       type: "InvitationOrder"
-      defaultValue: { direction: ASC, field: CREATED_AT }
+      defaultValue: { direction: DESC, field: CREATED_AT }
     }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
