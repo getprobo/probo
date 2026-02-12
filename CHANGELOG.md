@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.123.0] - 2026-02-12
+
+### Changed
+
+- Upgrade Postgres to 18.1
+- IAM: Migrate people into profiles
+
 ## [0.122.0] - 2026-02-12
 
 ### Added
