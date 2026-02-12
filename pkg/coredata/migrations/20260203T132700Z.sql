@@ -512,7 +512,7 @@ ALTER COLUMN
 SET
     NOT NULL,
 ADD
-    PRIMARY KEY (attendee_profile_id);
+    PRIMARY KEY (meeting_id, attendee_profile_id);
 
 ALTER TABLE
     nonconformities
