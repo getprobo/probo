@@ -1008,15 +1008,13 @@ func (s *OrganizationService) UpdateProfile(ctx context.Context, req *UpdateProf
 				profile.ContractEndDate = *req.ContractEndDate
 			}
 
-			if profile.ContractStartDate != nil && profile.ContractEndDate != nil {
-				if profile.ContractEndDate.Before(*profile.ContractStartDate) {
-					return fmt.Errorf("contract end date must be after or equal to start date")
-				}
-			}
-
 			profile.UpdatedAt = time.Now()
 
-			return profile.Update(ctx, conn, scope)
+			if err := profile.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			return nil
 		},
 	)
 
@@ -1033,7 +1031,11 @@ func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID)
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return profile.LoadByID(ctx, conn, coredata.NewScopeFromObjectID(profileID), profileID)
+			if err := profile.LoadByID(ctx, conn, coredata.NewScopeFromObjectID(profileID), profileID); err != nil {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			return nil
 		},
 	)
 
@@ -1058,7 +1060,11 @@ func (s *OrganizationService) ListProfiles(
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return profiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+			if err := profiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load profiles: %w", err)
+			}
+
+			return nil
 		},
 	)
 
