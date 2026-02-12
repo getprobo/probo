@@ -13,7 +13,6 @@ import {
 import { use, useState } from "react";
 import { graphql } from "relay-runtime";
 
-import type { MemberListItemFragment$data } from "#/__generated__/iam/MemberListItemFragment.graphql";
 import type { PeopleListItemFragment$data } from "#/__generated__/iam/PeopleListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -31,7 +30,7 @@ const updateMembershipMutation = graphql`
 `;
 
 export function EditMemberDialog(props: {
-  membership: MemberListItemFragment$data | PeopleListItemFragment$data;
+  membership: PeopleListItemFragment$data;
   onClose: () => void;
 }) {
   const { membership, onClose } = props;

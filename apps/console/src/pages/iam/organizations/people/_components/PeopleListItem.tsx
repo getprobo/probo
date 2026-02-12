@@ -13,7 +13,7 @@ import {
 import { clsx } from "clsx";
 import { useState } from "react";
 import { useFragment } from "react-relay";
-import { graphql } from "relay-runtime";
+import { type DataID, graphql } from "relay-runtime";
 
 import type { PeopleListItemFragment$key } from "#/__generated__/iam/PeopleListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
@@ -54,7 +54,7 @@ const removeMemberMutation = graphql`
 `;
 
 export function MemberListItem(props: {
-  connectionId: string;
+  connectionId: DataID;
   fKey: PeopleListItemFragment$key;
   onRefetch: () => void;
 }) {

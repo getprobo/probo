@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5b60de19e893c841d45ecd555eecf65a>>
+ * @generated SignedSource<<0ea0836cf3619cc6dc1017ed5dd24cb0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,6 @@ export type InvitationListItemFragment$data = {
   readonly canDelete: boolean;
   readonly createdAt: string;
   readonly email: string;
-  readonly expiresAt: string;
   readonly fullName: string;
   readonly id: string;
   readonly role: MembershipRole;
@@ -81,13 +80,6 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "expiresAt",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "acceptedAt",
       "storageKey": null
     },
@@ -109,6 +101,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "c0e21d5dd227cd3fff739dc9f0922657";
+(node as any).hash = "07748312ae877349e46cc169e5473408";
 
 export default node;

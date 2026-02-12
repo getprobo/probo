@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d5f15badabf09f653790f78494c229fe>>
+ * @generated SignedSource<<4122c968a27fbbea7a81d2a87bbc4bc3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -254,13 +254,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "expiresAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "acceptedAt",
                             "storageKey": null
                           },
@@ -366,12 +359,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "afc5598fd9e211b2e7af8ac8bce27511",
+    "cacheID": "af2ddd3fd12ff396d6e19fa1e630b614",
     "id": null,
     "metadata": {},
     "name": "InvitationListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query InvitationListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...InvitationListFragment_16fISc\n    id\n  }\n}\n\nfragment InvitationListFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  expiresAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n"
+    "text": "query InvitationListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...InvitationListFragment_16fISc\n    id\n  }\n}\n\nfragment InvitationListFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n"
   }
 };
 })();

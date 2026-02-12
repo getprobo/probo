@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ff0b4fa95a5c304058379d21994833ff>>
+ * @generated SignedSource<<8e60217d0397fc8690fc79915bdfdc6c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,20 +10,20 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MembersPage_invitationsTotalCountFragment$data = {
+export type PeoplePage_invitationsTotalCountFragment$data = {
   totalCount: number | null | undefined;
-  readonly " $fragmentType": "MembersPage_invitationsTotalCountFragment";
+  readonly " $fragmentType": "PeoplePage_invitationsTotalCountFragment";
 };
-export type MembersPage_invitationsTotalCountFragment$key = {
-  readonly " $data"?: MembersPage_invitationsTotalCountFragment$data;
-  readonly $updatableFragmentSpreads: FragmentRefs<"MembersPage_invitationsTotalCountFragment">;
+export type PeoplePage_invitationsTotalCountFragment$key = {
+  readonly " $data"?: PeoplePage_invitationsTotalCountFragment$data;
+  readonly $updatableFragmentSpreads: FragmentRefs<"PeoplePage_invitationsTotalCountFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "MembersPage_invitationsTotalCountFragment",
+  "name": "PeoplePage_invitationsTotalCountFragment",
   "selections": [
     {
       "alias": null,
@@ -37,6 +37,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "af477ef9a8b791eee11ab26caee3d304";
+(node as any).hash = "8881fd3459c738d64d70370fd317fe5d";
 
 export default node;

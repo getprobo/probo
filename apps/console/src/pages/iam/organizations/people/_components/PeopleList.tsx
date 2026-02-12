@@ -28,7 +28,7 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "PeopleListFragment_members", filter: ["orderBy"]) @required(action: THROW) {
+    ) @connection(key: "PeopleListFragment_members", filters: ["orderBy"]) @required(action: THROW) {
       __id
       totalCount
       edges @required(action: THROW) {

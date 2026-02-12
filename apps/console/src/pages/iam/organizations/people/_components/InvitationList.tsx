@@ -5,7 +5,7 @@ import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
 
 import type { InvitationListFragment$key } from "#/__generated__/iam/InvitationListFragment.graphql";
 import type { InvitationListFragment_RefetchQuery } from "#/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
-import type { MembersPage_invitationsTotalCountFragment$key } from "#/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
+import type { PeoplePage_invitationsTotalCountFragment$key } from "#/__generated__/iam/PeoplePage_invitationsTotalCountFragment.graphql";
 import {
   type Order,
   SortableTable,
@@ -55,7 +55,7 @@ export function InvitationList(props: {
   fKey: InvitationListFragment$key;
   onConnectionIdChange: (connectionId: string) => void;
   totalCount: number;
-  totalCountFKey: MembersPage_invitationsTotalCountFragment$key;
+  totalCountFKey: PeoplePage_invitationsTotalCountFragment$key;
 }) {
   const { fKey, onConnectionIdChange, totalCount, totalCountFKey } = props;
 

@@ -14,11 +14,11 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { InvitationListItemFragment$key } from "#/__generated__/iam/InvitationListItemFragment.graphql";
-import type { MembersPage_invitationsTotalCountFragment$key } from "#/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
+import type { PeoplePage_invitationsTotalCountFragment$key } from "#/__generated__/iam/PeoplePage_invitationsTotalCountFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { invitationCountFragment } from "../MembersPage";
+import { invitationCountFragment } from "../PeoplePage";
 
 const fragment = graphql`
   fragment InvitationListItemFragment on Invitation {
@@ -28,7 +28,6 @@ const fragment = graphql`
     role
     status
     createdAt
-    expiresAt
     acceptedAt
     canDelete: permission(action: "iam:invitation:delete")
   }
@@ -48,7 +47,7 @@ const deleteInvitationMutation = graphql`
 export function InvitationListItem(props: {
   connectionId: string;
   fKey: InvitationListItemFragment$key;
-  totalCountFKey: MembersPage_invitationsTotalCountFragment$key;
+  totalCountFKey: PeoplePage_invitationsTotalCountFragment$key;
   onRefetch: () => void;
 }) {
   const { connectionId, fKey, totalCountFKey } = props;
@@ -83,7 +82,7 @@ export function InvitationListItem(props: {
           },
           updater: (store) => {
             const { updatableData }
-              = store.readUpdatableFragment<MembersPage_invitationsTotalCountFragment$key>(
+              = store.readUpdatableFragment<PeoplePage_invitationsTotalCountFragment$key>(
                 invitationCountFragment,
                 totalCountFKey,
               );

@@ -16,13 +16,13 @@ import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { InviteUserDialogMutation } from "#/__generated__/iam/InviteUserDialogMutation.graphql";
-import type { MembersPage_invitationsTotalCountFragment$key } from "#/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
+import type { PeoplePage_invitationsTotalCountFragment$key } from "#/__generated__/iam/PeoplePage_invitationsTotalCountFragment.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 
-import { invitationCountFragment } from "../MembersPage";
+import { invitationCountFragment } from "../PeoplePage";
 
 const inviteMutation = graphql`
   mutation InviteUserDialogMutation(
@@ -63,7 +63,7 @@ const schema = z.object({
 
 type InviteUserDialogProps = PropsWithChildren<{
   connectionId: string;
-  fKey: MembersPage_invitationsTotalCountFragment$key;
+  fKey: PeoplePage_invitationsTotalCountFragment$key;
 }>;
 
 export function InviteUserDialog(props: InviteUserDialogProps) {
@@ -104,7 +104,7 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
       },
       updater: (store) => {
         const { updatableData }
-          = store.readUpdatableFragment<MembersPage_invitationsTotalCountFragment$key>(
+          = store.readUpdatableFragment<PeoplePage_invitationsTotalCountFragment$key>(
             invitationCountFragment,
             fKey,
           );
