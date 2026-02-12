@@ -3,7 +3,7 @@ services:
     image: "postgres:18.1"
     shm_size: "1g"
     command: >
-      postgres -c "shared_buffers=4GB"
+      postgres -c "shared_buffers=1GB"
                -c "max_connections=200"
                -c "log_statement=all"
     ports:
