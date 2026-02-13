@@ -463,6 +463,7 @@ func (s *Service) baseServiceProvider() *saml.ServiceProvider {
 		MetadataURL:       metadataURL,
 		AcsURL:            acsURL,
 		SloURL:            acsURL,
+		AuthnNameIDFormat: saml.EmailAddressNameIDFormat,
 		AllowIDPInitiated: true,
 	}
 }
