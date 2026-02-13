@@ -32,7 +32,6 @@ type (
 	Document struct {
 		ID                      gid.GID                `db:"id"`
 		OrganizationID          gid.GID                `db:"organization_id"`
-		ApproverID              gid.GID                `db:"approver_profile_id"`
 		Title                   string                 `db:"title"`
 		DocumentType            DocumentType           `db:"document_type"`
 		Classification          DocumentClassification `db:"classification"`
@@ -83,7 +82,6 @@ func (p *Document) LoadByID(
 SELECT
     id,
     organization_id,
-    approver_profile_id,
     title,
     document_type,
     classification,
@@ -135,7 +133,6 @@ func (p *Document) LoadByIDWithFilter(
 SELECT
     id,
     organization_id,
-    approver_profile_id,
     title,
     document_type,
     classification,
@@ -188,7 +185,6 @@ func (p *Documents) LoadByIDs(
 SELECT
     id,
     organization_id,
-    approver_profile_id,
     title,
     document_type,
     classification,
@@ -270,7 +266,6 @@ func (p *Documents) LoadByOrganizationID(
 SELECT
 	id,
     organization_id,
-    approver_profile_id,
     title,
     document_type,
     classification,
@@ -321,7 +316,6 @@ func (p *Documents) LoadAllByOrganizationID(
 SELECT
 	id,
     organization_id,
-    approver_profile_id,
     title,
     document_type,
     classification,
@@ -371,7 +365,6 @@ INSERT INTO
         tenant_id,
 		id,
 		organization_id,
-		approver_profile_id,
 		title,
 		document_type,
 		classification,
@@ -384,7 +377,6 @@ VALUES (
     @tenant_id,
     @document_id,
     @organization_id,
-    @approver_profile_id,
     @title,
     @document_type,
     @classification,
@@ -399,7 +391,6 @@ VALUES (
 		"tenant_id":                 scope.GetTenantID(),
 		"document_id":               p.ID,
 		"organization_id":           p.OrganizationID,
-		"approver_profile_id":          p.ApproverID,
 		"title":                     p.Title,
 		"document_type":             p.DocumentType,
 		"classification":            p.Classification,
@@ -460,7 +451,6 @@ UPDATE
 SET
 	title = @title,
 	current_published_version = @current_published_version,
-	approver_profile_id = @approver_profile_id,
 	document_type = @document_type,
 	classification = @classification,
 	trust_center_visibility = @trust_center_visibility,
@@ -477,7 +467,6 @@ WHERE
 		"updated_at":                time.Now(),
 		"title":                     p.Title,
 		"current_published_version": p.CurrentPublishedVersion,
-		"approver_profile_id":          p.ApproverID,
 		"document_type":             p.DocumentType,
 		"classification":            p.Classification,
 		"trust_center_visibility":   p.TrustCenterVisibility,
@@ -548,7 +537,6 @@ WITH scoped_documents AS (
 SELECT
 	scoped_documents.id,
 	scoped_documents.organization_id,
-	scoped_documents.approver_profile_id,
 	scoped_documents.title,
 	scoped_documents.document_type,
 	scoped_documents.classification,
@@ -638,7 +626,6 @@ WITH scoped_documents AS (
 SELECT
 	scoped_documents.id,
 	scoped_documents.organization_id,
-	scoped_documents.approver_profile_id,
 	scoped_documents.title,
 	scoped_documents.document_type,
 	scoped_documents.classification,

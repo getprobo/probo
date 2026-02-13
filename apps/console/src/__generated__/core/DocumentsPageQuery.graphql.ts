@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dcfc5a0f97ee1ee02c8679797141e265>>
+ * @generated SignedSource<<ea3e34a592ca995eba32df84e7f42c24>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -313,22 +313,50 @@ return {
                           },
                           {
                             "alias": null,
-                            "args": null,
-                            "concreteType": "Profile",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "first",
+                                "value": 100
+                              }
+                            ],
+                            "concreteType": "ProfileConnection",
                             "kind": "LinkedField",
-                            "name": "approver",
+                            "name": "approvers",
                             "plural": false,
                             "selections": [
-                              (v8/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
-                                "kind": "ScalarField",
-                                "name": "fullName",
+                                "concreteType": "ProfileEdge",
+                                "kind": "LinkedField",
+                                "name": "edges",
+                                "plural": true,
+                                "selections": [
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "concreteType": "Profile",
+                                    "kind": "LinkedField",
+                                    "name": "node",
+                                    "plural": false,
+                                    "selections": [
+                                      (v8/*: any*/),
+                                      {
+                                        "alias": null,
+                                        "args": null,
+                                        "kind": "ScalarField",
+                                        "name": "fullName",
+                                        "storageKey": null
+                                      }
+                                    ],
+                                    "storageKey": null
+                                  }
+                                ],
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": null
+                            "storageKey": "approvers(first:100)"
                           },
                           {
                             "alias": "lastVersion",
@@ -523,12 +551,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5d465e00a354c06dc571df056624dd39",
+    "cacheID": "638d1d0f41916e750ecb5ac9312b0c8c",
     "id": null,
     "metadata": {},
     "name": "DocumentsPageQuery",
     "operationKind": "query",
-    "text": "query DocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateDocument: permission(action: \"core:document:create\")\n      ...DocumentListFragment_1WMmEg\n      documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n        edges {\n          node {\n            canSendSigningNotifications: permission(action: \"core:document:send-signing-notifications\")\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentListFragment_1WMmEg on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  approver {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateDocument: permission(action: \"core:document:create\")\n      ...DocumentListFragment_1WMmEg\n      documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n        edges {\n          node {\n            canSendSigningNotifications: permission(action: \"core:document:send-signing-notifications\")\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentListFragment_1WMmEg on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  approvers(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n      }\n    }\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

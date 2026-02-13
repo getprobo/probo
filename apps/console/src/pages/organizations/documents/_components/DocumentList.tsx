@@ -167,7 +167,7 @@ export function DocumentList(props: {
                       {__("Type")}
                     </SortableTh>
                     <Th className="w-32">{__("Classification")}</Th>
-                    <Th className="w-60">{__("Approver")}</Th>
+                    <Th className="w-60">{__("Approvers")}</Th>
                     <Th className="w-60">{__("Last update")}</Th>
                     <Th className="w-20">{__("Signatures")}</Th>
                     {hasAnyAction && <Th className="w-18"></Th>}

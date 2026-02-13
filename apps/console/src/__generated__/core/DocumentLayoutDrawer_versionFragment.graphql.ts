@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a1338ba7fb986ab8e4f5d1e0355a4671>>
+ * @generated SignedSource<<7464a4e3e5b2b5b72a6ecda47b5dace7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,10 +13,6 @@ export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "S
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentLayoutDrawer_versionFragment$data = {
-  readonly approver: {
-    readonly fullName: string;
-    readonly id: string;
-  };
   readonly classification: DocumentClassification;
   readonly id: string;
   readonly publishedAt: string | null | undefined;
@@ -30,45 +26,24 @@ export type DocumentLayoutDrawer_versionFragment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"DocumentLayoutDrawer_versionFragment">;
 };
 
-const node: ReaderFragment = (function(){
-var v0 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-};
-return {
+const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
   "name": "DocumentLayoutDrawer_versionFragment",
   "selections": [
-    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "classification",
+      "name": "id",
       "storageKey": null
     },
     {
       "alias": null,
       "args": null,
-      "concreteType": "Profile",
-      "kind": "LinkedField",
-      "name": "approver",
-      "plural": false,
-      "selections": [
-        (v0/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "fullName",
-          "storageKey": null
-        }
-      ],
+      "kind": "ScalarField",
+      "name": "classification",
       "storageKey": null
     },
     {
@@ -103,8 +78,7 @@ return {
   "type": "DocumentVersion",
   "abstractKey": null
 };
-})();
 
-(node as any).hash = "63b956326e98c7620715250f4e7d1129";
+(node as any).hash = "ebe62fad4b4044be35adb9ba4979a45a";
 
 export default node;

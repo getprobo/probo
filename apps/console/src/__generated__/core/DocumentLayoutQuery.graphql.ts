@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<41d49c06d7dfad15f6c1d39cd9eddc80>>
+ * @generated SignedSource<<fa40a22c2297c683c649ccac9f6ebe50>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -277,30 +277,11 @@ v19 = {
 v20 = {
   "alias": null,
   "args": null,
-  "concreteType": "Profile",
-  "kind": "LinkedField",
-  "name": "approver",
-  "plural": false,
-  "selections": [
-    (v3/*: any*/),
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "fullName",
-      "storageKey": null
-    }
-  ],
-  "storageKey": null
-},
-v21 = {
-  "alias": null,
-  "args": null,
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
 },
-v22 = {
+v21 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -573,6 +554,53 @@ return {
                 "storageKey": null
               },
               {
+                "alias": null,
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "first",
+                    "value": 100
+                  }
+                ],
+                "concreteType": "ProfileConnection",
+                "kind": "LinkedField",
+                "name": "approvers",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "ProfileEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Profile",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v3/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "fullName",
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": "approvers(first:100)"
+              },
+              {
                 "condition": "versionSpecified",
                 "kind": "Condition",
                 "passingValue": false,
@@ -608,7 +636,6 @@ return {
                               (v19/*: any*/),
                               (v20/*: any*/),
                               (v21/*: any*/),
-                              (v22/*: any*/),
                               (v8/*: any*/),
                               (v9/*: any*/)
                             ],
@@ -653,7 +680,6 @@ return {
                   (v19/*: any*/),
                   (v20/*: any*/),
                   (v21/*: any*/),
-                  (v22/*: any*/),
                   (v8/*: any*/),
                   (v9/*: any*/)
                 ],
@@ -668,12 +694,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3e4d94e71ac7cf5c557b5ee59e0917ed",
+    "cacheID": "4291fe2afc2c86c77cbfd01d05f16e75",
     "id": null,
     "metadata": {},
     "name": "DocumentLayoutQuery",
     "operationKind": "query",
-    "text": "query DocumentLayoutQuery(\n  $documentId: ID!\n  $versionId: ID!\n  $versionSpecified: Boolean!\n) {\n  version: node(id: $versionId) @include(if: $versionSpecified) {\n    __typename\n    ... on DocumentVersion {\n      id\n      status\n      ...DocumentActionsDropdown_versionFragment\n      ...DocumentLayoutDrawer_versionFragment\n      signatures(first: 0, filter: {activeContract: true}) {\n        totalCount\n      }\n      signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n        totalCount\n      }\n    }\n    id\n  }\n  document: node(id: $documentId) {\n    __typename\n    ... on Document {\n      id\n      title\n      canPublish: permission(action: \"core:document-version:publish\")\n      controlInfo: controls(first: 0) {\n        totalCount\n      }\n      ...DocumentTitleFormFragment\n      ...DocumentActionsDropdown_documentFragment\n      ...DocumentLayoutDrawer_documentFragment\n      lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) @skip(if: $versionSpecified) {\n        edges {\n          node {\n            id\n            status\n            ...DocumentActionsDropdown_versionFragment\n            ...DocumentLayoutDrawer_versionFragment\n            signatures(first: 0, filter: {activeContract: true}) {\n              totalCount\n            }\n            signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n              totalCount\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentActionsDropdown_documentFragment on Document {\n  id\n  title\n  canUpdate: permission(action: \"core:document:update\")\n  canDelete: permission(action: \"core:document:delete\")\n  versions(first: 20) {\n    totalCount\n  }\n  ...UpdateVersionDialogFragment\n}\n\nfragment DocumentActionsDropdown_versionFragment on DocumentVersion {\n  id\n  version\n  status\n  canDeleteDraft: permission(action: \"core:document-version:delete-draft\")\n}\n\nfragment DocumentLayoutDrawer_documentFragment on Document {\n  id\n  documentType\n  canUpdate: permission(action: \"core:document:update\")\n}\n\nfragment DocumentLayoutDrawer_versionFragment on DocumentVersion {\n  id\n  classification\n  approver {\n    id\n    fullName\n  }\n  version\n  status\n  updatedAt\n  publishedAt\n}\n\nfragment DocumentTitleFormFragment on Document {\n  id\n  title\n  canUpdate: permission(action: \"core:document:update\")\n}\n\nfragment UpdateVersionDialogFragment on Document {\n  id\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        status\n        content\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query DocumentLayoutQuery(\n  $documentId: ID!\n  $versionId: ID!\n  $versionSpecified: Boolean!\n) {\n  version: node(id: $versionId) @include(if: $versionSpecified) {\n    __typename\n    ... on DocumentVersion {\n      id\n      status\n      ...DocumentActionsDropdown_versionFragment\n      ...DocumentLayoutDrawer_versionFragment\n      signatures(first: 0, filter: {activeContract: true}) {\n        totalCount\n      }\n      signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n        totalCount\n      }\n    }\n    id\n  }\n  document: node(id: $documentId) {\n    __typename\n    ... on Document {\n      id\n      title\n      canPublish: permission(action: \"core:document-version:publish\")\n      controlInfo: controls(first: 0) {\n        totalCount\n      }\n      ...DocumentTitleFormFragment\n      ...DocumentActionsDropdown_documentFragment\n      ...DocumentLayoutDrawer_documentFragment\n      lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) @skip(if: $versionSpecified) {\n        edges {\n          node {\n            id\n            status\n            ...DocumentActionsDropdown_versionFragment\n            ...DocumentLayoutDrawer_versionFragment\n            signatures(first: 0, filter: {activeContract: true}) {\n              totalCount\n            }\n            signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n              totalCount\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment DocumentActionsDropdown_documentFragment on Document {\n  id\n  title\n  canUpdate: permission(action: \"core:document:update\")\n  canDelete: permission(action: \"core:document:delete\")\n  versions(first: 20) {\n    totalCount\n  }\n  ...UpdateVersionDialogFragment\n}\n\nfragment DocumentActionsDropdown_versionFragment on DocumentVersion {\n  id\n  version\n  status\n  canDeleteDraft: permission(action: \"core:document-version:delete-draft\")\n}\n\nfragment DocumentLayoutDrawer_documentFragment on Document {\n  id\n  documentType\n  canUpdate: permission(action: \"core:document:update\")\n  approvers(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n      }\n    }\n  }\n}\n\nfragment DocumentLayoutDrawer_versionFragment on DocumentVersion {\n  id\n  classification\n  version\n  status\n  updatedAt\n  publishedAt\n}\n\nfragment DocumentTitleFormFragment on Document {\n  id\n  title\n  canUpdate: permission(action: \"core:document:update\")\n}\n\nfragment UpdateVersionDialogFragment on Document {\n  id\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        status\n        content\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();

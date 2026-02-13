@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ca358b419eca687c5ba8119e7de24829>>
+ * @generated SignedSource<<3d906005c4507bfced1f9d7036939157>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -192,22 +192,50 @@ return {
                   },
                   {
                     "alias": null,
-                    "args": null,
-                    "concreteType": "Profile",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "first",
+                        "value": 100
+                      }
+                    ],
+                    "concreteType": "ProfileConnection",
                     "kind": "LinkedField",
-                    "name": "approver",
+                    "name": "approvers",
                     "plural": false,
                     "selections": [
-                      (v2/*: any*/),
                       {
                         "alias": null,
                         "args": null,
-                        "kind": "ScalarField",
-                        "name": "fullName",
+                        "concreteType": "ProfileEdge",
+                        "kind": "LinkedField",
+                        "name": "edges",
+                        "plural": true,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Profile",
+                            "kind": "LinkedField",
+                            "name": "node",
+                            "plural": false,
+                            "selections": [
+                              (v2/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fullName",
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          }
+                        ],
                         "storageKey": null
                       }
                     ],
-                    "storageKey": null
+                    "storageKey": "approvers(first:100)"
                   },
                   {
                     "alias": "lastVersion",
@@ -324,12 +352,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0672eb52643ef05e90565df777644a7b",
+    "cacheID": "a62979260c1527e43c12c1effa025815",
     "id": null,
     "metadata": {},
     "name": "PublishDocumentsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  approver {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  approvers(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n      }\n    }\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

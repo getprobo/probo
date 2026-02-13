@@ -20,7 +20,7 @@ import type { CreateDocumentDialogMutation } from "#/__generated__/core/CreateDo
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { documentSchema, useDocumentForm } from "#/hooks/forms/useDocumentForm";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -143,12 +143,12 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
             </PropertyRow>
 
             <PropertyRow
-              id="approverId"
-              label={__("Approver")}
-              error={errors.approverId?.message}
+              id="approverIds"
+              label={__("Approvers")}
+              error={errors.approverIds?.message}
             >
-              <PeopleSelectField
-                name="approverId"
+              <PeopleMultiSelectField
+                name="approverIds"
                 control={control}
                 organizationId={organizationId}
               />

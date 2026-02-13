@@ -17,9 +17,13 @@ const fragment = graphql`
     classification
     updatedAt
     canDelete: permission(action: "core:document:delete")
-    approver {
-      id
-      fullName
+    approvers(first: 100) {
+      edges {
+        node {
+          id
+          fullName
+        }
+      }
     }
     lastVersion: versions(first: 1 orderBy: { field: CREATED_AT direction: DESC }) {
       edges {
@@ -129,8 +133,12 @@ export function DocumentListItem(props: {
       </Td>
       <Td className="w-60">
         <div className="flex gap-2 items-center">
-          <Avatar name={document.approver?.fullName ?? ""} />
-          {document.approver?.fullName}
+          {document.approvers.edges.map(({ node }) => (
+            <div key={node.id} className="flex gap-1 items-center">
+              <Avatar name={node.fullName} />
+              {node.fullName}
+            </div>
+          ))}
         </div>
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>

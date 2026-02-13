@@ -113,7 +113,7 @@ func TestDocument_Create(t *testing.T) {
 
 			input := map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"approverId":     approverProfileID.String(),
+				"approverIds":    []string{approverProfileID.String()},
 			}
 			for k, v := range tt.input {
 				input[k] = v
@@ -172,7 +172,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			wantErrorContains: "organizationId",
 		},
 		{
-			name: "missing approverId",
+			name: "missing approverIds",
 			input: map[string]any{
 				"title":          "Test Document",
 				"content":        "Test content",
@@ -180,7 +180,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 				"classification": "INTERNAL",
 			},
 			skipApprover:      true,
-			wantErrorContains: "approverId",
+			wantErrorContains: "approverIds",
 		},
 		{
 			name: "title with HTML tags",
@@ -293,7 +293,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
 			if !tt.skipApprover {
-				input["approverId"] = approverProfileID.String()
+				input["approverIds"] = []string{approverProfileID.String()}
 			}
 			for k, v := range tt.input {
 				input[k] = v
@@ -655,7 +655,7 @@ func TestDocument_Timestamps(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"approverId":     approverProfileID.String(),
+				"approverIds":    []string{approverProfileID.String()},
 				"title":          "Timestamp Test Document",
 				"content":        "Test content",
 				"documentType":   "POLICY",
@@ -736,15 +736,20 @@ func TestDocument_SubResolvers(t *testing.T) {
 	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
 	documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("SubResolver Test Document").Create()
 
-	t.Run("approver sub-resolver", func(t *testing.T) {
+	t.Run("approvers sub-resolver", func(t *testing.T) {
 		query := `
 			query($id: ID!) {
 				node(id: $id) {
 					... on Document {
 						id
-						approver {
-							id
-							fullName
+						approvers {
+							totalCount
+							edges {
+								node {
+									id
+									fullName
+								}
+							}
 						}
 					}
 				}
@@ -753,17 +758,24 @@ func TestDocument_SubResolvers(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID       string `json:"id"`
-				Approver struct {
-					ID       string `json:"id"`
-					FullName string `json:"fullName"`
-				} `json:"approver"`
+				ID        string `json:"id"`
+				Approvers struct {
+					TotalCount int `json:"totalCount"`
+					Edges      []struct {
+						Node struct {
+							ID       string `json:"id"`
+							FullName string `json:"fullName"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"approvers"`
 			} `json:"node"`
 		}
 
 		err := owner.Execute(query, map[string]any{"id": documentID}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, approverProfileID.String(), result.Node.Approver.ID)
+		assert.Equal(t, 1, result.Node.Approvers.TotalCount)
+		require.Len(t, result.Node.Approvers.Edges, 1)
+		assert.Equal(t, approverProfileID.String(), result.Node.Approvers.Edges[0].Node.ID)
 	})
 
 	t.Run("organization sub-resolver", func(t *testing.T) {
@@ -815,7 +827,7 @@ func TestDocument_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
-					"approverId":     approverProfileID.String(),
+					"approverIds":    []string{approverProfileID.String()},
 					"title":          "RBAC Test Document",
 					"content":        "Test content",
 					"documentType":   "POLICY",
@@ -839,7 +851,7 @@ func TestDocument_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId": admin.GetOrganizationID().String(),
-					"approverId":     approverProfileID.String(),
+					"approverIds":    []string{approverProfileID.String()},
 					"title":          "RBAC Test Document",
 					"content":        "Test content",
 					"documentType":   "POLICY",
@@ -863,7 +875,7 @@ func TestDocument_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId": viewer.GetOrganizationID().String(),
-					"approverId":     approverProfileID.String(),
+					"approverIds":    []string{approverProfileID.String()},
 					"title":          "RBAC Test Document",
 					"content":        "Test content",
 					"documentType":   "POLICY",
@@ -1088,7 +1100,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"approverId":     approverProfileID.String(),
+				"approverIds":    []string{approverProfileID.String()},
 				"title":          longTitle,
 				"content":        "Test content",
 				"documentType":   "POLICY",

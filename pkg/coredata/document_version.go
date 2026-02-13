@@ -34,7 +34,6 @@ type (
 		OrganizationID gid.GID                `db:"organization_id"`
 		DocumentID     gid.GID                `db:"document_id"`
 		Title          string                 `db:"title"`
-		ApproverID     gid.GID                `db:"approver_profile_id"`
 		VersionNumber  int                    `db:"version_number"`
 		Classification DocumentClassification `db:"classification"`
 		Content        string                 `db:"content"`
@@ -77,7 +76,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	approver_profile_id,
 	version_number,
 	classification,
 	content,
@@ -139,7 +137,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	approver_profile_id,
 	version_number,
 	classification,
 	content,
@@ -190,7 +187,6 @@ INSERT INTO document_versions (
 	organization_id,
 	document_id,
 	title,
-	approver_profile_id,
 	version_number,
 	classification,
 	content,
@@ -205,7 +201,6 @@ VALUES (
 	@organization_id,
 	@document_id,
 	@title,
-	@approver_profile_id,
 	@version_number,
 	@classification,
 	@content,
@@ -216,19 +211,18 @@ VALUES (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":        scope.GetTenantID(),
-		"id":               dv.ID,
-		"organization_id":  dv.OrganizationID,
-		"document_id":      dv.DocumentID,
-		"title":            dv.Title,
-		"approver_profile_id": dv.ApproverID,
-		"version_number":   dv.VersionNumber,
-		"classification":   dv.Classification,
-		"content":          dv.Content,
-		"changelog":        dv.Changelog,
-		"status":           dv.Status,
-		"created_at":       dv.CreatedAt,
-		"updated_at":       dv.UpdatedAt,
+		"tenant_id":       scope.GetTenantID(),
+		"id":              dv.ID,
+		"organization_id": dv.OrganizationID,
+		"document_id":     dv.DocumentID,
+		"title":           dv.Title,
+		"version_number":  dv.VersionNumber,
+		"classification":  dv.Classification,
+		"content":         dv.Content,
+		"changelog":       dv.Changelog,
+		"status":          dv.Status,
+		"created_at":      dv.CreatedAt,
+		"updated_at":      dv.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -260,7 +254,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	approver_profile_id,
 	version_number,
 	classification,
 	content,
@@ -313,7 +306,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	approver_profile_id,
 	version_number,
 	classification,
 	content,
@@ -364,7 +356,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	approver_profile_id,
 	version_number,
 	classification,
 	content,
@@ -413,7 +404,6 @@ func (dv DocumentVersion) Update(
 	q := `
 UPDATE document_versions SET
 	title = @title,
-	approver_profile_id = @approver_profile_id,
 	changelog = @changelog,
 	status = @status,
 	content = @content,
@@ -429,7 +419,6 @@ WHERE %s
 	args := pgx.StrictNamedArgs{
 		"document_version_id": dv.ID,
 		"title":               dv.Title,
-		"approver_profile_id":    dv.ApproverID,
 		"changelog":           dv.Changelog,
 		"status":              dv.Status,
 		"content":             dv.Content,

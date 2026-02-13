@@ -12,7 +12,7 @@ import type { DocumentLayoutDrawerMutation } from "#/__generated__/core/Document
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -22,6 +22,14 @@ const documentFragment = graphql`
     id
     documentType
     canUpdate: permission(action: "core:document:update")
+    approvers(first: 100) {
+      edges {
+        node {
+          id
+          fullName
+        }
+      }
+    }
   }
 `;
 
@@ -29,10 +37,6 @@ const versionFragment = graphql`
   fragment DocumentLayoutDrawer_versionFragment on DocumentVersion {
     id
     classification
-    approver {
-      id
-      fullName
-    }
     version
     status
     updatedAt
@@ -47,9 +51,13 @@ const updateDocumentMutation = graphql`
         id
         documentType
         classification
-        approver {
-          id
-          fullName
+        approvers(first: 100) {
+          edges {
+            node {
+              id
+              fullName
+            }
+          }
         }
       }
     }
@@ -57,7 +65,7 @@ const updateDocumentMutation = graphql`
 `;
 
 const schema = z.object({
-  approverId: z.string().min(1, "Approver is required"),
+  approverIds: z.array(z.string()).min(1, "At least one approver is required"),
   documentType: z.enum(documentTypes),
   classification: z.enum(documentClassifications),
 });
@@ -80,11 +88,13 @@ export function DocumentLayoutDrawer(props: {
 
   const isDraft = version.status === "DRAFT";
 
+  const approvers = document.approvers.edges.map(e => e.node);
+
   const { control, handleSubmit, reset } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        approverId: version.approver.id,
+        approverIds: approvers.map(a => a.id),
         documentType: document.documentType,
         classification: version.classification,
       },
@@ -100,12 +110,12 @@ export function DocumentLayoutDrawer(props: {
       },
     );
 
-  const handleUpdateApprover = async (data: { approverId: string }) => {
+  const handleUpdateApprover = async (data: { approverIds: string[] }) => {
     await updateDocument({
       variables: {
         input: {
           id: document.id,
-          approverId: data.approverId,
+          approverIds: data.approverIds,
         },
       },
       onSuccess: () => {
@@ -151,7 +161,7 @@ export function DocumentLayoutDrawer(props: {
       <div className="text-base text-txt-primary font-medium mb-4">
         {__("Properties")}
       </div>
-      <PropertyRow label={__("Approver")}>
+      <PropertyRow label={__("Approvers")}>
         {isEditingApprover
           ? (
               <EditablePropertyContent
@@ -162,10 +172,11 @@ export function DocumentLayoutDrawer(props: {
                 }}
                 disabled={isUpdatingDocument}
               >
-                <PeopleSelectField
-                  name="approverId"
+                <PeopleMultiSelectField
+                  name="approverIds"
                   control={control}
                   organizationId={organizationId}
+                  selectedPeople={approvers}
                 />
               </EditablePropertyContent>
             )
@@ -174,10 +185,14 @@ export function DocumentLayoutDrawer(props: {
                 onEdit={() => setIsEditingApprover(true)}
                 canEdit={document.canUpdate}
               >
-                <Badge variant="highlight" size="md" className="gap-2">
-                  <Avatar name={version.approver.fullName} />
-                  {version.approver.fullName}
-                </Badge>
+                <div className="flex flex-wrap gap-2">
+                  {approvers.map(approver => (
+                    <Badge key={approver.id} variant="highlight" size="md" className="gap-2">
+                      <Avatar name={approver.fullName} />
+                      {approver.fullName}
+                    </Badge>
+                  ))}
+                </div>
               </ReadOnlyPropertyContent>
             )}
       </PropertyRow>

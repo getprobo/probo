@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -142,8 +143,8 @@ func (s *DocumentService) exportPDFData(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	approver := &coredata.MembershipProfile{}
 	organization := &coredata.Organization{}
+	var approverNames []string
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -160,8 +161,19 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load latest published document version: %w", err)
 			}
 
-			if err := approver.LoadByID(ctx, conn, s.svc.scope, document.ApproverID); err != nil {
-				return fmt.Errorf("cannot load document approver profile: %w", err)
+			// Load approvers
+			docApprovers := &coredata.DocumentApprovers{}
+			if err := docApprovers.LoadByDocumentID(ctx, conn, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document approvers: %w", err)
+			}
+
+			profiles := coredata.MembershipProfiles{}
+			if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, docApprovers.ApproverProfileIDs()); err != nil {
+				return fmt.Errorf("cannot load document approver profiles: %w", err)
+			}
+
+			for _, p := range profiles {
+				approverNames = append(approverNames, p.FullName)
 			}
 
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {
@@ -203,7 +215,7 @@ func (s *DocumentService) exportPDFData(
 		Content:                     version.Content,
 		Version:                     version.VersionNumber,
 		Classification:              classification,
-		Approver:                    approver.FullName,
+		Approver:                    strings.Join(approverNames, ", "),
 		PublishedAt:                 version.PublishedAt,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 	}
