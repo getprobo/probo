@@ -22,21 +22,17 @@ const fragment = graphql`
 const acceptMutation = graphql`
   mutation InvitationCardMutation(
     $input: AcceptInvitationInput!
-    $membershipConnections: [ID!]!
+    # FIXME: profiles
+    # $membershipConnections: [ID!]!
     $pendingInvitationConnections: [ID!]!
   ) {
     acceptInvitation(input: $input) {
       invitation {
         id @deleteEdge(connections: $pendingInvitationConnections)
       }
-      membershipEdge @prependEdge(connections: $membershipConnections) {
-        node {
-          id
-          ...MembershipCardFragment
-          organization {
-            name
-          }
-        }
+      membership {
+        id
+        ...MembershipCardFragment
       }
     }
   }
@@ -44,12 +40,11 @@ const acceptMutation = graphql`
 
 interface InvitationCardProps {
   pendingInvitationsConnectionId: DataID;
-  membershipConnectionId: DataID;
   fKey: InvitationCardFragment$key;
 }
 
 export function InvitationCard(props: InvitationCardProps) {
-  const { pendingInvitationsConnectionId, membershipConnectionId, fKey }
+  const { pendingInvitationsConnectionId, fKey }
     = props;
 
   const { __ } = useTranslate();
@@ -67,7 +62,6 @@ export function InvitationCard(props: InvitationCardProps) {
           invitationId: invitation.id,
         },
         pendingInvitationConnections: [pendingInvitationsConnectionId],
-        membershipConnections: [membershipConnectionId],
       },
       onCompleted: (_, e) => {
         if (e) {

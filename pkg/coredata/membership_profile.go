@@ -534,13 +534,10 @@ WHERE
 	args := pgx.StrictNamedArgs{"identity_id": identityID}
 	maps.Copy(args, filter.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return 0, fmt.Errorf("cannot query iam_membership_profiles: %w", err)
-	}
+	row := conn.QueryRow(ctx, q, args)
 
 	var count int
-	err = rows.Scan(&count)
+	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
 	}
@@ -572,13 +569,10 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return 0, fmt.Errorf("cannot query iam_membership_profiles: %w", err)
-	}
+	row := conn.QueryRow(ctx, q, args)
 
 	var count int
-	err = rows.Scan(&count)
+	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
 	}

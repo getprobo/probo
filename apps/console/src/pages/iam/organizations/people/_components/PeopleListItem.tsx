@@ -22,23 +22,24 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { EditMemberDialog } from "../../settings/_components/EditMemberDialog";
 
 const fragment = graphql`
-  fragment PeopleListItemFragment on Membership {
+  fragment PeopleListItemFragment on Profile {
     id
-    role
-    source
-    state
-    profile @required(action: THROW) {
+    fullName
+    kind
+    position
+    membership @required(action: THROW) {
       id
-      fullName
-      kind
-      position
+      role
+      source
+      state
+      canUpdate: permission(action: "iam:membership:update")
+      canDelete: permission(action: "iam:membership-profile:delete")
     }
     identity @required(action: THROW) {
       email
     }
     createdAt
-    canUpdate: permission(action: "iam:membership:update")
-    canDelete: permission(action: "iam:membership:delete")
+    canUpdate: permission(action: "iam:membership-profile:update")
   }
 `;
 
@@ -65,9 +66,9 @@ export function MemberListItem(props: {
   const confirm = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const membership = useFragment<PeopleListItemFragment$key>(fragment, fKey);
+  const profile = useFragment<PeopleListItemFragment$key>(fragment, fKey);
 
-  const isInactive = membership.state === "INACTIVE";
+  const isInactive = profile.membership.state === "INACTIVE";
 
   const [removeMembership, isRemoving] = useMutationWithToasts(
     removeMemberMutation,
@@ -83,7 +84,7 @@ export function MemberListItem(props: {
         return removeMembership({
           variables: {
             input: {
-              membershipId: membership.id,
+              membershipId: profile.membership.id,
               organizationId: organizationId,
             },
             connections: [connectionId],
@@ -93,7 +94,7 @@ export function MemberListItem(props: {
       {
         message: sprintf(
           __("Are you sure you want to remove %s?"),
-          membership.profile.fullName,
+          profile.fullName,
         ),
       },
     );
@@ -106,33 +107,33 @@ export function MemberListItem(props: {
           isRemoving && "opacity-60 pointer-events-none",
           isInactive && "opacity-50",
         )}
-        to={`/organizations/${organizationId}/people/${membership.profile.id}`}
+        to={`/organizations/${organizationId}/people/${profile.id}`}
       >
         <Td>
           <div className="flex items-center gap-2">
-            <span className="font-semibold">{membership.profile.fullName}</span>
+            <span className="font-semibold">{profile.fullName}</span>
             {isInactive && <Badge variant="neutral">{__("Inactive")}</Badge>}
           </div>
         </Td>
         <Td>
           <div className="flex items-center gap-2">
-            {membership.identity.email}
-            <Badge variant="info">{membership.source}</Badge>
+            {profile.identity.email}
+            <Badge variant="info">{profile.membership.source}</Badge>
           </div>
         </Td>
-        <Td>{membership.profile.kind}</Td>
+        <Td>{profile.kind}</Td>
         <Td>
-          <Badge>{membership.role}</Badge>
+          <Badge>{profile.membership.role}</Badge>
         </Td>
-        <Td>{new Date(membership.createdAt).toLocaleDateString()}</Td>
-        <Td>{membership.profile.position}</Td>
+        <Td>{new Date(profile.createdAt).toLocaleDateString()}</Td>
+        <Td>{profile.position}</Td>
         <Td noLink width={160} className="text-end">
           {!isInactive && (
             <div
               className="flex gap-2 justify-end"
               onClick={e => e.stopPropagation()}
             >
-              {membership.canUpdate && (
+              {profile.membership.canUpdate && (
                 <Button
                   variant="secondary"
                   onClick={() => setDialogOpen(true)}
@@ -146,7 +147,7 @@ export function MemberListItem(props: {
                     <Spinner size={16} />
                   )
                 : (
-                    membership.canDelete && (
+                    profile.membership.canDelete && (
                       <Button
                         variant="danger"
                         onClick={handleRemove}
@@ -164,7 +165,7 @@ export function MemberListItem(props: {
       {dialogOpen && (
         <EditMemberDialog
           onClose={() => setDialogOpen(false)}
-          membership={membership}
+          profile={profile}
         />
       )}
     </>

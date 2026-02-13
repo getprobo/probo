@@ -18,19 +18,22 @@ import { MembershipCard } from "./_components/MembershipCard";
 export const membershipsPageQuery = graphql`
   query MembershipsPageQuery {
     viewer @required(action: THROW) {
-      memberships(
+      profiles(
         first: 1000
         orderBy: { direction: ASC, field: ORGANIZATION_NAME }
       )
-        @connection(key: "MembershipsPage_memberships")
+        @connection(key: "MembershipsPage_profiles")
         @required(action: THROW) {
         __id
         edges @required(action: THROW) {
           node {
             id
+            membership @required(action: THROW) {
             ...MembershipCardFragment
+            }
             organization @required(action: THROW) {
               name
+              ...MembershipCard_organizationFragment
             }
           }
         }
@@ -64,7 +67,7 @@ export function MembershipsPage(props: {
   const { queryRef } = props;
   const {
     viewer: {
-      memberships: { __id: membershipConnectionId, edges: initialMemberships },
+      profiles: { edges: initialProfiles },
       pendingInvitations: {
         __id: pendingInvitationsConnectionId,
         edges: invitations,
@@ -72,14 +75,14 @@ export function MembershipsPage(props: {
     },
   } = usePreloadedQuery<MembershipsPageQuery>(membershipsPageQuery, queryRef);
 
-  const memberships = useMemo(() => {
+  const profiles = useMemo(() => {
     if (!search.trim()) {
-      return initialMemberships;
+      return initialProfiles;
     }
-    return initialMemberships.filter(({ node }) =>
+    return initialProfiles.filter(({ node }) =>
       node.organization.name.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [initialMemberships, search]);
+  }, [initialProfiles, search]);
 
   return (
     <>
@@ -98,14 +101,13 @@ export function MembershipsPage(props: {
                   pendingInvitationsConnectionId={
                     pendingInvitationsConnectionId
                   }
-                  membershipConnectionId={membershipConnectionId}
                   key={node.id}
                   fKey={node}
                 />
               ))}
             </div>
           )}
-          {initialMemberships.length > 0 && (
+          {initialProfiles.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xl font-semibold">
                 {__("Your organizations")}
@@ -118,15 +120,19 @@ export function MembershipsPage(props: {
                   onValueChange={setSearch}
                 />
               </div>
-              {memberships.length === 0
+              {profiles.length === 0
                 ? (
                     <div className="text-center text-txt-secondary py-4">
                       {__("No organizations found")}
                     </div>
                   )
                 : (
-                    memberships.map(({ node }) => (
-                      <MembershipCard key={node.id} fKey={node} />
+                    profiles.map(({ node }) => (
+                      <MembershipCard
+                        key={node.id}
+                        fKey={node.membership}
+                        organizationFragmentRef={node.organization}
+                      />
                     ))
                   )}
             </div>

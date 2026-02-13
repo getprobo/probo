@@ -15,9 +15,11 @@ export const personPageQuery = graphql`
   query PersonPageQuery($personId: ID!) {
     person: node(id: $personId) @required(action: THROW) {
       __typename
-      ... on MembershipProfile {
+      ... on Profile {
         fullName
-        membershipId
+        membership @required(action: THROW) {
+          id
+        }
         identity @required(action: THROW) {
           email
         }
@@ -47,7 +49,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
   const navigate = useNavigate();
 
   const { person } = usePreloadedQuery<PersonPageQuery>(personPageQuery, queryRef);
-  if (person.__typename !== "MembershipProfile") {
+  if (person.__typename !== "Profile") {
     throw new Error("invalid type for node");
   }
 
@@ -65,7 +67,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
         return removeMembership({
           variables: {
             input: {
-              membershipId: person.membershipId,
+              membershipId: person.membership.id,
               organizationId: organizationId,
             },
           },

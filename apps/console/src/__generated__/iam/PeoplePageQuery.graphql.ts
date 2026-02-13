@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<53070e63046901877444d5de41cc8624>>
+ * @generated SignedSource<<e628337d33e88ca5cfe6e45a55eebe32>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -396,6 +396,19 @@ return {
                                 "kind": "ScalarField",
                                 "name": "permission",
                                 "storageKey": "permission(action:\"iam:membership:update\")"
+                              },
+                              {
+                                "alias": "canDelete",
+                                "args": [
+                                  {
+                                    "kind": "Literal",
+                                    "name": "action",
+                                    "value": "iam:membership-profile:delete"
+                                  }
+                                ],
+                                "kind": "ScalarField",
+                                "name": "permission",
+                                "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                               }
                             ],
                             "storageKey": null
@@ -426,19 +439,6 @@ return {
                             "kind": "ScalarField",
                             "name": "permission",
                             "storageKey": "permission(action:\"iam:membership-profile:update\")"
-                          },
-                          {
-                            "alias": "canDelete",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "iam:membership-profile:delete"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                           },
                           (v2/*: any*/)
                         ],
@@ -552,12 +552,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d13993ce884669894f65925a714aeaa6",
+    "cacheID": "4303ec6c2fa72181d747bb9053446aaa",
     "id": null,
     "metadata": {},
     "name": "PeoplePageQuery",
     "operationKind": "query",
-    "text": "query PeoplePageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canInviteUser: permission(action: \"iam:invitation:create\")\n      profiles(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n        totalCount\n      }\n      ...PeopleListFragment_8lnpd\n      invitations(first: 20, orderBy: {direction: DESC, field: CREATED_AT}) {\n        totalCount\n        __typename\n      }\n      ...InvitationListFragment_1PypFi\n    }\n    id\n  }\n}\n\nfragment InvitationListFragment_1PypFi on Organization {\n  invitations(first: 20, orderBy: {direction: DESC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n\nfragment PeopleListFragment_8lnpd on Organization {\n  profiles(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  fullName\n  kind\n  position\n  membership {\n    id\n    role\n    source\n    state\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
+    "text": "query PeoplePageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canInviteUser: permission(action: \"iam:invitation:create\")\n      profiles(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n        totalCount\n      }\n      ...PeopleListFragment_8lnpd\n      invitations(first: 20, orderBy: {direction: DESC, field: CREATED_AT}) {\n        totalCount\n        __typename\n      }\n      ...InvitationListFragment_1PypFi\n    }\n    id\n  }\n}\n\nfragment InvitationListFragment_1PypFi on Organization {\n  invitations(first: 20, orderBy: {direction: DESC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n\nfragment PeopleListFragment_8lnpd on Organization {\n  profiles(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  fullName\n  kind\n  position\n  membership {\n    id\n    role\n    source\n    state\n    canUpdate: permission(action: \"iam:membership:update\")\n    canDelete: permission(action: \"iam:membership-profile:delete\")\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
   }
 };
 })();
