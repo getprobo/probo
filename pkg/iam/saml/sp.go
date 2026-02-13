@@ -51,6 +51,9 @@ func (s *Service) serviceProvider(
 							},
 						},
 					},
+					NameIDFormats: []saml.NameIDFormat{
+						saml.EmailAddressNameIDFormat,
+					},
 				},
 				SingleSignOnServices: []saml.Endpoint{
 					{
