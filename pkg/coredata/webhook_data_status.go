@@ -52,12 +52,14 @@ func (s *WebhookDataStatus) UnmarshalText(text []byte) error {
 }
 
 func (s *WebhookDataStatus) Scan(value any) error {
-	str, ok := value.(string)
-	if !ok {
+	switch v := value.(type) {
+	case string:
+		return s.UnmarshalText([]byte(v))
+	case []byte:
+		return s.UnmarshalText(v)
+	default:
 		return fmt.Errorf("unsupported type for WebhookDataStatus: %T", value)
 	}
-
-	return s.UnmarshalText([]byte(str))
 }
 
 func (s WebhookDataStatus) Value() (driver.Value, error) {

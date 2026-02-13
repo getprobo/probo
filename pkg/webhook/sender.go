@@ -197,7 +197,6 @@ func (s *Sender) deliverToConfiguration(
 		s.logger.ErrorCtx(ctx, "error delivering webhook",
 			log.Error(sendErr),
 			log.String("webhook_data_id", webhookData.ID.String()),
-			log.String("endpoint_url", config.EndpointURL),
 		)
 	}
 
