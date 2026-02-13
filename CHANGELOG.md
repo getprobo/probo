@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.123.1] - 2026-02-13
+
+### Fixed
+
+- Fix missing NameID format information in SAML metadata
+
 ## [0.123.0] - 2026-02-12
 
 ### Changed
