@@ -69,7 +69,7 @@ func NewWebhookEvent(we *coredata.WebhookEvent) *WebhookEvent {
 
 	return &WebhookEvent{
 		ID:                     we.ID,
-		WebhookConfigurationID: we.WebhookConfigurationID,
+		WebhookSubscriptionID: we.WebhookSubscriptionID,
 		Status:                 we.Status,
 		Response:               response,
 		CreatedAt:              we.CreatedAt,

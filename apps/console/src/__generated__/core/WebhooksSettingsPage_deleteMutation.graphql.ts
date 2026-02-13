@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<86d94ecf595a0048971276541e185905>>
+ * @generated SignedSource<<bbbb8700958f1bee82226fdbf53189b3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,16 +9,16 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DeleteWebhookConfigurationInput = {
-  webhookConfigurationId: string;
+export type DeleteWebhookSubscriptionInput = {
+  webhookSubscriptionId: string;
 };
 export type WebhooksSettingsPage_deleteMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: DeleteWebhookConfigurationInput;
+  input: DeleteWebhookSubscriptionInput;
 };
 export type WebhooksSettingsPage_deleteMutation$data = {
-  readonly deleteWebhookConfiguration: {
-    readonly deletedWebhookConfigurationId: string;
+  readonly deleteWebhookSubscription: {
+    readonly deletedWebhookSubscriptionId: string;
   };
 };
 export type WebhooksSettingsPage_deleteMutation = {
@@ -48,7 +48,7 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "deletedWebhookConfigurationId",
+  "name": "deletedWebhookSubscriptionId",
   "storageKey": null
 };
 return {
@@ -64,9 +64,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeleteWebhookConfigurationPayload",
+        "concreteType": "DeleteWebhookSubscriptionPayload",
         "kind": "LinkedField",
-        "name": "deleteWebhookConfiguration",
+        "name": "deleteWebhookSubscription",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -89,9 +89,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeleteWebhookConfigurationPayload",
+        "concreteType": "DeleteWebhookSubscriptionPayload",
         "kind": "LinkedField",
-        "name": "deleteWebhookConfiguration",
+        "name": "deleteWebhookSubscription",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -102,7 +102,7 @@ return {
             "handle": "deleteEdge",
             "key": "",
             "kind": "ScalarHandle",
-            "name": "deletedWebhookConfigurationId",
+            "name": "deletedWebhookSubscriptionId",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -117,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ae53fa4e16e4491720c1fdfc52301c09",
+    "cacheID": "c1bab418b14488e982f2c444b8693919",
     "id": null,
     "metadata": {},
     "name": "WebhooksSettingsPage_deleteMutation",
     "operationKind": "mutation",
-    "text": "mutation WebhooksSettingsPage_deleteMutation(\n  $input: DeleteWebhookConfigurationInput!\n) {\n  deleteWebhookConfiguration(input: $input) {\n    deletedWebhookConfigurationId\n  }\n}\n"
+    "text": "mutation WebhooksSettingsPage_deleteMutation(\n  $input: DeleteWebhookSubscriptionInput!\n) {\n  deleteWebhookSubscription(input: $input) {\n    deletedWebhookSubscriptionId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "632fce2d89360bed2d857dd3feb90b9d";
+(node as any).hash = "794d73fc91d4332f5e65a070ea11d27d";
 
 export default node;

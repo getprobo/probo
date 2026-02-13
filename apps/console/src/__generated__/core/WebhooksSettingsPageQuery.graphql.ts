@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<18c0948adc229a75b1d980e64730b423>>
+ * @generated SignedSource<<164efe490915ac140a48e42cbd17e915>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type WebhooksSettingsPageQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
     readonly id: string;
-    readonly webhookConfigurations: {
+    readonly webhookSubscriptions: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly endpointUrl: string;
@@ -73,7 +73,7 @@ v4 = [
   {
     "alias": null,
     "args": null,
-    "concreteType": "WebhookConfigurationEdge",
+    "concreteType": "WebhookSubscriptionEdge",
     "kind": "LinkedField",
     "name": "edges",
     "plural": true,
@@ -81,7 +81,7 @@ v4 = [
       {
         "alias": null,
         "args": null,
-        "concreteType": "WebhookConfiguration",
+        "concreteType": "WebhookSubscription",
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
@@ -195,11 +195,11 @@ return {
               "selections": [
                 (v3/*: any*/),
                 {
-                  "alias": "webhookConfigurations",
+                  "alias": "webhookSubscriptions",
                   "args": null,
-                  "concreteType": "WebhookConfigurationConnection",
+                  "concreteType": "WebhookSubscriptionConnection",
                   "kind": "LinkedField",
-                  "name": "__WebhooksSettingsPage_webhookConfigurations_connection",
+                  "name": "__WebhooksSettingsPage_webhookSubscriptions_connection",
                   "plural": false,
                   "selections": (v4/*: any*/),
                   "storageKey": null
@@ -239,21 +239,21 @@ return {
               {
                 "alias": null,
                 "args": (v5/*: any*/),
-                "concreteType": "WebhookConfigurationConnection",
+                "concreteType": "WebhookSubscriptionConnection",
                 "kind": "LinkedField",
-                "name": "webhookConfigurations",
+                "name": "webhookSubscriptions",
                 "plural": false,
                 "selections": (v4/*: any*/),
-                "storageKey": "webhookConfigurations(first:50)"
+                "storageKey": "webhookSubscriptions(first:50)"
               },
               {
                 "alias": null,
                 "args": (v5/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "WebhooksSettingsPage_webhookConfigurations",
+                "key": "WebhooksSettingsPage_webhookSubscriptions",
                 "kind": "LinkedHandle",
-                "name": "webhookConfigurations"
+                "name": "webhookSubscriptions"
               }
             ],
             "type": "Organization",
@@ -265,7 +265,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b5ca3cf4d05d2cb81c744e760433cb94",
+    "cacheID": "eeb9eda2a1b1d205fadba357fc20077c",
     "id": null,
     "metadata": {
       "connection": [
@@ -275,18 +275,18 @@ return {
           "direction": "forward",
           "path": [
             "organization",
-            "webhookConfigurations"
+            "webhookSubscriptions"
           ]
         }
       ]
     },
     "name": "WebhooksSettingsPageQuery",
     "operationKind": "query",
-    "text": "query WebhooksSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      webhookConfigurations(first: 50) {\n        edges {\n          node {\n            id\n            endpointUrl\n            selectedEvents\n            events(first: 0) {\n              totalCount\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query WebhooksSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      webhookSubscriptions(first: 50) {\n        edges {\n          node {\n            id\n            endpointUrl\n            selectedEvents\n            events(first: 0) {\n              totalCount\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bac1812903d6f495d15bb0e70ce5ed48";
+(node as any).hash = "2d08ddd621d3e5880367b83a70d2f168";
 
 export default node;

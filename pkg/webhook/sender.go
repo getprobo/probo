@@ -64,7 +64,7 @@ type (
 
 	pendingDelivery struct {
 		Event  *coredata.WebhookEvent
-		Config *coredata.WebhookConfiguration
+		Config *coredata.WebhookSubscription
 	}
 )
 
@@ -138,22 +138,22 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 
 		scope := coredata.NewScopeFromObjectID(webhookData.ID)
 
-		var configs coredata.WebhookConfigurations
+		var configs coredata.WebhookSubscriptions
 		if err := configs.LoadMatchingByOrganizationIDAndEventType(
 			ctx, tx, scope, webhookData.OrganizationID, webhookData.EventType,
 		); err != nil {
-			return fmt.Errorf("cannot load matching webhook configurations: %w", err)
+			return fmt.Errorf("cannot load matching webhook subscriptions: %w", err)
 		}
 
 		now := time.Now()
 
 		for _, config := range configs {
 			event := &coredata.WebhookEvent{
-				ID:                     gid.New(webhookData.ID.TenantID(), coredata.WebhookEventEntityType),
-				WebhookDataID:          webhookData.ID,
-				WebhookConfigurationID: config.ID,
-				Status:                 coredata.WebhookEventStatusPending,
-				CreatedAt:              now,
+				ID:                    gid.New(webhookData.ID.TenantID(), coredata.WebhookEventEntityType),
+				WebhookDataID:         webhookData.ID,
+				WebhookSubscriptionID: config.ID,
+				Status:                coredata.WebhookEventStatusPending,
+				CreatedAt:             now,
 			}
 
 			if err := event.Insert(ctx, tx, scope); err != nil {
@@ -195,7 +195,7 @@ func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData,
 		s.logger.ErrorCtx(ctx, "cannot get signing secret",
 			log.Error(err),
 			log.String("webhook_data_id", webhookData.ID.String()),
-			log.String("configuration_id", d.Config.ID.String()),
+			log.String("subscription_id", d.Config.ID.String()),
 		)
 		s.updateEventStatus(ctx, d.Event, scope, coredata.WebhookEventStatusFailed, nil)
 		return
@@ -238,8 +238,8 @@ func (s *Sender) updateEventStatus(
 	}
 }
 
-func (s *Sender) getSigningSecret(webhookConfigurationID string, encryptedSigningSecret []byte) (string, error) {
-	if cached, ok := s.cache.Load(webhookConfigurationID); ok {
+func (s *Sender) getSigningSecret(webhookSubscriptionID string, encryptedSigningSecret []byte) (string, error) {
+	if cached, ok := s.cache.Load(webhookSubscriptionID); ok {
 		entry := cached.(*cachedSecret)
 		if bytes.Equal(entry.encryptedSecret, encryptedSigningSecret) {
 			return entry.plaintext, nil
@@ -252,7 +252,7 @@ func (s *Sender) getSigningSecret(webhookConfigurationID string, encryptedSignin
 	}
 
 	signingSecret := string(plaintext)
-	s.cache.Store(webhookConfigurationID, &cachedSecret{
+	s.cache.Store(webhookSubscriptionID, &cachedSecret{
 		encryptedSecret: encryptedSigningSecret,
 		plaintext:       signingSecret,
 	})
@@ -265,16 +265,16 @@ func (s *Sender) doHTTPCall(
 	eventID gid.GID,
 	endpointURL string,
 	webhookData *coredata.WebhookData,
-	configurationID gid.GID,
+	subscriptionID gid.GID,
 	signingSecret string,
 ) (json.RawMessage, error) {
 	payload := map[string]any{
-		"eventId":         eventID.String(),
-		"configurationId": configurationID.String(),
-		"organizationId":  webhookData.OrganizationID.String(),
-		"eventType":       webhookData.EventType.String(),
-		"createdAt":       webhookData.CreatedAt,
-		"data":            webhookData.Data,
+		"eventId":        eventID.String(),
+		"subscriptionId": subscriptionID.String(),
+		"organizationId": webhookData.OrganizationID.String(),
+		"eventType":      webhookData.EventType.String(),
+		"createdAt":      webhookData.CreatedAt,
+		"data":           webhookData.Data,
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {

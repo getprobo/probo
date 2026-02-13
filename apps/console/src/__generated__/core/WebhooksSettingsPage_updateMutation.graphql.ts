@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3331839e2cc81d14ac1b2fcfe3fd84f1>>
+ * @generated SignedSource<<864603efd6135475b827a1234b128b7c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,17 +10,17 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type WebhookEventType = "MEETING_CREATED" | "MEETING_DELETED" | "MEETING_UPDATED" | "VENDOR_CREATED" | "VENDOR_DELETED" | "VENDOR_UPDATED";
-export type UpdateWebhookConfigurationInput = {
+export type UpdateWebhookSubscriptionInput = {
   endpointUrl?: string | null | undefined;
   id: string;
   selectedEvents?: ReadonlyArray<WebhookEventType> | null | undefined;
 };
 export type WebhooksSettingsPage_updateMutation$variables = {
-  input: UpdateWebhookConfigurationInput;
+  input: UpdateWebhookSubscriptionInput;
 };
 export type WebhooksSettingsPage_updateMutation$data = {
-  readonly updateWebhookConfiguration: {
-    readonly webhookConfiguration: {
+  readonly updateWebhookSubscription: {
+    readonly webhookSubscription: {
       readonly endpointUrl: string;
       readonly id: string;
       readonly selectedEvents: ReadonlyArray<WebhookEventType>;
@@ -51,17 +51,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "UpdateWebhookConfigurationPayload",
+    "concreteType": "UpdateWebhookSubscriptionPayload",
     "kind": "LinkedField",
-    "name": "updateWebhookConfiguration",
+    "name": "updateWebhookSubscription",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "WebhookConfiguration",
+        "concreteType": "WebhookSubscription",
         "kind": "LinkedField",
-        "name": "webhookConfiguration",
+        "name": "webhookSubscription",
         "plural": false,
         "selections": [
           {
@@ -117,16 +117,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "399a35c005f10dd321784a7533fb4f80",
+    "cacheID": "e12790e2de3f89c6606b50a597acb244",
     "id": null,
     "metadata": {},
     "name": "WebhooksSettingsPage_updateMutation",
     "operationKind": "mutation",
-    "text": "mutation WebhooksSettingsPage_updateMutation(\n  $input: UpdateWebhookConfigurationInput!\n) {\n  updateWebhookConfiguration(input: $input) {\n    webhookConfiguration {\n      id\n      endpointUrl\n      selectedEvents\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation WebhooksSettingsPage_updateMutation(\n  $input: UpdateWebhookSubscriptionInput!\n) {\n  updateWebhookSubscription(input: $input) {\n    webhookSubscription {\n      id\n      endpointUrl\n      selectedEvents\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f974aae43d0ad8b5fe3cab60bd07a3ff";
+(node as any).hash = "f4c0f7667d77b64c41e436a7b5df6df5";
 
 export default node;

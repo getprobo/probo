@@ -19,37 +19,37 @@ import (
 )
 
 type (
-	WebhookConfigurationOrderField string
+	WebhookSubscriptionOrderField string
 )
 
 const (
-	WebhookConfigurationOrderFieldCreatedAt WebhookConfigurationOrderField = "CREATED_AT"
+	WebhookSubscriptionOrderFieldCreatedAt WebhookSubscriptionOrderField = "CREATED_AT"
 )
 
-func (p WebhookConfigurationOrderField) Column() string {
+func (p WebhookSubscriptionOrderField) Column() string {
 	return string(p)
 }
 
-func (p WebhookConfigurationOrderField) String() string {
+func (p WebhookSubscriptionOrderField) String() string {
 	return string(p)
 }
 
-func (p WebhookConfigurationOrderField) IsValid() bool {
+func (p WebhookSubscriptionOrderField) IsValid() bool {
 	switch p {
-	case WebhookConfigurationOrderFieldCreatedAt:
+	case WebhookSubscriptionOrderFieldCreatedAt:
 		return true
 	}
 	return false
 }
 
-func (p WebhookConfigurationOrderField) MarshalText() ([]byte, error) {
+func (p WebhookSubscriptionOrderField) MarshalText() ([]byte, error) {
 	return []byte(p.String()), nil
 }
 
-func (p *WebhookConfigurationOrderField) UnmarshalText(text []byte) error {
-	*p = WebhookConfigurationOrderField(text)
+func (p *WebhookSubscriptionOrderField) UnmarshalText(text []byte) error {
+	*p = WebhookSubscriptionOrderField(text)
 	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid WebhookConfigurationOrderField", string(text))
+		return fmt.Errorf("%s is not a valid WebhookSubscriptionOrderField", string(text))
 	}
 	return nil
 }

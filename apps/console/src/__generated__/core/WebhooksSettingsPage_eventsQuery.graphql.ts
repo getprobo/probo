@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7427d67b4f9b27376c782cbe0601a5ec>>
+ * @generated SignedSource<<6973a312c85bf6bed33ceda2600b989d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ export type WebhookEventStatus = "FAILED" | "PENDING" | "SUCCEEDED";
 export type WebhooksSettingsPage_eventsQuery$variables = {
   after?: string | null | undefined;
   first?: number | null | undefined;
-  webhookConfigurationId: string;
+  webhookSubscriptionId: string;
 };
 export type WebhooksSettingsPage_eventsQuery$data = {
   readonly node: {
@@ -53,13 +53,13 @@ v1 = {
 v2 = {
   "defaultValue": null,
   "kind": "LocalArgument",
-  "name": "webhookConfigurationId"
+  "name": "webhookSubscriptionId"
 },
 v3 = [
   {
     "kind": "Variable",
     "name": "id",
-    "variableName": "webhookConfigurationId"
+    "variableName": "webhookSubscriptionId"
   }
 ],
 v4 = {
@@ -171,7 +171,7 @@ v5 = {
       "storageKey": null
     }
   ],
-  "type": "WebhookConfiguration",
+  "type": "WebhookSubscription",
   "abstractKey": null
 };
 return {
@@ -234,16 +234,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4593e2ef5dabf3cef70959eb8d2e4b01",
+    "cacheID": "e74fa0d64dfc6bb54856386970bf4b68",
     "id": null,
     "metadata": {},
     "name": "WebhooksSettingsPage_eventsQuery",
     "operationKind": "query",
-    "text": "query WebhooksSettingsPage_eventsQuery(\n  $webhookConfigurationId: ID!\n  $first: Int\n  $after: CursorKey\n) {\n  node(id: $webhookConfigurationId) {\n    __typename\n    ... on WebhookConfiguration {\n      events(first: $first, after: $after) {\n        totalCount\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n        edges {\n          node {\n            id\n            status\n            createdAt\n            response\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query WebhooksSettingsPage_eventsQuery(\n  $webhookSubscriptionId: ID!\n  $first: Int\n  $after: CursorKey\n) {\n  node(id: $webhookSubscriptionId) {\n    __typename\n    ... on WebhookSubscription {\n      events(first: $first, after: $after) {\n        totalCount\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n        edges {\n          node {\n            id\n            status\n            createdAt\n            response\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "16da5d0681f767c57e3f352d4956eefe";
+(node as any).hash = "75d3f1df0526526656b065b6d9be8b65";
 
 export default node;

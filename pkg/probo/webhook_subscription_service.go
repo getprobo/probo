@@ -26,25 +26,25 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-type WebhookConfigurationService struct {
+type WebhookSubscriptionService struct {
 	svc *TenantService
 }
 
 type (
-	CreateWebhookConfigurationRequest struct {
+	CreateWebhookSubscriptionRequest struct {
 		OrganizationID gid.GID
 		EndpointURL    string
 		SelectedEvents []coredata.WebhookEventType
 	}
 
-	UpdateWebhookConfigurationRequest struct {
-		WebhookConfigurationID gid.GID
-		EndpointURL            *string
-		SelectedEvents         []coredata.WebhookEventType
+	UpdateWebhookSubscriptionRequest struct {
+		WebhookSubscriptionID gid.GID
+		EndpointURL           *string
+		SelectedEvents        []coredata.WebhookEventType
 	}
 )
 
-func (r *CreateWebhookConfigurationRequest) Validate() error {
+func (r *CreateWebhookSubscriptionRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
@@ -53,21 +53,21 @@ func (r *CreateWebhookConfigurationRequest) Validate() error {
 	return v.Error()
 }
 
-func (r *UpdateWebhookConfigurationRequest) Validate() error {
+func (r *UpdateWebhookSubscriptionRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(r.WebhookConfigurationID, "webhook_configuration_id", validator.Required(), validator.GID(coredata.WebhookConfigurationEntityType))
+	v.Check(r.WebhookSubscriptionID, "webhook_subscription_id", validator.Required(), validator.GID(coredata.WebhookSubscriptionEntityType))
 	v.Check(r.EndpointURL, "endpoint_url", validator.NotEmpty(), validator.HTTPSUrl())
 
 	return v.Error()
 }
 
-func (s WebhookConfigurationService) ListForOrganizationID(
+func (s WebhookSubscriptionService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	cursor *page.Cursor[coredata.WebhookConfigurationOrderField],
-) (*page.Page[*coredata.WebhookConfiguration, coredata.WebhookConfigurationOrderField], error) {
-	var configurations coredata.WebhookConfigurations
+	cursor *page.Cursor[coredata.WebhookSubscriptionOrderField],
+) (*page.Page[*coredata.WebhookSubscription, coredata.WebhookSubscriptionOrderField], error) {
+	var subscriptions coredata.WebhookSubscriptions
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
@@ -77,7 +77,7 @@ func (s WebhookConfigurationService) ListForOrganizationID(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			err := configurations.LoadByOrganizationID(
+			err := subscriptions.LoadByOrganizationID(
 				ctx,
 				conn,
 				s.svc.scope,
@@ -85,7 +85,7 @@ func (s WebhookConfigurationService) ListForOrganizationID(
 				cursor,
 			)
 			if err != nil {
-				return fmt.Errorf("cannot load webhook configurations: %w", err)
+				return fmt.Errorf("cannot load webhook subscriptions: %w", err)
 			}
 
 			return nil
@@ -96,10 +96,10 @@ func (s WebhookConfigurationService) ListForOrganizationID(
 		return nil, err
 	}
 
-	return page.NewPage(configurations, cursor), nil
+	return page.NewPage(subscriptions, cursor), nil
 }
 
-func (s WebhookConfigurationService) CountForOrganizationID(
+func (s WebhookSubscriptionService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 ) (int, error) {
@@ -108,10 +108,10 @@ func (s WebhookConfigurationService) CountForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			configurations := &coredata.WebhookConfigurations{}
-			count, err = configurations.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			subscriptions := &coredata.WebhookSubscriptions{}
+			count, err = subscriptions.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
-				return fmt.Errorf("cannot count webhook configurations: %w", err)
+				return fmt.Errorf("cannot count webhook subscriptions: %w", err)
 			}
 
 			return nil
@@ -125,17 +125,17 @@ func (s WebhookConfigurationService) CountForOrganizationID(
 	return count, nil
 }
 
-func (s WebhookConfigurationService) Get(
+func (s WebhookSubscriptionService) Get(
 	ctx context.Context,
-	webhookConfigurationID gid.GID,
-) (*coredata.WebhookConfiguration, error) {
-	wc := &coredata.WebhookConfiguration{}
+	webhookSubscriptionID gid.GID,
+) (*coredata.WebhookSubscription, error) {
+	wc := &coredata.WebhookSubscription{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookConfigurationID); err != nil {
-				return fmt.Errorf("cannot load webhook configuration: %w", err)
+			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookSubscriptionID); err != nil {
+				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}
 
 			return nil
@@ -149,16 +149,16 @@ func (s WebhookConfigurationService) Get(
 	return wc, nil
 }
 
-func (s WebhookConfigurationService) Create(
+func (s WebhookSubscriptionService) Create(
 	ctx context.Context,
-	req CreateWebhookConfigurationRequest,
-) (*coredata.WebhookConfiguration, error) {
+	req CreateWebhookSubscriptionRequest,
+) (*coredata.WebhookSubscription, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	now := time.Now()
-	var wc *coredata.WebhookConfiguration
+	var wc *coredata.WebhookSubscription
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithTx(
@@ -168,8 +168,8 @@ func (s WebhookConfigurationService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			wc = &coredata.WebhookConfiguration{
-				ID:             gid.New(organization.ID.TenantID(), coredata.WebhookConfigurationEntityType),
+			wc = &coredata.WebhookSubscription{
+				ID:             gid.New(organization.ID.TenantID(), coredata.WebhookSubscriptionEntityType),
 				OrganizationID: organization.ID,
 				EndpointURL:    req.EndpointURL,
 				SelectedEvents: req.SelectedEvents,
@@ -182,7 +182,7 @@ func (s WebhookConfigurationService) Create(
 			}
 
 			if err := wc.Insert(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert webhook configuration: %w", err)
+				return fmt.Errorf("cannot insert webhook subscription: %w", err)
 			}
 
 			return nil
@@ -196,21 +196,21 @@ func (s WebhookConfigurationService) Create(
 	return wc, nil
 }
 
-func (s WebhookConfigurationService) Update(
+func (s WebhookSubscriptionService) Update(
 	ctx context.Context,
-	req UpdateWebhookConfigurationRequest,
-) (*coredata.WebhookConfiguration, error) {
+	req UpdateWebhookSubscriptionRequest,
+) (*coredata.WebhookSubscription, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	wc := &coredata.WebhookConfiguration{}
+	wc := &coredata.WebhookSubscription{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := wc.LoadByID(ctx, conn, s.svc.scope, req.WebhookConfigurationID); err != nil {
-				return fmt.Errorf("cannot load webhook configuration: %w", err)
+			if err := wc.LoadByID(ctx, conn, s.svc.scope, req.WebhookSubscriptionID); err != nil {
+				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}
 
 			if req.EndpointURL != nil {
@@ -223,7 +223,7 @@ func (s WebhookConfigurationService) Update(
 			wc.UpdatedAt = time.Now()
 
 			if err := wc.Update(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update webhook configuration: %w", err)
+				return fmt.Errorf("cannot update webhook subscription: %w", err)
 			}
 
 			return nil
@@ -237,17 +237,17 @@ func (s WebhookConfigurationService) Update(
 	return wc, nil
 }
 
-func (s WebhookConfigurationService) GetSigningSecret(
+func (s WebhookSubscriptionService) GetSigningSecret(
 	ctx context.Context,
-	webhookConfigurationID gid.GID,
+	webhookSubscriptionID gid.GID,
 ) (string, error) {
-	wc := &coredata.WebhookConfiguration{}
+	wc := &coredata.WebhookSubscription{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookConfigurationID); err != nil {
-				return fmt.Errorf("cannot load webhook configuration: %w", err)
+			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookSubscriptionID); err != nil {
+				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}
 
 			return nil
@@ -261,9 +261,9 @@ func (s WebhookConfigurationService) GetSigningSecret(
 	return wc.DecryptSigningSecret(s.svc.encryptionKey)
 }
 
-func (s WebhookConfigurationService) ListEventsForConfigurationID(
+func (s WebhookSubscriptionService) ListEventsForSubscriptionID(
 	ctx context.Context,
-	webhookConfigurationID gid.GID,
+	webhookSubscriptionID gid.GID,
 	cursor *page.Cursor[coredata.WebhookEventOrderField],
 ) (*page.Page[*coredata.WebhookEvent, coredata.WebhookEventOrderField], error) {
 	var events coredata.WebhookEvents
@@ -271,7 +271,7 @@ func (s WebhookConfigurationService) ListEventsForConfigurationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := events.LoadByConfigurationID(ctx, conn, s.svc.scope, webhookConfigurationID, cursor); err != nil {
+			if err := events.LoadBySubscriptionID(ctx, conn, s.svc.scope, webhookSubscriptionID, cursor); err != nil {
 				return fmt.Errorf("cannot load webhook events: %w", err)
 			}
 
@@ -286,9 +286,9 @@ func (s WebhookConfigurationService) ListEventsForConfigurationID(
 	return page.NewPage(events, cursor), nil
 }
 
-func (s WebhookConfigurationService) CountEventsForConfigurationID(
+func (s WebhookSubscriptionService) CountEventsForSubscriptionID(
 	ctx context.Context,
-	webhookConfigurationID gid.GID,
+	webhookSubscriptionID gid.GID,
 ) (int, error) {
 	var count int
 
@@ -296,7 +296,7 @@ func (s WebhookConfigurationService) CountEventsForConfigurationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			events := &coredata.WebhookEvents{}
-			count, err = events.CountByConfigurationID(ctx, conn, s.svc.scope, webhookConfigurationID)
+			count, err = events.CountBySubscriptionID(ctx, conn, s.svc.scope, webhookSubscriptionID)
 
 			if err != nil {
 				return fmt.Errorf("cannot count webhook events: %w", err)
@@ -313,21 +313,21 @@ func (s WebhookConfigurationService) CountEventsForConfigurationID(
 	return count, nil
 }
 
-func (s WebhookConfigurationService) Delete(
+func (s WebhookSubscriptionService) Delete(
 	ctx context.Context,
-	webhookConfigurationID gid.GID,
+	webhookSubscriptionID gid.GID,
 ) error {
-	wc := &coredata.WebhookConfiguration{ID: webhookConfigurationID}
+	wc := &coredata.WebhookSubscription{ID: webhookSubscriptionID}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookConfigurationID); err != nil {
-				return fmt.Errorf("cannot load webhook configuration: %w", err)
+			if err := wc.LoadByID(ctx, conn, s.svc.scope, webhookSubscriptionID); err != nil {
+				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}
 
 			if err := wc.Delete(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot delete webhook configuration: %w", err)
+				return fmt.Errorf("cannot delete webhook subscription: %w", err)
 			}
 
 			return nil

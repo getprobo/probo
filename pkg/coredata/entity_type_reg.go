@@ -79,7 +79,7 @@ const (
 	SCIMEventEntityType                        uint16 = 53
 	TokenEntityType                            uint16 = 54
 	SCIMBridgeEntityType                       uint16 = 55
-	WebhookConfigurationEntityType             uint16 = 56
+	WebhookSubscriptionEntityType              uint16 = 56
 	WebhookDataEntityType                      uint16 = 57
 	WebhookEventEntityType                     uint16 = 58
 )
@@ -194,8 +194,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Token{ID: id}, true
 	case SCIMBridgeEntityType:
 		return &SCIMBridge{ID: id}, true
-	case WebhookConfigurationEntityType:
-		return &WebhookConfiguration{ID: id}, true
+	case WebhookSubscriptionEntityType:
+		return &WebhookSubscription{ID: id}, true
 	case WebhookDataEntityType:
 		return &WebhookData{ID: id}, true
 	case WebhookEventEntityType:

@@ -488,13 +488,13 @@ enum MeetingOrderField
         )
 }
 
-enum WebhookConfigurationOrderField
+enum WebhookSubscriptionOrderField
     @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.WebhookConfigurationOrderField"
+        model: "go.probo.inc/probo/pkg/coredata.WebhookSubscriptionOrderField"
     ) {
     CREATED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.WebhookConfigurationOrderFieldCreatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.WebhookSubscriptionOrderFieldCreatedAt"
         )
 }
 
@@ -1355,12 +1355,12 @@ input MeetingOrder
     field: MeetingOrderField!
 }
 
-input WebhookConfigurationOrder
+input WebhookSubscriptionOrder
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookConfigurationOrderBy"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookSubscriptionOrderBy"
     ) {
     direction: OrderDirection!
-    field: WebhookConfigurationOrderField!
+    field: WebhookSubscriptionOrderField!
 }
 
 input RiskOrder
@@ -1835,13 +1835,13 @@ type Organization implements Node {
 
     customDomain: CustomDomain @goField(forceResolver: true)
 
-    webhookConfigurations(
+    webhookSubscriptions(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: WebhookConfigurationOrder
-    ): WebhookConfigurationConnection! @goField(forceResolver: true)
+        orderBy: WebhookSubscriptionOrder
+    ): WebhookSubscriptionConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -2284,7 +2284,7 @@ enum WebhookEventType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorDeleted")
 }
 
-type WebhookConfiguration implements Node {
+type WebhookSubscription implements Node {
     id: ID!
     organization: Organization @goField(forceResolver: true)
     endpointUrl: String!
@@ -2304,18 +2304,18 @@ type WebhookConfiguration implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type WebhookConfigurationConnection
+type WebhookSubscriptionConnection
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookConfigurationConnection"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookSubscriptionConnection"
     ) {
-    edges: [WebhookConfigurationEdge!]!
+    edges: [WebhookSubscriptionEdge!]!
     pageInfo: PageInfo!
     totalCount: Int! @goField(forceResolver: true)
 }
 
-type WebhookConfigurationEdge {
+type WebhookSubscriptionEdge {
     cursor: CursorKey!
-    node: WebhookConfiguration!
+    node: WebhookSubscription!
 }
 
 enum WebhookEventStatus
@@ -2348,7 +2348,7 @@ input WebhookEventOrder
 
 type WebhookEvent implements Node {
     id: ID!
-    webhookConfigurationId: ID!
+    webhookSubscriptionId: ID!
     status: WebhookEventStatus!
     response: String
     createdAt: Datetime!
@@ -3396,16 +3396,16 @@ type Mutation {
     createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
     updateMeeting(input: UpdateMeetingInput!): UpdateMeetingPayload!
     deleteMeeting(input: DeleteMeetingInput!): DeleteMeetingPayload!
-    # WebhookConfiguration mutations
-    createWebhookConfiguration(
-        input: CreateWebhookConfigurationInput!
-    ): CreateWebhookConfigurationPayload!
-    updateWebhookConfiguration(
-        input: UpdateWebhookConfigurationInput!
-    ): UpdateWebhookConfigurationPayload!
-    deleteWebhookConfiguration(
-        input: DeleteWebhookConfigurationInput!
-    ): DeleteWebhookConfigurationPayload!
+    # WebhookSubscription mutations
+    createWebhookSubscription(
+        input: CreateWebhookSubscriptionInput!
+    ): CreateWebhookSubscriptionPayload!
+    updateWebhookSubscription(
+        input: UpdateWebhookSubscriptionInput!
+    ): UpdateWebhookSubscriptionPayload!
+    deleteWebhookSubscription(
+        input: DeleteWebhookSubscriptionInput!
+    ): DeleteWebhookSubscriptionPayload!
     # StateOfApplicability mutations
     createStateOfApplicability(
         input: CreateStateOfApplicabilityInput!
@@ -4757,32 +4757,32 @@ type DeleteMeetingPayload {
     deletedMeetingId: ID!
 }
 
-input CreateWebhookConfigurationInput {
+input CreateWebhookSubscriptionInput {
     organizationId: ID!
     endpointUrl: String!
     selectedEvents: [WebhookEventType!]!
 }
 
-input UpdateWebhookConfigurationInput {
+input UpdateWebhookSubscriptionInput {
     id: ID!
     endpointUrl: String
     selectedEvents: [WebhookEventType!]
 }
 
-input DeleteWebhookConfigurationInput {
-    webhookConfigurationId: ID!
+input DeleteWebhookSubscriptionInput {
+    webhookSubscriptionId: ID!
 }
 
-type CreateWebhookConfigurationPayload {
-    webhookConfigurationEdge: WebhookConfigurationEdge!
+type CreateWebhookSubscriptionPayload {
+    webhookSubscriptionEdge: WebhookSubscriptionEdge!
 }
 
-type UpdateWebhookConfigurationPayload {
-    webhookConfiguration: WebhookConfiguration!
+type UpdateWebhookSubscriptionPayload {
+    webhookSubscription: WebhookSubscription!
 }
 
-type DeleteWebhookConfigurationPayload {
-    deletedWebhookConfigurationId: ID!
+type DeleteWebhookSubscriptionPayload {
+    deletedWebhookSubscriptionId: ID!
 }
 
 type CreateStateOfApplicabilityPayload {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<56bfc2d1746edae72b0da44526fab12f>>
+ * @generated SignedSource<<d3e3309eefb502b19d48c61f9f162d18>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,20 +10,23 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type WebhookEventType = "MEETING_CREATED" | "MEETING_DELETED" | "MEETING_UPDATED" | "VENDOR_CREATED" | "VENDOR_DELETED" | "VENDOR_UPDATED";
-export type CreateWebhookConfigurationInput = {
+export type CreateWebhookSubscriptionInput = {
   endpointUrl: string;
   organizationId: string;
   selectedEvents: ReadonlyArray<WebhookEventType>;
 };
 export type WebhooksSettingsPage_createMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: CreateWebhookConfigurationInput;
+  input: CreateWebhookSubscriptionInput;
 };
 export type WebhooksSettingsPage_createMutation$data = {
-  readonly createWebhookConfiguration: {
-    readonly webhookConfigurationEdge: {
+  readonly createWebhookSubscription: {
+    readonly webhookSubscriptionEdge: {
       readonly node: {
         readonly endpointUrl: string;
+        readonly events: {
+          readonly totalCount: number;
+        };
         readonly id: string;
         readonly selectedEvents: ReadonlyArray<WebhookEventType>;
       };
@@ -56,15 +59,15 @@ v2 = [
 v3 = {
   "alias": null,
   "args": null,
-  "concreteType": "WebhookConfigurationEdge",
+  "concreteType": "WebhookSubscriptionEdge",
   "kind": "LinkedField",
-  "name": "webhookConfigurationEdge",
+  "name": "webhookSubscriptionEdge",
   "plural": false,
   "selections": [
     {
       "alias": null,
       "args": null,
-      "concreteType": "WebhookConfiguration",
+      "concreteType": "WebhookSubscription",
       "kind": "LinkedField",
       "name": "node",
       "plural": false,
@@ -89,6 +92,30 @@ v3 = {
           "kind": "ScalarField",
           "name": "selectedEvents",
           "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "first",
+              "value": 0
+            }
+          ],
+          "concreteType": "WebhookEventConnection",
+          "kind": "LinkedField",
+          "name": "events",
+          "plural": false,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "totalCount",
+              "storageKey": null
+            }
+          ],
+          "storageKey": "events(first:0)"
         }
       ],
       "storageKey": null
@@ -109,9 +136,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "CreateWebhookConfigurationPayload",
+        "concreteType": "CreateWebhookSubscriptionPayload",
         "kind": "LinkedField",
-        "name": "createWebhookConfiguration",
+        "name": "createWebhookSubscription",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -134,9 +161,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "CreateWebhookConfigurationPayload",
+        "concreteType": "CreateWebhookSubscriptionPayload",
         "kind": "LinkedField",
-        "name": "createWebhookConfiguration",
+        "name": "createWebhookSubscription",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -147,7 +174,7 @@ return {
             "handle": "prependEdge",
             "key": "",
             "kind": "LinkedHandle",
-            "name": "webhookConfigurationEdge",
+            "name": "webhookSubscriptionEdge",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -162,16 +189,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0e88932f635b8f16e41f730abf9e05ff",
+    "cacheID": "478c002a1f98dd87f23c6af0269ea2c6",
     "id": null,
     "metadata": {},
     "name": "WebhooksSettingsPage_createMutation",
     "operationKind": "mutation",
-    "text": "mutation WebhooksSettingsPage_createMutation(\n  $input: CreateWebhookConfigurationInput!\n) {\n  createWebhookConfiguration(input: $input) {\n    webhookConfigurationEdge {\n      node {\n        id\n        endpointUrl\n        selectedEvents\n      }\n    }\n  }\n}\n"
+    "text": "mutation WebhooksSettingsPage_createMutation(\n  $input: CreateWebhookSubscriptionInput!\n) {\n  createWebhookSubscription(input: $input) {\n    webhookSubscriptionEdge {\n      node {\n        id\n        endpointUrl\n        selectedEvents\n        events(first: 0) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4e1a7692c83c4dda0c2fc557f15d669d";
+(node as any).hash = "f47b849f8cad710922bf62eb6aebdd93";
 
 export default node;

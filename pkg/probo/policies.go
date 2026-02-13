@@ -79,7 +79,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionRightsRequestGet, ActionRightsRequestList,
 		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
-		ActionWebhookConfigurationGet, ActionWebhookConfigurationList,
+		ActionWebhookSubscriptionGet, ActionWebhookSubscriptionList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(

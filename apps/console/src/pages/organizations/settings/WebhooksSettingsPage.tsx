@@ -38,8 +38,8 @@ export const webhooksSettingsPageQuery = graphql`
       __typename
       ... on Organization {
         id
-        webhookConfigurations(first: 50)
-          @connection(key: "WebhooksSettingsPage_webhookConfigurations") {
+        webhookSubscriptions(first: 50)
+          @connection(key: "WebhooksSettingsPage_webhookSubscriptions") {
           edges {
             node {
               id
@@ -56,29 +56,32 @@ export const webhooksSettingsPageQuery = graphql`
   }
 `;
 
-const createWebhookConfigurationMutation = graphql`
+const createWebhookSubscriptionMutation = graphql`
   mutation WebhooksSettingsPage_createMutation(
-    $input: CreateWebhookConfigurationInput!
+    $input: CreateWebhookSubscriptionInput!
     $connections: [ID!]!
   ) {
-    createWebhookConfiguration(input: $input) {
-      webhookConfigurationEdge @prependEdge(connections: $connections) {
+    createWebhookSubscription(input: $input) {
+      webhookSubscriptionEdge @prependEdge(connections: $connections) {
         node {
           id
           endpointUrl
           selectedEvents
+          events(first: 0) {
+            totalCount
+          }
         }
       }
     }
   }
 `;
 
-const updateWebhookConfigurationMutation = graphql`
+const updateWebhookSubscriptionMutation = graphql`
   mutation WebhooksSettingsPage_updateMutation(
-    $input: UpdateWebhookConfigurationInput!
+    $input: UpdateWebhookSubscriptionInput!
   ) {
-    updateWebhookConfiguration(input: $input) {
-      webhookConfiguration {
+    updateWebhookSubscription(input: $input) {
+      webhookSubscription {
         id
         endpointUrl
         selectedEvents
@@ -89,9 +92,9 @@ const updateWebhookConfigurationMutation = graphql`
 `;
 
 const signingSecretQuery = graphql`
-  query WebhooksSettingsPage_signingSecretQuery($webhookConfigurationId: ID!) {
-    node(id: $webhookConfigurationId) {
-      ... on WebhookConfiguration {
+  query WebhooksSettingsPage_signingSecretQuery($webhookSubscriptionId: ID!) {
+    node(id: $webhookSubscriptionId) {
+      ... on WebhookSubscription {
         signingSecret
       }
     }
@@ -100,12 +103,12 @@ const signingSecretQuery = graphql`
 
 const webhookEventsQuery = graphql`
   query WebhooksSettingsPage_eventsQuery(
-    $webhookConfigurationId: ID!
+    $webhookSubscriptionId: ID!
     $first: Int
     $after: CursorKey
   ) {
-    node(id: $webhookConfigurationId) {
-      ... on WebhookConfiguration {
+    node(id: $webhookSubscriptionId) {
+      ... on WebhookSubscription {
         events(first: $first, after: $after) {
           totalCount
           pageInfo {
@@ -126,13 +129,13 @@ const webhookEventsQuery = graphql`
   }
 `;
 
-const deleteWebhookConfigurationMutation = graphql`
+const deleteWebhookSubscriptionMutation = graphql`
   mutation WebhooksSettingsPage_deleteMutation(
-    $input: DeleteWebhookConfigurationInput!
+    $input: DeleteWebhookSubscriptionInput!
     $connections: [ID!]!
   ) {
-    deleteWebhookConfiguration(input: $input) {
-      deletedWebhookConfigurationId @deleteEdge(connections: $connections)
+    deleteWebhookSubscription(input: $input) {
+      deletedWebhookSubscriptionId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -221,8 +224,8 @@ function WebhookFormDialog({
       trigger={trigger}
       title={
         mode === "create"
-          ? __("Add Webhook Configuration")
-          : __("Edit Webhook Configuration")
+          ? __("Add Webhook Subscription")
+          : __("Edit Webhook Subscription")
       }
       className="max-w-lg"
     >
@@ -300,11 +303,11 @@ function formatDate(iso: string) {
 }
 
 function WebhookEventsDialog({
-  webhookConfigurationId,
+  webhookSubscriptionId,
   endpointUrl,
   onClose,
 }: {
-  webhookConfigurationId: string;
+  webhookSubscriptionId: string;
   endpointUrl: string;
   onClose: () => void;
 }) {
@@ -329,7 +332,7 @@ function WebhookEventsDialog({
           environment,
           webhookEventsQuery,
           {
-            webhookConfigurationId,
+            webhookSubscriptionId,
             first: PAGE_SIZE,
             after: after ?? null,
           },
@@ -353,7 +356,7 @@ function WebhookEventsDialog({
         setLoading(false);
       }
     },
-    [environment, webhookConfigurationId, toast, __],
+    [environment, webhookSubscriptionId, toast, __],
   );
 
   useEffect(() => {
@@ -450,24 +453,24 @@ export function WebhooksSettingsPage(props: {
   const [viewingEventsId, setViewingEventsId] = useState<string | null>(null);
 
   const fetchSigningSecret = useCallback(
-    async (webhookConfigurationId: string): Promise<string | null> => {
+    async (webhookSubscriptionId: string): Promise<string | null> => {
       // Return cached secret if already fetched
-      if (revealedSecrets[webhookConfigurationId]) {
-        return revealedSecrets[webhookConfigurationId];
+      if (revealedSecrets[webhookSubscriptionId]) {
+        return revealedSecrets[webhookSubscriptionId];
       }
 
-      setLoadingSecrets(prev => new Set(prev).add(webhookConfigurationId));
+      setLoadingSecrets(prev => new Set(prev).add(webhookSubscriptionId));
 
       try {
         const data = await fetchQuery<WebhooksSettingsPage_signingSecretQuery>(
           environment,
           signingSecretQuery,
-          { webhookConfigurationId },
+          { webhookSubscriptionId },
         ).toPromise();
 
         const secret = data?.node?.signingSecret;
         if (secret) {
-          setRevealedSecrets(prev => ({ ...prev, [webhookConfigurationId]: secret }));
+          setRevealedSecrets(prev => ({ ...prev, [webhookSubscriptionId]: secret }));
           return secret;
         }
         return null;
@@ -481,7 +484,7 @@ export function WebhooksSettingsPage(props: {
       } finally {
         setLoadingSecrets((prev) => {
           const next = new Set(prev);
-          next.delete(webhookConfigurationId);
+          next.delete(webhookSubscriptionId);
           return next;
         });
       }
@@ -501,8 +504,8 @@ export function WebhooksSettingsPage(props: {
     }
   };
 
-  const copyToClipboard = async (webhookConfigurationId: string, label: string) => {
-    const secret = await fetchSigningSecret(webhookConfigurationId);
+  const copyToClipboard = async (webhookSubscriptionId: string, label: string) => {
+    const secret = await fetchSigningSecret(webhookSubscriptionId);
     if (secret) {
       void navigator.clipboard.writeText(secret);
       toast({
@@ -523,7 +526,7 @@ export function WebhooksSettingsPage(props: {
 
   const [createWebhook, isCreating]
     = useMutationWithToasts<WebhooksSettingsPage_createMutation>(
-      createWebhookConfigurationMutation,
+      createWebhookSubscriptionMutation,
       {
         successMessage: __("Webhook created successfully"),
         errorMessage: __("Failed to create webhook"),
@@ -532,7 +535,7 @@ export function WebhooksSettingsPage(props: {
 
   const [updateWebhook, isUpdating]
     = useMutationWithToasts<WebhooksSettingsPage_updateMutation>(
-      updateWebhookConfigurationMutation,
+      updateWebhookSubscriptionMutation,
       {
         successMessage: __("Webhook updated successfully"),
         errorMessage: __("Failed to update webhook"),
@@ -541,21 +544,21 @@ export function WebhooksSettingsPage(props: {
 
   const [deleteWebhook, isDeleting]
     = useMutationWithToasts<WebhooksSettingsPage_deleteMutation>(
-      deleteWebhookConfigurationMutation,
+      deleteWebhookSubscriptionMutation,
       {
         successMessage: __("Webhook deleted successfully"),
         errorMessage: __("Failed to delete webhook"),
       },
     );
 
-  const webhooks = organization.webhookConfigurations?.edges ?? [];
+  const webhooks = organization.webhookSubscriptions?.edges ?? [];
   const viewingEventsWebhook = viewingEventsId
     ? webhooks.find(e => e.node.id === viewingEventsId)?.node ?? null
     : null;
 
   const connectionId = ConnectionHandler.getConnectionID(
     organization.id,
-    "WebhooksSettingsPage_webhookConfigurations",
+    "WebhooksSettingsPage_webhookSubscriptions",
   );
 
   const handleCreate = (values: WebhookFormData) => {
@@ -587,7 +590,7 @@ export function WebhooksSettingsPage(props: {
     void deleteWebhook({
       variables: {
         input: {
-          webhookConfigurationId: id,
+          webhookSubscriptionId: id,
         },
         connections: [connectionId],
       },
@@ -602,7 +605,7 @@ export function WebhooksSettingsPage(props: {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-medium">{__("Webhook Configurations")}</h2>
+          <h2 className="text-base font-medium">{__("Webhook Subscriptions")}</h2>
           <p className="text-sm text-txt-tertiary">
             {__(
               "Configure webhooks to receive notifications when events occur in your organization.",
@@ -615,7 +618,7 @@ export function WebhooksSettingsPage(props: {
           isSubmitting={isCreating}
           trigger={(
             <Button icon={IconPlusLarge}>
-              {__("Add Webhook Configuration")}
+              {__("Add Webhook Subscription")}
             </Button>
           )}
         />
@@ -626,7 +629,7 @@ export function WebhooksSettingsPage(props: {
             <Card padded>
               <div className="text-center py-8">
                 <p className="text-sm text-txt-tertiary">
-                  {__("No webhook configurations yet. Add one to get started.")}
+                  {__("No webhook subscriptions yet. Add one to get started.")}
                 </p>
               </div>
             </Card>
@@ -737,7 +740,7 @@ export function WebhooksSettingsPage(props: {
         <DialogContent padded>
           <p className="text-txt-secondary">
             {__(
-              "Are you sure you want to delete this webhook configuration?",
+              "Are you sure you want to delete this webhook subscription?",
             )}
           </p>
           <p className="text-txt-secondary mt-2">
@@ -766,7 +769,7 @@ export function WebhooksSettingsPage(props: {
 
       {viewingEventsWebhook && viewingEventsId && (
         <WebhookEventsDialog
-          webhookConfigurationId={viewingEventsId}
+          webhookSubscriptionId={viewingEventsId}
           endpointUrl={viewingEventsWebhook.endpointUrl}
           onClose={() => setViewingEventsId(null)}
         />

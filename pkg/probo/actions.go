@@ -317,10 +317,10 @@ const (
 	ActionApplicabilityStatementUpdate = "core:applicability-statement:update"
 	ActionApplicabilityStatementDelete = "core:applicability-statement:delete"
 
-	// WebhookConfiguration actions
-	ActionWebhookConfigurationList   = "core:webhook-configuration:list"
-	ActionWebhookConfigurationGet    = "core:webhook-configuration:get"
-	ActionWebhookConfigurationCreate = "core:webhook-configuration:create"
-	ActionWebhookConfigurationUpdate = "core:webhook-configuration:update"
-	ActionWebhookConfigurationDelete = "core:webhook-configuration:delete"
+	// WebhookSubscription actions
+	ActionWebhookSubscriptionList   = "core:webhook-subscription:list"
+	ActionWebhookSubscriptionGet    = "core:webhook-subscription:get"
+	ActionWebhookSubscriptionCreate = "core:webhook-subscription:create"
+	ActionWebhookSubscriptionUpdate = "core:webhook-subscription:update"
+	ActionWebhookSubscriptionDelete = "core:webhook-subscription:delete"
 )

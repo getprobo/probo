@@ -7,7 +7,7 @@ CREATE TYPE webhook_event_type AS ENUM (
     'vendor:deleted'
 );
 
-CREATE TABLE webhook_configurations (
+CREATE TABLE webhook_subscriptions (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -38,7 +38,7 @@ CREATE TABLE webhook_events (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     webhook_data_id TEXT NOT NULL REFERENCES webhook_data(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    webhook_configuration_id TEXT NOT NULL REFERENCES webhook_configurations(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    webhook_subscription_id TEXT NOT NULL REFERENCES webhook_subscriptions(id) ON UPDATE CASCADE ON DELETE CASCADE,
     status webhook_event_status NOT NULL,
     response JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL

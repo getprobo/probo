@@ -31,7 +31,7 @@ import (
 )
 
 type (
-	WebhookConfiguration struct {
+	WebhookSubscription struct {
 		ID                     gid.GID           `db:"id"`
 		OrganizationID         gid.GID           `db:"organization_id"`
 		EndpointURL            string            `db:"endpoint_url"`
@@ -41,10 +41,10 @@ type (
 		UpdatedAt              time.Time         `db:"updated_at"`
 	}
 
-	WebhookConfigurations []*WebhookConfiguration
+	WebhookSubscriptions []*WebhookSubscription
 )
 
-func (w *WebhookConfiguration) GenerateSigningSecret(encryptionKey cipher.EncryptionKey) (string, error) {
+func (w *WebhookSubscription) GenerateSigningSecret(encryptionKey cipher.EncryptionKey) (string, error) {
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {
 		return "", fmt.Errorf("cannot generate signing secret: %w", err)
@@ -62,7 +62,7 @@ func (w *WebhookConfiguration) GenerateSigningSecret(encryptionKey cipher.Encryp
 	return signingSecret, nil
 }
 
-func (w *WebhookConfiguration) DecryptSigningSecret(encryptionKey cipher.EncryptionKey) (string, error) {
+func (w *WebhookSubscription) DecryptSigningSecret(encryptionKey cipher.EncryptionKey) (string, error) {
 	if len(w.EncryptedSigningSecret) == 0 {
 		return "", fmt.Errorf("no encrypted signing secret")
 	}
@@ -75,9 +75,9 @@ func (w *WebhookConfiguration) DecryptSigningSecret(encryptionKey cipher.Encrypt
 	return string(plaintext), nil
 }
 
-func (w WebhookConfiguration) CursorKey(orderBy WebhookConfigurationOrderField) page.CursorKey {
+func (w WebhookSubscription) CursorKey(orderBy WebhookSubscriptionOrderField) page.CursorKey {
 	switch orderBy {
-	case WebhookConfigurationOrderFieldCreatedAt:
+	case WebhookSubscriptionOrderFieldCreatedAt:
 		return page.NewCursorKey(w.ID, w.CreatedAt)
 	}
 
@@ -85,25 +85,25 @@ func (w WebhookConfiguration) CursorKey(orderBy WebhookConfigurationOrderField) 
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (w *WebhookConfiguration) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id FROM webhook_configurations WHERE id = $1 LIMIT 1;`
+func (w *WebhookSubscription) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM webhook_subscriptions WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
 	if err := conn.QueryRow(ctx, q, w.ID).Scan(&organizationID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
-		return nil, fmt.Errorf("cannot query webhook configuration authorization attributes: %w", err)
+		return nil, fmt.Errorf("cannot query webhook subscription authorization attributes: %w", err)
 	}
 
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (w *WebhookConfiguration) LoadByID(
+func (w *WebhookSubscription) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	webhookConfigurationID gid.GID,
+	webhookSubscriptionID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -115,42 +115,42 @@ SELECT
     created_at,
     updated_at
 FROM
-    webhook_configurations
+    webhook_subscriptions
 WHERE
     %s
-    AND id = @webhook_configuration_id
+    AND id = @webhook_subscription_id
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"webhook_configuration_id": webhookConfigurationID}
+	args := pgx.StrictNamedArgs{"webhook_subscription_id": webhookSubscriptionID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query webhook configurations: %w", err)
+		return fmt.Errorf("cannot query webhook subscriptions: %w", err)
 	}
 
-	wc, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[WebhookConfiguration])
+	wc, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[WebhookSubscription])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect webhook configuration: %w", err)
+		return fmt.Errorf("cannot collect webhook subscription: %w", err)
 	}
 
 	*w = wc
 	return nil
 }
 
-func (w *WebhookConfigurations) LoadByOrganizationID(
+func (w *WebhookSubscriptions) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
-	cursor *page.Cursor[WebhookConfigurationOrderField],
+	cursor *page.Cursor[WebhookSubscriptionOrderField],
 ) error {
 	q := `
 SELECT
@@ -162,7 +162,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    webhook_configurations
+    webhook_subscriptions
 WHERE
     %s
     AND organization_id = @organization_id
@@ -176,19 +176,19 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query webhook configurations: %w", err)
+		return fmt.Errorf("cannot query webhook subscriptions: %w", err)
 	}
 
-	configurations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[WebhookConfiguration])
+	subscriptions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[WebhookSubscription])
 	if err != nil {
-		return fmt.Errorf("cannot collect webhook configurations: %w", err)
+		return fmt.Errorf("cannot collect webhook subscriptions: %w", err)
 	}
 
-	*w = configurations
+	*w = subscriptions
 	return nil
 }
 
-func (w *WebhookConfigurations) CountByOrganizationID(
+func (w *WebhookSubscriptions) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -198,7 +198,7 @@ func (w *WebhookConfigurations) CountByOrganizationID(
 SELECT
     COUNT(*)
 FROM
-    webhook_configurations
+    webhook_subscriptions
 WHERE
     %s
     AND organization_id = @organization_id
@@ -213,13 +213,13 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 	var count int
 	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot count webhook configurations: %w", err)
+		return 0, fmt.Errorf("cannot count webhook subscriptions: %w", err)
 	}
 
 	return count, nil
 }
 
-func (w *WebhookConfigurations) ExistsByOrganizationIDAndEventType(
+func (w *WebhookSubscriptions) ExistsByOrganizationIDAndEventType(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -229,7 +229,7 @@ func (w *WebhookConfigurations) ExistsByOrganizationIDAndEventType(
 	q := `
 SELECT EXISTS (
     SELECT 1
-    FROM webhook_configurations
+    FROM webhook_subscriptions
     WHERE %s
         AND organization_id = @organization_id
         AND @event_type = ANY(selected_events)
@@ -245,20 +245,20 @@ SELECT EXISTS (
 
 	var exists bool
 	if err := conn.QueryRow(ctx, q, args).Scan(&exists); err != nil {
-		return false, fmt.Errorf("cannot check webhook configuration existence: %w", err)
+		return false, fmt.Errorf("cannot check webhook subscription existence: %w", err)
 	}
 
 	return exists, nil
 }
 
-func (w *WebhookConfiguration) Insert(
+func (w *WebhookSubscription) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
-    webhook_configurations (
+    webhook_subscriptions (
         tenant_id,
         id,
         organization_id,
@@ -270,7 +270,7 @@ INSERT INTO
     )
 VALUES (
     @tenant_id,
-    @webhook_configuration_id,
+    @webhook_subscription_id,
     @organization_id,
     @endpoint_url,
     @selected_events,
@@ -281,52 +281,52 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                scope.GetTenantID(),
-		"webhook_configuration_id": w.ID,
-		"organization_id":          w.OrganizationID,
-		"endpoint_url":             w.EndpointURL,
-		"selected_events":          w.SelectedEvents,
+		"tenant_id":               scope.GetTenantID(),
+		"webhook_subscription_id": w.ID,
+		"organization_id":         w.OrganizationID,
+		"endpoint_url":            w.EndpointURL,
+		"selected_events":         w.SelectedEvents,
 		"encrypted_signing_secret": w.EncryptedSigningSecret,
-		"created_at":               w.CreatedAt,
-		"updated_at":               w.UpdatedAt,
+		"created_at":              w.CreatedAt,
+		"updated_at":              w.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 
 	if err != nil {
-		return fmt.Errorf("cannot insert webhook configuration: %w", err)
+		return fmt.Errorf("cannot insert webhook subscription: %w", err)
 	}
 
 	return nil
 }
 
-func (w *WebhookConfiguration) Update(
+func (w *WebhookSubscription) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
-UPDATE webhook_configurations
+UPDATE webhook_subscriptions
 SET
     endpoint_url = @endpoint_url,
     selected_events = @selected_events,
     updated_at = @updated_at
 WHERE %s
-    AND id = @webhook_configuration_id
+    AND id = @webhook_subscription_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"webhook_configuration_id": w.ID,
-		"endpoint_url":             w.EndpointURL,
-		"selected_events":          w.SelectedEvents,
-		"updated_at":               w.UpdatedAt,
+		"webhook_subscription_id": w.ID,
+		"endpoint_url":            w.EndpointURL,
+		"selected_events":         w.SelectedEvents,
+		"updated_at":              w.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update webhook configuration: %w", err)
+		return fmt.Errorf("cannot update webhook subscription: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -336,7 +336,7 @@ WHERE %s
 	return nil
 }
 
-func (w *WebhookConfigurations) LoadMatchingByOrganizationIDAndEventType(
+func (w *WebhookSubscriptions) LoadMatchingByOrganizationIDAndEventType(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -353,7 +353,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    webhook_configurations
+    webhook_subscriptions
 WHERE
     %s
     AND organization_id = @organization_id
@@ -369,38 +369,38 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query matching webhook configurations: %w", err)
+		return fmt.Errorf("cannot query matching webhook subscriptions: %w", err)
 	}
 
-	configurations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[WebhookConfiguration])
+	subscriptions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[WebhookSubscription])
 	if err != nil {
-		return fmt.Errorf("cannot collect matching webhook configurations: %w", err)
+		return fmt.Errorf("cannot collect matching webhook subscriptions: %w", err)
 	}
 
-	*w = configurations
+	*w = subscriptions
 	return nil
 }
 
-func (w *WebhookConfiguration) Delete(
+func (w *WebhookSubscription) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM webhook_configurations
+DELETE FROM webhook_subscriptions
 WHERE %s
-    AND id = @webhook_configuration_id
+    AND id = @webhook_subscription_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"webhook_configuration_id": w.ID,
+		"webhook_subscription_id": w.ID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete webhook configuration: %w", err)
+		return fmt.Errorf("cannot delete webhook subscription: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {

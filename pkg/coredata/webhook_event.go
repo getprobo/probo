@@ -31,7 +31,7 @@ type (
 	WebhookEvent struct {
 		ID                     gid.GID            `db:"id"`
 		WebhookDataID          gid.GID            `db:"webhook_data_id"`
-		WebhookConfigurationID gid.GID            `db:"webhook_configuration_id"`
+		WebhookSubscriptionID gid.GID            `db:"webhook_subscription_id"`
 		Status                 WebhookEventStatus `db:"status"`
 		Response               json.RawMessage    `db:"response"`
 		CreatedAt              time.Time          `db:"created_at"`
@@ -49,18 +49,18 @@ func (w WebhookEvent) CursorKey(orderBy WebhookEventOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (w *WebhookEvents) LoadByConfigurationID(
+func (w *WebhookEvents) LoadBySubscriptionID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	webhookConfigurationID gid.GID,
+	webhookSubscriptionID gid.GID,
 	cursor *page.Cursor[WebhookEventOrderField],
 ) error {
 	q := `
 SELECT
     id,
     webhook_data_id,
-    webhook_configuration_id,
+    webhook_subscription_id,
     status,
     response,
     created_at
@@ -68,12 +68,12 @@ FROM
     webhook_events
 WHERE
     %s
-    AND webhook_configuration_id = @webhook_configuration_id
+    AND webhook_subscription_id = @webhook_subscription_id
     AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"webhook_configuration_id": webhookConfigurationID}
+	args := pgx.NamedArgs{"webhook_subscription_id": webhookSubscriptionID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -91,21 +91,21 @@ WHERE
 	return nil
 }
 
-func (w *WebhookEvents) CountByConfigurationID(
+func (w *WebhookEvents) CountBySubscriptionID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	webhookConfigurationID gid.GID,
+	webhookSubscriptionID gid.GID,
 ) (int, error) {
 	q := `
 SELECT COUNT(*)
 FROM webhook_events
 WHERE %s
-    AND webhook_configuration_id = @webhook_configuration_id
+    AND webhook_subscription_id = @webhook_subscription_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"webhook_configuration_id": webhookConfigurationID}
+	args := pgx.StrictNamedArgs{"webhook_subscription_id": webhookSubscriptionID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -126,7 +126,7 @@ INSERT INTO webhook_events (
     id,
     tenant_id,
     webhook_data_id,
-    webhook_configuration_id,
+    webhook_subscription_id,
     status,
     response,
     created_at
@@ -135,7 +135,7 @@ VALUES (
     @id,
     @tenant_id,
     @webhook_data_id,
-    @webhook_configuration_id,
+    @webhook_subscription_id,
     @status,
     @response,
     @created_at
@@ -146,7 +146,7 @@ VALUES (
 		"id":                       w.ID,
 		"tenant_id":                scope.GetTenantID(),
 		"webhook_data_id":          w.WebhookDataID,
-		"webhook_configuration_id": w.WebhookConfigurationID,
+		"webhook_subscription_id": w.WebhookSubscriptionID,
 		"status":                   w.Status,
 		"response":                 w.Response,
 		"created_at":               w.CreatedAt,

@@ -21,11 +21,11 @@ import (
 )
 
 type (
-	WebhookConfigurationOrderBy OrderBy[coredata.WebhookConfigurationOrderField]
+	WebhookSubscriptionOrderBy OrderBy[coredata.WebhookSubscriptionOrderField]
 
-	WebhookConfigurationConnection struct {
+	WebhookSubscriptionConnection struct {
 		TotalCount int
-		Edges      []*WebhookConfigurationEdge
+		Edges      []*WebhookSubscriptionEdge
 		PageInfo   PageInfo
 
 		Resolver any
@@ -33,18 +33,18 @@ type (
 	}
 )
 
-func NewWebhookConfigurationConnection(
-	p *page.Page[*coredata.WebhookConfiguration, coredata.WebhookConfigurationOrderField],
+func NewWebhookSubscriptionConnection(
+	p *page.Page[*coredata.WebhookSubscription, coredata.WebhookSubscriptionOrderField],
 	parentType any,
 	parentID gid.GID,
-) *WebhookConfigurationConnection {
-	var edges = make([]*WebhookConfigurationEdge, len(p.Data))
+) *WebhookSubscriptionConnection {
+	var edges = make([]*WebhookSubscriptionEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewWebhookConfigurationEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewWebhookSubscriptionEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &WebhookConfigurationConnection{
+	return &WebhookSubscriptionConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -53,15 +53,15 @@ func NewWebhookConfigurationConnection(
 	}
 }
 
-func NewWebhookConfigurationEdge(wc *coredata.WebhookConfiguration, orderBy coredata.WebhookConfigurationOrderField) *WebhookConfigurationEdge {
-	return &WebhookConfigurationEdge{
+func NewWebhookSubscriptionEdge(wc *coredata.WebhookSubscription, orderBy coredata.WebhookSubscriptionOrderField) *WebhookSubscriptionEdge {
+	return &WebhookSubscriptionEdge{
 		Cursor: wc.CursorKey(orderBy),
-		Node:   NewWebhookConfiguration(wc),
+		Node:   NewWebhookSubscription(wc),
 	}
 }
 
-func NewWebhookConfiguration(wc *coredata.WebhookConfiguration) *WebhookConfiguration {
-	return &WebhookConfiguration{
+func NewWebhookSubscription(wc *coredata.WebhookSubscription) *WebhookSubscription {
+	return &WebhookSubscription{
 		ID: wc.ID,
 		Organization: &Organization{
 			ID: wc.OrganizationID,

@@ -693,14 +693,14 @@ type CreateVendorServicePayload struct {
 	VendorServiceEdge *VendorServiceEdge `json:"vendorServiceEdge"`
 }
 
-type CreateWebhookConfigurationInput struct {
+type CreateWebhookSubscriptionInput struct {
 	OrganizationID gid.GID                     `json:"organizationId"`
 	EndpointURL    string                      `json:"endpointUrl"`
 	SelectedEvents []coredata.WebhookEventType `json:"selectedEvents"`
 }
 
-type CreateWebhookConfigurationPayload struct {
-	WebhookConfigurationEdge *WebhookConfigurationEdge `json:"webhookConfigurationEdge"`
+type CreateWebhookSubscriptionPayload struct {
+	WebhookSubscriptionEdge *WebhookSubscriptionEdge `json:"webhookSubscriptionEdge"`
 }
 
 type CustomDomain struct {
@@ -1113,12 +1113,12 @@ type DeleteVendorServicePayload struct {
 	DeletedVendorServiceID gid.GID `json:"deletedVendorServiceId"`
 }
 
-type DeleteWebhookConfigurationInput struct {
-	WebhookConfigurationID gid.GID `json:"webhookConfigurationId"`
+type DeleteWebhookSubscriptionInput struct {
+	WebhookSubscriptionID gid.GID `json:"webhookSubscriptionId"`
 }
 
-type DeleteWebhookConfigurationPayload struct {
-	DeletedWebhookConfigurationID gid.GID `json:"deletedWebhookConfigurationId"`
+type DeleteWebhookSubscriptionPayload struct {
+	DeletedWebhookSubscriptionID gid.GID `json:"deletedWebhookSubscriptionId"`
 }
 
 type Document struct {
@@ -1517,7 +1517,7 @@ type Organization struct {
 	TrustCenterFiles                *TrustCenterFileConnection                `json:"trustCenterFiles"`
 	TrustCenter                     *TrustCenter                              `json:"trustCenter,omitempty"`
 	CustomDomain                    *CustomDomain                             `json:"customDomain,omitempty"`
-	WebhookConfigurations           *WebhookConfigurationConnection           `json:"webhookConfigurations"`
+	WebhookSubscriptions           *WebhookSubscriptionConnection           `json:"webhookSubscriptions"`
 	CreatedAt                       time.Time                                 `json:"createdAt"`
 	UpdatedAt                       time.Time                                 `json:"updatedAt"`
 	Permission                      bool                                      `json:"permission"`
@@ -2361,14 +2361,14 @@ type UpdateVendorServicePayload struct {
 	VendorService *VendorService `json:"vendorService"`
 }
 
-type UpdateWebhookConfigurationInput struct {
+type UpdateWebhookSubscriptionInput struct {
 	ID             gid.GID                     `json:"id"`
 	EndpointURL    *string                     `json:"endpointUrl,omitempty"`
 	SelectedEvents []coredata.WebhookEventType `json:"selectedEvents,omitempty"`
 }
 
-type UpdateWebhookConfigurationPayload struct {
-	WebhookConfiguration *WebhookConfiguration `json:"webhookConfiguration"`
+type UpdateWebhookSubscriptionPayload struct {
+	WebhookSubscription *WebhookSubscription `json:"webhookSubscription"`
 }
 
 type UploadAuditReportInput struct {
@@ -2623,7 +2623,7 @@ type Viewer struct {
 	SignableDocument  *SignableDocument           `json:"signableDocument,omitempty"`
 }
 
-type WebhookConfiguration struct {
+type WebhookSubscription struct {
 	ID             gid.GID                     `json:"id"`
 	Organization   *Organization               `json:"organization,omitempty"`
 	EndpointURL    string                      `json:"endpointUrl"`
@@ -2635,17 +2635,17 @@ type WebhookConfiguration struct {
 	Permission     bool                        `json:"permission"`
 }
 
-func (WebhookConfiguration) IsNode()             {}
-func (this WebhookConfiguration) GetID() gid.GID { return this.ID }
+func (WebhookSubscription) IsNode()             {}
+func (this WebhookSubscription) GetID() gid.GID { return this.ID }
 
-type WebhookConfigurationEdge struct {
-	Cursor page.CursorKey        `json:"cursor"`
-	Node   *WebhookConfiguration `json:"node"`
+type WebhookSubscriptionEdge struct {
+	Cursor page.CursorKey       `json:"cursor"`
+	Node   *WebhookSubscription `json:"node"`
 }
 
 type WebhookEvent struct {
 	ID                     gid.GID                     `json:"id"`
-	WebhookConfigurationID gid.GID                     `json:"webhookConfigurationId"`
+	WebhookSubscriptionID gid.GID                     `json:"webhookSubscriptionId"`
 	Status                 coredata.WebhookEventStatus `json:"status"`
 	Response               *string                     `json:"response,omitempty"`
 	CreatedAt              time.Time                   `json:"createdAt"`
