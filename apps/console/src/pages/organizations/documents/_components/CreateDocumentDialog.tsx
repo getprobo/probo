@@ -143,12 +143,12 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
             </PropertyRow>
 
             <PropertyRow
-              id="ownerId"
-              label={__("Owner")}
-              error={errors.ownerId?.message}
+              id="approverId"
+              label={__("Approver")}
+              error={errors.approverId?.message}
             >
               <PeopleSelectField
-                name="ownerId"
+                name="approverId"
                 control={control}
                 organizationId={organizationId}
               />

@@ -862,23 +862,23 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
-// Owner is the resolver for the owner field.
-func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.Profile, error) {
+// Approver is the resolver for the approver field.
+func (r *documentResolver) Approver(ctx context.Context, obj *types.Document) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	approver, err := r.iam.OrganizationService.GetProfile(ctx, obj.Approver.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get owner: %w", err))
+		panic(fmt.Errorf("cannot get approver: %w", err))
 	}
 
-	return types.NewProfile(owner), nil
+	return types.NewProfile(approver), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -1031,23 +1031,23 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 	return types.NewDocument(document), nil
 }
 
-// Owner is the resolver for the owner field.
-func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.DocumentVersion) (*types.Profile, error) {
+// Approver is the resolver for the approver field.
+func (r *documentVersionResolver) Approver(ctx context.Context, obj *types.DocumentVersion) (*types.Profile, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	approver, err := r.iam.OrganizationService.GetProfile(ctx, obj.Approver.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get owner: %w", err))
+		panic(fmt.Errorf("cannot get approver: %w", err))
 	}
 
-	return types.NewProfile(owner), nil
+	return types.NewProfile(approver), nil
 }
 
 // Signatures is the resolver for the signatures field.
@@ -3528,7 +3528,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			OrganizationID:        input.OrganizationID,
 			DocumentType:          input.DocumentType,
 			Title:                 input.Title,
-			OwnerID:               input.OwnerID,
+			ApproverID:            input.ApproverID,
 			Content:               input.Content,
 			Classification:        input.Classification,
 			TrustCenterVisibility: input.TrustCenterVisibility,
@@ -3562,7 +3562,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
-			OwnerID:               input.OwnerID,
+			ApproverID:            input.ApproverID,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,

@@ -1577,7 +1577,7 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 			OrganizationID:        input.OrganizationID,
 			Title:                 input.Title,
 			Content:               input.Content,
-			OwnerID:               input.OwnerID,
+			ApproverID:            input.ApproverID,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: trustCenterVisibility,
@@ -1600,7 +1600,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
-			OwnerID:               input.OwnerID,
+			ApproverID:            input.ApproverID,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,

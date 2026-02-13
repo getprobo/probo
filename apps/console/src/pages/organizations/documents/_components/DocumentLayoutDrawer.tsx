@@ -29,7 +29,7 @@ const versionFragment = graphql`
   fragment DocumentLayoutDrawer_versionFragment on DocumentVersion {
     id
     classification
-    owner {
+    approver {
       id
       fullName
     }
@@ -47,7 +47,7 @@ const updateDocumentMutation = graphql`
         id
         documentType
         classification
-        owner {
+        approver {
           id
           fullName
         }
@@ -57,7 +57,7 @@ const updateDocumentMutation = graphql`
 `;
 
 const schema = z.object({
-  ownerId: z.string().min(1, "Owner is required"),
+  approverId: z.string().min(1, "Approver is required"),
   documentType: z.enum(documentTypes),
   classification: z.enum(documentClassifications),
 });
@@ -71,7 +71,7 @@ export function DocumentLayoutDrawer(props: {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
-  const [isEditingOwner, setIsEditingOwner] = useState(false);
+  const [isEditingApprover, setIsEditingApprover] = useState(false);
   const [isEditingType, setIsEditingType] = useState(false);
   const [isEditingClassification, setIsEditingClassification] = useState(false);
 
@@ -84,7 +84,7 @@ export function DocumentLayoutDrawer(props: {
     schema,
     {
       defaultValues: {
-        ownerId: version.owner.id,
+        approverId: version.approver.id,
         documentType: document.documentType,
         classification: version.classification,
       },
@@ -100,16 +100,16 @@ export function DocumentLayoutDrawer(props: {
       },
     );
 
-  const handleUpdateOwner = async (data: { ownerId: string }) => {
+  const handleUpdateApprover = async (data: { approverId: string }) => {
     await updateDocument({
       variables: {
         input: {
           id: document.id,
-          ownerId: data.ownerId,
+          approverId: data.approverId,
         },
       },
       onSuccess: () => {
-        setIsEditingOwner(false);
+        setIsEditingApprover(false);
       },
     });
   };
@@ -151,19 +151,19 @@ export function DocumentLayoutDrawer(props: {
       <div className="text-base text-txt-primary font-medium mb-4">
         {__("Properties")}
       </div>
-      <PropertyRow label={__("Owner")}>
-        {isEditingOwner
+      <PropertyRow label={__("Approver")}>
+        {isEditingApprover
           ? (
               <EditablePropertyContent
-                onSave={() => void handleSubmit(handleUpdateOwner)()}
+                onSave={() => void handleSubmit(handleUpdateApprover)()}
                 onCancel={() => {
-                  setIsEditingOwner(false);
+                  setIsEditingApprover(false);
                   reset();
                 }}
                 disabled={isUpdatingDocument}
               >
                 <PeopleSelectField
-                  name="ownerId"
+                  name="approverId"
                   control={control}
                   organizationId={organizationId}
                 />
@@ -171,12 +171,12 @@ export function DocumentLayoutDrawer(props: {
             )
           : (
               <ReadOnlyPropertyContent
-                onEdit={() => setIsEditingOwner(true)}
+                onEdit={() => setIsEditingApprover(true)}
                 canEdit={document.canUpdate}
               >
                 <Badge variant="highlight" size="md" className="gap-2">
-                  <Avatar name={version.owner.fullName} />
-                  {version.owner.fullName}
+                  <Avatar name={version.approver.fullName} />
+                  {version.approver.fullName}
                 </Badge>
               </ReadOnlyPropertyContent>
             )}

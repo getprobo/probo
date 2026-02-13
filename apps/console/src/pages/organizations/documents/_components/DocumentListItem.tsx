@@ -17,7 +17,7 @@ const fragment = graphql`
     classification
     updatedAt
     canDelete: permission(action: "core:document:delete")
-    owner {
+    approver {
       id
       fullName
     }
@@ -129,8 +129,8 @@ export function DocumentListItem(props: {
       </Td>
       <Td className="w-60">
         <div className="flex gap-2 items-center">
-          <Avatar name={document.owner?.fullName ?? ""} />
-          {document.owner?.fullName}
+          <Avatar name={document.approver?.fullName ?? ""} />
+          {document.approver?.fullName}
         </div>
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>

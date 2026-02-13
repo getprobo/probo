@@ -142,7 +142,7 @@ func (s *DocumentService) exportPDFData(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	owner := &coredata.MembershipProfile{}
+	approver := &coredata.MembershipProfile{}
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
@@ -160,8 +160,8 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load latest published document version: %w", err)
 			}
 
-			if err := owner.LoadByID(ctx, conn, s.svc.scope, document.OwnerID); err != nil {
-				return fmt.Errorf("cannot load document owner profile: %w", err)
+			if err := approver.LoadByID(ctx, conn, s.svc.scope, document.ApproverID); err != nil {
+				return fmt.Errorf("cannot load document approver profile: %w", err)
 			}
 
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {
@@ -203,7 +203,7 @@ func (s *DocumentService) exportPDFData(
 		Content:                     version.Content,
 		Version:                     version.VersionNumber,
 		Classification:              classification,
-		Approver:                    owner.FullName,
+		Approver:                    approver.FullName,
 		PublishedAt:                 version.PublishedAt,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 	}

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d4d20efd4d936984e9a38123528ae7af>>
+ * @generated SignedSource<<ca358b419eca687c5ba8119e7de24829>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -195,7 +195,7 @@ return {
                     "args": null,
                     "concreteType": "Profile",
                     "kind": "LinkedField",
-                    "name": "owner",
+                    "name": "approver",
                     "plural": false,
                     "selections": [
                       (v2/*: any*/),
@@ -324,12 +324,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0ac164af501f3f1bb74483e15b320715",
+    "cacheID": "0672eb52643ef05e90565df777644a7b",
     "id": null,
     "metadata": {},
     "name": "PublishDocumentsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  approver {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
