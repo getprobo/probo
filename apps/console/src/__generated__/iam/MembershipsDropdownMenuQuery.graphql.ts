@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<beba83081139a0721dd1ca6e169c56f2>>
+ * @generated SignedSource<<dcdbded62e85b824993721946b5e5e2e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type MembershipsDropdownMenuQuery$data = {
           readonly id: string;
           readonly membership: {
             readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdownMenuItemFragment">;
-          } | null | undefined;
+          };
           readonly organization: {
             readonly name: string;
             readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdownMenuItem_organizationFragment">;
@@ -134,20 +134,24 @@ return {
                                 "action": "THROW"
                               },
                               {
-                                "alias": null,
-                                "args": null,
-                                "concreteType": "Membership",
-                                "kind": "LinkedField",
-                                "name": "membership",
-                                "plural": false,
-                                "selections": [
-                                  {
-                                    "args": null,
-                                    "kind": "FragmentSpread",
-                                    "name": "MembershipsDropdownMenuItemFragment"
-                                  }
-                                ],
-                                "storageKey": null
+                                "kind": "RequiredField",
+                                "field": {
+                                  "alias": null,
+                                  "args": null,
+                                  "concreteType": "Membership",
+                                  "kind": "LinkedField",
+                                  "name": "membership",
+                                  "plural": false,
+                                  "selections": [
+                                    {
+                                      "args": null,
+                                      "kind": "FragmentSpread",
+                                      "name": "MembershipsDropdownMenuItemFragment"
+                                    }
+                                  ],
+                                  "storageKey": null
+                                },
+                                "action": "THROW"
                               }
                             ],
                             "storageKey": null
@@ -289,6 +293,6 @@ return {
 };
 })();
 
-(node as any).hash = "14dbd79243ffb6104ff7315b78aa7990";
+(node as any).hash = "11d7ec7c24e0e539fd42e428d71998e1";
 
 export default node;

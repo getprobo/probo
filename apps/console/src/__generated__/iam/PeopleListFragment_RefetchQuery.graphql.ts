@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5916f4df5b8113a300774131759cb218>>
+ * @generated SignedSource<<b6eef6dfea77fdf5e4e151eef11f4484>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -285,6 +285,19 @@ return {
                                 "kind": "ScalarField",
                                 "name": "permission",
                                 "storageKey": "permission(action:\"iam:membership:update\")"
+                              },
+                              {
+                                "alias": "canDelete",
+                                "args": [
+                                  {
+                                    "kind": "Literal",
+                                    "name": "action",
+                                    "value": "iam:membership-profile:delete"
+                                  }
+                                ],
+                                "kind": "ScalarField",
+                                "name": "permission",
+                                "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                               }
                             ],
                             "storageKey": null
@@ -327,19 +340,6 @@ return {
                             "kind": "ScalarField",
                             "name": "permission",
                             "storageKey": "permission(action:\"iam:membership-profile:update\")"
-                          },
-                          {
-                            "alias": "canDelete",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "iam:membership-profile:delete"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                           },
                           (v11/*: any*/)
                         ],
@@ -430,12 +430,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3ed525921615d7910d784222c189566a",
+    "cacheID": "25aa17e466fdec627ba3d24d5230301b",
     "id": null,
     "metadata": {},
     "name": "PeopleListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query PeopleListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ProfileOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleListFragment_16fISc\n    id\n  }\n}\n\nfragment PeopleListFragment_16fISc on Organization {\n  profiles(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  fullName\n  kind\n  position\n  membership {\n    id\n    role\n    source\n    state\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
+    "text": "query PeopleListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ProfileOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleListFragment_16fISc\n    id\n  }\n}\n\nfragment PeopleListFragment_16fISc on Organization {\n  profiles(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  fullName\n  kind\n  position\n  membership {\n    id\n    role\n    source\n    state\n    canUpdate: permission(action: \"iam:membership:update\")\n    canDelete: permission(action: \"iam:membership-profile:delete\")\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
   }
 };
 })();

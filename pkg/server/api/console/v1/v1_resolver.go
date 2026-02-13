@@ -6576,7 +6576,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 	}
 
 	switch obj.Resolver.(type) {
-	case *stateOfApplicabilityResolver:
+	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			panic(fmt.Errorf("cannot count profiles: %w", err))

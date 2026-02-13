@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<405fdde1b279cf7336ca395457041b93>>
+ * @generated SignedSource<<2e75f19fcdaf2b78a187c33458c9cfe0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,7 +23,7 @@ export type PersonPageQuery$data = {
     };
     readonly membership: {
       readonly id: string;
-    } | null | undefined;
+    };
     readonly " $fragmentSpreads": FragmentRefs<"PersonFormFragment">;
   } | {
     // This will never be '%other', but we need some
@@ -126,7 +126,11 @@ return {
               "kind": "InlineFragment",
               "selections": [
                 (v3/*: any*/),
-                (v5/*: any*/),
+                {
+                  "kind": "RequiredField",
+                  "field": (v5/*: any*/),
+                  "action": "THROW"
+                },
                 {
                   "kind": "RequiredField",
                   "field": {
@@ -265,6 +269,6 @@ return {
 };
 })();
 
-(node as any).hash = "24863216f5484c1fae7ff6ad002a7f8c";
+(node as any).hash = "5dce91fda9224f6f3928d4549485d3bd";
 
 export default node;

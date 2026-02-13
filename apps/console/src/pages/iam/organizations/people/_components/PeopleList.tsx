@@ -15,20 +15,20 @@ const fragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 20 }
     order: {
-      type: "MembershipOrder"
+      type: "ProfileOrder"
       defaultValue: { direction: ASC, field: FULL_NAME }
     }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
-    members(
+    profiles(
       first: $first
       after: $after
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "PeopleListFragment_members", filters: ["orderBy"]) @required(action: THROW) {
+    ) @connection(key: "PeopleListFragment_profiles", filters: ["orderBy"]) @required(action: THROW) {
       __id
       totalCount
       edges @required(action: THROW) {
@@ -51,7 +51,7 @@ export function PeopleList(props: { fKey: PeopleListFragment$key }) {
     PeopleListFragment$key
   >(fragment, fKey);
 
-  const refetchMemberships = () => {
+  const refetchPeople = () => {
     peoplePagination.refetch({}, { fetchPolicy: "network-only" });
   };
 
@@ -77,21 +77,21 @@ export function PeopleList(props: { fKey: PeopleListFragment$key }) {
         </Tr>
       </Thead>
       <Tbody>
-        {peoplePagination.data.members.totalCount === 0
+        {peoplePagination.data.profiles.totalCount === 0
           ? (
               <Tr>
                 <Td colSpan={7} className="text-center text-txt-secondary">
-                  {__("No members")}
+                  {__("No people")}
                 </Td>
               </Tr>
             )
           : (
-              peoplePagination.data.members.edges.map(({ node: membership }) => (
+              peoplePagination.data.profiles.edges.map(({ node: profile }) => (
                 <MemberListItem
-                  connectionId={peoplePagination.data.members.__id}
-                  key={membership.id}
-                  fKey={membership}
-                  onRefetch={refetchMemberships}
+                  connectionId={peoplePagination.data.profiles.__id}
+                  key={profile.id}
+                  fKey={profile}
+                  onRefetch={refetchPeople}
                 />
               ))
             )}

@@ -30,10 +30,10 @@ const updateMembershipMutation = graphql`
 `;
 
 export function EditMemberDialog(props: {
-  membership: PeopleListItemFragment$data;
+  profile: PeopleListItemFragment$data;
   onClose: () => void;
 }) {
-  const { membership, onClose } = props;
+  const { profile, onClose } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -41,7 +41,7 @@ export function EditMemberDialog(props: {
   const { role } = use(CurrentUser);
   const availableRoles = getAssignableRoles(role);
 
-  const [selectedRole, setSelectedRole] = useState<string>(membership.role);
+  const [selectedRole, setSelectedRole] = useState<string>(profile.membership.role);
 
   const [updateMembership, isUpdating] = useMutationWithToasts(
     updateMembershipMutation,
@@ -56,7 +56,7 @@ export function EditMemberDialog(props: {
     await updateMembership({
       variables: {
         input: {
-          membershipId: membership.id,
+          membershipId: profile.membership.id,
           organizationId: organizationId,
           role: selectedRole,
         },
@@ -73,7 +73,7 @@ export function EditMemberDialog(props: {
             <p className="text-txt-secondary text-sm mb-4">
               {sprintf(
                 __("Update the role for %s"),
-                membership.profile.fullName,
+                profile.fullName,
               )}
             </p>
 
@@ -121,7 +121,7 @@ export function EditMemberDialog(props: {
         <DialogFooter>
           <Button
             type="submit"
-            disabled={isUpdating || selectedRole === membership.role}
+            disabled={isUpdating || selectedRole === profile.membership.role}
           >
             {isUpdating && <Spinner />}
             {__("Update Role")}

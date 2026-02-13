@@ -17,7 +17,7 @@ export const peoplePageQuery = graphql`
       __typename
       ... on Organization {
         canInviteUser: permission(action: "iam:invitation:create")
-        members(first: 20, orderBy: { direction: ASC, field: FULL_NAME })
+        profiles(first: 20, orderBy: { direction: ASC, field: FULL_NAME })
           @required(action: THROW) {
           totalCount
         }
@@ -50,8 +50,8 @@ export function PeoplePage(props: {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
-  const [activeTab, setActiveTab] = useState<"memberships" | "invitations">(
-    "memberships",
+  const [activeTab, setActiveTab] = useState<"people" | "invitations">(
+    "people",
   );
 
   const { organization } = usePreloadedQuery<PeoplePageQuery>(
@@ -85,12 +85,12 @@ export function PeoplePage(props: {
 
       <Tabs>
         <TabItem
-          active={activeTab === "memberships"}
-          onClick={() => setActiveTab("memberships")}
+          active={activeTab === "people"}
+          onClick={() => setActiveTab("people")}
         >
-          {__("Members")}
-          {(organization.members.totalCount ?? 0) > 0 && (
-            <TabBadge>{organization.members.totalCount}</TabBadge>
+          {__("People")}
+          {(organization.profiles.totalCount ?? 0) > 0 && (
+            <TabBadge>{organization.profiles.totalCount}</TabBadge>
           )}
         </TabItem>
         <TabItem
@@ -105,7 +105,7 @@ export function PeoplePage(props: {
       </Tabs>
 
       <div className="pb-6 pt-6">
-        {activeTab === "memberships" && <PeopleList fKey={organization} />}
+        {activeTab === "people" && <PeopleList fKey={organization} />}
 
         {activeTab === "invitations" && (
           <InvitationList

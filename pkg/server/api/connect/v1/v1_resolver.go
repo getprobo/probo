@@ -38,14 +38,14 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 		return nil, err
 	}
 
+	filter := coredata.NewMembershipProfileFilter(nil)
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
 		}, nil
 	}
-
-	filter := coredata.NewMembershipProfileFilter(nil)
 
 	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
 		Field:     coredata.MembershipProfileOrderFieldFullName,
@@ -1247,14 +1247,14 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 		return nil, err
 	}
 
+	filter := coredata.NewMembershipProfileFilter(nil)
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
 		}, nil
 	}
-
-	filter := coredata.NewMembershipProfileFilter(nil)
 
 	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
 		Field:     coredata.MembershipProfileOrderFieldFullName,
@@ -1514,7 +1514,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountProfiles(ctx, obj.ParentID, coredata.NewMembershipProfileFilter(nil))
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count sprofiles", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
 		return &count, nil

@@ -23,10 +23,10 @@ export const viewerMembershipLayoutQuery = graphql`
         ...MembershipsDropdown_organizationFragment
         ...ViewerMembershipDropdownFragment
         ...SidebarFragment @skip(if: $hideSidebar)
-        viewerMembership @required(action: THROW) {
-          role
-          profile @required(action: THROW) {
-            fullName
+        viewer @required(action: THROW) {
+          fullName
+          membership @required(action: THROW) {
+            role
           }
         }
       }
@@ -91,11 +91,11 @@ export function ViewerMembershipLayout(props: {
         <CurrentUser
           value={{
             email: viewer.email,
-            fullName: organization.viewerMembership.profile.fullName,
-            role: organization.viewerMembership.role,
+            fullName: organization.viewer.fullName,
+            role: organization.viewer.membership.role,
           }}
         >
-          <Outlet context={organization.viewerMembership.role} />
+          <Outlet context={organization.viewer.membership.role} />
         </CurrentUser>
       </CoreRelayProvider>
     </Layout>

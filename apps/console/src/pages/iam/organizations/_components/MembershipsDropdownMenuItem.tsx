@@ -10,6 +10,7 @@ import { useFragment } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
+import type { MembershipsDropdownMenuItem_organizationFragment$key } from "#/__generated__/iam/MembershipsDropdownMenuItem_organizationFragment.graphql";
 import type { MembershipsDropdownMenuItemFragment$key } from "#/__generated__/iam/MembershipsDropdownMenuItemFragment.graphql";
 
 const fragment = graphql`
@@ -19,21 +20,27 @@ const fragment = graphql`
       id
       expiresAt
     }
-    organization @required(action: THROW) {
-      id
-      logoUrl
-      name
-    }
+  }
+`;
+
+const organizationFragment = graphql`
+  fragment MembershipsDropdownMenuItem_organizationFragment on Organization {
+    id
+    name
+    logoUrl
   }
 `;
 
 export function MembershipsDropdownMenuItem(props: {
   fKey: MembershipsDropdownMenuItemFragment$key;
+  organizationFragmentRef: MembershipsDropdownMenuItem_organizationFragment$key;
 }) {
-  const { fKey } = props;
+  const { fKey, organizationFragmentRef } = props;
 
-  const { id, lastSession, organization }
+  const { id, lastSession }
     = useFragment<MembershipsDropdownMenuItemFragment$key>(fragment, fKey);
+  const organization
+    = useFragment<MembershipsDropdownMenuItem_organizationFragment$key>(organizationFragment, organizationFragmentRef);
 
   const isAssuming = !!lastSession;
   const isExpired

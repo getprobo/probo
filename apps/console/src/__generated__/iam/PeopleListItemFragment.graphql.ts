@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b56389d57c3d4cb31dd873feaeff2bb3>>
+ * @generated SignedSource<<6e9b0a4fbf6ce65f11f2367f2ec5b6d4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,6 @@ export type MembershipState = "ACTIVE" | "INACTIVE";
 export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 import { FragmentRefs } from "relay-runtime";
 export type PeopleListItemFragment$data = {
-  readonly canDelete: boolean;
   readonly canUpdate: boolean;
   readonly createdAt: string;
   readonly fullName: string;
@@ -25,6 +24,7 @@ export type PeopleListItemFragment$data = {
   };
   readonly kind: ProfileKind;
   readonly membership: {
+    readonly canDelete: boolean;
     readonly canUpdate: boolean;
     readonly id: string;
     readonly role: MembershipRole;
@@ -119,6 +119,19 @@ return {
             "kind": "ScalarField",
             "name": "permission",
             "storageKey": "permission(action:\"iam:membership:update\")"
+          },
+          {
+            "alias": "canDelete",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "action",
+                "value": "iam:membership-profile:delete"
+              }
+            ],
+            "kind": "ScalarField",
+            "name": "permission",
+            "storageKey": "permission(action:\"iam:membership-profile:delete\")"
           }
         ],
         "storageKey": null
@@ -166,19 +179,6 @@ return {
       "kind": "ScalarField",
       "name": "permission",
       "storageKey": "permission(action:\"iam:membership-profile:update\")"
-    },
-    {
-      "alias": "canDelete",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "iam:membership-profile:delete"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"iam:membership-profile:delete\")"
     }
   ],
   "type": "Profile",
@@ -186,6 +186,6 @@ return {
 };
 })();
 
-(node as any).hash = "5f45ee7c58d50b0a6569c3bd22ffc83f";
+(node as any).hash = "89702fbdf02294212269adb22efb65fe";
 
 export default node;
