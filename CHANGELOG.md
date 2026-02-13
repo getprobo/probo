@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.123.3] - 2026-02-13
+
+### Fixed
+
+- Fix missing name id format for idp initiated SAML request
+
 ## [0.123.2] - 2026-02-13
 
 ### Fixed
