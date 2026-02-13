@@ -48,6 +48,11 @@ type (
 		timeout       time.Duration
 	}
 
+	cachedSecret struct {
+		encryptedSecret []byte
+		plaintext       string
+	}
+
 	Config struct {
 		Interval      time.Duration
 		Timeout       time.Duration
@@ -201,7 +206,10 @@ func (s *Sender) deliverToConfiguration(
 
 func (s *Sender) getSigningSecret(webhookConfigurationID string, encryptedSigningSecret []byte) (string, error) {
 	if cached, ok := s.cache.Load(webhookConfigurationID); ok {
-		return cached.(string), nil
+		entry := cached.(*cachedSecret)
+		if bytes.Equal(entry.encryptedSecret, encryptedSigningSecret) {
+			return entry.plaintext, nil
+		}
 	}
 
 	plaintext, err := cipher.Decrypt(encryptedSigningSecret, s.encryptionKey)
@@ -210,7 +218,10 @@ func (s *Sender) getSigningSecret(webhookConfigurationID string, encryptedSignin
 	}
 
 	signingSecret := string(plaintext)
-	s.cache.Store(webhookConfigurationID, signingSecret)
+	s.cache.Store(webhookConfigurationID, &cachedSecret{
+		encryptedSecret: encryptedSigningSecret,
+		plaintext:       signingSecret,
+	})
 
 	return signingSecret, nil
 }
@@ -231,7 +242,6 @@ func (s *Sender) doHTTPCall(
 		"createdAt":       webhookData.CreatedAt,
 		"data":            webhookData.Data,
 	}
-
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal webhook payload: %w", err)
