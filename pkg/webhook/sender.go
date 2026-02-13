@@ -317,7 +317,6 @@ func (s *Sender) recordEvent(
 		ID:                     eventID,
 		WebhookDataID:          webhookData.ID,
 		WebhookConfigurationID: config.ID,
-		EndpointURL:            config.EndpointURL,
 		Status:                 status,
 		Response:               response,
 		CreatedAt:              time.Now(),

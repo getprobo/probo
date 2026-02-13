@@ -32,7 +32,6 @@ type (
 		ID                     gid.GID            `db:"id"`
 		WebhookDataID          gid.GID            `db:"webhook_data_id"`
 		WebhookConfigurationID gid.GID            `db:"webhook_configuration_id"`
-		EndpointURL            string             `db:"endpoint_url"`
 		Status                 WebhookEventStatus `db:"status"`
 		Response               json.RawMessage    `db:"response"`
 		CreatedAt              time.Time          `db:"created_at"`
@@ -62,7 +61,6 @@ SELECT
     id,
     webhook_data_id,
     webhook_configuration_id,
-    endpoint_url,
     status,
     response,
     created_at
@@ -129,7 +127,6 @@ INSERT INTO webhook_events (
     tenant_id,
     webhook_data_id,
     webhook_configuration_id,
-    endpoint_url,
     status,
     response,
     created_at
@@ -139,7 +136,6 @@ VALUES (
     @tenant_id,
     @webhook_data_id,
     @webhook_configuration_id,
-    @endpoint_url,
     @status,
     @response,
     @created_at
@@ -151,7 +147,6 @@ VALUES (
 		"tenant_id":                scope.GetTenantID(),
 		"webhook_data_id":          w.WebhookDataID,
 		"webhook_configuration_id": w.WebhookConfigurationID,
-		"endpoint_url":             w.EndpointURL,
 		"status":                   w.Status,
 		"response":                 w.Response,
 		"created_at":               w.CreatedAt,

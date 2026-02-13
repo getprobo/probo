@@ -116,7 +116,6 @@ const webhookEventsQuery = graphql`
             node {
               id
               status
-              endpointUrl
               createdAt
               response
             }
@@ -394,9 +393,6 @@ function WebhookEventsDialog({
                         {formatDate(event.createdAt)}
                       </span>
                     </div>
-                    <p className="text-xs font-mono text-txt-secondary truncate">
-                      {event.endpointUrl}
-                    </p>
                     {event.response && (
                       <details className="text-xs">
                         <summary className="cursor-pointer text-txt-link hover:underline">

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<70389123cd52ffd010e2b8f0109aedcd>>
+ * @generated SignedSource<<e16673382ec7f9083ba5df0b67d76583>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,6 @@ export type WebhooksSettingsPage_eventsQuery$data = {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly createdAt: string;
-          readonly endpointUrl: string;
           readonly id: string;
           readonly response: string | null | undefined;
           readonly status: WebhookEventStatus;
@@ -152,13 +151,6 @@ v5 = {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "endpointUrl",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "createdAt",
                   "storageKey": null
                 },
@@ -242,16 +234,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "507b568e987ce78e58b171810a60bce8",
+    "cacheID": "4593e2ef5dabf3cef70959eb8d2e4b01",
     "id": null,
     "metadata": {},
     "name": "WebhooksSettingsPage_eventsQuery",
     "operationKind": "query",
-    "text": "query WebhooksSettingsPage_eventsQuery(\n  $webhookConfigurationId: ID!\n  $first: Int\n  $after: CursorKey\n) {\n  node(id: $webhookConfigurationId) {\n    __typename\n    ... on WebhookConfiguration {\n      events(first: $first, after: $after) {\n        totalCount\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n        edges {\n          node {\n            id\n            status\n            endpointUrl\n            createdAt\n            response\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query WebhooksSettingsPage_eventsQuery(\n  $webhookConfigurationId: ID!\n  $first: Int\n  $after: CursorKey\n) {\n  node(id: $webhookConfigurationId) {\n    __typename\n    ... on WebhookConfiguration {\n      events(first: $first, after: $after) {\n        totalCount\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n        edges {\n          node {\n            id\n            status\n            createdAt\n            response\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2e528e16c34c33138858f92215af2ab4";
+(node as any).hash = "16da5d0681f767c57e3f352d4956eefe";
 
 export default node;

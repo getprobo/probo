@@ -46,7 +46,6 @@ CREATE TABLE webhook_events (
     tenant_id TEXT NOT NULL,
     webhook_data_id TEXT NOT NULL REFERENCES webhook_data(id) ON UPDATE CASCADE ON DELETE CASCADE,
     webhook_configuration_id TEXT NOT NULL REFERENCES webhook_configurations(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    endpoint_url TEXT NOT NULL,
     status webhook_event_status NOT NULL,
     response JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL
