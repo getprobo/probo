@@ -39,13 +39,15 @@ import (
 
 type (
 	Sender struct {
-		pg            *pg.Client
-		logger        *log.Logger
-		httpClient    *http.Client
-		encryptionKey cipher.EncryptionKey
-		cache         sync.Map
-		interval      time.Duration
-		timeout       time.Duration
+		pg             *pg.Client
+		logger         *log.Logger
+		httpClient     *http.Client
+		encryptionKey  cipher.EncryptionKey
+		cache          sync.Map
+		cacheCreatedAt time.Time
+		cacheTTL       time.Duration
+		interval       time.Duration
+		timeout        time.Duration
 	}
 
 	cachedSecret struct {
@@ -56,6 +58,7 @@ type (
 	Config struct {
 		Interval      time.Duration
 		Timeout       time.Duration
+		CacheTTL      time.Duration
 		EncryptionKey cipher.EncryptionKey
 	}
 )
@@ -71,13 +74,19 @@ func NewSender(pg *pg.Client, logger *log.Logger, cfg Config) *Sender {
 		cfg.Timeout = 30 * time.Second
 	}
 
+	if cfg.CacheTTL <= 0 {
+		cfg.CacheTTL = 24 * time.Hour
+	}
+
 	return &Sender{
-		pg:            pg,
-		logger:        logger,
-		httpClient:    httpclient.DefaultPooledClient(httpclient.WithLogger(logger)),
-		encryptionKey: cfg.EncryptionKey,
-		interval:      cfg.Interval,
-		timeout:       cfg.Timeout,
+		pg:             pg,
+		logger:         logger,
+		httpClient:     httpclient.DefaultPooledClient(httpclient.WithLogger(logger)),
+		encryptionKey:  cfg.EncryptionKey,
+		cacheCreatedAt: time.Now(),
+		cacheTTL:       cfg.CacheTTL,
+		interval:       cfg.Interval,
+		timeout:        cfg.Timeout,
 	}
 }
 
@@ -95,6 +104,11 @@ func (s *Sender) Run(ctx context.Context) error {
 }
 
 func (s *Sender) processEvents(ctx context.Context) error {
+	if time.Since(s.cacheCreatedAt) >= s.cacheTTL {
+		s.cache = sync.Map{}
+		s.cacheCreatedAt = time.Now()
+	}
+
 	for {
 		webhookData, err := s.claimNextWebhookData(ctx)
 		if err != nil {

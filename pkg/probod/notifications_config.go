@@ -22,4 +22,5 @@ type notificationsConfig struct {
 
 type webhookConfig struct {
 	SenderInterval int `json:"sender-interval"`
+	CacheTTL       int `json:"cache-ttl"`
 }

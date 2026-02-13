@@ -157,6 +157,7 @@ func New() *Implm {
 				},
 				Webhook: webhookConfig{
 					SenderInterval: 5,
+					CacheTTL:       86400,
 				},
 			},
 			CustomDomains: customDomainsConfig{
@@ -486,6 +487,7 @@ func (impl *Implm) Run(
 	webhookSenderCtx, stopWebhookSender := context.WithCancel(context.Background())
 	webhookSender := webhook.NewSender(pgClient, l.Named("webhook-sender"), webhook.Config{
 		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
+		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
 		EncryptionKey: impl.cfg.EncryptionKey,
 	})
 	wg.Go(
