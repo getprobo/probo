@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<22d63f81020d1e99f7cdb84fc23913a4>>
+ * @generated SignedSource<<08f3ffe97dd35388d5ce01977170773b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -224,20 +224,8 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "Profile",
-                            "kind": "LinkedField",
-                            "name": "profile",
-                            "plural": false,
-                            "selections": [
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "fullName",
-                                "storageKey": null
-                              },
-                              (v8/*: any*/)
-                            ],
+                            "kind": "ScalarField",
+                            "name": "userName",
                             "storageKey": null
                           },
                           (v7/*: any*/)
@@ -315,12 +303,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "58b36de1b4c1f54de6433a95b297b570",
+    "cacheID": "5e80fcd5f3479d5b6bce65b59364d3f7",
     "id": null,
     "metadata": {},
     "name": "SCIMEventListPaginationQuery",
     "operationKind": "query",
-    "text": "query SCIMEventListPaginationQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...SCIMEventListFragment_pbnwq\n    id\n  }\n}\n\nfragment SCIMEventListFragment_pbnwq on SCIMConfiguration {\n  events(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        ...SCIMEventListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SCIMEventListItemFragment on SCIMEvent {\n  method\n  path\n  statusCode\n  errorMessage\n  ipAddress\n  createdAt\n  profile {\n    fullName\n    id\n  }\n}\n"
+    "text": "query SCIMEventListPaginationQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...SCIMEventListFragment_pbnwq\n    id\n  }\n}\n\nfragment SCIMEventListFragment_pbnwq on SCIMConfiguration {\n  events(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        ...SCIMEventListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SCIMEventListItemFragment on SCIMEvent {\n  method\n  path\n  statusCode\n  errorMessage\n  ipAddress\n  createdAt\n  userName\n}\n"
   }
 };
 })();

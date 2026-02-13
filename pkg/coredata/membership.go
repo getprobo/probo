@@ -25,24 +25,17 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	Membership struct {
-		ID             gid.GID          `db:"id"`
-		IdentityID     gid.GID          `db:"identity_id"`
-		OrganizationID gid.GID          `db:"organization_id"`
-		Role           MembershipRole   `db:"role"`
-		Source         MembershipSource `db:"source"`
-		State          MembershipState  `db:"state"`
-		// FIXME: remove after scim is based on profile
-		EmailAddress mail.Addr `db:"-"`
-		FullName     string    `db:"-"`
-
-		CreatedAt time.Time `db:"created_at"`
-		UpdatedAt time.Time `db:"updated_at"`
+		ID             gid.GID        `db:"id"`
+		IdentityID     gid.GID        `db:"identity_id"`
+		OrganizationID gid.GID        `db:"organization_id"`
+		Role           MembershipRole `db:"role"`
+		CreatedAt      time.Time      `db:"created_at"`
+		UpdatedAt      time.Time      `db:"updated_at"`
 	}
 
 	Memberships []*Membership
@@ -66,8 +59,6 @@ SELECT
     identity_id,
     organization_id,
     role,
-    source,
-    state,
     created_at,
     updated_at
 FROM
@@ -109,8 +100,6 @@ INSERT INTO
         identity_id,
         organization_id,
         role,
-        source,
-        state,
         created_at,
         updated_at
     )
@@ -120,8 +109,6 @@ VALUES (
     @identity_id,
     @organization_id,
     @role,
-    @source,
-    @state,
     @created_at,
     @updated_at
 );
@@ -133,8 +120,6 @@ VALUES (
 		"identity_id":     m.IdentityID,
 		"organization_id": m.OrganizationID,
 		"role":            m.Role,
-		"source":          m.Source,
-		"state":           m.State,
 		"created_at":      m.CreatedAt,
 		"updated_at":      m.UpdatedAt,
 	}
@@ -168,8 +153,6 @@ SELECT
     identity_id,
     organization_id,
     role,
-    source,
-    state,
     created_at,
     updated_at
 FROM
@@ -209,8 +192,7 @@ func (m *Membership) AuthorizationAttributes(ctx context.Context, conn pg.Conn) 
 SELECT
     identity_id,
     organization_id,
-    role,
-    source
+    role
 FROM
     iam_memberships
 WHERE
@@ -221,12 +203,10 @@ LIMIT 1;
 	var identityID gid.GID
 	var organizationID gid.GID
 	var role MembershipRole
-	var source MembershipSource
 	if err := conn.QueryRow(ctx, q, m.ID).Scan(
 		&identityID,
 		&organizationID,
 		&role,
-		&source,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
@@ -238,7 +218,6 @@ LIMIT 1;
 		"identity_id":     identityID.String(),
 		"organization_id": organizationID.String(),
 		"role":            role.String(),
-		"source":          source.String(),
 	}, nil
 }
 
@@ -255,8 +234,6 @@ SELECT
     identity_id,
     organization_id,
     role,
-    source,
-    state,
     created_at,
     updated_at
 FROM
@@ -299,8 +276,6 @@ UPDATE
     iam_memberships
 SET
     role = @role,
-    source = @source,
-    state = @state,
     updated_at = @updated_at
 WHERE
     id = @id
@@ -312,8 +287,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":         m.ID,
 		"role":       m.Role,
-		"source":     m.Source,
-		"state":      m.State,
 		"updated_at": m.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -358,180 +331,51 @@ WHERE
 	return nil
 }
 
-func (m *Memberships) LoadByOrganizationID(
+func (m *Membership) LoadActiveByIdentityIDAndOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
-	scope Scoper,
+	identityID gid.GID,
 	organizationID gid.GID,
-	cursor *page.Cursor[MembershipOrderField],
-	filter *MembershipFilter,
 ) error {
-	query := `
+	q := `
 SELECT
-    id,
-    identity_id,
-    organization_id,
-    role,
-    source,
-    state,
-    created_at,
-    updated_at
-FROM
-    iam_memberships
-WHERE
-    %s
-    AND %s
-    organization_id = @organization_id
-    AND %s
-`
-
-	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot query memberships: %w", err)
-	}
-
-	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Membership])
-	if err != nil {
-		return fmt.Errorf("cannot collect memberships: %w", err)
-	}
-
-	*m = memberships
-	return nil
-}
-
-func (m *Memberships) CountByOrganizationID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	filter *MembershipFilter,
-) (int, error) {
-	query := `
-SELECT
-    COUNT(*)
+    m.id,
+    m.identity_id,
+    m.organization_id,
+    m.role,
+    m.created_at,
+    m.updated_at
 FROM
     iam_memberships m
-JOIN
-    identities i ON m.identity_id = i.id
+INNER JOIN iam_membership_profiles p
+    ON p.identity_id = m.identity_id AND p.organization_id = m.organization_id
 WHERE
-    m.organization_id = @organization_id
-    AND m.%s
-    AND %s
+    p.state = @state
+    AND m.identity_id = @identity_id
+    AND m.organization_id = @organization_id
+LIMIT 1
 `
-	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment())
+
 	args := pgx.StrictNamedArgs{
+		"state":           ProfileStateActive,
+		"identity_id":     identityID,
 		"organization_id": organizationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-	row := conn.QueryRow(ctx, query, args)
-	var count int
-	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot count memberships: %w", err)
-	}
-	return count, nil
-}
 
-func (m *Memberships) CountByIdentityID(
-	ctx context.Context,
-	conn pg.Conn,
-	identityID gid.GID,
-) (int, error) {
-	query := `
-SELECT
-    COUNT(*)
-FROM
-    iam_memberships
-WHERE
-    identity_id = @identity_id
-    AND state = 'ACTIVE'
-`
-	args := pgx.StrictNamedArgs{
-		"identity_id": identityID,
-	}
-
-	row := conn.QueryRow(ctx, query, args)
-	var count int
-	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot count memberships: %w", err)
-	}
-
-	return count, nil
-}
-
-func (m *Memberships) LoadAllByIdentityID(
-	ctx context.Context,
-	conn pg.Conn,
-	identityID gid.GID,
-) error {
-	q := `
-SELECT
-    id,
-    identity_id,
-    organization_id,
-    role,
-    source,
-    state,
-    created_at,
-    updated_at
-FROM
-    iam_memberships
-WHERE
-    identity_id = $1
-;
-`
-
-	rows, err := conn.Query(ctx, q, identityID)
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query memberships: %w", err)
 	}
 
-	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Membership])
+	membership, err := pgx.CollectExactlyOneRow(rows, pgx.RowToAddrOfStructByName[Membership])
 	if err != nil {
-		return fmt.Errorf("cannot collect memberships: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect membership: %w", err)
 	}
 
-	*m = memberships
-	return nil
-}
-
-func (m *Memberships) ResetSCIMSources(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-UPDATE iam_memberships
-SET
-    source = 'MANUAL',
-    updated_at = @updated_at
-WHERE
-    %s
-    AND organization_id = @organization_id
-    AND source = 'SCIM'
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{
-		"organization_id": organizationID,
-		"updated_at":      time.Now(),
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot reset SCIM membership sources: %w", err)
-	}
-
+	*m = *membership
 	return nil
 }

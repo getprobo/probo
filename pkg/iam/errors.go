@@ -123,28 +123,28 @@ func (e ErrMembershipNotFound) Error() string {
 	return fmt.Sprintf("membership %q not found", e.MembershipID)
 }
 
-type ErrMembershipInactive struct {
-	MembershipID gid.GID
+type ErrUserInactive struct {
+	ProfileID gid.GID
 }
 
-func NewMembershipInactiveError(membershipID gid.GID) error {
-	return &ErrMembershipInactive{MembershipID: membershipID}
+func NewUserInactiveError(profileID gid.GID) error {
+	return &ErrUserInactive{ProfileID: profileID}
 }
 
-func (e ErrMembershipInactive) Error() string {
-	return fmt.Sprintf("membership %q is inactive", e.MembershipID)
+func (e ErrUserInactive) Error() string {
+	return fmt.Sprintf("user %q is inactive", e.ProfileID)
 }
 
-type ErrMembershipManagedBySCIM struct {
-	MembershipID gid.GID
+type ErrUserManagedBySCIM struct {
+	ProfileID gid.GID
 }
 
-func NewMembershipManagedBySCIMError(membershipID gid.GID) error {
-	return &ErrMembershipManagedBySCIM{MembershipID: membershipID}
+func NewUserManagedBySCIMError(profileID gid.GID) error {
+	return &ErrUserManagedBySCIM{ProfileID: profileID}
 }
 
-func (e ErrMembershipManagedBySCIM) Error() string {
-	return fmt.Sprintf("membership %q is managed by SCIM and cannot be deleted manually", e.MembershipID)
+func (e ErrUserManagedBySCIM) Error() string {
+	return fmt.Sprintf("user %q is managed by SCIM and cannot be deleted manually", e.ProfileID)
 }
 
 type ErrLastActiveOwner struct {
@@ -156,7 +156,7 @@ func NewLastActiveOwnerError(membershipID gid.GID) error {
 }
 
 func (e ErrLastActiveOwner) Error() string {
-	return fmt.Sprintf("cannot remove membership %q: last active owner of the organization", e.MembershipID)
+	return fmt.Sprintf("cannot remove profile %q: last active owner of the organization", e.MembershipID)
 }
 
 type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
@@ -220,17 +220,17 @@ func (e ErrSessionExpired) Error() string {
 	return fmt.Sprintf("session %q expired", e.SessionID)
 }
 
-type ErrMembershipAlreadyExists struct {
+type ErrUserAlreadyExists struct {
 	IdentityID     gid.GID
 	OrganizationID gid.GID
 }
 
-func NewMembershipAlreadyExistsError(identityID gid.GID, organizationID gid.GID) error {
-	return &ErrMembershipAlreadyExists{IdentityID: identityID, OrganizationID: organizationID}
+func NewUserAlreadyExistsError(identityID gid.GID, organizationID gid.GID) error {
+	return &ErrUserAlreadyExists{IdentityID: identityID, OrganizationID: organizationID}
 }
 
-func (e ErrMembershipAlreadyExists) Error() string {
-	return fmt.Sprintf("membership already exists for identity %q in organization %q", e.IdentityID, e.OrganizationID)
+func (e ErrUserAlreadyExists) Error() string {
+	return fmt.Sprintf("user already exists for identity %q in organization %q", e.IdentityID, e.OrganizationID)
 }
 
 type ErrSAMLConfigurationNotFound struct{ ConfigID gid.GID }

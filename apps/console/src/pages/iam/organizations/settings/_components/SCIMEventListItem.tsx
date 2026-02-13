@@ -14,9 +14,7 @@ const SCIMEventListItemFragment = graphql`
     errorMessage
     ipAddress
     createdAt
-    profile {
-      fullName
-    }
+    userName
   }
 `;
 
@@ -89,8 +87,7 @@ export function SCIMEventListItem(props: {
               <div className="flex gap-8 text-sm">
                 <div>
                   <span className="text-txt-secondary">User: </span>
-                  {/* FIXME */}
-                  {/* <span>{event.membership?.profile?.fullName || "-"}</span> */}
+                  <span>{event.userName || "-"}</span>
                 </div>
                 <div>
                   <span className="text-txt-secondary">IP Address: </span>

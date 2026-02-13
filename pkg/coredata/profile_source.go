@@ -19,19 +19,19 @@ import (
 	"fmt"
 )
 
-type MembershipSource string
+type ProfileSource string
 
 const (
-	MembershipSourceManual MembershipSource = "MANUAL"
-	MembershipSourceSAML   MembershipSource = "SAML"
-	MembershipSourceSCIM   MembershipSource = "SCIM"
+	ProfileSourceManual ProfileSource = "MANUAL"
+	ProfileSourceSAML   ProfileSource = "SAML"
+	ProfileSourceSCIM   ProfileSource = "SCIM"
 )
 
-func (s MembershipSource) String() string {
+func (s ProfileSource) String() string {
 	return string(s)
 }
 
-func (s *MembershipSource) Scan(value any) error {
+func (s *ProfileSource) Scan(value any) error {
 	var str string
 	switch v := value.(type) {
 	case string:
@@ -39,22 +39,22 @@ func (s *MembershipSource) Scan(value any) error {
 	case []byte:
 		str = string(v)
 	default:
-		return fmt.Errorf("unsupported type for MembershipSource: %T", value)
+		return fmt.Errorf("unsupported type for ProfileSource: %T", value)
 	}
 
 	switch str {
 	case "MANUAL":
-		*s = MembershipSourceManual
+		*s = ProfileSourceManual
 	case "SAML":
-		*s = MembershipSourceSAML
+		*s = ProfileSourceSAML
 	case "SCIM":
-		*s = MembershipSourceSCIM
+		*s = ProfileSourceSCIM
 	default:
-		return fmt.Errorf("invalid MembershipSource value: %q", str)
+		return fmt.Errorf("invalid ProfileSource value: %q", str)
 	}
 	return nil
 }
 
-func (s MembershipSource) Value() (driver.Value, error) {
+func (s ProfileSource) Value() (driver.Value, error) {
 	return s.String(), nil
 }
