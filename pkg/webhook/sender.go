@@ -140,7 +140,11 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 
 		var configs coredata.WebhookSubscriptions
 		if err := configs.LoadMatchingByOrganizationIDAndEventType(
-			ctx, tx, scope, webhookData.OrganizationID, webhookData.EventType,
+			ctx,
+			tx,
+			scope,
+			webhookData.OrganizationID,
+			webhookData.EventType,
 		); err != nil {
 			return fmt.Errorf("cannot load matching webhook subscriptions: %w", err)
 		}
@@ -192,7 +196,9 @@ func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData,
 
 	signingSecret, err := s.getSigningSecret(d.Config.ID.String(), d.Config.EncryptedSigningSecret)
 	if err != nil {
-		s.logger.ErrorCtx(ctx, "cannot get signing secret",
+		s.logger.ErrorCtx(
+			ctx,
+			"cannot get signing secret",
 			log.Error(err),
 			log.String("webhook_data_id", webhookData.ID.String()),
 			log.String("subscription_id", d.Config.ID.String()),
@@ -206,7 +212,9 @@ func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData,
 	eventStatus := coredata.WebhookEventStatusSucceeded
 	if sendErr != nil {
 		eventStatus = coredata.WebhookEventStatusFailed
-		s.logger.ErrorCtx(ctx, "error delivering webhook",
+		s.logger.ErrorCtx(
+			ctx,
+			"error delivering webhook",
 			log.Error(sendErr),
 			log.String("webhook_data_id", webhookData.ID.String()),
 			log.String("event_id", d.Event.ID.String()),
@@ -230,7 +238,9 @@ func (s *Sender) updateEventStatus(
 		return event.UpdateStatus(ctx, conn, scope)
 	})
 	if err != nil {
-		s.logger.ErrorCtx(ctx, "cannot update webhook event status",
+		s.logger.ErrorCtx(
+			ctx,
+			"cannot update webhook event status",
 			log.Error(err),
 			log.String("event_id", event.ID.String()),
 			log.String("target_status", status.String()),
@@ -252,10 +262,13 @@ func (s *Sender) getSigningSecret(webhookSubscriptionID string, encryptedSigning
 	}
 
 	signingSecret := string(plaintext)
-	s.cache.Store(webhookSubscriptionID, &cachedSecret{
-		encryptedSecret: encryptedSigningSecret,
-		plaintext:       signingSecret,
-	})
+	s.cache.Store(
+		webhookSubscriptionID,
+		&cachedSecret{
+			encryptedSecret: encryptedSigningSecret,
+			plaintext:       signingSecret,
+		},
+	)
 
 	return signingSecret, nil
 }
@@ -268,13 +281,13 @@ func (s *Sender) doHTTPCall(
 	subscriptionID gid.GID,
 	signingSecret string,
 ) (json.RawMessage, error) {
-	payload := map[string]any{
-		"eventId":        eventID.String(),
-		"subscriptionId": subscriptionID.String(),
-		"organizationId": webhookData.OrganizationID.String(),
-		"eventType":      webhookData.EventType.String(),
-		"createdAt":      webhookData.CreatedAt,
-		"data":           webhookData.Data,
+	payload := Payload{
+		EventID:        eventID.String(),
+		SubscriptionID: subscriptionID.String(),
+		OrganizationID: webhookData.OrganizationID.String(),
+		EventType:      webhookData.EventType.String(),
+		CreatedAt:      webhookData.CreatedAt,
+		Data:           webhookData.Data,
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {

@@ -25,6 +25,15 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
+type Payload struct {
+	EventID        string          `json:"eventId"`
+	SubscriptionID string          `json:"subscriptionId"`
+	OrganizationID string          `json:"organizationId"`
+	EventType      string          `json:"eventType"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	Data           json.RawMessage `json:"data"`
+}
+
 func InsertData(
 	ctx context.Context,
 	conn pg.Conn,
