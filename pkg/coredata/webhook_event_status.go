@@ -22,8 +22,9 @@ import (
 type WebhookEventStatus string
 
 const (
-	WebhookEventStatusSucceeded WebhookEventStatus = "SUCCEEDED"
-	WebhookEventStatusFailed    WebhookEventStatus = "FAILED"
+	WebhookEventStatusPending WebhookEventStatus = "PENDING"
+	WebhookEventStatusSucceeded  WebhookEventStatus = "SUCCEEDED"
+	WebhookEventStatusFailed     WebhookEventStatus = "FAILED"
 )
 
 func (s WebhookEventStatus) String() string {
@@ -32,7 +33,7 @@ func (s WebhookEventStatus) String() string {
 
 func (s WebhookEventStatus) IsValid() bool {
 	switch s {
-	case WebhookEventStatusSucceeded, WebhookEventStatusFailed:
+	case WebhookEventStatusPending, WebhookEventStatusSucceeded, WebhookEventStatusFailed:
 		return true
 	}
 	return false

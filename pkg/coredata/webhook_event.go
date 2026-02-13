@@ -159,3 +159,38 @@ VALUES (
 
 	return nil
 }
+
+func (w *WebhookEvent) UpdateStatus(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+UPDATE webhook_events
+SET
+    status = @status,
+    response = @response
+WHERE %s
+    AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":       w.ID,
+		"status":   w.Status,
+		"response": w.Response,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update webhook event: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}

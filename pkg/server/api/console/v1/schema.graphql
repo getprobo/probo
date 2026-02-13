@@ -2320,6 +2320,8 @@ type WebhookConfigurationEdge {
 
 enum WebhookEventStatus
     @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookEventStatus") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusPending")
     SUCCEEDED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusSucceeded")
     FAILED

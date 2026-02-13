@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e16673382ec7f9083ba5df0b67d76583>>
+ * @generated SignedSource<<7427d67b4f9b27376c782cbe0601a5ec>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type WebhookEventStatus = "FAILED" | "SUCCEEDED";
+export type WebhookEventStatus = "FAILED" | "PENDING" | "SUCCEEDED";
 export type WebhooksSettingsPage_eventsQuery$variables = {
   after?: string | null | undefined;
   first?: number | null | undefined;

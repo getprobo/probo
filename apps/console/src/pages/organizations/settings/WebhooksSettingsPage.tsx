@@ -289,6 +289,9 @@ function EventStatusBadge({ status }: { status: string }) {
   if (status === "SUCCEEDED") {
     return <Badge variant="success" size="sm">{__("Succeeded")}</Badge>;
   }
+  if (status === "PENDING") {
+    return <Badge variant="info" size="sm">{__("Pending")}</Badge>;
+  }
   return <Badge variant="danger" size="sm">{__("Failed")}</Badge>;
 }
 

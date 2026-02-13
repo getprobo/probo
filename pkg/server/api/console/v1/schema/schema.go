@@ -12907,6 +12907,8 @@ type WebhookConfigurationEdge {
 
 enum WebhookEventStatus
     @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookEventStatus") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusPending")
     SUCCEEDED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusSucceeded")
     FAILED
@@ -100921,10 +100923,12 @@ func (ec *executionContext) marshalNWebhookEventStatus2goᚗproboᚗincᚋprobo�
 
 var (
 	unmarshalNWebhookEventStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐWebhookEventStatus = map[string]coredata.WebhookEventStatus{
+		"PENDING":   coredata.WebhookEventStatusPending,
 		"SUCCEEDED": coredata.WebhookEventStatusSucceeded,
 		"FAILED":    coredata.WebhookEventStatusFailed,
 	}
 	marshalNWebhookEventStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐWebhookEventStatus = map[coredata.WebhookEventStatus]string{
+		coredata.WebhookEventStatusPending:   "PENDING",
 		coredata.WebhookEventStatusSucceeded: "SUCCEEDED",
 		coredata.WebhookEventStatusFailed:    "FAILED",
 	}

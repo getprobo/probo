@@ -52,7 +52,6 @@ func InsertEvent(
 		ID:             gid.New(scope.GetTenantID(), coredata.WebhookDataEntityType),
 		OrganizationID: organizationID,
 		EventType:      eventType,
-		Status:         coredata.WebhookDataStatusPending,
 		Data:           raw,
 		CreatedAt:      time.Now(),
 	}

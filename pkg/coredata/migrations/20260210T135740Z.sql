@@ -18,25 +18,18 @@ CREATE TABLE webhook_configurations (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE TYPE webhook_data_status AS ENUM (
-    'PENDING',
-    'PROCESSING',
-    'PROCESSED',
-    'FAILED'
-);
-
 CREATE TABLE webhook_data (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE,
     event_type webhook_event_type NOT NULL,
-    status webhook_data_status NOT NULL,
     data JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     processed_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TYPE webhook_event_status AS ENUM (
+    'PENDING',
     'SUCCEEDED',
     'FAILED'
 );
