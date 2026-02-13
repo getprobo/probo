@@ -3649,7 +3649,7 @@ components:
       required:
         - id
         - organization_id
-        - owner_id
+        - approver_ids
         - title
         - document_type
         - classification
@@ -3663,9 +3663,11 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver IDs
         title:
           type: string
           description: Document title
@@ -3699,7 +3701,7 @@ components:
         - organization_id
         - document_id
         - title
-        - owner_id
+        - approver_ids
         - version_number
         - classification
         - content
@@ -3720,9 +3722,11 @@ components:
         title:
           type: string
           description: Document version title
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver IDs
         version_number:
           type: integer
           description: Version number
@@ -3864,7 +3868,7 @@ components:
         - organization_id
         - title
         - content
-        - owner_id
+        - approver_ids
         - classification
         - document_type
       properties:
@@ -3877,9 +3881,11 @@ components:
         content:
           type: string
           description: Document content
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver IDs
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -3912,9 +3918,11 @@ components:
         title:
           type: string
           description: Document title
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver IDs
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification

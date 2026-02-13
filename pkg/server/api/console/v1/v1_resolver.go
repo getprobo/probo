@@ -862,23 +862,39 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
-// Approver is the resolver for the approver field.
-func (r *documentResolver) Approver(ctx context.Context, obj *types.Document) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+// Approvers is the resolver for the approvers field.
+func (r *documentResolver) Approvers(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
 		return nil, err
 	}
 
-	approver, err := r.iam.OrganizationService.GetProfile(ctx, obj.Approver.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get approver: %w", err))
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ProfileConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
 	}
 
-	return types.NewProfile(approver), nil
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy.Field = coredata.MembershipProfileOrderField(orderBy.Field)
+		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
+	}
+
+	c := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.Documents.ListApprovers(ctx, obj.ID, c)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list document approvers", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfileConnection(p, r, obj.ID, nil), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -1031,23 +1047,39 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 	return types.NewDocument(document), nil
 }
 
-// Approver is the resolver for the approver field.
-func (r *documentVersionResolver) Approver(ctx context.Context, obj *types.DocumentVersion) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+// Approvers is the resolver for the approvers field.
+func (r *documentVersionResolver) Approvers(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
 		return nil, err
 	}
 
-	approver, err := r.iam.OrganizationService.GetProfile(ctx, obj.Approver.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get approver: %w", err))
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ProfileConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
 	}
 
-	return types.NewProfile(approver), nil
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy.Field = coredata.MembershipProfileOrderField(orderBy.Field)
+		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
+	}
+
+	c := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.Documents.ListVersionApprovers(ctx, obj.ID, c)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list document version approvers", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfileConnection(p, r, obj.ID, nil), nil
 }
 
 // Signatures is the resolver for the signatures field.
@@ -3528,7 +3560,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			OrganizationID:        input.OrganizationID,
 			DocumentType:          input.DocumentType,
 			Title:                 input.Title,
-			ApproverID:            input.ApproverID,
+			ApproverIDs:           input.ApproverIds,
 			Content:               input.Content,
 			Classification:        input.Classification,
 			TrustCenterVisibility: input.TrustCenterVisibility,
@@ -3562,7 +3594,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
-			ApproverID:            input.ApproverID,
+			ApproverIDs:           input.ApproverIds,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
@@ -6574,6 +6606,20 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			panic(fmt.Errorf("cannot count profiles: %w", err))
+		}
+		return count, nil
+	case *documentResolver:
+		prb := r.ProboService(ctx, obj.ParentID.TenantID())
+		count, err := prb.Documents.CountApprovers(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count document approvers: %w", err))
+		}
+		return count, nil
+	case *documentVersionResolver:
+		prb := r.ProboService(ctx, obj.ParentID.TenantID())
+		count, err := prb.Documents.CountVersionApprovers(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count document version approvers: %w", err))
 		}
 		return count, nil
 	}

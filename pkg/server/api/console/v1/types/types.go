@@ -369,7 +369,7 @@ type CreateDocumentInput struct {
 	OrganizationID        gid.GID                         `json:"organizationId"`
 	Title                 string                          `json:"title"`
 	Content               string                          `json:"content"`
-	ApproverID            gid.GID                         `json:"approverId"`
+	ApproverIds           []gid.GID                       `json:"approverIds"`
 	DocumentType          coredata.DocumentType           `json:"documentType"`
 	Classification        coredata.DocumentClassification `json:"classification"`
 	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
@@ -1129,7 +1129,7 @@ type Document struct {
 	Classification          coredata.DocumentClassification `json:"classification"`
 	CurrentPublishedVersion *int                            `json:"currentPublishedVersion,omitempty"`
 	TrustCenterVisibility   coredata.TrustCenterVisibility  `json:"trustCenterVisibility"`
-	Approver                *Profile                        `json:"approver"`
+	Approvers               *ProfileConnection              `json:"approvers"`
 	Organization            *Organization                   `json:"organization"`
 	Versions                *DocumentVersionConnection      `json:"versions"`
 	Controls                *ControlConnection              `json:"controls"`
@@ -1159,7 +1159,7 @@ type DocumentVersion struct {
 	Changelog      string                              `json:"changelog"`
 	Title          string                              `json:"title"`
 	Classification coredata.DocumentClassification     `json:"classification"`
-	Approver       *Profile                            `json:"approver"`
+	Approvers      *ProfileConnection                  `json:"approvers"`
 	Signatures     *DocumentVersionSignatureConnection `json:"signatures"`
 	Signed         bool                                `json:"signed"`
 	PublishedAt    *time.Time                          `json:"publishedAt,omitempty"`
@@ -2036,7 +2036,7 @@ type UpdateDocumentInput struct {
 	ID                    gid.GID                          `json:"id"`
 	Title                 *string                          `json:"title,omitempty"`
 	Content               *string                          `json:"content,omitempty"`
-	ApproverID            *gid.GID                         `json:"approverId,omitempty"`
+	ApproverIds           []gid.GID                        `json:"approverIds,omitempty"`
 	DocumentType          *coredata.DocumentType           `json:"documentType,omitempty"`
 	Classification        *coredata.DocumentClassification `json:"classification,omitempty"`
 	TrustCenterVisibility *coredata.TrustCenterVisibility  `json:"trustCenterVisibility,omitempty"`

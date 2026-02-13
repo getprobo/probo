@@ -2208,7 +2208,13 @@ type Document implements Node {
     classification: DocumentClassification!
     currentPublishedVersion: Int
     trustCenterVisibility: TrustCenterVisibility!
-    approver: Profile! @goField(forceResolver: true)
+    approvers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+    ): ProfileConnection! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     versions(
@@ -4018,7 +4024,7 @@ input CreateDocumentInput {
     organizationId: ID!
     title: String!
     content: String!
-    approverId: ID!
+    approverIds: [ID!]!
     documentType: DocumentType!
     classification: DocumentClassification!
     trustCenterVisibility: TrustCenterVisibility
@@ -4028,7 +4034,7 @@ input UpdateDocumentInput {
     id: ID!
     title: String
     content: String
-    approverId: ID
+    approverIds: [ID!]
     documentType: DocumentType
     classification: DocumentClassification
     trustCenterVisibility: TrustCenterVisibility
@@ -4862,7 +4868,13 @@ type DocumentVersion implements Node {
     changelog: String!
     title: String!
     classification: DocumentClassification!
-    approver: Profile! @goField(forceResolver: true)
+    approvers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+    ): ProfileConnection! @goField(forceResolver: true)
 
     signatures(
         first: Int

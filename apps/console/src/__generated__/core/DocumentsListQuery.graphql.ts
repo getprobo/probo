@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bbb5bdb7a678a554aeb043bc7e2941f0>>
+ * @generated SignedSource<<e4b70bd5e8e7ea7e8bb4f66fac469dde>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -298,22 +298,50 @@ return {
                           },
                           {
                             "alias": null,
-                            "args": null,
-                            "concreteType": "Profile",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "first",
+                                "value": 100
+                              }
+                            ],
+                            "concreteType": "ProfileConnection",
                             "kind": "LinkedField",
-                            "name": "approver",
+                            "name": "approvers",
                             "plural": false,
                             "selections": [
-                              (v12/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
-                                "kind": "ScalarField",
-                                "name": "fullName",
+                                "concreteType": "ProfileEdge",
+                                "kind": "LinkedField",
+                                "name": "edges",
+                                "plural": true,
+                                "selections": [
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "concreteType": "Profile",
+                                    "kind": "LinkedField",
+                                    "name": "node",
+                                    "plural": false,
+                                    "selections": [
+                                      (v12/*: any*/),
+                                      {
+                                        "alias": null,
+                                        "args": null,
+                                        "kind": "ScalarField",
+                                        "name": "fullName",
+                                        "storageKey": null
+                                      }
+                                    ],
+                                    "storageKey": null
+                                  }
+                                ],
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": null
+                            "storageKey": "approvers(first:100)"
                           },
                           {
                             "alias": "lastVersion",
@@ -507,12 +535,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0e6f334d4bea09ecf47fe18b87ef3b84",
+    "cacheID": "232b7e2c41d7603f54a3de844506ce08",
     "id": null,
     "metadata": {},
     "name": "DocumentsListQuery",
     "operationKind": "query",
-    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  approver {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  approvers(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n      }\n    }\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

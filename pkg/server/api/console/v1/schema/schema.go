@@ -702,7 +702,7 @@ type ComplexityRoot struct {
 	}
 
 	Document struct {
-		Approver                func(childComplexity int) int
+		Approvers               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) int
 		Classification          func(childComplexity int) int
 		Controls                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt               func(childComplexity int) int
@@ -730,7 +730,7 @@ type ComplexityRoot struct {
 	}
 
 	DocumentVersion struct {
-		Approver       func(childComplexity int) int
+		Approvers      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) int
 		Changelog      func(childComplexity int) int
 		Classification func(childComplexity int) int
 		Content        func(childComplexity int) int
@@ -2058,7 +2058,7 @@ type DatumConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.DatumConnection) (int, error)
 }
 type DocumentResolver interface {
-	Approver(ctx context.Context, obj *types.Document) (*types.Profile, error)
+	Approvers(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error)
 	Organization(ctx context.Context, obj *types.Document) (*types.Organization, error)
 	Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
 	Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
@@ -2071,7 +2071,7 @@ type DocumentConnectionResolver interface {
 type DocumentVersionResolver interface {
 	Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error)
 
-	Approver(ctx context.Context, obj *types.DocumentVersion) (*types.Profile, error)
+	Approvers(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error)
 	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) (*types.DocumentVersionSignatureConnection, error)
 	Signed(ctx context.Context, obj *types.DocumentVersion) (bool, error)
 
@@ -4208,12 +4208,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteWebhookSubscriptionPayload.DeletedWebhookSubscriptionID(childComplexity), true
 
-	case "Document.approver":
-		if e.complexity.Document.Approver == nil {
+	case "Document.approvers":
+		if e.complexity.Document.Approvers == nil {
 			break
 		}
 
-		return e.complexity.Document.Approver(childComplexity), true
+		args, err := ec.field_Document_approvers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Document.Approvers(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProfileOrderBy)), true
 	case "Document.classification":
 		if e.complexity.Document.Classification == nil {
 			break
@@ -4340,12 +4345,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DocumentEdge.Node(childComplexity), true
 
-	case "DocumentVersion.approver":
-		if e.complexity.DocumentVersion.Approver == nil {
+	case "DocumentVersion.approvers":
+		if e.complexity.DocumentVersion.Approvers == nil {
 			break
 		}
 
-		return e.complexity.DocumentVersion.Approver(childComplexity), true
+		args, err := ec.field_DocumentVersion_approvers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DocumentVersion.Approvers(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProfileOrderBy)), true
 	case "DocumentVersion.changelog":
 		if e.complexity.DocumentVersion.Changelog == nil {
 			break
@@ -12795,7 +12805,13 @@ type Document implements Node {
     classification: DocumentClassification!
     currentPublishedVersion: Int
     trustCenterVisibility: TrustCenterVisibility!
-    approver: Profile! @goField(forceResolver: true)
+    approvers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+    ): ProfileConnection! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     versions(
@@ -14605,7 +14621,7 @@ input CreateDocumentInput {
     organizationId: ID!
     title: String!
     content: String!
-    approverId: ID!
+    approverIds: [ID!]!
     documentType: DocumentType!
     classification: DocumentClassification!
     trustCenterVisibility: TrustCenterVisibility
@@ -14615,7 +14631,7 @@ input UpdateDocumentInput {
     id: ID!
     title: String
     content: String
-    approverId: ID
+    approverIds: [ID!]
     documentType: DocumentType
     classification: DocumentClassification
     trustCenterVisibility: TrustCenterVisibility
@@ -15449,7 +15465,13 @@ type DocumentVersion implements Node {
     changelog: String!
     title: String!
     classification: DocumentClassification!
-    approver: Profile! @goField(forceResolver: true)
+    approvers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+    ): ProfileConnection! @goField(forceResolver: true)
 
     signatures(
         first: Int
@@ -16362,6 +16384,37 @@ func (ec *executionContext) field_DocumentVersionSignature_permission_args(ctx c
 	return args, nil
 }
 
+func (ec *executionContext) field_DocumentVersion_approvers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
 func (ec *executionContext) field_DocumentVersion_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16406,6 +16459,37 @@ func (ec *executionContext) field_DocumentVersion_signatures_args(ctx context.Co
 		return nil, err
 	}
 	args["filter"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Document_approvers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -29115,23 +29199,24 @@ func (ec *executionContext) fieldContext_Document_trustCenterVisibility(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Document_approver(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+func (ec *executionContext) _Document_approvers(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Document_approver,
+		ec.fieldContext_Document_approvers,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Document().Approver(ctx, obj)
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Document().Approvers(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProfileOrderBy))
 		},
 		nil,
-		ec.marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfile,
+		ec.marshalNProfileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileConnection,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Document_approver(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_approvers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Document",
 		Field:      field,
@@ -29139,31 +29224,26 @@ func (ec *executionContext) fieldContext_Document_approver(_ context.Context, fi
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Profile_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Profile_fullName(ctx, field)
-			case "emailAddress":
-				return ec.fieldContext_Profile_emailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_Profile_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_Profile_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_Profile_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_Profile_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Profile_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Profile_updatedAt(ctx, field)
-			case "permission":
-				return ec.fieldContext_Profile_permission(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_ProfileConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProfileConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ProfileConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ProfileConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Document_approvers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -29642,8 +29722,8 @@ func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, fi
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
 				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
-			case "approver":
-				return ec.fieldContext_Document_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_Document_approvers(ctx, field)
 			case "organization":
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
@@ -29730,8 +29810,8 @@ func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Cont
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
 				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
-			case "approver":
-				return ec.fieldContext_Document_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_Document_approvers(ctx, field)
 			case "organization":
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
@@ -29925,23 +30005,24 @@ func (ec *executionContext) fieldContext_DocumentVersion_classification(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _DocumentVersion_approver(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+func (ec *executionContext) _DocumentVersion_approvers(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_DocumentVersion_approver,
+		ec.fieldContext_DocumentVersion_approvers,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.DocumentVersion().Approver(ctx, obj)
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.DocumentVersion().Approvers(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProfileOrderBy))
 		},
 		nil,
-		ec.marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfile,
+		ec.marshalNProfileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileConnection,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_DocumentVersion_approver(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_approvers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DocumentVersion",
 		Field:      field,
@@ -29949,31 +30030,26 @@ func (ec *executionContext) fieldContext_DocumentVersion_approver(_ context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Profile_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Profile_fullName(ctx, field)
-			case "emailAddress":
-				return ec.fieldContext_Profile_emailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_Profile_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_Profile_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_Profile_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_Profile_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Profile_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Profile_updatedAt(ctx, field)
-			case "permission":
-				return ec.fieldContext_Profile_permission(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_ProfileConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProfileConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ProfileConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ProfileConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DocumentVersion_approvers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -30356,8 +30432,8 @@ func (ec *executionContext) fieldContext_DocumentVersionEdge_node(_ context.Cont
 				return ec.fieldContext_DocumentVersion_title(ctx, field)
 			case "classification":
 				return ec.fieldContext_DocumentVersion_classification(ctx, field)
-			case "approver":
-				return ec.fieldContext_DocumentVersion_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_DocumentVersion_approvers(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
 			case "signed":
@@ -30446,8 +30522,8 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_documentVersio
 				return ec.fieldContext_DocumentVersion_title(ctx, field)
 			case "classification":
 				return ec.fieldContext_DocumentVersion_classification(ctx, field)
-			case "approver":
-				return ec.fieldContext_DocumentVersion_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_DocumentVersion_approvers(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
 			case "signed":
@@ -45461,8 +45537,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_documentV
 				return ec.fieldContext_DocumentVersion_title(ctx, field)
 			case "classification":
 				return ec.fieldContext_DocumentVersion_classification(ctx, field)
-			case "approver":
-				return ec.fieldContext_DocumentVersion_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_DocumentVersion_approvers(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
 			case "signed":
@@ -45520,8 +45596,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_document(
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
 				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
-			case "approver":
-				return ec.fieldContext_Document_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_Document_approvers(ctx, field)
 			case "organization":
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
@@ -52250,8 +52326,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_document(_ co
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
 				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
-			case "approver":
-				return ec.fieldContext_Document_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_Document_approvers(ctx, field)
 			case "organization":
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
@@ -54047,8 +54123,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ contex
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
 				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
-			case "approver":
-				return ec.fieldContext_Document_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_Document_approvers(ctx, field)
 			case "organization":
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
@@ -54108,8 +54184,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentVersionPayload_documentVe
 				return ec.fieldContext_DocumentVersion_title(ctx, field)
 			case "classification":
 				return ec.fieldContext_DocumentVersion_classification(ctx, field)
-			case "approver":
-				return ec.fieldContext_DocumentVersion_approver(ctx, field)
+			case "approvers":
+				return ec.fieldContext_DocumentVersion_approvers(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
 			case "signed":
@@ -63387,7 +63463,7 @@ func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "title", "content", "approverId", "documentType", "classification", "trustCenterVisibility"}
+	fieldsInOrder := [...]string{"organizationId", "title", "content", "approverIds", "documentType", "classification", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63415,13 +63491,13 @@ func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.Content = data
-		case "approverId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("approverId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+		case "approverIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("approverIds"))
+			data, err := ec.unmarshalNID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ApproverID = data
+			it.ApproverIds = data
 		case "documentType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentType"))
 			data, err := ec.unmarshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx, v)
@@ -68341,7 +68417,7 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "content", "approverId", "documentType", "classification", "trustCenterVisibility"}
+	fieldsInOrder := [...]string{"id", "title", "content", "approverIds", "documentType", "classification", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -68369,13 +68445,13 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.Content = data
-		case "approverId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("approverId"))
-			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+		case "approverIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("approverIds"))
+			data, err := ec.unmarshalOID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ApproverID = data
+			it.ApproverIds = data
 		case "documentType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentType"))
 			data, err := ec.unmarshalODocumentType2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx, v)
@@ -77056,7 +77132,7 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "approver":
+		case "approvers":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -77065,7 +77141,7 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Document_approver(ctx, field, obj)
+				res = ec._Document_approvers(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -77475,7 +77551,7 @@ func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "approver":
+		case "approvers":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -77484,7 +77560,7 @@ func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.Select
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._DocumentVersion_approver(ctx, field, obj)
+				res = ec._DocumentVersion_approvers(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

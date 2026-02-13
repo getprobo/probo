@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ac954cbaf8e5e859cbf2112ce60b3047>>
+ * @generated SignedSource<<de4e9afc3a3f6d68664e55bfad5952ff>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,9 +14,13 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentListItemFragment$data = {
-  readonly approver: {
-    readonly fullName: string;
-    readonly id: string;
+  readonly approvers: {
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly fullName: string;
+        readonly id: string;
+      };
+    }>;
   };
   readonly canDelete: boolean;
   readonly classification: DocumentClassification;
@@ -118,22 +122,50 @@ return {
     },
     {
       "alias": null,
-      "args": null,
-      "concreteType": "Profile",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "first",
+          "value": 100
+        }
+      ],
+      "concreteType": "ProfileConnection",
       "kind": "LinkedField",
-      "name": "approver",
+      "name": "approvers",
       "plural": false,
       "selections": [
-        (v0/*: any*/),
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "fullName",
+          "concreteType": "ProfileEdge",
+          "kind": "LinkedField",
+          "name": "edges",
+          "plural": true,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "Profile",
+              "kind": "LinkedField",
+              "name": "node",
+              "plural": false,
+              "selections": [
+                (v0/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "fullName",
+                  "storageKey": null
+                }
+              ],
+              "storageKey": null
+            }
+          ],
           "storageKey": null
         }
       ],
-      "storageKey": null
+      "storageKey": "approvers(first:100)"
     },
     {
       "alias": "lastVersion",
@@ -244,6 +276,6 @@ return {
 };
 })();
 
-(node as any).hash = "18456198eadac7ae24bbeebf0f75b5c9";
+(node as any).hash = "440108e302ffc0f15018c14a9e922e88";
 
 export default node;
