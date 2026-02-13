@@ -23,9 +23,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/webhook"
+
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 type MeetingService struct {
@@ -209,7 +210,7 @@ func (s MeetingService) Create(
 				}
 			}
 
-			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeMeetingCreated, types.NewMeeting(meeting)); err != nil {
+			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeMeetingCreated, webhooktypes.NewMeeting(meeting)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -289,7 +290,7 @@ func (s MeetingService) Update(
 				}
 			}
 
-			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, meeting.OrganizationID, coredata.WebhookEventTypeMeetingUpdated, types.NewMeeting(meeting)); err != nil {
+			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, meeting.OrganizationID, coredata.WebhookEventTypeMeetingUpdated, webhooktypes.NewMeeting(meeting)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -317,7 +318,7 @@ func (s MeetingService) Delete(
 				return fmt.Errorf("cannot load meeting: %w", err)
 			}
 
-			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, meeting.OrganizationID, coredata.WebhookEventTypeMeetingDeleted, types.NewMeeting(meeting)); err != nil {
+			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, meeting.OrganizationID, coredata.WebhookEventTypeMeetingDeleted, webhooktypes.NewMeeting(meeting)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 

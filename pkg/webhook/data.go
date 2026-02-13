@@ -16,21 +16,13 @@ package webhook
 
 import (
 	"context"
-	"encoding"
 	"encoding/json"
 	"fmt"
-	"reflect"
-	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-)
-
-var (
-	jsonMarshalerType = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
-	textMarshalerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
 )
 
 func InsertEvent(
@@ -51,7 +43,7 @@ func InsertEvent(
 		return nil
 	}
 
-	raw, err := MarshalData(data)
+	raw, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("cannot marshal webhook event data: %w", err)
 	}
@@ -70,84 +62,4 @@ func InsertEvent(
 	}
 
 	return nil
-}
-
-func MarshalData(v any) (json.RawMessage, error) {
-	raw, err := json.Marshal(v)
-	if err != nil {
-		return nil, fmt.Errorf("cannot marshal webhook data: %w", err)
-	}
-
-	var m map[string]any
-	if err := json.Unmarshal(raw, &m); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal webhook data: %w", err)
-	}
-
-	for _, key := range nestedFieldKeys(v) {
-		delete(m, key)
-	}
-
-	delete(m, "permission")
-
-	data, err := json.Marshal(m)
-	if err != nil {
-		return nil, fmt.Errorf("cannot re-marshal webhook data: %w", err)
-	}
-
-	return data, nil
-}
-
-func nestedFieldKeys(v any) []string {
-	t := reflect.TypeOf(v)
-	for t.Kind() == reflect.Pointer {
-		t = t.Elem()
-	}
-
-	if t.Kind() != reflect.Struct {
-		return nil
-	}
-
-	var keys []string
-	for i := range t.NumField() {
-		field := t.Field(i)
-
-		tag := field.Tag.Get("json")
-		if tag == "" || tag == "-" {
-			continue
-		}
-
-		jsonKey, _, _ := strings.Cut(tag, ",")
-
-		if isNestedType(field.Type) {
-			keys = append(keys, jsonKey)
-		}
-	}
-
-	return keys
-}
-
-func isNestedType(t reflect.Type) bool {
-	for t.Kind() == reflect.Pointer {
-		t = t.Elem()
-	}
-
-	if t.Kind() == reflect.Slice {
-		return isNestedType(t.Elem())
-	}
-
-	if t.Kind() != reflect.Struct {
-		return false
-	}
-
-	ptrType := reflect.PointerTo(t)
-
-	if t.Implements(jsonMarshalerType) || ptrType.Implements(jsonMarshalerType) {
-		return false
-	}
-
-	if t.Implements(textMarshalerType) || ptrType.Implements(textMarshalerType) {
-		return false
-	}
-
-	return true
 }

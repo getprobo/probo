@@ -227,6 +227,7 @@ func (s *Sender) doHTTPCall(
 		"eventId":         event.ID.String(),
 		"callId":          callID.String(),
 		"configurationId": configurationID.String(),
+		"organizationId":  event.OrganizationID.String(),
 		"eventType":       event.EventType.String(),
 		"createdAt":       event.CreatedAt,
 		"data":            event.Data,
