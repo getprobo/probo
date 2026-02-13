@@ -25,7 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func InsertEvent(
+func InsertData(
 	ctx context.Context,
 	conn pg.Conn,
 	scope coredata.Scoper,

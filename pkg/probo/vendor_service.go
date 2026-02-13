@@ -394,7 +394,7 @@ func (s VendorService) Update(
 				return fmt.Errorf("cannot update vendor: %w", err)
 			}
 
-			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorUpdated, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorUpdated, webhooktypes.NewVendor(vendor)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -442,7 +442,7 @@ func (s VendorService) Delete(
 				return fmt.Errorf("cannot load vendor: %w", err)
 			}
 
-			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorDeleted, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorDeleted, webhooktypes.NewVendor(vendor)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -519,7 +519,7 @@ func (s VendorService) Create(
 				return fmt.Errorf("cannot insert vendor: %w", err)
 			}
 
-			if err := webhook.InsertEvent(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeVendorCreated, webhooktypes.NewVendor(vendor)); err != nil {
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeVendorCreated, webhooktypes.NewVendor(vendor)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
