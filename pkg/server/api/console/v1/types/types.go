@@ -2645,7 +2645,6 @@ type WebhookConfigurationEdge struct {
 
 type WebhookEvent struct {
 	ID                     gid.GID                     `json:"id"`
-	WebhookDataID          gid.GID                     `json:"webhookDataId"`
 	WebhookConfigurationID gid.GID                     `json:"webhookConfigurationId"`
 	EndpointURL            string                      `json:"endpointUrl"`
 	Status                 coredata.WebhookEventStatus `json:"status"`

@@ -1960,7 +1960,6 @@ type ComplexityRoot struct {
 		Response               func(childComplexity int) int
 		Status                 func(childComplexity int) int
 		WebhookConfigurationID func(childComplexity int) int
-		WebhookDataID          func(childComplexity int) int
 	}
 
 	WebhookEventConnection struct {
@@ -10260,12 +10259,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.WebhookEvent.WebhookConfigurationID(childComplexity), true
-	case "WebhookEvent.webhookDataId":
-		if e.complexity.WebhookEvent.WebhookDataID == nil {
-			break
-		}
-
-		return e.complexity.WebhookEvent.WebhookDataID(childComplexity), true
 
 	case "WebhookEventConnection.edges":
 		if e.complexity.WebhookEventConnection.Edges == nil {
@@ -12947,7 +12940,6 @@ input WebhookEventOrder
 
 type WebhookEvent implements Node {
     id: ID!
-    webhookDataId: ID!
     webhookConfigurationId: ID!
     endpointUrl: String!
     status: WebhookEventStatus!
@@ -60507,35 +60499,6 @@ func (ec *executionContext) fieldContext_WebhookEvent_id(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _WebhookEvent_webhookDataId(ctx context.Context, field graphql.CollectedField, obj *types.WebhookEvent) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_WebhookEvent_webhookDataId,
-		func(ctx context.Context) (any, error) {
-			return obj.WebhookDataID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_WebhookEvent_webhookDataId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "WebhookEvent",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _WebhookEvent_webhookConfigurationId(ctx context.Context, field graphql.CollectedField, obj *types.WebhookEvent) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -60839,8 +60802,6 @@ func (ec *executionContext) fieldContext_WebhookEventEdge_node(_ context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_WebhookEvent_id(ctx, field)
-			case "webhookDataId":
-				return ec.fieldContext_WebhookEvent_webhookDataId(ctx, field)
 			case "webhookConfigurationId":
 				return ec.fieldContext_WebhookEvent_webhookConfigurationId(ctx, field)
 			case "endpointUrl":
@@ -91699,11 +91660,6 @@ func (ec *executionContext) _WebhookEvent(ctx context.Context, sel ast.Selection
 			out.Values[i] = graphql.MarshalString("WebhookEvent")
 		case "id":
 			out.Values[i] = ec._WebhookEvent_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "webhookDataId":
-			out.Values[i] = ec._WebhookEvent_webhookDataId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

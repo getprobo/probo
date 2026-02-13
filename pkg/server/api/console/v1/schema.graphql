@@ -2346,7 +2346,6 @@ input WebhookEventOrder
 
 type WebhookEvent implements Node {
     id: ID!
-    webhookDataId: ID!
     webhookConfigurationId: ID!
     endpointUrl: String!
     status: WebhookEventStatus!
