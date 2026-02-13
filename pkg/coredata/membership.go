@@ -37,10 +37,12 @@ type (
 		Role           MembershipRole   `db:"role"`
 		Source         MembershipSource `db:"source"`
 		State          MembershipState  `db:"state"`
-		FullName       string           `db:"full_name"`
-		EmailAddress   mail.Addr        `db:"email_address"`
-		CreatedAt      time.Time        `db:"created_at"`
-		UpdatedAt      time.Time        `db:"updated_at"`
+		// FIXME: remove after scim is based on profile
+		EmailAddress mail.Addr `db:"-"`
+		FullName     string    `db:"-"`
+
+		CreatedAt time.Time `db:"created_at"`
+		UpdatedAt time.Time `db:"updated_at"`
 	}
 
 	Memberships []*Membership
@@ -48,10 +50,6 @@ type (
 
 func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 	switch orderBy {
-	case MembershipOrderFieldFullName:
-		return page.NewCursorKey(m.ID, m.FullName)
-	case MembershipOrderFieldEmailAddress:
-		return page.NewCursorKey(m.ID, m.EmailAddress)
 	case MembershipOrderFieldRole:
 		return page.NewCursorKey(m.ID, m.Role)
 	case MembershipOrderFieldCreatedAt:
@@ -63,39 +61,20 @@ func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 
 func (m *Membership) LoadByIdentityInOrganization(ctx context.Context, conn pg.Conn, identityID gid.GID, organizationID gid.GID) error {
 	q := `
-WITH mbr AS (
-    SELECT
-        id,
-        identity_id,
-        organization_id,
-        role,
-        source,
-        state,
-        created_at,
-        updated_at
-    FROM
-        iam_memberships
-    WHERE
-        identity_id = @identity_id
-        AND organization_id = @organization_id
-)
 SELECT
-    mbr.id,
-    mbr.identity_id,
-    mbr.organization_id,
-    mbr.role,
-    mbr.source,
-    mbr.state,
-    COALESCE(mp.full_name, i.full_name, '') as full_name,
-    i.email_address,
-    o.name AS organization_name,
-    mbr.created_at,
-    mbr.updated_at
+    id,
+    identity_id,
+    organization_id,
+    role,
+    source,
+    state,
+    created_at,
+    updated_at
 FROM
-    mbr
-JOIN identities i ON mbr.identity_id = i.id
-JOIN organizations o ON mbr.organization_id = o.id
-LEFT JOIN iam_membership_profiles mp ON mp.membership_id = mbr.id
+    iam_memberships
+WHERE
+    identity_id = @identity_id
+    AND organization_id = @organization_id
 `
 
 	args := pgx.StrictNamedArgs{
@@ -184,42 +163,20 @@ func (m *Membership) LoadByID(
 	membershipID gid.GID,
 ) error {
 	query := `
-WITH mbr AS (
-    SELECT
-        id,
-        identity_id,
-        organization_id,
-        role,
-        source,
-        state,
-        created_at,
-        updated_at
-    FROM
-        iam_memberships
-    WHERE
-        id = @membership_id
-        AND %s
-)
 SELECT
-    mbr.id,
-    mbr.identity_id,
-    mbr.organization_id,
-    mbr.role,
-    mbr.source,
-    mbr.state,
-    COALESCE(mp.full_name, i.full_name, '') as full_name,
-    i.email_address,
-    o.name as organization_name,
-    mbr.created_at,
-    mbr.updated_at
+    id,
+    identity_id,
+    organization_id,
+    role,
+    source,
+    state,
+    created_at,
+    updated_at
 FROM
-    mbr
-JOIN
-    identities i ON mbr.identity_id = i.id
-JOIN
-    organizations o ON mbr.organization_id = o.id
-LEFT JOIN
-    iam_membership_profiles mp ON mp.membership_id = mbr.id
+    iam_memberships
+WHERE
+    id = @membership_id
+    AND %s
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
@@ -293,45 +250,23 @@ func (m *Membership) LoadByIdentityAndOrg(
 	organizationID gid.GID,
 ) error {
 	q := `
-WITH mbr AS (
-    SELECT
-        am.id,
-        am.identity_id,
-        am.organization_id,
-        am.role,
-        am.source,
-        am.state,
-        am.created_at,
-        am.updated_at
-    FROM
-        iam_memberships am
-    WHERE
-        am.identity_id = @identity_id
-        AND am.organization_id = @organization_id
-        AND %s
-)
 SELECT
-    mbr.id,
-    mbr.identity_id,
-    mbr.organization_id,
-    mbr.role,
-    mbr.source,
-    mbr.state,
-    COALESCE(mp.full_name, i.full_name, '') as full_name,
-    i.email_address,
-    o.name as organization_name,
-    mbr.created_at,
-    mbr.updated_at
+    id,
+    identity_id,
+    organization_id,
+    role,
+    source,
+    state,
+    created_at,
+    updated_at
 FROM
-    mbr
-JOIN
-    identities i ON mbr.identity_id = i.id
-JOIN
-    organizations o ON mbr.organization_id = o.id
-LEFT JOIN
-    iam_membership_profiles mp ON mp.membership_id = mbr.id
+    iam_memberships
+WHERE
+    identity_id = @identity_id
+    AND organization_id = @organization_id
+    AND %s
+)
 `
-
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
@@ -432,46 +367,6 @@ func (m *Memberships) LoadByOrganizationID(
 	filter *MembershipFilter,
 ) error {
 	query := `
-WITH m AS (
-    SELECT
-        id,
-        identity_id,
-        organization_id,
-        role,
-        source,
-        state,
-        created_at,
-        updated_at
-    FROM
-        iam_memberships
-    WHERE
-        organization_id = @organization_id
-        AND %s
-),
-r AS (
-    SELECT
-        m.id,
-        m.identity_id,
-        m.organization_id,
-        m.role,
-        m.source,
-        m.state,
-        COALESCE(mp.full_name, i.full_name, '') as full_name,
-        o.name as organization_name,
-        i.email_address,
-        m.created_at,
-        m.updated_at
-    FROM
-        m
-    JOIN
-        identities i ON m.identity_id = i.id
-    JOIN
-        organizations o ON m.organization_id = o.id
-    LEFT JOIN
-        iam_membership_profiles mp ON mp.membership_id = m.id
-    WHERE
-        %s
-)
 SELECT
     id,
     identity_id,
@@ -479,15 +374,15 @@ SELECT
     role,
     source,
     state,
-    full_name,
-    organization_name,
-    email_address,
     created_at,
     updated_at
 FROM
-    r
+    iam_memberships
 WHERE
     %s
+    AND %s
+    organization_id = @organization_id
+    AND %s
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
@@ -586,9 +481,6 @@ SELECT
     role,
     source,
     state,
-    '' as full_name,
-    NULL as email_address,
-    '' as organization_name,
     created_at,
     updated_at
 FROM
