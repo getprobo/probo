@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<334e066f78a528494ef5c68d088c002a>>
+ * @generated SignedSource<<5cb0be6e5ab775bdf7d509d9789e9821>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,11 +13,11 @@ export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "S
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateDocumentInput = {
+  approverId?: string | null | undefined;
   classification?: DocumentClassification | null | undefined;
   content?: string | null | undefined;
   documentType?: DocumentType | null | undefined;
   id: string;
-  ownerId?: string | null | undefined;
   title?: string | null | undefined;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };
@@ -27,13 +27,13 @@ export type DocumentLayoutDrawerMutation$variables = {
 export type DocumentLayoutDrawerMutation$data = {
   readonly updateDocument: {
     readonly document: {
-      readonly classification: DocumentClassification;
-      readonly documentType: DocumentType;
-      readonly id: string;
-      readonly owner: {
+      readonly approver: {
         readonly fullName: string;
         readonly id: string;
       };
+      readonly classification: DocumentClassification;
+      readonly documentType: DocumentType;
+      readonly id: string;
     };
   };
 };
@@ -100,7 +100,7 @@ v2 = [
             "args": null,
             "concreteType": "Profile",
             "kind": "LinkedField",
-            "name": "owner",
+            "name": "approver",
             "plural": false,
             "selections": [
               (v1/*: any*/),
@@ -139,16 +139,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "968dc4701234cb6c5761eeea9faff752",
+    "cacheID": "717ce480e61acba39409ff42ee5344cb",
     "id": null,
     "metadata": {},
     "name": "DocumentLayoutDrawerMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentLayoutDrawerMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      documentType\n      classification\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
+    "text": "mutation DocumentLayoutDrawerMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      documentType\n      classification\n      approver {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "80901db65cb0c486e23b823bd2c16bc0";
+(node as any).hash = "815cb617b0685f018afe95e97c910771";
 
 export default node;

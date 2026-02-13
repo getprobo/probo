@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<02a8fd2b19d7f7fdc180b373fa0b17c9>>
+ * @generated SignedSource<<a1338ba7fb986ab8e4f5d1e0355a4671>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,12 +13,12 @@ export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "S
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentLayoutDrawer_versionFragment$data = {
-  readonly classification: DocumentClassification;
-  readonly id: string;
-  readonly owner: {
+  readonly approver: {
     readonly fullName: string;
     readonly id: string;
   };
+  readonly classification: DocumentClassification;
+  readonly id: string;
   readonly publishedAt: string | null | undefined;
   readonly status: DocumentStatus;
   readonly updatedAt: string;
@@ -57,7 +57,7 @@ return {
       "args": null,
       "concreteType": "Profile",
       "kind": "LinkedField",
-      "name": "owner",
+      "name": "approver",
       "plural": false,
       "selections": [
         (v0/*: any*/),
@@ -105,6 +105,6 @@ return {
 };
 })();
 
-(node as any).hash = "f5e9183b163586bab18475a19843b186";
+(node as any).hash = "63b956326e98c7620715250f4e7d1129";
 
 export default node;

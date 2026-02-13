@@ -50,7 +50,7 @@ type (
 		OrganizationID        gid.GID
 		Title                 string
 		Content               string
-		OwnerID               gid.GID
+		ApproverID            gid.GID
 		Classification        coredata.DocumentClassification
 		DocumentType          coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
@@ -59,7 +59,7 @@ type (
 	UpdateDocumentRequest struct {
 		DocumentID            gid.GID
 		Title                 *string
-		OwnerID               *gid.GID
+		ApproverID            *gid.GID
 		Classification        *coredata.DocumentClassification
 		DocumentType          *coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
@@ -102,7 +102,7 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cdr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
-	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(cdr.ApproverID, "approver_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -115,7 +115,7 @@ func (udr *UpdateDocumentRequest) Validate() error {
 
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
 	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(udr.ApproverID, "approver_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(udr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -355,7 +355,7 @@ func (s *DocumentService) publishVersionInTx(
 		}
 		if publishedVersion.Content == documentVersion.Content &&
 			publishedVersion.Title == documentVersion.Title &&
-			publishedVersion.OwnerID == documentVersion.OwnerID {
+			publishedVersion.ApproverID == documentVersion.ApproverID {
 			return nil, nil, &ErrDocumentVersionNoChanges{}
 		}
 	}
@@ -395,7 +395,7 @@ func (s *DocumentService) Create(
 	documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 
 	organization := &coredata.Organization{}
-	owner := &coredata.MembershipProfile{}
+	approver := &coredata.MembershipProfile{}
 
 	document := &coredata.Document{
 		ID:                    documentID,
@@ -415,7 +415,7 @@ func (s *DocumentService) Create(
 		ID:             documentVersionID,
 		DocumentID:     documentID,
 		Title:          req.Title,
-		OwnerID:        req.OwnerID,
+		ApproverID:     req.ApproverID,
 		VersionNumber:  1,
 		Content:        req.Content,
 		Status:         coredata.DocumentStatusDraft,
@@ -431,12 +431,12 @@ func (s *DocumentService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := owner.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner profile: %w", err)
+			if err := approver.LoadByID(ctx, conn, s.svc.scope, req.ApproverID); err != nil {
+				return fmt.Errorf("cannot load approver profile: %w", err)
 			}
 
 			document.OrganizationID = organization.ID
-			document.OwnerID = owner.ID
+			document.ApproverID = approver.ID
 
 			if err := document.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert document: %w", err)
@@ -706,7 +706,7 @@ func (s *DocumentService) UpdateVersion(
 			}
 
 			documentVersion.Title = document.Title
-			documentVersion.OwnerID = document.OwnerID
+			documentVersion.ApproverID = document.ApproverID
 			documentVersion.Classification = document.Classification
 			documentVersion.Content = req.Content
 			documentVersion.UpdatedAt = time.Now()
@@ -944,7 +944,7 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.OrganizationID = document.OrganizationID
 			draftVersion.DocumentID = documentID
 			draftVersion.Title = document.Title
-			draftVersion.OwnerID = document.OwnerID
+			draftVersion.ApproverID = document.ApproverID
 			draftVersion.VersionNumber = latestVersion.VersionNumber + 1
 			draftVersion.Classification = document.Classification
 			draftVersion.Content = latestVersion.Content
@@ -1384,7 +1384,7 @@ func (s *DocumentService) Update(
 	}
 
 	document := &coredata.Document{}
-	owner := &coredata.MembershipProfile{}
+	approver := &coredata.MembershipProfile{}
 	now := time.Now()
 
 	err := s.svc.pg.WithTx(
@@ -1414,11 +1414,11 @@ func (s *DocumentService) Update(
 				document.TrustCenterVisibility = *req.TrustCenterVisibility
 			}
 
-			if req.OwnerID != nil {
-				if err := owner.LoadByID(ctx, tx, s.svc.scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner profile %q: %w", *req.OwnerID, err)
+			if req.ApproverID != nil {
+				if err := approver.LoadByID(ctx, tx, s.svc.scope, *req.ApproverID); err != nil {
+					return fmt.Errorf("cannot load approver profile %q: %w", *req.ApproverID, err)
 				}
-				document.OwnerID = owner.ID
+				document.ApproverID = approver.ID
 			}
 
 			document.UpdatedAt = now
@@ -1432,7 +1432,7 @@ func (s *DocumentService) Update(
 			err := draftVersion.LoadLatestVersion(ctx, tx, s.svc.scope, req.DocumentID)
 			if err == nil && draftVersion.Status == coredata.DocumentStatusDraft {
 				draftVersion.Title = document.Title
-				draftVersion.OwnerID = document.OwnerID
+				draftVersion.ApproverID = document.ApproverID
 				draftVersion.Classification = document.Classification
 				draftVersion.UpdatedAt = now
 
@@ -1638,7 +1638,7 @@ func exportDocumentPDF(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	owner := &coredata.MembershipProfile{}
+	approver := &coredata.MembershipProfile{}
 	organization := &coredata.Organization{}
 
 	if err := version.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
@@ -1649,8 +1649,8 @@ func exportDocumentPDF(
 		return nil, fmt.Errorf("cannot load document: %w", err)
 	}
 
-	if err := owner.LoadByID(ctx, conn, scope, document.OwnerID); err != nil {
-		return nil, fmt.Errorf("cannot load document owner profile: %w", err)
+	if err := approver.LoadByID(ctx, conn, scope, document.ApproverID); err != nil {
+		return nil, fmt.Errorf("cannot load document approver profile: %w", err)
 	}
 
 	if err := organization.LoadByID(ctx, conn, scope, document.OrganizationID); err != nil {
@@ -1702,7 +1702,7 @@ func exportDocumentPDF(
 		Content:                     version.Content,
 		Version:                     version.VersionNumber,
 		Classification:              classification,
-		Approver:                    owner.FullName,
+		Approver:                    approver.FullName,
 		PublishedAt:                 version.PublishedAt,
 		Signatures:                  signatureData,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,

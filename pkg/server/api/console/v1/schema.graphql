@@ -2208,7 +2208,7 @@ type Document implements Node {
     classification: DocumentClassification!
     currentPublishedVersion: Int
     trustCenterVisibility: TrustCenterVisibility!
-    owner: Profile! @goField(forceResolver: true)
+    approver: Profile! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     versions(
@@ -4018,7 +4018,7 @@ input CreateDocumentInput {
     organizationId: ID!
     title: String!
     content: String!
-    ownerId: ID!
+    approverId: ID!
     documentType: DocumentType!
     classification: DocumentClassification!
     trustCenterVisibility: TrustCenterVisibility
@@ -4028,7 +4028,7 @@ input UpdateDocumentInput {
     id: ID!
     title: String
     content: String
-    ownerId: ID
+    approverId: ID
     documentType: DocumentType
     classification: DocumentClassification
     trustCenterVisibility: TrustCenterVisibility
@@ -4862,7 +4862,7 @@ type DocumentVersion implements Node {
     changelog: String!
     title: String!
     classification: DocumentClassification!
-    owner: Profile! @goField(forceResolver: true)
+    approver: Profile! @goField(forceResolver: true)
 
     signatures(
         first: Int

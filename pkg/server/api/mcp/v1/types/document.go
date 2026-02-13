@@ -23,7 +23,7 @@ func NewDocument(d *coredata.Document) *Document {
 	return &Document{
 		ID:                      d.ID,
 		OrganizationID:          d.OrganizationID,
-		OwnerID:                 d.OwnerID,
+		ApproverID:              d.ApproverID,
 		Title:                   d.Title,
 		DocumentType:            d.DocumentType,
 		Classification:          d.Classification,
@@ -65,7 +65,7 @@ func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
 		OrganizationID: dv.OrganizationID,
 		DocumentID:     dv.DocumentID,
 		Title:          dv.Title,
-		OwnerID:        dv.OwnerID,
+		ApproverID:     dv.ApproverID,
 		VersionNumber:  dv.VersionNumber,
 		Classification: dv.Classification,
 		Content:        dv.Content,

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7dc6855a815d76f559d0efe4a8b34c66>>
+ * @generated SignedSource<<ac954cbaf8e5e859cbf2112ce60b3047>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,10 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentListItemFragment$data = {
+  readonly approver: {
+    readonly fullName: string;
+    readonly id: string;
+  };
   readonly canDelete: boolean;
   readonly classification: DocumentClassification;
   readonly documentType: DocumentType;
@@ -32,10 +36,6 @@ export type DocumentListItemFragment$data = {
         readonly version: number;
       };
     }>;
-  };
-  readonly owner: {
-    readonly fullName: string;
-    readonly id: string;
   };
   readonly title: string;
   readonly updatedAt: string;
@@ -121,7 +121,7 @@ return {
       "args": null,
       "concreteType": "Profile",
       "kind": "LinkedField",
-      "name": "owner",
+      "name": "approver",
       "plural": false,
       "selections": [
         (v0/*: any*/),
@@ -244,6 +244,6 @@ return {
 };
 })();
 
-(node as any).hash = "6e72b37fa90b7a272ebba38fe80b9f93";
+(node as any).hash = "18456198eadac7ae24bbeebf0f75b5c9";
 
 export default node;
