@@ -48,17 +48,17 @@ func InsertEvent(
 		return fmt.Errorf("cannot marshal webhook event data: %w", err)
 	}
 
-	event := &coredata.WebhookEvent{
-		ID:             gid.New(scope.GetTenantID(), coredata.WebhookEventEntityType),
+	webhookData := &coredata.WebhookData{
+		ID:             gid.New(scope.GetTenantID(), coredata.WebhookDataEntityType),
 		OrganizationID: organizationID,
 		EventType:      eventType,
-		Status:         coredata.WebhookEventStatusPending,
+		Status:         coredata.WebhookDataStatusPending,
 		Data:           raw,
 		CreatedAt:      time.Now(),
 	}
 
-	if err = event.Insert(ctx, conn, scope); err != nil {
-		return fmt.Errorf("cannot insert webhook event: %w", err)
+	if err = webhookData.Insert(ctx, conn, scope); err != nil {
+		return fmt.Errorf("cannot insert webhook data: %w", err)
 	}
 
 	return nil

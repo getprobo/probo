@@ -19,46 +19,47 @@ import (
 	"fmt"
 )
 
-type WebhookCallStatus string
+type WebhookDataStatus string
 
 const (
-	WebhookCallStatusSucceeded WebhookCallStatus = "SUCCEEDED"
-	WebhookCallStatusFailed    WebhookCallStatus = "FAILED"
+	WebhookDataStatusPending    WebhookDataStatus = "PENDING"
+	WebhookDataStatusProcessing WebhookDataStatus = "PROCESSING"
+	WebhookDataStatusDelivered  WebhookDataStatus = "DELIVERED"
 )
 
-func (s WebhookCallStatus) String() string {
+func (s WebhookDataStatus) String() string {
 	return string(s)
 }
 
-func (s WebhookCallStatus) IsValid() bool {
+func (s WebhookDataStatus) IsValid() bool {
 	switch s {
-	case WebhookCallStatusSucceeded, WebhookCallStatusFailed:
+	case WebhookDataStatusPending, WebhookDataStatusProcessing, WebhookDataStatusDelivered:
 		return true
 	}
 	return false
 }
 
-func (s WebhookCallStatus) MarshalText() ([]byte, error) {
+func (s WebhookDataStatus) MarshalText() ([]byte, error) {
 	return []byte(s.String()), nil
 }
 
-func (s *WebhookCallStatus) UnmarshalText(text []byte) error {
-	*s = WebhookCallStatus(text)
+func (s *WebhookDataStatus) UnmarshalText(text []byte) error {
+	*s = WebhookDataStatus(text)
 	if !s.IsValid() {
-		return fmt.Errorf("%s is not a valid WebhookCallStatus", string(text))
+		return fmt.Errorf("%s is not a valid WebhookDataStatus", string(text))
 	}
 	return nil
 }
 
-func (s *WebhookCallStatus) Scan(value any) error {
+func (s *WebhookDataStatus) Scan(value any) error {
 	str, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("unsupported type for WebhookCallStatus: %T", value)
+		return fmt.Errorf("unsupported type for WebhookDataStatus: %T", value)
 	}
 
 	return s.UnmarshalText([]byte(str))
 }
 
-func (s WebhookCallStatus) Value() (driver.Value, error) {
+func (s WebhookDataStatus) Value() (driver.Value, error) {
 	return s.String(), nil
 }

@@ -23,9 +23,9 @@ import { type PreloadedQuery, usePreloadedQuery, useRelayEnvironment } from "rea
 import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { WebhooksSettingsPage_callsQuery } from "#/__generated__/core/WebhooksSettingsPage_callsQuery.graphql";
 import type { WebhooksSettingsPage_createMutation } from "#/__generated__/core/WebhooksSettingsPage_createMutation.graphql";
 import type { WebhooksSettingsPage_deleteMutation } from "#/__generated__/core/WebhooksSettingsPage_deleteMutation.graphql";
+import type { WebhooksSettingsPage_eventsQuery } from "#/__generated__/core/WebhooksSettingsPage_eventsQuery.graphql";
 import type { WebhooksSettingsPage_signingSecretQuery } from "#/__generated__/core/WebhooksSettingsPage_signingSecretQuery.graphql";
 import type { WebhooksSettingsPage_updateMutation } from "#/__generated__/core/WebhooksSettingsPage_updateMutation.graphql";
 import type { WebhooksSettingsPageQuery } from "#/__generated__/core/WebhooksSettingsPageQuery.graphql";
@@ -45,7 +45,7 @@ export const webhooksSettingsPageQuery = graphql`
               id
               endpointUrl
               selectedEvents
-              calls(first: 0) {
+              events(first: 0) {
                 totalCount
               }
             }
@@ -98,15 +98,15 @@ const signingSecretQuery = graphql`
   }
 `;
 
-const webhookCallsQuery = graphql`
-  query WebhooksSettingsPage_callsQuery(
+const webhookEventsQuery = graphql`
+  query WebhooksSettingsPage_eventsQuery(
     $webhookConfigurationId: ID!
     $first: Int
     $after: CursorKey
   ) {
     node(id: $webhookConfigurationId) {
       ... on WebhookConfiguration {
-        calls(first: $first, after: $after) {
+        events(first: $first, after: $after) {
           totalCount
           pageInfo {
             hasNextPage
@@ -285,7 +285,7 @@ function WebhookFormDialog({
   );
 }
 
-function CallStatusBadge({ status }: { status: string }) {
+function EventStatusBadge({ status }: { status: string }) {
   const { __ } = useTranslate();
   if (status === "SUCCEEDED") {
     return <Badge variant="success" size="sm">{__("Succeeded")}</Badge>;
@@ -297,7 +297,7 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleString();
 }
 
-function WebhookCallsDialog({
+function WebhookEventsDialog({
   webhookConfigurationId,
   endpointUrl,
   onClose,
@@ -307,10 +307,11 @@ function WebhookCallsDialog({
   onClose: () => void;
 }) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const environment = useRelayEnvironment();
   const dialogRef = useDialogRef();
-  type CallNode = NonNullable<WebhooksSettingsPage_callsQuery["response"]["node"]["calls"]>["edges"][number]["node"];
-  const [calls, setCalls] = useState<CallNode[]>([]);
+  type EventNode = NonNullable<WebhooksSettingsPage_eventsQuery["response"]["node"]["events"]>["edges"][number]["node"];
+  const [events, setEvents] = useState<EventNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [endCursor, setEndCursor] = useState<string | null>(null);
@@ -318,13 +319,13 @@ function WebhookCallsDialog({
 
   const PAGE_SIZE = 20;
 
-  const loadCalls = useCallback(
+  const loadEvents = useCallback(
     async (after?: string | null) => {
       setLoading(true);
       try {
-        const data = await fetchQuery<WebhooksSettingsPage_callsQuery>(
+        const data = await fetchQuery<WebhooksSettingsPage_eventsQuery>(
           environment,
-          webhookCallsQuery,
+          webhookEventsQuery,
           {
             webhookConfigurationId,
             first: PAGE_SIZE,
@@ -332,30 +333,36 @@ function WebhookCallsDialog({
           },
         ).toPromise();
 
-        const connection = data?.node?.calls;
+        const connection = data?.node?.events;
         if (connection) {
-          const newCalls = connection.edges.map(e => e.node);
-          setCalls(prev => after ? [...prev, ...newCalls] : newCalls);
+          const newEvents = connection.edges.map(e => e.node);
+          setEvents(prev => after ? [...prev, ...newEvents] : newEvents);
           setHasNextPage(connection.pageInfo.hasNextPage);
           setEndCursor(connection.pageInfo.endCursor ?? null);
           setTotalCount(connection.totalCount);
         }
+      } catch {
+        toast({
+          title: __("Error"),
+          description: __("Failed to load webhook events."),
+          variant: "error",
+        });
       } finally {
         setLoading(false);
       }
     },
-    [environment, webhookConfigurationId],
+    [environment, webhookConfigurationId, toast, __],
   );
 
   useEffect(() => {
-    void loadCalls();
+    void loadEvents();
     dialogRef.current?.open();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadEvents]);
 
   return (
     <Dialog
       ref={dialogRef}
-      title={__("Webhook Calls")}
+      title={__("Webhook Events")}
       className="max-w-2xl"
       onClose={onClose}
     >
@@ -368,29 +375,29 @@ function WebhookCallsDialog({
             </span>
           )}
         </p>
-        {calls.length === 0 && !loading
+        {events.length === 0 && !loading
           ? (
               <p className="text-sm text-txt-tertiary text-center py-8">
-                {__("No webhook calls recorded yet.")}
+                {__("No webhook events recorded yet.")}
               </p>
             )
           : (
               <div className="space-y-2">
-                {calls.map(call => (
+                {events.map(event => (
                   <div
-                    key={call.id}
+                    key={event.id}
                     className="border border-border-solid rounded-md p-3 space-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <CallStatusBadge status={call.status} />
+                      <EventStatusBadge status={event.status} />
                       <span className="text-xs text-txt-tertiary">
-                        {formatDate(call.createdAt)}
+                        {formatDate(event.createdAt)}
                       </span>
                     </div>
                     <p className="text-xs font-mono text-txt-secondary truncate">
-                      {call.endpointUrl}
+                      {event.endpointUrl}
                     </p>
-                    {call.response && (
+                    {event.response && (
                       <details className="text-xs">
                         <summary className="cursor-pointer text-txt-link hover:underline">
                           {__("Response")}
@@ -398,9 +405,9 @@ function WebhookCallsDialog({
                         <pre className="mt-1 bg-subtle p-2 rounded text-xs overflow-auto max-h-48 whitespace-pre-wrap break-all">
                           {(() => {
                             try {
-                              return JSON.stringify(JSON.parse(call.response), null, 2);
+                              return JSON.stringify(JSON.parse(event.response), null, 2);
                             } catch {
-                              return call.response;
+                              return event.response;
                             }
                           })()}
                         </pre>
@@ -420,7 +427,7 @@ function WebhookCallsDialog({
         <DialogFooter>
           <Button
             variant="secondary"
-            onClick={() => void loadCalls(endCursor)}
+            onClick={() => void loadEvents(endCursor)}
           >
             {__("Load more")}
           </Button>
@@ -441,7 +448,7 @@ export function WebhooksSettingsPage(props: {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, string>>({});
   const [loadingSecrets, setLoadingSecrets] = useState<Set<string>>(new Set());
-  const [viewingCallsId, setViewingCallsId] = useState<string | null>(null);
+  const [viewingEventsId, setViewingEventsId] = useState<string | null>(null);
 
   const fetchSigningSecret = useCallback(
     async (webhookConfigurationId: string): Promise<string | null> => {
@@ -543,6 +550,9 @@ export function WebhooksSettingsPage(props: {
     );
 
   const webhooks = organization.webhookConfigurations?.edges ?? [];
+  const viewingEventsWebhook = viewingEventsId
+    ? webhooks.find(e => e.node.id === viewingEventsId)?.node ?? null
+    : null;
 
   const connectionId = ConnectionHandler.getConnectionID(
     organization.id,
@@ -683,9 +693,9 @@ export function WebhooksSettingsPage(props: {
                     <div className="flex items-center gap-1 shrink-0">
                       <Button
                         variant="secondary"
-                        onClick={() => setViewingCallsId(webhook.id)}
+                        onClick={() => setViewingEventsId(webhook.id)}
                       >
-                        {`${__("Calls")} (${webhook.calls.totalCount})`}
+                        {`${__("Events")} (${webhook.events.totalCount})`}
                       </Button>
                       <WebhookFormDialog
                         mode="edit"
@@ -740,26 +750,22 @@ export function WebhooksSettingsPage(props: {
             variant="danger"
             onClick={() => deletingId && handleDelete(deletingId)}
             disabled={isDeleting}
-            icon={isDeleting ? Spinner : IconTrashCan}
+            icon={isDeleting ? undefined : IconTrashCan}
           >
             {isDeleting
-              ? __("Deleting...")
+              ? <><Spinner size={16} /> {__("Deleting...")}</>
               : __("Delete")}
           </Button>
         </DialogFooter>
       </Dialog>
 
-      {viewingCallsId && (() => {
-        const webhook = webhooks.find(e => e.node.id === viewingCallsId);
-        if (!webhook) return null;
-        return (
-          <WebhookCallsDialog
-            webhookConfigurationId={viewingCallsId}
-            endpointUrl={webhook.node.endpointUrl}
-            onClose={() => setViewingCallsId(null)}
-          />
-        );
-      })()}
+      {viewingEventsWebhook && viewingEventsId && (
+        <WebhookEventsDialog
+          webhookConfigurationId={viewingEventsId}
+          endpointUrl={viewingEventsWebhook.endpointUrl}
+          onClose={() => setViewingEventsId(null)}
+        />
+      )}
     </div>
   );
 }

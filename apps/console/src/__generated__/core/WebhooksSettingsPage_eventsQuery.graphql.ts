@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c53381e72c0d17cff70568af0bbbb6e5>>
+ * @generated SignedSource<<70389123cd52ffd010e2b8f0109aedcd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,22 +9,22 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type WebhookCallStatus = "FAILED" | "SUCCEEDED";
-export type WebhooksSettingsPage_callsQuery$variables = {
+export type WebhookEventStatus = "FAILED" | "SUCCEEDED";
+export type WebhooksSettingsPage_eventsQuery$variables = {
   after?: string | null | undefined;
   first?: number | null | undefined;
   webhookConfigurationId: string;
 };
-export type WebhooksSettingsPage_callsQuery$data = {
+export type WebhooksSettingsPage_eventsQuery$data = {
   readonly node: {
-    readonly calls?: {
+    readonly events?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly createdAt: string;
           readonly endpointUrl: string;
           readonly id: string;
           readonly response: string | null | undefined;
-          readonly status: WebhookCallStatus;
+          readonly status: WebhookEventStatus;
         };
       }>;
       readonly pageInfo: {
@@ -35,9 +35,9 @@ export type WebhooksSettingsPage_callsQuery$data = {
     };
   };
 };
-export type WebhooksSettingsPage_callsQuery = {
-  response: WebhooksSettingsPage_callsQuery$data;
-  variables: WebhooksSettingsPage_callsQuery$variables;
+export type WebhooksSettingsPage_eventsQuery = {
+  response: WebhooksSettingsPage_eventsQuery$data;
+  variables: WebhooksSettingsPage_eventsQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -87,9 +87,9 @@ v5 = {
           "variableName": "first"
         }
       ],
-      "concreteType": "WebhookCallConnection",
+      "concreteType": "WebhookEventConnection",
       "kind": "LinkedField",
-      "name": "calls",
+      "name": "events",
       "plural": false,
       "selections": [
         {
@@ -127,7 +127,7 @@ v5 = {
         {
           "alias": null,
           "args": null,
-          "concreteType": "WebhookCallEdge",
+          "concreteType": "WebhookEventEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -135,7 +135,7 @@ v5 = {
             {
               "alias": null,
               "args": null,
-              "concreteType": "WebhookCall",
+              "concreteType": "WebhookEvent",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -191,7 +191,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "WebhooksSettingsPage_callsQuery",
+    "name": "WebhooksSettingsPage_eventsQuery",
     "selections": [
       {
         "alias": null,
@@ -217,7 +217,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "WebhooksSettingsPage_callsQuery",
+    "name": "WebhooksSettingsPage_eventsQuery",
     "selections": [
       {
         "alias": null,
@@ -242,16 +242,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9371a8918daebbb2a660b02649ba0241",
+    "cacheID": "507b568e987ce78e58b171810a60bce8",
     "id": null,
     "metadata": {},
-    "name": "WebhooksSettingsPage_callsQuery",
+    "name": "WebhooksSettingsPage_eventsQuery",
     "operationKind": "query",
-    "text": "query WebhooksSettingsPage_callsQuery(\n  $webhookConfigurationId: ID!\n  $first: Int\n  $after: CursorKey\n) {\n  node(id: $webhookConfigurationId) {\n    __typename\n    ... on WebhookConfiguration {\n      calls(first: $first, after: $after) {\n        totalCount\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n        edges {\n          node {\n            id\n            status\n            endpointUrl\n            createdAt\n            response\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query WebhooksSettingsPage_eventsQuery(\n  $webhookConfigurationId: ID!\n  $first: Int\n  $after: CursorKey\n) {\n  node(id: $webhookConfigurationId) {\n    __typename\n    ... on WebhookConfiguration {\n      events(first: $first, after: $after) {\n        totalCount\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n        edges {\n          node {\n            id\n            status\n            endpointUrl\n            createdAt\n            response\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "de18874117b6272fdf2e22871adc4a5d";
+(node as any).hash = "2e528e16c34c33138858f92215af2ab4";
 
 export default node;

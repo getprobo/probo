@@ -91,7 +91,7 @@ func (s *Sender) Run(ctx context.Context) error {
 
 func (s *Sender) processEvents(ctx context.Context) error {
 	for {
-		event, err := s.claimNextEvent(ctx)
+		webhookData, err := s.claimNextWebhookData(ctx)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil
@@ -99,24 +99,24 @@ func (s *Sender) processEvents(ctx context.Context) error {
 			return err
 		}
 
-		s.processEvent(ctx, event)
+		s.processWebhookData(ctx, webhookData)
 	}
 }
 
-func (s *Sender) claimNextEvent(ctx context.Context) (*coredata.WebhookEvent, error) {
-	var event coredata.WebhookEvent
+func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookData, error) {
+	var webhookData coredata.WebhookData
 
 	err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
-		if err := event.LoadNextPendingForUpdate(ctx, tx); err != nil {
+		if err := webhookData.LoadNextPendingForUpdate(ctx, tx); err != nil {
 			return err
 		}
 
-		scope := coredata.NewScopeFromObjectID(event.ID)
+		scope := coredata.NewScopeFromObjectID(webhookData.ID)
 
-		event.Status = coredata.WebhookEventStatusProcessing
+		webhookData.Status = coredata.WebhookDataStatusProcessing
 
-		if err := event.UpdateStatus(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot update webhook event to processing: %w", err)
+		if err := webhookData.UpdateStatus(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot update webhook data to processing: %w", err)
 		}
 
 		return nil
@@ -126,77 +126,77 @@ func (s *Sender) claimNextEvent(ctx context.Context) (*coredata.WebhookEvent, er
 		return nil, err
 	}
 
-	return &event, nil
+	return &webhookData, nil
 }
 
-func (s *Sender) processEvent(ctx context.Context, event *coredata.WebhookEvent) {
-	scope := coredata.NewScopeFromObjectID(event.ID)
+func (s *Sender) processWebhookData(ctx context.Context, webhookData *coredata.WebhookData) {
+	scope := coredata.NewScopeFromObjectID(webhookData.ID)
 
 	var configs coredata.WebhookConfigurations
 	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		return configs.LoadMatchingByOrganizationIDAndEventType(
-			ctx, conn, scope, event.OrganizationID, event.EventType,
+			ctx, conn, scope, webhookData.OrganizationID, webhookData.EventType,
 		)
 	})
 	if err != nil {
 		s.logger.ErrorCtx(ctx, "cannot load matching webhook configurations",
 			log.Error(err),
-			log.String("event_id", event.ID.String()),
+			log.String("webhook_data_id", webhookData.ID.String()),
 		)
 		return
 	}
 
 	for _, config := range configs {
-		s.deliverToConfiguration(ctx, event, config, scope)
+		s.deliverToConfiguration(ctx, webhookData, config, scope)
 	}
 
 	now := time.Now()
-	event.Status = coredata.WebhookEventStatusDelivered
-	event.ProcessedAt = &now
+	webhookData.Status = coredata.WebhookDataStatusDelivered
+	webhookData.ProcessedAt = &now
 
 	err = s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return event.UpdateStatus(ctx, conn, scope)
+		return webhookData.UpdateStatus(ctx, conn, scope)
 	})
 	if err != nil {
-		s.logger.ErrorCtx(ctx, "cannot update webhook event to delivered",
+		s.logger.ErrorCtx(ctx, "cannot update webhook data to delivered",
 			log.Error(err),
-			log.String("event_id", event.ID.String()),
+			log.String("webhook_data_id", webhookData.ID.String()),
 		)
 	}
 }
 
 func (s *Sender) deliverToConfiguration(
 	ctx context.Context,
-	event *coredata.WebhookEvent,
+	webhookData *coredata.WebhookData,
 	config *coredata.WebhookConfiguration,
 	scope coredata.Scoper,
 ) {
-	callID := gid.New(event.ID.TenantID(), coredata.WebhookCallEntityType)
+	eventID := gid.New(webhookData.ID.TenantID(), coredata.WebhookEventEntityType)
 
 	signingSecret, err := s.getSigningSecret(config.ID.String(), config.EncryptedSigningSecret)
 	if err != nil {
 		s.logger.ErrorCtx(ctx, "cannot get signing secret",
 			log.Error(err),
-			log.String("event_id", event.ID.String()),
+			log.String("webhook_data_id", webhookData.ID.String()),
 			log.String("configuration_id", config.ID.String()),
 		)
-		s.recordCall(ctx, callID, event, config, scope, coredata.WebhookCallStatusFailed, nil)
+		s.recordEvent(ctx, eventID, webhookData, config, scope, coredata.WebhookEventStatusFailed, nil)
 		return
 	}
 
-	response, sendErr := s.doHTTPCall(ctx, callID, config.EndpointURL, event, config.ID, signingSecret)
+	response, sendErr := s.doHTTPCall(ctx, eventID, config.EndpointURL, webhookData, config.ID, signingSecret)
 
-	callStatus := coredata.WebhookCallStatusSucceeded
+	eventStatus := coredata.WebhookEventStatusSucceeded
 	if sendErr != nil {
-		callStatus = coredata.WebhookCallStatusFailed
-		s.logger.ErrorCtx(ctx, "error delivering webhook event",
+		eventStatus = coredata.WebhookEventStatusFailed
+		s.logger.ErrorCtx(ctx, "error delivering webhook",
 			log.Error(sendErr),
-			log.String("event_id", event.ID.String()),
+			log.String("webhook_data_id", webhookData.ID.String()),
 			log.String("endpoint_url", config.EndpointURL),
 		)
 	}
 
-	s.recordCall(ctx, callID, event, config, scope, callStatus, response)
+	s.recordEvent(ctx, eventID, webhookData, config, scope, eventStatus, response)
 }
 
 func (s *Sender) getSigningSecret(webhookConfigurationID string, encryptedSigningSecret []byte) (string, error) {
@@ -217,20 +217,19 @@ func (s *Sender) getSigningSecret(webhookConfigurationID string, encryptedSignin
 
 func (s *Sender) doHTTPCall(
 	ctx context.Context,
-	callID gid.GID,
+	eventID gid.GID,
 	endpointURL string,
-	event *coredata.WebhookEvent,
+	webhookData *coredata.WebhookData,
 	configurationID gid.GID,
 	signingSecret string,
 ) (json.RawMessage, error) {
 	payload := map[string]any{
-		"eventId":         event.ID.String(),
-		"callId":          callID.String(),
+		"eventId":         eventID.String(),
 		"configurationId": configurationID.String(),
-		"organizationId":  event.OrganizationID.String(),
-		"eventType":       event.EventType.String(),
-		"createdAt":       event.CreatedAt,
-		"data":            event.Data,
+		"organizationId":  webhookData.OrganizationID.String(),
+		"eventType":       webhookData.EventType.String(),
+		"createdAt":       webhookData.CreatedAt,
+		"data":            webhookData.Data,
 	}
 
 	body, err := json.Marshal(payload)
@@ -250,7 +249,7 @@ func (s *Sender) doHTTPCall(
 	signature := computeSignature(signingSecret, timestamp, body)
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Probo-Webhook-Event", event.EventType.String())
+	req.Header.Set("X-Probo-Webhook-Event", webhookData.EventType.String())
 	req.Header.Set("X-Probo-Webhook-Timestamp", timestamp)
 	req.Header.Set("X-Probo-Webhook-Signature", signature)
 
@@ -275,18 +274,18 @@ func (s *Sender) doHTTPCall(
 	}
 }
 
-func (s *Sender) recordCall(
+func (s *Sender) recordEvent(
 	ctx context.Context,
-	callID gid.GID,
-	event *coredata.WebhookEvent,
+	eventID gid.GID,
+	webhookData *coredata.WebhookData,
 	config *coredata.WebhookConfiguration,
 	scope coredata.Scoper,
-	status coredata.WebhookCallStatus,
+	status coredata.WebhookEventStatus,
 	response json.RawMessage,
 ) {
-	call := coredata.WebhookCall{
-		ID:                     callID,
-		WebhookEventID:         event.ID,
+	event := coredata.WebhookEvent{
+		ID:                     eventID,
+		WebhookDataID:          webhookData.ID,
 		WebhookConfigurationID: config.ID,
 		EndpointURL:            config.EndpointURL,
 		Status:                 status,
@@ -295,12 +294,12 @@ func (s *Sender) recordCall(
 	}
 
 	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return call.Insert(ctx, conn, scope)
+		return event.Insert(ctx, conn, scope)
 	})
 	if err != nil {
-		s.logger.ErrorCtx(ctx, "cannot insert webhook call",
+		s.logger.ErrorCtx(ctx, "cannot insert webhook event",
 			log.Error(err),
-			log.String("event_id", event.ID.String()),
+			log.String("webhook_data_id", webhookData.ID.String()),
 			log.String("configuration_id", config.ID.String()),
 		)
 	}

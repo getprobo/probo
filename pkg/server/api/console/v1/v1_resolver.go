@@ -8559,23 +8559,6 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 	}, nil
 }
 
-// TotalCount is the resolver for the totalCount field.
-func (r *webhookCallConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookCallConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookConfigurationGet); err != nil {
-		return 0, err
-	}
-
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-	count, err := prb.WebhookConfigurations.CountCallsForConfigurationID(ctx, obj.ParentID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count webhook calls", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
-	}
-
-	return count, nil
-}
-
 // Organization is the resolver for the organization field.
 func (r *webhookConfigurationResolver) Organization(ctx context.Context, obj *types.WebhookConfiguration) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -8599,6 +8582,10 @@ func (r *webhookConfigurationResolver) Organization(ctx context.Context, obj *ty
 
 // SigningSecret is the resolver for the signingSecret field.
 func (r *webhookConfigurationResolver) SigningSecret(ctx context.Context, obj *types.WebhookConfiguration) (string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionWebhookConfigurationUpdate); err != nil {
+		return "", err
+	}
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	signingSecret, err := prb.WebhookConfigurations.GetSigningSecret(ctx, obj.ID)
@@ -8610,20 +8597,20 @@ func (r *webhookConfigurationResolver) SigningSecret(ctx context.Context, obj *t
 	return signingSecret, nil
 }
 
-// Calls is the resolver for the calls field.
-func (r *webhookConfigurationResolver) Calls(ctx context.Context, obj *types.WebhookConfiguration, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookCallOrderBy) (*types.WebhookCallConnection, error) {
+// Events is the resolver for the events field.
+func (r *webhookConfigurationResolver) Events(ctx context.Context, obj *types.WebhookConfiguration, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookEventOrderBy) (*types.WebhookEventConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionWebhookConfigurationGet); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.WebhookCallOrderField]{
-		Field:     coredata.WebhookCallOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.WebhookEventOrderField]{
+		Field:     coredata.WebhookEventOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.WebhookCallOrderField]{
+		pageOrderBy = page.OrderBy[coredata.WebhookEventOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -8631,13 +8618,13 @@ func (r *webhookConfigurationResolver) Calls(ctx context.Context, obj *types.Web
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.WebhookConfigurations.ListCallsForConfigurationID(ctx, obj.ID, cursor)
+	page, err := prb.WebhookConfigurations.ListEventsForConfigurationID(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list webhook calls", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list webhook events", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewWebhookCallConnection(page, r, obj.ID), nil
+	return types.NewWebhookEventConnection(page, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -8665,6 +8652,23 @@ func (r *webhookConfigurationConnectionResolver) TotalCount(ctx context.Context,
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver for webhook configuration connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 	return 0, gqlutils.Internal(ctx)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookEventConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookConfigurationGet); err != nil {
+		return 0, err
+	}
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.WebhookConfigurations.CountEventsForConfigurationID(ctx, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count webhook events", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // ApplicabilityStatement returns schema.ApplicabilityStatementResolver implementation.
@@ -8969,11 +8973,6 @@ func (r *Resolver) VendorService() schema.VendorServiceResolver { return &vendor
 // Viewer returns schema.ViewerResolver implementation.
 func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 
-// WebhookCallConnection returns schema.WebhookCallConnectionResolver implementation.
-func (r *Resolver) WebhookCallConnection() schema.WebhookCallConnectionResolver {
-	return &webhookCallConnectionResolver{r}
-}
-
 // WebhookConfiguration returns schema.WebhookConfigurationResolver implementation.
 func (r *Resolver) WebhookConfiguration() schema.WebhookConfigurationResolver {
 	return &webhookConfigurationResolver{r}
@@ -8982,6 +8981,11 @@ func (r *Resolver) WebhookConfiguration() schema.WebhookConfigurationResolver {
 // WebhookConfigurationConnection returns schema.WebhookConfigurationConnectionResolver implementation.
 func (r *Resolver) WebhookConfigurationConnection() schema.WebhookConfigurationConnectionResolver {
 	return &webhookConfigurationConnectionResolver{r}
+}
+
+// WebhookEventConnection returns schema.WebhookEventConnectionResolver implementation.
+func (r *Resolver) WebhookEventConnection() schema.WebhookEventConnectionResolver {
+	return &webhookEventConnectionResolver{r}
 }
 
 type applicabilityStatementResolver struct{ *Resolver }
@@ -9056,6 +9060,6 @@ type vendorDataPrivacyAgreementResolver struct{ *Resolver }
 type vendorRiskAssessmentResolver struct{ *Resolver }
 type vendorServiceResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
-type webhookCallConnectionResolver struct{ *Resolver }
 type webhookConfigurationResolver struct{ *Resolver }
 type webhookConfigurationConnectionResolver struct{ *Resolver }
+type webhookEventConnectionResolver struct{ *Resolver }

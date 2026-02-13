@@ -21,11 +21,11 @@ import (
 )
 
 type (
-	WebhookCallOrderBy OrderBy[coredata.WebhookCallOrderField]
+	WebhookEventOrderBy OrderBy[coredata.WebhookEventOrderField]
 
-	WebhookCallConnection struct {
+	WebhookEventConnection struct {
 		TotalCount int
-		Edges      []*WebhookCallEdge
+		Edges      []*WebhookEventEdge
 		PageInfo   PageInfo
 
 		Resolver any
@@ -33,18 +33,18 @@ type (
 	}
 )
 
-func NewWebhookCallConnection(
-	p *page.Page[*coredata.WebhookCall, coredata.WebhookCallOrderField],
+func NewWebhookEventConnection(
+	p *page.Page[*coredata.WebhookEvent, coredata.WebhookEventOrderField],
 	parentType any,
 	parentID gid.GID,
-) *WebhookCallConnection {
-	var edges = make([]*WebhookCallEdge, len(p.Data))
+) *WebhookEventConnection {
+	var edges = make([]*WebhookEventEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewWebhookCallEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewWebhookEventEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &WebhookCallConnection{
+	return &WebhookEventConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -53,27 +53,27 @@ func NewWebhookCallConnection(
 	}
 }
 
-func NewWebhookCallEdge(wc *coredata.WebhookCall, orderBy coredata.WebhookCallOrderField) *WebhookCallEdge {
-	return &WebhookCallEdge{
-		Cursor: wc.CursorKey(orderBy),
-		Node:   NewWebhookCall(wc),
+func NewWebhookEventEdge(we *coredata.WebhookEvent, orderBy coredata.WebhookEventOrderField) *WebhookEventEdge {
+	return &WebhookEventEdge{
+		Cursor: we.CursorKey(orderBy),
+		Node:   NewWebhookEvent(we),
 	}
 }
 
-func NewWebhookCall(wc *coredata.WebhookCall) *WebhookCall {
+func NewWebhookEvent(we *coredata.WebhookEvent) *WebhookEvent {
 	var response *string
-	if len(wc.Response) > 0 {
-		s := string(wc.Response)
+	if len(we.Response) > 0 {
+		s := string(we.Response)
 		response = &s
 	}
 
-	return &WebhookCall{
-		ID:                     wc.ID,
-		WebhookEventID:        wc.WebhookEventID,
-		WebhookConfigurationID: wc.WebhookConfigurationID,
-		EndpointURL:            wc.EndpointURL,
-		Status:                 wc.Status,
+	return &WebhookEvent{
+		ID:                     we.ID,
+		WebhookDataID:          we.WebhookDataID,
+		WebhookConfigurationID: we.WebhookConfigurationID,
+		EndpointURL:            we.EndpointURL,
+		Status:                 we.Status,
 		Response:               response,
-		CreatedAt:              wc.CreatedAt,
+		CreatedAt:              we.CreatedAt,
 	}
 }

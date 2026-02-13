@@ -261,18 +261,18 @@ func (s WebhookConfigurationService) GetSigningSecret(
 	return wc.DecryptSigningSecret(s.svc.encryptionKey)
 }
 
-func (s WebhookConfigurationService) ListCallsForConfigurationID(
+func (s WebhookConfigurationService) ListEventsForConfigurationID(
 	ctx context.Context,
 	webhookConfigurationID gid.GID,
-	cursor *page.Cursor[coredata.WebhookCallOrderField],
-) (*page.Page[*coredata.WebhookCall, coredata.WebhookCallOrderField], error) {
-	var calls coredata.WebhookCalls
+	cursor *page.Cursor[coredata.WebhookEventOrderField],
+) (*page.Page[*coredata.WebhookEvent, coredata.WebhookEventOrderField], error) {
+	var events coredata.WebhookEvents
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := calls.LoadByConfigurationID(ctx, conn, s.svc.scope, webhookConfigurationID, cursor); err != nil {
-				return fmt.Errorf("cannot load webhook calls: %w", err)
+			if err := events.LoadByConfigurationID(ctx, conn, s.svc.scope, webhookConfigurationID, cursor); err != nil {
+				return fmt.Errorf("cannot load webhook events: %w", err)
 			}
 
 			return nil
@@ -283,10 +283,10 @@ func (s WebhookConfigurationService) ListCallsForConfigurationID(
 		return nil, err
 	}
 
-	return page.NewPage(calls, cursor), nil
+	return page.NewPage(events, cursor), nil
 }
 
-func (s WebhookConfigurationService) CountCallsForConfigurationID(
+func (s WebhookConfigurationService) CountEventsForConfigurationID(
 	ctx context.Context,
 	webhookConfigurationID gid.GID,
 ) (int, error) {
@@ -295,11 +295,11 @@ func (s WebhookConfigurationService) CountCallsForConfigurationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			calls := &coredata.WebhookCalls{}
-			count, err = calls.CountByConfigurationID(ctx, conn, s.svc.scope, webhookConfigurationID)
+			events := &coredata.WebhookEvents{}
+			count, err = events.CountByConfigurationID(ctx, conn, s.svc.scope, webhookConfigurationID)
 
 			if err != nil {
-				return fmt.Errorf("cannot count webhook calls: %w", err)
+				return fmt.Errorf("cannot count webhook events: %w", err)
 			}
 
 			return nil

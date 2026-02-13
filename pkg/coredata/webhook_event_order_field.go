@@ -19,37 +19,37 @@ import (
 )
 
 type (
-	WebhookCallOrderField string
+	WebhookEventOrderField string
 )
 
 const (
-	WebhookCallOrderFieldCreatedAt WebhookCallOrderField = "CREATED_AT"
+	WebhookEventOrderFieldCreatedAt WebhookEventOrderField = "CREATED_AT"
 )
 
-func (p WebhookCallOrderField) Column() string {
+func (p WebhookEventOrderField) Column() string {
 	return string(p)
 }
 
-func (p WebhookCallOrderField) String() string {
+func (p WebhookEventOrderField) String() string {
 	return string(p)
 }
 
-func (p WebhookCallOrderField) IsValid() bool {
+func (p WebhookEventOrderField) IsValid() bool {
 	switch p {
-	case WebhookCallOrderFieldCreatedAt:
+	case WebhookEventOrderFieldCreatedAt:
 		return true
 	}
 	return false
 }
 
-func (p WebhookCallOrderField) MarshalText() ([]byte, error) {
+func (p WebhookEventOrderField) MarshalText() ([]byte, error) {
 	return []byte(p.String()), nil
 }
 
-func (p *WebhookCallOrderField) UnmarshalText(text []byte) error {
-	*p = WebhookCallOrderField(text)
+func (p *WebhookEventOrderField) UnmarshalText(text []byte) error {
+	*p = WebhookEventOrderField(text)
 	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid WebhookCallOrderField", string(text))
+		return fmt.Errorf("%s is not a valid WebhookEventOrderField", string(text))
 	}
 	return nil
 }
