@@ -279,6 +279,7 @@ func (s *Sender) doHTTPCall(
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Probo-Webhook-Event", webhookData.EventType.String())
+	req.Header.Set("X-Probo-Webhook-Organization-Id", webhookData.OrganizationID.String())
 	req.Header.Set("X-Probo-Webhook-Timestamp", timestamp)
 	req.Header.Set("X-Probo-Webhook-Signature", signature)
 
