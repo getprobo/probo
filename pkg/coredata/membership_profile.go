@@ -99,6 +99,7 @@ SELECT
     p.position,
     p.contract_start_date,
     p.contract_end_date,
+    '' AS organization_name,
     p.created_at,
     p.updated_at
 FROM
@@ -154,6 +155,7 @@ SELECT
     p.position,
     p.contract_start_date,
     p.contract_end_date,
+    '' AS organization_name,
     p.created_at,
     p.updated_at
 FROM
@@ -212,6 +214,7 @@ SELECT
     p.position,
     p.contract_start_date,
     p.contract_end_date,
+    '' AS organization_name,
     p.created_at,
     p.updated_at
 FROM
@@ -284,6 +287,7 @@ SELECT
     p.position,
     p.contract_start_date,
     p.contract_end_date,
+    '' AS organization_name,
     p.created_at,
     p.updated_at
 FROM profiles p
@@ -338,7 +342,6 @@ WITH profiles AS (
         %s
         AND identity_id = @identity_id
         AND %s
-        AND %s
 )
 SELECT
     p.id,
@@ -357,6 +360,8 @@ SELECT
 FROM profiles p
 INNER JOIN identities i ON i.id = p.identity_id
 INNER JOIN organizations o ON o.id = p.organization_id
+WHERE
+    %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
@@ -624,6 +629,7 @@ SELECT
     position,
     contract_start_date,
     contract_end_date,
+    '' AS organization_name,
     created_at,
     updated_at
 FROM
@@ -682,6 +688,7 @@ SELECT
     p.position,
     p.contract_start_date,
     p.contract_end_date,
+    '' AS organization_name,
     p.created_at,
     p.updated_at
 FROM
@@ -721,7 +728,6 @@ FROM
     iam_membership_profiles
 WHERE
     %s
-    AND %s
     AND identity_id = @identity_id
 `
 
