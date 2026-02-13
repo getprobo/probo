@@ -138,13 +138,13 @@ type Identity implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
 
-  memberships(
+  profiles(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: MembershipOrder
-  ): MembershipConnection @goField(forceResolver: true)
+    orderBy: ProfileOrder
+  ): ProfileConnection @goField(forceResolver: true)
 
   pendingInvitations(
     first: Int
@@ -178,7 +178,7 @@ type Identity implements Node {
     @session(required: PRESENT)
 }
 
-type MembershipProfile implements Node {
+type Profile implements Node {
   id: ID!
   fullName: String!
   additionalEmailAddresses: [EmailAddr!]!
@@ -191,9 +191,7 @@ type MembershipProfile implements Node {
 
   identity: Identity @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
-
-  # FIXME: remove when memberships are under profile
-  membershipId: ID!
+  membership: Membership @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -212,13 +210,13 @@ type Organization implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
 
-  members(
+  profiles(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: MembershipOrder
-  ): MembershipConnection @goField(forceResolver: true)
+    orderBy: ProfileOrder
+  ): ProfileConnection @goField(forceResolver: true)
 
   invitations(
     first: Int
@@ -238,7 +236,7 @@ type Organization implements Node {
 
   scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
 
-  viewerMembership: Membership @goField(forceResolver: true)
+  viewer: Profile @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -285,9 +283,6 @@ enum MembershipState
 type Membership implements Node {
   id: ID!
   createdAt: Datetime!
-  identity: Identity @goField(forceResolver: true)
-  profile: MembershipProfile @goField(forceResolver: true)
-  organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   source: MembershipSource!
   state: MembershipState!
@@ -445,7 +440,7 @@ type SCIMEvent implements Node {
   requestBody: String
   responseBody: String
   errorMessage: String
-  membership: Membership @goField(forceResolver: true)
+  profile: Profile @goField(forceResolver: true)
   ipAddress: String!
   createdAt: Datetime!
 
@@ -481,50 +476,6 @@ enum ReauthenticationReason {
   SESSION_EXPIRED
   SENSITIVE_ACTION
   POLICY_REQUIREMENT
-}
-
-enum MembershipOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
-  FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
-    )
-  ORGANIZATION_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldOrganizationName"
-    )
-  EMAIL_ADDRESS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
-    )
-  ROLE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
-  CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
-    )
-}
-
-input MembershipOrder
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.MembershipOrderBy"
-  ) {
-  direction: OrderDirection!
-  field: MembershipOrderField!
-}
-
-type MembershipConnection
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.MembershipConnection"
-  ) {
-  edges: [MembershipEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int @goField(forceResolver: true)
-}
-
-type MembershipEdge {
-  node: Membership!
-  cursor: CursorKey!
 }
 
 enum InvitationOrderField
@@ -571,6 +522,45 @@ type InvitationConnection
 type InvitationEdge {
   node: Invitation!
   cursor: CursorKey!
+}
+
+enum ProfileOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldFullName"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
+    )
+  KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
+  ORGANIZATION_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldOrganizationName"
+    )
+}
+
+input ProfileOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.ProfileOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ProfileOrderField!
+}
+
+type ProfileConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.ProfileConnection"
+  ) {
+  totalCount: Int @goField(forceResolver: true)
+  edges: [ProfileEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProfileEdge {
+  cursor: CursorKey!
+  node: Profile!
 }
 
 type SessionConnection
@@ -885,7 +875,7 @@ type RevokePersonalAPIKeyPayload {
 
 type CreateOrganizationPayload {
   organization: Organization
-  membershipEdge: MembershipEdge!
+  membership: Membership!
 }
 
 type UpdateOrganizationPayload {
@@ -905,7 +895,7 @@ type InviteMemberPayload {
 }
 
 type UpdateProfilePayload {
-  profile: MembershipProfile!
+  profile: Profile!
 }
 
 type UpdateMembershipPayload {
@@ -917,7 +907,7 @@ type RemoveMemberPayload {
 }
 
 type AcceptInvitationPayload {
-  membershipEdge: MembershipEdge!
+  membership: Membership!
   invitation: Invitation!
 }
 

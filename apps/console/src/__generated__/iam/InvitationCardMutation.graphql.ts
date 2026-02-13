@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2d970c5558233522bbd695a075469cad>>
+ * @generated SignedSource<<8369cd1e8f928481ea43a4e09f11a3f4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,6 @@ export type AcceptInvitationInput = {
 };
 export type InvitationCardMutation$variables = {
   input: AcceptInvitationInput;
-  membershipConnections: ReadonlyArray<string>;
   pendingInvitationConnections: ReadonlyArray<string>;
 };
 export type InvitationCardMutation$data = {
@@ -23,14 +22,9 @@ export type InvitationCardMutation$data = {
     readonly invitation: {
       readonly id: string;
     };
-    readonly membershipEdge: {
-      readonly node: {
-        readonly id: string;
-        readonly organization: {
-          readonly name: string;
-        } | null | undefined;
-        readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
-      };
+    readonly membership: {
+      readonly id: string;
+      readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
     };
   } | null | undefined;
 };
@@ -45,11 +39,6 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "input"
-  },
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "membershipConnections"
   },
   {
     "defaultValue": null,
@@ -69,13 +58,6 @@ v2 = {
   "args": null,
   "kind": "ScalarField",
   "name": "id",
-  "storageKey": null
-},
-v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
   "storageKey": null
 };
 return {
@@ -108,39 +90,16 @@ return {
           {
             "alias": null,
             "args": null,
-            "concreteType": "MembershipEdge",
+            "concreteType": "Membership",
             "kind": "LinkedField",
-            "name": "membershipEdge",
+            "name": "membership",
             "plural": false,
             "selections": [
+              (v2/*: any*/),
               {
-                "alias": null,
                 "args": null,
-                "concreteType": "Membership",
-                "kind": "LinkedField",
-                "name": "node",
-                "plural": false,
-                "selections": [
-                  (v2/*: any*/),
-                  {
-                    "args": null,
-                    "kind": "FragmentSpread",
-                    "name": "MembershipCardFragment"
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Organization",
-                    "kind": "LinkedField",
-                    "name": "organization",
-                    "plural": false,
-                    "selections": [
-                      (v3/*: any*/)
-                    ],
-                    "storageKey": null
-                  }
-                ],
-                "storageKey": null
+                "kind": "FragmentSpread",
+                "name": "MembershipCardFragment"
               }
             ],
             "storageKey": null
@@ -197,57 +156,26 @@ return {
           {
             "alias": null,
             "args": null,
-            "concreteType": "MembershipEdge",
+            "concreteType": "Membership",
             "kind": "LinkedField",
-            "name": "membershipEdge",
+            "name": "membership",
             "plural": false,
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "Membership",
+                "concreteType": "Session",
                 "kind": "LinkedField",
-                "name": "node",
+                "name": "lastSession",
                 "plural": false,
                 "selections": [
                   (v2/*: any*/),
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "Session",
-                    "kind": "LinkedField",
-                    "name": "lastSession",
-                    "plural": false,
-                    "selections": [
-                      (v2/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "expiresAt",
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Organization",
-                    "kind": "LinkedField",
-                    "name": "organization",
-                    "plural": false,
-                    "selections": [
-                      (v2/*: any*/),
-                      (v3/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "logoUrl",
-                        "storageKey": null
-                      }
-                    ],
+                    "kind": "ScalarField",
+                    "name": "expiresAt",
                     "storageKey": null
                   }
                 ],
@@ -255,22 +183,6 @@ return {
               }
             ],
             "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "filters": null,
-            "handle": "prependEdge",
-            "key": "",
-            "kind": "LinkedHandle",
-            "name": "membershipEdge",
-            "handleArgs": [
-              {
-                "kind": "Variable",
-                "name": "connections",
-                "variableName": "membershipConnections"
-              }
-            ]
           }
         ],
         "storageKey": null
@@ -278,16 +190,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "15ed0089d35b0163252ef542a4b1b667",
+    "cacheID": "bebfc1241803845587648eaad4988fcb",
     "id": null,
     "metadata": {},
     "name": "InvitationCardMutation",
     "operationKind": "mutation",
-    "text": "mutation InvitationCardMutation(\n  $input: AcceptInvitationInput!\n) {\n  acceptInvitation(input: $input) {\n    invitation {\n      id\n    }\n    membershipEdge {\n      node {\n        id\n        ...MembershipCardFragment\n        organization {\n          name\n          id\n        }\n      }\n    }\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    name\n    logoUrl\n  }\n}\n"
+    "text": "mutation InvitationCardMutation(\n  $input: AcceptInvitationInput!\n) {\n  acceptInvitation(input: $input) {\n    invitation {\n      id\n    }\n    membership {\n      id\n      ...MembershipCardFragment\n    }\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  lastSession {\n    id\n    expiresAt\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "587f3fc115f88830e5ee49759f3ab7b5";
+(node as any).hash = "32d7fb0d26660c95e87012d3b31068e8";
 
 export default node;

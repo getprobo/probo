@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a7fb3832b9c9d3830ceff389237da093>>
+ * @generated SignedSource<<beba83081139a0721dd1ca6e169c56f2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,14 +13,17 @@ import { FragmentRefs } from "relay-runtime";
 export type MembershipsDropdownMenuQuery$variables = Record<PropertyKey, never>;
 export type MembershipsDropdownMenuQuery$data = {
   readonly viewer: {
-    readonly memberships: {
+    readonly profiles: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly id: string;
+          readonly membership: {
+            readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdownMenuItemFragment">;
+          } | null | undefined;
           readonly organization: {
             readonly name: string;
+            readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdownMenuItem_organizationFragment">;
           };
-          readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdownMenuItemFragment">;
         };
       }>;
     };
@@ -83,9 +86,9 @@ return {
               "field": {
                 "alias": null,
                 "args": (v0/*: any*/),
-                "concreteType": "MembershipConnection",
+                "concreteType": "ProfileConnection",
                 "kind": "LinkedField",
-                "name": "memberships",
+                "name": "profiles",
                 "plural": false,
                 "selections": [
                   {
@@ -93,7 +96,7 @@ return {
                     "field": {
                       "alias": null,
                       "args": null,
-                      "concreteType": "MembershipEdge",
+                      "concreteType": "ProfileEdge",
                       "kind": "LinkedField",
                       "name": "edges",
                       "plural": true,
@@ -103,7 +106,7 @@ return {
                           "field": {
                             "alias": null,
                             "args": null,
-                            "concreteType": "Membership",
+                            "concreteType": "Profile",
                             "kind": "LinkedField",
                             "name": "node",
                             "plural": false,
@@ -119,16 +122,32 @@ return {
                                   "name": "organization",
                                   "plural": false,
                                   "selections": [
-                                    (v2/*: any*/)
+                                    (v2/*: any*/),
+                                    {
+                                      "args": null,
+                                      "kind": "FragmentSpread",
+                                      "name": "MembershipsDropdownMenuItem_organizationFragment"
+                                    }
                                   ],
                                   "storageKey": null
                                 },
                                 "action": "THROW"
                               },
                               {
+                                "alias": null,
                                 "args": null,
-                                "kind": "FragmentSpread",
-                                "name": "MembershipsDropdownMenuItemFragment"
+                                "concreteType": "Membership",
+                                "kind": "LinkedField",
+                                "name": "membership",
+                                "plural": false,
+                                "selections": [
+                                  {
+                                    "args": null,
+                                    "kind": "FragmentSpread",
+                                    "name": "MembershipsDropdownMenuItemFragment"
+                                  }
+                                ],
+                                "storageKey": null
                               }
                             ],
                             "storageKey": null
@@ -141,7 +160,7 @@ return {
                     "action": "THROW"
                   }
                 ],
-                "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
+                "storageKey": "profiles(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
               },
               "action": "THROW"
             }
@@ -171,15 +190,15 @@ return {
           {
             "alias": null,
             "args": (v0/*: any*/),
-            "concreteType": "MembershipConnection",
+            "concreteType": "ProfileConnection",
             "kind": "LinkedField",
-            "name": "memberships",
+            "name": "profiles",
             "plural": false,
             "selections": [
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "MembershipEdge",
+                "concreteType": "ProfileEdge",
                 "kind": "LinkedField",
                 "name": "edges",
                 "plural": true,
@@ -187,7 +206,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "Membership",
+                    "concreteType": "Profile",
                     "kind": "LinkedField",
                     "name": "node",
                     "plural": false,
@@ -216,17 +235,29 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Session",
+                        "concreteType": "Membership",
                         "kind": "LinkedField",
-                        "name": "lastSession",
+                        "name": "membership",
                         "plural": false,
                         "selections": [
                           (v1/*: any*/),
                           {
                             "alias": null,
                             "args": null,
-                            "kind": "ScalarField",
-                            "name": "expiresAt",
+                            "concreteType": "Session",
+                            "kind": "LinkedField",
+                            "name": "lastSession",
+                            "plural": false,
+                            "selections": [
+                              (v1/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "expiresAt",
+                                "storageKey": null
+                              }
+                            ],
                             "storageKey": null
                           }
                         ],
@@ -239,7 +270,7 @@ return {
                 "storageKey": null
               }
             ],
-            "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
+            "storageKey": "profiles(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
           },
           (v1/*: any*/)
         ],
@@ -248,16 +279,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9295fb9d95666f4b397645e143b7e774",
+    "cacheID": "aaad8b2150ade721cdcbd9c3eb35318d",
     "id": null,
     "metadata": {},
     "name": "MembershipsDropdownMenuQuery",
     "operationKind": "query",
-    "text": "query MembershipsDropdownMenuQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            id\n          }\n          ...MembershipsDropdownMenuItemFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    logoUrl\n    name\n  }\n}\n"
+    "text": "query MembershipsDropdownMenuQuery {\n  viewer {\n    profiles(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            ...MembershipsDropdownMenuItem_organizationFragment\n            id\n          }\n          membership {\n            ...MembershipsDropdownMenuItemFragment\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n}\n\nfragment MembershipsDropdownMenuItem_organizationFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
   }
 };
 })();
 
-(node as any).hash = "cd47570a10588c0e1c68240817141fd8";
+(node as any).hash = "14dbd79243ffb6104ff7315b78aa7990";
 
 export default node;

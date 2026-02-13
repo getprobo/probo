@@ -72,11 +72,12 @@ func NewSCIMEvent(scimEvent *coredata.SCIMEvent) *SCIMEvent {
 		CreatedAt:    scimEvent.CreatedAt,
 	}
 
-	if scimEvent.MembershipID != nil {
-		event.Membership = &Membership{
-			ID: *scimEvent.MembershipID,
-		}
-	}
+	// FIXME: profile
+	// if scimEvent.MembershipID != nil {
+	// 	event.Membership = &Membership{
+	// 		ID: *scimEvent.MembershipID,
+	// 	}
+	// }
 
 	return event
 }

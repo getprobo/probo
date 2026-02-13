@@ -40,6 +40,7 @@ type (
 		Position                 *string               `db:"position"`
 		ContractStartDate        *time.Time            `db:"contract_start_date"`
 		ContractEndDate          *time.Time            `db:"contract_end_date"`
+		OrganizationName         string                `db:"organization_name"`
 		CreatedAt                time.Time             `db:"created_at"`
 		UpdatedAt                time.Time             `db:"updated_at"`
 	}
@@ -55,6 +56,8 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 		return page.NewCursorKey(p.ID, p.FullName)
 	case MembershipProfileOrderFieldKind:
 		return page.NewCursorKey(p.ID, p.Kind)
+	case MembershipProfileOrderFieldOrganizationName:
+		return page.NewCursorKey(p.ID, p.OrganizationName)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -307,6 +310,75 @@ INNER JOIN identities i ON i.id = p.identity_id
 	return nil
 }
 
+func (p *MembershipProfiles) LoadByIdentityID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	identityID gid.GID,
+	cursor *page.Cursor[MembershipProfileOrderField],
+	filter *MembershipProfileFilter,
+) error {
+	q := `
+WITH profiles AS (
+    SELECT
+        id,
+        identity_id,
+        organization_id,
+        full_name,
+        kind,
+        additional_email_addresses,
+        position,
+        contract_start_date,
+        contract_end_date,
+        created_at,
+        updated_at
+    FROM
+        iam_membership_profiles
+    WHERE
+        %s
+        AND identity_id = @identity_id
+        AND %s
+        AND %s
+)
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    i.email_address,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    o.name AS organization_name,
+    p.created_at,
+    p.updated_at
+FROM profiles p
+INNER JOIN identities i ON i.id = p.identity_id
+INNER JOIN organizations o ON o.id = p.organization_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"identity_id": identityID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profiles: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profiles: %w", err)
+	}
+
+	*p = profiles
+
+	return nil
+}
+
 func (p *MembershipProfiles) LoadByDocumentID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -320,7 +392,6 @@ WITH profiles AS (
         mp.id,
         mp.identity_id,
         mp.organization_id,
-        mp.membership_id,
         mp.full_name,
         mp.kind,
         mp.additional_email_addresses,
@@ -344,7 +415,6 @@ SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    p.membership_id,
     i.email_address,
     p.full_name,
     p.kind,
@@ -423,7 +493,6 @@ WITH profiles AS (
         mp.id,
         mp.identity_id,
         mp.organization_id,
-        mp.membership_id,
         mp.full_name,
         mp.kind,
         mp.additional_email_addresses,
@@ -447,7 +516,6 @@ SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    p.membership_id,
     i.email_address,
     p.full_name,
     p.kind,
@@ -654,7 +722,7 @@ FROM
     iam_membership_profiles
 WHERE
     %s
-	AND %s
+    AND %s
     AND organization_id = @organization_id
 `
 

@@ -30,8 +30,8 @@ type AcceptInvitationInput struct {
 }
 
 type AcceptInvitationPayload struct {
-	MembershipEdge *MembershipEdge `json:"membershipEdge"`
-	Invitation     *Invitation     `json:"invitation"`
+	Membership *Membership `json:"membership"`
+	Invitation *Invitation `json:"invitation"`
 }
 
 type AssumeOrganizationSessionInput struct {
@@ -79,8 +79,8 @@ type CreateOrganizationInput struct {
 }
 
 type CreateOrganizationPayload struct {
-	Organization   *Organization   `json:"organization,omitempty"`
-	MembershipEdge *MembershipEdge `json:"membershipEdge"`
+	Organization *Organization `json:"organization,omitempty"`
+	Membership   *Membership   `json:"membership"`
 }
 
 type CreatePersonalAPIKeyInput struct {
@@ -176,7 +176,7 @@ type Identity struct {
 	EmailVerified      bool                      `json:"emailVerified"`
 	CreatedAt          time.Time                 `json:"createdAt"`
 	UpdatedAt          time.Time                 `json:"updatedAt"`
-	Memberships        *MembershipConnection     `json:"memberships,omitempty"`
+	Profiles           *ProfileConnection        `json:"profiles,omitempty"`
 	PendingInvitations *InvitationConnection     `json:"pendingInvitations,omitempty"`
 	Sessions           *SessionConnection        `json:"sessions,omitempty"`
 	PersonalAPIKeys    *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
@@ -220,44 +220,17 @@ type InviteMemberPayload struct {
 }
 
 type Membership struct {
-	ID           gid.GID                   `json:"id"`
-	CreatedAt    time.Time                 `json:"createdAt"`
-	Identity     *Identity                 `json:"identity,omitempty"`
-	Profile      *MembershipProfile        `json:"profile,omitempty"`
-	Organization *Organization             `json:"organization,omitempty"`
-	Role         coredata.MembershipRole   `json:"role"`
-	Source       coredata.MembershipSource `json:"source"`
-	State        coredata.MembershipState  `json:"state"`
-	LastSession  *Session                  `json:"lastSession,omitempty"`
-	Permission   bool                      `json:"permission"`
+	ID          gid.GID                   `json:"id"`
+	CreatedAt   time.Time                 `json:"createdAt"`
+	Role        coredata.MembershipRole   `json:"role"`
+	Source      coredata.MembershipSource `json:"source"`
+	State       coredata.MembershipState  `json:"state"`
+	LastSession *Session                  `json:"lastSession,omitempty"`
+	Permission  bool                      `json:"permission"`
 }
 
 func (Membership) IsNode()             {}
 func (this Membership) GetID() gid.GID { return this.ID }
-
-type MembershipEdge struct {
-	Node   *Membership    `json:"node"`
-	Cursor page.CursorKey `json:"cursor"`
-}
-
-type MembershipProfile struct {
-	ID                       gid.GID                        `json:"id"`
-	FullName                 string                         `json:"fullName"`
-	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses"`
-	Kind                     coredata.MembershipProfileKind `json:"kind"`
-	Position                 *string                        `json:"position,omitempty"`
-	ContractStartDate        *time.Time                     `json:"contractStartDate,omitempty"`
-	ContractEndDate          *time.Time                     `json:"contractEndDate,omitempty"`
-	CreatedAt                time.Time                      `json:"createdAt"`
-	UpdatedAt                time.Time                      `json:"updatedAt"`
-	Identity                 *Identity                      `json:"identity,omitempty"`
-	Organization             *Organization                  `json:"organization,omitempty"`
-	MembershipID             gid.GID                        `json:"membershipId"`
-	Permission               bool                           `json:"permission"`
-}
-
-func (MembershipProfile) IsNode()             {}
-func (this MembershipProfile) GetID() gid.GID { return this.ID }
 
 type Mutation struct {
 }
@@ -273,11 +246,11 @@ type Organization struct {
 	HeadquarterAddress *string                      `json:"headquarterAddress,omitempty"`
 	CreatedAt          time.Time                    `json:"createdAt"`
 	UpdatedAt          time.Time                    `json:"updatedAt"`
-	Members            *MembershipConnection        `json:"members,omitempty"`
+	Profiles           *ProfileConnection           `json:"profiles,omitempty"`
 	Invitations        *InvitationConnection        `json:"invitations,omitempty"`
 	SamlConfigurations *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
 	ScimConfiguration  *SCIMConfiguration           `json:"scimConfiguration,omitempty"`
-	ViewerMembership   *Membership                  `json:"viewerMembership,omitempty"`
+	Viewer             *Profile                     `json:"viewer,omitempty"`
 	Permission         bool                         `json:"permission"`
 }
 
@@ -320,6 +293,30 @@ func (this PersonalAPIKey) GetID() gid.GID { return this.ID }
 type PersonalAPIKeyEdge struct {
 	Node   *PersonalAPIKey `json:"node"`
 	Cursor page.CursorKey  `json:"cursor"`
+}
+
+type Profile struct {
+	ID                       gid.GID                        `json:"id"`
+	FullName                 string                         `json:"fullName"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 *string                        `json:"position,omitempty"`
+	ContractStartDate        *time.Time                     `json:"contractStartDate,omitempty"`
+	ContractEndDate          *time.Time                     `json:"contractEndDate,omitempty"`
+	CreatedAt                time.Time                      `json:"createdAt"`
+	UpdatedAt                time.Time                      `json:"updatedAt"`
+	Identity                 *Identity                      `json:"identity,omitempty"`
+	Organization             *Organization                  `json:"organization,omitempty"`
+	Membership               *Membership                    `json:"membership,omitempty"`
+	Permission               bool                           `json:"permission"`
+}
+
+func (Profile) IsNode()             {}
+func (this Profile) GetID() gid.GID { return this.ID }
+
+type ProfileEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Profile       `json:"node"`
 }
 
 type Query struct {
@@ -448,17 +445,17 @@ func (SCIMConfiguration) IsNode()             {}
 func (this SCIMConfiguration) GetID() gid.GID { return this.ID }
 
 type SCIMEvent struct {
-	ID           gid.GID     `json:"id"`
-	Method       string      `json:"method"`
-	Path         string      `json:"path"`
-	StatusCode   int         `json:"statusCode"`
-	RequestBody  *string     `json:"requestBody,omitempty"`
-	ResponseBody *string     `json:"responseBody,omitempty"`
-	ErrorMessage *string     `json:"errorMessage,omitempty"`
-	Membership   *Membership `json:"membership,omitempty"`
-	IPAddress    string      `json:"ipAddress"`
-	CreatedAt    time.Time   `json:"createdAt"`
-	Permission   bool        `json:"permission"`
+	ID           gid.GID   `json:"id"`
+	Method       string    `json:"method"`
+	Path         string    `json:"path"`
+	StatusCode   int       `json:"statusCode"`
+	RequestBody  *string   `json:"requestBody,omitempty"`
+	ResponseBody *string   `json:"responseBody,omitempty"`
+	ErrorMessage *string   `json:"errorMessage,omitempty"`
+	Profile      *Profile  `json:"profile,omitempty"`
+	IPAddress    string    `json:"ipAddress"`
+	CreatedAt    time.Time `json:"createdAt"`
+	Permission   bool      `json:"permission"`
 }
 
 func (SCIMEvent) IsNode()             {}
@@ -564,7 +561,7 @@ type UpdateProfileInput struct {
 }
 
 type UpdateProfilePayload struct {
-	Profile *MembershipProfile `json:"profile"`
+	Profile *Profile `json:"profile"`
 }
 
 type UpdateSAMLConfigurationInput struct {

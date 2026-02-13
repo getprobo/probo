@@ -19,9 +19,10 @@ type (
 )
 
 const (
-	MembershipProfileOrderFieldCreatedAt MembershipProfileOrderField = "CREATED_AT"
-	MembershipProfileOrderFieldFullName  MembershipProfileOrderField = "FULL_NAME"
-	MembershipProfileOrderFieldKind      MembershipProfileOrderField = "KIND"
+	MembershipProfileOrderFieldCreatedAt        MembershipProfileOrderField = "CREATED_AT"
+	MembershipProfileOrderFieldFullName         MembershipProfileOrderField = "FULL_NAME"
+	MembershipProfileOrderFieldKind             MembershipProfileOrderField = "KIND"
+	MembershipProfileOrderFieldOrganizationName MembershipProfileOrderField = "ORGANIZATION_NAME"
 )
 
 func (p MembershipProfileOrderField) Column() string {

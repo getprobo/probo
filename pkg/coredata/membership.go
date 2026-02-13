@@ -31,17 +31,16 @@ import (
 
 type (
 	Membership struct {
-		ID               gid.GID          `db:"id"`
-		IdentityID       gid.GID          `db:"identity_id"`
-		OrganizationID   gid.GID          `db:"organization_id"`
-		Role             MembershipRole   `db:"role"`
-		Source           MembershipSource `db:"source"`
-		State            MembershipState  `db:"state"`
-		FullName         string           `db:"full_name"`
-		EmailAddress     mail.Addr        `db:"email_address"`
-		OrganizationName string           `db:"organization_name"`
-		CreatedAt        time.Time        `db:"created_at"`
-		UpdatedAt        time.Time        `db:"updated_at"`
+		ID             gid.GID          `db:"id"`
+		IdentityID     gid.GID          `db:"identity_id"`
+		OrganizationID gid.GID          `db:"organization_id"`
+		Role           MembershipRole   `db:"role"`
+		Source         MembershipSource `db:"source"`
+		State          MembershipState  `db:"state"`
+		FullName       string           `db:"full_name"`
+		EmailAddress   mail.Addr        `db:"email_address"`
+		CreatedAt      time.Time        `db:"created_at"`
+		UpdatedAt      time.Time        `db:"updated_at"`
 	}
 
 	Memberships []*Membership
@@ -49,8 +48,6 @@ type (
 
 func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 	switch orderBy {
-	case MembershipOrderFieldOrganizationName:
-		return page.NewCursorKey(m.ID, m.OrganizationName)
 	case MembershipOrderFieldFullName:
 		return page.NewCursorKey(m.ID, m.FullName)
 	case MembershipOrderFieldEmailAddress:
@@ -423,93 +420,6 @@ WHERE
 		return ErrResourceNotFound
 	}
 
-	return nil
-}
-
-func (m *Memberships) LoadByIdentityID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	identityID gid.GID,
-	cursor *page.Cursor[MembershipOrderField],
-) error {
-	query := `
-WITH mbr AS (
-    SELECT
-        id,
-        identity_id,
-        organization_id,
-        role,
-        source,
-        state,
-        created_at,
-        updated_at
-    FROM
-        iam_memberships
-    WHERE
-        identity_id = @identity_id
-        AND state = 'ACTIVE'
-        AND %s
-),
-r AS (
-    SELECT
-        mbr.id,
-        mbr.identity_id,
-        mbr.organization_id,
-        mbr.role,
-        mbr.source,
-        mbr.state,
-        COALESCE(mp.full_name, i.full_name, '') as full_name,
-        i.email_address,
-        o.name as organization_name,
-        mbr.created_at,
-        mbr.updated_at
-    FROM
-        mbr
-    JOIN
-        identities i ON mbr.identity_id = i.id
-    JOIN
-        organizations o ON mbr.organization_id = o.id
-    LEFT JOIN
-        iam_membership_profiles mp ON mp.membership_id = mbr.id
-)
-SELECT
-    id,
-    identity_id,
-    organization_id,
-    role,
-    source,
-    state,
-    full_name,
-    email_address,
-    organization_name,
-    created_at,
-    updated_at
-FROM
-    r
-WHERE
-    %s
-`
-
-	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"identity_id": identityID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot query memberships: %w", err)
-	}
-
-	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Membership])
-	if err != nil {
-		return fmt.Errorf("cannot collect memberships: %w", err)
-	}
-
-	*m = memberships
 	return nil
 }
 
