@@ -843,3 +843,56 @@ func (s AccountService) CountSAMLConfigurationsForEmail(
 
 	return count, nil
 }
+
+func (s *AccountService) ListProfilesForIdentity(
+	ctx context.Context,
+	identityID gid.GID,
+	cursor *page.Cursor[coredata.MembershipProfileOrderField],
+	filter *coredata.MembershipProfileFilter,
+) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
+	var (
+		profiles = coredata.MembershipProfiles{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profiles.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identityID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load profiles: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(profiles, cursor), nil
+}
+
+func (s AccountService) CountProfiles(
+	ctx context.Context,
+	identityID gid.GID,
+	filter *coredata.MembershipProfileFilter,
+) (int, error) {
+	var (
+		count int
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			profiles := coredata.MembershipProfiles{}
+			count, err = profiles.CountByIdentityID(ctx, conn, identityID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count profiles: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return count, err
+}

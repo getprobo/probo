@@ -1002,6 +1002,41 @@ func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID)
 		ctx,
 		func(conn pg.Conn) error {
 			if err := profile.LoadByID(ctx, conn, coredata.NewScopeFromObjectID(profileID), profileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewProfileNotFoundError(profileID)
+				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
+func (s *OrganizationService) GetProfileForIdentityAndOrganization(ctx context.Context, identityID gid.GID, organizationID gid.GID) (*coredata.MembershipProfile, error) {
+	profile := &coredata.MembershipProfile{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				coredata.NewScopeFromObjectID(organizationID),
+				identityID,
+				organizationID,
+			); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewProfileNotFoundError(gid.Nil)
+				}
+
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 

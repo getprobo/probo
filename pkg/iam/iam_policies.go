@@ -90,7 +90,10 @@ var IAMSelfManageProfilePolicy = policy.NewPolicy(
 	"Self-Manage Profiles",
 
 	// Users can view their own profiles
-	policy.Allow(ActionMembershipProfileGet).
+	policy.Allow(
+		ActionMembershipProfileGet,
+		ActionMembershipProfileList,
+	).
 		WithSID("view-own-profiles").
 		When(policy.Equals("principal.id", "resource.identity_id")),
 ).

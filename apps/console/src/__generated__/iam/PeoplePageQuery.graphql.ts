@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f4e0f213a6bd3df7841650d2f57fd254>>
+ * @generated SignedSource<<53070e63046901877444d5de41cc8624>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,7 +22,7 @@ export type PeoplePageQuery$data = {
       readonly totalCount: number | null | undefined;
     };
     readonly profiles: {
-      readonly totalCount: number;
+      readonly totalCount: number | null | undefined;
     };
     readonly " $fragmentSpreads": FragmentRefs<"InvitationListFragment" | "PeopleListFragment">;
   } | {

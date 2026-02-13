@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e639ada9f797274b710cc71198ec4089>>
+ * @generated SignedSource<<d7b957d5b207e241e695d6592091dc2d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -29,7 +29,7 @@ export type MembershipsPageQuery$data = {
           readonly id: string;
           readonly membership: {
             readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
-          } | null | undefined;
+          };
           readonly organization: {
             readonly name: string;
             readonly " $fragmentSpreads": FragmentRefs<"MembershipCard_organizationFragment">;
@@ -191,20 +191,24 @@ return {
                           "selections": [
                             (v1/*: any*/),
                             {
-                              "alias": null,
-                              "args": null,
-                              "concreteType": "Membership",
-                              "kind": "LinkedField",
-                              "name": "membership",
-                              "plural": false,
-                              "selections": [
-                                {
-                                  "args": null,
-                                  "kind": "FragmentSpread",
-                                  "name": "MembershipCardFragment"
-                                }
-                              ],
-                              "storageKey": null
+                              "kind": "RequiredField",
+                              "field": {
+                                "alias": null,
+                                "args": null,
+                                "concreteType": "Membership",
+                                "kind": "LinkedField",
+                                "name": "membership",
+                                "plural": false,
+                                "selections": [
+                                  {
+                                    "args": null,
+                                    "kind": "FragmentSpread",
+                                    "name": "MembershipCardFragment"
+                                  }
+                                ],
+                                "storageKey": null
+                              },
+                              "action": "THROW"
                             },
                             {
                               "kind": "RequiredField",
@@ -530,6 +534,6 @@ return {
 };
 })();
 
-(node as any).hash = "05ac7c8fa236be3a01eeb28fc14ceb9d";
+(node as any).hash = "84f5ab240bec94caf75e9ae163117e3d";
 
 export default node;

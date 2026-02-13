@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6739397aaeb3d7890fd697ab4323736a>>
+ * @generated SignedSource<<b56389d57c3d4cb31dd873feaeff2bb3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,19 +18,20 @@ export type PeopleListItemFragment$data = {
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
   readonly createdAt: string;
+  readonly fullName: string;
   readonly id: string;
   readonly identity: {
     readonly email: string;
   };
-  readonly profile: {
-    readonly fullName: string;
+  readonly kind: ProfileKind;
+  readonly membership: {
+    readonly canUpdate: boolean;
     readonly id: string;
-    readonly kind: ProfileKind;
-    readonly position: string | null | undefined;
+    readonly role: MembershipRole;
+    readonly source: MembershipSource;
+    readonly state: MembershipState;
   };
-  readonly role: MembershipRole;
-  readonly source: MembershipSource;
-  readonly state: MembershipState;
+  readonly position: string | null | undefined;
   readonly " $fragmentType": "PeopleListItemFragment";
 };
 export type PeopleListItemFragment$key = {
@@ -57,21 +58,21 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "role",
+      "name": "fullName",
       "storageKey": null
     },
     {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "source",
+      "name": "kind",
       "storageKey": null
     },
     {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "state",
+      "name": "position",
       "storageKey": null
     },
     {
@@ -79,9 +80,9 @@ return {
       "field": {
         "alias": null,
         "args": null,
-        "concreteType": "MembershipProfile",
+        "concreteType": "Membership",
         "kind": "LinkedField",
-        "name": "profile",
+        "name": "membership",
         "plural": false,
         "selections": [
           (v0/*: any*/),
@@ -89,22 +90,35 @@ return {
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "fullName",
+            "name": "role",
             "storageKey": null
           },
           {
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "kind",
+            "name": "source",
             "storageKey": null
           },
           {
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "position",
+            "name": "state",
             "storageKey": null
+          },
+          {
+            "alias": "canUpdate",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "action",
+                "value": "iam:membership:update"
+              }
+            ],
+            "kind": "ScalarField",
+            "name": "permission",
+            "storageKey": "permission(action:\"iam:membership:update\")"
           }
         ],
         "storageKey": null
@@ -146,12 +160,12 @@ return {
         {
           "kind": "Literal",
           "name": "action",
-          "value": "iam:membership:update"
+          "value": "iam:membership-profile:update"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"iam:membership:update\")"
+      "storageKey": "permission(action:\"iam:membership-profile:update\")"
     },
     {
       "alias": "canDelete",
@@ -159,19 +173,19 @@ return {
         {
           "kind": "Literal",
           "name": "action",
-          "value": "iam:membership:delete"
+          "value": "iam:membership-profile:delete"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"iam:membership:delete\")"
+      "storageKey": "permission(action:\"iam:membership-profile:delete\")"
     }
   ],
-  "type": "Membership",
+  "type": "Profile",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "cf1683d15b13975d8f739c3a7aa38d7e";
+(node as any).hash = "5f45ee7c58d50b0a6569c3bd22ffc83f";
 
 export default node;
