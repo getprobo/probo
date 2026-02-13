@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.124.0] - 2026-02-13
+
+### Added
+
+- Add webhooks
+
 ## [0.123.3] - 2026-02-13
 
 ### Fixed
