@@ -261,6 +261,7 @@ func (s *Service) HandleAssertion(
 				*identity = coredata.Identity{
 					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 					EmailAddress:         email,
+					SAMLSubject:          &assertion.Subject.NameID.Value,
 					FullName:             fullname,
 					HashedPassword:       nil,
 					EmailAddressVerified: true,
@@ -275,7 +276,6 @@ func (s *Service) HandleAssertion(
 			} else if err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			} else {
-				identity.SAMLSubject = &assertion.Subject.NameID.Value
 				identity.EmailAddress = email
 				identity.FullName = fullname
 				identity.EmailAddressVerified = true
