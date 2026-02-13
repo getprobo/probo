@@ -21,7 +21,8 @@ CREATE TABLE webhook_configurations (
 CREATE TYPE webhook_data_status AS ENUM (
     'PENDING',
     'PROCESSING',
-    'DELIVERED'
+    'PROCESSED',
+    'FAILED'
 );
 
 CREATE TABLE webhook_data (

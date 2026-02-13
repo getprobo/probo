@@ -148,6 +148,7 @@ func (s *Sender) processWebhookData(ctx context.Context, webhookData *coredata.W
 			log.Error(err),
 			log.String("webhook_data_id", webhookData.ID.String()),
 		)
+		s.markWebhookData(ctx, webhookData, scope, coredata.WebhookDataStatusFailed)
 		return
 	}
 
@@ -155,17 +156,22 @@ func (s *Sender) processWebhookData(ctx context.Context, webhookData *coredata.W
 		s.deliverToConfiguration(ctx, webhookData, config, scope)
 	}
 
+	s.markWebhookData(ctx, webhookData, scope, coredata.WebhookDataStatusProcessed)
+}
+
+func (s *Sender) markWebhookData(ctx context.Context, webhookData *coredata.WebhookData, scope coredata.Scoper, status coredata.WebhookDataStatus) {
 	now := time.Now()
-	webhookData.Status = coredata.WebhookDataStatusDelivered
+	webhookData.Status = status
 	webhookData.ProcessedAt = &now
 
-	err = s.pg.WithConn(ctx, func(conn pg.Conn) error {
+	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		return webhookData.UpdateStatus(ctx, conn, scope)
 	})
 	if err != nil {
-		s.logger.ErrorCtx(ctx, "cannot update webhook data to delivered",
+		s.logger.ErrorCtx(ctx, "cannot update webhook data status",
 			log.Error(err),
 			log.String("webhook_data_id", webhookData.ID.String()),
+			log.String("target_status", status.String()),
 		)
 	}
 }

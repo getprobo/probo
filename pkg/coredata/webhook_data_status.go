@@ -24,7 +24,8 @@ type WebhookDataStatus string
 const (
 	WebhookDataStatusPending    WebhookDataStatus = "PENDING"
 	WebhookDataStatusProcessing WebhookDataStatus = "PROCESSING"
-	WebhookDataStatusDelivered  WebhookDataStatus = "DELIVERED"
+	WebhookDataStatusProcessed  WebhookDataStatus = "PROCESSED"
+	WebhookDataStatusFailed     WebhookDataStatus = "FAILED"
 )
 
 func (s WebhookDataStatus) String() string {
@@ -33,7 +34,7 @@ func (s WebhookDataStatus) String() string {
 
 func (s WebhookDataStatus) IsValid() bool {
 	switch s {
-	case WebhookDataStatusPending, WebhookDataStatusProcessing, WebhookDataStatusDelivered:
+	case WebhookDataStatusPending, WebhookDataStatusProcessing, WebhookDataStatusProcessed, WebhookDataStatusFailed:
 		return true
 	}
 	return false
