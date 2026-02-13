@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ff8dc842880d57321b274bff2ee91007>>
+ * @generated SignedSource<<2d667e47f47ffe754960a9336fc4b8dc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type PeopleListFragment$data = {
   readonly id: string;
-  readonly members: {
+  readonly profiles: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
@@ -33,7 +33,7 @@ import PeopleListFragment_RefetchQuery_graphql from './PeopleListFragment_Refetc
 
 const node: ReaderFragment = (function(){
 var v0 = [
-  "members"
+  "profiles"
 ],
 v1 = {
   "alias": null,
@@ -110,7 +110,7 @@ return {
     {
       "kind": "RequiredField",
       "field": {
-        "alias": "members",
+        "alias": "profiles",
         "args": [
           {
             "kind": "Variable",
@@ -118,9 +118,9 @@ return {
             "variableName": "order"
           }
         ],
-        "concreteType": "MembershipConnection",
+        "concreteType": "ProfileConnection",
         "kind": "LinkedField",
-        "name": "__PeopleListFragment_members_connection",
+        "name": "__PeopleListFragment_profiles_connection",
         "plural": false,
         "selections": [
           {
@@ -135,7 +135,7 @@ return {
             "field": {
               "alias": null,
               "args": null,
-              "concreteType": "MembershipEdge",
+              "concreteType": "ProfileEdge",
               "kind": "LinkedField",
               "name": "edges",
               "plural": true,
@@ -143,7 +143,7 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "concreteType": "Membership",
+                  "concreteType": "Profile",
                   "kind": "LinkedField",
                   "name": "node",
                   "plural": false,
@@ -239,6 +239,6 @@ return {
 };
 })();
 
-(node as any).hash = "c62c77bc2ef0e36b7eaf4553cc721e0c";
+(node as any).hash = "ee3aeca404063a0660eeb9ff27592e86";
 
 export default node;

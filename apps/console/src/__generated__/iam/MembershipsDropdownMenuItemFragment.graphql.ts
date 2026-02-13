@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e907a3f8c0610d5deed37b1a47500377>>
+ * @generated SignedSource<<fe0de6febc77244c92f8d2413bbb0ca2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,11 +16,6 @@ export type MembershipsDropdownMenuItemFragment$data = {
     readonly expiresAt: string;
     readonly id: string;
   } | null | undefined;
-  readonly organization: {
-    readonly id: string;
-    readonly logoUrl: string | null | undefined;
-    readonly name: string;
-  };
   readonly " $fragmentType": "MembershipsDropdownMenuItemFragment";
 };
 export type MembershipsDropdownMenuItemFragment$key = {
@@ -61,36 +56,6 @@ return {
         }
       ],
       "storageKey": null
-    },
-    {
-      "kind": "RequiredField",
-      "field": {
-        "alias": null,
-        "args": null,
-        "concreteType": "Organization",
-        "kind": "LinkedField",
-        "name": "organization",
-        "plural": false,
-        "selections": [
-          (v0/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "logoUrl",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "name",
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      },
-      "action": "THROW"
     }
   ],
   "type": "Membership",
@@ -98,6 +63,6 @@ return {
 };
 })();
 
-(node as any).hash = "915a6fb0071b4890010401a56f3affa6";
+(node as any).hash = "4f40e957597476f8e6179f6df68d386e";
 
 export default node;

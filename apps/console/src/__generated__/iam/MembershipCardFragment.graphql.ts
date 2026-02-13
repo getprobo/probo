@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b545f1a231e042bd94c84430f3015112>>
+ * @generated SignedSource<<f6caf8d14eaaea74987cd5f91fedaed3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,11 +15,6 @@ export type MembershipCardFragment$data = {
     readonly expiresAt: string;
     readonly id: string;
   } | null | undefined;
-  readonly organization: {
-    readonly id: string;
-    readonly logoUrl: string | null | undefined;
-    readonly name: string;
-  };
   readonly " $fragmentType": "MembershipCardFragment";
 };
 export type MembershipCardFragment$key = {
@@ -27,15 +22,7 @@ export type MembershipCardFragment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
 };
 
-const node: ReaderFragment = (function(){
-var v0 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-};
-return {
+const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
@@ -49,7 +36,13 @@ return {
       "name": "lastSession",
       "plural": false,
       "selections": [
-        (v0/*: any*/),
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "id",
+          "storageKey": null
+        },
         {
           "alias": null,
           "args": null,
@@ -59,43 +52,12 @@ return {
         }
       ],
       "storageKey": null
-    },
-    {
-      "kind": "RequiredField",
-      "field": {
-        "alias": null,
-        "args": null,
-        "concreteType": "Organization",
-        "kind": "LinkedField",
-        "name": "organization",
-        "plural": false,
-        "selections": [
-          (v0/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "name",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "logoUrl",
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      },
-      "action": "THROW"
     }
   ],
   "type": "Membership",
   "abstractKey": null
 };
-})();
 
-(node as any).hash = "5a2532aed755a94df49c2f9ce0929a1f";
+(node as any).hash = "3da5f340850d352daaa553ca7b78aa37";
 
 export default node;

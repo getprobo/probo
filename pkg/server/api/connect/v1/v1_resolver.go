@@ -23,7 +23,6 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	types1 "go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
@@ -34,8 +33,40 @@ func (r *connectorResolver) Permission(ctx context.Context, obj *types.Connector
 }
 
 // Profiles is the resolver for the profiles field.
-func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types1.ProfileOrderBy) (*types1.ProfileConnection, error) {
-	panic(fmt.Errorf("not implemented: Profiles - profiles"))
+func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ProfileConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	filter := coredata.NewMembershipProfileFilter(nil)
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldFullName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.AccountService.ListProfilesForIdentity(ctx, obj.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfileConnection(page, r, obj.ID), nil
 }
 
 // PendingInvitations is the resolver for the pendingInvitations field.
@@ -1211,8 +1242,40 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 }
 
 // Profiles is the resolver for the profiles field.
-func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types1.ProfileOrderBy) (*types1.ProfileConnection, error) {
-	panic(fmt.Errorf("not implemented: Profiles - profiles"))
+func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
+		return nil, err
+	}
+
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.ProfileConnection{
+			Resolver: r,
+			ParentID: obj.ID,
+		}, nil
+	}
+
+	filter := coredata.NewMembershipProfileFilter(nil)
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldFullName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfileConnection(page, r, obj.ID), nil
 }
 
 // Invitations is the resolver for the invitations field.
@@ -1305,21 +1368,26 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 	return types.NewSCIMConfiguration(config), nil
 }
 
-// ViewerMembership is the resolver for the viewerMembership field.
-func (r *organizationResolver) ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
+// Viewer is the resolver for the viewer field.
+func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organization) (*types.Profile, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
 	identity := authn.IdentityFromContext(ctx)
 
-	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, identity.ID, obj.ID)
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get membership for organization", log.Error(err))
+		var errNotFound *iam.ErrProfileNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewMembership(membership), nil
+	return types.NewProfile(profile), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -1372,37 +1440,95 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 
 // Identity is the resolver for the identity field.
 func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*types.Identity, error) {
-	panic(fmt.Errorf("not implemented: Identity - identity"))
+	if err := r.authorize(
+		ctx,
+		obj.ID,
+		iam.ActionMembershipProfileGet,
+		authz.WithSkipAssumptionCheck(),
+	); err != nil {
+		return nil, err
+	}
+
+	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
+	if err != nil {
+		var errNotFound *iam.ErrIdentityNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get identity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewIdentity(identity), nil
 }
 
 // Organization is the resolver for the organization field.
 func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) (*types.Organization, error) {
-	panic(fmt.Errorf("not implemented: Organization - organization"))
+	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
+	if err != nil {
+		var errNotFound *iam.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // Membership is the resolver for the membership field.
 func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*types.Membership, error) {
-	panic(fmt.Errorf("not implemented: Membership - membership"))
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, obj.Identity.ID, obj.Organization.ID)
+	if err != nil {
+		var errNotFound *iam.ErrMembershipNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get membership", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMembership(membership), nil
 }
 
 // Permission is the resolver for the permission field.
 func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, action string) (bool, error) {
-	panic(fmt.Errorf("not implemented: Permission - permission"))
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types1.ProfileConnection) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
-}
+func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.ProfileConnection) (*int, error) {
+	switch obj.Resolver.(type) {
+	case *identityResolver:
+		count, err := r.iam.AccountService.CountProfiles(ctx, obj.ParentID, coredata.NewMembershipProfileFilter(nil))
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count sprofiles", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+		return &count, nil
+	case *organizationResolver:
+		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, coredata.NewMembershipProfileFilter(nil))
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+		return &count, nil
+	}
 
-// Edges is the resolver for the edges field.
-func (r *profileConnectionResolver) Edges(ctx context.Context, obj *types1.ProfileConnection) ([]*types.ProfileEdge, error) {
-	panic(fmt.Errorf("not implemented: Edges - edges"))
-}
-
-// PageInfo is the resolver for the pageInfo field.
-func (r *profileConnectionResolver) PageInfo(ctx context.Context, obj *types1.ProfileConnection) (*types.PageInfo, error) {
-	panic(fmt.Errorf("not implemented: PageInfo - pageInfo"))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return nil, gqlutils.Internal(ctx)
 }
 
 // Node is the resolver for the node field.
@@ -1523,12 +1649,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			errOrganizationNotFound *iam.ErrOrganizationNotFound
 			errIdentityNotFound     *iam.ErrIdentityNotFound
 			errSessionNotFound      *iam.ErrSessionNotFound
+			errProfileNotFound      *iam.ErrProfileNotFound
 			errMembershipNotFound   *iam.ErrMembershipNotFound
 			errInvitationNotFound   *iam.ErrInvitationNotFound
 
 			isNotFoundErr = errors.As(err, &errOrganizationNotFound) ||
 				errors.As(err, &errIdentityNotFound) ||
 				errors.As(err, &errSessionNotFound) ||
+				errors.As(err, &errProfileNotFound) ||
 				errors.As(err, &errMembershipNotFound) ||
 				errors.As(err, &errInvitationNotFound)
 		)
@@ -1761,34 +1889,9 @@ func (r *sCIMConfigurationResolver) Permission(ctx context.Context, obj *types.S
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// Membership is the resolver for the membership field.
-func (r *sCIMEventResolver) Membership(ctx context.Context, obj *types.SCIMEvent) (*types.Membership, error) {
-	if obj.Membership == nil {
-		return nil, nil
-	}
-
-	if err := r.authorize(ctx, obj.Membership.ID, iam.ActionMembershipGet); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyIDSelected(ctx) {
-		return &types.Membership{
-			ID: obj.Membership.ID,
-		}, nil
-	}
-
-	membership, err := r.iam.GetMembership(ctx, obj.Membership.ID)
-	if err != nil {
-		var errMembershipNotFound *iam.ErrMembershipNotFound
-		if errors.As(err, &errMembershipNotFound) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get membership for scim event", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewMembership(membership), nil
+// Profile is the resolver for the profile field.
+func (r *sCIMEventResolver) Profile(ctx context.Context, obj *types.SCIMEvent) (*types.Profile, error) {
+	panic(fmt.Errorf("not implemented: Profile - profile"))
 }
 
 // Permission is the resolver for the permission field.

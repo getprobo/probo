@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1deba62d68487df7458534fef4bed9ff>>
+ * @generated SignedSource<<6ee89b2ab0c55ac9498bf9186e78ee90>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -96,10 +96,10 @@ const node: ReaderFragment = {
       "storageKey": "permission(action:\"iam:membership-profile:update\")"
     }
   ],
-  "type": "MembershipProfile",
+  "type": "Profile",
   "abstractKey": null
 };
 
-(node as any).hash = "ba9398e81e237b983ce37f05436439ee";
+(node as any).hash = "9ecc41c74271a3202bbde08b63c92b73";
 
 export default node;
