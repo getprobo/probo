@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.123.2] - 2026-02-13
+
+### Fixed
+
+- Fix SAML subject must not be updated
+- Fix SAML subject not set on first login
+
 ## [0.123.1] - 2026-02-13
 
 ### Fixed
