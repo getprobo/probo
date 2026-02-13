@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2fcd3cca1f1b02c835d906b3b2ebdcea>>
+ * @generated SignedSource<<5916f4df5b8113a300774131759cb218>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,11 +10,11 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MembershipOrderField = "CREATED_AT" | "EMAIL_ADDRESS" | "FULL_NAME" | "ORGANIZATION_NAME" | "ROLE";
 export type OrderDirection = "ASC" | "DESC";
-export type MembershipOrder = {
+export type ProfileOrderField = "CREATED_AT" | "FULL_NAME" | "KIND" | "ORGANIZATION_NAME";
+export type ProfileOrder = {
   direction: OrderDirection;
-  field: MembershipOrderField;
+  field: ProfileOrderField;
 };
 export type PeopleListFragment_RefetchQuery$variables = {
   after?: string | null | undefined;
@@ -22,7 +22,7 @@ export type PeopleListFragment_RefetchQuery$variables = {
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;
-  order?: MembershipOrder | null | undefined;
+  order?: ProfileOrder | null | undefined;
 };
 export type PeopleListFragment_RefetchQuery$data = {
   readonly node: {
@@ -193,9 +193,9 @@ return {
               {
                 "alias": null,
                 "args": (v13/*: any*/),
-                "concreteType": "MembershipConnection",
+                "concreteType": "ProfileConnection",
                 "kind": "LinkedField",
-                "name": "members",
+                "name": "profiles",
                 "plural": false,
                 "selections": [
                   {
@@ -208,7 +208,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "MembershipEdge",
+                    "concreteType": "ProfileEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -216,7 +216,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Membership",
+                        "concreteType": "Profile",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -226,29 +226,29 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "role",
+                            "name": "fullName",
                             "storageKey": null
                           },
                           {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "source",
+                            "name": "kind",
                             "storageKey": null
                           },
                           {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "state",
+                            "name": "position",
                             "storageKey": null
                           },
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "MembershipProfile",
+                            "concreteType": "Membership",
                             "kind": "LinkedField",
-                            "name": "profile",
+                            "name": "membership",
                             "plural": false,
                             "selections": [
                               (v12/*: any*/),
@@ -256,22 +256,35 @@ return {
                                 "alias": null,
                                 "args": null,
                                 "kind": "ScalarField",
-                                "name": "fullName",
+                                "name": "role",
                                 "storageKey": null
                               },
                               {
                                 "alias": null,
                                 "args": null,
                                 "kind": "ScalarField",
-                                "name": "kind",
+                                "name": "source",
                                 "storageKey": null
                               },
                               {
                                 "alias": null,
                                 "args": null,
                                 "kind": "ScalarField",
-                                "name": "position",
+                                "name": "state",
                                 "storageKey": null
+                              },
+                              {
+                                "alias": "canUpdate",
+                                "args": [
+                                  {
+                                    "kind": "Literal",
+                                    "name": "action",
+                                    "value": "iam:membership:update"
+                                  }
+                                ],
+                                "kind": "ScalarField",
+                                "name": "permission",
+                                "storageKey": "permission(action:\"iam:membership:update\")"
                               }
                             ],
                             "storageKey": null
@@ -308,12 +321,12 @@ return {
                               {
                                 "kind": "Literal",
                                 "name": "action",
-                                "value": "iam:membership:update"
+                                "value": "iam:membership-profile:update"
                               }
                             ],
                             "kind": "ScalarField",
                             "name": "permission",
-                            "storageKey": "permission(action:\"iam:membership:update\")"
+                            "storageKey": "permission(action:\"iam:membership-profile:update\")"
                           },
                           {
                             "alias": "canDelete",
@@ -321,12 +334,12 @@ return {
                               {
                                 "kind": "Literal",
                                 "name": "action",
-                                "value": "iam:membership:delete"
+                                "value": "iam:membership-profile:delete"
                               }
                             ],
                             "kind": "ScalarField",
                             "name": "permission",
-                            "storageKey": "permission(action:\"iam:membership:delete\")"
+                            "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                           },
                           (v11/*: any*/)
                         ],
@@ -403,9 +416,9 @@ return {
                   "orderBy"
                 ],
                 "handle": "connection",
-                "key": "PeopleListFragment_members",
+                "key": "PeopleListFragment_profiles",
                 "kind": "LinkedHandle",
-                "name": "members"
+                "name": "profiles"
               }
             ],
             "type": "Organization",
@@ -417,16 +430,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7b0c4eff8642cc6d595afdd01f4a643e",
+    "cacheID": "3ed525921615d7910d784222c189566a",
     "id": null,
     "metadata": {},
     "name": "PeopleListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query PeopleListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleListFragment_16fISc\n    id\n  }\n}\n\nfragment PeopleListFragment_16fISc on Organization {\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Membership {\n  id\n  role\n  source\n  state\n  profile {\n    id\n    fullName\n    kind\n    position\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n"
+    "text": "query PeopleListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ProfileOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleListFragment_16fISc\n    id\n  }\n}\n\nfragment PeopleListFragment_16fISc on Organization {\n  profiles(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  fullName\n  kind\n  position\n  membership {\n    id\n    role\n    source\n    state\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c62c77bc2ef0e36b7eaf4553cc721e0c";
+(node as any).hash = "ee3aeca404063a0660eeb9ff27592e86";
 
 export default node;

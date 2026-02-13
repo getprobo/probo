@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fa83e89c2c59e37853ab5efafb00287b>>
+ * @generated SignedSource<<d1d8e96af7def93da24f32d96697106d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -60,7 +60,7 @@ v1 = [
       {
         "alias": null,
         "args": null,
-        "concreteType": "MembershipProfile",
+        "concreteType": "Profile",
         "kind": "LinkedField",
         "name": "profile",
         "plural": false,

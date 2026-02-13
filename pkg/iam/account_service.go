@@ -384,32 +384,6 @@ func (s *AccountService) CountPendingInvitations(
 	return count, nil
 }
 
-func (s *AccountService) ListMemberships(
-	ctx context.Context,
-	identityID gid.GID,
-	cursor *page.Cursor[coredata.MembershipOrderField],
-) (*page.Page[*coredata.Membership, coredata.MembershipOrderField], error) {
-	var memberships coredata.Memberships
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := memberships.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
-			if err != nil {
-				return fmt.Errorf("cannot load memberships: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(memberships, cursor), nil
-}
-
 func (s *AccountService) CountMemberships(
 	ctx context.Context,
 	identityID gid.GID,

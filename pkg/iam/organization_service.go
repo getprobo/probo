@@ -944,35 +944,6 @@ func (s *OrganizationService) DeleteOrganization(ctx context.Context, organizati
 	)
 }
 
-func (s *OrganizationService) ListMembers(
-	ctx context.Context,
-	organizationID gid.GID,
-	cursor *page.Cursor[coredata.MembershipOrderField],
-) (*page.Page[*coredata.Membership, coredata.MembershipOrderField], error) {
-	var (
-		scope       = coredata.NewScopeFromObjectID(organizationID)
-		memberships = coredata.Memberships{}
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := memberships.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, coredata.NewMembershipFilter())
-			if err != nil {
-				return fmt.Errorf("cannot load memberships: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(memberships, cursor), nil
-}
-
 func (s *OrganizationService) UpdateProfile(ctx context.Context, req *UpdateProfileRequest) (*coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
