@@ -24,14 +24,14 @@ import { EditMemberDialog } from "../../settings/_components/EditMemberDialog";
 const fragment = graphql`
   fragment PeopleListItemFragment on Profile {
     id
+    source
+    state
     fullName
     kind
     position
     membership @required(action: THROW) {
       id
       role
-      source
-      state
       canUpdate: permission(action: "iam:membership:update")
       canDelete: permission(action: "iam:membership-profile:delete")
     }
@@ -68,7 +68,7 @@ export function MemberListItem(props: {
 
   const profile = useFragment<PeopleListItemFragment$key>(fragment, fKey);
 
-  const isInactive = profile.membership.state === "INACTIVE";
+  const isInactive = profile.state === "INACTIVE";
 
   const [removeMembership, isRemoving] = useMutationWithToasts(
     removeMemberMutation,
@@ -118,7 +118,7 @@ export function MemberListItem(props: {
         <Td>
           <div className="flex items-center gap-2">
             {profile.identity.email}
-            <Badge variant="info">{profile.membership.source}</Badge>
+            <Badge variant="info">{profile.source}</Badge>
           </div>
         </Td>
         <Td>{profile.kind}</Td>

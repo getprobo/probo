@@ -360,9 +360,9 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		if err != nil {
 			// Here session middleware already took care of expired/nil root session so we only handle membership related errors
 			var errMembershipNotFound *iam.ErrMembershipNotFound
-			var errMembershipInactive *iam.ErrMembershipInactive
+			var errUserInactive *iam.ErrUserInactive
 
-			if errors.As(err, &errMembershipNotFound) || errors.As(err, &errMembershipInactive) {
+			if errors.As(err, &errMembershipNotFound) || errors.As(err, &errUserInactive) {
 				return nil, gqlutils.Forbiddenf(ctx, "forbidden")
 			}
 
@@ -890,13 +890,13 @@ func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteM
 	)
 	if err != nil {
 		var errOrganizationNotFound *iam.ErrOrganizationNotFound
-		var errMembershipAlreadyExists *iam.ErrMembershipAlreadyExists
+		var errUserAlreadyExists *iam.ErrUserAlreadyExists
 
 		if errors.As(err, &errOrganizationNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.As(err, &errMembershipAlreadyExists) {
+		if errors.As(err, &errUserAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
@@ -994,7 +994,7 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 
 	err := r.iam.OrganizationService.RemoveMember(ctx, input.OrganizationID, input.MembershipID)
 	if err != nil {
-		var errManagedBySCIM *iam.ErrMembershipManagedBySCIM
+		var errManagedBySCIM *iam.ErrUserManagedBySCIM
 		var errLastActiveOwner *iam.ErrLastActiveOwner
 
 		if errors.As(err, &errManagedBySCIM) {
@@ -1887,11 +1887,6 @@ func (r *sCIMConfigurationResolver) Events(ctx context.Context, obj *types.SCIMC
 // Permission is the resolver for the permission field.
 func (r *sCIMConfigurationResolver) Permission(ctx context.Context, obj *types.SCIMConfiguration, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// Profile is the resolver for the profile field.
-func (r *sCIMEventResolver) Profile(ctx context.Context, obj *types.SCIMEvent) (*types.Profile, error) {
-	panic(fmt.Errorf("not implemented: Profile - profile"))
 }
 
 // Permission is the resolver for the permission field.

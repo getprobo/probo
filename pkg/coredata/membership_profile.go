@@ -34,6 +34,8 @@ type (
 		IdentityID               gid.GID               `db:"identity_id"`
 		OrganizationID           gid.GID               `db:"organization_id"`
 		EmailAddress             mail.Addr             `db:"email_address"`
+		Source                   ProfileSource         `db:"source"`
+		State                    ProfileState          `db:"state"`
 		FullName                 string                `db:"full_name"`
 		Kind                     MembershipProfileKind `db:"kind"`
 		AdditionalEmailAddresses mail.Addrs            `db:"additional_email_addresses"`
@@ -93,6 +95,8 @@ SELECT
     p.identity_id,
     p.organization_id,
     i.email_address,
+    p.source,
+    p.state,
     p.full_name,
     p.kind,
     p.additional_email_addresses,
@@ -149,6 +153,8 @@ SELECT
     p.identity_id,
     p.organization_id,
     i.email_address,
+    p.source,
+    p.state,
     p.full_name,
     p.kind,
     p.additional_email_addresses,
@@ -208,6 +214,8 @@ SELECT
     p.identity_id,
     p.organization_id,
     i.email_address,
+    p.source,
+    p.state,
     p.full_name,
     p.kind,
     p.additional_email_addresses,
@@ -257,30 +265,35 @@ func (p *MembershipProfiles) LoadByOrganizationID(
 	q := `
 WITH profiles AS (
     SELECT
-        id,
-        identity_id,
-        organization_id,
-        full_name,
-        kind,
-        additional_email_addresses,
-        position,
-        contract_start_date,
-        contract_end_date,
-        created_at,
-        updated_at
+        p.id,
+        p.identity_id,
+        p.organization_id,
+        i.email_address,
+        p.source,
+        p.state,
+        p.full_name,
+        p.kind,
+        p.additional_email_addresses,
+        p.position,
+        p.contract_start_date,
+        p.contract_end_date,
+        p.created_at,
+        p.updated_at
     FROM
-        iam_membership_profiles
+        iam_membership_profiles p
+    INNER JOIN identities i ON i.id = p.identity_id
     WHERE
-        %s
-        AND organization_id = @organization_id
-        AND %s
+        p.%s
+        AND p.organization_id = @organization_id
         AND %s
 )
 SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    i.email_address,
+    p.email_address,
+    p.source,
+    p.state,
     p.full_name,
     p.kind,
     p.additional_email_addresses,
@@ -291,7 +304,8 @@ SELECT
     p.created_at,
     p.updated_at
 FROM profiles p
-INNER JOIN identities i ON i.id = p.identity_id
+WHERE
+    %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
@@ -317,7 +331,6 @@ INNER JOIN identities i ON i.id = p.identity_id
 func (p *MembershipProfiles) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
-	scope Scoper,
 	identityID gid.GID,
 	cursor *page.Cursor[MembershipProfileOrderField],
 	filter *MembershipProfileFilter,
@@ -325,29 +338,34 @@ func (p *MembershipProfiles) LoadByIdentityID(
 	q := `
 WITH profiles AS (
     SELECT
-        id,
-        identity_id,
-        organization_id,
-        full_name,
-        kind,
-        additional_email_addresses,
-        position,
-        contract_start_date,
-        contract_end_date,
-        created_at,
-        updated_at
+        p.id,
+        p.identity_id,
+        p.organization_id,
+        i.email_address,
+        p.source,
+        p.state,
+        p.full_name,
+        p.kind,
+        p.additional_email_addresses,
+        p.position,
+        p.contract_start_date,
+        p.contract_end_date,
+        p.created_at,
+        p.updated_at
     FROM
-        iam_membership_profiles
+        iam_membership_profiles p
+    INNER JOIN identities i ON i.id = p.identity_id
     WHERE
-        %s
-        AND identity_id = @identity_id
+        p.identity_id = @identity_id
         AND %s
 )
 SELECT
     p.id,
     p.identity_id,
     p.organization_id,
-    i.email_address,
+    p.email_address,
+    p.source,
+    p.state,
     p.full_name,
     p.kind,
     p.additional_email_addresses,
@@ -358,16 +376,14 @@ SELECT
     p.created_at,
     p.updated_at
 FROM profiles p
-INNER JOIN identities i ON i.id = p.identity_id
 INNER JOIN organizations o ON o.id = p.organization_id
 WHERE
     %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"identity_id": identityID}
-	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -600,6 +616,8 @@ WITH attendees AS (
         p.identity_id,
         p.organization_id,
         i.email_address,
+        p.source,
+        p.state,
         p.full_name,
         p.kind,
         p.additional_email_addresses,
@@ -624,6 +642,8 @@ SELECT
     organization_id,
     kind,
     email_address,
+    source,
+    state,
     full_name,
     additional_email_addresses,
     position,
@@ -684,6 +704,8 @@ SELECT
     p.kind,
     p.full_name,
     i.email_address,
+    p.source,
+    p.state,
     p.additional_email_addresses,
     p.position,
     p.contract_start_date,
@@ -725,10 +747,11 @@ func (p *MembershipProfiles) CountByIdentityID(
 SELECT
     COUNT(*)
 FROM
-    iam_membership_profiles
+    iam_membership_profiles p
+INNER JOIN identities i ON i.id = p.identity_id
 WHERE
     %s
-    AND identity_id = @identity_id
+    AND p.identity_id = @identity_id
 `
 
 	q = fmt.Sprintf(q, filter.SQLFragment())
@@ -758,11 +781,12 @@ func (p *MembershipProfiles) CountByOrganizationID(
 SELECT
     COUNT(*)
 FROM
-    iam_membership_profiles
+    iam_membership_profiles p
+INNER JOIN identities i ON i.id = p.identity_id
 WHERE
-    %s
+    p.%s
     AND %s
-    AND organization_id = @organization_id
+    AND p.organization_id = @organization_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -770,6 +794,45 @@ WHERE
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot collect count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (p *MembershipProfiles) CountActiveOwnerByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(*)
+FROM
+    iam_membership_profiles p
+INNER JOIN iam_memberships m ON m.identity_id = p.identity_id AND m.organization_id = p.organization_id
+WHERE
+    %s
+    AND p.organization_id = @organization_id
+    AND p.state = @state
+    AND m.role = @role
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"state":           ProfileStateActive,
+		"role":            MembershipRoleOwner,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -793,6 +856,8 @@ INSERT INTO
         id,
         identity_id,
         organization_id,
+        source,
+        state,
         full_name,
         kind,
         additional_email_addresses,
@@ -807,6 +872,8 @@ VALUES (
     @id,
     @identity_id,
     @organization_id,
+    @source,
+    @state,
     @full_name,
     @kind,
     COALESCE(@additional_email_addresses, '{}'::CITEXT[]),
@@ -823,6 +890,8 @@ VALUES (
 		"id":                         p.ID,
 		"identity_id":                p.IdentityID,
 		"organization_id":            p.OrganizationID,
+		"source":                     p.Source,
+		"state":                      p.State,
 		"full_name":                  p.FullName,
 		"kind":                       p.Kind,
 		"additional_email_addresses": p.AdditionalEmailAddresses,
@@ -850,6 +919,8 @@ func (p *MembershipProfile) Update(
 UPDATE
     iam_membership_profiles
 SET
+    source = @source,
+    state = @state,
     full_name = @full_name,
     kind = @kind,
     additional_email_addresses = @additional_email_addresses,
@@ -866,6 +937,8 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                         p.ID,
+		"source":                     p.Source,
+		"state":                      p.State,
 		"full_name":                  p.FullName,
 		"kind":                       p.Kind,
 		"additional_email_addresses": p.AdditionalEmailAddresses,
@@ -883,6 +956,38 @@ WHERE
 
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+func (p *MembershipProfiles) ResetSCIMSources(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+UPDATE iam_membership_profiles
+SET
+    source = 'MANUAL',
+    updated_at = @updated_at
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND source = 'SCIM'
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{
+		"organization_id": organizationID,
+		"updated_at":      time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reset SCIM user sources: %w", err)
 	}
 
 	return nil

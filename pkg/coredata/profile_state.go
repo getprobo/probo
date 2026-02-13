@@ -19,18 +19,18 @@ import (
 	"fmt"
 )
 
-type MembershipState string
+type ProfileState string
 
 const (
-	MembershipStateActive   MembershipState = "ACTIVE"
-	MembershipStateInactive MembershipState = "INACTIVE"
+	ProfileStateActive   ProfileState = "ACTIVE"
+	ProfileStateInactive ProfileState = "INACTIVE"
 )
 
-func (s MembershipState) String() string {
+func (s ProfileState) String() string {
 	return string(s)
 }
 
-func (s *MembershipState) Scan(value any) error {
+func (s *ProfileState) Scan(value any) error {
 	var str string
 	switch v := value.(type) {
 	case string:
@@ -38,20 +38,20 @@ func (s *MembershipState) Scan(value any) error {
 	case []byte:
 		str = string(v)
 	default:
-		return fmt.Errorf("unsupported type for MembershipState: %T", value)
+		return fmt.Errorf("unsupported type for ProfileState: %T", value)
 	}
 
 	switch str {
 	case "ACTIVE":
-		*s = MembershipStateActive
+		*s = ProfileStateActive
 	case "INACTIVE":
-		*s = MembershipStateInactive
+		*s = ProfileStateInactive
 	default:
-		return fmt.Errorf("invalid MembershipState value: %q", str)
+		return fmt.Errorf("invalid ProfileState value: %q", str)
 	}
 	return nil
 }
 
-func (s MembershipState) Value() (driver.Value, error) {
+func (s ProfileState) Value() (driver.Value, error) {
 	return s.String(), nil
 }

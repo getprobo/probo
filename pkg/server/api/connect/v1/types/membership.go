@@ -23,7 +23,5 @@ func NewMembership(membership *coredata.Membership) *Membership {
 		ID:        membership.ID,
 		CreatedAt: membership.CreatedAt,
 		Role:      membership.Role,
-		Source:    membership.Source,
-		State:     membership.State,
 	}
 }

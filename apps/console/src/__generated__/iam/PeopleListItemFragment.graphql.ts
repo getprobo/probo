@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6e9b0a4fbf6ce65f11f2367f2ec5b6d4>>
+ * @generated SignedSource<<67410bc0aa6e9426f4534a0938429b6e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,9 +10,8 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type MembershipSource = "MANUAL" | "SAML" | "SCIM";
-export type MembershipState = "ACTIVE" | "INACTIVE";
 export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
+export type ProfileState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type PeopleListItemFragment$data = {
   readonly canUpdate: boolean;
@@ -28,10 +27,10 @@ export type PeopleListItemFragment$data = {
     readonly canUpdate: boolean;
     readonly id: string;
     readonly role: MembershipRole;
-    readonly source: MembershipSource;
-    readonly state: MembershipState;
   };
   readonly position: string | null | undefined;
+  readonly source: string;
+  readonly state: ProfileState;
   readonly " $fragmentType": "PeopleListItemFragment";
 };
 export type PeopleListItemFragment$key = {
@@ -54,6 +53,20 @@ return {
   "name": "PeopleListItemFragment",
   "selections": [
     (v0/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "source",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "state",
+      "storageKey": null
+    },
     {
       "alias": null,
       "args": null,
@@ -91,20 +104,6 @@ return {
             "args": null,
             "kind": "ScalarField",
             "name": "role",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "source",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "state",
             "storageKey": null
           },
           {
@@ -186,6 +185,6 @@ return {
 };
 })();
 
-(node as any).hash = "89702fbdf02294212269adb22efb65fe";
+(node as any).hash = "ad9ed05edf606ec084c6f53462530b8b";
 
 export default node;

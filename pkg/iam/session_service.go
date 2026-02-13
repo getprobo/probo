@@ -324,6 +324,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 		now          = time.Now()
 		rootSession  = &coredata.Session{}
 		identity     = &coredata.Identity{}
+		profile      = &coredata.MembershipProfile{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
 		scope        = coredata.NewScopeFromObjectID(organizationID)
@@ -353,16 +354,24 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
+			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(organizationID)
+				}
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				return NewUserInactiveError(profile.ID)
+			}
+
 			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
 				return fmt.Errorf("cannot load membership: %w", err)
-			}
-
-			if membership.State == coredata.MembershipStateInactive {
-				return NewMembershipInactiveError(membership.ID)
 			}
 
 			tenantID := scope.GetTenantID()
@@ -417,6 +426,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 		now          = time.Now()
 		rootSession  = &coredata.Session{}
 		identity     = &coredata.Identity{}
+		profile      = &coredata.MembershipProfile{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
 		scope        = coredata.NewScopeFromObjectID(organizationID)
@@ -446,16 +456,24 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
+			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(organizationID)
+				}
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				return NewUserInactiveError(profile.ID)
+			}
+
 			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
 				return fmt.Errorf("cannot load membership: %w", err)
-			}
-
-			if membership.State == coredata.MembershipStateInactive {
-				return NewMembershipInactiveError(membership.ID)
 			}
 
 			tenantID := scope.GetTenantID()
@@ -497,6 +515,7 @@ func (s SessionService) AssumeOrganizationSession(
 		now          = time.Now()
 		rootSession  = &coredata.Session{}
 		identity     = &coredata.Identity{}
+		profile      = &coredata.MembershipProfile{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
 		scope        = coredata.NewScopeFromObjectID(organizationID)
@@ -524,15 +543,22 @@ func (s SessionService) AssumeOrganizationSession(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(organizationID)
+				}
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				return NewUserInactiveError(profile.ID)
+			}
+
 			if err := membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
 				return fmt.Errorf("cannot load membership: %w", err)
-			}
-
-			if membership.State == coredata.MembershipStateInactive {
-				return NewMembershipInactiveError(membership.ID)
 			}
 
 			samlConfig := &coredata.SAMLConfiguration{}

@@ -181,6 +181,8 @@ type Identity implements Node {
 type Profile implements Node {
   id: ID!
   fullName: String!
+  source: String!
+  state: ProfileState!
   additionalEmailAddresses: [EmailAddr!]!
   kind: ProfileKind!
   position: String
@@ -196,6 +198,32 @@ type Profile implements Node {
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)
+}
+
+enum ProfileState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
+}
+
+enum ProfileSource
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileSource") {
+  MANUAL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceManual")
+  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSAML")
+  SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSCIM")
+}
+
+enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
+  EMPLOYEE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
+  CONTRACTOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
+  SERVICE_ACCOUNT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
+    )
 }
 
 type Organization implements Node {
@@ -243,17 +271,6 @@ type Organization implements Node {
     @session(required: PRESENT)
 }
 
-enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
-  EMPLOYEE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
-  CONTRACTOR
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
-  SERVICE_ACCOUNT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
-    )
-}
-
 enum MembershipRole
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
   OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
@@ -265,27 +282,10 @@ enum MembershipRole
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
 }
 
-enum MembershipSource
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipSource") {
-  MANUAL
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceManual")
-  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSAML")
-  SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSCIM")
-}
-
-enum MembershipState
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipState") {
-  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateActive")
-  INACTIVE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateInactive")
-}
-
 type Membership implements Node {
   id: ID!
   createdAt: Datetime!
   role: MembershipRole!
-  source: MembershipSource!
-  state: MembershipState!
 
   lastSession: Session @goField(forceResolver: true)
 
@@ -440,7 +440,7 @@ type SCIMEvent implements Node {
   requestBody: String
   responseBody: String
   errorMessage: String
-  profile: Profile @goField(forceResolver: true)
+  userName: String!
   ipAddress: String!
   createdAt: Datetime!
 

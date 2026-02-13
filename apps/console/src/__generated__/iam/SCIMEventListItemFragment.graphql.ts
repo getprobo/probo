@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6bc4cdb83f5825b5d606fe579fa8f7a8>>
+ * @generated SignedSource<<f347bcc313be984e835dd6518091a71c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,10 +16,8 @@ export type SCIMEventListItemFragment$data = {
   readonly ipAddress: string;
   readonly method: string;
   readonly path: string;
-  readonly profile: {
-    readonly fullName: string;
-  } | null | undefined;
   readonly statusCode: number;
+  readonly userName: string;
   readonly " $fragmentType": "SCIMEventListItemFragment";
 };
 export type SCIMEventListItemFragment$key = {
@@ -78,19 +76,8 @@ const node: ReaderFragment = {
     {
       "alias": null,
       "args": null,
-      "concreteType": "Profile",
-      "kind": "LinkedField",
-      "name": "profile",
-      "plural": false,
-      "selections": [
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "fullName",
-          "storageKey": null
-        }
-      ],
+      "kind": "ScalarField",
+      "name": "userName",
       "storageKey": null
     }
   ],
@@ -98,6 +85,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "b38af9ac9b660d3aab75e00e2c55dfb6";
+(node as any).hash = "9df2e986643ab90589ebc6e4631cde24";
 
 export default node;

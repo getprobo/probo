@@ -220,13 +220,11 @@ type InviteMemberPayload struct {
 }
 
 type Membership struct {
-	ID          gid.GID                   `json:"id"`
-	CreatedAt   time.Time                 `json:"createdAt"`
-	Role        coredata.MembershipRole   `json:"role"`
-	Source      coredata.MembershipSource `json:"source"`
-	State       coredata.MembershipState  `json:"state"`
-	LastSession *Session                  `json:"lastSession,omitempty"`
-	Permission  bool                      `json:"permission"`
+	ID          gid.GID                 `json:"id"`
+	CreatedAt   time.Time               `json:"createdAt"`
+	Role        coredata.MembershipRole `json:"role"`
+	LastSession *Session                `json:"lastSession,omitempty"`
+	Permission  bool                    `json:"permission"`
 }
 
 func (Membership) IsNode()             {}
@@ -298,6 +296,8 @@ type PersonalAPIKeyEdge struct {
 type Profile struct {
 	ID                       gid.GID                        `json:"id"`
 	FullName                 string                         `json:"fullName"`
+	Source                   string                         `json:"source"`
+	State                    coredata.ProfileState          `json:"state"`
 	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses"`
 	Kind                     coredata.MembershipProfileKind `json:"kind"`
 	Position                 *string                        `json:"position,omitempty"`
@@ -452,7 +452,7 @@ type SCIMEvent struct {
 	RequestBody  *string   `json:"requestBody,omitempty"`
 	ResponseBody *string   `json:"responseBody,omitempty"`
 	ErrorMessage *string   `json:"errorMessage,omitempty"`
-	Profile      *Profile  `json:"profile,omitempty"`
+	UserName     string    `json:"userName"`
 	IPAddress    string    `json:"ipAddress"`
 	CreatedAt    time.Time `json:"createdAt"`
 	Permission   bool      `json:"permission"`

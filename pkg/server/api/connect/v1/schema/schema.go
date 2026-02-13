@@ -192,8 +192,6 @@ type ComplexityRoot struct {
 		LastSession func(childComplexity int) int
 		Permission  func(childComplexity int, action string) int
 		Role        func(childComplexity int) int
-		Source      func(childComplexity int) int
-		State       func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -299,6 +297,8 @@ type ComplexityRoot struct {
 		Organization             func(childComplexity int) int
 		Permission               func(childComplexity int, action string) int
 		Position                 func(childComplexity int) int
+		Source                   func(childComplexity int) int
+		State                    func(childComplexity int) int
 		UpdatedAt                func(childComplexity int) int
 	}
 
@@ -414,10 +414,10 @@ type ComplexityRoot struct {
 		Method       func(childComplexity int) int
 		Path         func(childComplexity int) int
 		Permission   func(childComplexity int, action string) int
-		Profile      func(childComplexity int) int
 		RequestBody  func(childComplexity int) int
 		ResponseBody func(childComplexity int) int
 		StatusCode   func(childComplexity int) int
+		UserName     func(childComplexity int) int
 	}
 
 	SCIMEventConnection struct {
@@ -605,8 +605,6 @@ type SCIMConfigurationResolver interface {
 	Permission(ctx context.Context, obj *types.SCIMConfiguration, action string) (bool, error)
 }
 type SCIMEventResolver interface {
-	Profile(ctx context.Context, obj *types.SCIMEvent) (*types.Profile, error)
-
 	Permission(ctx context.Context, obj *types.SCIMEvent, action string) (bool, error)
 }
 type SCIMEventConnectionResolver interface {
@@ -1042,18 +1040,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Membership.Role(childComplexity), true
-	case "Membership.source":
-		if e.complexity.Membership.Source == nil {
-			break
-		}
-
-		return e.complexity.Membership.Source(childComplexity), true
-	case "Membership.state":
-		if e.complexity.Membership.State == nil {
-			break
-		}
-
-		return e.complexity.Membership.State(childComplexity), true
 
 	case "Mutation.acceptInvitation":
 		if e.complexity.Mutation.AcceptInvitation == nil {
@@ -1706,6 +1692,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Profile.Position(childComplexity), true
+	case "Profile.source":
+		if e.complexity.Profile.Source == nil {
+			break
+		}
+
+		return e.complexity.Profile.Source(childComplexity), true
+	case "Profile.state":
+		if e.complexity.Profile.State == nil {
+			break
+		}
+
+		return e.complexity.Profile.State(childComplexity), true
 	case "Profile.updatedAt":
 		if e.complexity.Profile.UpdatedAt == nil {
 			break
@@ -2142,12 +2140,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SCIMEvent.Permission(childComplexity, args["action"].(string)), true
-	case "SCIMEvent.profile":
-		if e.complexity.SCIMEvent.Profile == nil {
-			break
-		}
-
-		return e.complexity.SCIMEvent.Profile(childComplexity), true
 	case "SCIMEvent.requestBody":
 		if e.complexity.SCIMEvent.RequestBody == nil {
 			break
@@ -2166,6 +2158,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SCIMEvent.StatusCode(childComplexity), true
+	case "SCIMEvent.userName":
+		if e.complexity.SCIMEvent.UserName == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.UserName(childComplexity), true
 
 	case "SCIMEventConnection.edges":
 		if e.complexity.SCIMEventConnection.Edges == nil {
@@ -2683,6 +2681,8 @@ type Identity implements Node {
 type Profile implements Node {
   id: ID!
   fullName: String!
+  source: String!
+  state: ProfileState!
   additionalEmailAddresses: [EmailAddr!]!
   kind: ProfileKind!
   position: String
@@ -2698,6 +2698,32 @@ type Profile implements Node {
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)
+}
+
+enum ProfileState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
+}
+
+enum ProfileSource
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileSource") {
+  MANUAL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceManual")
+  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSAML")
+  SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSCIM")
+}
+
+enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
+  EMPLOYEE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
+  CONTRACTOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
+  SERVICE_ACCOUNT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
+    )
 }
 
 type Organization implements Node {
@@ -2745,17 +2771,6 @@ type Organization implements Node {
     @session(required: PRESENT)
 }
 
-enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
-  EMPLOYEE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
-  CONTRACTOR
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
-  SERVICE_ACCOUNT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
-    )
-}
-
 enum MembershipRole
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
   OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
@@ -2767,27 +2782,10 @@ enum MembershipRole
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
 }
 
-enum MembershipSource
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipSource") {
-  MANUAL
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceManual")
-  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSAML")
-  SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSCIM")
-}
-
-enum MembershipState
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipState") {
-  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateActive")
-  INACTIVE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateInactive")
-}
-
 type Membership implements Node {
   id: ID!
   createdAt: Datetime!
   role: MembershipRole!
-  source: MembershipSource!
-  state: MembershipState!
 
   lastSession: Session @goField(forceResolver: true)
 
@@ -2942,7 +2940,7 @@ type SCIMEvent implements Node {
   requestBody: String
   responseBody: String
   errorMessage: String
-  profile: Profile @goField(forceResolver: true)
+  userName: String!
   ipAddress: String!
   createdAt: Datetime!
 
@@ -4335,10 +4333,6 @@ func (ec *executionContext) fieldContext_AcceptInvitationPayload_membership(_ co
 				return ec.fieldContext_Membership_createdAt(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "source":
-				return ec.fieldContext_Membership_source(ctx, field)
-			case "state":
-				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -4756,10 +4750,6 @@ func (ec *executionContext) fieldContext_CreateOrganizationPayload_membership(_ 
 				return ec.fieldContext_Membership_createdAt(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "source":
-				return ec.fieldContext_Membership_source(ctx, field)
-			case "state":
-				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -6333,64 +6323,6 @@ func (ec *executionContext) fieldContext_Membership_role(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type MembershipRole does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_source(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_source,
-		func(ctx context.Context) (any, error) {
-			return obj.Source, nil
-		},
-		nil,
-		ec.marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MembershipSource does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_state(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_state,
-		func(ctx context.Context) (any, error) {
-			return obj.State, nil
-		},
-		nil,
-		ec.marshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MembershipState does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8921,6 +8853,10 @@ func (ec *executionContext) fieldContext_Organization_viewer(_ context.Context, 
 				return ec.fieldContext_Profile_id(ctx, field)
 			case "fullName":
 				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "source":
+				return ec.fieldContext_Profile_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -9086,10 +9022,6 @@ func (ec *executionContext) fieldContext_OrganizationSessionCreated_membership(_
 				return ec.fieldContext_Membership_createdAt(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "source":
-				return ec.fieldContext_Membership_source(ctx, field)
-			case "state":
-				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -9714,6 +9646,64 @@ func (ec *executionContext) fieldContext_Profile_fullName(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Profile_source(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_source,
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Profile_state(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_state,
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		ec.marshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProfileState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Profile_additionalEmailAddresses(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10063,10 +10053,6 @@ func (ec *executionContext) fieldContext_Profile_membership(_ context.Context, f
 				return ec.fieldContext_Membership_createdAt(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "source":
-				return ec.fieldContext_Membership_source(ctx, field)
-			case "state":
-				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -10297,6 +10283,10 @@ func (ec *executionContext) fieldContext_ProfileEdge_node(_ context.Context, fie
 				return ec.fieldContext_Profile_id(ctx, field)
 			case "fullName":
 				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "source":
+				return ec.fieldContext_Profile_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -12488,58 +12478,30 @@ func (ec *executionContext) fieldContext_SCIMEvent_errorMessage(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _SCIMEvent_profile(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+func (ec *executionContext) _SCIMEvent_userName(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_SCIMEvent_profile,
+		ec.fieldContext_SCIMEvent_userName,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.SCIMEvent().Profile(ctx, obj)
+			return obj.UserName, nil
 		},
 		nil,
-		ec.marshalOProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfile,
+		ec.marshalNString2string,
 		true,
-		false,
+		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_SCIMEvent_profile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SCIMEvent_userName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SCIMEvent",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Profile_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Profile_fullName(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_Profile_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_Profile_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_Profile_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_Profile_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Profile_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Profile_updatedAt(ctx, field)
-			case "identity":
-				return ec.fieldContext_Profile_identity(ctx, field)
-			case "organization":
-				return ec.fieldContext_Profile_organization(ctx, field)
-			case "membership":
-				return ec.fieldContext_Profile_membership(ctx, field)
-			case "permission":
-				return ec.fieldContext_Profile_permission(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12803,8 +12765,8 @@ func (ec *executionContext) fieldContext_SCIMEventEdge_node(_ context.Context, f
 				return ec.fieldContext_SCIMEvent_responseBody(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_SCIMEvent_errorMessage(ctx, field)
-			case "profile":
-				return ec.fieldContext_SCIMEvent_profile(ctx, field)
+			case "userName":
+				return ec.fieldContext_SCIMEvent_userName(ctx, field)
 			case "ipAddress":
 				return ec.fieldContext_SCIMEvent_ipAddress(ctx, field)
 			case "createdAt":
@@ -13585,10 +13547,6 @@ func (ec *executionContext) fieldContext_UpdateMembershipPayload_membership(_ co
 				return ec.fieldContext_Membership_createdAt(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "source":
-				return ec.fieldContext_Membership_source(ctx, field)
-			case "state":
-				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -13691,6 +13649,10 @@ func (ec *executionContext) fieldContext_UpdateProfilePayload_profile(_ context.
 				return ec.fieldContext_Profile_id(ctx, field)
 			case "fullName":
 				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "source":
+				return ec.fieldContext_Profile_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -18019,16 +17981,6 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "source":
-			out.Values[i] = ec._Membership_source(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "state":
-			out.Values[i] = ec._Membership_state(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "lastSession":
 			field := field
 
@@ -19020,6 +18972,16 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "fullName":
 			out.Values[i] = ec._Profile_fullName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "source":
+			out.Values[i] = ec._Profile_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "state":
+			out.Values[i] = ec._Profile_state(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -20471,39 +20433,11 @@ func (ec *executionContext) _SCIMEvent(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._SCIMEvent_responseBody(ctx, field, obj)
 		case "errorMessage":
 			out.Values[i] = ec._SCIMEvent_errorMessage(ctx, field, obj)
-		case "profile":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SCIMEvent_profile(ctx, field, obj)
-				return res
+		case "userName":
+			out.Values[i] = ec._SCIMEvent_userName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "ipAddress":
 			out.Values[i] = ec._SCIMEvent_ipAddress(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22073,64 +22007,6 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource(ctx context.Context, v any) (coredata.MembershipSource, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipSource) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource = map[string]coredata.MembershipSource{
-		"MANUAL": coredata.MembershipSourceManual,
-		"SAML":   coredata.MembershipSourceSAML,
-		"SCIM":   coredata.MembershipSourceSCIM,
-	}
-	marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource = map[coredata.MembershipSource]string{
-		coredata.MembershipSourceManual: "MANUAL",
-		coredata.MembershipSourceSAML:   "SAML",
-		coredata.MembershipSourceSCIM:   "SCIM",
-	}
-)
-
-func (ec *executionContext) unmarshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState(ctx context.Context, v any) (coredata.MembershipState, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipState) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState = map[string]coredata.MembershipState{
-		"ACTIVE":   coredata.MembershipStateActive,
-		"INACTIVE": coredata.MembershipStateInactive,
-	}
-	marshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState = map[coredata.MembershipState]string{
-		coredata.MembershipStateActive:   "ACTIVE",
-		coredata.MembershipStateInactive: "INACTIVE",
-	}
-)
-
 func (ec *executionContext) unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx context.Context, v any) (page.OrderDirection, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection[tmp]
@@ -22360,6 +22236,34 @@ var (
 		coredata.MembershipProfileOrderFieldCreatedAt:        "CREATED_AT",
 		coredata.MembershipProfileOrderFieldKind:             "KIND",
 		coredata.MembershipProfileOrderFieldOrganizationName: "ORGANIZATION_NAME",
+	}
+)
+
+func (ec *executionContext) unmarshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState(ctx context.Context, v any) (coredata.ProfileState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState(ctx context.Context, sel ast.SelectionSet, v coredata.ProfileState) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState = map[string]coredata.ProfileState{
+		"ACTIVE":   coredata.ProfileStateActive,
+		"INACTIVE": coredata.ProfileStateInactive,
+	}
+	marshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState = map[coredata.ProfileState]string{
+		coredata.ProfileStateActive:   "ACTIVE",
+		coredata.ProfileStateInactive: "INACTIVE",
 	}
 )
 
