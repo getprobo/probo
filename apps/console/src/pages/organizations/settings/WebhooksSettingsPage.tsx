@@ -163,12 +163,12 @@ const webhookFormSchema = z.object({
       (val) => {
         try {
           const url = new URL(val);
-          return url.protocol === "http:" || url.protocol === "https:";
+          return url.protocol === "https:";
         } catch {
           return false;
         }
       },
-      "URL must use http:// or https://",
+      "URL must use https://",
     ),
   selectedEvents: z
     .array(z.enum(WEBHOOK_EVENT_VALUES))

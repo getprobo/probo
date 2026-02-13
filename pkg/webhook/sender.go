@@ -323,7 +323,10 @@ func (s *Sender) recordEvent(
 	}
 
 	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return event.Insert(ctx, conn, scope)
+		if err := event.Insert(ctx, conn, scope); err != nil {
+			return fmt.Errorf("cannot insert webhook event: %w", err)
+		}
+		return nil
 	})
 	if err != nil {
 		s.logger.ErrorCtx(ctx, "cannot insert webhook event",

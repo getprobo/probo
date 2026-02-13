@@ -48,7 +48,7 @@ func (r *CreateWebhookConfigurationRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(r.EndpointURL, "endpoint_url", validator.Required(), validator.URL())
+	v.Check(r.EndpointURL, "endpoint_url", validator.Required(), validator.HTTPSUrl())
 
 	return v.Error()
 }
@@ -57,7 +57,7 @@ func (r *UpdateWebhookConfigurationRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.WebhookConfigurationID, "webhook_configuration_id", validator.Required(), validator.GID(coredata.WebhookConfigurationEntityType))
-	v.Check(r.EndpointURL, "endpoint_url", validator.NotEmpty(), validator.URL())
+	v.Check(r.EndpointURL, "endpoint_url", validator.NotEmpty(), validator.HTTPSUrl())
 
 	return v.Error()
 }
