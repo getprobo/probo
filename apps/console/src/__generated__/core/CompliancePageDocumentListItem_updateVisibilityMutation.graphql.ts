@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<499820c9df6a66e5a4969b593e6f257c>>
+ * @generated SignedSource<<0948c131a30705ee3921f60bbd40c3cb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,11 +14,11 @@ export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "S
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateDocumentInput = {
+  approverIds?: ReadonlyArray<string> | null | undefined;
   classification?: DocumentClassification | null | undefined;
   content?: string | null | undefined;
   documentType?: DocumentType | null | undefined;
   id: string;
-  ownerId?: string | null | undefined;
   title?: string | null | undefined;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };

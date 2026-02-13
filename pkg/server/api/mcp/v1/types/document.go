@@ -16,14 +16,15 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewDocument(d *coredata.Document) *Document {
+func NewDocument(d *coredata.Document, approverIDs []gid.GID) *Document {
 	return &Document{
 		ID:                      d.ID,
 		OrganizationID:          d.OrganizationID,
-		OwnerID:                 d.OwnerID,
+		ApproverIds:             approverIDs,
 		Title:                   d.Title,
 		DocumentType:            d.DocumentType,
 		Classification:          d.Classification,
@@ -34,10 +35,10 @@ func NewDocument(d *coredata.Document) *Document {
 	}
 }
 
-func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField]) ListDocumentsOutput {
+func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField], approverIDsMap map[gid.GID][]gid.GID) ListDocumentsOutput {
 	documents := make([]*Document, 0, len(documentPage.Data))
 	for _, d := range documentPage.Data {
-		documents = append(documents, NewDocument(d))
+		documents = append(documents, NewDocument(d, approverIDsMap[d.ID]))
 	}
 
 	var nextCursor *page.CursorKey
@@ -52,20 +53,20 @@ func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata
 	}
 }
 
-func NewAddDocumentOutput(doc *coredata.Document, docVersion *coredata.DocumentVersion) AddDocumentOutput {
+func NewAddDocumentOutput(doc *coredata.Document, docVersion *coredata.DocumentVersion, docApproverIDs []gid.GID, versionApproverIDs []gid.GID) AddDocumentOutput {
 	return AddDocumentOutput{
-		Document:        NewDocument(doc),
-		DocumentVersion: NewDocumentVersion(docVersion),
+		Document:        NewDocument(doc, docApproverIDs),
+		DocumentVersion: NewDocumentVersion(docVersion, versionApproverIDs),
 	}
 }
 
-func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
+func NewDocumentVersion(dv *coredata.DocumentVersion, approverIDs []gid.GID) *DocumentVersion {
 	return &DocumentVersion{
 		ID:             dv.ID,
 		OrganizationID: dv.OrganizationID,
 		DocumentID:     dv.DocumentID,
 		Title:          dv.Title,
-		OwnerID:        dv.OwnerID,
+		ApproverIds:    approverIDs,
 		VersionNumber:  dv.VersionNumber,
 		Classification: dv.Classification,
 		Content:        dv.Content,
@@ -77,10 +78,10 @@ func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
 	}
 }
 
-func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField]) ListDocumentVersionsOutput {
+func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField], approverIDsMap map[gid.GID][]gid.GID) ListDocumentVersionsOutput {
 	versions := make([]*DocumentVersion, 0, len(versionPage.Data))
 	for _, v := range versionPage.Data {
-		versions = append(versions, NewDocumentVersion(v))
+		versions = append(versions, NewDocumentVersion(v, approverIDsMap[v.ID]))
 	}
 
 	var nextCursor *page.CursorKey

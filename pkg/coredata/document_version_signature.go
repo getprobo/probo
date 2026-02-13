@@ -364,7 +364,7 @@ WITH sigs AS (
 	FROM
 		document_version_signatures dvs
 	INNER JOIN
-		iam_membership_profile_id p ON dvs.signed_by_profile_id = p.id
+		iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
 	WHERE
 		dvs.document_version_id = @document_version_id
 	ORDER BY
