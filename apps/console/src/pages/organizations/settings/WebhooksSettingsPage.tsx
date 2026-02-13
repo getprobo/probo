@@ -753,7 +753,13 @@ export function WebhooksSettingsPage(props: {
             icon={isDeleting ? undefined : IconTrashCan}
           >
             {isDeleting
-              ? <><Spinner size={16} /> {__("Deleting...")}</>
+              ? (
+                  <>
+                    <Spinner size={16} />
+                    {" "}
+                    {__("Deleting...")}
+                  </>
+                )
               : __("Delete")}
           </Button>
         </DialogFooter>
