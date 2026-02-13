@@ -101,7 +101,7 @@ func (s *Sender) processEvents(ctx context.Context) error {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil
 			}
-			return err
+			return fmt.Errorf("cannot claim next webhook data: %w", err)
 		}
 
 		s.processWebhookData(ctx, webhookData)
@@ -113,7 +113,7 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 
 	err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
 		if err := webhookData.LoadNextPendingForUpdate(ctx, tx); err != nil {
-			return err
+			return fmt.Errorf("cannot load next pending webhook data: %w", err)
 		}
 
 		scope := coredata.NewScopeFromObjectID(webhookData.ID)
