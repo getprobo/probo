@@ -278,6 +278,12 @@ func (s *Service) HandleAssertion(
 			} else {
 				identity.EmailAddress = email
 				identity.FullName = fullname
+
+				// Identity can exist (e.g. provisioned via SCIM) but not have a SAML subject
+				if identity.SAMLSubject == nil {
+					identity.SAMLSubject = &assertion.Subject.NameID.Value
+				}
+
 				identity.EmailAddressVerified = true
 				identity.UpdatedAt = now
 
