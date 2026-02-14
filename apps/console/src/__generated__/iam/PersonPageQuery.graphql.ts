@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a809c0ce9c8f1fdb68a0b2835be99b05>>
+ * @generated SignedSource<<2e75f19fcdaf2b78a187c33458c9cfe0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,13 +15,15 @@ export type PersonPageQuery$variables = {
 };
 export type PersonPageQuery$data = {
   readonly person: {
-    readonly __typename: "MembershipProfile";
+    readonly __typename: "Profile";
     readonly canDelete: boolean;
     readonly fullName: string;
     readonly identity: {
       readonly email: string;
     };
-    readonly membershipId: string;
+    readonly membership: {
+      readonly id: string;
+    };
     readonly " $fragmentSpreads": FragmentRefs<"PersonFormFragment">;
   } | {
     // This will never be '%other', but we need some
@@ -67,17 +69,29 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "membershipId",
+  "name": "id",
   "storageKey": null
 },
 v5 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "Membership",
+  "kind": "LinkedField",
+  "name": "membership",
+  "plural": false,
+  "selections": [
+    (v4/*: any*/)
+  ],
+  "storageKey": null
+},
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "email",
   "storageKey": null
 },
-v6 = {
+v7 = {
   "alias": "canDelete",
   "args": [
     {
@@ -89,13 +103,6 @@ v6 = {
   "kind": "ScalarField",
   "name": "permission",
   "storageKey": "permission(action:\"iam:membership-profile:delete\")"
-},
-v7 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
 };
 return {
   "fragment": {
@@ -119,7 +126,11 @@ return {
               "kind": "InlineFragment",
               "selections": [
                 (v3/*: any*/),
-                (v4/*: any*/),
+                {
+                  "kind": "RequiredField",
+                  "field": (v5/*: any*/),
+                  "action": "THROW"
+                },
                 {
                   "kind": "RequiredField",
                   "field": {
@@ -130,20 +141,20 @@ return {
                     "name": "identity",
                     "plural": false,
                     "selections": [
-                      (v5/*: any*/)
+                      (v6/*: any*/)
                     ],
                     "storageKey": null
                   },
                   "action": "THROW"
                 },
-                (v6/*: any*/),
+                (v7/*: any*/),
                 {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "PersonFormFragment"
                 }
               ],
-              "type": "MembershipProfile",
+              "type": "Profile",
               "abstractKey": null
             }
           ],
@@ -170,12 +181,12 @@ return {
         "plural": false,
         "selections": [
           (v2/*: any*/),
-          (v7/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
-              (v4/*: any*/),
+              (v5/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -184,12 +195,12 @@ return {
                 "name": "identity",
                 "plural": false,
                 "selections": [
-                  (v5/*: any*/),
-                  (v7/*: any*/)
+                  (v6/*: any*/),
+                  (v4/*: any*/)
                 ],
                 "storageKey": null
               },
-              (v6/*: any*/),
+              (v7/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -239,7 +250,7 @@ return {
                 "storageKey": "permission(action:\"iam:membership-profile:update\")"
               }
             ],
-            "type": "MembershipProfile",
+            "type": "Profile",
             "abstractKey": null
           }
         ],
@@ -248,16 +259,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f754630a84c19798f2b0611dba4c6603",
+    "cacheID": "e148eb605cc90b57c6c7772b9045217d",
     "id": null,
     "metadata": {},
     "name": "PersonPageQuery",
     "operationKind": "query",
-    "text": "query PersonPageQuery(\n  $personId: ID!\n) {\n  person: node(id: $personId) {\n    __typename\n    ... on MembershipProfile {\n      fullName\n      membershipId\n      identity {\n        email\n        id\n      }\n      canDelete: permission(action: \"iam:membership-profile:delete\")\n      ...PersonFormFragment\n    }\n    id\n  }\n}\n\nfragment PersonFormFragment on MembershipProfile {\n  id\n  fullName\n  kind\n  position\n  additionalEmailAddresses\n  contractStartDate\n  contractEndDate\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
+    "text": "query PersonPageQuery(\n  $personId: ID!\n) {\n  person: node(id: $personId) {\n    __typename\n    ... on Profile {\n      fullName\n      membership {\n        id\n      }\n      identity {\n        email\n        id\n      }\n      canDelete: permission(action: \"iam:membership-profile:delete\")\n      ...PersonFormFragment\n    }\n    id\n  }\n}\n\nfragment PersonFormFragment on Profile {\n  id\n  fullName\n  kind\n  position\n  additionalEmailAddresses\n  contractStartDate\n  contractEndDate\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d701ae3a51eb1fed62aec260f42b3c41";
+(node as any).hash = "5dce91fda9224f6f3928d4549485d3bd";
 
 export default node;

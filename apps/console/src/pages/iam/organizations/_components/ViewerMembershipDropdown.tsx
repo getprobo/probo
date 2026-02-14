@@ -14,17 +14,16 @@ import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ViewerMembershipDropdownFragment$key } from "#/__generated__/iam/ViewerMembershipDropdownFragment.graphql";
+import type { ViewerMembershipDropdownSignOutMutation } from "#/__generated__/iam/ViewerMembershipDropdownSignOutMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 export const fragment = graphql`
   fragment ViewerMembershipDropdownFragment on Organization {
-    viewerMembership @required(action: THROW) {
+    viewer @required(action: THROW) {
+      fullName
       identity @required(action: THROW) {
         email
         canListAPIKeys: permission(action: "iam:personal-api-key:list")
-      }
-      profile @required(action: THROW) {
-        fullName
       }
     }
   }
@@ -48,12 +47,12 @@ export function ViewerMembershipDropdown(props: {
   const { toast } = useToast();
 
   const {
-    viewerMembership: {
+    viewer: {
+      fullName,
       identity: { canListAPIKeys, email },
-      profile: { fullName },
     },
   } = useFragment<ViewerMembershipDropdownFragment$key>(fragment, fKey);
-  const [signOut] = useMutation(signOutMutation);
+  const [signOut] = useMutation<ViewerMembershipDropdownSignOutMutation>(signOutMutation);
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
     e.preventDefault();

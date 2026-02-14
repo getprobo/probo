@@ -13,6 +13,7 @@ import { useFragment } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
+import type { MembershipCard_organizationFragment$key } from "#/__generated__/iam/MembershipCard_organizationFragment.graphql";
 import type { MembershipCardFragment$key } from "#/__generated__/iam/MembershipCardFragment.graphql";
 
 const fragment = graphql`
@@ -21,25 +22,33 @@ const fragment = graphql`
       id
       expiresAt
     }
-    organization @required(action: THROW) {
-      id
-      name
-      logoUrl
-    }
+  }
+`;
+
+const organizationFragment = graphql`
+  fragment MembershipCard_organizationFragment on Organization {
+    id
+    name
+    logoUrl
   }
 `;
 
 interface MembershipCardProps {
   fKey: MembershipCardFragment$key;
+  organizationFragmentRef: MembershipCard_organizationFragment$key;
 }
 
 export function MembershipCard(props: MembershipCardProps) {
-  const { fKey } = props;
+  const { fKey, organizationFragmentRef } = props;
   const { __ } = useTranslate();
 
-  const { lastSession, organization } = useFragment<MembershipCardFragment$key>(
+  const { lastSession } = useFragment<MembershipCardFragment$key>(
     fragment,
     fKey,
+  );
+  const organization = useFragment<MembershipCard_organizationFragment$key>(
+    organizationFragment,
+    organizationFragmentRef,
   );
   const isExpired
     = lastSession && parseDate(lastSession.expiresAt) < new Date();

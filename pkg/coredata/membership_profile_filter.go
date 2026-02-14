@@ -18,12 +18,16 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
 	MembershipProfileFilter struct {
 		excludeContractEnded *bool
 		currentDate          time.Time
+		email                *mail.Addr
+		state                *ProfileState
+		source               *ProfileSource
 	}
 )
 
@@ -34,20 +38,72 @@ func NewMembershipProfileFilter(excludeContractEnded *bool) *MembershipProfileFi
 	}
 }
 
+func (f *MembershipProfileFilter) WithEmail(email *mail.Addr) *MembershipProfileFilter {
+	f.email = email
+	return f
+}
+
+func (f *MembershipProfileFilter) Email() *mail.Addr {
+	return f.email
+}
+
+func (f *MembershipProfileFilter) WithState(state ProfileState) *MembershipProfileFilter {
+	f.state = &state
+	return f
+}
+
+func (f *MembershipProfileFilter) State() *ProfileState {
+	return f.state
+}
+
+func (f *MembershipProfileFilter) WithSource(source ProfileSource) *MembershipProfileFilter {
+	f.source = &source
+	return f
+}
+
+func (f *MembershipProfileFilter) Source() *ProfileSource {
+	return f.source
+}
+
 func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
+		"filter_email":           f.email,
 		"exclude_contract_ended": f.excludeContractEnded,
 		"current_date":           f.currentDate,
+		"filter_state":           f.state,
+		"filter_source":          f.source,
 	}
 }
 
 func (f *MembershipProfileFilter) SQLFragment() string {
 	return `
 (
+	CASE
+		WHEN @filter_email::text IS NOT NULL THEN
+			i.email_address = @filter_email::text
+		ELSE TRUE
+	END
+)
+AND (
     CASE
         WHEN @exclude_contract_ended::boolean IS NOT NULL AND @exclude_contract_ended::boolean = true THEN
-            (contract_end_date IS NULL OR contract_end_date >= @current_date::date)
+            (p.contract_end_date IS NULL OR p.contract_end_date >= @current_date::date)
         ELSE TRUE
     END
-)`
+)
+AND (
+	CASE
+		WHEN @filter_state::text IS NOT NULL THEN
+			p.state = @filter_state::membership_state
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_source::text IS NOT NULL THEN
+			p.source = @filter_source::text
+		ELSE TRUE
+	END
+)
+`
 }

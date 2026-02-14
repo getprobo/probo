@@ -14,12 +14,60 @@
 
 package types
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
+)
 
-func NewMembershipProfile(profile *coredata.MembershipProfile) *MembershipProfile {
-	return &MembershipProfile{
+type (
+	ProfileOrderBy OrderBy[coredata.MembershipProfileOrderField]
+
+	ProfileConnection struct {
+		TotalCount int
+		Edges      []*ProfileEdge
+		PageInfo   PageInfo
+
+		Resolver any
+		ParentID gid.GID
+	}
+)
+
+func NewProfileConnection(
+	p *page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField],
+	resolver any,
+	parentID gid.GID,
+) *ProfileConnection {
+	edges := make([]*ProfileEdge, len(p.Data))
+	for i, profile := range p.Data {
+		edges[i] = NewProfileEdge(profile, p.Cursor.OrderBy.Field)
+	}
+
+	return &ProfileConnection{
+		Edges:    edges,
+		PageInfo: *NewPageInfo(p),
+
+		Resolver: resolver,
+		ParentID: parentID,
+	}
+}
+
+func NewProfileEdge(
+	profile *coredata.MembershipProfile,
+	orderField coredata.MembershipProfileOrderField,
+) *ProfileEdge {
+	return &ProfileEdge{
+		Node:   NewProfile(profile),
+		Cursor: profile.CursorKey(orderField),
+	}
+}
+
+func NewProfile(profile *coredata.MembershipProfile) *Profile {
+	return &Profile{
 		ID:                       profile.ID,
 		FullName:                 profile.FullName,
+		Source:                   profile.Source.String(),
+		State:                    profile.State,
 		AdditionalEmailAddresses: profile.AdditionalEmailAddresses,
 		Kind:                     profile.Kind,
 		Position:                 profile.Position,
@@ -27,7 +75,6 @@ func NewMembershipProfile(profile *coredata.MembershipProfile) *MembershipProfil
 		ContractEndDate:          profile.ContractEndDate,
 		CreatedAt:                profile.CreatedAt,
 		UpdatedAt:                profile.UpdatedAt,
-		MembershipID:             profile.MembershipID,
 		Identity: &Identity{
 			ID: profile.IdentityID,
 		},

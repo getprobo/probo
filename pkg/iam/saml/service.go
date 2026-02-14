@@ -178,6 +178,7 @@ func (s *Service) HandleAssertion(
 	var (
 		now        = time.Now()
 		identity   = &coredata.Identity{}
+		profile    = &coredata.MembershipProfile{}
 		membership = &coredata.Membership{}
 	)
 
@@ -289,24 +290,54 @@ func (s *Service) HandleAssertion(
 
 			scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-			err = membership.LoadByIdentityAndOrg(ctx, tx, scope, identity.ID, config.OrganizationID)
-			if err != nil && err != coredata.ErrResourceNotFound {
-				return fmt.Errorf("cannot load membership: %w", err)
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				scope,
+				identity.ID,
+				config.OrganizationID,
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load profile: %w", err)
+				}
+
+				profile = &coredata.MembershipProfile{
+					ID:             gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
+					IdentityID:     identity.ID,
+					OrganizationID: config.OrganizationID,
+					Source:         coredata.ProfileSourceSAML,
+					State:          coredata.ProfileStateActive,
+					FullName:       fullname,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				err = profile.Insert(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("cannot insert membership profile: %w", err)
+				}
+			} else {
+				if profile.State == coredata.ProfileStateInactive {
+					return NewUserInactiveError(membership.ID)
+				}
 			}
 
-			if membership.ID != gid.Nil && membership.State == coredata.MembershipStateInactive {
-				return NewMembershipInactiveError(membership.ID)
-			}
+			if err := membership.LoadByIdentityAndOrg(
+				ctx,
+				tx,
+				scope,
+				identity.ID,
+				config.OrganizationID,
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
 
-			isMember := membership.ID != gid.Nil
-			if !isMember {
 				membership = &coredata.Membership{
 					ID:             gid.New(config.ID.TenantID(), coredata.MembershipEntityType),
 					IdentityID:     identity.ID,
 					OrganizationID: config.OrganizationID,
 					Role:           coredata.MembershipRoleEmployee,
-					Source:         coredata.MembershipSourceSAML,
-					State:          coredata.MembershipStateActive,
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
@@ -314,21 +345,6 @@ func (s *Service) HandleAssertion(
 				err = membership.Insert(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot insert membership: %w", err)
-				}
-
-				membershipProfile := &coredata.MembershipProfile{
-					ID:             gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
-					IdentityID:     identity.ID,
-					OrganizationID: config.OrganizationID,
-					MembershipID:   membership.ID,
-					FullName:       fullname,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				err = membershipProfile.Insert(ctx, tx)
-				if err != nil {
-					return fmt.Errorf("cannot insert membership profile: %w", err)
 				}
 
 				// Expire all pending invitations for email in organization
@@ -346,39 +362,25 @@ func (s *Service) HandleAssertion(
 				}
 			}
 
-			if membership.Source != coredata.MembershipSourceSCIM {
-				needsUpdate := false
+			if profile.Source != coredata.ProfileSourceSCIM {
+				profile.FullName = fullname
+				profile.UpdatedAt = now
+				if profile.Source == coredata.ProfileSourceManual {
+					profile.Source = coredata.ProfileSourceSAML
+				}
+				err = profile.Update(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot update profile: %w", err)
+				}
 
 				if role != nil {
 					membership.Role = *role
 					membership.UpdatedAt = now
-					needsUpdate = true
-				}
 
-				if membership.Source == coredata.MembershipSourceManual {
-					membership.Source = coredata.MembershipSourceSAML
-					membership.UpdatedAt = now
-					needsUpdate = true
-				}
-
-				if needsUpdate {
 					err = membership.Update(ctx, tx, scope)
 					if err != nil {
 						return fmt.Errorf("cannot update membership: %w", err)
 					}
-				}
-
-				memberProfile := &coredata.MembershipProfile{}
-				err = memberProfile.LoadByMembershipID(ctx, tx, scope, membership.ID)
-				if err != nil {
-					return fmt.Errorf("cannot load membership profile: %w", err)
-				}
-
-				memberProfile.FullName = fullname
-				memberProfile.UpdatedAt = now
-				err = memberProfile.Update(ctx, tx, scope)
-				if err != nil {
-					return fmt.Errorf("cannot update membership profile: %w", err)
 				}
 			}
 

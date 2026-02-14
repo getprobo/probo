@@ -188,6 +188,7 @@ func (s *AccountService) AcceptInvitation(
 ) (*coredata.Invitation, *coredata.Membership, error) {
 	var (
 		now        = time.Now()
+		profile    = &coredata.MembershipProfile{}
 		membership = &coredata.Membership{}
 		invitation = &coredata.Invitation{}
 	)
@@ -228,48 +229,24 @@ func (s *AccountService) AcceptInvitation(
 			tenantID := invitation.OrganizationID.TenantID()
 			scope := coredata.NewScope(invitation.OrganizationID.TenantID())
 
-			existingMembership := &coredata.Membership{}
-			if err := existingMembership.LoadByIdentityAndOrg(
+			existingProfile := &coredata.MembershipProfile{}
+			if err := existingProfile.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				tx,
 				scope,
 				identityID,
 				invitation.OrganizationID,
-			); err != nil && err != coredata.ErrResourceNotFound {
-				return fmt.Errorf("cannot load existing membership: %w", err)
-			}
-
-			if existingMembership.ID != gid.Nil && existingMembership.State == coredata.MembershipStateInactive {
-				existingMembership.State = coredata.MembershipStateActive
-				existingMembership.Role = invitation.Role
-				existingMembership.UpdatedAt = now
-
-				if err := existingMembership.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot reactivate membership: %w", err)
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load existing profile: %w", err)
 				}
 
-				membership = existingMembership
-			} else {
-				membership = &coredata.Membership{
-					ID:             gid.New(tenantID, coredata.MembershipEntityType),
-					IdentityID:     identityID,
-					OrganizationID: invitation.OrganizationID,
-					Role:           invitation.Role,
-					Source:         coredata.MembershipSourceManual,
-					State:          coredata.MembershipStateActive,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				if err := membership.Insert(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot create membership: %w", err)
-				}
-
-				profile := &coredata.MembershipProfile{
+				profile = &coredata.MembershipProfile{
 					ID:             gid.New(tenantID, coredata.MembershipProfileEntityType),
 					IdentityID:     identity.ID,
 					OrganizationID: invitation.OrganizationID,
-					MembershipID:   membership.ID,
+					Source:         coredata.ProfileSourceManual,
+					State:          coredata.ProfileStateActive,
 					FullName:       identity.FullName,
 					CreatedAt:      now,
 					UpdatedAt:      now,
@@ -278,6 +255,51 @@ func (s *AccountService) AcceptInvitation(
 				if err := profile.Insert(ctx, tx); err != nil {
 					return fmt.Errorf("cannot insert profile: %w", err)
 				}
+			} else {
+				if existingProfile.State == coredata.ProfileStateInactive {
+					existingProfile.State = coredata.ProfileStateActive
+
+					if err := existingProfile.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot reactivate profile: %w", err)
+					}
+				}
+
+				profile = existingProfile
+			}
+
+			existingMembership := &coredata.Membership{}
+			if err := existingMembership.LoadByIdentityAndOrg(
+				ctx,
+				tx,
+				scope,
+				identityID,
+				invitation.OrganizationID,
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load existing membership: %w", err)
+				}
+
+				membership = &coredata.Membership{
+					ID:             gid.New(tenantID, coredata.MembershipEntityType),
+					IdentityID:     identityID,
+					OrganizationID: invitation.OrganizationID,
+					Role:           invitation.Role,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if err := membership.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot create membership: %w", err)
+				}
+			} else {
+				existingMembership.Role = invitation.Role
+				existingMembership.UpdatedAt = now
+
+				if err := existingMembership.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot assign membership role: %w", err)
+				}
+
+				membership = existingMembership
 			}
 
 			invitation.AcceptedAt = &now
@@ -378,58 +400,6 @@ func (s *AccountService) CountPendingInvitations(
 			return nil
 		},
 	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
-func (s *AccountService) ListMemberships(
-	ctx context.Context,
-	identityID gid.GID,
-	cursor *page.Cursor[coredata.MembershipOrderField],
-) (*page.Page[*coredata.Membership, coredata.MembershipOrderField], error) {
-	var memberships coredata.Memberships
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := memberships.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
-			if err != nil {
-				return fmt.Errorf("cannot load memberships: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(memberships, cursor), nil
-}
-
-func (s *AccountService) CountMemberships(
-	ctx context.Context,
-	identityID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) (err error) {
-			memberships := coredata.Memberships{}
-			count, err = memberships.CountByIdentityID(ctx, conn, identityID)
-			if err != nil {
-				return fmt.Errorf("cannot count memberships: %w", err)
-			}
-
-			return nil
-		},
-	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -820,45 +790,6 @@ func (s AccountService) GetMembershipForOrganization(
 	return membership, nil
 }
 
-func (s AccountService) GetProfileForMembership(ctx context.Context, membershipID gid.GID) (*coredata.MembershipProfile, error) {
-	var (
-		scope   = coredata.NewScopeFromObjectID(membershipID)
-		profile = &coredata.MembershipProfile{}
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			membership := &coredata.Membership{}
-			err := membership.LoadByID(ctx, conn, scope, membershipID)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewMembershipNotFoundError(membershipID)
-				}
-
-				return fmt.Errorf("cannot load membership: %w", err)
-			}
-
-			err = profile.LoadByMembershipID(ctx, conn, scope, membershipID)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewProfileNotFoundError(membershipID)
-				}
-
-				return fmt.Errorf("cannot load membership profile: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return profile, nil
-}
-
 func (s AccountService) ListSAMLConfigurationsForEmail(
 	ctx context.Context,
 	email mail.Addr,
@@ -908,4 +839,57 @@ func (s AccountService) CountSAMLConfigurationsForEmail(
 	}
 
 	return count, nil
+}
+
+func (s *AccountService) ListProfilesForIdentity(
+	ctx context.Context,
+	identityID gid.GID,
+	cursor *page.Cursor[coredata.MembershipProfileOrderField],
+	filter *coredata.MembershipProfileFilter,
+) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
+	var (
+		profiles = coredata.MembershipProfiles{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profiles.LoadByIdentityID(ctx, conn, identityID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load profiles: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(profiles, cursor), nil
+}
+
+func (s AccountService) CountProfiles(
+	ctx context.Context,
+	identityID gid.GID,
+	filter *coredata.MembershipProfileFilter,
+) (int, error) {
+	var (
+		count int
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			profiles := coredata.MembershipProfiles{}
+			count, err = profiles.CountByIdentityID(ctx, conn, identityID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count profiles: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return count, err
 }

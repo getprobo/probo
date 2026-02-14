@@ -13,7 +13,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const fragment = graphql`
-  fragment PersonFormFragment on MembershipProfile {
+  fragment PersonFormFragment on Profile {
     id
     fullName
     kind

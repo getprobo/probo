@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6739397aaeb3d7890fd697ab4323736a>>
+ * @generated SignedSource<<67410bc0aa6e9426f4534a0938429b6e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,27 +10,27 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type MembershipSource = "MANUAL" | "SAML" | "SCIM";
-export type MembershipState = "ACTIVE" | "INACTIVE";
 export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
+export type ProfileState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type PeopleListItemFragment$data = {
-  readonly canDelete: boolean;
   readonly canUpdate: boolean;
   readonly createdAt: string;
+  readonly fullName: string;
   readonly id: string;
   readonly identity: {
     readonly email: string;
   };
-  readonly profile: {
-    readonly fullName: string;
+  readonly kind: ProfileKind;
+  readonly membership: {
+    readonly canDelete: boolean;
+    readonly canUpdate: boolean;
     readonly id: string;
-    readonly kind: ProfileKind;
-    readonly position: string | null | undefined;
+    readonly role: MembershipRole;
   };
-  readonly role: MembershipRole;
-  readonly source: MembershipSource;
-  readonly state: MembershipState;
+  readonly position: string | null | undefined;
+  readonly source: string;
+  readonly state: ProfileState;
   readonly " $fragmentType": "PeopleListItemFragment";
 };
 export type PeopleListItemFragment$key = {
@@ -57,13 +57,6 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "role",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "source",
       "storageKey": null
     },
@@ -75,13 +68,34 @@ return {
       "storageKey": null
     },
     {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "fullName",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "kind",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "position",
+      "storageKey": null
+    },
+    {
       "kind": "RequiredField",
       "field": {
         "alias": null,
         "args": null,
-        "concreteType": "MembershipProfile",
+        "concreteType": "Membership",
         "kind": "LinkedField",
-        "name": "profile",
+        "name": "membership",
         "plural": false,
         "selections": [
           (v0/*: any*/),
@@ -89,22 +103,34 @@ return {
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "fullName",
+            "name": "role",
             "storageKey": null
           },
           {
-            "alias": null,
-            "args": null,
+            "alias": "canUpdate",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "action",
+                "value": "iam:membership:update"
+              }
+            ],
             "kind": "ScalarField",
-            "name": "kind",
-            "storageKey": null
+            "name": "permission",
+            "storageKey": "permission(action:\"iam:membership:update\")"
           },
           {
-            "alias": null,
-            "args": null,
+            "alias": "canDelete",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "action",
+                "value": "iam:membership-profile:delete"
+              }
+            ],
             "kind": "ScalarField",
-            "name": "position",
-            "storageKey": null
+            "name": "permission",
+            "storageKey": "permission(action:\"iam:membership-profile:delete\")"
           }
         ],
         "storageKey": null
@@ -146,32 +172,19 @@ return {
         {
           "kind": "Literal",
           "name": "action",
-          "value": "iam:membership:update"
+          "value": "iam:membership-profile:update"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"iam:membership:update\")"
-    },
-    {
-      "alias": "canDelete",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "iam:membership:delete"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"iam:membership:delete\")"
+      "storageKey": "permission(action:\"iam:membership-profile:update\")"
     }
   ],
-  "type": "Membership",
+  "type": "Profile",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "cf1683d15b13975d8f739c3a7aa38d7e";
+(node as any).hash = "ad9ed05edf606ec084c6f53462530b8b";
 
 export default node;

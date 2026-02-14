@@ -8,19 +8,13 @@ import type { SCIMEventListItemFragment$key } from "#/__generated__/iam/SCIMEven
 
 const SCIMEventListItemFragment = graphql`
   fragment SCIMEventListItemFragment on SCIMEvent {
-    id
     method
     path
     statusCode
     errorMessage
     ipAddress
     createdAt
-    membership {
-      id
-      profile {
-        fullName
-      }
-    }
+    userName
   }
 `;
 
@@ -93,7 +87,7 @@ export function SCIMEventListItem(props: {
               <div className="flex gap-8 text-sm">
                 <div>
                   <span className="text-txt-secondary">User: </span>
-                  <span>{event.membership?.profile?.fullName || "-"}</span>
+                  <span>{event.userName || "-"}</span>
                 </div>
                 <div>
                   <span className="text-txt-secondary">IP Address: </span>

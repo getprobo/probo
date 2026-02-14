@@ -39,7 +39,7 @@ type (
 		ResponseBody        *string   `db:"response_body"`
 		StatusCode          int       `db:"status_code"`
 		ErrorMessage        *string   `db:"error_message"`
-		MembershipID        *gid.GID  `db:"membership_id"`
+		UserName            string    `db:"user_name"`
 		IPAddress           net.IP    `db:"ip_address"`
 		CreatedAt           time.Time `db:"created_at"`
 	}
@@ -87,7 +87,7 @@ SELECT
     response_body,
     status_code,
     error_message,
-    membership_id,
+    user_name,
     ip_address,
     created_at
 FROM
@@ -139,7 +139,7 @@ INSERT INTO iam_scim_events (
     response_body,
     status_code,
     error_message,
-    membership_id,
+    user_name,
     ip_address,
     created_at
 ) VALUES (
@@ -153,7 +153,7 @@ INSERT INTO iam_scim_events (
     @response_body,
     @status_code,
     @error_message,
-    @membership_id,
+    @user_name,
     @ip_address,
     @created_at
 )
@@ -170,7 +170,7 @@ INSERT INTO iam_scim_events (
 		"response_body":         s.ResponseBody,
 		"status_code":           s.StatusCode,
 		"error_message":         s.ErrorMessage,
-		"membership_id":         s.MembershipID,
+		"user_name":             s.UserName,
 		"ip_address":            s.IPAddress,
 		"created_at":            s.CreatedAt,
 	}
@@ -201,7 +201,7 @@ SELECT
     response_body,
     status_code,
     error_message,
-    membership_id,
+    user_name,
     ip_address,
     created_at
 FROM
@@ -281,7 +281,7 @@ SELECT
     response_body,
     status_code,
     error_message,
-    membership_id,
+    user_name,
     ip_address,
     created_at
 FROM
