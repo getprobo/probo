@@ -3716,8 +3716,8 @@ func (r *mutationResolver) UpdateWebhookSubscription(ctx context.Context, input 
 		ctx,
 		probo.UpdateWebhookSubscriptionRequest{
 			WebhookSubscriptionID: input.ID,
-			EndpointURL:            input.EndpointURL,
-			SelectedEvents:         input.SelectedEvents,
+			EndpointURL:           input.EndpointURL,
+			SelectedEvents:        input.SelectedEvents,
 		},
 	)
 	if err != nil {
@@ -8559,6 +8559,23 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 	}, nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookEventConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionGet); err != nil {
+		return 0, err
+	}
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count webhook events", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *webhookSubscriptionResolver) Organization(ctx context.Context, obj *types.WebhookSubscription) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -8652,23 +8669,6 @@ func (r *webhookSubscriptionConnectionResolver) TotalCount(ctx context.Context, 
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver for webhook subscription connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 	return 0, gqlutils.Internal(ctx)
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookEventConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionGet); err != nil {
-		return 0, err
-	}
-
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-	count, err := prb.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, obj.ParentID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count webhook events", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
-	}
-
-	return count, nil
 }
 
 // ApplicabilityStatement returns schema.ApplicabilityStatementResolver implementation.
@@ -8973,6 +8973,11 @@ func (r *Resolver) VendorService() schema.VendorServiceResolver { return &vendor
 // Viewer returns schema.ViewerResolver implementation.
 func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 
+// WebhookEventConnection returns schema.WebhookEventConnectionResolver implementation.
+func (r *Resolver) WebhookEventConnection() schema.WebhookEventConnectionResolver {
+	return &webhookEventConnectionResolver{r}
+}
+
 // WebhookSubscription returns schema.WebhookSubscriptionResolver implementation.
 func (r *Resolver) WebhookSubscription() schema.WebhookSubscriptionResolver {
 	return &webhookSubscriptionResolver{r}
@@ -8981,11 +8986,6 @@ func (r *Resolver) WebhookSubscription() schema.WebhookSubscriptionResolver {
 // WebhookSubscriptionConnection returns schema.WebhookSubscriptionConnectionResolver implementation.
 func (r *Resolver) WebhookSubscriptionConnection() schema.WebhookSubscriptionConnectionResolver {
 	return &webhookSubscriptionConnectionResolver{r}
-}
-
-// WebhookEventConnection returns schema.WebhookEventConnectionResolver implementation.
-func (r *Resolver) WebhookEventConnection() schema.WebhookEventConnectionResolver {
-	return &webhookEventConnectionResolver{r}
 }
 
 type applicabilityStatementResolver struct{ *Resolver }
@@ -9060,6 +9060,6 @@ type vendorDataPrivacyAgreementResolver struct{ *Resolver }
 type vendorRiskAssessmentResolver struct{ *Resolver }
 type vendorServiceResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
+type webhookEventConnectionResolver struct{ *Resolver }
 type webhookSubscriptionResolver struct{ *Resolver }
 type webhookSubscriptionConnectionResolver struct{ *Resolver }
-type webhookEventConnectionResolver struct{ *Resolver }
