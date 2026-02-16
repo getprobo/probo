@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.124.2] - 2026-02-16
+
+### Fixed
+
+- Display control description
+- Change download button text while loading in compliance page
+
 ## [0.124.1] - 2026-02-16
 
 ### Fixed
