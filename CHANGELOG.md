@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.125.0] - 2026-02-16
+
+### Added
+
+- Add delete risks to mcp
+- Add meetings to mcp
+
 ## [0.124.3] - 2026-02-16
 
 ### Fixed
