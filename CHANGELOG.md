@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.124.3] - 2026-02-16
+
+### Fixed
+
+- Fix missing risk validations
+
 ## [0.124.2] - 2026-02-16
 
 ### Fixed
