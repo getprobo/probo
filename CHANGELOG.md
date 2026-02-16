@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.124.1] - 2026-02-16
+
+### Fixed
+
+- Fix control order in SOA
+- Fix saml subject not populated
+
 ## [0.124.0] - 2026-02-13
 
 ### Added
