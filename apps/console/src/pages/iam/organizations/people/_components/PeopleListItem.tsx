@@ -1,25 +1,25 @@
-import { sprintf } from "@probo/helpers";
+import { getAssignableRoles, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
   Button,
-  IconPencil,
   IconTrashCan,
+  Option,
+  Select,
   Spinner,
   Td,
   Tr,
   useConfirm,
 } from "@probo/ui";
 import { clsx } from "clsx";
-import { useState } from "react";
+import { use } from "react";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
 import type { PeopleListItemFragment$key } from "#/__generated__/iam/PeopleListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-
-import { EditMemberDialog } from "../../settings/_components/EditMemberDialog";
+import { CurrentUser } from "#/providers/CurrentUser";
 
 const fragment = graphql`
   fragment PeopleListItemFragment on Profile {
@@ -43,18 +43,29 @@ const fragment = graphql`
   }
 `;
 
-const removeMemberMutation = graphql`
-  mutation PeopleListItem_removeMutation(
-    $input: RemoveMemberInput!
-    $connections: [ID!]!
-  ) {
-    removeMember(input: $input) {
-      deletedMembershipId @deleteEdge(connections: $connections)
+const updateRoleMutation = graphql`
+  mutation PeopleListItem_updateRoleMutation($input: UpdateMembershipInput!) {
+    updateMembership(input: $input) {
+      membership {
+        id
+        role
+      }
     }
   }
 `;
 
-export function MemberListItem(props: {
+const removeUserMutation = graphql`
+  mutation PeopleListItem_removeMutation(
+    $input: RemoveUserInput!
+    $connections: [ID!]!
+  ) {
+    removeUser(input: $input) {
+      deletedProfileId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export function PeopleListItem(props: {
   connectionId: DataID;
   fKey: PeopleListItemFragment$key;
   onRefetch: () => void;
@@ -64,27 +75,48 @@ export function MemberListItem(props: {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const confirm = useConfirm();
-  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { role } = use(CurrentUser);
+  const availableRoles = getAssignableRoles(role);
 
   const profile = useFragment<PeopleListItemFragment$key>(fragment, fKey);
 
   const isInactive = profile.state === "INACTIVE";
 
-  const [removeMembership, isRemoving] = useMutationWithToasts(
-    removeMemberMutation,
+  const [updateMembership, isUpdatingRole] = useMutationWithToasts(
+    updateRoleMutation,
     {
-      successMessage: __("Member removed successfully"),
-      errorMessage: __("Failed to remove member"),
+      successMessage: __("Role updated successfully"),
+      errorMessage: __("Failed to update role"),
     },
   );
+  const [removeUser, isRemoving] = useMutationWithToasts(
+    removeUserMutation,
+    {
+      successMessage: __("Person removed successfully"),
+      errorMessage: __("Failed to remove person"),
+    },
+  );
+
+  const handleUpdateRole = async (role: string) => {
+    await updateMembership({
+      variables: {
+        input: {
+          membershipId: profile.membership.id,
+          organizationId: organizationId,
+          role: role,
+        },
+      },
+    });
+  };
 
   const handleRemove = () => {
     confirm(
       () => {
-        return removeMembership({
+        return removeUser({
           variables: {
             input: {
-              membershipId: profile.membership.id,
+              profileId: profile.id,
               organizationId: organizationId,
             },
             connections: [connectionId],
@@ -122,8 +154,28 @@ export function MemberListItem(props: {
           </div>
         </Td>
         <Td>{profile.kind}</Td>
-        <Td>
-          <Badge>{profile.membership.role}</Badge>
+        <Td noLink className="pr-4">
+          <Select
+            disabled={!profile.membership.canUpdate || isUpdatingRole}
+            value={profile.membership.role}
+            onValueChange={role => void handleUpdateRole(role)}
+          >
+            {availableRoles.includes("OWNER") && (
+              <Option value="OWNER">{__("Owner")}</Option>
+            )}
+            {availableRoles.includes("ADMIN") && (
+              <Option value="ADMIN">{__("Admin")}</Option>
+            )}
+            {availableRoles.includes("VIEWER") && (
+              <Option value="VIEWER">{__("Viewer")}</Option>
+            )}
+            {availableRoles.includes("AUDITOR") && (
+              <Option value="AUDITOR">{__("Auditor")}</Option>
+            )}
+            {availableRoles.includes("EMPLOYEE") && (
+              <Option value="EMPLOYEE">{__("Employee")}</Option>
+            )}
+          </Select>
         </Td>
         <Td>{new Date(profile.createdAt).toLocaleDateString()}</Td>
         <Td>{profile.position}</Td>
@@ -133,15 +185,6 @@ export function MemberListItem(props: {
               className="flex gap-2 justify-end"
               onClick={e => e.stopPropagation()}
             >
-              {profile.membership.canUpdate && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setDialogOpen(true)}
-                  disabled={dialogOpen}
-                  icon={IconPencil}
-                  aria-label={__("Edit role")}
-                />
-              )}
               {isRemoving
                 ? (
                     <Spinner size={16} />
@@ -161,13 +204,6 @@ export function MemberListItem(props: {
           )}
         </Td>
       </Tr>
-
-      {dialogOpen && (
-        <EditMemberDialog
-          onClose={() => setDialogOpen(false)}
-          profile={profile}
-        />
-      )}
     </>
   );
 }

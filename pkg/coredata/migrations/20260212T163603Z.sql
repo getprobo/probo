@@ -19,6 +19,11 @@ ALTER TABLE
     iam_membership_profiles DROP COLUMN membership_id;
 
 ALTER TABLE
+    iam_memberships
+ALTER COLUMN
+    source DROP NOT NULL;
+
+ALTER TABLE
     iam_scim_events
 ADD
     COLUMN user_name CITEXT NOT NULL DEFAULT '';
@@ -29,7 +34,7 @@ WITH emails AS (
         m.id
     FROM
         iam_memberships m
-    INNER JOIN identities i ON i.id = m.identity_id
+        INNER JOIN identities i ON i.id = m.identity_id
 )
 UPDATE
     iam_scim_events se

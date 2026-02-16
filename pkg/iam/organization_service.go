@@ -942,7 +942,7 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 		now     = time.Now()
 	)
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
 			identity := &coredata.Identity{}
@@ -966,6 +966,9 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 
 			profile = &coredata.MembershipProfile{
 				ID:                       gid.New(req.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
+				IdentityID:               identity.ID,
+				OrganizationID:           req.OrganizationID,
+				Source:                   coredata.ProfileSourceManual,
 				FullName:                 req.FullName,
 				Kind:                     req.Kind,
 				AdditionalEmailAddresses: req.AdditionalEmailAddresses,

@@ -26,10 +26,10 @@ import { invitationCountFragment } from "../PeoplePage";
 
 const inviteMutation = graphql`
   mutation InviteUserDialogMutation(
-    $input: InviteMemberInput!
+    $input: InviteUserInput!
     $connections: [ID!]!
   ) {
-    inviteMember(input: $input) {
+    inviteUser(input: $input) {
       invitationEdge @prependEdge(connections: $connections) {
         node {
           id

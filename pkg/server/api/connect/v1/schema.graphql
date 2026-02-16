@@ -183,6 +183,7 @@ type Identity implements Node {
 type Profile implements Node {
   id: ID!
   fullName: String!
+  emailAddress: EmailAddr!
   source: String!
   state: ProfileState!
   additionalEmailAddresses: [EmailAddr!]!

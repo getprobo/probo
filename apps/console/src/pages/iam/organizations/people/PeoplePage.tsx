@@ -2,11 +2,12 @@ import { useTranslate } from "@probo/i18n";
 import { Button, PageHeader, TabBadge, TabItem, Tabs } from "@probo/ui";
 import { useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
 
 import type { PeoplePageQuery } from "#/__generated__/iam/PeoplePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { AddPersonDialog } from "./_components/AddPersonDialog";
 import { InvitationList } from "./_components/InvitationList";
 import { InviteUserDialog } from "./_components/InviteUserDialog";
 import { PeopleList } from "./_components/PeopleList";
@@ -16,6 +17,7 @@ export const peoplePageQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
+        canCreateUser: permission(action: "iam:membership-profile:create")
         canInviteUser: permission(action: "iam:invitation:create")
         profiles(first: 20, orderBy: { direction: ASC, field: FULL_NAME })
           @required(action: THROW) {
@@ -53,6 +55,13 @@ export function PeoplePage(props: {
   const [activeTab, setActiveTab] = useState<"people" | "invitations">(
     "people",
   );
+  const [connectionId, setConnectionId] = useState<DataID>(
+    ConnectionHandler.getConnectionID(
+      organizationId,
+      "PeopleListFragment_profiles",
+      { orderBy: { direction: "ASC", field: "CREATED_AT" } },
+    ),
+  );
 
   const { organization } = usePreloadedQuery<PeoplePageQuery>(
     peoplePageQuery,
@@ -73,6 +82,12 @@ export function PeoplePage(props: {
   return (
     <div className="space-y-6">
       <PageHeader title={__("People")}>
+        {organization.canCreateUser
+          && (
+            <AddPersonDialog connectionId={connectionId}>
+              <Button variant="secondary">{__("Add Person")}</Button>
+            </AddPersonDialog>
+          )}
         {organization.canInviteUser && (
           <InviteUserDialog
             connectionId={invitationListConnectionId}
@@ -105,7 +120,12 @@ export function PeoplePage(props: {
       </Tabs>
 
       <div className="pb-6 pt-6">
-        {activeTab === "people" && <PeopleList fKey={organization} />}
+        {activeTab === "people" && (
+          <PeopleList
+            fKey={organization}
+            onConnectionIdChange={setConnectionId}
+          />
+        )}
 
         {activeTab === "invitations" && (
           <InvitationList

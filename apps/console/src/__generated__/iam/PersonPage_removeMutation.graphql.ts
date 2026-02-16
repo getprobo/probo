@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0c55769185354921be98596538492fab>>
+ * @generated SignedSource<<7df320d2cbda9f48737622295ed141ad>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,16 +9,16 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type RemoveMemberInput = {
-  membershipId: string;
+export type RemoveUserInput = {
   organizationId: string;
+  profileId: string;
 };
 export type PersonPage_removeMutation$variables = {
-  input: RemoveMemberInput;
+  input: RemoveUserInput;
 };
 export type PersonPage_removeMutation$data = {
-  readonly removeMember: {
-    readonly deletedMembershipId: string;
+  readonly removeUser: {
+    readonly deletedProfileId: string;
   } | null | undefined;
 };
 export type PersonPage_removeMutation = {
@@ -44,16 +44,16 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "RemoveMemberPayload",
+    "concreteType": "RemoveUserPayload",
     "kind": "LinkedField",
-    "name": "removeMember",
+    "name": "removeUser",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
         "kind": "ScalarField",
-        "name": "deletedMembershipId",
+        "name": "deletedProfileId",
         "storageKey": null
       }
     ],
@@ -78,16 +78,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "0c220926bf64fda6954b3ab8e23dcd72",
+    "cacheID": "1e686e9dcb1425cde221721b4635a747",
     "id": null,
     "metadata": {},
     "name": "PersonPage_removeMutation",
     "operationKind": "mutation",
-    "text": "mutation PersonPage_removeMutation(\n  $input: RemoveMemberInput!\n) {\n  removeMember(input: $input) {\n    deletedMembershipId\n  }\n}\n"
+    "text": "mutation PersonPage_removeMutation(\n  $input: RemoveUserInput!\n) {\n  removeUser(input: $input) {\n    deletedProfileId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "60608384ce1ea37ec7b347ec4fdb4a61";
+(node as any).hash = "37b79997d660eee761e9380612739211";
 
 export default node;

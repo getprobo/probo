@@ -294,6 +294,7 @@ type ComplexityRoot struct {
 		ContractEndDate          func(childComplexity int) int
 		ContractStartDate        func(childComplexity int) int
 		CreatedAt                func(childComplexity int) int
+		EmailAddress             func(childComplexity int) int
 		FullName                 func(childComplexity int) int
 		ID                       func(childComplexity int) int
 		Identity                 func(childComplexity int) int
@@ -1663,6 +1664,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Profile.CreatedAt(childComplexity), true
+	case "Profile.emailAddress":
+		if e.complexity.Profile.EmailAddress == nil {
+			break
+		}
+
+		return e.complexity.Profile.EmailAddress(childComplexity), true
 	case "Profile.fullName":
 		if e.complexity.Profile.FullName == nil {
 			break
@@ -2708,6 +2715,7 @@ type Identity implements Node {
 type Profile implements Node {
   id: ID!
   fullName: String!
+  emailAddress: EmailAddr!
   source: String!
   state: ProfileState!
   additionalEmailAddresses: [EmailAddr!]!
@@ -9003,6 +9011,8 @@ func (ec *executionContext) fieldContext_Organization_viewer(_ context.Context, 
 				return ec.fieldContext_Profile_id(ctx, field)
 			case "fullName":
 				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "emailAddress":
+				return ec.fieldContext_Profile_emailAddress(ctx, field)
 			case "source":
 				return ec.fieldContext_Profile_source(ctx, field)
 			case "state":
@@ -9796,6 +9806,35 @@ func (ec *executionContext) fieldContext_Profile_fullName(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Profile_emailAddress(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_emailAddress,
+		func(ctx context.Context) (any, error) {
+			return obj.EmailAddress, nil
+		},
+		nil,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_emailAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type EmailAddr does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Profile_source(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10433,6 +10472,8 @@ func (ec *executionContext) fieldContext_ProfileEdge_node(_ context.Context, fie
 				return ec.fieldContext_Profile_id(ctx, field)
 			case "fullName":
 				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "emailAddress":
+				return ec.fieldContext_Profile_emailAddress(ctx, field)
 			case "source":
 				return ec.fieldContext_Profile_source(ctx, field)
 			case "state":
@@ -13907,6 +13948,8 @@ func (ec *executionContext) fieldContext_UpdateUserPayload_profile(_ context.Con
 				return ec.fieldContext_Profile_id(ctx, field)
 			case "fullName":
 				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "emailAddress":
+				return ec.fieldContext_Profile_emailAddress(ctx, field)
 			case "source":
 				return ec.fieldContext_Profile_source(ctx, field)
 			case "state":
@@ -19234,6 +19277,11 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "fullName":
 			out.Values[i] = ec._Profile_fullName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "emailAddress":
+			out.Values[i] = ec._Profile_emailAddress(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

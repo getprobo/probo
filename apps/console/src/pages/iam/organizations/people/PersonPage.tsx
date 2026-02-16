@@ -1,6 +1,6 @@
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, Avatar, Breadcrumb, DropdownItem, IconTrashCan, useConfirm } from "@probo/ui";
+import { ActionDropdown, Avatar, Breadcrumb, Card, DropdownItem, IconTrashCan, useConfirm } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -9,17 +9,15 @@ import type { PersonPageQuery } from "#/__generated__/iam/PersonPageQuery.graphq
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { PersonForm } from "./_components/PersonForm";
+import { PersonFormLoader } from "./_components/PersonForm";
 
 export const personPageQuery = graphql`
   query PersonPageQuery($personId: ID!) {
     person: node(id: $personId) @required(action: THROW) {
       __typename
       ... on Profile {
+        id
         fullName
-        membership @required(action: THROW) {
-          id
-        }
         identity @required(action: THROW) {
           email
         }
@@ -30,12 +28,12 @@ export const personPageQuery = graphql`
   }
 `;
 
-const removeMemberMutation = graphql`
+const removeUserMutation = graphql`
   mutation PersonPage_removeMutation(
-    $input: RemoveMemberInput!
+    $input: RemoveUserInput!
   ) {
-    removeMember(input: $input) {
-      deletedMembershipId
+    removeUser(input: $input) {
+      deletedProfileId
     }
   }
 `;
@@ -53,21 +51,21 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
     throw new Error("invalid type for node");
   }
 
-  const [removeMembership, isRemoving] = useMutationWithToasts(
-    removeMemberMutation,
+  const [removeUser, isRemoving] = useMutationWithToasts(
+    removeUserMutation,
     {
-      successMessage: __("Member removed successfully"),
-      errorMessage: __("Failed to remove member"),
+      successMessage: __("Person removed successfully"),
+      errorMessage: __("Failed to remove person"),
     },
   );
 
   const handleRemove = () => {
     confirm(
       () => {
-        return removeMembership({
+        return removeUser({
           variables: {
             input: {
-              membershipId: person.membership.id,
+              profileId: person.id,
               organizationId: organizationId,
             },
           },
@@ -121,7 +119,9 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
         )}
       </div>
 
-      <PersonForm fragmentRef={person} />
+      <Card padded className="space-y-4">
+        <PersonFormLoader fragmentRef={person} />
+      </Card>
     </div>
   );
 };

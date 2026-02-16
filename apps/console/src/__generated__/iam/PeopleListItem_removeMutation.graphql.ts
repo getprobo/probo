@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8c0cc8f8d9d0418ea1d817412793f2dc>>
+ * @generated SignedSource<<921243e6b4b9007688051434ab212f85>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,17 +9,17 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type RemoveMemberInput = {
-  membershipId: string;
+export type RemoveUserInput = {
   organizationId: string;
+  profileId: string;
 };
 export type PeopleListItem_removeMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: RemoveMemberInput;
+  input: RemoveUserInput;
 };
 export type PeopleListItem_removeMutation$data = {
-  readonly removeMember: {
-    readonly deletedMembershipId: string;
+  readonly removeUser: {
+    readonly deletedProfileId: string;
   } | null | undefined;
 };
 export type PeopleListItem_removeMutation = {
@@ -49,7 +49,7 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "deletedMembershipId",
+  "name": "deletedProfileId",
   "storageKey": null
 };
 return {
@@ -65,9 +65,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "RemoveMemberPayload",
+        "concreteType": "RemoveUserPayload",
         "kind": "LinkedField",
-        "name": "removeMember",
+        "name": "removeUser",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -90,9 +90,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "RemoveMemberPayload",
+        "concreteType": "RemoveUserPayload",
         "kind": "LinkedField",
-        "name": "removeMember",
+        "name": "removeUser",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -103,7 +103,7 @@ return {
             "handle": "deleteEdge",
             "key": "",
             "kind": "ScalarHandle",
-            "name": "deletedMembershipId",
+            "name": "deletedProfileId",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -118,16 +118,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d5a0e195ee72906380f566bcecb45a3f",
+    "cacheID": "ec2aeab79c24169e2f8fc95ca3b28a7d",
     "id": null,
     "metadata": {},
     "name": "PeopleListItem_removeMutation",
     "operationKind": "mutation",
-    "text": "mutation PeopleListItem_removeMutation(\n  $input: RemoveMemberInput!\n) {\n  removeMember(input: $input) {\n    deletedMembershipId\n  }\n}\n"
+    "text": "mutation PeopleListItem_removeMutation(\n  $input: RemoveUserInput!\n) {\n  removeUser(input: $input) {\n    deletedProfileId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c1bceb22b556aff77543ec1956445187";
+(node as any).hash = "e84b22e1f4a71940947b8a85d83a2dd6";
 
 export default node;

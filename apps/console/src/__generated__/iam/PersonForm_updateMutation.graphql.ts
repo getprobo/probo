@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d29dfbdd0293d60af6d3f72e09dd5e9d>>
+ * @generated SignedSource<<8563f3b122bb8d5b6c2e5e7354a0a0c8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,26 +9,29 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type UpdateMembershipInput = {
-  membershipId: string;
-  organizationId: string;
-  role: MembershipRole;
+export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
+export type UpdateUserInput = {
+  additionalEmailAddresses?: ReadonlyArray<string> | null | undefined;
+  contractEndDate?: string | null | undefined;
+  contractStartDate?: string | null | undefined;
+  fullName: string;
+  id: string;
+  kind: ProfileKind;
+  position?: string | null | undefined;
 };
-export type EditMemberDialog_updateMutation$variables = {
-  input: UpdateMembershipInput;
+export type PersonForm_updateMutation$variables = {
+  input: UpdateUserInput;
 };
-export type EditMemberDialog_updateMutation$data = {
-  readonly updateMembership: {
-    readonly membership: {
+export type PersonForm_updateMutation$data = {
+  readonly updateUser: {
+    readonly profile: {
       readonly id: string;
-      readonly role: MembershipRole;
     };
   };
 };
-export type EditMemberDialog_updateMutation = {
-  response: EditMemberDialog_updateMutation$data;
-  variables: EditMemberDialog_updateMutation$variables;
+export type PersonForm_updateMutation = {
+  response: PersonForm_updateMutation$data;
+  variables: PersonForm_updateMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -49,17 +52,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "UpdateMembershipPayload",
+    "concreteType": "UpdateUserPayload",
     "kind": "LinkedField",
-    "name": "updateMembership",
+    "name": "updateUser",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "Membership",
+        "concreteType": "Profile",
         "kind": "LinkedField",
-        "name": "membership",
+        "name": "profile",
         "plural": false,
         "selections": [
           {
@@ -67,13 +70,6 @@ v1 = [
             "args": null,
             "kind": "ScalarField",
             "name": "id",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "role",
             "storageKey": null
           }
         ],
@@ -88,7 +84,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "EditMemberDialog_updateMutation",
+    "name": "PersonForm_updateMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -97,20 +93,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "EditMemberDialog_updateMutation",
+    "name": "PersonForm_updateMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "696ec9f74220b92171bf60630e5c8d7f",
+    "cacheID": "0623be6bdbd6575b04173a59b1dd45f7",
     "id": null,
     "metadata": {},
-    "name": "EditMemberDialog_updateMutation",
+    "name": "PersonForm_updateMutation",
     "operationKind": "mutation",
-    "text": "mutation EditMemberDialog_updateMutation(\n  $input: UpdateMembershipInput!\n) {\n  updateMembership(input: $input) {\n    membership {\n      id\n      role\n    }\n  }\n}\n"
+    "text": "mutation PersonForm_updateMutation(\n  $input: UpdateUserInput!\n) {\n  updateUser(input: $input) {\n    profile {\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "fc971ff69092912586c14c7f6e2111ed";
+(node as any).hash = "e1da3d7148eef5f6ab8bdf827e41654a";
 
 export default node;

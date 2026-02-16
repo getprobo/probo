@@ -1,13 +1,14 @@
 import { useTranslate } from "@probo/i18n";
 import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import type { ComponentProps } from "react";
-import { graphql, usePaginationFragment } from "react-relay";
+import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
 
 import type { PeopleListFragment$key } from "#/__generated__/iam/PeopleListFragment.graphql";
 import type { PeopleListFragment_RefetchQuery } from "#/__generated__/iam/PeopleListFragment_RefetchQuery.graphql";
-import { SortableTable, SortableTh } from "#/components/SortableTable";
+import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { MemberListItem } from "./PeopleListItem";
+import { PeopleListItem } from "./PeopleListItem";
 
 const fragment = graphql`
   fragment PeopleListFragment on Organization
@@ -41,9 +42,13 @@ const fragment = graphql`
   }
 `;
 
-export function PeopleList(props: { fKey: PeopleListFragment$key }) {
-  const { fKey } = props;
+export function PeopleList(props: {
+  onConnectionIdChange: (connectionId: string) => void;
+  fKey: PeopleListFragment$key;
+}) {
+  const { fKey, onConnectionIdChange } = props;
 
+  const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
   const peoplePagination = usePaginationFragment<
@@ -53,6 +58,16 @@ export function PeopleList(props: { fKey: PeopleListFragment$key }) {
 
   const refetchPeople = () => {
     peoplePagination.refetch({}, { fetchPolicy: "network-only" });
+  };
+
+  const handleOrderChange = (order: Order) => {
+    onConnectionIdChange(
+      ConnectionHandler.getConnectionID(
+        organizationId,
+        "PeopleListFragment_profiles",
+        { orderBy: order },
+      ),
+    );
   };
 
   return (
@@ -67,11 +82,11 @@ export function PeopleList(props: { fKey: PeopleListFragment$key }) {
     >
       <Thead>
         <Tr>
-          <SortableTh field="FULL_NAME">{__("Name")}</SortableTh>
-          <SortableTh field="EMAIL_ADDRESS">{__("Email")}</SortableTh>
+          <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{__("Name")}</SortableTh>
+          <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{__("Email")}</SortableTh>
           <Th>{__("Type")}</Th>
-          <SortableTh field="ROLE">{__("Role")}</SortableTh>
-          <SortableTh field="CREATED_AT">{__("Joined")}</SortableTh>
+          <SortableTh field="ROLE" onOrderChange={handleOrderChange}>{__("Role")}</SortableTh>
+          <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{__("Joined")}</SortableTh>
           <Th>{__("Position")}</Th>
           <Th></Th>
         </Tr>
@@ -87,7 +102,7 @@ export function PeopleList(props: { fKey: PeopleListFragment$key }) {
             )
           : (
               peoplePagination.data.profiles.edges.map(({ node: profile }) => (
-                <MemberListItem
+                <PeopleListItem
                   connectionId={peoplePagination.data.profiles.__id}
                   key={profile.id}
                   fKey={profile}

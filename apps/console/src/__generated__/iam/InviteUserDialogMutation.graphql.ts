@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<14b3e1990be5f8333046dffcada56516>>
+ * @generated SignedSource<<dd59cf57f55eff8458d1481b25e38991>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,18 +10,16 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type InviteMemberInput = {
-  email: string;
-  fullName: string;
+export type InviteUserInput = {
   organizationId: string;
-  role: MembershipRole;
+  profileId: string;
 };
 export type InviteUserDialogMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: InviteMemberInput;
+  input: InviteUserInput;
 };
 export type InviteUserDialogMutation$data = {
-  readonly inviteMember: {
+  readonly inviteUser: {
     readonly invitationEdge: {
       readonly node: {
         readonly acceptedAt: string | null | undefined;
@@ -156,9 +154,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "InviteMemberPayload",
+        "concreteType": "InviteUserPayload",
         "kind": "LinkedField",
-        "name": "inviteMember",
+        "name": "inviteUser",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -181,9 +179,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "InviteMemberPayload",
+        "concreteType": "InviteUserPayload",
         "kind": "LinkedField",
-        "name": "inviteMember",
+        "name": "inviteUser",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -209,16 +207,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8d9e447c08739bef2460474225fb77bf",
+    "cacheID": "685e0bc12871b33065d1fe03334110b6",
     "id": null,
     "metadata": {},
     "name": "InviteUserDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation InviteUserDialogMutation(\n  $input: InviteMemberInput!\n) {\n  inviteMember(input: $input) {\n    invitationEdge {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n        canDelete: permission(action: \"iam:invitation:delete\")\n      }\n    }\n  }\n}\n"
+    "text": "mutation InviteUserDialogMutation(\n  $input: InviteUserInput!\n) {\n  inviteUser(input: $input) {\n    invitationEdge {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n        canDelete: permission(action: \"iam:invitation:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "dc2446f51b33dbab3a348e1250a25049";
+(node as any).hash = "70766e9b81d0ade0f128fae2e15aac62";
 
 export default node;

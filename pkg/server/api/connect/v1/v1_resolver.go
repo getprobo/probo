@@ -899,6 +899,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 			return nil, gqlutils.Conflictf(ctx, "user %q already exists", input.EmailAddress.String())
 		}
 
+		r.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 

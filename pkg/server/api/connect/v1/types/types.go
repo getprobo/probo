@@ -310,6 +310,7 @@ type PersonalAPIKeyEdge struct {
 type Profile struct {
 	ID                       gid.GID                        `json:"id"`
 	FullName                 string                         `json:"fullName"`
+	EmailAddress             mail.Addr                      `json:"emailAddress"`
 	Source                   string                         `json:"source"`
 	State                    coredata.ProfileState          `json:"state"`
 	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses"`

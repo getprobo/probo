@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6ee89b2ab0c55ac9498bf9186e78ee90>>
+ * @generated SignedSource<<a8e224db1200fa5aaa6edc17c09e7a35>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 import { FragmentRefs } from "relay-runtime";
 export type PersonFormFragment$data = {
@@ -16,9 +17,13 @@ export type PersonFormFragment$data = {
   readonly canUpdate: boolean;
   readonly contractEndDate: string | null | undefined;
   readonly contractStartDate: string | null | undefined;
+  readonly emailAddress: string;
   readonly fullName: string;
   readonly id: string;
   readonly kind: ProfileKind;
+  readonly membership: {
+    readonly role: MembershipRole;
+  };
   readonly position: string | null | undefined;
   readonly " $fragmentType": "PersonFormFragment";
 };
@@ -46,6 +51,35 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "fullName",
       "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "emailAddress",
+      "storageKey": null
+    },
+    {
+      "kind": "RequiredField",
+      "field": {
+        "alias": null,
+        "args": null,
+        "concreteType": "Membership",
+        "kind": "LinkedField",
+        "name": "membership",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "role",
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      },
+      "action": "THROW"
     },
     {
       "alias": null,
@@ -100,6 +134,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "9ecc41c74271a3202bbde08b63c92b73";
+(node as any).hash = "4f99d9b9ed708290c5a7d7ec258a0b1d";
 
 export default node;
