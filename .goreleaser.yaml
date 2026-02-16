@@ -78,17 +78,29 @@ signs:
     artifacts: checksum
     output: true
 
-docker_manifests:
-  - name_template: "ghcr.io/getprobo/probo:{{ .Tag }}"
-    image_templates:
-      - "ghcr.io/getprobo/probo:{{ .Tag }}-amd64"
-      - "ghcr.io/getprobo/probo:{{ .Tag }}-arm64"
-    skip_push: "{{ .IsSnapshot }}"
-  - name_template: "ghcr.io/getprobo/probo:latest"
-    image_templates:
-      - "ghcr.io/getprobo/probo:latest-amd64"
-      - "ghcr.io/getprobo/probo:latest-arm64"
-    skip_push: "{{ .IsSnapshot }}"
+dockers_v2:
+  - images:
+      - "ghcr.io/getprobo/probo"
+    tags:
+      - "{{ .Tag }}"
+      - latest
+    dockerfile: Dockerfile
+    ids:
+      - probod-docker
+    extra_files:
+      - entrypoint.sh
+    labels:
+      "org.opencontainers.image.title": "{{.ProjectName}}"
+      "org.opencontainers.image.description": "Probo compliance management platform"
+      "org.opencontainers.image.url": "https://github.com/getprobo/probo"
+      "org.opencontainers.image.source": "https://github.com/getprobo/probo"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.created": '{{time "2006-01-02T15:04:05Z07:00"}}'
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.licenses": "MIT"
+    platforms:
+      - linux/amd64
+      - linux/arm64
 
 docker_signs:
   - id: images
@@ -120,54 +132,6 @@ docker_signs:
           cosign sign "${artifact}@${digest}" --yes
         fi
 
-dockers:
-  - image_templates:
-      - "ghcr.io/getprobo/probo:{{ .Tag }}-amd64"
-      - "ghcr.io/getprobo/probo:latest-amd64"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.description=Probo compliance management platform"
-      - "--label=org.opencontainers.image.url=https://github.com/getprobo/probo"
-      - "--label=org.opencontainers.image.source=https://github.com/getprobo/probo"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - '--label=org.opencontainers.image.created={{time "2006-01-02T15:04:05Z07:00"}}'
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.licenses=MIT"
-    extra_files:
-      - entrypoint.sh
-    # Use the Docker-specific build with AMD64 filtering
-    ids:
-      - probod-docker
-    goos: linux
-    goarch: amd64
-    skip_push: "{{ .IsSnapshot }}"
-  - image_templates:
-      - "ghcr.io/getprobo/probo:{{ .Tag }}-arm64"
-      - "ghcr.io/getprobo/probo:latest-arm64"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.description=Probo compliance management platform"
-      - "--label=org.opencontainers.image.url=https://github.com/getprobo/probo"
-      - "--label=org.opencontainers.image.source=https://github.com/getprobo/probo"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - '--label=org.opencontainers.image.created={{time "2006-01-02T15:04:05Z07:00"}}'
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.licenses=MIT"
-    extra_files:
-      - entrypoint.sh
-    # Use the Docker-specific build with ARM64 filtering
-    ids:
-      - probod-docker
-    goos: linux
-    goarch: arm64
-    skip_push: "{{ .IsSnapshot }}"
-
 changelog:
   sort: asc
   filters:
@@ -193,7 +157,3 @@ release:
     ## Docker Images
     - `ghcr.io/getprobo/probo:{{ .Tag }}` (multi-arch: linux/amd64, linux/arm64)
     - `ghcr.io/getprobo/probo:latest` (multi-arch: linux/amd64, linux/arm64)
-
-    ### Architecture-specific images
-    - `ghcr.io/getprobo/probo:{{ .Tag }}-amd64`
-    - `ghcr.io/getprobo/probo:{{ .Tag }}-arm64`
