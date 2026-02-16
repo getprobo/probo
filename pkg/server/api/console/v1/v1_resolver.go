@@ -241,8 +241,8 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 	report, err := prb.Reports.Get(ctx, obj.Report.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load report: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewReport(report), nil
@@ -389,8 +389,8 @@ func (r *continualImprovementConnectionResolver) TotalCount(ctx context.Context,
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Organization is the resolver for the organization field.
@@ -407,8 +407,8 @@ func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) 
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 	return types.NewOrganization(organization), nil
 }
@@ -463,8 +463,8 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get framework: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewFramework(framework), nil
@@ -498,8 +498,8 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 	page, err := prb.Measures.ListForControlID(ctx, obj.ID, cursor, measureFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list measures: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list measures", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
@@ -803,8 +803,8 @@ func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *in
 
 	page, err := prb.Data.ListVendors(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list data vendors: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list data vendors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewVendorConnection(page, r, obj.ID), nil
@@ -824,8 +824,8 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganization(org), nil
@@ -858,8 +858,8 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Owner is the resolver for the owner field.
@@ -874,8 +874,8 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get owner: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -895,8 +895,8 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -927,8 +927,8 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 
 	page, err := prb.Documents.ListVersions(ctx, obj.ID, cursor, versionFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list document versions: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list document versions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewDocumentVersionConnection(page, r, obj.ID), nil
@@ -962,8 +962,8 @@ func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, fi
 
 	page, err := prb.Controls.ListForDocumentID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list document controls: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list document controls", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -986,28 +986,28 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	case *controlResolver:
 		count, err := prb.Documents.CountForControlID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count controls: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	case *organizationResolver:
 		count, err := prb.Documents.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count documents: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count documents", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Documents.CountForRiskID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count risks: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Document is the resolver for the document field.
@@ -1024,8 +1024,8 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get document: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewDocument(document), nil
@@ -1043,8 +1043,8 @@ func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.Document
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get owner: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -1085,8 +1085,8 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 
 	page, err := prb.Documents.ListSignatures(ctx, obj.ID, cursor, signatureFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list document version signatures: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list document version signatures", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewDocumentVersionSignatureConnection(page, r, obj.ID, signatureFilter), nil
@@ -1104,8 +1104,8 @@ func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.Documen
 
 	signed, err := prb.Documents.IsVersionSignedByUserEmail(ctx, obj.ID, identity.EmailAddress)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot check if document version is signed: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot check if document version is signed", log.Error(err))
+		return false, gqlutils.Internal(ctx)
 	}
 
 	return signed, nil
@@ -1132,14 +1132,14 @@ func (r *documentVersionConnectionResolver) TotalCount(ctx context.Context, obj 
 		}
 		count, err := prb.Documents.CountVersionsForDocumentID(ctx, obj.ParentID, filter)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count document versions: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count document versions", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // DocumentVersion is the resolver for the documentVersion field.
@@ -1152,8 +1152,8 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, obj.DocumentVersion.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get document version: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewDocumentVersion(documentVersion), nil
@@ -1171,8 +1171,8 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get people: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get people", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewProfile(signatory), nil
@@ -1199,14 +1199,14 @@ func (r *documentVersionSignatureConnectionResolver) TotalCount(ctx context.Cont
 		}
 		count, err := prb.Documents.CountSignaturesForVersionID(ctx, obj.ParentID, filter)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count signatures: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count signatures", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // File is the resolver for the file field.
@@ -1251,8 +1251,8 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load task: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot load task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewTask(task), nil
@@ -1272,8 +1272,8 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load measure: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot load measure", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewMeasure(measure), nil
@@ -1296,21 +1296,21 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	case *measureResolver:
 		count, err := prb.Evidences.CountForMeasureID(ctx, obj.ParentID)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count measure evidence: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count measure evidence", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	case *taskResolver:
 		count, err := prb.Evidences.CountForTaskID(ctx, obj.ParentID)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count task evidence: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count task evidence", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // DownloadURL is the resolver for the downloadUrl field.
@@ -1323,11 +1323,10 @@ func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string
 
 	downloadUrl, err := prb.Files.GenerateFileTempURL(ctx, obj.ID, 60*time.Second)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		return "", fmt.Errorf("cannot generate download url: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot generate download url", log.Error(err))
+		return "", gqlutils.Internal(ctx)
 	}
 
-	// TODO no panic use gqlutils.InternalError
 	return downloadUrl, nil
 }
 
@@ -1345,8 +1344,8 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -1380,8 +1379,8 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 	page, err := prb.Controls.ListForFrameworkID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list controls: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list controls", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -1426,14 +1425,14 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 
 		count, err := prb.Frameworks.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count frameworks: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Evidences is the resolver for the evidences field.
@@ -1459,8 +1458,8 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 	page, err := prb.Evidences.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list measure evidences: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list measure evidences", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewEvidenceConnection(page, r, obj.ID), nil
@@ -1489,8 +1488,8 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 	page, err := prb.Tasks.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list measure tasks: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list measure tasks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewTaskConnection(page, r, obj.ID), nil
@@ -1524,8 +1523,8 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 	page, err := prb.Risks.ListForMeasureID(ctx, obj.ID, cursor, riskFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list measure risks: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list measure risks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
@@ -1559,8 +1558,8 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 
 	page, err := prb.Controls.ListForMeasureID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list measure controls: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list measure controls", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -1583,28 +1582,28 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 	case *organizationResolver:
 		count, err := prb.Measures.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count measures: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	case *controlResolver:
 		count, err := prb.Measures.CountForControlID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count measures: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Measures.CountForRiskID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count measures: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Attendees is the resolver for the attendees field.
@@ -1619,8 +1618,8 @@ func (r *meetingResolver) Attendees(ctx context.Context, obj *types.Meeting) ([]
 
 	attendees, err := prb.Meetings.GetAttendees(ctx, obj.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load meeting attendees: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot load meeting attendees", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	if len(attendees) == 0 {
@@ -1649,8 +1648,8 @@ func (r *meetingResolver) Organization(ctx context.Context, obj *types.Meeting) 
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -1673,14 +1672,14 @@ func (r *meetingConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 	case *organizationResolver:
 		count, err := prb.Meetings.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count meetings: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count meetings", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // UpdateOrganizationContext is the resolver for the updateOrganizationContext field.
@@ -1698,8 +1697,8 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 
 	organizationContext, err := prb.Organizations.UpdateContext(ctx, req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update organization context: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update organization context", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateOrganizationContextPayload{
@@ -1723,8 +1722,8 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update trust center: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateTrustCenterPayload{
@@ -1749,8 +1748,8 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot upload trust center NDA: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot upload trust center NDA", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UploadTrustCenterNDAPayload{
@@ -1768,8 +1767,8 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 
 	trustCenter, file, err := prb.TrustCenters.DeleteNDA(ctx, input.TrustCenterID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete trust center NDA: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete trust center NDA", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteTrustCenterNDAPayload{
@@ -1916,8 +1915,8 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update trust center access: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update trust center access", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateTrustCenterAccessPayload{
@@ -1935,8 +1934,8 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 
 	err := prb.TrustCenterAccesses.Delete(ctx, input.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete trust center access: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete trust center access", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteTrustCenterAccessPayload{
@@ -1968,8 +1967,8 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create trust center reference: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create trust center reference", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateTrustCenterReferencePayload{
@@ -2004,8 +2003,8 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 
 	reference, err := prb.TrustCenterReferences.Update(ctx, req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update trust center reference: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update trust center reference", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateTrustCenterReferencePayload{
@@ -2023,8 +2022,8 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 	err := prb.TrustCenterReferences.Delete(ctx, input.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete trust center reference: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete trust center reference", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteTrustCenterReferencePayload{
@@ -2056,8 +2055,8 @@ func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input type
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create trust center file: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create trust center file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateTrustCenterFilePayload{
@@ -2083,8 +2082,8 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update trust center file: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update trust center file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateTrustCenterFilePayload{
@@ -2102,8 +2101,8 @@ func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.G
 
 	file, err := prb.TrustCenterFiles.Get(ctx, input.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get trust center file: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get trust center file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.GetTrustCenterFilePayload{
@@ -2121,8 +2120,8 @@ func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input type
 
 	err := prb.TrustCenterFiles.Delete(ctx, input.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete trust center file: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete trust center file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteTrustCenterFilePayload{
@@ -2168,8 +2167,8 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		return nil, fmt.Errorf("cannot create vendor: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot create vendor", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 	return &types.CreateVendorPayload{
 		VendorEdge: types.NewVendorEdge(vendor, coredata.VendorOrderFieldName),
@@ -2211,8 +2210,8 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		return nil, fmt.Errorf("cannot update vendor: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot update vendor", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateVendorPayload{
@@ -2230,8 +2229,8 @@ func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteV
 
 	err := prb.Vendors.Delete(ctx, input.VendorID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete vendor: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete vendor", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteVendorPayload{
@@ -2257,8 +2256,8 @@ func (r *mutationResolver) CreateVendorContact(ctx context.Context, input types.
 
 	vendorContact, err := prb.VendorContacts.Create(ctx, req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		return nil, fmt.Errorf("cannot create vendor contact: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot create vendor contact", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateVendorContactPayload{
@@ -2284,8 +2283,8 @@ func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.
 
 	vendorContact, err := prb.VendorContacts.Update(ctx, req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update vendor contact: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update vendor contact", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateVendorContactPayload{
@@ -2303,8 +2302,8 @@ func (r *mutationResolver) DeleteVendorContact(ctx context.Context, input types.
 
 	err := prb.VendorContacts.Delete(ctx, input.VendorContactID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		return nil, fmt.Errorf("cannot delete vendor contact: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot delete vendor contact", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteVendorContactPayload{
@@ -2328,8 +2327,8 @@ func (r *mutationResolver) CreateVendorService(ctx context.Context, input types.
 
 	vendorService, err := prb.VendorServices.Create(ctx, req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		return nil, fmt.Errorf("cannot create vendor service: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot create vendor service", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateVendorServicePayload{
@@ -2353,8 +2352,8 @@ func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.
 
 	vendorService, err := prb.VendorServices.Update(ctx, req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update vendor service: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update vendor service", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateVendorServicePayload{
@@ -2372,8 +2371,8 @@ func (r *mutationResolver) DeleteVendorService(ctx context.Context, input types.
 
 	err := prb.VendorServices.Delete(ctx, input.VendorServiceID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete vendor service: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete vendor service", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteVendorServicePayload{
@@ -2397,8 +2396,8 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		return nil, fmt.Errorf("cannot create framework: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot create framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateFrameworkPayload{
@@ -2423,8 +2422,8 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		return nil, fmt.Errorf("cannot update framework: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot update framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateFrameworkPayload{
@@ -2451,8 +2450,8 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot import framework: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot import framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.ImportFrameworkPayload{
@@ -2470,8 +2469,8 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 	err := prb.Frameworks.Delete(ctx, input.FrameworkID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete framework: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteFrameworkPayload{
@@ -2489,8 +2488,8 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 
 	soa, err := prb.Frameworks.StateOfApplicability(ctx, input.FrameworkID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate framework SOA: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate framework SOA", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.GenerateFrameworkStateOfApplicabilityPayload{
@@ -2517,8 +2516,8 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 		identity.FullName,
 	)
 	if exportErr != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot export framework: %w", exportErr))
+		r.logger.ErrorCtx(ctx, "cannot export framework", log.Error(exportErr))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.ExportFrameworkPayload{
@@ -2551,8 +2550,8 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create control: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create control", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateControlPayload{
@@ -2586,8 +2585,8 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update control: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update control", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateControlPayload{
@@ -2605,8 +2604,8 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 
 	err := prb.Controls.Delete(ctx, input.ControlID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete control: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete control", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteControlPayload{
@@ -2663,8 +2662,8 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update measure: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update measure", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateMeasurePayload{
@@ -2682,14 +2681,14 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 
 	var req probo.ImportMeasureRequest
 	if err := json.NewDecoder(input.File.File).Decode(&req.Measures); err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot unmarshal measure: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot unmarshal measure", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	measures, err := prb.Measures.Import(ctx, input.OrganizationID, req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot import measure: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot import measure", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	measureEdges := make([]*types.MeasureEdge, len(measures.Data))
@@ -2712,8 +2711,8 @@ func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.Delete
 
 	err := prb.Measures.Delete(ctx, input.MeasureID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete measure: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete measure", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteMeasurePayload{
@@ -2731,8 +2730,8 @@ func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, inpu
 
 	control, measure, err := prb.Controls.CreateMeasureMapping(ctx, input.ControlID, input.MeasureID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create control measure mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create control measure mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateControlMeasureMappingPayload{
@@ -2755,8 +2754,8 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create control document mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create control document mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateControlDocumentMappingPayload{
@@ -2775,8 +2774,8 @@ func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, inpu
 
 	control, measure, err := prb.Controls.DeleteMeasureMapping(ctx, input.ControlID, input.MeasureID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete control measure mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete control measure mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteControlMeasureMappingPayload{
@@ -2795,8 +2794,8 @@ func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, inp
 
 	control, document, err := prb.Controls.DeleteDocumentMapping(ctx, input.ControlID, input.DocumentID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete control document mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete control document mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteControlDocumentMappingPayload{
@@ -2869,8 +2868,8 @@ func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input 
 
 	control, audit, err := prb.Controls.CreateAuditMapping(ctx, input.ControlID, input.AuditID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create control audit mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create control audit mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateControlAuditMappingPayload{
@@ -2889,8 +2888,8 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 
 	control, audit, err := prb.Controls.DeleteAuditMapping(ctx, input.ControlID, input.AuditID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete control audit mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete control audit mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteControlAuditMappingPayload{
@@ -2947,8 +2946,8 @@ func (r *mutationResolver) CreateControlSnapshotMapping(ctx context.Context, inp
 
 	control, snapshot, err := prb.Controls.CreateSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create control snapshot mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create control snapshot mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateControlSnapshotMappingPayload{
@@ -2967,8 +2966,8 @@ func (r *mutationResolver) DeleteControlSnapshotMapping(ctx context.Context, inp
 
 	control, snapshot, err := prb.Controls.DeleteSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete control snapshot mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete control snapshot mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteControlSnapshotMappingPayload{
@@ -3002,8 +3001,8 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create task: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateTaskPayload{
@@ -3033,8 +3032,8 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update task: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateTaskPayload{
@@ -3052,8 +3051,8 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 
 	err := prb.Tasks.Delete(ctx, input.TaskID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete task: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete task", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteTaskPayload{
@@ -3090,8 +3089,8 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create risk: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create risk", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateRiskPayload{
@@ -3124,8 +3123,8 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update risk: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update risk", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateRiskPayload{
@@ -3143,8 +3142,8 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 
 	err := prb.Risks.Delete(ctx, input.RiskID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete risk: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete risk", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteRiskPayload{
@@ -3162,8 +3161,8 @@ func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input t
 
 	risk, measure, err := prb.Risks.CreateMeasureMapping(ctx, input.RiskID, input.MeasureID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create risk measure mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create risk measure mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateRiskMeasureMappingPayload{
@@ -3182,8 +3181,8 @@ func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input t
 
 	risk, measure, err := prb.Risks.DeleteMeasureMapping(ctx, input.RiskID, input.MeasureID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete risk measure mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete risk measure mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteRiskMeasureMappingPayload{
@@ -3202,8 +3201,8 @@ func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input 
 
 	risk, document, err := prb.Risks.CreateDocumentMapping(ctx, input.RiskID, input.DocumentID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create risk document mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create risk document mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateRiskDocumentMappingPayload{
@@ -3222,8 +3221,8 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 
 	risk, document, err := prb.Risks.DeleteDocumentMapping(ctx, input.RiskID, input.DocumentID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete risk document mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete risk document mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteRiskDocumentMappingPayload{
@@ -3242,8 +3241,8 @@ func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, inpu
 
 	risk, obligation, err := prb.Risks.CreateObligationMapping(ctx, input.RiskID, input.ObligationID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create risk obligation mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create risk obligation mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateRiskObligationMappingPayload{
@@ -3262,8 +3261,8 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 
 	risk, obligation, err := prb.Risks.DeleteObligationMapping(ctx, input.RiskID, input.ObligationID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete risk obligation mapping: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete risk obligation mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteRiskObligationMappingPayload{
@@ -3282,8 +3281,8 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 
 	err := prb.Evidences.Delete(ctx, input.EvidenceID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete evidence: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete evidence", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteEvidencePayload{
@@ -3312,8 +3311,8 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot upload measure evidence: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot upload measure evidence", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UploadMeasureEvidencePayload{
@@ -3340,8 +3339,8 @@ func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, inp
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot upload vendor compliance report: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot upload vendor compliance report", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UploadVendorComplianceReportPayload{
@@ -3359,8 +3358,8 @@ func (r *mutationResolver) DeleteVendorComplianceReport(ctx context.Context, inp
 
 	err := prb.VendorComplianceReports.Delete(ctx, input.ReportID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete vendor compliance report: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete vendor compliance report", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteVendorComplianceReportPayload{
@@ -3387,8 +3386,8 @@ func (r *mutationResolver) UploadVendorBusinessAssociateAgreement(ctx context.Co
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot upload vendor business associate agreement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot upload vendor business associate agreement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UploadVendorBusinessAssociateAgreementPayload{
@@ -3413,8 +3412,8 @@ func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Co
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update vendor business associate agreement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update vendor business associate agreement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateVendorBusinessAssociateAgreementPayload{
@@ -3432,8 +3431,8 @@ func (r *mutationResolver) DeleteVendorBusinessAssociateAgreement(ctx context.Co
 
 	err := prb.VendorBusinessAssociateAgreements.DeleteByVendorID(ctx, input.VendorID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete vendor business associate agreement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete vendor business associate agreement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteVendorBusinessAssociateAgreementPayload{
@@ -3460,8 +3459,8 @@ func (r *mutationResolver) UploadVendorDataPrivacyAgreement(ctx context.Context,
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot upload vendor data privacy agreement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot upload vendor data privacy agreement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UploadVendorDataPrivacyAgreementPayload{
@@ -3486,8 +3485,8 @@ func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context,
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update vendor data privacy agreement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update vendor data privacy agreement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateVendorDataPrivacyAgreementPayload{
@@ -3505,8 +3504,8 @@ func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context,
 
 	err := prb.VendorDataPrivacyAgreements.DeleteByVendorID(ctx, input.VendorID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete vendor data privacy agreement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete vendor data privacy agreement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteVendorDataPrivacyAgreementPayload{
@@ -3539,8 +3538,8 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create document: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateDocumentPayload{
@@ -3570,8 +3569,8 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	)
 
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update document: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateDocumentPayload{
@@ -3589,8 +3588,8 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 
 	err := prb.Documents.SoftDelete(ctx, input.DocumentID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot soft delete document: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot soft delete document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteDocumentPayload{
@@ -3617,8 +3616,8 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input types.Create
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create meeting: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create meeting", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateMeetingPayload{
@@ -3650,8 +3649,8 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input types.Update
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update meeting: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update meeting", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateMeetingPayload{
@@ -3669,8 +3668,8 @@ func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.Delete
 
 	err := prb.Meetings.Delete(ctx, input.MeetingID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete meeting: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete meeting", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteMeetingPayload{
@@ -3866,8 +3865,8 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 			return nil, gqlutils.Invalid(ctx, errNoChanges)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot publish document version: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot publish document version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.PublishDocumentVersionPayload{
@@ -3909,8 +3908,8 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 			return nil, gqlutils.Invalid(ctx, errNoChanges)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot bulk publish document versions: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot bulk publish document versions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.BulkPublishDocumentVersionsPayload{
@@ -3988,8 +3987,8 @@ func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input 
 
 	changelog, err := prb.Documents.GenerateChangelog(ctx, input.DocumentID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate document changelog: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate document changelog", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.GenerateDocumentChangelogPayload{
@@ -4007,8 +4006,8 @@ func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input
 
 	documentVersion, err := prb.Documents.CreateDraft(ctx, input.DocumentID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create draft document version: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create draft document version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateDraftDocumentVersionPayload{
@@ -4026,8 +4025,8 @@ func (r *mutationResolver) DeleteDraftDocumentVersion(ctx context.Context, input
 
 	err := prb.Documents.DeleteDraft(ctx, input.DocumentVersionID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete draft document version: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete draft document version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteDraftDocumentVersionPayload{
@@ -4051,8 +4050,8 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update document version: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update document version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateDocumentVersionPayload{
@@ -4076,8 +4075,8 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot request signature: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot request signature", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.RequestSignaturePayload{
@@ -4109,8 +4108,8 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot bulk request signatures: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot bulk request signatures", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.BulkRequestSignaturesPayload{
@@ -4128,8 +4127,8 @@ func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input t
 
 	err := prb.Documents.SendSigningNotifications(ctx, input.OrganizationID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot send signing notifications: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot send signing notifications", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.SendSigningNotificationsPayload{
@@ -4147,8 +4146,8 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 
 	err := prb.Documents.CancelSignatureRequest(ctx, input.DocumentVersionSignatureID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot cancel signature request: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot cancel signature request", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CancelSignatureRequestPayload{
@@ -4171,8 +4170,8 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot sign document: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot sign document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.SignDocumentPayload{
@@ -4196,8 +4195,8 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 
 	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID, options)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot export document version PDF: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot export document version PDF", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.ExportDocumentVersionPDFPayload{
@@ -4215,8 +4214,8 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, input.DocumentVersionID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get document version: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	identity := authn.IdentityFromContext(ctx)
@@ -4228,8 +4227,8 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get signable document: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get signable document", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	options := probo.ExportPDFOptions{
@@ -4240,8 +4239,8 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 
 	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID, options)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot export signable document PDF: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot export signable document PDF", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.ExportSignableDocumentVersionPDFPayload{
@@ -4349,8 +4348,8 @@ func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create vendor risk assessment: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create vendor risk assessment", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateVendorRiskAssessmentPayload{
@@ -4374,8 +4373,8 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot assess vendor: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot assess vendor", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.AssessVendorPayload{
@@ -4405,8 +4404,8 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 	)
 
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create asset: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create asset", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateAssetPayload{
@@ -4435,8 +4434,8 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update asset: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update asset", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateAssetPayload{
@@ -4454,8 +4453,8 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 
 	err := prb.Assets.Delete(ctx, input.AssetID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete asset: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete asset", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteAssetPayload{
@@ -4483,8 +4482,8 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 	)
 
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create datum: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create datum", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateDatumPayload{
@@ -4512,8 +4511,8 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 	)
 
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update datum: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update datum", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateDatumPayload{
@@ -4530,8 +4529,8 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 	prb := r.ProboService(ctx, input.DatumID.TenantID())
 
 	if err := prb.Data.Delete(ctx, input.DatumID); err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete datum: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete datum", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteDatumPayload{
@@ -4559,8 +4558,8 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 
 	audit, err := prb.Audits.Create(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create audit: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create audit", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateAuditPayload{
@@ -4587,8 +4586,8 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 
 	audit, err := prb.Audits.Update(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update audit: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update audit", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateAuditPayload{
@@ -4606,8 +4605,8 @@ func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAu
 
 	err := prb.Audits.Delete(ctx, input.AuditID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete audit: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete audit", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteAuditPayload{
@@ -4635,8 +4634,8 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 
 	audit, err := prb.Audits.UploadReport(ctx, req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot upload audit report: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot upload audit report", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UploadAuditReportPayload{
@@ -4654,8 +4653,8 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 
 	audit, err := prb.Audits.DeleteReport(ctx, input.AuditID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete audit report: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete audit report", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteAuditReportPayload{
@@ -4687,8 +4686,8 @@ func (r *mutationResolver) CreateNonconformity(ctx context.Context, input types.
 
 	nonconformity, err := prb.Nonconformities.Create(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create nonconformity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create nonconformity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateNonconformityPayload{
@@ -4720,8 +4719,8 @@ func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.
 
 	nonconformity, err := prb.Nonconformities.Update(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update nonconformity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update nonconformity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateNonconformityPayload{
@@ -4739,8 +4738,8 @@ func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.
 
 	err := prb.Nonconformities.Delete(ctx, input.NonconformityID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete nonconformity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete nonconformity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteNonconformityPayload{
@@ -4772,8 +4771,8 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 
 	obligation, err := prb.Obligations.Create(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create obligation: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create obligation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateObligationPayload{
@@ -4805,8 +4804,8 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 
 	obligation, err := prb.Obligations.Update(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update obligation: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update obligation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateObligationPayload{
@@ -4824,8 +4823,8 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 
 	err := prb.Obligations.Delete(ctx, input.ObligationID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete obligation: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete obligation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteObligationPayload{
@@ -4854,8 +4853,8 @@ func (r *mutationResolver) CreateContinualImprovement(ctx context.Context, input
 
 	continualImprovement, err := prb.ContinualImprovements.Create(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create continual improvement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create continual improvement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateContinualImprovementPayload{
@@ -4884,8 +4883,8 @@ func (r *mutationResolver) UpdateContinualImprovement(ctx context.Context, input
 
 	continualImprovement, err := prb.ContinualImprovements.Update(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update continual improvement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update continual improvement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateContinualImprovementPayload{
@@ -4903,8 +4902,8 @@ func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input
 
 	err := prb.ContinualImprovements.Delete(ctx, input.ContinualImprovementID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete continual improvement: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete continual improvement", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteContinualImprovementPayload{
@@ -5021,8 +5020,8 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 
 	activity, err := prb.ProcessingActivities.Create(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create processing activity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create processing activity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateProcessingActivityPayload{
@@ -5063,8 +5062,8 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 
 	activity, err := prb.ProcessingActivities.Update(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update processing activity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update processing activity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateProcessingActivityPayload{
@@ -5082,8 +5081,8 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 
 	err := prb.ProcessingActivities.Delete(ctx, input.ProcessingActivityID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete processing activity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete processing activity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteProcessingActivityPayload{
@@ -5263,8 +5262,8 @@ func (r *mutationResolver) CreateSnapshot(ctx context.Context, input types.Creat
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create snapshot: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create snapshot", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateSnapshotPayload{
@@ -5282,8 +5281,8 @@ func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.Delet
 
 	err := prb.Snapshots.Delete(ctx, input.SnapshotID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete snapshot: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete snapshot", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteSnapshotPayload{
@@ -5307,8 +5306,8 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create custom domain: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create custom domain", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateCustomDomainPayload{
@@ -5338,8 +5337,8 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	deletedDomainID := domain.ID
 
 	if err := prb.CustomDomains.DeleteCustomDomain(ctx, input.OrganizationID); err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete custom domain: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete custom domain", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.DeleteCustomDomainPayload{
@@ -5361,8 +5360,8 @@ func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Non
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get nonconformity organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get nonconformity organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -5386,8 +5385,8 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get nonconformity audit: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get nonconformity audit", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewAudit(audit), nil
@@ -5405,8 +5404,8 @@ func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconform
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get nonconformity owner: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get nonconformity owner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -5433,14 +5432,14 @@ func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 		count, err := prb.Nonconformities.CountForOrganizationID(ctx, obj.ParentID, nonconformityFilter)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count nonconformities: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count nonconformities", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Organization is the resolver for the organization field.
@@ -5457,8 +5456,8 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get obligation organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get obligation organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -5476,8 +5475,8 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get obligation owner: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get obligation owner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -5505,8 +5504,8 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 		count, err := prb.Obligations.CountForOrganizationID(ctx, obj.ParentID, obligationFilter)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count obligations: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count obligations", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	case *riskResolver:
@@ -5517,14 +5516,14 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 		count, err := prb.Obligations.CountForRiskID(ctx, obj.ParentID, obligationFilter)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count risk obligations: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count risk obligations", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // LogoURL is the resolver for the logoUrl field.
@@ -5537,8 +5536,8 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 
 	logoURL, err := prb.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate logo url: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return logoURL, nil
@@ -5554,8 +5553,8 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 
 	horizontalLogoURL, err := prb.Organizations.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate horizontal logo url: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo url", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return horizontalLogoURL, nil
@@ -5571,8 +5570,8 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 
 	orgContext, err := prb.Organizations.GetContextSummary(ctx, obj.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load organization context: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot load organization context", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganizationContext(orgContext), nil
@@ -5636,8 +5635,8 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 
 	page, err := prb.Connectors.ListForOrganizationID(ctx, obj.ID, cursor, filter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization slack connections: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization slack connections", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewSlackConnectionConnection(page), nil
@@ -5666,8 +5665,8 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 
 	page, err := prb.Frameworks.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization frameworks: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization frameworks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewFrameworkConnection(page, r, obj.ID), nil
@@ -5701,8 +5700,8 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 
 	page, err := prb.Controls.ListForOrganizationID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list controls: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list controls", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -5736,8 +5735,8 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, vendorFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization vendors: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization vendors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewVendorConnection(page, r, obj.ID), nil
@@ -5771,8 +5770,8 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 
 	page, err := prb.Documents.ListByOrganizationID(ctx, obj.ID, cursor, documentFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization documents: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization documents", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
@@ -5801,8 +5800,8 @@ func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organiza
 
 	page, err := prb.Meetings.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization meetings: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization meetings", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewMeetingConnection(page, r, obj.ID), nil
@@ -5870,8 +5869,8 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 
 	page, err := prb.Measures.ListForOrganizationID(ctx, obj.ID, cursor, measureFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization measures: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization measures", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
@@ -5905,8 +5904,8 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 
 	page, err := prb.Risks.ListForOrganizationID(ctx, obj.ID, cursor, riskFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization risks: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization risks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
@@ -5935,8 +5934,8 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 	page, err := prb.Tasks.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization tasks: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization tasks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewTaskConnection(page, r, obj.ID), nil
@@ -5970,8 +5969,8 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 	page, err := prb.Assets.ListForOrganizationID(ctx, obj.ID, cursor, assetFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization assets: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization assets", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewAssetConnection(page, r, obj.ID, filter), nil
@@ -6005,8 +6004,8 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 	page, err := prb.Data.ListForOrganizationID(ctx, obj.ID, cursor, datumFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization data: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization data", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewDataConnection(page, r, obj.ID, filter), nil
@@ -6035,8 +6034,8 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 
 	page, err := prb.Audits.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization audits: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization audits", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewAuditConnection(page, r, obj.ID), nil
@@ -6071,8 +6070,8 @@ func (r *organizationResolver) Nonconformities(ctx context.Context, obj *types.O
 
 	page, err := prb.Nonconformities.ListForOrganizationID(ctx, obj.ID, cursor, nonconformityFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization nonconformities: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization nonconformities", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewNonconformityConnection(page, r, obj.ID, filter), nil
@@ -6107,8 +6106,8 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 
 	page, err := prb.Obligations.ListForOrganizationID(ctx, obj.ID, cursor, obligationFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization obligations: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization obligations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewObligationConnection(page, r, obj.ID, filter), nil
@@ -6143,8 +6142,8 @@ func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *t
 
 	page, err := prb.ContinualImprovements.ListForOrganizationID(ctx, obj.ID, cursor, continualImprovementFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization continual improvements: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization continual improvements", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewContinualImprovementConnection(page, r, obj.ID, filter), nil
@@ -6209,8 +6208,8 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 
 	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, obj.ID, cursor, processingActivityFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization processing activities: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization processing activities", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewProcessingActivityConnection(page, r, obj.ID, filter), nil
@@ -6309,8 +6308,8 @@ func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organiz
 
 	page, err := prb.Snapshots.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization snapshots: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization snapshots", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewSnapshotConnection(page, r, obj.ID), nil
@@ -6339,8 +6338,8 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 
 	pageResult, err := prb.TrustCenterFiles.ListForOrganizationID(ctx, obj.ID, cursor, &coredata.TrustCenterFileFilter{})
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization trust center files: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization trust center files", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewTrustCenterFileConnection(pageResult, obj.ID), nil
@@ -6356,8 +6355,8 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 	trustCenter, file, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get trust center: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewTrustCenter(trustCenter, file), nil
@@ -6373,8 +6372,8 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 
 	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, obj.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get custom domain: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	if domain == nil {
@@ -6433,8 +6432,8 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -6481,8 +6480,8 @@ func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.Pro
 
 	page, err := prb.Vendors.ListForProcessingActivityID(ctx, obj.ID, cursor)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list processing activity vendors: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list processing activity vendors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewVendorConnection(page, r, obj.ID), nil
@@ -6548,14 +6547,14 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 
 		count, err := prb.ProcessingActivities.CountForOrganizationID(ctx, obj.ParentID, processingActivityFilter)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count organization processing activities: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count organization processing activities", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Permission is the resolver for the permission field.
@@ -6919,8 +6918,8 @@ func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*s
 
 	url, err := prb.Reports.GenerateDownloadURL(ctx, obj.ID, 15*time.Minute)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate download URL: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate download URL", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return url, nil
@@ -6936,8 +6935,8 @@ func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.A
 
 	audit, err := prb.Audits.GetByReportID(ctx, obj.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load audit for report: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot load audit for report", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewAudit(audit), nil
@@ -7014,8 +7013,8 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profi
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get owner: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -7035,8 +7034,8 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -7070,8 +7069,8 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 	page, err := prb.Measures.ListForRiskID(ctx, obj.ID, cursor, measureFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list risk measures: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list risk measures", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
@@ -7105,8 +7104,8 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 
 	page, err := prb.Documents.ListForRiskID(ctx, obj.ID, cursor, documentFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list risk documents: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list risk documents", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
@@ -7139,8 +7138,8 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 
 	page, err := prb.Controls.ListForRiskID(ctx, obj.ID, cursor, filters)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list risk controls: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list risk controls", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, filters), nil
@@ -7174,8 +7173,8 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 	page, err := prb.Obligations.ListForRiskID(ctx, obj.ID, cursor, obligationFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list risk obligations: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list risk obligations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewObligationConnection(page, r, obj.ID, filter), nil
@@ -7198,21 +7197,21 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 	case *measureResolver:
 		count, err := prb.Risks.CountForMeasureID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count risks: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	case *organizationResolver:
 		count, err := prb.Risks.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count risks: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
 		}
 		return count, nil
 	}
 
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Signed is the resolver for the signed field.
@@ -7632,8 +7631,8 @@ func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustC
 
 	logoURL, err := prb.TrustCenters.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate logo url: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return logoURL, nil
@@ -7649,8 +7648,8 @@ func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.Tr
 
 	logoURL, err := prb.TrustCenters.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate logo url: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return logoURL, nil
