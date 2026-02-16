@@ -1956,3 +1956,23 @@ func (r *Resolver) DeleteRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 		DeletedRiskID: input.ID,
 	}, nil
 }
+
+func (r *Resolver) ListMeetingAttendeesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingAttendeesInput) (*mcp.CallToolResult, types.ListMeetingAttendeesOutput, error) {
+	r.MustAuthorize(ctx, input.MeetingID, probo.ActionMeetingGet)
+
+	svc := r.ProboService(ctx, input.MeetingID)
+
+	attendees, err := svc.Meetings.GetAttendees(ctx, input.MeetingID)
+	if err != nil {
+		return nil, types.ListMeetingAttendeesOutput{}, fmt.Errorf("failed to list meeting attendees: %w", err)
+	}
+
+	profiles := make([]*types.Profile, 0, len(attendees))
+	for _, a := range attendees {
+		profiles = append(profiles, types.NewProfile(a))
+	}
+
+	return nil, types.ListMeetingAttendeesOutput{
+		Attendees: profiles,
+	}, nil
+}

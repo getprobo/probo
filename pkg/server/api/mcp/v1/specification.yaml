@@ -4354,6 +4354,26 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted meeting ID
 
+    ListMeetingAttendeesInput:
+      type: object
+      required:
+        - meeting_id
+      properties:
+        meeting_id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+
+    ListMeetingAttendeesOutput:
+      type: object
+      required:
+        - attendees
+      properties:
+        attendees:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+          description: List of attendee profiles
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -5075,3 +5095,12 @@ tools:
       $ref: "#/components/schemas/DeleteMeetingInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteMeetingOutput"
+  - name: listMeetingAttendees
+    description: List all attendees for a meeting
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeetingAttendeesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeetingAttendeesOutput"
