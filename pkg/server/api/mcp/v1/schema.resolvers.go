@@ -1448,6 +1448,21 @@ func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolReques
 	}, nil
 }
 
+func (r *Resolver) DeleteTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTaskInput) (*mcp.CallToolResult, types.DeleteTaskOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTaskDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Tasks.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteTaskOutput{}, fmt.Errorf("failed to delete task: %w", err)
+	}
+
+	return nil, types.DeleteTaskOutput{
+		DeletedTaskID: input.ID,
+	}, nil
+}
+
 func (r *Resolver) ListSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSnapshotsInput) (*mcp.CallToolResult, types.ListSnapshotsOutput, error) {
 	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionSnapshotList)
 

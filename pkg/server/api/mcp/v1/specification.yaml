@@ -3386,6 +3386,24 @@ components:
         task:
           $ref: "#/components/schemas/Task"
 
+    DeleteTaskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    DeleteTaskOutput:
+      type: object
+      required:
+        - deleted_task_id
+      properties:
+        deleted_task_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted task ID
+
     SnapshotsType:
       type: string
       enum:
@@ -4898,6 +4916,15 @@ tools:
       $ref: "#/components/schemas/UnassignTaskInput"
     outputSchema:
       $ref: "#/components/schemas/UnassignTaskOutput"
+  - name: deleteTask
+    description: Delete a task
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTaskOutput"
   - name: listSnapshots
     description: List all snapshots for the organization
     hints:

@@ -54,6 +54,8 @@ var (
 	DeleteDraftDocumentVersionToolInputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"document_version_id":{"type":"string","format":"string"}},"required":["document_version_id"]}`)
 	DeleteDraftDocumentVersionToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_document_version_id":{"type":"string","format":"string"}},"required":["deleted_document_version_id"]}`)
 	DeleteMeetingToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
+	DeleteTaskToolInputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
+	DeleteTaskToolOutputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_task_id":{"type":"string","format":"string"}},"required":["deleted_task_id"]}`)
 	DeleteMeetingToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_meeting_id":{"type":"string","format":"string"}},"required":["deleted_meeting_id"]}`)
 	DeleteRiskToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	DeleteRiskToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_risk_id":{"type":"string","format":"string"}},"required":["deleted_risk_id"]}`)
@@ -2167,6 +2169,18 @@ type UnassignTaskInput struct {
 // UnassignTaskOutput represents the schema
 type UnassignTaskOutput struct {
 	Task *Task `json:"task"`
+}
+
+// DeleteTaskInput represents the schema
+type DeleteTaskInput struct {
+	// Task ID
+	ID gid.GID `json:"id"`
+}
+
+// DeleteTaskOutput represents the schema
+type DeleteTaskOutput struct {
+	// Deleted task ID
+	DeletedTaskID gid.GID `json:"deleted_task_id"`
 }
 
 // UnlinkControlAuditInput represents the schema
