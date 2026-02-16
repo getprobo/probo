@@ -615,6 +615,10 @@ enum ApplicabilityStatementOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderFieldCreatedAt"
         )
+    CONTROL_SECTION_TITLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderFieldControlSectionTitle"
+        )
 }
 
 enum CountryCode

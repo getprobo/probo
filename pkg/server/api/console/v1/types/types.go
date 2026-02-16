@@ -1517,7 +1517,7 @@ type Organization struct {
 	TrustCenterFiles                *TrustCenterFileConnection                `json:"trustCenterFiles"`
 	TrustCenter                     *TrustCenter                              `json:"trustCenter,omitempty"`
 	CustomDomain                    *CustomDomain                             `json:"customDomain,omitempty"`
-	WebhookSubscriptions           *WebhookSubscriptionConnection           `json:"webhookSubscriptions"`
+	WebhookSubscriptions            *WebhookSubscriptionConnection            `json:"webhookSubscriptions"`
 	CreatedAt                       time.Time                                 `json:"createdAt"`
 	UpdatedAt                       time.Time                                 `json:"updatedAt"`
 	Permission                      bool                                      `json:"permission"`
@@ -2623,6 +2623,22 @@ type Viewer struct {
 	SignableDocument  *SignableDocument           `json:"signableDocument,omitempty"`
 }
 
+type WebhookEvent struct {
+	ID                    gid.GID                     `json:"id"`
+	WebhookSubscriptionID gid.GID                     `json:"webhookSubscriptionId"`
+	Status                coredata.WebhookEventStatus `json:"status"`
+	Response              *string                     `json:"response,omitempty"`
+	CreatedAt             time.Time                   `json:"createdAt"`
+}
+
+func (WebhookEvent) IsNode()             {}
+func (this WebhookEvent) GetID() gid.GID { return this.ID }
+
+type WebhookEventEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *WebhookEvent  `json:"node"`
+}
+
 type WebhookSubscription struct {
 	ID             gid.GID                     `json:"id"`
 	Organization   *Organization               `json:"organization,omitempty"`
@@ -2641,20 +2657,4 @@ func (this WebhookSubscription) GetID() gid.GID { return this.ID }
 type WebhookSubscriptionEdge struct {
 	Cursor page.CursorKey       `json:"cursor"`
 	Node   *WebhookSubscription `json:"node"`
-}
-
-type WebhookEvent struct {
-	ID                     gid.GID                     `json:"id"`
-	WebhookSubscriptionID gid.GID                     `json:"webhookSubscriptionId"`
-	Status                 coredata.WebhookEventStatus `json:"status"`
-	Response               *string                     `json:"response,omitempty"`
-	CreatedAt              time.Time                   `json:"createdAt"`
-}
-
-func (WebhookEvent) IsNode()             {}
-func (this WebhookEvent) GetID() gid.GID { return this.ID }
-
-type WebhookEventEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *WebhookEvent  `json:"node"`
 }

@@ -39,6 +39,9 @@ type (
 		Justification          *string   `db:"justification"`
 		CreatedAt              time.Time `db:"created_at"`
 		UpdatedAt              time.Time `db:"updated_at"`
+
+		// Ordering only.
+		SectionTitle string `db:"section_title"`
 	}
 
 	ApplicabilityStatements []*ApplicabilityStatement
@@ -48,6 +51,8 @@ func (s ApplicabilityStatement) CursorKey(orderBy ApplicabilityStatementOrderFie
 	switch orderBy {
 	case ApplicabilityStatementOrderFieldCreatedAt:
 		return page.NewCursorKey(s.ID, s.CreatedAt)
+	case ApplicabilityStatementOrderFieldControlSectionTitle:
+		return page.NewCursorKey(s.ID, s.SectionTitle)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -74,6 +79,29 @@ func (sac *ApplicabilityStatement) LoadByID(
 	id gid.GID,
 ) error {
 	q := `
+WITH stmt AS (
+    SELECT
+        a.id,
+        a.state_of_applicability_id,
+        a.control_id,
+        a.organization_id,
+        a.snapshot_id,
+        a.applicability,
+        a.justification,
+        a.created_at,
+        a.updated_at,
+        a.tenant_id,
+        f.name || ' - ' || c.section_title AS section_title
+    FROM
+        applicability_statements a
+    INNER JOIN
+        controls c ON c.id = a.control_id
+    INNER JOIN
+        frameworks f ON f.id = c.framework_id
+    WHERE
+        a.%s
+        AND a.id = @id
+)
 SELECT
     id,
     state_of_applicability_id,
@@ -83,15 +111,15 @@ SELECT
     applicability,
     justification,
     created_at,
-    updated_at
+    updated_at,
+    section_title
 FROM
-    applicability_statements
+    stmt
 WHERE
     %s
-    AND id = @id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
 	maps.Copy(args, scope.SQLArguments())
@@ -139,11 +167,16 @@ SELECT
     soac.applicability,
     soac.justification,
     soac.created_at,
-    soac.updated_at
+    soac.updated_at,
+    f.name || ' - ' || c.section_title AS section_title
 FROM
     applicability_statements soac
 INNER JOIN
     current_soa ON soac.state_of_applicability_id = current_soa.id
+INNER JOIN
+    controls c ON c.id = soac.control_id
+INNER JOIN
+    frameworks f ON f.id = c.framework_id
 WHERE
     soac.control_id = @control_id
 LIMIT 1;
@@ -373,6 +406,29 @@ func (sacs *ApplicabilityStatements) LoadByStateOfApplicabilityID(
 	cursor *page.Cursor[ApplicabilityStatementOrderField],
 ) error {
 	q := `
+WITH stmt AS (
+    SELECT
+        a.id,
+        a.state_of_applicability_id,
+        a.control_id,
+        a.organization_id,
+        a.snapshot_id,
+        a.applicability,
+        a.justification,
+        a.created_at,
+        a.updated_at,
+        a.tenant_id,
+        f.name || ' - ' || c.section_title AS section_title
+    FROM
+        applicability_statements a
+    INNER JOIN
+        controls c ON c.id = a.control_id
+    INNER JOIN
+        frameworks f ON f.id = c.framework_id
+    WHERE
+        a.%[1]s
+        AND a.state_of_applicability_id = @state_of_applicability_id
+)
 SELECT
     id,
     state_of_applicability_id,
@@ -382,13 +438,12 @@ SELECT
     applicability,
     justification,
     created_at,
-    updated_at
+    updated_at,
+    section_title
 FROM
-    applicability_statements
+    stmt
 WHERE
-    %[1]s
-    AND state_of_applicability_id = @state_of_applicability_id
-    AND %[2]s
+    %[2]s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
@@ -459,11 +514,16 @@ WITH soac_ctrl AS (
         soac.justification,
         soac.created_at,
         soac.updated_at,
-        soac.tenant_id
+        soac.tenant_id,
+        f.name || ' - ' || c.section_title AS section_title
     FROM
         applicability_statements soac
     INNER JOIN
         states_of_applicability soa ON soac.state_of_applicability_id = soa.id
+    INNER JOIN
+        controls c ON c.id = soac.control_id
+    INNER JOIN
+        frameworks f ON f.id = c.framework_id
     WHERE
         soac.%[1]s
         AND soac.control_id = @control_id
@@ -478,7 +538,8 @@ SELECT
     applicability,
     justification,
     created_at,
-    updated_at
+    updated_at,
+    section_title
 FROM
     soac_ctrl
 WHERE

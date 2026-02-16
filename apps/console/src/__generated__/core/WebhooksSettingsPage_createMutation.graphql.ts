@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d3e3309eefb502b19d48c61f9f162d18>>
+ * @generated SignedSource<<240851e53a2871e13a6e19a5b327684c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -189,7 +189,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "478c002a1f98dd87f23c6af0269ea2c6",
+    "cacheID": "680c8a1d89c3f45d06e203072c68e593",
     "id": null,
     "metadata": {},
     "name": "WebhooksSettingsPage_createMutation",
@@ -199,6 +199,6 @@ return {
 };
 })();
 
-(node as any).hash = "f47b849f8cad710922bf62eb6aebdd93";
+(node as any).hash = "ba13f2e1f417d449aa7d959c6411f858";
 
 export default node;

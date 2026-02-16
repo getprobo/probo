@@ -457,7 +457,7 @@ func (s StateOfApplicabilityService) ExportPDF(
 				nil,
 				page.Head,
 				page.OrderBy[coredata.ApplicabilityStatementOrderField]{
-					Field:     coredata.ApplicabilityStatementOrderFieldCreatedAt,
+					Field:     coredata.ApplicabilityStatementOrderFieldControlSectionTitle,
 					Direction: page.OrderDirectionAsc,
 				},
 			)

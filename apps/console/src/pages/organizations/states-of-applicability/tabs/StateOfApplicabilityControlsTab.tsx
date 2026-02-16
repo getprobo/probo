@@ -14,8 +14,9 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
-import { Suspense, useRef } from "react";
-import { graphql, useFragment } from "react-relay";
+import { Suspense, useCallback, useRef } from "react";
+import { graphql, useFragment, useRelayEnvironment } from "react-relay";
+import { fetchQuery } from "relay-runtime";
 
 import type { StateOfApplicabilityControlsTabFragment$key } from "#/__generated__/core/StateOfApplicabilityControlsTabFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
@@ -29,6 +30,16 @@ import {
   EditControlDialog,
   type EditControlDialogRef,
 } from "../dialogs/EditControlDialog";
+
+const refetchStatementsQuery = graphql`
+    query StateOfApplicabilityControlsTabRefetchQuery($stateOfApplicabilityId: ID!) {
+        node(id: $stateOfApplicabilityId) {
+            ... on StateOfApplicability {
+                ...StateOfApplicabilityControlsTabFragment
+            }
+        }
+    }
+`;
 
 export const controlsFragment = graphql`
     fragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {
@@ -47,7 +58,7 @@ export const controlsFragment = graphql`
             action: "core:applicability-statement:delete"
         )
 
-        applicabilityStatements(first: 1000, orderBy: { direction: ASC, field: CREATED_AT })
+        applicabilityStatements(first: 1000, orderBy: { direction: ASC, field: CONTROL_SECTION_TITLE })
             @connection(key: "StateOfApplicabilityControlsTab_applicabilityStatements") {
             __id
             edges {
@@ -99,9 +110,17 @@ export default function StateOfApplicabilityControlsTab({
 }) {
   const { __ } = useTranslate();
   const data = useFragment(controlsFragment, stateOfApplicability);
+  const environment = useRelayEnvironment();
   const organizationId = useOrganizationId();
   const addStatementDialogRef = useRef<AddApplicabilityStatementDialogRef>(null);
   const editDialogRef = useRef<EditControlDialogRef>(null);
+
+  const handleDialogClose = useCallback(() => {
+    if (!data.id) return;
+    fetchQuery(environment, refetchStatementsQuery, {
+      stateOfApplicabilityId: data.id,
+    }).subscribe({});
+  }, [environment, data.id]);
 
   const connectionId = data.applicabilityStatements?.__id;
 
@@ -401,7 +420,7 @@ export default function StateOfApplicabilityControlsTab({
       </div>
 
       <Suspense fallback={null}>
-        <AddApplicabilityStatementDialog ref={addStatementDialogRef} />
+        <AddApplicabilityStatementDialog ref={addStatementDialogRef} onClose={handleDialogClose} />
         <EditControlDialog ref={editDialogRef} />
       </Suspense>
     </>
