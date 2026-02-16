@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -47,6 +48,7 @@ type (
 		authorize         authz.AuthorizeFunc
 		probo             *probo.Service
 		iam               *iam.Service
+		esign             *esign.Service
 		logger            *log.Logger
 		customDomainCname string
 	}
@@ -56,6 +58,7 @@ func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
+	esignSvc *esign.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	connectorRegistry *connector.ConnectorRegistry,
@@ -66,7 +69,7 @@ func NewMux(
 
 	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, customDomainCname, logger)
+	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, esignSvc, customDomainCname, logger)
 
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))

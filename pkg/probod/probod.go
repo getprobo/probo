@@ -51,6 +51,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
@@ -69,6 +70,10 @@ type (
 		cfg config
 	}
 
+	esignConfig struct {
+		TSAURL string `json:"tsa-url"`
+	}
+
 	config struct {
 		BaseURL       *baseurl.BaseURL     `json:"base-url"`
 		EncryptionKey cipher.EncryptionKey `json:"encryption-key"`
@@ -83,6 +88,7 @@ type (
 		ChromeDPAddr  string               `json:"chrome-dp-addr"`
 		CustomDomains customDomainsConfig  `json:"custom-domains"`
 		SCIMBridge    scimBridgeConfig     `json:"scim-bridge"`
+		ESign         esignConfig          `json:"esign"`
 	}
 
 	trustCenterConfig struct {
@@ -173,6 +179,9 @@ func New() *Implm {
 			SCIMBridge: scimBridgeConfig{
 				SyncInterval: 60, // 15 minutes
 				PollInterval: 30, // 30 seconds
+			},
+			ESign: esignConfig{
+				TSAURL: "http://timestamp.digicert.com",
 			},
 		},
 	}
@@ -375,6 +384,15 @@ func (impl *Implm) Run(
 		l.Named("slack"),
 	)
 
+	esignService := esign.NewService(
+		pgClient,
+		fileManagerService,
+		html2pdfConverter,
+		impl.cfg.ESign.TSAURL,
+		impl.cfg.AWS.Bucket,
+		l.Named("esign"),
+	)
+
 	proboService, err := probo.NewService(
 		ctx,
 		impl.cfg.EncryptionKey,
@@ -390,6 +408,7 @@ func (impl *Implm) Run(
 		l.Named("probo"),
 		slackService,
 		iamService,
+		esignService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -403,6 +422,7 @@ func (impl *Implm) Run(
 		impl.cfg.EncryptionKey,
 		impl.cfg.GetSlackSigningSecret(),
 		iamService,
+		esignService,
 		html2pdfConverter,
 		fileManagerService,
 		l,
@@ -416,6 +436,7 @@ func (impl *Implm) Run(
 			Probo:             proboService,
 			IAM:               iamService,
 			Trust:             trustService,
+			ESign:             esignService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			BaseURL:           impl.cfg.BaseURL,
@@ -452,6 +473,7 @@ func (impl *Implm) Run(
 	mailerCtx, stopMailer := context.WithCancel(context.Background())
 	mailer := mailer.NewMailer(
 		pgClient,
+		fileManagerService,
 		l,
 		mailer.Config{
 			SenderEmail: impl.cfg.Notifications.Mailer.SenderEmail,
@@ -516,6 +538,15 @@ func (impl *Implm) Run(
 		},
 	)
 
+	esignServiceCtx, stopESignService := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := esignService.Run(esignServiceCtx, trustService.EmailPresenterConfigByOrganizationID); err != nil {
+				cancel(fmt.Errorf("esign service crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 	wg.Go(
@@ -528,13 +559,14 @@ func (impl *Implm) Run(
 
 	<-ctx.Done()
 
-	stopMailer()
-	stopSlackSender()
-	stopWebhookSender()
-	stopExportJobExporter()
-	stopIAMService()
 	stopApiServer()
 	stopTrustCenterServer()
+	stopWebhookSender()
+	stopESignService()
+	stopExportJobExporter()
+	stopIAMService()
+	stopMailer()
+	stopSlackSender()
 
 	wg.Wait()
 

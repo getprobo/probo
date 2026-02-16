@@ -82,6 +82,9 @@ const (
 	WebhookSubscriptionEntityType              uint16 = 56
 	WebhookDataEntityType                      uint16 = 57
 	WebhookEventEntityType                     uint16 = 58
+	ElectronicSignatureEntityType              uint16 = 59
+	ElectronicSignatureEventEntityType         uint16 = 60
+	EmailAttachmentEntityType                  uint16 = 61
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -200,6 +203,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &WebhookData{ID: id}, true
 	case WebhookEventEntityType:
 		return &WebhookEvent{ID: id}, true
+	case ElectronicSignatureEntityType:
+		return &ElectronicSignature{ID: id}, true
+	case ElectronicSignatureEventEntityType:
+		return &ElectronicSignatureEvent{ID: id}, true
+	case EmailAttachmentEntityType:
+		return &EmailAttachment{ID: id}, true
 	default:
 		return nil, false
 	}
