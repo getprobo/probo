@@ -25,6 +25,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
@@ -157,6 +158,23 @@ func (s TrustCenterAccessService) Request(
 				if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
 					return fmt.Errorf("cannot insert trust center access: %w", err)
 				}
+
+				// Create PENDING electronic signature when NDA is configured.
+				if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
+					_, err := s.svc.esign.CreateSignature(
+						ctx,
+						tx,
+						&esign.CreateSignatureRequest{
+							OrganizationID: access.OrganizationID,
+							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
+							FileID:         *trustCenter.NonDisclosureAgreementFileID,
+							SignerEmail:    access.Email,
+						},
+					)
+					if err != nil {
+						return fmt.Errorf("cannot create pending signature: %w", err)
+					}
+				}
 			}
 
 			var existingAccesses coredata.TrustCenterDocumentAccesses
@@ -226,21 +244,50 @@ func (s TrustCenterAccessService) Request(
 }
 
 func (s TrustCenterAccessService) HasAcceptedNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email mail.Addr) (bool, error) {
-	access := &coredata.TrustCenterAccess{}
+	var access coredata.TrustCenterAccess
 	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
-		if err != nil {
-			return fmt.Errorf("cannot load trust center access: %w", err)
-		}
-
-		return nil
+		return access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
 	})
 
 	if err != nil {
 		return false, nil
 	}
 
-	return access.HasAcceptedNonDisclosureAgreement, nil
+	// Legacy path: check the old boolean field.
+	if access.HasAcceptedNonDisclosureAgreement {
+		return true, nil
+	}
+
+	// New path: check for an electronic signature in ACCEPTED or later status.
+	if s.svc.esign != nil {
+		trustCenter := &coredata.TrustCenter{}
+		err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+			return trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID)
+		})
+		if err != nil {
+			return false, nil
+		}
+
+		if trustCenter.NonDisclosureAgreementFileID != nil {
+			sig, err := s.svc.esign.LoadSignatureByOrgEmailAndDocType(
+				ctx,
+				trustCenter.OrganizationID,
+				email.String(),
+				coredata.ElectronicSignatureDocumentTypeNDA,
+				*trustCenter.NonDisclosureAgreementFileID,
+			)
+			if err == nil {
+				switch sig.Status {
+				case coredata.ElectronicSignatureStatusAccepted,
+					coredata.ElectronicSignatureStatusProcessing,
+					coredata.ElectronicSignatureStatusCompleted:
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
 }
 
 type AcceptNDARequest struct {

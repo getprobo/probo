@@ -496,6 +496,7 @@ type TrustCenter implements Node {
   darkLogoFileUrl: String @goField(forceResolver: true)
   ndaFileName: String
   ndaFileUrl: String @goField(forceResolver: true)
+  ndaSignature: ElectronicSignature @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
   isViewerMember: Boolean! @goField(forceResolver: true)
   hasAcceptedNonDisclosureAgreement: Boolean! @goField(forceResolver: true)
@@ -608,6 +609,143 @@ type AcceptNonDisclosureAgreementPayload {
   success: Boolean!
 }
 
+# Electronic Signature
+
+enum ElectronicSignatureStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatus"
+  ) {
+  PENDING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusPending"
+    )
+  ACCEPTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusAccepted"
+    )
+  PROCESSING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusProcessing"
+    )
+  COMPLETED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusCompleted"
+    )
+  FAILED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusFailed"
+    )
+}
+
+enum ElectronicSignatureDocumentType
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentType"
+  ) {
+  NDA
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeNDA"
+    )
+  DPA
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeDPA"
+    )
+  MSA
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeMSA"
+    )
+  SOW
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeSOW"
+    )
+  SLA
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeSLA"
+    )
+  TOS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeTOS"
+    )
+  PRIVACY_POLICY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypePrivacyPolicy"
+    )
+  OTHER
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeOther"
+    )
+}
+
+enum ElectronicSignatureEventType
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventType"
+  ) {
+  DOCUMENT_VIEWED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeDocumentViewed"
+    )
+  CONSENT_GIVEN
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeConsentGiven"
+    )
+  FULL_NAME_TYPED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeFullNameTyped"
+    )
+  SIGNATURE_ACCEPTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSignatureAccepted"
+    )
+  SIGNATURE_COMPLETED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSignatureCompleted"
+    )
+  SEAL_COMPUTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSealComputed"
+    )
+  TIMESTAMP_REQUESTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeTimestampRequested"
+    )
+  CERTIFICATE_GENERATED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeCertificateGenerated"
+    )
+  PROCESSING_ERROR
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeProcessingError"
+    )
+}
+
+type ElectronicSignature implements Node {
+  id: ID!
+  status: ElectronicSignatureStatus!
+  documentType: ElectronicSignatureDocumentType!
+  consentText: String!
+  lastError: String
+  signedAt: Datetime
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+input AcceptElectronicSignatureInput {
+  signatureId: ID!
+  fullName: String!
+}
+
+type AcceptElectronicSignaturePayload {
+  signature: ElectronicSignature!
+}
+
+input RecordSigningEventInput {
+  signatureId: ID!
+  eventType: ElectronicSignatureEventType!
+}
+
+type RecordSigningEventPayload {
+  success: Boolean!
+}
+
 type Query {
   viewer: Identity
   node(id: ID!): Node!
@@ -647,4 +785,12 @@ type Mutation {
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
   ): RequestAccessesPayload! @session(required: PRESENT)
+
+  acceptElectronicSignature(
+    input: AcceptElectronicSignatureInput!
+  ): AcceptElectronicSignaturePayload @session(required: PRESENT)
+
+  recordSigningEvent(
+    input: RecordSigningEventInput!
+  ): RecordSigningEventPayload @session(required: PRESENT)
 }

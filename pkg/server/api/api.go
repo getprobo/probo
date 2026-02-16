@@ -25,6 +25,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -44,6 +45,7 @@ type (
 		Probo             *probo.Service
 		IAM               *iam.Service
 		Trust             *trust.Service
+		ESign             *esign.Service
 		Slack             *slack.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
@@ -117,6 +119,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("trust.v1"),
 			cfg.IAM,
 			cfg.Trust,
+			cfg.ESign,
 			cfg.Cookie,
 			cfg.BaseURL,
 		),
@@ -124,6 +127,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
 			cfg.IAM,
+			cfg.ESign,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.ConnectorRegistry,

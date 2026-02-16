@@ -23,6 +23,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
@@ -251,6 +252,23 @@ func (s TrustCenterAccessService) Create(
 
 			if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert trust center access: %w", err)
+			}
+
+			if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
+				_, err := s.svc.esign.CreateSignature(
+					ctx,
+					tx,
+					&esign.CreateSignatureRequest{
+						OrganizationID: access.OrganizationID,
+						DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
+						FileID:         *trustCenter.NonDisclosureAgreementFileID,
+						SignerEmail:    access.Email,
+					},
+				)
+
+				if err != nil {
+					return fmt.Errorf("cannot create pending signature: %w", err)
+				}
 			}
 
 			return nil

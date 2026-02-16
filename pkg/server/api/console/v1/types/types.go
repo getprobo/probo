@@ -1206,6 +1206,33 @@ type DocumentVersionSignatureOrder struct {
 	Direction page.OrderDirection                         `json:"direction"`
 }
 
+type ElectronicSignature struct {
+	ID                 gid.GID                                  `json:"id"`
+	Status             coredata.ElectronicSignatureStatus       `json:"status"`
+	DocumentType       coredata.ElectronicSignatureDocumentType `json:"documentType"`
+	ConsentText        string                                   `json:"consentText"`
+	LastError          *string                                  `json:"lastError,omitempty"`
+	SignedAt           *time.Time                               `json:"signedAt,omitempty"`
+	CertificateFileURL *string                                  `json:"certificateFileUrl,omitempty"`
+	Events             []*ElectronicSignatureEvent              `json:"events"`
+	CreatedAt          time.Time                                `json:"createdAt"`
+	UpdatedAt          time.Time                                `json:"updatedAt"`
+}
+
+func (ElectronicSignature) IsNode()             {}
+func (this ElectronicSignature) GetID() gid.GID { return this.ID }
+
+type ElectronicSignatureEvent struct {
+	ID             gid.GID                                 `json:"id"`
+	EventType      coredata.ElectronicSignatureEventType   `json:"eventType"`
+	EventSource    coredata.ElectronicSignatureEventSource `json:"eventSource"`
+	ActorEmail     string                                  `json:"actorEmail"`
+	ActorIPAddress string                                  `json:"actorIpAddress"`
+	ActorUserAgent string                                  `json:"actorUserAgent"`
+	OccurredAt     time.Time                               `json:"occurredAt"`
+	CreatedAt      time.Time                               `json:"createdAt"`
+}
+
 type Evidence struct {
 	ID          gid.GID                `json:"id"`
 	Size        int                    `json:"size"`
@@ -1847,6 +1874,7 @@ type TrustCenterAccess struct {
 	Name                              string                               `json:"name"`
 	State                             coredata.TrustCenterAccessState      `json:"state"`
 	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
+	NdaSignature                      *ElectronicSignature                 `json:"ndaSignature,omitempty"`
 	CreatedAt                         time.Time                            `json:"createdAt"`
 	UpdatedAt                         time.Time                            `json:"updatedAt"`
 	LastTokenExpiresAt                *time.Time                           `json:"lastTokenExpiresAt,omitempty"`

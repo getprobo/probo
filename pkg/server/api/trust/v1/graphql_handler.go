@@ -19,6 +19,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -28,11 +29,12 @@ import (
 	"go.probo.inc/probo/pkg/trust"
 )
 
-func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
+func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, esignSvc *esign.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
 			iam:           iamSvc,
 			trust:         trustSvc,
+			esign:         esignSvc,
 			logger:        logger,
 			baseURL:       baseURL,
 			sessionCookie: authn.NewCookie(&cookieConfig),

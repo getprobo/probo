@@ -14,6 +14,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
@@ -648,6 +649,71 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 	}, nil
 }
 
+// AcceptElectronicSignature is the resolver for the acceptElectronicSignature field.
+func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
+	}
+
+	httpReq := gqlutils.HTTPRequestFromContext(ctx)
+
+	if _, err := r.iam.AuthService.UpdateIdentity(ctx, identity.ID, input.FullName); err != nil {
+		var errNotFound *iam.ErrIdentityNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if err := r.esign.AcceptSignature(ctx, &esign.AcceptSignatureRequest{
+		SignatureID:    input.SignatureID,
+		SignerFullName: input.FullName,
+		SignerEmail:    identity.EmailAddress,
+		SignerIPAddr:   httpReq.RemoteAddr,
+		SignerUA:       httpReq.UserAgent(),
+	}); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	sig, err := r.esign.LoadSignatureByID(ctx, input.SignatureID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load electronic signature", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.AcceptElectronicSignaturePayload{
+		Signature: types.NewElectronicSignature(sig),
+	}, nil
+}
+
+// RecordSigningEvent is the resolver for the recordSigningEvent field.
+func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
+	}
+
+	httpReq := gqlutils.HTTPRequestFromContext(ctx)
+
+	if err := r.esign.RecordEvent(ctx, &esign.RecordEventRequest{
+		SignatureID: input.SignatureID,
+		EventType:   input.EventType,
+		EventSource: coredata.ElectronicSignatureEventSourceClient,
+		ActorEmail:  identity.EmailAddress,
+		ActorIPAddr: httpReq.RemoteAddr,
+		ActorUA:     httpReq.UserAgent(),
+	}); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RecordSigningEventPayload{Success: true}, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
@@ -866,6 +932,32 @@ func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCe
 	}
 
 	return &fileURL, nil
+}
+
+// NdaSignature is the resolver for the ndaSignature field.
+func (r *trustCenterResolver) NdaSignature(ctx context.Context, obj *types.TrustCenter) (*types.ElectronicSignature, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, nil
+	}
+
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter == nil || trustCenter.NonDisclosureAgreementFileID == nil {
+		return nil, nil
+	}
+
+	sig, err := r.esign.LoadSignatureByOrgEmailAndDocType(
+		ctx,
+		trustCenter.OrganizationID,
+		identity.EmailAddress.String(),
+		coredata.ElectronicSignatureDocumentTypeNDA,
+		*trustCenter.NonDisclosureAgreementFileID,
+	)
+	if err != nil {
+		return nil, nil
+	}
+
+	return types.NewElectronicSignature(sig), nil
 }
 
 // Organization is the resolver for the organization field.

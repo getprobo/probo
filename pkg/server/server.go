@@ -25,6 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -43,6 +44,7 @@ type Config struct {
 	Probo             *probo.Service
 	IAM               *iam.Service
 	Trust             *trust.Service
+	ESign             *esign.Service
 	Slack             *slack.Service
 	Cookie            securecookie.Config
 	TokenSecret       string
@@ -70,6 +72,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Probo:             cfg.Probo,
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
+		ESign:             cfg.ESign,
 		Slack:             cfg.Slack,
 		Cookie:            cfg.Cookie,
 		TokenSecret:       cfg.TokenSecret,
