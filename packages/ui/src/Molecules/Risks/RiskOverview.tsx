@@ -23,7 +23,8 @@ type Risk = {
 };
 
 const getColor = (score: number): string => {
-  return levelColors[Math.ceil(score / 2) - 1].color;
+  const clamped = Math.min(5, Math.max(1, score));
+  return levelColors[Math.ceil(clamped / 2) - 1].color;
 };
 
 export function RiskOverview({ type, risk }: Props) {
