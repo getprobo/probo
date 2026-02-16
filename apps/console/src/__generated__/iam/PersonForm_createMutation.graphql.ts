@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5148e84724d7649be7a0ccf0fe813893>>
+ * @generated SignedSource<<85bf3907699ac605e0603c8d1ae6ef8b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -64,6 +64,28 @@ v3 = {
   "args": null,
   "kind": "ScalarField",
   "name": "id",
+  "storageKey": null
+},
+v4 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 1
+  },
+  {
+    "kind": "Literal",
+    "name": "orderBy",
+    "value": {
+      "direction": "DESC",
+      "field": "CREATED_AT"
+    }
+  }
+],
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "createdAt",
   "storageKey": null
 };
 return {
@@ -176,20 +198,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "kind",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "position",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "Membership",
                     "kind": "LinkedField",
                     "name": "membership",
@@ -215,19 +223,6 @@ return {
                         "kind": "ScalarField",
                         "name": "permission",
                         "storageKey": "permission(action:\"iam:membership:update\")"
-                      },
-                      {
-                        "alias": "canDelete",
-                        "args": [
-                          {
-                            "kind": "Literal",
-                            "name": "action",
-                            "value": "iam:membership-profile:delete"
-                          }
-                        ],
-                        "kind": "ScalarField",
-                        "name": "permission",
-                        "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                       }
                     ],
                     "storageKey": null
@@ -252,12 +247,117 @@ return {
                     "storageKey": null
                   },
                   {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "createdAt",
-                    "storageKey": null
+                    "alias": "lastInvitation",
+                    "args": (v4/*: any*/),
+                    "concreteType": "InvitationConnection",
+                    "kind": "LinkedField",
+                    "name": "pendingInvitations",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "InvitationEdge",
+                        "kind": "LinkedField",
+                        "name": "edges",
+                        "plural": true,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Invitation",
+                            "kind": "LinkedField",
+                            "name": "node",
+                            "plural": false,
+                            "selections": [
+                              (v3/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "expiresAt",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "acceptedAt",
+                                "storageKey": null
+                              },
+                              (v5/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "__typename",
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "cursor",
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "PageInfo",
+                        "kind": "LinkedField",
+                        "name": "pageInfo",
+                        "plural": false,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "endCursor",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "hasNextPage",
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      },
+                      {
+                        "kind": "ClientExtension",
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "__id",
+                            "storageKey": null
+                          }
+                        ]
+                      }
+                    ],
+                    "storageKey": "pendingInvitations(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                   },
+                  {
+                    "alias": "lastInvitation",
+                    "args": (v4/*: any*/),
+                    "filters": [
+                      "orderBy"
+                    ],
+                    "handle": "connection",
+                    "key": "PeopleListItem_lastInvitation",
+                    "kind": "LinkedHandle",
+                    "name": "pendingInvitations"
+                  },
+                  (v5/*: any*/),
                   {
                     "alias": "canUpdate",
                     "args": [
@@ -270,6 +370,32 @@ return {
                     "kind": "ScalarField",
                     "name": "permission",
                     "storageKey": "permission(action:\"iam:membership-profile:update\")"
+                  },
+                  {
+                    "alias": "canInvite",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "iam:invitation:create"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"iam:invitation:create\")"
+                  },
+                  {
+                    "alias": "canDelete",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "iam:membership-profile:delete"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                   }
                 ],
                 "storageKey": null
@@ -299,12 +425,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ff3f29c40614a067d108d55df828f7c0",
+    "cacheID": "afbd8ffc5b5ae7156a108a2d1b25440b",
     "id": null,
     "metadata": {},
     "name": "PersonForm_createMutation",
     "operationKind": "mutation",
-    "text": "mutation PersonForm_createMutation(\n  $input: CreateUserInput!\n) {\n  createUser(input: $input) {\n    profileEdge {\n      node {\n        ...PeopleListItemFragment\n        id\n      }\n    }\n  }\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  source\n  state\n  fullName\n  kind\n  position\n  membership {\n    id\n    role\n    canUpdate: permission(action: \"iam:membership:update\")\n    canDelete: permission(action: \"iam:membership-profile:delete\")\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
+    "text": "mutation PersonForm_createMutation(\n  $input: CreateUserInput!\n) {\n  createUser(input: $input) {\n    profileEdge {\n      node {\n        ...PeopleListItemFragment\n        id\n      }\n    }\n  }\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  source\n  state\n  fullName\n  membership {\n    id\n    role\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  identity {\n    email\n    id\n  }\n  lastInvitation: pendingInvitations(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canInvite: permission(action: \"iam:invitation:create\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
   }
 };
 })();

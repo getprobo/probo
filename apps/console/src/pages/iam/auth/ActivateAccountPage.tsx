@@ -7,14 +7,15 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
+import type { ActivateAccountPageMutation } from "#/__generated__/iam/ActivateAccountPageMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
-const signUpFromIvitationMutation = graphql`
-  mutation SignUpFromInvitationPageMutation(
-    $input: SignUpFromInvitationInput!
+const activateAccountMutation = graphql`
+  mutation ActivateAccountPageMutation(
+    $input: ActivateAccountInput!
   ) {
-    signUpFromInvitation(input: $input) {
-      identity {
+    activateAccount(input: $input) {
+      profile {
         id
       }
     }
@@ -28,7 +29,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function SignUpFromInvitationPage() {
+export default function ActivateAccountPage() {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function SignUpFromInvitationPage() {
     },
   });
 
-  const [signUpFromInvitation] = useMutation(signUpFromIvitationMutation);
+  const [activateAccount] = useMutation<ActivateAccountPageMutation>(activateAccountMutation);
 
   const onSubmit = (data: FormData) => {
     const token = searchParams.get("token");
@@ -57,7 +58,7 @@ export default function SignUpFromInvitationPage() {
       return;
     }
 
-    signUpFromInvitation({
+    activateAccount({
       variables: {
         input: {
           token,

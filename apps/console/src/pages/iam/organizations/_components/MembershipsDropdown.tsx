@@ -1,13 +1,11 @@
 import { useTranslate } from "@probo/i18n";
 import {
-  Badge,
   Button,
   Dropdown,
   DropdownItem,
   DropdownSeparator,
   IconChevronGrabberVertical,
   IconMagnifyingGlass,
-  IconPeopleAdd,
   IconPlusLarge,
   Input,
 } from "@probo/ui";
@@ -17,7 +15,6 @@ import { Link, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { MembershipsDropdown_organizationFragment$key } from "#/__generated__/iam/MembershipsDropdown_organizationFragment.graphql";
-import type { MembershipsDropdown_viewerFragment$key } from "#/__generated__/iam/MembershipsDropdown_viewerFragment.graphql";
 import type { MembershipsDropdownMenuQuery } from "#/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
 
 import {
@@ -30,19 +27,11 @@ const organizationFragment = graphql`
     name
   }
 `;
-const viewerFragment = graphql`
-  fragment MembershipsDropdown_viewerFragment on Identity {
-    pendingInvitations @required(action: THROW) {
-      totalCount @required(action: THROW)
-    }
-  }
-`;
 
 export function MembershipsDropdown(props: {
   organizationFKey: MembershipsDropdown_organizationFragment$key;
-  viewerFKey: MembershipsDropdown_viewerFragment$key;
 }) {
-  const { organizationFKey, viewerFKey } = props;
+  const { organizationFKey } = props;
 
   const location = useLocation();
   const { __ } = useTranslate();
@@ -53,12 +42,6 @@ export function MembershipsDropdown(props: {
       organizationFragment,
       organizationFKey,
     );
-  const {
-    pendingInvitations: { totalCount: pendingInvitationCount },
-  } = useFragment<MembershipsDropdown_viewerFragment$key>(
-    viewerFragment,
-    viewerFKey,
-  );
   const [queryRef, loadQuery] = useQueryLoader<MembershipsDropdownMenuQuery>(
     membershipsDropdownMenuQuery,
   );
@@ -110,17 +93,6 @@ export function MembershipsDropdown(props: {
           )}
         </div>
         <DropdownSeparator />
-        {pendingInvitationCount > 0 && (
-          <DropdownItem asChild>
-            <Link to="/">
-              <IconPeopleAdd size={16} />
-              <span className="flex-1">{__("Invitations")}</span>
-              <Badge variant="info" size="sm">
-                {pendingInvitationCount}
-              </Badge>
-            </Link>
-          </DropdownItem>
-        )}
         <DropdownItem asChild>
           <Link to="/organizations/new" state={{ from: location.pathname }}>
             <IconPlusLarge size={16} />

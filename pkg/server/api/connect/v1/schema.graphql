@@ -53,9 +53,9 @@ type Mutation {
   signIn(input: SignInInput!): SignInPayload @session(required: OPTIONAL)
   signUp(input: SignUpInput!): SignUpPayload @session(required: NONE)
   signOut: SignOutPayload @session(required: PRESENT)
-  signUpFromInvitation(
-    input: SignUpFromInvitationInput!
-  ): SignUpFromInvitationPayload @session(required: NONE)
+  activateAccount(
+    input: ActivateAccountInput!
+  ): ActivateAccountPayload @session(required: NONE)
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
     @session(required: NONE)
   resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
@@ -98,14 +98,9 @@ type Mutation {
     @session(required: PRESENT)
   inviteUser(input: InviteUserInput!): InviteUserPayload
     @session(required: PRESENT)
-  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
-    @session(required: PRESENT)
   updateUser(input: UpdateUserInput!): UpdateUserPayload!
   updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
   removeUser(input: RemoveUserInput!): RemoveUserPayload
-    @session(required: PRESENT)
-
-  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload
     @session(required: PRESENT)
 
   createSAMLConfiguration(
@@ -148,14 +143,6 @@ type Identity implements Node {
     orderBy: ProfileOrder
   ): ProfileConnection @goField(forceResolver: true)
 
-  pendingInvitations(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: InvitationOrder
-  ): InvitationConnection @goField(forceResolver: true)
-
   sessions(
     first: Int
     after: CursorKey
@@ -197,6 +184,13 @@ type Profile implements Node {
   identity: Identity @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   membership: Membership @goField(forceResolver: true)
+  pendingInvitations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: InvitationOrder
+  ): InvitationConnection @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -249,15 +243,6 @@ type Organization implements Node {
     orderBy: ProfileOrder
   ): ProfileConnection @goField(forceResolver: true)
 
-  invitations(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    status: InvitationStatus
-    orderBy: InvitationOrder
-  ): InvitationConnection @goField(forceResolver: true)
-
   samlConfigurations(
     first: Int
     after: CursorKey
@@ -299,13 +284,12 @@ type Membership implements Node {
 
 type Invitation implements Node {
   id: ID!
-  email: EmailAddr!
-  fullName: String!
-  role: MembershipRole!
   expiresAt: Datetime!
   acceptedAt: Datetime
   createdAt: Datetime!
   status: InvitationStatus!
+
+  user: Profile @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
@@ -483,25 +467,9 @@ enum ReauthenticationReason {
 
 enum InvitationOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
-  FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldFullName"
-    )
-  EMAIL
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
-  ROLE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole")
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
-    )
-  EXPIRES_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
-    )
-  ACCEPTED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
     )
 }
 
@@ -658,10 +626,9 @@ input SignUpInput {
   fullName: String!
 }
 
-input SignUpFromInvitationInput {
+input ActivateAccountInput {
   token: String!
   password: String!
-  fullName: String!
 }
 
 input ForgotPasswordInput {
@@ -823,8 +790,8 @@ type SignOutPayload {
   success: Boolean!
 }
 
-type SignUpFromInvitationPayload {
-  identity: Identity
+type ActivateAccountPayload {
+  profile: Profile
 }
 
 type ForgotPasswordPayload {

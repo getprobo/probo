@@ -65,13 +65,13 @@ func NewInvitationEdge(invitation *coredata.Invitation, orderField coredata.Invi
 func NewInvitation(invitation *coredata.Invitation) *Invitation {
 	return &Invitation{
 		ID:         invitation.ID,
-		Email:      invitation.Email,
-		Role:       invitation.Role,
-		FullName:   invitation.FullName,
 		ExpiresAt:  invitation.ExpiresAt,
 		AcceptedAt: invitation.AcceptedAt,
 		CreatedAt:  invitation.CreatedAt,
 		Status:     invitation.Status,
+		User: &Profile{
+			ID: invitation.UserID,
+		},
 		Organization: &Organization{
 			ID: invitation.OrganizationID,
 		},

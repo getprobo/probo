@@ -1,12 +1,14 @@
 import { getAssignableRoles, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
+  ActionDropdown,
   Badge,
   Button,
+  DropdownItem,
+  IconMail,
   IconTrashCan,
   Option,
   Select,
-  Spinner,
   Td,
   Tr,
   useConfirm,
@@ -16,6 +18,7 @@ import { use } from "react";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
+import type { PeopleListItem_inviteMutation } from "#/__generated__/iam/PeopleListItem_inviteMutation.graphql";
 import type { PeopleListItemFragment$key } from "#/__generated__/iam/PeopleListItemFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -27,19 +30,49 @@ const fragment = graphql`
     source
     state
     fullName
-    kind
-    position
     membership @required(action: THROW) {
       id
       role
       canUpdate: permission(action: "iam:membership:update")
-      canDelete: permission(action: "iam:membership-profile:delete")
     }
     identity @required(action: THROW) {
       email
     }
+    lastInvitation: pendingInvitations(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
+    @required(action: THROW)
+    @connection(key: "PeopleListItem_lastInvitation") {
+      __id
+      edges {
+        node {
+          id
+          expiresAt
+          acceptedAt
+          createdAt
+        }
+      }
+    }
     createdAt
     canUpdate: permission(action: "iam:membership-profile:update")
+    canInvite: permission(action: "iam:invitation:create")
+    canDelete: permission(action: "iam:membership-profile:delete")
+  }
+`;
+
+const inviteUserMutation = graphql`
+  mutation PeopleListItem_inviteMutation(
+    $input: InviteUserInput!
+    $connections: [ID!]!
+  ) {
+    inviteUser(input: $input) {
+      invitationEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          expiresAt
+          acceptedAt
+          createdAt
+        }
+      }
+    }
   }
 `;
 
@@ -73,16 +106,22 @@ export function PeopleListItem(props: {
   const { fKey, connectionId } = props;
 
   const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
+  const { __, dateTimeFormat } = useTranslate();
   const confirm = useConfirm();
 
   const { role } = use(CurrentUser);
   const availableRoles = getAssignableRoles(role);
 
   const profile = useFragment<PeopleListItemFragment$key>(fragment, fKey);
+  const lastInvitation = profile.lastInvitation.edges[0]?.node;
 
   const isInactive = profile.state === "INACTIVE";
 
+  const [inviteUser, isInviting]
+    = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {
+      successMessage: __("Invitation sent successfully"),
+      errorMessage: __("Failed to send invitation"),
+    });
   const [updateMembership, isUpdatingRole] = useMutationWithToasts(
     updateRoleMutation,
     {
@@ -98,6 +137,29 @@ export function PeopleListItem(props: {
     },
   );
 
+  const handleInvite = () => {
+    confirm(
+      () => {
+        return inviteUser({
+          variables: {
+            input: {
+              organizationId,
+              profileId: profile.id,
+            },
+            connections: [profile.lastInvitation.__id],
+          },
+        });
+      },
+      {
+        label: __("Send"),
+        variant: "primary",
+        message: sprintf(
+          __("Send the activation email to %s?"),
+          profile.fullName,
+        ),
+      },
+    );
+  };
   const handleUpdateRole = async (role: string) => {
     await updateMembership({
       variables: {
@@ -109,7 +171,6 @@ export function PeopleListItem(props: {
       },
     });
   };
-
   const handleRemove = () => {
     confirm(
       () => {
@@ -134,27 +195,35 @@ export function PeopleListItem(props: {
 
   return (
     <>
-      <Tr
-        className={clsx(
+      <Tr to={`/organizations/${organizationId}/people/${profile.id}`}>
+        <Td className={clsx(
           isRemoving && "opacity-60 pointer-events-none",
           isInactive && "opacity-50",
         )}
-        to={`/organizations/${organizationId}/people/${profile.id}`}
-      >
-        <Td>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">{profile.fullName}</span>
-            {isInactive && <Badge variant="neutral">{__("Inactive")}</Badge>}
-          </div>
+        >
+          <span className="font-semibold">{profile.fullName}</span>
         </Td>
         <Td>
+          <Badge variant={profile.state === "INACTIVE" ? "neutral" : "success"}>{profile.state}</Badge>
+        </Td>
+        <Td className={clsx(
+          isRemoving && "opacity-60 pointer-events-none",
+          isInactive && "opacity-50",
+        )}
+        >
           <div className="flex items-center gap-2">
             {profile.identity.email}
             <Badge variant="info">{profile.source}</Badge>
           </div>
         </Td>
-        <Td>{profile.kind}</Td>
-        <Td noLink className="pr-4">
+        <Td
+          noLink
+          className={clsx(
+            "pr-4",
+            isRemoving && "opacity-60 pointer-events-none",
+            isInactive && "opacity-50",
+          )}
+        >
           <Select
             disabled={!profile.membership.canUpdate || isUpdatingRole}
             value={profile.membership.role}
@@ -177,31 +246,33 @@ export function PeopleListItem(props: {
             )}
           </Select>
         </Td>
-        <Td>{new Date(profile.createdAt).toLocaleDateString()}</Td>
-        <Td>{profile.position}</Td>
+        <Td className={clsx(
+          isRemoving && "opacity-60 pointer-events-none",
+          isInactive && "opacity-50",
+        )}
+        >
+          {new Date(profile.createdAt).toLocaleDateString()}
+        </Td>
         <Td noLink width={160} className="text-end">
-          {!isInactive && (
-            <div
-              className="flex gap-2 justify-end"
-              onClick={e => e.stopPropagation()}
-            >
-              {isRemoving
-                ? (
-                    <Spinner size={16} />
-                  )
-                : (
-                    profile.membership.canDelete && (
-                      <Button
-                        variant="danger"
-                        onClick={handleRemove}
-                        disabled={isRemoving}
-                        icon={IconTrashCan}
-                        aria-label={__("Remove member")}
-                      />
-                    )
-                  )}
-            </div>
-          )}
+          <ActionDropdown>
+            {isInactive && (
+              <DropdownItem
+                onClick={handleInvite}
+                icon={IconMail}
+              >
+                {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
+              </DropdownItem>
+            )}
+            {profile.canDelete && (
+              <DropdownItem
+                onClick={handleRemove}
+                variant="danger"
+                icon={IconTrashCan}
+              >
+                {__("Remove person")}
+              </DropdownItem>
+            )}
+          </ActionDropdown>
         </Td>
       </Tr>
     </>

@@ -43,8 +43,8 @@ const fragment = graphql`
 `;
 
 export function PeopleList(props: {
-  onConnectionIdChange: (connectionId: string) => void;
   fKey: PeopleListFragment$key;
+  onConnectionIdChange: (connectionId: string) => void;
 }) {
   const { fKey, onConnectionIdChange } = props;
 
@@ -83,11 +83,10 @@ export function PeopleList(props: {
       <Thead>
         <Tr>
           <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{__("Name")}</SortableTh>
+          <SortableTh field="STATUS">{__("Status")}</SortableTh>
           <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{__("Email")}</SortableTh>
-          <Th>{__("Type")}</Th>
           <SortableTh field="ROLE" onOrderChange={handleOrderChange}>{__("Role")}</SortableTh>
-          <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{__("Joined")}</SortableTh>
-          <Th>{__("Position")}</Th>
+          <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{__("Created on")}</SortableTh>
           <Th></Th>
         </Tr>
       </Thead>

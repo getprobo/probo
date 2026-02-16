@@ -181,176 +181,24 @@ func (s AccountService) VerifyEmail(ctx context.Context, token string) error {
 	)
 }
 
-func (s *AccountService) AcceptInvitation(
-	ctx context.Context,
-	identityID gid.GID,
-	invitationID gid.GID,
-) (*coredata.Invitation, *coredata.Membership, error) {
-	var (
-		now        = time.Now()
-		profile    = &coredata.MembershipProfile{}
-		membership = &coredata.Membership{}
-		invitation = &coredata.Invitation{}
-	)
-
-	err := s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			identity := coredata.Identity{}
-
-			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewIdentityNotFoundError(identityID)
-				}
-
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-
-			if err := invitation.LoadByID(ctx, tx, coredata.NewNoScope(), invitationID); err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewInvitationNotFoundError(invitationID)
-				}
-
-				return fmt.Errorf("cannot load invitation: %w", err)
-			}
-
-			if invitation.Email != identity.EmailAddress {
-				return NewInvitationNotFoundError(invitationID)
-			}
-
-			if invitation.AcceptedAt != nil {
-				return NewInvitationAlreadyAcceptedError(invitationID)
-			}
-
-			if invitation.ExpiresAt.Before(now) {
-				return NewInvitationExpiredError(invitationID)
-			}
-
-			tenantID := invitation.OrganizationID.TenantID()
-			scope := coredata.NewScope(invitation.OrganizationID.TenantID())
-
-			existingProfile := &coredata.MembershipProfile{}
-			if err := existingProfile.LoadByIdentityIDAndOrganizationID(
-				ctx,
-				tx,
-				scope,
-				identityID,
-				invitation.OrganizationID,
-			); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load existing profile: %w", err)
-				}
-
-				profile = &coredata.MembershipProfile{
-					ID:             gid.New(tenantID, coredata.MembershipProfileEntityType),
-					IdentityID:     identity.ID,
-					OrganizationID: invitation.OrganizationID,
-					Source:         coredata.ProfileSourceManual,
-					State:          coredata.ProfileStateActive,
-					FullName:       identity.FullName,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				if err := profile.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert profile: %w", err)
-				}
-			} else {
-				if existingProfile.State == coredata.ProfileStateInactive {
-					existingProfile.State = coredata.ProfileStateActive
-
-					if err := existingProfile.Update(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot reactivate profile: %w", err)
-					}
-				}
-
-				profile = existingProfile
-			}
-
-			existingMembership := &coredata.Membership{}
-			if err := existingMembership.LoadByIdentityIDAndOrganizationID(
-				ctx,
-				tx,
-				scope,
-				identityID,
-				invitation.OrganizationID,
-			); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load existing membership: %w", err)
-				}
-
-				membership = &coredata.Membership{
-					ID:             gid.New(tenantID, coredata.MembershipEntityType),
-					IdentityID:     identityID,
-					OrganizationID: invitation.OrganizationID,
-					Role:           invitation.Role,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				if err := membership.Insert(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot create membership: %w", err)
-				}
-			} else {
-				existingMembership.Role = invitation.Role
-				existingMembership.UpdatedAt = now
-
-				if err := existingMembership.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot assign membership role: %w", err)
-				}
-
-				membership = existingMembership
-			}
-
-			invitation.AcceptedAt = &now
-			if err := invitation.Update(ctx, tx, scope); err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewInvitationNotFoundError(invitationID)
-				}
-
-				return fmt.Errorf("cannot update invitation: %w", err)
-			}
-
-			// Expire other pending invitations for email in organization
-			invitations := &coredata.Invitations{}
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			if err := invitations.ExpireByEmailAndOrganization(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(invitation.OrganizationID),
-				invitation.Email,
-				invitation.OrganizationID,
-				onlyPending,
-			); err != nil {
-				return fmt.Errorf("cannot expire pending invitations by email: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return invitation, membership, nil
-}
-
 func (s *AccountService) ListPendingInvitations(
 	ctx context.Context,
-	identityID gid.GID,
+	userID gid.GID,
 	cursor *page.Cursor[coredata.InvitationOrderField],
 ) (*page.Page[*coredata.Invitation, coredata.InvitationOrderField], error) {
-	var invitations coredata.Invitations
+	var (
+		scope       = coredata.NewScopeFromObjectID(userID)
+		invitations coredata.Invitations
+	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			identity := coredata.Identity{}
-			err := identity.LoadByID(ctx, conn, identityID)
+			profile := coredata.MembershipProfile{}
+			err := profile.LoadByID(ctx, conn, scope, userID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewIdentityNotFoundError(identityID)
+					return NewIdentityNotFoundError(userID)
 				}
 
 				return fmt.Errorf("cannot load identity: %w", err)
@@ -358,7 +206,7 @@ func (s *AccountService) ListPendingInvitations(
 
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 
-			err = invitations.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identity.EmailAddress, cursor, onlyPending)
+			err = invitations.LoadByUserID(ctx, conn, scope, userID, cursor, onlyPending)
 			if err != nil {
 				return fmt.Errorf("cannot load invitations: %w", err)
 			}
@@ -372,39 +220,6 @@ func (s *AccountService) ListPendingInvitations(
 	}
 
 	return page.NewPage(invitations, cursor), nil
-}
-
-func (s *AccountService) CountPendingInvitations(
-	ctx context.Context,
-	identityID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			identity := coredata.Identity{}
-			err := identity.LoadByID(ctx, conn, identityID)
-			if err != nil {
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-
-			invitations := coredata.Invitations{}
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-
-			count, err = invitations.CountByEmail(ctx, conn, identity.EmailAddress, onlyPending)
-			if err != nil {
-				return fmt.Errorf("cannot count pending invitations: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 func (s AccountService) ChangePassword(ctx context.Context, identityID gid.GID, req *ChangePasswordRequest) error {

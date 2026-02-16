@@ -48,7 +48,6 @@ type (
 	CreateIdentityFromInvitationRequest struct {
 		InvitationToken string
 		Password        string
-		FullName        string
 	}
 
 	LoadOrCreateIdentityRequest struct {
@@ -93,7 +92,6 @@ func (req CreateIdentityFromInvitationRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.InvitationToken, "invitationToken", validator.NotEmpty())
-	v.Check(req.FullName, "fullName", validator.NotEmpty(), validator.MinLen(1), validator.MaxLen(255))
 	v.Check(req.Password, "password", PasswordValidator())
 
 	return v.Error()
@@ -134,10 +132,10 @@ func (req CreateIdentityWithPasswordRequest) Validate() error {
 	return v.Error()
 }
 
-func (s *AuthService) CreateIdentityFromInvitation(
+func (s *AuthService) ActivateAccount(
 	ctx context.Context,
 	req *CreateIdentityFromInvitationRequest,
-) (*coredata.Identity, *coredata.Session, error) {
+) (*coredata.MembershipProfile, *coredata.Session, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -150,8 +148,8 @@ func (s *AuthService) CreateIdentityFromInvitation(
 	var (
 		scope      = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
 		invitation = &coredata.Invitation{}
-		identity   = &coredata.Identity{}
-		session    = &coredata.Session{}
+		profile    *coredata.MembershipProfile
+		session    *coredata.Session
 		now        = time.Now()
 	)
 
@@ -180,23 +178,54 @@ func (s *AuthService) CreateIdentityFromInvitation(
 				return NewInvitationExpiredError(payload.Data.InvitationID)
 			}
 
-			identity = &coredata.Identity{
-				ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
-				EmailAddress:         invitation.Email,
-				FullName:             invitation.FullName,
-				HashedPassword:       hashedPassword,
-				EmailAddressVerified: true,
-				CreatedAt:            now,
-				UpdatedAt:            now,
+			profile = &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, tx, scope, invitation.UserID); err != nil {
+				return fmt.Errorf("cannot load user: %w", err)
 			}
 
-			err = identity.Insert(ctx, tx)
+			if profile.State == coredata.ProfileStateInactive {
+				profile.State = coredata.ProfileStateActive
+				profile.UpdatedAt = now
+
+				if err := profile.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update user: %w", err)
+				}
+			}
+
+			identity := &coredata.Identity{}
+			if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			identity.HashedPassword = hashedPassword
+			identity.EmailAddressVerified = true
+			identity.UpdatedAt = now
+
+			err = identity.Update(ctx, tx)
 			if err != nil {
-				if err == coredata.ErrResourceAlreadyExists {
-					return NewIdentityAlreadyExistsError(invitation.Email)
+				return fmt.Errorf("cannot update identity: %w", err)
+			}
+
+			invitation.AcceptedAt = &now
+			if err := invitation.Update(ctx, tx, scope); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewInvitationNotFoundError(payload.Data.InvitationID)
 				}
 
-				return fmt.Errorf("cannot insert identity: %w", err)
+				return fmt.Errorf("cannot update invitation: %w", err)
+			}
+
+			// Expire other pending invitations for user
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(invitation.OrganizationID),
+				invitation.UserID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
 			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
@@ -213,7 +242,7 @@ func (s *AuthService) CreateIdentityFromInvitation(
 		return nil, nil, err
 	}
 
-	return identity, session, nil
+	return profile, session, nil
 }
 
 func (s AuthService) ResetPassword(

@@ -24,17 +24,14 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	Invitation struct {
 		ID             gid.GID          `db:"id"`
-		OrganizationID gid.GID          `db:"organization_id"`
-		Email          mail.Addr        `db:"email"`
-		FullName       string           `db:"full_name"`
-		Role           MembershipRole   `db:"role"`
+		OrganizationID gid.GID          `fb:"organization_id"`
+		UserID         gid.GID          `db:"user_id"`
 		Status         InvitationStatus `db:"status"`
 		ExpiresAt      time.Time        `db:"expires_at"`
 		AcceptedAt     *time.Time       `db:"accepted_at"`
@@ -46,22 +43,8 @@ type (
 
 func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 	switch orderBy {
-	case InvitationOrderFieldFullName:
-		return page.NewCursorKey(i.ID, i.FullName)
-	case InvitationOrderFieldEmail:
-		return page.NewCursorKey(i.ID, i.Email)
-	case InvitationOrderFieldRole:
-		return page.NewCursorKey(i.ID, i.Role)
 	case InvitationOrderFieldCreatedAt:
 		return page.NewCursorKey(i.ID, i.CreatedAt)
-	case InvitationOrderFieldExpiresAt:
-		return page.NewCursorKey(i.ID, i.ExpiresAt)
-	case InvitationOrderFieldAcceptedAt:
-		acceptedAt := time.Time{}
-		if i.AcceptedAt != nil {
-			acceptedAt = *i.AcceptedAt
-		}
-		return page.NewCursorKey(i.ID, acceptedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -72,21 +55,17 @@ func (i *Invitation) Insert(ctx context.Context, conn pg.Conn, scope Scoper) err
 INSERT INTO
     iam_invitations (
         tenant_id,
+		organization_id,
+		user_id,
         id,
-        organization_id,
-        email,
-        full_name,
-        role,
         expires_at,
         created_at
     )
 VALUES (
     @tenant_id,
+	@organization_id,
+	@user_id,
     @id,
-    @organization_id,
-    @email,
-    @full_name,
-    @role,
     @expires_at,
     @created_at
 );
@@ -94,11 +73,9 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
-		"id":              i.ID,
 		"organization_id": i.OrganizationID,
-		"email":           i.Email,
-		"full_name":       i.FullName,
-		"role":            i.Role,
+		"id":              i.ID,
+		"user_id":         i.UserID,
 		"expires_at":      i.ExpiresAt,
 		"created_at":      i.CreatedAt,
 	}
@@ -120,10 +97,8 @@ func (i *Invitation) LoadByID(
 	query := `
 SELECT
     id,
-    organization_id,
-    email,
-    full_name,
-    role,
+	organization_id,
+	user_id,
     CASE
         WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
         WHEN expires_at < NOW() THEN 'EXPIRED'
@@ -164,49 +139,12 @@ WHERE
 	return nil
 }
 
-func (i *Invitations) ExpireByEmailAndOrganization(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	email mail.Addr,
-	organizationID gid.GID,
-	filter *InvitationFilter,
-) error {
-	q := `
-UPDATE
-    iam_invitations
-SET
-    expires_at = NOW()
-WHERE
-    email = @email
-    AND organization_id = @organization_id
-    AND %s
-    AND %s
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"email":           email,
-		"organization_id": organizationID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot expire invitations: %w", err)
-	}
-
-	return nil
-}
-
 // AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
 // It is intentionally lightweight and does not populate the Invitation struct.
 func (i *Invitation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
 	q := `
 SELECT
-    email
-    , organization_id
+    email, organization_id
 FROM
     iam_invitations
 WHERE
@@ -288,11 +226,11 @@ WHERE
 	return nil
 }
 
-func (i *Invitations) LoadByIdentityID(
+func (i *Invitations) LoadByUserID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	email mail.Addr,
+	userID gid.GID,
 	cursor *page.Cursor[InvitationOrderField],
 	filter *InvitationFilter,
 ) error {
@@ -300,9 +238,7 @@ func (i *Invitations) LoadByIdentityID(
 SELECT
     id,
     organization_id,
-    email,
-    full_name,
-    role,
+	user_id,
     CASE
         WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
         WHEN expires_at < NOW() THEN 'EXPIRED'
@@ -314,60 +250,7 @@ SELECT
 FROM
     iam_invitations
 WHERE
-    email = @email
-    AND %s
-    AND %s
-`
-
-	query = fmt.Sprintf(query, filter.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"email": email,
-	}
-	maps.Copy(args, filter.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot query invitations: %w", err)
-	}
-
-	invitations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Invitation])
-	if err != nil {
-		return fmt.Errorf("cannot collect invitations: %w", err)
-	}
-
-	*i = invitations
-	return nil
-}
-
-func (i *Invitations) LoadByOrganizationID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	orgID gid.GID,
-	cursor *page.Cursor[InvitationOrderField],
-	filter *InvitationFilter,
-) error {
-	query := `
-SELECT
-    id,
-    organization_id,
-    email,
-    full_name,
-    role,
-    CASE
-        WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
-        WHEN expires_at < NOW() THEN 'EXPIRED'
-        ELSE 'PENDING'
-    END as status,
-    expires_at,
-    accepted_at,
-    created_at
-FROM
-    iam_invitations
-WHERE
-    organization_id = @organization_id
+    user_id = @user_id
     AND %s
     AND %s
     AND %s
@@ -376,7 +259,7 @@ WHERE
 	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"organization_id": orgID,
+		"user_id": userID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -396,73 +279,36 @@ WHERE
 	return nil
 }
 
-func (i *Invitations) CountByOrganizationID(
+func (i *Invitations) ExpireByUserID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	orgID gid.GID,
+	userID gid.GID,
 	filter *InvitationFilter,
-) (int, error) {
+) error {
 	q := `
-SELECT
-    COUNT(*)
-FROM
-    iam_invitations
-WHERE
-    organization_id = @organization_id AND %s AND %s
-`
+	UPDATE
+	    iam_invitations
+	SET
+	    expires_at = NOW()
+	WHERE
+	    user_id = @user_id
+	    AND organization_id = @organization_id
+	    AND %s
+	    AND %s
+	`
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"organization_id": orgID,
+		"user_id": userID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-	err := row.Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot count invitations: %w", err)
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot expire invitations: %w", err)
 	}
 
-	return count, nil
-}
-
-// Tenant scope is not applied because this is used to count invitations across all tenants
-// for a user who doesn't have tenant access yet (before accepting an invitation).
-func (i *Invitations) CountByEmail(
-	ctx context.Context,
-	conn pg.Conn,
-	email mail.Addr,
-	filter *InvitationFilter,
-) (int, error) {
-	q := `
-SELECT
-    COUNT(*)
-FROM
-    iam_invitations
-WHERE
-    email = @email
-    AND %s
-`
-
-	q = fmt.Sprintf(q, filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"email": email,
-	}
-	maps.Copy(args, filter.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-	err := row.Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot count invitations: %w", err)
-	}
-
-	return count, nil
+	return nil
 }

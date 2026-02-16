@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, PageHeader, TabBadge, TabItem, Tabs } from "@probo/ui";
+import { Button, PageHeader } from "@probo/ui";
 import { useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
@@ -8,8 +8,6 @@ import type { PeoplePageQuery } from "#/__generated__/iam/PeoplePageQuery.graphq
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AddPersonDialog } from "./_components/AddPersonDialog";
-import { InvitationList } from "./_components/InvitationList";
-import { InviteUserDialog } from "./_components/InviteUserDialog";
 import { PeopleList } from "./_components/PeopleList";
 
 export const peoplePageQuery = graphql`
@@ -18,29 +16,10 @@ export const peoplePageQuery = graphql`
       __typename
       ... on Organization {
         canCreateUser: permission(action: "iam:membership-profile:create")
-        canInviteUser: permission(action: "iam:invitation:create")
-        profiles(first: 20, orderBy: { direction: ASC, field: FULL_NAME })
-          @required(action: THROW) {
-          totalCount
-        }
         ...PeopleListFragment
           @arguments(first: 20, order: { direction: ASC, field: FULL_NAME })
-        invitations(first: 20, orderBy: { direction: DESC, field: CREATED_AT })
-          @required(action: THROW) {
-          totalCount
-          ...PeoplePage_invitationsTotalCountFragment
-        }
-        ...InvitationListFragment
-          @arguments(first: 20, order: { direction: DESC, field: CREATED_AT })
       }
     }
-  }
-`;
-
-export const invitationCountFragment = graphql`
-  fragment PeoplePage_invitationsTotalCountFragment on InvitationConnection
-  @updatable {
-    totalCount
   }
 `;
 
@@ -52,14 +31,11 @@ export function PeoplePage(props: {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
-  const [activeTab, setActiveTab] = useState<"people" | "invitations">(
-    "people",
-  );
   const [connectionId, setConnectionId] = useState<DataID>(
     ConnectionHandler.getConnectionID(
       organizationId,
       "PeopleListFragment_profiles",
-      { orderBy: { direction: "ASC", field: "CREATED_AT" } },
+      { orderBy: { direction: "ASC", field: "FULL_NAME" } },
     ),
   );
 
@@ -71,14 +47,6 @@ export function PeoplePage(props: {
     throw new Error("node is of invalid type");
   }
 
-  const [invitationListConnectionId, setInvitationListConnectionId] = useState(
-    ConnectionHandler.getConnectionID(
-      organizationId,
-      "InvitationListFragment_invitations",
-      { orderBy: { direction: "ASC", field: "CREATED_AT" } },
-    ),
-  );
-
   return (
     <div className="space-y-6">
       <PageHeader title={__("People")}>
@@ -88,53 +56,13 @@ export function PeoplePage(props: {
               <Button variant="secondary">{__("Add Person")}</Button>
             </AddPersonDialog>
           )}
-        {organization.canInviteUser && (
-          <InviteUserDialog
-            connectionId={invitationListConnectionId}
-            fKey={organization.invitations}
-          >
-            <Button variant="secondary">{__("Invite member")}</Button>
-          </InviteUserDialog>
-        )}
       </PageHeader>
 
-      <Tabs>
-        <TabItem
-          active={activeTab === "people"}
-          onClick={() => setActiveTab("people")}
-        >
-          {__("People")}
-          {(organization.profiles.totalCount ?? 0) > 0 && (
-            <TabBadge>{organization.profiles.totalCount}</TabBadge>
-          )}
-        </TabItem>
-        <TabItem
-          active={activeTab === "invitations"}
-          onClick={() => setActiveTab("invitations")}
-        >
-          {__("Invitations")}
-          {(organization.invitations.totalCount ?? 0) > 0 && (
-            <TabBadge>{organization.invitations.totalCount}</TabBadge>
-          )}
-        </TabItem>
-      </Tabs>
-
       <div className="pb-6 pt-6">
-        {activeTab === "people" && (
-          <PeopleList
-            fKey={organization}
-            onConnectionIdChange={setConnectionId}
-          />
-        )}
-
-        {activeTab === "invitations" && (
-          <InvitationList
-            fKey={organization}
-            totalCount={organization.invitations.totalCount ?? 0}
-            totalCountFKey={organization.invitations}
-            onConnectionIdChange={setInvitationListConnectionId}
-          />
-        )}
+        <PeopleList
+          fKey={organization}
+          onConnectionIdChange={setConnectionId}
+        />
       </div>
     </div>
   );

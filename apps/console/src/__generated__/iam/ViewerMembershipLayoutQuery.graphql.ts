@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bb127fea9cdcaddd0cf0a0a3db90ff14>>
+ * @generated SignedSource<<6bcbc60c4f6fe80fc82937a5f53ee509>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -32,10 +32,6 @@ export type ViewerMembershipLayoutQuery$data = {
   };
   readonly viewer: {
     readonly email: string;
-    readonly pendingInvitations: {
-      readonly totalCount: number;
-    };
-    readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdown_viewerFragment">;
   };
 };
 export type ViewerMembershipLayoutQuery = {
@@ -90,13 +86,6 @@ v6 = {
   "storageKey": null
 },
 v7 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "totalCount",
-  "storageKey": null
-},
-v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -200,32 +189,7 @@ return {
           "name": "viewer",
           "plural": false,
           "selections": [
-            (v6/*: any*/),
-            {
-              "args": null,
-              "kind": "FragmentSpread",
-              "name": "MembershipsDropdown_viewerFragment"
-            },
-            {
-              "kind": "RequiredField",
-              "field": {
-                "alias": null,
-                "args": null,
-                "concreteType": "InvitationConnection",
-                "kind": "LinkedField",
-                "name": "pendingInvitations",
-                "plural": false,
-                "selections": [
-                  {
-                    "kind": "RequiredField",
-                    "field": (v7/*: any*/),
-                    "action": "THROW"
-                  }
-                ],
-                "storageKey": null
-              },
-              "action": "THROW"
-            }
+            (v6/*: any*/)
           ],
           "storageKey": null
         },
@@ -294,11 +258,11 @@ return {
                         "name": "permission",
                         "storageKey": "permission(action:\"iam:personal-api-key:list\")"
                       },
-                      (v8/*: any*/)
+                      (v7/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v8/*: any*/),
+                  (v7/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -308,7 +272,7 @@ return {
                     "plural": false,
                     "selections": [
                       (v5/*: any*/),
-                      (v8/*: any*/)
+                      (v7/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -586,7 +550,7 @@ return {
             "type": "Organization",
             "abstractKey": null
           },
-          (v8/*: any*/)
+          (v7/*: any*/)
         ],
         "storageKey": null
       },
@@ -599,35 +563,23 @@ return {
         "plural": false,
         "selections": [
           (v6/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "InvitationConnection",
-            "kind": "LinkedField",
-            "name": "pendingInvitations",
-            "plural": false,
-            "selections": [
-              (v7/*: any*/)
-            ],
-            "storageKey": null
-          },
-          (v8/*: any*/)
+          (v7/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "63f113e3848e77978d2caee55ca07ed4",
+    "cacheID": "4f0eae19e470f2dd64ac495cb2612a19",
     "id": null,
     "metadata": {},
     "name": "ViewerMembershipLayoutQuery",
     "operationKind": "query",
-    "text": "query ViewerMembershipLayoutQuery(\n  $organizationId: ID!\n  $hideSidebar: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...ViewerMembershipDropdownFragment\n      ...SidebarFragment @skip(if: $hideSidebar)\n      viewer {\n        fullName\n        membership {\n          role\n          id\n        }\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    email\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measure:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:framework:list\")\n  canListMembers: permission(action: \"iam:membership:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n\nfragment ViewerMembershipDropdownFragment on Organization {\n  viewer {\n    fullName\n    identity {\n      email\n      canListAPIKeys: permission(action: \"iam:personal-api-key:list\")\n      id\n    }\n    id\n  }\n}\n"
+    "text": "query ViewerMembershipLayoutQuery(\n  $organizationId: ID!\n  $hideSidebar: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...ViewerMembershipDropdownFragment\n      ...SidebarFragment @skip(if: $hideSidebar)\n      viewer {\n        fullName\n        membership {\n          role\n          id\n        }\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    email\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measure:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:framework:list\")\n  canListMembers: permission(action: \"iam:membership:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n\nfragment ViewerMembershipDropdownFragment on Organization {\n  viewer {\n    fullName\n    identity {\n      email\n      canListAPIKeys: permission(action: \"iam:personal-api-key:list\")\n      id\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1ca4734452833d75388f7409315cf715";
+(node as any).hash = "00ae11d725a9aacd5389ef00381faf98";
 
 export default node;

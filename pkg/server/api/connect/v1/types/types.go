@@ -34,6 +34,15 @@ type AcceptInvitationPayload struct {
 	Invitation *Invitation `json:"invitation"`
 }
 
+type ActivateAccountInput struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
+type ActivateAccountPayload struct {
+	Profile *Profile `json:"profile,omitempty"`
+}
+
 type AssumeOrganizationSessionInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Continue       string  `json:"continue"`
@@ -186,18 +195,16 @@ type ForgotPasswordPayload struct {
 }
 
 type Identity struct {
-	ID                 gid.GID                   `json:"id"`
-	Email              mail.Addr                 `json:"email"`
-	FullName           string                    `json:"fullName"`
-	EmailVerified      bool                      `json:"emailVerified"`
-	CreatedAt          time.Time                 `json:"createdAt"`
-	UpdatedAt          time.Time                 `json:"updatedAt"`
-	Profiles           *ProfileConnection        `json:"profiles,omitempty"`
-	PendingInvitations *InvitationConnection     `json:"pendingInvitations,omitempty"`
-	Sessions           *SessionConnection        `json:"sessions,omitempty"`
-	PersonalAPIKeys    *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
-	SsoLoginURL        *string                   `json:"ssoLoginURL,omitempty"`
-	Permission         bool                      `json:"permission"`
+	ID              gid.GID                   `json:"id"`
+	Email           mail.Addr                 `json:"email"`
+	FullName        string                    `json:"fullName"`
+	EmailVerified   bool                      `json:"emailVerified"`
+	CreatedAt       time.Time                 `json:"createdAt"`
+	UpdatedAt       time.Time                 `json:"updatedAt"`
+	Profiles        *ProfileConnection        `json:"profiles,omitempty"`
+	Sessions        *SessionConnection        `json:"sessions,omitempty"`
+	PersonalAPIKeys *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
+	Permission      bool                      `json:"permission"`
 }
 
 func (Identity) IsNode()             {}
@@ -205,13 +212,11 @@ func (this Identity) GetID() gid.GID { return this.ID }
 
 type Invitation struct {
 	ID           gid.GID                   `json:"id"`
-	Email        mail.Addr                 `json:"email"`
-	FullName     string                    `json:"fullName"`
-	Role         coredata.MembershipRole   `json:"role"`
 	ExpiresAt    time.Time                 `json:"expiresAt"`
 	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
 	CreatedAt    time.Time                 `json:"createdAt"`
 	Status       coredata.InvitationStatus `json:"status"`
+	User         *Profile                  `json:"user,omitempty"`
 	Organization *Organization             `json:"organization,omitempty"`
 	Permission   bool                      `json:"permission"`
 }
@@ -259,7 +264,6 @@ type Organization struct {
 	CreatedAt          time.Time                    `json:"createdAt"`
 	UpdatedAt          time.Time                    `json:"updatedAt"`
 	Profiles           *ProfileConnection           `json:"profiles,omitempty"`
-	Invitations        *InvitationConnection        `json:"invitations,omitempty"`
 	SamlConfigurations *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
 	ScimConfiguration  *SCIMConfiguration           `json:"scimConfiguration,omitempty"`
 	Viewer             *Profile                     `json:"viewer,omitempty"`
@@ -323,6 +327,7 @@ type Profile struct {
 	Identity                 *Identity                      `json:"identity,omitempty"`
 	Organization             *Organization                  `json:"organization,omitempty"`
 	Membership               *Membership                    `json:"membership,omitempty"`
+	PendingInvitations       *InvitationConnection          `json:"pendingInvitations,omitempty"`
 	Permission               bool                           `json:"permission"`
 }
 
@@ -518,16 +523,6 @@ type SignInPayload struct {
 
 type SignOutPayload struct {
 	Success bool `json:"success"`
-}
-
-type SignUpFromInvitationInput struct {
-	Token    string `json:"token"`
-	Password string `json:"password"`
-	FullName string `json:"fullName"`
-}
-
-type SignUpFromInvitationPayload struct {
-	Identity *Identity `json:"identity,omitempty"`
 }
 
 type SignUpInput struct {

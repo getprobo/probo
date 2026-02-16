@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dd59cf57f55eff8458d1481b25e38991>>
+ * @generated SignedSource<<5c890fa68733de0a9a1b5475cd45b1a1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,34 +9,29 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type InviteUserInput = {
   organizationId: string;
   profileId: string;
 };
-export type InviteUserDialogMutation$variables = {
+export type PeopleListItem_inviteMutation$variables = {
   connections: ReadonlyArray<string>;
   input: InviteUserInput;
 };
-export type InviteUserDialogMutation$data = {
+export type PeopleListItem_inviteMutation$data = {
   readonly inviteUser: {
     readonly invitationEdge: {
       readonly node: {
         readonly acceptedAt: string | null | undefined;
-        readonly canDelete: boolean;
         readonly createdAt: string;
-        readonly email: string;
         readonly expiresAt: string;
-        readonly fullName: string;
         readonly id: string;
-        readonly role: MembershipRole;
       };
     };
   } | null | undefined;
 };
-export type InviteUserDialogMutation = {
-  response: InviteUserDialogMutation$data;
-  variables: InviteUserDialogMutation$variables;
+export type PeopleListItem_inviteMutation = {
+  response: PeopleListItem_inviteMutation$data;
+  variables: PeopleListItem_inviteMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -84,27 +79,6 @@ v3 = {
           "alias": null,
           "args": null,
           "kind": "ScalarField",
-          "name": "email",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "fullName",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "role",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
           "name": "expiresAt",
           "storageKey": null
         },
@@ -121,19 +95,6 @@ v3 = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
-        },
-        {
-          "alias": "canDelete",
-          "args": [
-            {
-              "kind": "Literal",
-              "name": "action",
-              "value": "iam:invitation:delete"
-            }
-          ],
-          "kind": "ScalarField",
-          "name": "permission",
-          "storageKey": "permission(action:\"iam:invitation:delete\")"
         }
       ],
       "storageKey": null
@@ -149,7 +110,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "InviteUserDialogMutation",
+    "name": "PeopleListItem_inviteMutation",
     "selections": [
       {
         "alias": null,
@@ -174,7 +135,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "InviteUserDialogMutation",
+    "name": "PeopleListItem_inviteMutation",
     "selections": [
       {
         "alias": null,
@@ -207,16 +168,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "685e0bc12871b33065d1fe03334110b6",
+    "cacheID": "adf65c15aebb17087c5701c9b83e6711",
     "id": null,
     "metadata": {},
-    "name": "InviteUserDialogMutation",
+    "name": "PeopleListItem_inviteMutation",
     "operationKind": "mutation",
-    "text": "mutation InviteUserDialogMutation(\n  $input: InviteUserInput!\n) {\n  inviteUser(input: $input) {\n    invitationEdge {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n        canDelete: permission(action: \"iam:invitation:delete\")\n      }\n    }\n  }\n}\n"
+    "text": "mutation PeopleListItem_inviteMutation(\n  $input: InviteUserInput!\n) {\n  inviteUser(input: $input) {\n    invitationEdge {\n      node {\n        id\n        expiresAt\n        acceptedAt\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "70766e9b81d0ade0f128fae2e15aac62";
+(node as any).hash = "7ce62bafa9a5ec7a965c048fe7ef1763";
 
 export default node;

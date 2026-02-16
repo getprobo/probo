@@ -12,7 +12,6 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQuery.graphql";
 
-import { InvitationCard } from "./_components/InvitationCard";
 import { MembershipCard } from "./_components/MembershipCard";
 
 export const membershipsPageQuery = graphql`
@@ -24,7 +23,6 @@ export const membershipsPageQuery = graphql`
       )
         @connection(key: "MembershipsPage_profiles")
         @required(action: THROW) {
-        __id
         edges @required(action: THROW) {
           node {
             id
@@ -35,20 +33,6 @@ export const membershipsPageQuery = graphql`
               name
               ...MembershipCard_organizationFragment
             }
-          }
-        }
-      }
-      pendingInvitations(
-        first: 1000
-        orderBy: { direction: DESC, field: CREATED_AT }
-      )
-        @connection(key: "MembershipsPage_pendingInvitations")
-        @required(action: THROW) {
-        __id
-        edges @required(action: THROW) {
-          node {
-            id
-            ...InvitationCardFragment
           }
         }
       }
@@ -68,10 +52,6 @@ export function MembershipsPage(props: {
   const {
     viewer: {
       profiles: { edges: initialProfiles },
-      pendingInvitations: {
-        __id: pendingInvitationsConnectionId,
-        edges: invitations,
-      },
     },
   } = usePreloadedQuery<MembershipsPageQuery>(membershipsPageQuery, queryRef);
 
@@ -91,22 +71,6 @@ export function MembershipsPage(props: {
           {__("Select an organization")}
         </h1>
         <div className="space-y-4 w-full">
-          {invitations.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-xl font-semibold">
-                {__("Pending invitations")}
-              </h2>
-              {invitations.map(({ node }) => (
-                <InvitationCard
-                  pendingInvitationsConnectionId={
-                    pendingInvitationsConnectionId
-                  }
-                  key={node.id}
-                  fKey={node}
-                />
-              ))}
-            </div>
-          )}
           {initialProfiles.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xl font-semibold">

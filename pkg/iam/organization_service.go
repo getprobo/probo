@@ -333,99 +333,6 @@ func (s *OrganizationService) RemoveUser(
 	)
 }
 
-func (s *OrganizationService) DeleteInvitation(
-	ctx context.Context,
-	organizationID gid.GID,
-	invitationID gid.GID,
-) error {
-	scope := coredata.NewScopeFromObjectID(organizationID)
-
-	return s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			invitation := coredata.Invitation{}
-			err := invitation.LoadByID(ctx, tx, scope, invitationID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewInvitationNotFoundError(invitationID)
-				}
-
-				return fmt.Errorf("cannot load invitation: %w", err)
-			}
-
-			switch invitation.Status {
-			case coredata.InvitationStatusAccepted:
-				return NewInvitationNotDeletedError(invitationID, invitation.Status.String())
-			case coredata.InvitationStatusPending, coredata.InvitationStatusExpired:
-			}
-
-			err = invitation.Delete(ctx, tx, scope, invitationID)
-			if err != nil {
-				return fmt.Errorf("cannot delete invitation: %w", err)
-			}
-
-			return nil
-		},
-	)
-}
-
-func (s *OrganizationService) ListInvitations(
-	ctx context.Context,
-	organizationID gid.GID,
-	cursor *page.Cursor[coredata.InvitationOrderField],
-	filter *coredata.InvitationFilter,
-) (*page.Page[*coredata.Invitation, coredata.InvitationOrderField], error) {
-	var (
-		invitations coredata.Invitations
-		scope       = coredata.NewScopeFromObjectID(organizationID)
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := invitations.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
-			if err != nil {
-				return fmt.Errorf("cannot load invitations: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(invitations, cursor), nil
-}
-
-func (s *OrganizationService) CountInvitations(
-	ctx context.Context,
-	organizationID gid.GID,
-	filter *coredata.InvitationFilter,
-) (int, error) {
-	var (
-		count int
-		scope = coredata.NewScopeFromObjectID(organizationID)
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) (err error) {
-			invitations := coredata.Invitations{}
-			count, err = invitations.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
-			if err != nil {
-				return fmt.Errorf("cannot count invitations: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
 func (s *OrganizationService) InviteUser(
 	ctx context.Context,
 	req *CreateInvitationRequest,
@@ -436,6 +343,7 @@ func (s *OrganizationService) InviteUser(
 		invitation = &coredata.Invitation{
 			ID:             gid.New(req.OrganizationID.TenantID(), coredata.InvitationEntityType),
 			OrganizationID: req.OrganizationID,
+			UserID:         req.ProfileID,
 			Status:         coredata.InvitationStatusPending,
 			ExpiresAt:      now.Add(s.invitationTokenValidity),
 			CreatedAt:      now,
@@ -483,7 +391,7 @@ func (s *OrganizationService) InviteUser(
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderInvitation(
 				ctx,
-				"/auth/signup-from-invitation",
+				"/auth/activate-account",
 				invitationToken,
 				organization.Name,
 			)

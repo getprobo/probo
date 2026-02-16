@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<59df18257cc2bae52aefd576c20f03cf>>
+ * @generated SignedSource<<e920b2bbd380e12014a100bfb963c8f7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,24 +9,23 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type SignUpFromInvitationInput = {
-  fullName: string;
+export type ActivateAccountInput = {
   password: string;
   token: string;
 };
-export type SignUpFromInvitationPageMutation$variables = {
-  input: SignUpFromInvitationInput;
+export type ActivateAccountPageMutation$variables = {
+  input: ActivateAccountInput;
 };
-export type SignUpFromInvitationPageMutation$data = {
-  readonly signUpFromInvitation: {
-    readonly identity: {
+export type ActivateAccountPageMutation$data = {
+  readonly activateAccount: {
+    readonly profile: {
       readonly id: string;
     } | null | undefined;
   } | null | undefined;
 };
-export type SignUpFromInvitationPageMutation = {
-  response: SignUpFromInvitationPageMutation$data;
-  variables: SignUpFromInvitationPageMutation$variables;
+export type ActivateAccountPageMutation = {
+  response: ActivateAccountPageMutation$data;
+  variables: ActivateAccountPageMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -47,17 +46,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "SignUpFromInvitationPayload",
+    "concreteType": "ActivateAccountPayload",
     "kind": "LinkedField",
-    "name": "signUpFromInvitation",
+    "name": "activateAccount",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "Identity",
+        "concreteType": "Profile",
         "kind": "LinkedField",
-        "name": "identity",
+        "name": "profile",
         "plural": false,
         "selections": [
           {
@@ -79,7 +78,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "SignUpFromInvitationPageMutation",
+    "name": "ActivateAccountPageMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -88,20 +87,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "SignUpFromInvitationPageMutation",
+    "name": "ActivateAccountPageMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "9bdca3bd56cb86a2e9c0627379f7f58f",
+    "cacheID": "57d92d0ae2a6220af84fbd9fe27f7aa3",
     "id": null,
     "metadata": {},
-    "name": "SignUpFromInvitationPageMutation",
+    "name": "ActivateAccountPageMutation",
     "operationKind": "mutation",
-    "text": "mutation SignUpFromInvitationPageMutation(\n  $input: SignUpFromInvitationInput!\n) {\n  signUpFromInvitation(input: $input) {\n    identity {\n      id\n    }\n  }\n}\n"
+    "text": "mutation ActivateAccountPageMutation(\n  $input: ActivateAccountInput!\n) {\n  activateAccount(input: $input) {\n    profile {\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "418fe53fbdc92e4ce5d2256062f08322";
+(node as any).hash = "0e073ce00eb7c435a875b5797f3e6db0";
 
 export default node;

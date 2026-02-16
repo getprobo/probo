@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<67410bc0aa6e9426f4534a0938429b6e>>
+ * @generated SignedSource<<91bec60a40a9170868272814635ea3fa>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,10 +10,11 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 export type ProfileState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type PeopleListItemFragment$data = {
+  readonly canDelete: boolean;
+  readonly canInvite: boolean;
   readonly canUpdate: boolean;
   readonly createdAt: string;
   readonly fullName: string;
@@ -21,14 +22,22 @@ export type PeopleListItemFragment$data = {
   readonly identity: {
     readonly email: string;
   };
-  readonly kind: ProfileKind;
+  readonly lastInvitation: {
+    readonly __id: string;
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly acceptedAt: string | null | undefined;
+        readonly createdAt: string;
+        readonly expiresAt: string;
+        readonly id: string;
+      };
+    }>;
+  };
   readonly membership: {
-    readonly canDelete: boolean;
     readonly canUpdate: boolean;
     readonly id: string;
     readonly role: MembershipRole;
   };
-  readonly position: string | null | undefined;
   readonly source: string;
   readonly state: ProfileState;
   readonly " $fragmentType": "PeopleListItemFragment";
@@ -45,11 +54,29 @@ var v0 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
+},
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "createdAt",
+  "storageKey": null
 };
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
-  "metadata": null,
+  "metadata": {
+    "connection": [
+      {
+        "count": null,
+        "cursor": null,
+        "direction": "forward",
+        "path": [
+          "lastInvitation"
+        ]
+      }
+    ]
+  },
   "name": "PeopleListItemFragment",
   "selections": [
     (v0/*: any*/),
@@ -72,20 +99,6 @@ return {
       "args": null,
       "kind": "ScalarField",
       "name": "fullName",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "kind",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "position",
       "storageKey": null
     },
     {
@@ -118,19 +131,6 @@ return {
             "kind": "ScalarField",
             "name": "permission",
             "storageKey": "permission(action:\"iam:membership:update\")"
-          },
-          {
-            "alias": "canDelete",
-            "args": [
-              {
-                "kind": "Literal",
-                "name": "action",
-                "value": "iam:membership-profile:delete"
-              }
-            ],
-            "kind": "ScalarField",
-            "name": "permission",
-            "storageKey": "permission(action:\"iam:membership-profile:delete\")"
           }
         ],
         "storageKey": null
@@ -160,12 +160,119 @@ return {
       "action": "THROW"
     },
     {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "createdAt",
-      "storageKey": null
+      "kind": "RequiredField",
+      "field": {
+        "alias": "lastInvitation",
+        "args": [
+          {
+            "kind": "Literal",
+            "name": "orderBy",
+            "value": {
+              "direction": "DESC",
+              "field": "CREATED_AT"
+            }
+          }
+        ],
+        "concreteType": "InvitationConnection",
+        "kind": "LinkedField",
+        "name": "__PeopleListItem_lastInvitation_connection",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "InvitationEdge",
+            "kind": "LinkedField",
+            "name": "edges",
+            "plural": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Invitation",
+                "kind": "LinkedField",
+                "name": "node",
+                "plural": false,
+                "selections": [
+                  (v0/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "expiresAt",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "acceptedAt",
+                    "storageKey": null
+                  },
+                  (v1/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "__typename",
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "cursor",
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "PageInfo",
+            "kind": "LinkedField",
+            "name": "pageInfo",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "endCursor",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "hasNextPage",
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          },
+          {
+            "kind": "ClientExtension",
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "__id",
+                "storageKey": null
+              }
+            ]
+          }
+        ],
+        "storageKey": "__PeopleListItem_lastInvitation_connection(orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+      },
+      "action": "THROW"
     },
+    (v1/*: any*/),
     {
       "alias": "canUpdate",
       "args": [
@@ -178,6 +285,32 @@ return {
       "kind": "ScalarField",
       "name": "permission",
       "storageKey": "permission(action:\"iam:membership-profile:update\")"
+    },
+    {
+      "alias": "canInvite",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "iam:invitation:create"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"iam:invitation:create\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "iam:membership-profile:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"iam:membership-profile:delete\")"
     }
   ],
   "type": "Profile",
@@ -185,6 +318,6 @@ return {
 };
 })();
 
-(node as any).hash = "ad9ed05edf606ec084c6f53462530b8b";
+(node as any).hash = "b276a06948260a9d89947b386c6392d1";
 
 export default node;

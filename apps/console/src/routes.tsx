@@ -56,16 +56,16 @@ const routes = [
       },
       {
         path: "register",
-        Component: lazy(() => import("./pages/iam/auth/sign-up/SignUpPage")),
+        Component: lazy(() => import("./pages/iam/auth/SignUpPage")),
       },
       {
         path: "verify-email",
         Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
       },
       {
-        path: "signup-from-invitation",
+        path: "activate-account",
         Component: lazy(
-          () => import("./pages/iam/auth/sign-up/SignUpFromInvitationPage"),
+          () => import("./pages/iam/auth/ActivateAccountPage"),
         ),
       },
       {
