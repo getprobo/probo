@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
@@ -61,6 +62,7 @@ type (
 		fileManager       *filemanager.Service
 		logger            *log.Logger
 		slack             *slack.Service
+		esign             *esign.Service
 	}
 
 	TenantService struct {
@@ -73,6 +75,7 @@ type (
 		tokenSecret                       string
 		agent                             *agents.Agent
 		fileManager                       *filemanager.Service
+		esign                             *esign.Service
 		Frameworks                        *FrameworkService
 		Measures                          *MeasureService
 		Tasks                             *TaskService
@@ -128,6 +131,7 @@ func NewService(
 	logger *log.Logger,
 	slackService *slack.Service,
 	iamService *iam.Service,
+	esignService *esign.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -148,6 +152,7 @@ func NewService(
 		fileManager:       fileManagerService,
 		logger:            logger,
 		slack:             slackService,
+		esign:             esignService,
 	}
 
 	return svc, nil
@@ -164,6 +169,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		tokenSecret:   s.tokenSecret,
 		agent:         agents.NewAgent(nil, s.agentConfig),
 		fileManager:   s.fileManager,
+		esign:         s.esign,
 	}
 
 	tenantService.Frameworks = &FrameworkService{

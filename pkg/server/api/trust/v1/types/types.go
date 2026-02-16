@@ -16,6 +16,15 @@ type Node interface {
 	GetID() gid.GID
 }
 
+type AcceptElectronicSignatureInput struct {
+	SignatureID gid.GID `json:"signatureId"`
+	FullName    string  `json:"fullName"`
+}
+
+type AcceptElectronicSignaturePayload struct {
+	Signature *ElectronicSignature `json:"signature"`
+}
+
 type AcceptNonDisclosureAgreementInput struct {
 	FullName string `json:"fullName"`
 }
@@ -63,6 +72,20 @@ type DocumentEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Document      `json:"node"`
 }
+
+type ElectronicSignature struct {
+	ID           gid.GID                                  `json:"id"`
+	Status       coredata.ElectronicSignatureStatus       `json:"status"`
+	DocumentType coredata.ElectronicSignatureDocumentType `json:"documentType"`
+	ConsentText  string                                   `json:"consentText"`
+	LastError    *string                                  `json:"lastError,omitempty"`
+	SignedAt     *time.Time                               `json:"signedAt,omitempty"`
+	CreatedAt    time.Time                                `json:"createdAt"`
+	UpdatedAt    time.Time                                `json:"updatedAt"`
+}
+
+func (ElectronicSignature) IsNode()             {}
+func (this ElectronicSignature) GetID() gid.GID { return this.ID }
 
 type ExportDocumentPDFInput struct {
 	DocumentID gid.GID `json:"documentId"`
@@ -136,6 +159,15 @@ type PageInfo struct {
 type Query struct {
 }
 
+type RecordSigningEventInput struct {
+	SignatureID gid.GID                               `json:"signatureId"`
+	EventType   coredata.ElectronicSignatureEventType `json:"eventType"`
+}
+
+type RecordSigningEventPayload struct {
+	Success bool `json:"success"`
+}
+
 type Report struct {
 	ID                     gid.GID `json:"id"`
 	Filename               string  `json:"filename"`
@@ -178,6 +210,7 @@ type TrustCenter struct {
 	DarkLogoFileURL                   *string                         `json:"darkLogoFileUrl,omitempty"`
 	NdaFileName                       *string                         `json:"ndaFileName,omitempty"`
 	NdaFileURL                        *string                         `json:"ndaFileUrl,omitempty"`
+	NdaSignature                      *ElectronicSignature            `json:"ndaSignature,omitempty"`
 	Organization                      *Organization                   `json:"organization"`
 	IsViewerMember                    bool                            `json:"isViewerMember"`
 	HasAcceptedNonDisclosureAgreement bool                            `json:"hasAcceptedNonDisclosureAgreement"`

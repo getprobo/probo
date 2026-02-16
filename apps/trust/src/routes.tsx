@@ -56,6 +56,11 @@ const routes = [
     Component: Fragment,
     ErrorBoundary: ErrorBoundary,
   },
+  {
+    path: "/nda",
+    Component: lazy(() => import("#/pages/NDAPageLoader")),
+    ErrorBoundary: ErrorBoundary,
+  },
   // Custom domain routes (subdomain-based)
   {
     path: "/overview",

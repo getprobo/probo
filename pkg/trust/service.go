@@ -22,8 +22,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -43,6 +45,7 @@ type (
 		slackSigningSecret string
 		baseURL            string
 		iam                *iam.Service
+		esign              *esign.Service
 		html2pdfConverter  *html2pdf.Converter
 		fileManager        *filemanager.Service
 		logger             *log.Logger
@@ -58,6 +61,7 @@ type (
 		encryptionKey         cipher.EncryptionKey
 		baseURL               string
 		iam                   *iam.Service
+		esign                 *esign.Service
 		html2pdfConverter     *html2pdf.Converter
 		fileManager           *filemanager.Service
 		logger                *log.Logger
@@ -83,6 +87,7 @@ func NewService(
 	encryptionKey cipher.EncryptionKey,
 	slackSigningSecret string,
 	iam *iam.Service,
+	esignSvc *esign.Service,
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
@@ -96,6 +101,7 @@ func NewService(
 		slackSigningSecret: slackSigningSecret,
 		baseURL:            baseURL,
 		iam:                iam,
+		esign:              esignSvc,
 		html2pdfConverter:  html2pdfConverter,
 		fileManager:        fileManagerService,
 		logger:             logger,
@@ -113,6 +119,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		encryptionKey:     s.encryptionKey,
 		baseURL:           s.baseURL,
 		iam:               s.iam,
+		esign:             s.esign,
 		html2pdfConverter: s.html2pdfConverter,
 		fileManager:       s.fileManager,
 		logger:            s.logger,
@@ -251,6 +258,21 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 	}
 
 	return customDomain, err
+}
+
+// EmailPresenterConfigByOrganizationID resolves the emails.PresenterConfig for
+// the trust center that belongs to the given organization. This is used by the
+// esign certificate worker which needs per-org branding at render time.
+func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgID gid.GID) (emails.PresenterConfig, error) {
+	var trustCenter coredata.TrustCenter
+	scope := coredata.NewScopeFromObjectID(orgID)
+	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+		return trustCenter.LoadByOrganizationID(ctx, conn, scope, orgID)
+	})
+	if err != nil {
+		return emails.PresenterConfig{}, fmt.Errorf("cannot load trust center for org %s: %w", orgID, err)
+	}
+	return s.WithTenant(orgID.TenantID()).TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
 }
 
 func (s *Service) GetMembershipByCompliancePageIDAndEmail(ctx context.Context, compliancePageID gid.GID, email mail.Addr) (*coredata.TrustCenterAccess, error) {

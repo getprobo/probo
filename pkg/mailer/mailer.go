@@ -24,18 +24,20 @@ import (
 	"net/smtp"
 	"time"
 
-	"go.probo.inc/probo/pkg/coredata"
 	"github.com/jhillyerd/enmime"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 )
 
 type (
 	Mailer struct {
-		pg       *pg.Client
-		l        *log.Logger
-		cfg      Config
-		interval time.Duration
+		pg          *pg.Client
+		fileManager *filemanager.Service
+		l           *log.Logger
+		cfg         Config
+		interval    time.Duration
 	}
 
 	Config struct {
@@ -50,7 +52,7 @@ type (
 	}
 )
 
-func NewMailer(pg *pg.Client, l *log.Logger, cfg Config) *Mailer {
+func NewMailer(pg *pg.Client, fileManager *filemanager.Service, l *log.Logger, cfg Config) *Mailer {
 	// Set a default timeout if not provided
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 10 * time.Second
@@ -61,7 +63,7 @@ func NewMailer(pg *pg.Client, l *log.Logger, cfg Config) *Mailer {
 		cfg.Interval = 60 * time.Second
 	}
 
-	return &Mailer{pg: pg, l: l, cfg: cfg, interval: cfg.Interval}
+	return &Mailer{pg: pg, fileManager: fileManager, l: l, cfg: cfg, interval: cfg.Interval}
 }
 
 func (m *Mailer) Run(ctx context.Context) error {
@@ -151,6 +153,11 @@ func (m *Mailer) batchSendEmails(ctx context.Context) error {
 					return err
 				}
 
+				var attachments coredata.EmailAttachments
+				if err := attachments.LoadByEmailID(ctx, tx, email.ID); err != nil {
+					return fmt.Errorf("cannot load email attachments: %w", err)
+				}
+
 				mail := enmime.Builder().
 					Subject(email.Subject).
 					From(m.cfg.SenderName, m.cfg.SenderEmail).
@@ -159,6 +166,22 @@ func (m *Mailer) batchSendEmails(ctx context.Context) error {
 
 				if email.HtmlBody != nil {
 					mail = mail.HTML([]byte(*email.HtmlBody))
+				}
+
+				for _, att := range attachments {
+					var file coredata.File
+					if err := file.LoadByID(ctx, tx, coredata.NewNoScope(), att.FileID); err != nil {
+						return fmt.Errorf("cannot load file record for attachment %s: %w", att.Filename, err)
+					}
+
+					// TODO use reader
+					data, err := m.fileManager.GetFileBytes(ctx, &file)
+					if err != nil {
+						return fmt.Errorf("cannot download attachment %s: %w", att.Filename, err)
+					}
+
+					// TODO [esign] maybe use AddAttachmentWithReader instead?
+					mail = mail.AddAttachment(data, att.ContentType, att.Filename)
 				}
 
 				envelope, err := mail.Build()

@@ -68,6 +68,7 @@ type ResolverRoot interface {
 	DocumentVersionConnection() DocumentVersionConnectionResolver
 	DocumentVersionSignature() DocumentVersionSignatureResolver
 	DocumentVersionSignatureConnection() DocumentVersionSignatureConnectionResolver
+	ElectronicSignature() ElectronicSignatureResolver
 	Evidence() EvidenceResolver
 	EvidenceConnection() EvidenceConnectionResolver
 	File() FileResolver
@@ -777,6 +778,30 @@ type ComplexityRoot struct {
 	DocumentVersionSignatureEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	ElectronicSignature struct {
+		CertificateFileURL func(childComplexity int) int
+		ConsentText        func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		DocumentType       func(childComplexity int) int
+		Events             func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		LastError          func(childComplexity int) int
+		SignedAt           func(childComplexity int) int
+		Status             func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+	}
+
+	ElectronicSignatureEvent struct {
+		ActorEmail     func(childComplexity int) int
+		ActorIPAddress func(childComplexity int) int
+		ActorUserAgent func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		EventSource    func(childComplexity int) int
+		EventType      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		OccurredAt     func(childComplexity int) int
 	}
 
 	Evidence struct {
@@ -1516,6 +1541,7 @@ type ComplexityRoot struct {
 		ID                                func(childComplexity int) int
 		LastTokenExpiresAt                func(childComplexity int) int
 		Name                              func(childComplexity int) int
+		NdaSignature                      func(childComplexity int) int
 		PendingRequestCount               func(childComplexity int) int
 		Permission                        func(childComplexity int, action string) int
 		State                             func(childComplexity int) int
@@ -2083,6 +2109,10 @@ type DocumentVersionSignatureResolver interface {
 type DocumentVersionSignatureConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.DocumentVersionSignatureConnection) (int, error)
 }
+type ElectronicSignatureResolver interface {
+	CertificateFileURL(ctx context.Context, obj *types.ElectronicSignature) (*string, error)
+	Events(ctx context.Context, obj *types.ElectronicSignature) ([]*types.ElectronicSignatureEvent, error)
+}
 type EvidenceResolver interface {
 	File(ctx context.Context, obj *types.Evidence) (*types.File, error)
 
@@ -2432,6 +2462,8 @@ type TrustCenterResolver interface {
 	Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error)
 }
 type TrustCenterAccessResolver interface {
+	NdaSignature(ctx context.Context, obj *types.TrustCenterAccess) (*types.ElectronicSignature, error)
+
 	PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error)
 	ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error)
 	AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error)
@@ -4554,6 +4586,116 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DocumentVersionSignatureEdge.Node(childComplexity), true
+
+	case "ElectronicSignature.certificateFileUrl":
+		if e.complexity.ElectronicSignature.CertificateFileURL == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.CertificateFileURL(childComplexity), true
+	case "ElectronicSignature.consentText":
+		if e.complexity.ElectronicSignature.ConsentText == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.ConsentText(childComplexity), true
+	case "ElectronicSignature.createdAt":
+		if e.complexity.ElectronicSignature.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.CreatedAt(childComplexity), true
+	case "ElectronicSignature.documentType":
+		if e.complexity.ElectronicSignature.DocumentType == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.DocumentType(childComplexity), true
+	case "ElectronicSignature.events":
+		if e.complexity.ElectronicSignature.Events == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.Events(childComplexity), true
+	case "ElectronicSignature.id":
+		if e.complexity.ElectronicSignature.ID == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.ID(childComplexity), true
+	case "ElectronicSignature.lastError":
+		if e.complexity.ElectronicSignature.LastError == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.LastError(childComplexity), true
+	case "ElectronicSignature.signedAt":
+		if e.complexity.ElectronicSignature.SignedAt == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.SignedAt(childComplexity), true
+	case "ElectronicSignature.status":
+		if e.complexity.ElectronicSignature.Status == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.Status(childComplexity), true
+	case "ElectronicSignature.updatedAt":
+		if e.complexity.ElectronicSignature.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.UpdatedAt(childComplexity), true
+
+	case "ElectronicSignatureEvent.actorEmail":
+		if e.complexity.ElectronicSignatureEvent.ActorEmail == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignatureEvent.ActorEmail(childComplexity), true
+	case "ElectronicSignatureEvent.actorIpAddress":
+		if e.complexity.ElectronicSignatureEvent.ActorIPAddress == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignatureEvent.ActorIPAddress(childComplexity), true
+	case "ElectronicSignatureEvent.actorUserAgent":
+		if e.complexity.ElectronicSignatureEvent.ActorUserAgent == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignatureEvent.ActorUserAgent(childComplexity), true
+	case "ElectronicSignatureEvent.createdAt":
+		if e.complexity.ElectronicSignatureEvent.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignatureEvent.CreatedAt(childComplexity), true
+	case "ElectronicSignatureEvent.eventSource":
+		if e.complexity.ElectronicSignatureEvent.EventSource == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignatureEvent.EventSource(childComplexity), true
+	case "ElectronicSignatureEvent.eventType":
+		if e.complexity.ElectronicSignatureEvent.EventType == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignatureEvent.EventType(childComplexity), true
+	case "ElectronicSignatureEvent.id":
+		if e.complexity.ElectronicSignatureEvent.ID == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignatureEvent.ID(childComplexity), true
+	case "ElectronicSignatureEvent.occurredAt":
+		if e.complexity.ElectronicSignatureEvent.OccurredAt == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignatureEvent.OccurredAt(childComplexity), true
 
 	case "Evidence.createdAt":
 		if e.complexity.Evidence.CreatedAt == nil {
@@ -8759,6 +8901,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterAccess.Name(childComplexity), true
+	case "TrustCenterAccess.ndaSignature":
+		if e.complexity.TrustCenterAccess.NdaSignature == nil {
+			break
+		}
+
+		return e.complexity.TrustCenterAccess.NdaSignature(childComplexity), true
 	case "TrustCenterAccess.pendingRequestCount":
 		if e.complexity.TrustCenterAccess.PendingRequestCount == nil {
 			break
@@ -13272,6 +13420,7 @@ type TrustCenterAccess implements Node {
     name: String!
     state: TrustCenterAccessState!
     hasAcceptedNonDisclosureAgreement: Boolean!
+    ndaSignature: ElectronicSignature @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
     lastTokenExpiresAt: Datetime
@@ -15944,6 +16093,152 @@ type CreateCustomDomainPayload {
 
 type DeleteCustomDomainPayload {
     deletedCustomDomainId: ID!
+}
+
+# Electronic Signature
+
+enum ElectronicSignatureStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatus"
+    ) {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusPending"
+        )
+    ACCEPTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusAccepted"
+        )
+    PROCESSING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusProcessing"
+        )
+    COMPLETED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusCompleted"
+        )
+    FAILED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusFailed"
+        )
+}
+
+enum ElectronicSignatureDocumentType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentType"
+    ) {
+    NDA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeNDA"
+        )
+    DPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeDPA"
+        )
+    MSA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeMSA"
+        )
+    SOW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeSOW"
+        )
+    SLA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeSLA"
+        )
+    TOS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeTOS"
+        )
+    PRIVACY_POLICY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypePrivacyPolicy"
+        )
+    OTHER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeOther"
+        )
+}
+
+enum ElectronicSignatureEventType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventType"
+    ) {
+    DOCUMENT_VIEWED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeDocumentViewed"
+        )
+    CONSENT_GIVEN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeConsentGiven"
+        )
+    FULL_NAME_TYPED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeFullNameTyped"
+        )
+    SIGNATURE_ACCEPTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSignatureAccepted"
+        )
+    SIGNATURE_COMPLETED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSignatureCompleted"
+        )
+    SEAL_COMPUTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSealComputed"
+        )
+    TIMESTAMP_REQUESTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeTimestampRequested"
+        )
+    CERTIFICATE_GENERATED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeCertificateGenerated"
+        )
+    PROCESSING_ERROR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeProcessingError"
+        )
+}
+
+enum ElectronicSignatureEventSource
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventSource"
+    ) {
+    CLIENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventSourceClient"
+        )
+    SERVER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventSourceServer"
+        )
+}
+
+type ElectronicSignature implements Node {
+    id: ID!
+    status: ElectronicSignatureStatus!
+    documentType: ElectronicSignatureDocumentType!
+    consentText: String!
+    lastError: String
+    signedAt: Datetime
+    certificateFileUrl: String @goField(forceResolver: true)
+    events: [ElectronicSignatureEvent!]! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ElectronicSignatureEvent {
+    id: ID!
+    eventType: ElectronicSignatureEventType!
+    eventSource: ElectronicSignatureEventSource!
+    actorEmail: String!
+    actorIpAddress: String!
+    actorUserAgent: String!
+    occurredAt: Datetime!
+    createdAt: Datetime!
 }
 `, BuiltIn: false},
 }
@@ -30817,6 +31112,546 @@ func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_node(_ con
 				return ec.fieldContext_DocumentVersionSignature_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignature", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_id(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_status(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ElectronicSignatureStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_documentType(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_documentType,
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentType, nil
+		},
+		nil,
+		ec.marshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_documentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ElectronicSignatureDocumentType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_consentText(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_consentText,
+		func(ctx context.Context) (any, error) {
+			return obj.ConsentText, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_consentText(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_lastError(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_lastError,
+		func(ctx context.Context) (any, error) {
+			return obj.LastError, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_lastError(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_signedAt(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_signedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.SignedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_signedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_certificateFileUrl(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_certificateFileUrl,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ElectronicSignature().CertificateFileURL(ctx, obj)
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_certificateFileUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_events(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_events,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ElectronicSignature().Events(ctx, obj)
+		},
+		nil,
+		ec.marshalNElectronicSignatureEvent2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐElectronicSignatureEventᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_events(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ElectronicSignatureEvent_id(ctx, field)
+			case "eventType":
+				return ec.fieldContext_ElectronicSignatureEvent_eventType(ctx, field)
+			case "eventSource":
+				return ec.fieldContext_ElectronicSignatureEvent_eventSource(ctx, field)
+			case "actorEmail":
+				return ec.fieldContext_ElectronicSignatureEvent_actorEmail(ctx, field)
+			case "actorIpAddress":
+				return ec.fieldContext_ElectronicSignatureEvent_actorIpAddress(ctx, field)
+			case "actorUserAgent":
+				return ec.fieldContext_ElectronicSignatureEvent_actorUserAgent(ctx, field)
+			case "occurredAt":
+				return ec.fieldContext_ElectronicSignatureEvent_occurredAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ElectronicSignatureEvent_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ElectronicSignatureEvent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignatureEvent_id(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignatureEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignatureEvent_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignatureEvent_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignatureEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignatureEvent_eventType(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignatureEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignatureEvent_eventType,
+		func(ctx context.Context) (any, error) {
+			return obj.EventType, nil
+		},
+		nil,
+		ec.marshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignatureEvent_eventType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignatureEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ElectronicSignatureEventType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignatureEvent_eventSource(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignatureEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignatureEvent_eventSource,
+		func(ctx context.Context) (any, error) {
+			return obj.EventSource, nil
+		},
+		nil,
+		ec.marshalNElectronicSignatureEventSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventSource,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignatureEvent_eventSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignatureEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ElectronicSignatureEventSource does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignatureEvent_actorEmail(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignatureEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignatureEvent_actorEmail,
+		func(ctx context.Context) (any, error) {
+			return obj.ActorEmail, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignatureEvent_actorEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignatureEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignatureEvent_actorIpAddress(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignatureEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignatureEvent_actorIpAddress,
+		func(ctx context.Context) (any, error) {
+			return obj.ActorIPAddress, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignatureEvent_actorIpAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignatureEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignatureEvent_actorUserAgent(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignatureEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignatureEvent_actorUserAgent,
+		func(ctx context.Context) (any, error) {
+			return obj.ActorUserAgent, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignatureEvent_actorUserAgent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignatureEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignatureEvent_occurredAt(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignatureEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignatureEvent_occurredAt,
+		func(ctx context.Context) (any, error) {
+			return obj.OccurredAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignatureEvent_occurredAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignatureEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignatureEvent_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignatureEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignatureEvent_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignatureEvent_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignatureEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -51548,6 +52383,57 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_hasAcceptedNonDisclos
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenterAccess_ndaSignature(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenterAccess_ndaSignature,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.TrustCenterAccess().NdaSignature(ctx, obj)
+		},
+		nil,
+		ec.marshalOElectronicSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐElectronicSignature,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_ndaSignature(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ElectronicSignature_id(ctx, field)
+			case "status":
+				return ec.fieldContext_ElectronicSignature_status(ctx, field)
+			case "documentType":
+				return ec.fieldContext_ElectronicSignature_documentType(ctx, field)
+			case "consentText":
+				return ec.fieldContext_ElectronicSignature_consentText(ctx, field)
+			case "lastError":
+				return ec.fieldContext_ElectronicSignature_lastError(ctx, field)
+			case "signedAt":
+				return ec.fieldContext_ElectronicSignature_signedAt(ctx, field)
+			case "certificateFileUrl":
+				return ec.fieldContext_ElectronicSignature_certificateFileUrl(ctx, field)
+			case "events":
+				return ec.fieldContext_ElectronicSignature_events(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ElectronicSignature_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ElectronicSignature_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ElectronicSignature", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenterAccess_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -51920,6 +52806,8 @@ func (ec *executionContext) fieldContext_TrustCenterAccessEdge_node(_ context.Co
 				return ec.fieldContext_TrustCenterAccess_state(ctx, field)
 			case "hasAcceptedNonDisclosureAgreement":
 				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
+			case "ndaSignature":
+				return ec.fieldContext_TrustCenterAccess_ndaSignature(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
@@ -54718,6 +55606,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterAccessPayload_trustCen
 				return ec.fieldContext_TrustCenterAccess_state(ctx, field)
 			case "hasAcceptedNonDisclosureAgreement":
 				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
+			case "ndaSignature":
+				return ec.fieldContext_TrustCenterAccess_ndaSignature(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
@@ -70534,6 +71424,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Evidence(ctx, sel, obj)
+	case types.ElectronicSignature:
+		return ec._ElectronicSignature(ctx, sel, &obj)
+	case *types.ElectronicSignature:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ElectronicSignature(ctx, sel, obj)
 	case types.DocumentVersionSignature:
 		return ec._DocumentVersionSignature(ctx, sel, &obj)
 	case *types.DocumentVersionSignature:
@@ -77840,6 +78737,217 @@ func (ec *executionContext) _DocumentVersionSignatureEdge(ctx context.Context, s
 			}
 		case "node":
 			out.Values[i] = ec._DocumentVersionSignatureEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var electronicSignatureImplementors = []string{"ElectronicSignature", "Node"}
+
+func (ec *executionContext) _ElectronicSignature(ctx context.Context, sel ast.SelectionSet, obj *types.ElectronicSignature) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, electronicSignatureImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ElectronicSignature")
+		case "id":
+			out.Values[i] = ec._ElectronicSignature_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._ElectronicSignature_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "documentType":
+			out.Values[i] = ec._ElectronicSignature_documentType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "consentText":
+			out.Values[i] = ec._ElectronicSignature_consentText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastError":
+			out.Values[i] = ec._ElectronicSignature_lastError(ctx, field, obj)
+		case "signedAt":
+			out.Values[i] = ec._ElectronicSignature_signedAt(ctx, field, obj)
+		case "certificateFileUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ElectronicSignature_certificateFileUrl(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "events":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ElectronicSignature_events(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._ElectronicSignature_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ElectronicSignature_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var electronicSignatureEventImplementors = []string{"ElectronicSignatureEvent"}
+
+func (ec *executionContext) _ElectronicSignatureEvent(ctx context.Context, sel ast.SelectionSet, obj *types.ElectronicSignatureEvent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, electronicSignatureEventImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ElectronicSignatureEvent")
+		case "id":
+			out.Values[i] = ec._ElectronicSignatureEvent_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "eventType":
+			out.Values[i] = ec._ElectronicSignatureEvent_eventType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "eventSource":
+			out.Values[i] = ec._ElectronicSignatureEvent_eventSource(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "actorEmail":
+			out.Values[i] = ec._ElectronicSignatureEvent_actorEmail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "actorIpAddress":
+			out.Values[i] = ec._ElectronicSignatureEvent_actorIpAddress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "actorUserAgent":
+			out.Values[i] = ec._ElectronicSignatureEvent_actorUserAgent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "occurredAt":
+			out.Values[i] = ec._ElectronicSignatureEvent_occurredAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._ElectronicSignatureEvent_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -86440,6 +87548,39 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "ndaSignature":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenterAccess_ndaSignature(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
 			out.Values[i] = ec._TrustCenterAccess_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -95662,6 +96803,204 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType(ctx context.Context, v any) (coredata.ElectronicSignatureDocumentType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType(ctx context.Context, sel ast.SelectionSet, v coredata.ElectronicSignatureDocumentType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType = map[string]coredata.ElectronicSignatureDocumentType{
+		"NDA":            coredata.ElectronicSignatureDocumentTypeNDA,
+		"DPA":            coredata.ElectronicSignatureDocumentTypeDPA,
+		"MSA":            coredata.ElectronicSignatureDocumentTypeMSA,
+		"SOW":            coredata.ElectronicSignatureDocumentTypeSOW,
+		"SLA":            coredata.ElectronicSignatureDocumentTypeSLA,
+		"TOS":            coredata.ElectronicSignatureDocumentTypeTOS,
+		"PRIVACY_POLICY": coredata.ElectronicSignatureDocumentTypePrivacyPolicy,
+		"OTHER":          coredata.ElectronicSignatureDocumentTypeOther,
+	}
+	marshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType = map[coredata.ElectronicSignatureDocumentType]string{
+		coredata.ElectronicSignatureDocumentTypeNDA:           "NDA",
+		coredata.ElectronicSignatureDocumentTypeDPA:           "DPA",
+		coredata.ElectronicSignatureDocumentTypeMSA:           "MSA",
+		coredata.ElectronicSignatureDocumentTypeSOW:           "SOW",
+		coredata.ElectronicSignatureDocumentTypeSLA:           "SLA",
+		coredata.ElectronicSignatureDocumentTypeTOS:           "TOS",
+		coredata.ElectronicSignatureDocumentTypePrivacyPolicy: "PRIVACY_POLICY",
+		coredata.ElectronicSignatureDocumentTypeOther:         "OTHER",
+	}
+)
+
+func (ec *executionContext) marshalNElectronicSignatureEvent2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐElectronicSignatureEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ElectronicSignatureEvent) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNElectronicSignatureEvent2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐElectronicSignatureEvent(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNElectronicSignatureEvent2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐElectronicSignatureEvent(ctx context.Context, sel ast.SelectionSet, v *types.ElectronicSignatureEvent) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ElectronicSignatureEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNElectronicSignatureEventSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventSource(ctx context.Context, v any) (coredata.ElectronicSignatureEventSource, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNElectronicSignatureEventSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventSource[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNElectronicSignatureEventSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventSource(ctx context.Context, sel ast.SelectionSet, v coredata.ElectronicSignatureEventSource) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNElectronicSignatureEventSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventSource[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNElectronicSignatureEventSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventSource = map[string]coredata.ElectronicSignatureEventSource{
+		"CLIENT": coredata.ElectronicSignatureEventSourceClient,
+		"SERVER": coredata.ElectronicSignatureEventSourceServer,
+	}
+	marshalNElectronicSignatureEventSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventSource = map[coredata.ElectronicSignatureEventSource]string{
+		coredata.ElectronicSignatureEventSourceClient: "CLIENT",
+		coredata.ElectronicSignatureEventSourceServer: "SERVER",
+	}
+)
+
+func (ec *executionContext) unmarshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType(ctx context.Context, v any) (coredata.ElectronicSignatureEventType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType(ctx context.Context, sel ast.SelectionSet, v coredata.ElectronicSignatureEventType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType = map[string]coredata.ElectronicSignatureEventType{
+		"DOCUMENT_VIEWED":       coredata.ElectronicSignatureEventTypeDocumentViewed,
+		"CONSENT_GIVEN":         coredata.ElectronicSignatureEventTypeConsentGiven,
+		"FULL_NAME_TYPED":       coredata.ElectronicSignatureEventTypeFullNameTyped,
+		"SIGNATURE_ACCEPTED":    coredata.ElectronicSignatureEventTypeSignatureAccepted,
+		"SIGNATURE_COMPLETED":   coredata.ElectronicSignatureEventTypeSignatureCompleted,
+		"SEAL_COMPUTED":         coredata.ElectronicSignatureEventTypeSealComputed,
+		"TIMESTAMP_REQUESTED":   coredata.ElectronicSignatureEventTypeTimestampRequested,
+		"CERTIFICATE_GENERATED": coredata.ElectronicSignatureEventTypeCertificateGenerated,
+		"PROCESSING_ERROR":      coredata.ElectronicSignatureEventTypeProcessingError,
+	}
+	marshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType = map[coredata.ElectronicSignatureEventType]string{
+		coredata.ElectronicSignatureEventTypeDocumentViewed:       "DOCUMENT_VIEWED",
+		coredata.ElectronicSignatureEventTypeConsentGiven:         "CONSENT_GIVEN",
+		coredata.ElectronicSignatureEventTypeFullNameTyped:        "FULL_NAME_TYPED",
+		coredata.ElectronicSignatureEventTypeSignatureAccepted:    "SIGNATURE_ACCEPTED",
+		coredata.ElectronicSignatureEventTypeSignatureCompleted:   "SIGNATURE_COMPLETED",
+		coredata.ElectronicSignatureEventTypeSealComputed:         "SEAL_COMPUTED",
+		coredata.ElectronicSignatureEventTypeTimestampRequested:   "TIMESTAMP_REQUESTED",
+		coredata.ElectronicSignatureEventTypeCertificateGenerated: "CERTIFICATE_GENERATED",
+		coredata.ElectronicSignatureEventTypeProcessingError:      "PROCESSING_ERROR",
+	}
+)
+
+func (ec *executionContext) unmarshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus(ctx context.Context, v any) (coredata.ElectronicSignatureStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus(ctx context.Context, sel ast.SelectionSet, v coredata.ElectronicSignatureStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus = map[string]coredata.ElectronicSignatureStatus{
+		"PENDING":    coredata.ElectronicSignatureStatusPending,
+		"ACCEPTED":   coredata.ElectronicSignatureStatusAccepted,
+		"PROCESSING": coredata.ElectronicSignatureStatusProcessing,
+		"COMPLETED":  coredata.ElectronicSignatureStatusCompleted,
+		"FAILED":     coredata.ElectronicSignatureStatusFailed,
+	}
+	marshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus = map[coredata.ElectronicSignatureStatus]string{
+		coredata.ElectronicSignatureStatusPending:    "PENDING",
+		coredata.ElectronicSignatureStatusAccepted:   "ACCEPTED",
+		coredata.ElectronicSignatureStatusProcessing: "PROCESSING",
+		coredata.ElectronicSignatureStatusCompleted:  "COMPLETED",
+		coredata.ElectronicSignatureStatusFailed:     "FAILED",
+	}
+)
+
 func (ec *executionContext) unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (mail.Addr, error) {
 	res, err := mail1.UnmarshalAddrScalar(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -101668,6 +103007,13 @@ func (ec *executionContext) marshalODuration2ᚖtimeᚐDuration(ctx context.Cont
 	_ = ctx
 	res := graphql.MarshalDuration(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOElectronicSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐElectronicSignature(ctx context.Context, sel ast.SelectionSet, v *types.ElectronicSignature) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ElectronicSignature(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (*mail.Addr, error) {

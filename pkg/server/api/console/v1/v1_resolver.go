@@ -1241,6 +1241,40 @@ func (r *documentVersionSignatureConnectionResolver) TotalCount(ctx context.Cont
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// CertificateFileURL is the resolver for the certificateFileUrl field.
+func (r *electronicSignatureResolver) CertificateFileURL(ctx context.Context, obj *types.ElectronicSignature) (*string, error) {
+	sig, err := r.esign.LoadSignatureByID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load signature: %w", err)
+	}
+
+	if sig.CertificateFileID == nil {
+		return nil, nil
+	}
+
+	url, err := r.esign.GenerateCertificateFileURL(ctx, *sig.CertificateFileID, 1*time.Hour)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate certificate file URL: %w", err)
+	}
+
+	return &url, nil
+}
+
+// Events is the resolver for the events field.
+func (r *electronicSignatureResolver) Events(ctx context.Context, obj *types.ElectronicSignature) ([]*types.ElectronicSignatureEvent, error) {
+	events, err := r.esign.LoadEventsBySignatureID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load signature events: %w", err)
+	}
+
+	result := make([]*types.ElectronicSignatureEvent, len(events))
+	for i := range events {
+		result[i] = types.NewElectronicSignatureEvent(events[i])
+	}
+
+	return result, nil
+}
+
 // File is the resolver for the file field.
 func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*types.File, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
@@ -7785,6 +7819,42 @@ func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCe
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
+// NdaSignature is the resolver for the ndaSignature field.
+func (r *trustCenterAccessResolver) NdaSignature(ctx context.Context, obj *types.TrustCenterAccess) (*types.ElectronicSignature, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	access, err := prb.TrustCenterAccesses.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center access: %w", err)
+	}
+
+	trustCenter, _, err := prb.TrustCenters.Get(ctx, access.TrustCenterID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center: %w", err)
+	}
+
+	if trustCenter.NonDisclosureAgreementFileID == nil {
+		return nil, nil
+	}
+
+	sig, err := r.esign.LoadSignatureByOrgEmailAndDocType(
+		ctx,
+		access.OrganizationID,
+		string(access.Email),
+		coredata.ElectronicSignatureDocumentTypeNDA,
+		*trustCenter.NonDisclosureAgreementFileID,
+	)
+	if err != nil {
+		return nil, nil // No signature row — pre-existing access
+	}
+
+	return types.NewElectronicSignature(sig), nil
+}
+
 // PendingRequestCount is the resolver for the pendingRequestCount field.
 func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet); err != nil {
@@ -8784,6 +8854,11 @@ func (r *Resolver) DocumentVersionSignatureConnection() schema.DocumentVersionSi
 	return &documentVersionSignatureConnectionResolver{r}
 }
 
+// ElectronicSignature returns schema.ElectronicSignatureResolver implementation.
+func (r *Resolver) ElectronicSignature() schema.ElectronicSignatureResolver {
+	return &electronicSignatureResolver{r}
+}
+
 // Evidence returns schema.EvidenceResolver implementation.
 func (r *Resolver) Evidence() schema.EvidenceResolver { return &evidenceResolver{r} }
 
@@ -9029,6 +9104,7 @@ type documentVersionResolver struct{ *Resolver }
 type documentVersionConnectionResolver struct{ *Resolver }
 type documentVersionSignatureResolver struct{ *Resolver }
 type documentVersionSignatureConnectionResolver struct{ *Resolver }
+type electronicSignatureResolver struct{ *Resolver }
 type evidenceResolver struct{ *Resolver }
 type evidenceConnectionResolver struct{ *Resolver }
 type fileResolver struct{ *Resolver }
