@@ -4140,6 +4140,202 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted document version signature ID
 
+    MeetingOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - DATE
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MeetingOrderField
+
+    MeetingOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/MeetingOrderField"
+          description: Meeting order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Meeting order direction
+
+    Meeting:
+      type: object
+      required:
+        - id
+        - name
+        - date
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+        name:
+          type: string
+          description: Meeting name
+        date:
+          type: string
+          format: date-time
+          description: Meeting date
+        minutes:
+          anyOf:
+            - type: string
+              description: Meeting minutes
+            - type: "null"
+              description: No minutes
+          description: Meeting minutes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListMeetingsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/MeetingOrderBy"
+          description: Meeting order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListMeetingsOutput:
+      type: object
+      required:
+        - meetings
+      properties:
+        meetings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Meeting"
+          description: List of meetings
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetMeetingInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+
+    GetMeetingOutput:
+      type: object
+      required:
+        - meeting
+      properties:
+        meeting:
+          $ref: "#/components/schemas/Meeting"
+
+    AddMeetingInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - date
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Meeting name
+        date:
+          type: string
+          format: date-time
+          description: Meeting date
+        attendee_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: List of attendee profile IDs
+        minutes:
+          anyOf:
+            - type: string
+              description: Meeting minutes
+            - type: "null"
+              description: No minutes
+          description: Meeting minutes
+
+    AddMeetingOutput:
+      type: object
+      required:
+        - meeting
+      properties:
+        meeting:
+          $ref: "#/components/schemas/Meeting"
+
+    UpdateMeetingInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+        name:
+          type: string
+          description: Meeting name
+        date:
+          type: string
+          format: date-time
+          description: Meeting date
+        attendee_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: List of attendee profile IDs
+        minutes:
+          type: ["string", "null"]
+          description: Meeting minutes
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateMeetingOutput:
+      type: object
+      required:
+        - meeting
+      properties:
+        meeting:
+          $ref: "#/components/schemas/Meeting"
+
+    DeleteMeetingInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+
+    DeleteMeetingOutput:
+      type: object
+      required:
+        - deleted_meeting_id
+      properties:
+        deleted_meeting_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted meeting ID
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -4809,3 +5005,46 @@ tools:
       $ref: "#/components/schemas/CancelSignatureRequestInput"
     outputSchema:
       $ref: "#/components/schemas/CancelSignatureRequestOutput"
+  - name: listMeetings
+    description: List all meetings for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeetingsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeetingsOutput"
+  - name: getMeeting
+    description: Get a meeting by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetMeetingInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetMeetingOutput"
+  - name: addMeeting
+    description: Add a new meeting to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddMeetingInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddMeetingOutput"
+  - name: updateMeeting
+    description: Update an existing meeting
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateMeetingInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateMeetingOutput"
+  - name: deleteMeeting
+    description: Delete a meeting
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteMeetingInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteMeetingOutput"

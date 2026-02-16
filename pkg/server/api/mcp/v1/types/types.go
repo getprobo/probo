@@ -31,6 +31,8 @@ var (
 	AddFrameworkToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"framework":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Framework description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Framework name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","created_at","updated_at"]}},"required":["framework"]}`)
 	AddMeasureToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"category":{"type":"string","description":"Measure category"},"description":{"type":"string","description":"Measure description"},"name":{"type":"string","description":"Measure name"},"organization_id":{"type":"string","format":"string"}},"required":["organization_id","name","category"]}`)
 	AddMeasureToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measure":{"type":"object","properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","category","name","state","created_at","updated_at"]}},"required":["measure"]}`)
+	AddMeetingToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"attendee_ids":{"type":"array","items":{"type":"string","format":"string"},"description":"List of attendee profile IDs"},"date":{"type":"string","description":"Meeting date","format":"date-time"},"minutes":{"description":"Meeting minutes","anyOf":[{"type":"string","description":"Meeting minutes"},{"type":"null","description":"No minutes"}]},"name":{"type":"string","description":"Meeting name"},"organization_id":{"type":"string","format":"string"}},"required":["organization_id","name","date"]}`)
+	AddMeetingToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"meeting":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date":{"type":"string","description":"Meeting date","format":"date-time"},"id":{"type":"string","format":"string"},"minutes":{"description":"Meeting minutes","anyOf":[{"type":"string","description":"Meeting minutes"},{"type":"null","description":"No minutes"}]},"name":{"type":"string","description":"Meeting name"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","name","date","created_at","updated_at"]}},"required":["meeting"]}`)
 	AddNonconformityToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"audit_id":{"description":"Audit ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No audit"}]},"corrective_action":{"type":"string","description":"Corrective action"},"date_identified":{"type":"string","description":"Date identified","format":"date-time"},"description":{"type":"string","description":"Description"},"due_date":{"type":"string","description":"Due date","format":"date-time"},"effectiveness_check":{"type":"string","description":"Effectiveness check"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},{"type":"null","description":"No status"}]}},"required":["organization_id","reference_id","root_cause","owner_id","status"]}`)
 	AddNonconformityToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"nonconformity":{"type":"object","properties":{"audit_id":{"description":"Audit ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No audit"}]},"corrective_action":{"description":"Corrective action"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","reference_id","root_cause","owner_id","status","created_at","updated_at"]}},"required":["nonconformity"]}`)
 	AddObligationToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"actions_to_be_implemented":{"type":"string","description":"Actions to be implemented"},"area":{"type":"string","description":"Area"},"due_date":{"type":"string","description":"Due date","format":"date-time"},"last_review_date":{"type":"string","description":"Last review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"regulator":{"type":"string","description":"Regulator"},"requirement":{"type":"string","description":"Requirement"},"source":{"type":"string","description":"Source"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},{"type":"null","description":"No status"}]},"type":{"description":"Type","anyOf":[{"type":"string","enum":["LEGAL","CONTRACTUAL"]},{"type":"null","description":"No type"}]}},"required":["organization_id","owner_id","status","type"]}`)
@@ -51,6 +53,8 @@ var (
 	DeleteDocumentToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_document_id":{"type":"string","format":"string"}},"required":["deleted_document_id"]}`)
 	DeleteDraftDocumentVersionToolInputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"document_version_id":{"type":"string","format":"string"}},"required":["document_version_id"]}`)
 	DeleteDraftDocumentVersionToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_document_version_id":{"type":"string","format":"string"}},"required":["deleted_document_version_id"]}`)
+	DeleteMeetingToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
+	DeleteMeetingToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_meeting_id":{"type":"string","format":"string"}},"required":["deleted_meeting_id"]}`)
 	GetAssetToolInputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	GetAssetToolOutputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"asset":{"type":"object","properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","amount","owner_id","asset_type","data_types_stored","created_at","updated_at"]}},"required":["asset"]}`)
 	GetAuditToolInputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
@@ -71,6 +75,8 @@ var (
 	GetFrameworkToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"framework":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Framework description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Framework name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","created_at","updated_at"]}},"required":["framework"]}`)
 	GetMeasureToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	GetMeasureToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measure":{"type":"object","properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","category","name","state","created_at","updated_at"]}},"required":["measure"]}`)
+	GetMeetingToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
+	GetMeetingToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"meeting":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date":{"type":"string","description":"Meeting date","format":"date-time"},"id":{"type":"string","format":"string"},"minutes":{"description":"Meeting minutes","anyOf":[{"type":"string","description":"Meeting minutes"},{"type":"null","description":"No minutes"}]},"name":{"type":"string","description":"Meeting name"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","name","date","created_at","updated_at"]}},"required":["meeting"]}`)
 	GetNonconformityToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	GetNonconformityToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"nonconformity":{"type":"object","properties":{"audit_id":{"description":"Audit ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No audit"}]},"corrective_action":{"description":"Corrective action"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","reference_id","root_cause","owner_id","status","created_at","updated_at"]}},"required":["nonconformity"]}`)
 	GetObligationToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
@@ -111,6 +117,8 @@ var (
 	ListFrameworksToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"frameworks":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Framework description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Framework name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["frameworks"]}`)
 	ListMeasuresToolInputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"query":{"type":"string","description":"Search query"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","NAME"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListMeasuresToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measures":{"type":"array","items":{"type":"object","properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","category","name","state","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["measures"]}`)
+	ListMeetingsToolInputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","DATE","NAME"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
+	ListMeetingsToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"meetings":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date":{"type":"string","description":"Meeting date","format":"date-time"},"id":{"type":"string","format":"string"},"minutes":{"description":"Meeting minutes","anyOf":[{"type":"string","description":"Meeting minutes"},{"type":"null","description":"No minutes"}]},"name":{"type":"string","description":"Meeting name"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","name","date","created_at","updated_at"]},"description":"List of meetings"},"next_cursor":{"description":"Next page cursor","anyOf":[{"type":"string","format":"string"},{"type":"null"}]}},"required":["meetings"]}`)
 	ListNonconformitiesToolInputSchema              = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","REFERENCE_ID","DATE_IDENTIFIED","DUE_DATE","STATUS"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListNonconformitiesToolOutputSchema             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"nonconformities":{"type":"array","items":{"type":"object","properties":{"audit_id":{"description":"Audit ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No audit"}]},"corrective_action":{"description":"Corrective action"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","reference_id","root_cause","owner_id","status","created_at","updated_at"]}}},"required":["nonconformities"]}`)
 	ListObligationsToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","LAST_REVIEW_DATE","DUE_DATE","STATUS"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
@@ -161,6 +169,8 @@ var (
 	UpdateFrameworkToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"framework":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Framework description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Framework name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","created_at","updated_at"]}},"required":["framework"]}`)
 	UpdateMeasureToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"category":{"type":"string","description":"Measure category"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]}},"required":["id"]}`)
 	UpdateMeasureToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measure":{"type":"object","properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","category","name","state","created_at","updated_at"]}},"required":["measure"]}`)
+	UpdateMeetingToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"attendee_ids":{"type":"array","items":{"type":"string","format":"string"},"description":"List of attendee profile IDs"},"date":{"type":"string","description":"Meeting date","format":"date-time"},"id":{"type":"string","format":"string"},"minutes":{"description":"Meeting minutes"},"name":{"type":"string","description":"Meeting name"}},"required":["id"]}`)
+	UpdateMeetingToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"meeting":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date":{"type":"string","description":"Meeting date","format":"date-time"},"id":{"type":"string","format":"string"},"minutes":{"description":"Meeting minutes","anyOf":[{"type":"string","description":"Meeting minutes"},{"type":"null","description":"No minutes"}]},"name":{"type":"string","description":"Meeting name"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","name","date","created_at","updated_at"]}},"required":["meeting"]}`)
 	UpdateNonconformityToolInputSchema              = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"audit_id":{"description":"Audit ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"corrective_action":{"description":"Corrective action"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]}},"required":["id"]}`)
 	UpdateNonconformityToolOutputSchema             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"nonconformity":{"type":"object","properties":{"audit_id":{"description":"Audit ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No audit"}]},"corrective_action":{"description":"Corrective action"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","reference_id","root_cause","owner_id","status","created_at","updated_at"]}},"required":["nonconformity"]}`)
 	UpdateObligationToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"actions_to_be_implemented":{"description":"Actions to be implemented"},"area":{"description":"Area"},"due_date":{"description":"Due date","format":"date-time"},"id":{"type":"string","format":"string"},"last_review_date":{"description":"Last review date","format":"date-time"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"regulator":{"description":"Regulator"},"requirement":{"description":"Requirement"},"source":{"description":"Source"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},{"type":"null","description":"No status"}]},"type":{"description":"Type","anyOf":[{"type":"string","enum":["LEGAL","CONTRACTUAL"]},{"type":"null","description":"No type"}]}},"required":["id"]}`)
@@ -642,6 +652,25 @@ type AddMeasureOutput struct {
 	Measure *Measure `json:"measure"`
 }
 
+// AddMeetingInput represents the schema
+type AddMeetingInput struct {
+	// List of attendee profile IDs
+	AttendeeIds []gid.GID `json:"attendee_ids,omitempty"`
+	// Meeting date
+	Date time.Time `json:"date"`
+	// Meeting minutes
+	Minutes *string `json:"minutes,omitempty"`
+	// Meeting name
+	Name string `json:"name"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+}
+
+// AddMeetingOutput represents the schema
+type AddMeetingOutput struct {
+	Meeting *Meeting `json:"meeting"`
+}
+
 // AddNonconformityInput represents the schema
 type AddNonconformityInput struct {
 	// Audit ID
@@ -1029,6 +1058,18 @@ type DeleteDraftDocumentVersionOutput struct {
 	DeletedDocumentVersionID gid.GID `json:"deleted_document_version_id"`
 }
 
+// DeleteMeetingInput represents the schema
+type DeleteMeetingInput struct {
+	// Meeting ID
+	ID gid.GID `json:"id"`
+}
+
+// DeleteMeetingOutput represents the schema
+type DeleteMeetingOutput struct {
+	// Deleted meeting ID
+	DeletedMeetingID gid.GID `json:"deleted_meeting_id"`
+}
+
 // Document represents the schema
 type Document struct {
 	// Document classification
@@ -1261,6 +1302,17 @@ type GetMeasureInput struct {
 // GetMeasureOutput represents the schema
 type GetMeasureOutput struct {
 	Measure *Measure `json:"measure"`
+}
+
+// GetMeetingInput represents the schema
+type GetMeetingInput struct {
+	// Meeting ID
+	ID gid.GID `json:"id"`
+}
+
+// GetMeetingOutput represents the schema
+type GetMeetingOutput struct {
+	Meeting *Meeting `json:"meeting"`
 }
 
 // GetNonconformityInput represents the schema
@@ -1576,6 +1628,26 @@ type ListMeasuresOutput struct {
 	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
 }
 
+// ListMeetingsInput represents the schema
+type ListMeetingsInput struct {
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Meeting order by
+	OrderBy *MeetingOrderBy `json:"order_by,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListMeetingsOutput represents the schema
+type ListMeetingsOutput struct {
+	// List of meetings
+	Meetings []*Meeting `json:"meetings"`
+	// Next page cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
 // ListNonconformitiesInput represents the schema
 type ListNonconformitiesInput struct {
 	// Page cursor
@@ -1753,6 +1825,30 @@ type MeasureOrderBy struct {
 	Direction page.OrderDirection `json:"direction"`
 	// Measure order field
 	Field coredata.MeasureOrderField `json:"field"`
+}
+
+// Meeting represents the schema
+type Meeting struct {
+	// Creation timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Meeting date
+	Date time.Time `json:"date"`
+	// Meeting ID
+	ID gid.GID `json:"id"`
+	// Meeting minutes
+	Minutes *string `json:"minutes,omitempty"`
+	// Meeting name
+	Name string `json:"name"`
+	// Update timestamp
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// MeetingOrderBy represents the schema
+type MeetingOrderBy struct {
+	// Meeting order direction
+	Direction page.OrderDirection `json:"direction"`
+	// Meeting order field
+	Field coredata.MeetingOrderField `json:"field"`
 }
 
 // Nonconformity represents the schema
@@ -2268,6 +2364,25 @@ type UpdateMeasureInput struct {
 // UpdateMeasureOutput represents the schema
 type UpdateMeasureOutput struct {
 	Measure *Measure `json:"measure"`
+}
+
+// UpdateMeetingInput represents the schema
+type UpdateMeetingInput struct {
+	// List of attendee profile IDs
+	AttendeeIds []gid.GID `json:"attendee_ids,omitempty"`
+	// Meeting date
+	Date *time.Time `json:"date,omitempty"`
+	// Meeting ID
+	ID gid.GID `json:"id"`
+	// Meeting minutes
+	Minutes mcp.Omittable[*string] `json:"minutes,omitempty"`
+	// Meeting name
+	Name *string `json:"name,omitempty"`
+}
+
+// UpdateMeetingOutput represents the schema
+type UpdateMeetingOutput struct {
+	Meeting *Meeting `json:"meeting"`
 }
 
 // UpdateNonconformityInput represents the schema

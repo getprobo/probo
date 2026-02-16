@@ -1837,3 +1837,107 @@ func (r *Resolver) GetProfileTool(ctx context.Context, req *mcp.CallToolRequest,
 func (r *Resolver) UpdateProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProfileInput) (*mcp.CallToolResult, types.UpdateProfileOutput, error) {
 	return nil, types.UpdateProfileOutput{}, fmt.Errorf("updateProfile not implemented")
 }
+
+func (r *Resolver) ListMeetingsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingsInput) (*mcp.CallToolResult, types.ListMeetingsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMeetingList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.MeetingOrderField]{
+		Field:     coredata.MeetingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeetingOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.Meetings.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization meetings: %w", err))
+	}
+
+	return nil, types.NewListMeetingsOutput(page), nil
+}
+
+func (r *Resolver) GetMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeetingInput) (*mcp.CallToolResult, types.GetMeetingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionMeetingGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	meeting, err := prb.Meetings.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetMeetingOutput{}, fmt.Errorf("failed to get meeting: %w", err)
+	}
+
+	return nil, types.GetMeetingOutput{
+		Meeting: types.NewMeeting(meeting),
+	}, nil
+}
+
+func (r *Resolver) AddMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeetingInput) (*mcp.CallToolResult, types.AddMeetingOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMeetingCreate)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	meeting, err := svc.Meetings.Create(
+		ctx,
+		probo.CreateMeetingRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Date:           input.Date,
+			AttendeeIDs:    input.AttendeeIds,
+			Minutes:        input.Minutes,
+		},
+	)
+	if err != nil {
+		return nil, types.AddMeetingOutput{}, fmt.Errorf("failed to create meeting: %w", err)
+	}
+
+	return nil, types.AddMeetingOutput{
+		Meeting: types.NewMeeting(meeting),
+	}, nil
+}
+
+func (r *Resolver) UpdateMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeetingInput) (*mcp.CallToolResult, types.UpdateMeetingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionMeetingUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	meeting, err := svc.Meetings.Update(
+		ctx,
+		probo.UpdateMeetingRequest{
+			MeetingID:   input.ID,
+			Name:        input.Name,
+			Date:        input.Date,
+			AttendeeIDs: input.AttendeeIds,
+			Minutes:     UnwrapOmittable(input.Minutes),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateMeetingOutput{}, fmt.Errorf("failed to update meeting: %w", err)
+	}
+
+	return nil, types.UpdateMeetingOutput{
+		Meeting: types.NewMeeting(meeting),
+	}, nil
+}
+
+func (r *Resolver) DeleteMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeetingInput) (*mcp.CallToolResult, types.DeleteMeetingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionMeetingDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Meetings.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteMeetingOutput{}, fmt.Errorf("failed to delete meeting: %w", err)
+	}
+
+	return nil, types.DeleteMeetingOutput{
+		DeletedMeetingID: input.ID,
+	}, nil
+}

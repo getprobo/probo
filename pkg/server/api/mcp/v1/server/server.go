@@ -89,6 +89,11 @@ type ResolverInterface interface {
 	GetDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionSignatureInput) (*mcp.CallToolResult, types.GetDocumentVersionSignatureOutput, error)
 	RequestDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestDocumentVersionSignatureInput) (*mcp.CallToolResult, types.RequestDocumentVersionSignatureOutput, error)
 	CancelSignatureRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CancelSignatureRequestInput) (*mcp.CallToolResult, types.CancelSignatureRequestOutput, error)
+	ListMeetingsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingsInput) (*mcp.CallToolResult, types.ListMeetingsOutput, error)
+	GetMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeetingInput) (*mcp.CallToolResult, types.GetMeetingOutput, error)
+	AddMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeetingInput) (*mcp.CallToolResult, types.AddMeetingOutput, error)
+	UpdateMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeetingInput) (*mcp.CallToolResult, types.UpdateMeetingOutput, error)
+	DeleteMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeetingInput) (*mcp.CallToolResult, types.DeleteMeetingOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -1039,6 +1044,67 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			},
 		},
 		resolver.CancelSignatureRequestTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listMeetings",
+			Description:  "List all meetings for the organization",
+			InputSchema:  types.ListMeetingsToolInputSchema,
+			OutputSchema: types.ListMeetingsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListMeetingsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getMeeting",
+			Description:  "Get a meeting by ID",
+			InputSchema:  types.GetMeetingToolInputSchema,
+			OutputSchema: types.GetMeetingToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetMeetingTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addMeeting",
+			Description:  "Add a new meeting to the organization",
+			InputSchema:  types.AddMeetingToolInputSchema,
+			OutputSchema: types.AddMeetingToolOutputSchema,
+		},
+		resolver.AddMeetingTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateMeeting",
+			Description:  "Update an existing meeting",
+			InputSchema:  types.UpdateMeetingToolInputSchema,
+			OutputSchema: types.UpdateMeetingToolOutputSchema,
+		},
+		resolver.UpdateMeetingTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteMeeting",
+			Description:  "Delete a meeting",
+			InputSchema:  types.DeleteMeetingToolInputSchema,
+			OutputSchema: types.DeleteMeetingToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteMeetingTool,
 	)
 }
 
