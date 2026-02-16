@@ -281,7 +281,7 @@ func (s *OrganizationService) RemoveMember(
 			}
 
 			membership := &coredata.Membership{}
-			if err := membership.LoadByIdentityAndOrg(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 

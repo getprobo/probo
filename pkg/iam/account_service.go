@@ -268,7 +268,7 @@ func (s *AccountService) AcceptInvitation(
 			}
 
 			existingMembership := &coredata.Membership{}
-			if err := existingMembership.LoadByIdentityAndOrg(
+			if err := existingMembership.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				tx,
 				scope,
@@ -775,7 +775,13 @@ func (s AccountService) GetMembershipForOrganization(
 				return fmt.Errorf("cannot load identity %q: %w", identityID, err)
 			}
 
-			if err := membership.LoadByIdentityInOrganization(ctx, tx, identityID, organizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(organizationID),
+				identityID,
+				organizationID,
+			); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 

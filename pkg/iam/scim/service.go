@@ -213,7 +213,7 @@ func (s *Service) CreateUser(
 
 		// Check if membership exists
 		membership = &coredata.Membership{}
-		if err := membership.LoadByIdentityAndOrg(
+		if err := membership.LoadByIdentityIDAndOrganizationID(
 			ctx,
 			tx,
 			scope,
@@ -294,7 +294,7 @@ func (s *Service) GetUser(
 			}
 
 			membership = &coredata.Membership{}
-			if err := membership.LoadByIdentityAndOrg(
+			if err := membership.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				conn,
 				scope,
@@ -437,7 +437,7 @@ func (s *Service) updateUser(
 			}
 
 			membership = &coredata.Membership{}
-			if err := membership.LoadByIdentityAndOrg(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 

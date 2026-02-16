@@ -328,7 +328,7 @@ func (s *Service) HandleAssertion(
 				}
 			}
 
-			if err := membership.LoadByIdentityAndOrg(
+			if err := membership.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				tx,
 				scope,

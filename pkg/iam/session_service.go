@@ -366,7 +366,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				return NewUserInactiveError(profile.ID)
 			}
 
-			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
+			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
@@ -468,7 +468,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return NewUserInactiveError(profile.ID)
 			}
 
-			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
+			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
@@ -554,7 +554,7 @@ func (s SessionService) AssumeOrganizationSession(
 				return NewUserInactiveError(profile.ID)
 			}
 
-			if err := membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}

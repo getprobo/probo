@@ -52,7 +52,13 @@ func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (m *Membership) LoadByIdentityInOrganization(ctx context.Context, conn pg.Conn, identityID gid.GID, organizationID gid.GID) error {
+func (m *Membership) LoadByIdentityIDAndOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	identityID gid.GID,
+	organizationID gid.GID,
+) error {
 	q := `
 SELECT
     id,
@@ -66,14 +72,19 @@ FROM
 WHERE
     identity_id = @identity_id
     AND organization_id = @organization_id
+    AND %s
 `
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"identity_id":     identityID,
 		"organization_id": organizationID,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
+	rows,
+		err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query membership: %w", err)
 	}
