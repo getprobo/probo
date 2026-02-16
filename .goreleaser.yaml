@@ -66,14 +66,14 @@ signs:
   - cmd: sh
     env:
       - COSIGN_EXPERIMENTAL=1
-    certificate: "${artifact}.pem"
+    signature: "${artifact}.bundle"
     args:
       - -c
       - |
         if [ "{{ .IsSnapshot }}" = "true" ]; then
           echo "Skipping signing (snapshot: {{ .IsSnapshot }})"
         else
-          cosign sign-blob --output-certificate="${certificate}" --output-signature="${signature}" "${artifact}" --yes
+          cosign sign-blob --bundle="${signature}" "${artifact}" --yes
         fi
     artifacts: checksum
     output: true
