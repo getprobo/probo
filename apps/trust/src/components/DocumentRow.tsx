@@ -124,7 +124,7 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
               icon={downloading ? Spinner : IconArrowInbox}
               onClick={() => void handleDownload()}
             >
-              {__("Download")}
+              {downloading ? __("Downloading") : __("Download")}
             </Button>
           )
         : viewer
