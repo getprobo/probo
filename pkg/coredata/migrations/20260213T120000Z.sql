@@ -1,3 +1,9 @@
+-- Rename owner_profile_id to approver_profile_id on documents table
+ALTER TABLE documents RENAME COLUMN owner_profile_id TO approver_profile_id;
+
+-- Rename owner_profile_id to approver_profile_id on document_versions table
+ALTER TABLE document_versions RENAME COLUMN owner_profile_id TO approver_profile_id;
+
 -- Create document_approvers join table
 CREATE TABLE document_approvers (
     document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
@@ -31,6 +37,7 @@ SELECT id, approver_profile_id, tenant_id, organization_id, created_at
 FROM document_versions
 WHERE approver_profile_id IS NOT NULL;
 
--- Drop the old columns
-ALTER TABLE documents DROP COLUMN approver_profile_id;
-ALTER TABLE document_versions DROP COLUMN approver_profile_id;
+-- Allow NULL on old columns now that data is in the join tables
+ALTER TABLE document_versions ALTER COLUMN approver_profile_id DROP NOT NULL;
+
+-- TODO: Drop the old columns
