@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.126.1] - 2026-02-16
+
+### Added
+
+- Add delete tasks to mcp
+
 ## [0.126.0] - 2026-02-16
 
 ### Fixed
