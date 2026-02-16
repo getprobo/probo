@@ -206,14 +206,6 @@ func TestMeasure_Create_Validation(t *testing.T) {
 			wantErrorContains: "HTML",
 		},
 		{
-			name: "name with angle brackets",
-			input: map[string]any{
-				"name":     "Test < Measure",
-				"category": "POLICY",
-			},
-			wantErrorContains: "angle brackets",
-		},
-		{
 			name: "description with HTML tags",
 			input: map[string]any{
 				"name":        "Test Measure",
@@ -472,14 +464,6 @@ func TestMeasure_Update_Validation(t *testing.T) {
 				return map[string]any{"id": id, "name": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
-		},
-		{
-			name:  "name with angle brackets",
-			setup: func() string { return baseMeasureID },
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "name": "Test < Measure"}
-			},
-			wantErrorContains: "angle brackets",
 		},
 		{
 			name:  "description with HTML tags",

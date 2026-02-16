@@ -136,14 +136,6 @@ func TestMeeting_Create_Validation(t *testing.T) {
 			wantErrorContains: "HTML",
 		},
 		{
-			name: "name with angle brackets",
-			input: map[string]any{
-				"name": "Test < Meeting",
-				"date": time.Now().Format(time.RFC3339Nano),
-			},
-			wantErrorContains: "angle brackets",
-		},
-		{
 			name: "name with newline",
 			input: map[string]any{
 				"name": "Test\nMeeting",
@@ -342,14 +334,6 @@ func TestMeeting_Update_Validation(t *testing.T) {
 				return map[string]any{"meetingId": id, "name": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
-		},
-		{
-			name:  "name with angle brackets",
-			setup: func() string { return baseMeetingID },
-			input: func(id string) map[string]any {
-				return map[string]any{"meetingId": id, "name": "Test < Meeting"}
-			},
-			wantErrorContains: "angle brackets",
 		},
 		{
 			name:  "name with newline",

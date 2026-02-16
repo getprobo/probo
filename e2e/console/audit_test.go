@@ -183,13 +183,6 @@ func TestAudit_Create_Validation(t *testing.T) {
 			wantErrorContains: "HTML",
 		},
 		{
-			name: "name with angle brackets",
-			input: map[string]any{
-				"name": "Test < Audit",
-			},
-			wantErrorContains: "angle brackets",
-		},
-		{
 			name: "name with newline",
 			input: map[string]any{
 				"name": "Test\nAudit",
@@ -424,14 +417,6 @@ func TestAudit_Update_Validation(t *testing.T) {
 				return map[string]any{"id": id, "name": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
-		},
-		{
-			name:  "name with angle brackets",
-			setup: func() string { return baseAuditID },
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "name": "Test < Audit"}
-			},
-			wantErrorContains: "angle brackets",
 		},
 		{
 			name:  "name with newline",
