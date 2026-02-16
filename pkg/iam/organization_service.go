@@ -98,12 +98,24 @@ type (
 		Role     coredata.MembershipRole
 	}
 
+	CreateUserRequest struct {
+		OrganizationID           gid.GID
+		EmailAddress             mail.Addr
+		Role                     coredata.MembershipRole
+		FullName                 string
+		AdditionalEmailAddresses mail.Addrs
+		Kind                     coredata.MembershipProfileKind
+		Position                 *string
+		ContractStartDate        **time.Time
+		ContractEndDate          **time.Time
+	}
+
 	UpdateProfileRequest struct {
 		ID                       gid.GID
 		FullName                 string
 		AdditionalEmailAddresses mail.Addrs
 		Kind                     coredata.MembershipProfileKind
-		Position                 **string
+		Position                 *string
 		ContractStartDate        **time.Time
 		ContractEndDate          **time.Time
 	}
@@ -188,6 +200,22 @@ func (req UpdateOrganizationRequest) Validate() error {
 			return fmt.Errorf("invalid horizontal logo file: %w", err)
 		}
 	}
+
+	return v.Error()
+}
+
+func (cur *CreateUserRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cur.OrganizationID, "id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cur.Kind, "kind", validator.OneOfSlice(coredata.MembershipProfileKinds()))
+	v.Check(cur.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
+	v.CheckEach(cur.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())
+	})
+	v.Check(cur.Position, "position", validator.SafeText(TitleMaxLength))
+	v.Check(cur.ContractStartDate, "contract_start_date", validator.Before(cur.ContractEndDate))
+	v.Check(cur.ContractEndDate, "contract_end_date", validator.After(cur.ContractStartDate))
 
 	return v.Error()
 }
@@ -922,6 +950,90 @@ func (s *OrganizationService) DeleteOrganization(ctx context.Context, organizati
 	)
 }
 
+func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserRequest) (*coredata.MembershipProfile, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	var (
+		scope   = coredata.NewScopeFromObjectID(req.OrganizationID)
+		profile *coredata.MembershipProfile
+		now     = time.Now()
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			identity := &coredata.Identity{}
+			if err := identity.LoadByEmail(ctx, conn, req.EmailAddress); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load identity: %w", err)
+				}
+
+				identity = &coredata.Identity{
+					ID:           gid.New(gid.NilTenant, coredata.IdentityEntityType),
+					EmailAddress: req.EmailAddress,
+					FullName:     req.FullName,
+					CreatedAt:    now,
+					UpdatedAt:    now,
+				}
+
+				if err := identity.Insert(ctx, conn); err != nil {
+					return fmt.Errorf("cannot insert identity: %w", err)
+				}
+			}
+
+			profile = &coredata.MembershipProfile{
+				ID:                       gid.New(req.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
+				FullName:                 req.FullName,
+				Kind:                     req.Kind,
+				AdditionalEmailAddresses: req.AdditionalEmailAddresses,
+				Position:                 req.Position,
+				// User is created inactive
+				State:     coredata.ProfileStateInactive,
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+
+			if req.ContractStartDate != nil {
+				profile.ContractStartDate = *req.ContractStartDate
+			}
+
+			if req.ContractEndDate != nil {
+				profile.ContractEndDate = *req.ContractEndDate
+			}
+
+			if err := profile.Insert(ctx, conn); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return NewUserAlreadyExistsError(identity.ID, req.OrganizationID)
+				}
+
+				return fmt.Errorf("cannot insert profile: %w", err)
+			}
+
+			membership := &coredata.Membership{
+				ID:             gid.New(req.OrganizationID.TenantID(), coredata.MembershipEntityType),
+				IdentityID:     identity.ID,
+				OrganizationID: req.OrganizationID,
+				Role:           req.Role,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+			if err := membership.Insert(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot insert membership: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
 func (s *OrganizationService) UpdateProfile(ctx context.Context, req *UpdateProfileRequest) (*coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -941,12 +1053,8 @@ func (s *OrganizationService) UpdateProfile(ctx context.Context, req *UpdateProf
 
 			profile.FullName = req.FullName
 			profile.Kind = req.Kind
-
 			profile.AdditionalEmailAddresses = req.AdditionalEmailAddresses
-
-			if req.Position != nil {
-				profile.Position = *req.Position
-			}
+			profile.Position = req.Position
 
 			if req.ContractStartDate != nil {
 				profile.ContractStartDate = *req.ContractStartDate

@@ -118,6 +118,22 @@ type CreateSCIMConfigurationPayload struct {
 	Token             string             `json:"token"`
 }
 
+type CreateUserInput struct {
+	OrganizationID           gid.GID                        `json:"organizationId"`
+	FullName                 string                         `json:"fullName"`
+	EmailAddress             mail.Addr                      `json:"emailAddress"`
+	Role                     coredata.MembershipRole        `json:"role"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses,omitempty"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 *string                        `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
+}
+
+type CreateUserPayload struct {
+	ProfileEdge *ProfileEdge `json:"profileEdge"`
+}
+
 type DeleteInvitationInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	InvitationID   gid.GID `json:"invitationId"`
@@ -555,7 +571,7 @@ type UpdateProfileInput struct {
 	FullName                 string                         `json:"fullName"`
 	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses,omitempty"`
 	Kind                     coredata.MembershipProfileKind `json:"kind"`
-	Position                 graphql.Omittable[*string]     `json:"position,omitempty"`
+	Position                 *string                        `json:"position,omitempty"`
 	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
 	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
 }

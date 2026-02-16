@@ -94,6 +94,8 @@ type Mutation {
     input: DeleteOrganizationHorizontalLogoInput!
   ): DeleteOrganizationHorizontalLogoPayload @session(required: PRESENT)
 
+  createUser(input: CreateUserInput!): CreateUserPayload
+    @session(required: PRESENT)
   inviteMember(input: InviteMemberInput!): InviteMemberPayload
     @session(required: PRESENT)
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
@@ -727,6 +729,18 @@ input DeleteOrganizationHorizontalLogoInput {
   organizationId: ID!
 }
 
+input CreateUserInput {
+  organizationId: ID!
+  fullName: String!
+  emailAddress: EmailAddr!
+  role: MembershipRole!
+  additionalEmailAddresses: [EmailAddr!]
+  kind: ProfileKind!
+  position: String
+  contractStartDate: Datetime @goField(omittable: true)
+  contractEndDate: Datetime @goField(omittable: true)
+}
+
 input InviteMemberInput {
   organizationId: ID!
   email: EmailAddr!
@@ -739,7 +753,7 @@ input UpdateProfileInput {
   fullName: String!
   additionalEmailAddresses: [EmailAddr!]
   kind: ProfileKind!
-  position: String @goField(omittable: true)
+  position: String
   contractStartDate: Datetime @goField(omittable: true)
   contractEndDate: Datetime @goField(omittable: true)
 }
@@ -888,6 +902,10 @@ type DeleteOrganizationPayload {
 
 type DeleteOrganizationHorizontalLogoPayload {
   organization: Organization!
+}
+
+type CreateUserPayload {
+  profileEdge: ProfileEdge!
 }
 
 type InviteMemberPayload {

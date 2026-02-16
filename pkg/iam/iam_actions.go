@@ -54,6 +54,7 @@ const (
 	// Membership Profile actions
 	ActionMembershipProfileGet    = "iam:membership-profile:get"
 	ActionMembershipProfileList   = "iam:membership-profile:list"
+	ActionMembershipProfileCreate = "iam:membership-profile:create"
 	ActionMembershipProfileUpdate = "iam:membership-profile:update"
 
 	// Personal API Key actions

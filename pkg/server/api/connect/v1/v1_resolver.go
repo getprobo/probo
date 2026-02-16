@@ -873,6 +873,40 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 	panic(fmt.Errorf("not implemented: DeleteOrganizationHorizontalLogo - deleteOrganizationHorizontalLogo"))
 }
 
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUserInput) (*types.CreateUserPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate); err != nil {
+		return nil, err
+	}
+
+	profile, err := r.iam.OrganizationService.CreateUser(
+		ctx,
+		&iam.CreateUserRequest{
+			OrganizationID:           input.OrganizationID,
+			EmailAddress:             input.EmailAddress,
+			Role:                     input.Role,
+			FullName:                 input.FullName,
+			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+			Kind:                     input.Kind,
+			Position:                 input.Position,
+			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
+			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
+		},
+	)
+	if err != nil {
+		var errAlreadyExists *iam.ErrUserAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, gqlutils.Conflictf(ctx, "user %q already exists", input.EmailAddress.String())
+		}
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateUserPayload{
+		ProfileEdge: types.NewProfileEdge(profile, coredata.MembershipProfileOrderFieldCreatedAt),
+	}, nil
+}
+
 // InviteMember is the resolver for the inviteMember field.
 func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteMemberInput) (*types.InviteMemberPayload, error) {
 	if err := r.authorize(ctx, input.OrganizationID, iam.ActionInvitationCreate); err != nil {
@@ -948,7 +982,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input types.Update
 			FullName:                 input.FullName,
 			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
 			Kind:                     input.Kind,
-			Position:                 gqlutils.UnwrapOmittable(input.Position),
+			Position:                 input.Position,
 			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
 			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
 		},
