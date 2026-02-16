@@ -64,8 +64,8 @@ func (crr *CreateRiskRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(crr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(crr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(crr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(crr.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(crr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(crr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
 	v.Check(crr.Treatment, "treatment", validator.Required(), validator.OneOfSlice(coredata.RiskTreatments()))
 	v.Check(crr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
@@ -418,6 +418,10 @@ func (s RiskService) Create(
 	ctx context.Context,
 	req CreateRiskRequest,
 ) (*coredata.Risk, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 	owner := coredata.MembershipProfile{}
 	organization := coredata.Organization{}
@@ -498,6 +502,10 @@ func (s RiskService) Update(
 	ctx context.Context,
 	req UpdateRiskRequest,
 ) (*coredata.Risk, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	risk := &coredata.Risk{ID: req.ID}
 
 	err := s.svc.pg.WithTx(
