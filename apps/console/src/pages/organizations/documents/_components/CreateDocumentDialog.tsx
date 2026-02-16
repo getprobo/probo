@@ -151,6 +151,7 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
                 name="approverIds"
                 control={control}
                 organizationId={organizationId}
+                placeholder={__("Add approvers...")}
               />
             </PropertyRow>
           </div>

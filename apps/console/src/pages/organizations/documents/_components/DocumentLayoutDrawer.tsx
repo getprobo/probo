@@ -177,6 +177,7 @@ export function DocumentLayoutDrawer(props: {
                   control={control}
                   organizationId={organizationId}
                   selectedPeople={approvers}
+                  placeholder={__("Add approvers...")}
                 />
               </EditablePropertyContent>
             )

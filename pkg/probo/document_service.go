@@ -1927,7 +1927,7 @@ func exportDocumentPDF(
 		Content:                     version.Content,
 		Version:                     version.VersionNumber,
 		Classification:              classification,
-		Approver:                    strings.Join(approverNames, ", "),
+		Approvers:                   approverNames,
 		PublishedAt:                 version.PublishedAt,
 		Signatures:                  signatureData,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,

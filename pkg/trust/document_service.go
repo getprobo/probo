@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -215,7 +214,7 @@ func (s *DocumentService) exportPDFData(
 		Content:                     version.Content,
 		Version:                     version.VersionNumber,
 		Classification:              classification,
-		Approver:                    strings.Join(approverNames, ", "),
+		Approvers:                   approverNames,
 		PublishedAt:                 version.PublishedAt,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 	}

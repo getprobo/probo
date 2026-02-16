@@ -1,6 +1,6 @@
 import { formatDate, getDocumentClassificationLabel, getDocumentTypeLabel, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, Avatar, Badge, Checkbox, DropdownItem, IconTrashCan, Td, Tr, useConfirm } from "@probo/ui";
+import { ActionDropdown, Badge, Checkbox, DropdownItem, IconTrashCan, Td, Tr, useConfirm } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
@@ -132,14 +132,7 @@ export function DocumentListItem(props: {
         {getDocumentClassificationLabel(__, document.classification)}
       </Td>
       <Td className="w-60">
-        <div className="flex gap-2 items-center">
-          {document.approvers.edges.map(({ node }) => (
-            <div key={node.id} className="flex gap-1 items-center">
-              <Avatar name={node.fullName} />
-              {node.fullName}
-            </div>
-          ))}
-        </div>
+        {document.approvers.edges.map(({ node }) => node.fullName).join(", ")}
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>
       <Td className="w-20">
