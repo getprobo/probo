@@ -55,6 +55,8 @@ var (
 	DeleteDraftDocumentVersionToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_document_version_id":{"type":"string","format":"string"}},"required":["deleted_document_version_id"]}`)
 	DeleteMeetingToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	DeleteMeetingToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_meeting_id":{"type":"string","format":"string"}},"required":["deleted_meeting_id"]}`)
+	DeleteRiskToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
+	DeleteRiskToolOutputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_risk_id":{"type":"string","format":"string"}},"required":["deleted_risk_id"]}`)
 	GetAssetToolInputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	GetAssetToolOutputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"asset":{"type":"object","properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","amount","owner_id","asset_type","data_types_stored","created_at","updated_at"]}},"required":["asset"]}`)
 	GetAuditToolInputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
@@ -1068,6 +1070,18 @@ type DeleteMeetingInput struct {
 type DeleteMeetingOutput struct {
 	// Deleted meeting ID
 	DeletedMeetingID gid.GID `json:"deleted_meeting_id"`
+}
+
+// DeleteRiskInput represents the schema
+type DeleteRiskInput struct {
+	// Risk ID
+	ID gid.GID `json:"id"`
+}
+
+// DeleteRiskOutput represents the schema
+type DeleteRiskOutput struct {
+	// Deleted risk ID
+	DeletedRiskID gid.GID `json:"deleted_risk_id"`
 }
 
 // Document represents the schema

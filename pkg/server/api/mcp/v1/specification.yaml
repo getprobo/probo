@@ -939,6 +939,24 @@ components:
         risk:
           $ref: "#/components/schemas/Risk"
 
+    DeleteRiskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+
+    DeleteRiskOutput:
+      type: object
+      required:
+        - deleted_risk_id
+      properties:
+        deleted_risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk ID
+
     MeasureState:
       type: string
       enum:
@@ -4431,6 +4449,15 @@ tools:
       $ref: "#/components/schemas/UpdateRiskInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskOutput"
+  - name: deleteRisk
+    description: Delete a risk
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskOutput"
   - name: listMeasures
     description: List all measures for the organization
     hints:

@@ -21,6 +21,7 @@ type ResolverInterface interface {
 	GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error)
 	AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error)
 	UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskInput) (*mcp.CallToolResult, types.UpdateRiskOutput, error)
+	DeleteRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskInput) (*mcp.CallToolResult, types.DeleteRiskOutput, error)
 	ListMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasuresInput) (*mcp.CallToolResult, types.ListMeasuresOutput, error)
 	GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeasureInput) (*mcp.CallToolResult, types.GetMeasureOutput, error)
 	AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error)
@@ -246,6 +247,19 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateRiskToolOutputSchema,
 		},
 		resolver.UpdateRiskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteRisk",
+			Description:  "Delete a risk",
+			InputSchema:  types.DeleteRiskToolInputSchema,
+			OutputSchema: types.DeleteRiskToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteRiskTool,
 	)
 	mcp.AddTool(
 		server,

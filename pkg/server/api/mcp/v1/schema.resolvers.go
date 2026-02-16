@@ -1941,3 +1941,18 @@ func (r *Resolver) DeleteMeetingTool(ctx context.Context, req *mcp.CallToolReque
 		DeletedMeetingID: input.ID,
 	}, nil
 }
+
+func (r *Resolver) DeleteRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskInput) (*mcp.CallToolResult, types.DeleteRiskOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Risks.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteRiskOutput{}, fmt.Errorf("failed to delete risk: %w", err)
+	}
+
+	return nil, types.DeleteRiskOutput{
+		DeletedRiskID: input.ID,
+	}, nil
+}
