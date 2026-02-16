@@ -357,7 +357,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewProfileNotFoundError(organizationID)
+					return NewProfileNotFoundError(gid.Nil)
 				}
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
@@ -459,7 +459,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewProfileNotFoundError(organizationID)
+					return NewProfileNotFoundError(gid.Nil)
 				}
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
@@ -545,7 +545,7 @@ func (s SessionService) AssumeOrganizationSession(
 
 			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID); err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewProfileNotFoundError(organizationID)
+					return NewProfileNotFoundError(gid.Nil)
 				}
 				return fmt.Errorf("cannot load profile: %w", err)
 			}

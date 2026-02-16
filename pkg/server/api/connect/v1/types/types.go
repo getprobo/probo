@@ -224,14 +224,12 @@ type InvitationEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 }
 
-type InviteMemberInput struct {
-	OrganizationID gid.GID                 `json:"organizationId"`
-	Email          mail.Addr               `json:"email"`
-	FullName       string                  `json:"fullName"`
-	Role           coredata.MembershipRole `json:"role"`
+type InviteUserInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	ProfileID      gid.GID `json:"profileId"`
 }
 
-type InviteMemberPayload struct {
+type InviteUserPayload struct {
 	InvitationEdge *InvitationEdge `json:"invitationEdge"`
 }
 
@@ -348,13 +346,13 @@ type RegenerateSCIMTokenPayload struct {
 	Token             string             `json:"token"`
 }
 
-type RemoveMemberInput struct {
+type RemoveUserInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
-	MembershipID   gid.GID `json:"membershipId"`
+	ProfileID      gid.GID `json:"profileId"`
 }
 
-type RemoveMemberPayload struct {
-	DeletedMembershipID gid.GID `json:"deletedMembershipId"`
+type RemoveUserPayload struct {
+	DeletedProfileID gid.GID `json:"deletedProfileId"`
 }
 
 type ResetPasswordInput struct {
@@ -566,20 +564,6 @@ type UpdateOrganizationPayload struct {
 	Organization *Organization `json:"organization,omitempty"`
 }
 
-type UpdateProfileInput struct {
-	ID                       gid.GID                        `json:"id"`
-	FullName                 string                         `json:"fullName"`
-	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses,omitempty"`
-	Kind                     coredata.MembershipProfileKind `json:"kind"`
-	Position                 *string                        `json:"position,omitempty"`
-	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
-	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
-}
-
-type UpdateProfilePayload struct {
-	Profile *Profile `json:"profile"`
-}
-
 type UpdateSAMLConfigurationInput struct {
 	OrganizationID      gid.GID                        `json:"organizationId"`
 	SamlConfigurationID gid.GID                        `json:"samlConfigurationId"`
@@ -603,6 +587,20 @@ type UpdateSCIMBridgeInput struct {
 
 type UpdateSCIMBridgePayload struct {
 	ScimBridge *SCIMBridge `json:"scimBridge"`
+}
+
+type UpdateUserInput struct {
+	ID                       gid.GID                        `json:"id"`
+	FullName                 string                         `json:"fullName"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses,omitempty"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 *string                        `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
+}
+
+type UpdateUserPayload struct {
+	Profile *Profile `json:"profile"`
 }
 
 type VerifyEmailInput struct {

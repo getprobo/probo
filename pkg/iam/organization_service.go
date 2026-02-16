@@ -93,9 +93,8 @@ type (
 	}
 
 	CreateInvitationRequest struct {
-		Email    mail.Addr
-		FullName string
-		Role     coredata.MembershipRole
+		ProfileID      gid.GID
+		OrganizationID gid.GID
 	}
 
 	CreateUserRequest struct {
@@ -110,7 +109,7 @@ type (
 		ContractEndDate          **time.Time
 	}
 
-	UpdateProfileRequest struct {
+	UpdateUserRequest struct {
 		ID                       gid.GID
 		FullName                 string
 		AdditionalEmailAddresses mail.Addrs
@@ -220,7 +219,7 @@ func (cur *CreateUserRequest) Validate() error {
 	return v.Error()
 }
 
-func (upr *UpdateProfileRequest) Validate() error {
+func (upr *UpdateUserRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
@@ -280,7 +279,7 @@ func (s *OrganizationService) UpdateMempership(
 	return &membership, nil
 }
 
-func (s *OrganizationService) RemoveMember(
+func (s *OrganizationService) RemoveUser(
 	ctx context.Context,
 	organizationID gid.GID,
 	profileID gid.GID,
@@ -298,10 +297,6 @@ func (s *OrganizationService) RemoveMember(
 				}
 
 				return fmt.Errorf("cannot load profile: %w", err)
-			}
-
-			if profile.OrganizationID != organizationID {
-				return NewMembershipNotFoundError(profile.ID)
 			}
 
 			if profile.Source == coredata.ProfileSourceSCIM {
@@ -431,20 +426,16 @@ func (s *OrganizationService) CountInvitations(
 	return count, nil
 }
 
-func (s *OrganizationService) InviteMember(
+func (s *OrganizationService) InviteUser(
 	ctx context.Context,
-	organizationID gid.GID,
 	req *CreateInvitationRequest,
 ) (*coredata.Invitation, error) {
 	var (
-		scope      = coredata.NewScopeFromObjectID(organizationID)
+		scope      = coredata.NewScopeFromObjectID(req.OrganizationID)
 		now        = time.Now()
 		invitation = &coredata.Invitation{
-			ID:             gid.New(organizationID.TenantID(), coredata.InvitationEntityType),
-			OrganizationID: organizationID,
-			Email:          req.Email,
-			FullName:       req.FullName,
-			Role:           req.Role,
+			ID:             gid.New(req.OrganizationID.TenantID(), coredata.InvitationEntityType),
+			OrganizationID: req.OrganizationID,
 			Status:         coredata.InvitationStatusPending,
 			ExpiresAt:      now.Add(s.invitationTokenValidity),
 			CreatedAt:      now,
@@ -455,32 +446,22 @@ func (s *OrganizationService) InviteMember(
 		ctx,
 		func(tx pg.Conn) error {
 			organization := coredata.Organization{}
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			err := organization.LoadByID(ctx, tx, scope, req.OrganizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewOrganizationNotFoundError(organizationID)
+					return NewOrganizationNotFoundError(req.OrganizationID)
 				}
 
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			identity := &coredata.Identity{}
-			err = identity.LoadByEmail(ctx, tx, invitation.Email)
-			if err != nil && err != coredata.ErrResourceNotFound {
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-
-			identityExists := identity.ID != gid.Nil
-			if identityExists {
-				profile := &coredata.MembershipProfile{}
-				err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, identity.ID, organizationID)
-				if err != nil && err != coredata.ErrResourceNotFound {
-					return fmt.Errorf("cannot load profile: %w", err)
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, tx, scope, req.ProfileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewProfileNotFoundError(req.ProfileID)
 				}
 
-				if profile.ID != gid.Nil && profile.State == coredata.ProfileStateActive {
-					return NewUserAlreadyExistsError(identity.ID, organizationID)
-				}
+				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
 			err = invitation.Insert(ctx, tx, scope)
@@ -498,7 +479,7 @@ func (s *OrganizationService) InviteMember(
 				return fmt.Errorf("cannot generate invitation token: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.fm, s.bucket, s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.fm, s.bucket, s.baseURL, profile.FullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderInvitation(
 				ctx,
@@ -511,8 +492,8 @@ func (s *OrganizationService) InviteMember(
 			}
 
 			email := coredata.NewEmail(
-				invitation.FullName,
-				invitation.Email,
+				profile.FullName,
+				profile.EmailAddress,
 				subject,
 				textBody,
 				htmlBody,
@@ -1034,7 +1015,7 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 	return profile, nil
 }
 
-func (s *OrganizationService) UpdateProfile(ctx context.Context, req *UpdateProfileRequest) (*coredata.MembershipProfile, error) {
+func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserRequest) (*coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}

@@ -907,19 +907,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 	}, nil
 }
 
-// InviteMember is the resolver for the inviteMember field.
-func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteMemberInput) (*types.InviteMemberPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionInvitationCreate); err != nil {
+// InviteUser is the resolver for the inviteUser field.
+func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
+	if err := r.authorize(ctx, input.ProfileID, iam.ActionInvitationCreate); err != nil {
 		return nil, err
 	}
 
-	invitation, err := r.iam.OrganizationService.InviteMember(
+	invitation, err := r.iam.OrganizationService.InviteUser(
 		ctx,
-		input.OrganizationID,
 		&iam.CreateInvitationRequest{
-			Email:    input.Email,
-			FullName: input.FullName,
-			Role:     input.Role,
+			OrganizationID: input.OrganizationID,
+			ProfileID:      input.ProfileID,
 		},
 	)
 	if err != nil {
@@ -934,11 +932,11 @@ func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteM
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot add member to organization", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot invite user", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.InviteMemberPayload{
+	return &types.InviteUserPayload{
 		InvitationEdge: types.NewInvitationEdge(invitation, coredata.InvitationOrderFieldCreatedAt),
 	}, nil
 }
@@ -969,15 +967,15 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 	return &types.DeleteInvitationPayload{DeletedInvitationID: input.InvitationID}, nil
 }
 
-// UpdateProfile is the resolver for the updateProfile field.
-func (r *mutationResolver) UpdateProfile(ctx context.Context, input types.UpdateProfileInput) (*types.UpdateProfilePayload, error) {
+// UpdateUser is the resolver for the updateUser field.
+func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUserInput) (*types.UpdateUserPayload, error) {
 	if err := r.authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate); err != nil {
 		return nil, err
 	}
 
-	profile, err := r.iam.OrganizationService.UpdateProfile(
+	profile, err := r.iam.OrganizationService.UpdateUser(
 		ctx,
-		&iam.UpdateProfileRequest{
+		&iam.UpdateUserRequest{
 			ID:                       input.ID,
 			FullName:                 input.FullName,
 			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
@@ -992,7 +990,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input types.Update
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.UpdateProfilePayload{
+	return &types.UpdateUserPayload{
 		Profile: types.NewProfile(profile),
 	}, nil
 }
@@ -1020,13 +1018,13 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 	}, nil
 }
 
-// RemoveMember is the resolver for the removeMember field.
-func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error) {
-	if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipDelete); err != nil {
+// RemoveUser is the resolver for the removeUser field.
+func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
+	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
 		return nil, err
 	}
 
-	err := r.iam.OrganizationService.RemoveMember(ctx, input.OrganizationID, input.MembershipID)
+	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		var errManagedBySCIM *iam.ErrUserManagedBySCIM
 		var errLastActiveOwner *iam.ErrLastActiveOwner
@@ -1039,11 +1037,11 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot remove member from organization", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.RemoveMemberPayload{DeletedMembershipID: input.MembershipID}, nil
+	return &types.RemoveUserPayload{DeletedProfileID: input.ProfileID}, nil
 }
 
 // AcceptInvitation is the resolver for the acceptInvitation field.

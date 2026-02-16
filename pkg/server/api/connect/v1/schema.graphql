@@ -96,13 +96,13 @@ type Mutation {
 
   createUser(input: CreateUserInput!): CreateUserPayload
     @session(required: PRESENT)
-  inviteMember(input: InviteMemberInput!): InviteMemberPayload
+  inviteUser(input: InviteUserInput!): InviteUserPayload
     @session(required: PRESENT)
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
     @session(required: PRESENT)
-  updateProfile(input: UpdateProfileInput!): UpdateProfilePayload!
+  updateUser(input: UpdateUserInput!): UpdateUserPayload!
   updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
-  removeMember(input: RemoveMemberInput!): RemoveMemberPayload
+  removeUser(input: RemoveUserInput!): RemoveUserPayload
     @session(required: PRESENT)
 
   acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload
@@ -741,14 +741,12 @@ input CreateUserInput {
   contractEndDate: Datetime @goField(omittable: true)
 }
 
-input InviteMemberInput {
+input InviteUserInput {
   organizationId: ID!
-  email: EmailAddr!
-  fullName: String!
-  role: MembershipRole!
+  profileId: ID!
 }
 
-input UpdateProfileInput {
+input UpdateUserInput {
   id: ID!
   fullName: String!
   additionalEmailAddresses: [EmailAddr!]
@@ -764,9 +762,9 @@ input UpdateMembershipInput {
   role: MembershipRole!
 }
 
-input RemoveMemberInput {
+input RemoveUserInput {
   organizationId: ID!
-  membershipId: ID!
+  profileId: ID!
 }
 
 input AcceptInvitationInput {
@@ -908,11 +906,11 @@ type CreateUserPayload {
   profileEdge: ProfileEdge!
 }
 
-type InviteMemberPayload {
+type InviteUserPayload {
   invitationEdge: InvitationEdge!
 }
 
-type UpdateProfilePayload {
+type UpdateUserPayload {
   profile: Profile!
 }
 
@@ -920,8 +918,8 @@ type UpdateMembershipPayload {
   membership: Membership!
 }
 
-type RemoveMemberPayload {
-  deletedMembershipId: ID!
+type RemoveUserPayload {
+  deletedProfileId: ID!
 }
 
 type AcceptInvitationPayload {

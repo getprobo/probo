@@ -253,14 +253,14 @@ func (e ErrPersonalAPIKeyNotFound) Error() string {
 	return fmt.Sprintf("personal API key %q not found", e.PersonalAPIKeyID)
 }
 
-type ErrProfileNotFound struct{ MembershipID gid.GID }
+type ErrProfileNotFound struct{ ProfileID gid.GID }
 
-func NewProfileNotFoundError(membershipID gid.GID) error {
-	return &ErrProfileNotFound{MembershipID: membershipID}
+func NewProfileNotFoundError(profileID gid.GID) error {
+	return &ErrProfileNotFound{ProfileID: profileID}
 }
 
 func (e ErrProfileNotFound) Error() string {
-	return fmt.Sprintf("profile for membership %q not found", e.MembershipID)
+	return fmt.Sprintf("profile %q not found", e.ProfileID)
 }
 
 type ErrPersonalAPIKeyExpired struct{ PersonalAPIKeyID gid.GID }

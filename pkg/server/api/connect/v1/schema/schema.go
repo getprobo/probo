@@ -186,7 +186,7 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	InviteMemberPayload struct {
+	InviteUserPayload struct {
 		InvitationEdge func(childComplexity int) int
 	}
 
@@ -214,9 +214,9 @@ type ComplexityRoot struct {
 		DeleteSAMLConfiguration          func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
 		DeleteSCIMConfiguration          func(childComplexity int, input types.DeleteSCIMConfigurationInput) int
 		ForgotPassword                   func(childComplexity int, input types.ForgotPasswordInput) int
-		InviteMember                     func(childComplexity int, input types.InviteMemberInput) int
+		InviteUser                       func(childComplexity int, input types.InviteUserInput) int
 		RegenerateSCIMToken              func(childComplexity int, input types.RegenerateSCIMTokenInput) int
-		RemoveMember                     func(childComplexity int, input types.RemoveMemberInput) int
+		RemoveUser                       func(childComplexity int, input types.RemoveUserInput) int
 		ResetPassword                    func(childComplexity int, input types.ResetPasswordInput) int
 		RevokeAllSessions                func(childComplexity int) int
 		RevokePersonalAPIKey             func(childComplexity int, input types.RevokePersonalAPIKeyInput) int
@@ -227,9 +227,9 @@ type ComplexityRoot struct {
 		SignUpFromInvitation             func(childComplexity int, input types.SignUpFromInvitationInput) int
 		UpdateMembership                 func(childComplexity int, input types.UpdateMembershipInput) int
 		UpdateOrganization               func(childComplexity int, input types.UpdateOrganizationInput) int
-		UpdateProfile                    func(childComplexity int, input types.UpdateProfileInput) int
 		UpdateSAMLConfiguration          func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
 		UpdateSCIMBridge                 func(childComplexity int, input types.UpdateSCIMBridgeInput) int
+		UpdateUser                       func(childComplexity int, input types.UpdateUserInput) int
 		VerifyEmail                      func(childComplexity int, input types.VerifyEmailInput) int
 	}
 
@@ -329,8 +329,8 @@ type ComplexityRoot struct {
 		Token             func(childComplexity int) int
 	}
 
-	RemoveMemberPayload struct {
-		DeletedMembershipID func(childComplexity int) int
+	RemoveUserPayload struct {
+		DeletedProfileID func(childComplexity int) int
 	}
 
 	ResetPasswordPayload struct {
@@ -483,16 +483,16 @@ type ComplexityRoot struct {
 		Organization func(childComplexity int) int
 	}
 
-	UpdateProfilePayload struct {
-		Profile func(childComplexity int) int
-	}
-
 	UpdateSAMLConfigurationPayload struct {
 		SamlConfiguration func(childComplexity int) int
 	}
 
 	UpdateSCIMBridgePayload struct {
 		ScimBridge func(childComplexity int) int
+	}
+
+	UpdateUserPayload struct {
+		Profile func(childComplexity int) int
 	}
 
 	VerifyEmailPayload struct {
@@ -542,11 +542,11 @@ type MutationResolver interface {
 	DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error)
 	DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error)
 	CreateUser(ctx context.Context, input types.CreateUserInput) (*types.CreateUserPayload, error)
-	InviteMember(ctx context.Context, input types.InviteMemberInput) (*types.InviteMemberPayload, error)
+	InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error)
 	DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error)
-	UpdateProfile(ctx context.Context, input types.UpdateProfileInput) (*types.UpdateProfilePayload, error)
+	UpdateUser(ctx context.Context, input types.UpdateUserInput) (*types.UpdateUserPayload, error)
 	UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error)
-	RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error)
+	RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error)
 	AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error)
 	CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error)
 	UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error)
@@ -1011,12 +1011,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.InvitationEdge.Node(childComplexity), true
 
-	case "InviteMemberPayload.invitationEdge":
-		if e.complexity.InviteMemberPayload.InvitationEdge == nil {
+	case "InviteUserPayload.invitationEdge":
+		if e.complexity.InviteUserPayload.InvitationEdge == nil {
 			break
 		}
 
-		return e.complexity.InviteMemberPayload.InvitationEdge(childComplexity), true
+		return e.complexity.InviteUserPayload.InvitationEdge(childComplexity), true
 
 	case "Membership.createdAt":
 		if e.complexity.Membership.CreatedAt == nil {
@@ -1219,17 +1219,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ForgotPassword(childComplexity, args["input"].(types.ForgotPasswordInput)), true
-	case "Mutation.inviteMember":
-		if e.complexity.Mutation.InviteMember == nil {
+	case "Mutation.inviteUser":
+		if e.complexity.Mutation.InviteUser == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_inviteMember_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_inviteUser_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InviteMember(childComplexity, args["input"].(types.InviteMemberInput)), true
+		return e.complexity.Mutation.InviteUser(childComplexity, args["input"].(types.InviteUserInput)), true
 	case "Mutation.regenerateSCIMToken":
 		if e.complexity.Mutation.RegenerateSCIMToken == nil {
 			break
@@ -1241,17 +1241,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.RegenerateSCIMToken(childComplexity, args["input"].(types.RegenerateSCIMTokenInput)), true
-	case "Mutation.removeMember":
-		if e.complexity.Mutation.RemoveMember == nil {
+	case "Mutation.removeUser":
+		if e.complexity.Mutation.RemoveUser == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_removeMember_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_removeUser_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemoveMember(childComplexity, args["input"].(types.RemoveMemberInput)), true
+		return e.complexity.Mutation.RemoveUser(childComplexity, args["input"].(types.RemoveUserInput)), true
 	case "Mutation.resetPassword":
 		if e.complexity.Mutation.ResetPassword == nil {
 			break
@@ -1352,17 +1352,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateOrganization(childComplexity, args["input"].(types.UpdateOrganizationInput)), true
-	case "Mutation.updateProfile":
-		if e.complexity.Mutation.UpdateProfile == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateProfile_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateProfile(childComplexity, args["input"].(types.UpdateProfileInput)), true
 	case "Mutation.updateSAMLConfiguration":
 		if e.complexity.Mutation.UpdateSAMLConfiguration == nil {
 			break
@@ -1385,6 +1374,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateSCIMBridge(childComplexity, args["input"].(types.UpdateSCIMBridgeInput)), true
+	case "Mutation.updateUser":
+		if e.complexity.Mutation.UpdateUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUser_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUser(childComplexity, args["input"].(types.UpdateUserInput)), true
 	case "Mutation.verifyEmail":
 		if e.complexity.Mutation.VerifyEmail == nil {
 			break
@@ -1809,12 +1809,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.RegenerateSCIMTokenPayload.Token(childComplexity), true
 
-	case "RemoveMemberPayload.deletedMembershipId":
-		if e.complexity.RemoveMemberPayload.DeletedMembershipID == nil {
+	case "RemoveUserPayload.deletedProfileId":
+		if e.complexity.RemoveUserPayload.DeletedProfileID == nil {
 			break
 		}
 
-		return e.complexity.RemoveMemberPayload.DeletedMembershipID(childComplexity), true
+		return e.complexity.RemoveUserPayload.DeletedProfileID(childComplexity), true
 
 	case "ResetPasswordPayload.success":
 		if e.complexity.ResetPasswordPayload.Success == nil {
@@ -2355,13 +2355,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateOrganizationPayload.Organization(childComplexity), true
 
-	case "UpdateProfilePayload.profile":
-		if e.complexity.UpdateProfilePayload.Profile == nil {
-			break
-		}
-
-		return e.complexity.UpdateProfilePayload.Profile(childComplexity), true
-
 	case "UpdateSAMLConfigurationPayload.samlConfiguration":
 		if e.complexity.UpdateSAMLConfigurationPayload.SamlConfiguration == nil {
 			break
@@ -2375,6 +2368,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UpdateSCIMBridgePayload.ScimBridge(childComplexity), true
+
+	case "UpdateUserPayload.profile":
+		if e.complexity.UpdateUserPayload.Profile == nil {
+			break
+		}
+
+		return e.complexity.UpdateUserPayload.Profile(childComplexity), true
 
 	case "VerifyEmailPayload.success":
 		if e.complexity.VerifyEmailPayload.Success == nil {
@@ -2407,10 +2407,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteSCIMConfigurationInput,
 		ec.unmarshalInputForgotPasswordInput,
 		ec.unmarshalInputInvitationOrder,
-		ec.unmarshalInputInviteMemberInput,
+		ec.unmarshalInputInviteUserInput,
 		ec.unmarshalInputProfileOrder,
 		ec.unmarshalInputRegenerateSCIMTokenInput,
-		ec.unmarshalInputRemoveMemberInput,
+		ec.unmarshalInputRemoveUserInput,
 		ec.unmarshalInputResetPasswordInput,
 		ec.unmarshalInputRevokePersonalAPIKeyInput,
 		ec.unmarshalInputRevokeSessionInput,
@@ -2422,9 +2422,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSignUpInput,
 		ec.unmarshalInputUpdateMembershipInput,
 		ec.unmarshalInputUpdateOrganizationInput,
-		ec.unmarshalInputUpdateProfileInput,
 		ec.unmarshalInputUpdateSAMLConfigurationInput,
 		ec.unmarshalInputUpdateSCIMBridgeInput,
+		ec.unmarshalInputUpdateUserInput,
 		ec.unmarshalInputVerifyEmailInput,
 	)
 	first := true
@@ -2621,13 +2621,13 @@ type Mutation {
 
   createUser(input: CreateUserInput!): CreateUserPayload
     @session(required: PRESENT)
-  inviteMember(input: InviteMemberInput!): InviteMemberPayload
+  inviteUser(input: InviteUserInput!): InviteUserPayload
     @session(required: PRESENT)
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
     @session(required: PRESENT)
-  updateProfile(input: UpdateProfileInput!): UpdateProfilePayload!
+  updateUser(input: UpdateUserInput!): UpdateUserPayload!
   updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
-  removeMember(input: RemoveMemberInput!): RemoveMemberPayload
+  removeUser(input: RemoveUserInput!): RemoveUserPayload
     @session(required: PRESENT)
 
   acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload
@@ -3266,14 +3266,12 @@ input CreateUserInput {
   contractEndDate: Datetime @goField(omittable: true)
 }
 
-input InviteMemberInput {
+input InviteUserInput {
   organizationId: ID!
-  email: EmailAddr!
-  fullName: String!
-  role: MembershipRole!
+  profileId: ID!
 }
 
-input UpdateProfileInput {
+input UpdateUserInput {
   id: ID!
   fullName: String!
   additionalEmailAddresses: [EmailAddr!]
@@ -3289,9 +3287,9 @@ input UpdateMembershipInput {
   role: MembershipRole!
 }
 
-input RemoveMemberInput {
+input RemoveUserInput {
   organizationId: ID!
-  membershipId: ID!
+  profileId: ID!
 }
 
 input AcceptInvitationInput {
@@ -3433,11 +3431,11 @@ type CreateUserPayload {
   profileEdge: ProfileEdge!
 }
 
-type InviteMemberPayload {
+type InviteUserPayload {
   invitationEdge: InvitationEdge!
 }
 
-type UpdateProfilePayload {
+type UpdateUserPayload {
   profile: Profile!
 }
 
@@ -3445,8 +3443,8 @@ type UpdateMembershipPayload {
   membership: Membership!
 }
 
-type RemoveMemberPayload {
-  deletedMembershipId: ID!
+type RemoveUserPayload {
+  deletedProfileId: ID!
 }
 
 type AcceptInvitationPayload {
@@ -3895,10 +3893,10 @@ func (ec *executionContext) field_Mutation_forgotPassword_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_inviteMember_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_inviteUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNInviteMemberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNInviteUserInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -3917,10 +3915,10 @@ func (ec *executionContext) field_Mutation_regenerateSCIMToken_args(ctx context.
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_removeMember_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_removeUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRemoveMemberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRemoveUserInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -4016,17 +4014,6 @@ func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.C
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateProfileInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateProfileInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_updateSAMLConfiguration_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4042,6 +4029,17 @@ func (ec *executionContext) field_Mutation_updateSCIMBridge_args(ctx context.Con
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateSCIMBridgeInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSCIMBridgeInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateUserInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -6295,12 +6293,12 @@ func (ec *executionContext) fieldContext_InvitationEdge_cursor(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _InviteMemberPayload_invitationEdge(ctx context.Context, field graphql.CollectedField, obj *types.InviteMemberPayload) (ret graphql.Marshaler) {
+func (ec *executionContext) _InviteUserPayload_invitationEdge(ctx context.Context, field graphql.CollectedField, obj *types.InviteUserPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_InviteMemberPayload_invitationEdge,
+		ec.fieldContext_InviteUserPayload_invitationEdge,
 		func(ctx context.Context) (any, error) {
 			return obj.InvitationEdge, nil
 		},
@@ -6311,9 +6309,9 @@ func (ec *executionContext) _InviteMemberPayload_invitationEdge(ctx context.Cont
 	)
 }
 
-func (ec *executionContext) fieldContext_InviteMemberPayload_invitationEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_InviteUserPayload_invitationEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "InviteMemberPayload",
+		Object:     "InviteUserPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -7702,15 +7700,15 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_inviteMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_inviteUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_inviteMember,
+		ec.fieldContext_Mutation_inviteUser,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().InviteMember(ctx, fc.Args["input"].(types.InviteMemberInput))
+			return ec.resolvers.Mutation().InviteUser(ctx, fc.Args["input"].(types.InviteUserInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -7718,11 +7716,11 @@ func (ec *executionContext) _Mutation_inviteMember(ctx context.Context, field gr
 			directive1 := func(ctx context.Context) (any, error) {
 				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
-					var zeroVal *types.InviteMemberPayload
+					var zeroVal *types.InviteUserPayload
 					return zeroVal, err
 				}
 				if ec.directives.Session == nil {
-					var zeroVal *types.InviteMemberPayload
+					var zeroVal *types.InviteUserPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
@@ -7731,13 +7729,13 @@ func (ec *executionContext) _Mutation_inviteMember(ctx context.Context, field gr
 			next = directive1
 			return next
 		},
-		ec.marshalOInviteMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberPayload,
+		ec.marshalOInviteUserPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteUserPayload,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_inviteMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_inviteUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -7746,9 +7744,9 @@ func (ec *executionContext) fieldContext_Mutation_inviteMember(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "invitationEdge":
-				return ec.fieldContext_InviteMemberPayload_invitationEdge(ctx, field)
+				return ec.fieldContext_InviteUserPayload_invitationEdge(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type InviteMemberPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type InviteUserPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -7758,7 +7756,7 @@ func (ec *executionContext) fieldContext_Mutation_inviteMember(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_inviteMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_inviteUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7828,24 +7826,24 @@ func (ec *executionContext) fieldContext_Mutation_deleteInvitation(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_updateProfile,
+		ec.fieldContext_Mutation_updateUser,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateProfile(ctx, fc.Args["input"].(types.UpdateProfileInput))
+			return ec.resolvers.Mutation().UpdateUser(ctx, fc.Args["input"].(types.UpdateUserInput))
 		},
 		nil,
-		ec.marshalNUpdateProfilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateProfilePayload,
+		ec.marshalNUpdateUserPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateUserPayload,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -7854,9 +7852,9 @@ func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "profile":
-				return ec.fieldContext_UpdateProfilePayload_profile(ctx, field)
+				return ec.fieldContext_UpdateUserPayload_profile(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdateProfilePayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UpdateUserPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -7866,7 +7864,7 @@ func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7918,15 +7916,15 @@ func (ec *executionContext) fieldContext_Mutation_updateMembership(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_removeMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_removeUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_removeMember,
+		ec.fieldContext_Mutation_removeUser,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RemoveMember(ctx, fc.Args["input"].(types.RemoveMemberInput))
+			return ec.resolvers.Mutation().RemoveUser(ctx, fc.Args["input"].(types.RemoveUserInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -7934,11 +7932,11 @@ func (ec *executionContext) _Mutation_removeMember(ctx context.Context, field gr
 			directive1 := func(ctx context.Context) (any, error) {
 				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
-					var zeroVal *types.RemoveMemberPayload
+					var zeroVal *types.RemoveUserPayload
 					return zeroVal, err
 				}
 				if ec.directives.Session == nil {
-					var zeroVal *types.RemoveMemberPayload
+					var zeroVal *types.RemoveUserPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
@@ -7947,13 +7945,13 @@ func (ec *executionContext) _Mutation_removeMember(ctx context.Context, field gr
 			next = directive1
 			return next
 		},
-		ec.marshalORemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberPayload,
+		ec.marshalORemoveUserPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveUserPayload,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_removeMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_removeUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -7961,10 +7959,10 @@ func (ec *executionContext) fieldContext_Mutation_removeMember(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "deletedMembershipId":
-				return ec.fieldContext_RemoveMemberPayload_deletedMembershipId(ctx, field)
+			case "deletedProfileId":
+				return ec.fieldContext_RemoveUserPayload_deletedProfileId(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type RemoveMemberPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type RemoveUserPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -7974,7 +7972,7 @@ func (ec *executionContext) fieldContext_Mutation_removeMember(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_removeMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_removeUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10843,14 +10841,14 @@ func (ec *executionContext) fieldContext_RegenerateSCIMTokenPayload_token(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _RemoveMemberPayload_deletedMembershipId(ctx context.Context, field graphql.CollectedField, obj *types.RemoveMemberPayload) (ret graphql.Marshaler) {
+func (ec *executionContext) _RemoveUserPayload_deletedProfileId(ctx context.Context, field graphql.CollectedField, obj *types.RemoveUserPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_RemoveMemberPayload_deletedMembershipId,
+		ec.fieldContext_RemoveUserPayload_deletedProfileId,
 		func(ctx context.Context) (any, error) {
-			return obj.DeletedMembershipID, nil
+			return obj.DeletedProfileID, nil
 		},
 		nil,
 		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
@@ -10859,9 +10857,9 @@ func (ec *executionContext) _RemoveMemberPayload_deletedMembershipId(ctx context
 	)
 }
 
-func (ec *executionContext) fieldContext_RemoveMemberPayload_deletedMembershipId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RemoveUserPayload_deletedProfileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "RemoveMemberPayload",
+		Object:     "RemoveUserPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13773,67 +13771,6 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 	return fc, nil
 }
 
-func (ec *executionContext) _UpdateProfilePayload_profile(ctx context.Context, field graphql.CollectedField, obj *types.UpdateProfilePayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UpdateProfilePayload_profile,
-		func(ctx context.Context) (any, error) {
-			return obj.Profile, nil
-		},
-		nil,
-		ec.marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfile,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UpdateProfilePayload_profile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateProfilePayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Profile_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Profile_fullName(ctx, field)
-			case "source":
-				return ec.fieldContext_Profile_source(ctx, field)
-			case "state":
-				return ec.fieldContext_Profile_state(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_Profile_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_Profile_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_Profile_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_Profile_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Profile_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Profile_updatedAt(ctx, field)
-			case "identity":
-				return ec.fieldContext_Profile_identity(ctx, field)
-			case "organization":
-				return ec.fieldContext_Profile_organization(ctx, field)
-			case "membership":
-				return ec.fieldContext_Profile_membership(ctx, field)
-			case "permission":
-				return ec.fieldContext_Profile_permission(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _UpdateSAMLConfigurationPayload_samlConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.UpdateSAMLConfigurationPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13937,6 +13874,67 @@ func (ec *executionContext) fieldContext_UpdateSCIMBridgePayload_scimBridge(_ co
 				return ec.fieldContext_SCIMBridge_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SCIMBridge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateUserPayload_profile(ctx context.Context, field graphql.CollectedField, obj *types.UpdateUserPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateUserPayload_profile,
+		func(ctx context.Context) (any, error) {
+			return obj.Profile, nil
+		},
+		nil,
+		ec.marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfile,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateUserPayload_profile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateUserPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Profile_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "source":
+				return ec.fieldContext_Profile_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_Profile_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_Profile_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_Profile_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_Profile_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Profile_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Profile_updatedAt(ctx, field)
+			case "identity":
+				return ec.fieldContext_Profile_identity(ctx, field)
+			case "organization":
+				return ec.fieldContext_Profile_organization(ctx, field)
+			case "membership":
+				return ec.fieldContext_Profile_membership(ctx, field)
+			case "permission":
+				return ec.fieldContext_Profile_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
 	}
 	return fc, nil
@@ -16024,14 +16022,14 @@ func (ec *executionContext) unmarshalInputInvitationOrder(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputInviteMemberInput(ctx context.Context, obj any) (types.InviteMemberInput, error) {
-	var it types.InviteMemberInput
+func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, obj any) (types.InviteUserInput, error) {
+	var it types.InviteUserInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "email", "fullName", "role"}
+	fieldsInOrder := [...]string{"organizationId", "profileId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16045,27 +16043,13 @@ func (ec *executionContext) unmarshalInputInviteMemberInput(ctx context.Context,
 				return it, err
 			}
 			it.OrganizationID = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
+		case "profileId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profileId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Email = data
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
-		case "role":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-			data, err := ec.unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Role = data
+			it.ProfileID = data
 		}
 	}
 
@@ -16140,14 +16124,14 @@ func (ec *executionContext) unmarshalInputRegenerateSCIMTokenInput(ctx context.C
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputRemoveMemberInput(ctx context.Context, obj any) (types.RemoveMemberInput, error) {
-	var it types.RemoveMemberInput
+func (ec *executionContext) unmarshalInputRemoveUserInput(ctx context.Context, obj any) (types.RemoveUserInput, error) {
+	var it types.RemoveUserInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "membershipId"}
+	fieldsInOrder := [...]string{"organizationId", "profileId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16161,13 +16145,13 @@ func (ec *executionContext) unmarshalInputRemoveMemberInput(ctx context.Context,
 				return it, err
 			}
 			it.OrganizationID = data
-		case "membershipId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("membershipId"))
+		case "profileId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profileId"))
 			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MembershipID = data
+			it.ProfileID = data
 		}
 	}
 
@@ -16618,75 +16602,6 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context, obj any) (types.UpdateProfileInput, error) {
-	var it types.UpdateProfileInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id", "fullName", "additionalEmailAddresses", "kind", "position", "contractStartDate", "contractEndDate"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
-		case "additionalEmailAddresses":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("additionalEmailAddresses"))
-			data, err := ec.unmarshalOEmailAddr2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AdditionalEmailAddresses = data
-		case "kind":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := ec.unmarshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Kind = data
-		case "position":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Position = data
-		case "contractStartDate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contractStartDate"))
-			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContractStartDate = graphql.OmittableOf(data)
-		case "contractEndDate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contractEndDate"))
-			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContractEndDate = graphql.OmittableOf(data)
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputUpdateSAMLConfigurationInput(ctx context.Context, obj any) (types.UpdateSAMLConfigurationInput, error) {
 	var it types.UpdateSAMLConfigurationInput
 	asMap := map[string]any{}
@@ -16798,6 +16713,75 @@ func (ec *executionContext) unmarshalInputUpdateSCIMBridgeInput(ctx context.Cont
 				return it, err
 			}
 			it.ExcludedUserNames = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, obj any) (types.UpdateUserInput, error) {
+	var it types.UpdateUserInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "fullName", "additionalEmailAddresses", "kind", "position", "contractStartDate", "contractEndDate"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FullName = data
+		case "additionalEmailAddresses":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("additionalEmailAddresses"))
+			data, err := ec.unmarshalOEmailAddr2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AdditionalEmailAddresses = data
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "position":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Position = data
+		case "contractStartDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contractStartDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContractStartDate = graphql.OmittableOf(data)
+		case "contractEndDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contractEndDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContractEndDate = graphql.OmittableOf(data)
 		}
 	}
 
@@ -18190,19 +18174,19 @@ func (ec *executionContext) _InvitationEdge(ctx context.Context, sel ast.Selecti
 	return out
 }
 
-var inviteMemberPayloadImplementors = []string{"InviteMemberPayload"}
+var inviteUserPayloadImplementors = []string{"InviteUserPayload"}
 
-func (ec *executionContext) _InviteMemberPayload(ctx context.Context, sel ast.SelectionSet, obj *types.InviteMemberPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, inviteMemberPayloadImplementors)
+func (ec *executionContext) _InviteUserPayload(ctx context.Context, sel ast.SelectionSet, obj *types.InviteUserPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inviteUserPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("InviteMemberPayload")
+			out.Values[i] = graphql.MarshalString("InviteUserPayload")
 		case "invitationEdge":
-			out.Values[i] = ec._InviteMemberPayload_invitationEdge(ctx, field, obj)
+			out.Values[i] = ec._InviteUserPayload_invitationEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -18445,17 +18429,17 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createUser(ctx, field)
 			})
-		case "inviteMember":
+		case "inviteUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_inviteMember(ctx, field)
+				return ec._Mutation_inviteUser(ctx, field)
 			})
 		case "deleteInvitation":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteInvitation(ctx, field)
 			})
-		case "updateProfile":
+		case "updateUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateProfile(ctx, field)
+				return ec._Mutation_updateUser(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -18467,9 +18451,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "removeMember":
+		case "removeUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_removeMember(ctx, field)
+				return ec._Mutation_removeUser(ctx, field)
 			})
 		case "acceptInvitation":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -19719,19 +19703,19 @@ func (ec *executionContext) _RegenerateSCIMTokenPayload(ctx context.Context, sel
 	return out
 }
 
-var removeMemberPayloadImplementors = []string{"RemoveMemberPayload"}
+var removeUserPayloadImplementors = []string{"RemoveUserPayload"}
 
-func (ec *executionContext) _RemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RemoveMemberPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, removeMemberPayloadImplementors)
+func (ec *executionContext) _RemoveUserPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RemoveUserPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, removeUserPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("RemoveMemberPayload")
-		case "deletedMembershipId":
-			out.Values[i] = ec._RemoveMemberPayload_deletedMembershipId(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("RemoveUserPayload")
+		case "deletedProfileId":
+			out.Values[i] = ec._RemoveUserPayload_deletedProfileId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -21384,45 +21368,6 @@ func (ec *executionContext) _UpdateOrganizationPayload(ctx context.Context, sel 
 	return out
 }
 
-var updateProfilePayloadImplementors = []string{"UpdateProfilePayload"}
-
-func (ec *executionContext) _UpdateProfilePayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateProfilePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateProfilePayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateProfilePayload")
-		case "profile":
-			out.Values[i] = ec._UpdateProfilePayload_profile(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var updateSAMLConfigurationPayloadImplementors = []string{"UpdateSAMLConfigurationPayload"}
 
 func (ec *executionContext) _UpdateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateSAMLConfigurationPayload) graphql.Marshaler {
@@ -21472,6 +21417,45 @@ func (ec *executionContext) _UpdateSCIMBridgePayload(ctx context.Context, sel as
 			out.Values[i] = graphql.MarshalString("UpdateSCIMBridgePayload")
 		case "scimBridge":
 			out.Values[i] = ec._UpdateSCIMBridgePayload_scimBridge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateUserPayloadImplementors = []string{"UpdateUserPayload"}
+
+func (ec *executionContext) _UpdateUserPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateUserPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateUserPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateUserPayload")
+		case "profile":
+			out.Values[i] = ec._UpdateUserPayload_profile(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22241,8 +22225,8 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNInviteMemberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberInput(ctx context.Context, v any) (types.InviteMemberInput, error) {
-	res, err := ec.unmarshalInputInviteMemberInput(ctx, v)
+func (ec *executionContext) unmarshalNInviteUserInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteUserInput(ctx context.Context, v any) (types.InviteUserInput, error) {
+	res, err := ec.unmarshalInputInviteUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -22565,8 +22549,8 @@ func (ec *executionContext) unmarshalNRegenerateSCIMTokenInput2goᚗproboᚗinc�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRemoveMemberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberInput(ctx context.Context, v any) (types.RemoveMemberInput, error) {
-	res, err := ec.unmarshalInputRemoveMemberInput(ctx, v)
+func (ec *executionContext) unmarshalNRemoveUserInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveUserInput(ctx context.Context, v any) (types.RemoveUserInput, error) {
+	res, err := ec.unmarshalInputRemoveUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -23078,25 +23062,6 @@ func (ec *executionContext) unmarshalNUpdateOrganizationInput2goᚗproboᚗinc�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateProfileInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateProfileInput(ctx context.Context, v any) (types.UpdateProfileInput, error) {
-	res, err := ec.unmarshalInputUpdateProfileInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateProfilePayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateProfilePayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateProfilePayload) graphql.Marshaler {
-	return ec._UpdateProfilePayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateProfilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateProfilePayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateProfilePayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateProfilePayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNUpdateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationInput(ctx context.Context, v any) (types.UpdateSAMLConfigurationInput, error) {
 	res, err := ec.unmarshalInputUpdateSAMLConfigurationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -23105,6 +23070,25 @@ func (ec *executionContext) unmarshalNUpdateSAMLConfigurationInput2goᚗproboᚗ
 func (ec *executionContext) unmarshalNUpdateSCIMBridgeInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSCIMBridgeInput(ctx context.Context, v any) (types.UpdateSCIMBridgeInput, error) {
 	res, err := ec.unmarshalInputUpdateSCIMBridgeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateUserInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateUserInput(ctx context.Context, v any) (types.UpdateUserInput, error) {
+	res, err := ec.unmarshalInputUpdateUserInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateUserPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateUserPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateUserPayload) graphql.Marshaler {
+	return ec._UpdateUserPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateUserPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateUserPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateUserPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateUserPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNVerifyEmailInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐVerifyEmailInput(ctx context.Context, v any) (types.VerifyEmailInput, error) {
@@ -23669,11 +23653,11 @@ var (
 	}
 )
 
-func (ec *executionContext) marshalOInviteMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberPayload(ctx context.Context, sel ast.SelectionSet, v *types.InviteMemberPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOInviteUserPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteUserPayload(ctx context.Context, sel ast.SelectionSet, v *types.InviteUserPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._InviteMemberPayload(ctx, sel, v)
+	return ec._InviteUserPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v *types.Membership) graphql.Marshaler {
@@ -23733,11 +23717,11 @@ func (ec *executionContext) marshalORegenerateSCIMTokenPayload2ᚖgoᚗproboᚗi
 	return ec._RegenerateSCIMTokenPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, v *types.RemoveMemberPayload) graphql.Marshaler {
+func (ec *executionContext) marshalORemoveUserPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveUserPayload(ctx context.Context, sel ast.SelectionSet, v *types.RemoveUserPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._RemoveMemberPayload(ctx, sel, v)
+	return ec._RemoveUserPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOResetPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordPayload(ctx context.Context, sel ast.SelectionSet, v *types.ResetPasswordPayload) graphql.Marshaler {
