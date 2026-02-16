@@ -193,16 +193,6 @@ func TestDocument_Create_Validation(t *testing.T) {
 			wantErrorContains: "HTML",
 		},
 		{
-			name: "title with angle brackets",
-			input: map[string]any{
-				"title":          "Test < Document",
-				"content":        "Test content",
-				"documentType":   "POLICY",
-				"classification": "INTERNAL",
-			},
-			wantErrorContains: "angle brackets",
-		},
-		{
 			name: "title with newline",
 			input: map[string]any{
 				"title":          "Test\nDocument",
@@ -417,14 +407,6 @@ func TestDocument_Update_Validation(t *testing.T) {
 				return map[string]any{"id": id, "title": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
-		},
-		{
-			name:  "title with angle brackets",
-			setup: func() string { return baseDocumentID },
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "title": "Test < Document"}
-			},
-			wantErrorContains: "angle brackets",
 		},
 		{
 			name:  "title with newline",

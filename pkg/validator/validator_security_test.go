@@ -106,38 +106,35 @@ func TestNoHTML(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid - less than symbol", func(t *testing.T) {
+	t.Run("valid - less than symbol", func(t *testing.T) {
 		str := "5 < 10"
 		err := NoHTML()(&str)
-		if err == nil {
-			t.Fatal("expected validation error for angle bracket")
-		}
-		if !strings.Contains(err.Message, "angle brackets") {
-			t.Errorf("unexpected error message: %s", err.Message)
+		if err != nil {
+			t.Errorf("expected no error for bare angle bracket, got: %v", err)
 		}
 	})
 
-	t.Run("invalid - greater than symbol", func(t *testing.T) {
+	t.Run("valid - greater than symbol", func(t *testing.T) {
 		str := "10 > 5"
 		err := NoHTML()(&str)
-		if err == nil {
-			t.Error("expected validation error for angle bracket")
+		if err != nil {
+			t.Errorf("expected no error for bare angle bracket, got: %v", err)
 		}
 	})
 
-	t.Run("invalid - both angle brackets", func(t *testing.T) {
+	t.Run("valid - both angle brackets", func(t *testing.T) {
 		str := "5 < x > 10"
 		err := NoHTML()(&str)
-		if err == nil {
-			t.Error("expected validation error for angle brackets")
+		if err != nil {
+			t.Errorf("expected no error for bare angle brackets, got: %v", err)
 		}
 	})
 
-	t.Run("invalid - malformed tag", func(t *testing.T) {
+	t.Run("valid - incomplete tag", func(t *testing.T) {
 		str := "text <incomplete"
 		err := NoHTML()(&str)
-		if err == nil {
-			t.Error("expected validation error for incomplete tag")
+		if err != nil {
+			t.Errorf("expected no error for incomplete tag, got: %v", err)
 		}
 	})
 
@@ -146,6 +143,126 @@ func TestNoHTML(t *testing.T) {
 		err := NoHTML()(&str)
 		if err == nil {
 			t.Error("expected validation error for mixed case script tag")
+		}
+	})
+
+	t.Run("invalid - svg onload XSS", func(t *testing.T) {
+		str := `<svg onload=alert(1)>`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for svg tag")
+		}
+	})
+
+	t.Run("invalid - svg with slash", func(t *testing.T) {
+		str := `<svg/onload=alert(1)>`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for svg/onload tag")
+		}
+	})
+
+	t.Run("invalid - iframe tag", func(t *testing.T) {
+		str := `<iframe src="javascript:alert(1)">`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for iframe tag")
+		}
+	})
+
+	t.Run("invalid - style tag", func(t *testing.T) {
+		str := `<style>body{background:url(evil)}</style>`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for style tag")
+		}
+	})
+
+	t.Run("invalid - HTML comment", func(t *testing.T) {
+		str := `<!-- comment -->`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for HTML comment")
+		}
+	})
+
+	t.Run("invalid - DOCTYPE", func(t *testing.T) {
+		str := `<!DOCTYPE html>`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for DOCTYPE")
+		}
+	})
+
+	t.Run("invalid - details ontoggle XSS", func(t *testing.T) {
+		str := `<details open ontoggle=alert(1)>`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for details tag")
+		}
+	})
+
+	t.Run("invalid - body onload XSS", func(t *testing.T) {
+		str := `<body onload=alert(1)>`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for body tag")
+		}
+	})
+
+	t.Run("invalid - object tag", func(t *testing.T) {
+		str := `<object data="evil.swf">`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for object tag")
+		}
+	})
+
+	t.Run("invalid - embed tag", func(t *testing.T) {
+		str := `<embed src="evil.swf">`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for embed tag")
+		}
+	})
+
+	t.Run("invalid - meta refresh", func(t *testing.T) {
+		str := `<meta http-equiv="refresh" content="0;url=evil">`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for meta tag")
+		}
+	})
+
+	t.Run("invalid - input with autofocus XSS", func(t *testing.T) {
+		str := `<input onfocus=alert(1) autofocus>`
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for input tag")
+		}
+	})
+
+	t.Run("invalid - tag with newlines in attributes", func(t *testing.T) {
+		str := "<img\nsrc=x\nonerror=alert(1)>"
+		err := NoHTML()(&str)
+		if err == nil {
+			t.Error("expected validation error for tag with newlines")
+		}
+	})
+
+	t.Run("valid - math expression", func(t *testing.T) {
+		str := "if x < 10 then y = 20"
+		err := NoHTML()(&str)
+		if err != nil {
+			t.Errorf("expected no error for math expression, got: %v", err)
+		}
+	})
+
+	t.Run("valid - arrow notation", func(t *testing.T) {
+		str := "use -> or => for arrows"
+		err := NoHTML()(&str)
+		if err != nil {
+			t.Errorf("expected no error for arrow notation, got: %v", err)
 		}
 	})
 
@@ -209,13 +326,13 @@ func TestNoHTML(t *testing.T) {
 		errors := v.Errors()
 		found := false
 		for _, err := range errors {
-			if strings.Contains(err.Message, "HTML tags") || strings.Contains(err.Message, "angle brackets") {
+			if strings.Contains(err.Message, "HTML tags") {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Error("expected error about HTML tags or angle brackets")
+			t.Error("expected error about HTML tags")
 		}
 	})
 
@@ -623,14 +740,11 @@ func TestSafeText(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid - contains angle brackets", func(t *testing.T) {
+	t.Run("valid - contains angle brackets", func(t *testing.T) {
 		str := "5 < 10"
 		err := SafeText(100)(&str)
-		if err == nil {
-			t.Fatal("expected validation error for angle brackets")
-		}
-		if !strings.Contains(err.Message, "angle brackets") {
-			t.Errorf("unexpected error message: %s", err.Message)
+		if err != nil {
+			t.Errorf("expected no error for bare angle brackets, got: %v", err)
 		}
 	})
 
@@ -743,13 +857,13 @@ func TestSafeText(t *testing.T) {
 		errors := v.Errors()
 		found := false
 		for _, err := range errors {
-			if strings.Contains(err.Message, "HTML tags") || strings.Contains(err.Message, "angle brackets") {
+			if strings.Contains(err.Message, "HTML tags") {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Error("expected error about HTML tags or angle brackets")
+			t.Error("expected error about HTML tags")
 		}
 	})
 
@@ -922,4 +1036,3 @@ func TestSafeTextNoNewLine(t *testing.T) {
 		}
 	})
 }
-

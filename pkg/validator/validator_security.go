@@ -17,18 +17,17 @@ package validator
 import (
 	"fmt"
 	"regexp"
-	"strings"
 )
 
 var (
-	htmlTagRegex = regexp.MustCompile(`<[^>]*>`)
+	htmlTagRegex = regexp.MustCompile(`</?[a-zA-Z][^>]*>|<![^>]*>`)
 )
 
-// NoHTML validates that a string does not contain HTML tags or angle brackets.
+// NoHTML validates that a string does not contain HTML tags.
 // It rejects:
 // - HTML tags (e.g., <script>, <b>, <div>, etc.)
-// - Angle brackets (< and >) even when not part of complete tags
 //
+// Plain angle brackets used outside of HTML tags (e.g., "5 < 10") are allowed.
 // This helps prevent XSS attacks and ensures user input doesn't contain HTML markup.
 // Combine with PrintableText() for comprehensive text field validation.
 func NoHTML() ValidatorFunc {
@@ -47,14 +46,8 @@ func NoHTML() ValidatorFunc {
 			return nil
 		}
 
-		// Check for HTML tags first (more specific error message)
 		if htmlTagRegex.MatchString(str) {
 			return newValidationError(ErrorCodeInvalidFormat, "must not contain HTML tags")
-		}
-
-		// Check for angle brackets (even without complete tags)
-		if strings.ContainsAny(str, "<>") {
-			return newValidationError(ErrorCodeInvalidFormat, "must not contain angle brackets")
 		}
 
 		return nil

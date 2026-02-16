@@ -144,13 +144,6 @@ func TestFramework_Create_Validation(t *testing.T) {
 			},
 			wantErrorContains: "HTML",
 		},
-		{
-			name: "name with angle brackets",
-			input: map[string]any{
-				"name": "Test < Framework",
-			},
-			wantErrorContains: "angle brackets",
-		},
 		// Newline validation
 		{
 			name: "name with newline",
@@ -358,14 +351,6 @@ func TestFramework_Update_Validation(t *testing.T) {
 				return map[string]any{"id": id, "name": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
-		},
-		{
-			name:  "name with angle brackets",
-			setup: func() string { return baseFrameworkID },
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "name": "Test < Framework"}
-			},
-			wantErrorContains: "angle brackets",
 		},
 		{
 			name:  "description with HTML tags",
