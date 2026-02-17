@@ -53,6 +53,8 @@ var (
 	DeleteDocumentToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_document_id":{"type":"string","format":"string"}},"required":["deleted_document_id"]}`)
 	DeleteDraftDocumentVersionToolInputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"document_version_id":{"type":"string","format":"string"}},"required":["document_version_id"]}`)
 	DeleteDraftDocumentVersionToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_document_version_id":{"type":"string","format":"string"}},"required":["deleted_document_version_id"]}`)
+	DeleteMeasureToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
+	DeleteMeasureToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_measure_id":{"type":"string","format":"string"}},"required":["deleted_measure_id"]}`)
 	DeleteMeetingToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	DeleteMeetingToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_meeting_id":{"type":"string","format":"string"}},"required":["deleted_meeting_id"]}`)
 	DeleteRiskToolInputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
@@ -1054,6 +1056,18 @@ type DeleteDraftDocumentVersionInput struct {
 type DeleteDraftDocumentVersionOutput struct {
 	// Deleted document version ID
 	DeletedDocumentVersionID gid.GID `json:"deleted_document_version_id"`
+}
+
+// DeleteMeasureInput represents the schema
+type DeleteMeasureInput struct {
+	// Measure ID
+	ID gid.GID `json:"id"`
+}
+
+// DeleteMeasureOutput represents the schema
+type DeleteMeasureOutput struct {
+	// Deleted measure ID
+	DeletedMeasureID gid.GID `json:"deleted_measure_id"`
 }
 
 // DeleteMeetingInput represents the schema

@@ -1137,6 +1137,24 @@ components:
         measure:
           $ref: "#/components/schemas/Measure"
 
+    DeleteMeasureInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+
+    DeleteMeasureOutput:
+      type: object
+      required:
+        - deleted_measure_id
+      properties:
+        deleted_measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted measure ID
+
     FrameworkOrderField:
       type: string
       enum:
@@ -4506,6 +4524,15 @@ tools:
       $ref: "#/components/schemas/UpdateMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateMeasureOutput"
+  - name: deleteMeasure
+    description: Delete a measure
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteMeasureInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteMeasureOutput"
   - name: listFrameworks
     description: List all frameworks for the organization
     hints:

@@ -2040,3 +2040,18 @@ func (r *Resolver) ListMeetingAttendeesTool(ctx context.Context, req *mcp.CallTo
 		Attendees: profiles,
 	}, nil
 }
+
+func (r *Resolver) DeleteMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeasureInput) (*mcp.CallToolResult, types.DeleteMeasureOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionMeasureDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Measures.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteMeasureOutput{}, fmt.Errorf("failed to delete measure: %w", err)
+	}
+
+	return nil, types.DeleteMeasureOutput{
+		DeletedMeasureID: input.ID,
+	}, nil
+}
