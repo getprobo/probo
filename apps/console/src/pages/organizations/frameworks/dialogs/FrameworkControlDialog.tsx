@@ -33,8 +33,6 @@ const controlFragment = graphql`
         name
         description
         sectionTitle
-        status
-        exclusionJustification
         bestPractice
     }
 `;
@@ -64,31 +62,12 @@ const updateMutation = graphql`
     }
 `;
 
-const schema = z
-  .object({
-    name: z.string(),
-    description: z.string().optional().nullable(),
-    sectionTitle: z.string(),
-    status: z.enum(["INCLUDED", "EXCLUDED"]),
-    exclusionJustification: z.string().optional(),
-    bestPractice: z.boolean(),
-  })
-  .refine(
-    (data) => {
-      if (data.status === "EXCLUDED") {
-        return (
-          data.exclusionJustification
-          && data.exclusionJustification.trim().length > 0
-        );
-      }
-      return true;
-    },
-    {
-      message:
-                "Exclusion justification is required when status is excluded",
-      path: ["exclusionJustification"],
-    },
-  );
+const schema = z.object({
+  name: z.string(),
+  description: z.string().optional().nullable(),
+  sectionTitle: z.string(),
+  bestPractice: z.boolean(),
+});
 
 export function FrameworkControlDialog(props: Props) {
   const { __ } = useTranslate();
@@ -111,9 +90,6 @@ export function FrameworkControlDialog(props: Props) {
       name: frameworkControl?.name ?? "",
       description: frameworkControl?.description ?? "",
       sectionTitle: frameworkControl?.sectionTitle ?? "",
-      status: frameworkControl?.status ?? "INCLUDED",
-      exclusionJustification:
-                frameworkControl?.exclusionJustification ?? "",
       bestPractice: frameworkControl?.bestPractice ?? true,
     }),
     [frameworkControl],
@@ -141,11 +117,6 @@ export function FrameworkControlDialog(props: Props) {
             description: data.description || null,
             sectionTitle: data.sectionTitle,
             bestPractice: data.bestPractice,
-            status: data.status,
-            exclusionJustification:
-                            data.status === "EXCLUDED"
-                              ? data.exclusionJustification
-                              : null,
           },
         },
       });
@@ -159,11 +130,6 @@ export function FrameworkControlDialog(props: Props) {
             description: data.description || null,
             sectionTitle: data.sectionTitle,
             bestPractice: data.bestPractice ?? true,
-            status: data.status,
-            exclusionJustification:
-                            data.status === "EXCLUDED"
-                              ? data.exclusionJustification
-                              : null,
           },
           connections: [props.connectionId!],
         },

@@ -103,8 +103,7 @@ func TestRequired(t *testing.T) {
 		err := Required()(&str)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-		if err.Code != ErrorCodeRequired {
+		} else if err.Code != ErrorCodeRequired {
 			t.Errorf("expected error code %s, got %s", ErrorCodeRequired, err.Code)
 		}
 	})
@@ -193,8 +192,7 @@ func TestRequired(t *testing.T) {
 		err := Required()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for empty []string slice")
-		}
-		if err.Code != ErrorCodeRequired {
+		} else if err.Code != ErrorCodeRequired {
 			t.Errorf("expected error code %s, got %s", ErrorCodeRequired, err.Code)
 		}
 	})
@@ -212,8 +210,7 @@ func TestRequired(t *testing.T) {
 		err := Required()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for empty []int slice")
-		}
-		if err.Code != ErrorCodeRequired {
+		} else if err.Code != ErrorCodeRequired {
 			t.Errorf("expected error code %s, got %s", ErrorCodeRequired, err.Code)
 		}
 	})
@@ -234,8 +231,7 @@ func TestRequired(t *testing.T) {
 		err := Required()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for empty custom type slice")
-		}
-		if err.Code != ErrorCodeRequired {
+		} else if err.Code != ErrorCodeRequired {
 			t.Errorf("expected error code %s, got %s", ErrorCodeRequired, err.Code)
 		}
 	})

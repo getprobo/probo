@@ -1182,12 +1182,10 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 	control, err := svc.Controls.Create(
 		ctx,
 		probo.CreateControlRequest{
-			FrameworkID:            input.FrameworkID,
-			Name:                   input.Name,
-			Description:            input.Description,
-			SectionTitle:           input.SectionTitle,
-			Status:                 input.Status,
-			ExclusionJustification: input.ExclusionJustification,
+			FrameworkID:  input.FrameworkID,
+			Name:         input.Name,
+			Description:  input.Description,
+			SectionTitle: input.SectionTitle,
 		},
 	)
 	if err != nil {
@@ -1207,12 +1205,10 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 	control, err := svc.Controls.Update(
 		ctx,
 		probo.UpdateControlRequest{
-			ID:                     input.ID,
-			Name:                   input.Name,
-			Description:            UnwrapOmittable(input.Description),
-			SectionTitle:           input.SectionTitle,
-			Status:                 input.Status,
-			ExclusionJustification: input.ExclusionJustification,
+			ID:           input.ID,
+			Name:         input.Name,
+			Description:  UnwrapOmittable(input.Description),
+			SectionTitle: input.SectionTitle,
 		},
 	)
 	if err != nil {

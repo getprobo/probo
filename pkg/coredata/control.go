@@ -30,17 +30,15 @@ import (
 
 type (
 	Control struct {
-		ID                     gid.GID       `db:"id"`
-		OrganizationID         gid.GID       `db:"organization_id"`
-		SectionTitle           string        `db:"section_title"`
-		FrameworkID            gid.GID       `db:"framework_id"`
-		Name                   string        `db:"name"`
-		Description            *string       `db:"description"`
-		Status                 ControlStatus `db:"status"`
-		ExclusionJustification *string       `db:"exclusion_justification"`
-		BestPractice           bool          `db:"best_practice"`
-		CreatedAt              time.Time     `db:"created_at"`
-		UpdatedAt              time.Time     `db:"updated_at"`
+		ID             gid.GID   `db:"id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		SectionTitle   string    `db:"section_title"`
+		FrameworkID    gid.GID   `db:"framework_id"`
+		Name           string    `db:"name"`
+		Description    *string   `db:"description"`
+		BestPractice   bool      `db:"best_practice"`
+		CreatedAt      time.Time `db:"created_at"`
+		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
 	Controls []*Control
@@ -132,8 +130,6 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
-		c.status,
-		c.exclusion_justification,
 		c.best_practice,
 		c.created_at,
 		c.updated_at,
@@ -152,8 +148,6 @@ SELECT
 	organization_id,
 	name,
 	description,
-	status,
-	exclusion_justification,
 	best_practice,
 	created_at,
 	updated_at
@@ -245,8 +239,6 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
-		c.status,
-		c.exclusion_justification,
 		c.best_practice,
 		c.created_at,
 		c.updated_at,
@@ -265,8 +257,6 @@ SELECT
 	organization_id,
 	name,
 	description,
-	status,
-	exclusion_justification,
 	best_practice,
 	created_at,
 	updated_at
@@ -364,8 +354,6 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
-		c.status,
-		c.exclusion_justification,
 		c.best_practice,
 		c.created_at,
 		c.updated_at,
@@ -390,8 +378,6 @@ SELECT
 	organization_id,
 	name,
 	description,
-	status,
-	exclusion_justification,
 	best_practice,
 	created_at,
 	updated_at
@@ -471,8 +457,6 @@ SELECT
     organization_id,
     name,
     description,
-    status,
-	exclusion_justification,
 	best_practice,
     created_at,
     updated_at
@@ -567,8 +551,6 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
-		c.status,
-		c.exclusion_justification,
 		c.best_practice,
 		c.created_at,
 		c.updated_at,
@@ -587,8 +569,6 @@ SELECT
 	organization_id,
 	name,
 	description,
-	status,
-	exclusion_justification,
 	best_practice,
 	created_at,
 	updated_at
@@ -635,8 +615,6 @@ SELECT
     organization_id,
     name,
     description,
-    status,
-    exclusion_justification,
     best_practice,
     created_at,
     updated_at
@@ -685,8 +663,6 @@ SELECT
     organization_id,
     name,
     description,
-    status,
-    exclusion_justification,
     best_practice,
     created_at,
     updated_at
@@ -739,8 +715,6 @@ SELECT
     organization_id,
     name,
     description,
-    status,
-    exclusion_justification,
     best_practice,
     created_at,
     updated_at
@@ -783,8 +757,6 @@ INSERT INTO
         section_title,
         name,
         description,
-        status,
-        exclusion_justification,
         best_practice,
         created_at,
         updated_at
@@ -797,8 +769,6 @@ VALUES (
     @section_title,
     @name,
     @description,
-	@status,
-	@exclusion_justification,
 	@best_practice,
     @created_at,
     @updated_at
@@ -806,18 +776,16 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":               scope.GetTenantID(),
-		"control_id":              c.ID,
-		"organization_id":         c.OrganizationID,
-		"framework_id":            c.FrameworkID,
-		"section_title":           c.SectionTitle,
-		"name":                    c.Name,
-		"description":             c.Description,
-		"status":                  c.Status,
-		"exclusion_justification": c.ExclusionJustification,
-		"best_practice":           c.BestPractice,
-		"created_at":              c.CreatedAt,
-		"updated_at":              c.UpdatedAt,
+		"tenant_id":       scope.GetTenantID(),
+		"control_id":      c.ID,
+		"organization_id": c.OrganizationID,
+		"framework_id":    c.FrameworkID,
+		"section_title":   c.SectionTitle,
+		"name":            c.Name,
+		"description":     c.Description,
+		"best_practice":   c.BestPractice,
+		"created_at":      c.CreatedAt,
+		"updated_at":      c.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 
@@ -866,8 +834,6 @@ UPDATE controls SET
     name = @name,
     description = @description,
     section_title = @section_title,
-	status = @status,
-	exclusion_justification = @exclusion_justification,
 	best_practice = @best_practice,
     updated_at = @updated_at
 WHERE %s
@@ -876,14 +842,12 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"control_id":              c.ID,
-		"name":                    c.Name,
-		"description":             c.Description,
-		"section_title":           c.SectionTitle,
-		"status":                  c.Status,
-		"exclusion_justification": c.ExclusionJustification,
-		"best_practice":           c.BestPractice,
-		"updated_at":              c.UpdatedAt,
+		"control_id":    c.ID,
+		"name":          c.Name,
+		"description":   c.Description,
+		"section_title": c.SectionTitle,
+		"best_practice": c.BestPractice,
+		"updated_at":    c.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -963,8 +927,6 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
-		c.status,
-		c.exclusion_justification,
 		c.best_practice,
 		c.created_at,
 		c.updated_at,
@@ -983,8 +945,6 @@ SELECT
 	organization_id,
 	name,
 	description,
-	status,
-	exclusion_justification,
 	best_practice,
 	created_at,
 	updated_at
@@ -1077,8 +1037,6 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
-		c.status,
-		c.exclusion_justification,
 		c.best_practice,
 		c.created_at,
 		c.updated_at,
@@ -1097,8 +1055,6 @@ SELECT
 	organization_id,
 	name,
 	description,
-	status,
-	exclusion_justification,
 	best_practice,
 	created_at,
 	updated_at

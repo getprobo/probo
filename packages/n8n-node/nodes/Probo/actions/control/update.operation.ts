@@ -55,42 +55,6 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The description of the control',
 	},
-	{
-		displayName: 'Status',
-		name: 'status',
-		type: 'options',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['update'],
-			},
-		},
-		options: [
-			{
-				name: 'Included',
-				value: 'INCLUDED',
-			},
-			{
-				name: 'Excluded',
-				value: 'EXCLUDED',
-			},
-		],
-		default: 'INCLUDED',
-		description: 'The status of the control',
-	},
-	{
-		displayName: 'Exclusion Justification',
-		name: 'exclusionJustification',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The justification for excluding the control',
-	},
 ];
 
 export async function execute(
@@ -101,8 +65,6 @@ export async function execute(
 	const sectionTitle = this.getNodeParameter('sectionTitle', itemIndex, '') as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
-	const status = this.getNodeParameter('status', itemIndex, '') as string;
-	const exclusionJustification = this.getNodeParameter('exclusionJustification', itemIndex, '') as string;
 
 	const query = `
 		mutation UpdateControl($input: UpdateControlInput!) {
@@ -112,8 +74,6 @@ export async function execute(
 					sectionTitle
 					name
 					description
-					status
-					exclusionJustification
 					createdAt
 					updatedAt
 				}
@@ -125,8 +85,6 @@ export async function execute(
 	if (sectionTitle) input.sectionTitle = sectionTitle;
 	if (name) input.name = name;
 	if (description) input.description = description;
-	if (status) input.status = status;
-	if (exclusionJustification) input.exclusionJustification = exclusionJustification;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 
@@ -135,4 +93,3 @@ export async function execute(
 		pairedItem: { item: itemIndex },
 	};
 }
-

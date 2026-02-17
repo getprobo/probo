@@ -81,7 +81,6 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 			"name":         "Control for Mapping",
 			"description":  "Test control for mapping",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createControlResult)
@@ -361,7 +360,6 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			"name":         "Control for Document Mapping",
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createControlResult)
@@ -503,7 +501,6 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 			"name":         "Control for Audit Mapping",
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createControlResult)
@@ -641,7 +638,6 @@ func TestControlSnapshotMapping_CreateDelete(t *testing.T) {
 			"name":         "Control for Snapshot Mapping",
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createControlResult)

@@ -179,26 +179,24 @@ type ContinualImprovementFilter struct {
 }
 
 type Control struct {
-	ID                     gid.GID                `json:"id"`
-	Organization           *Organization          `json:"organization,omitempty"`
-	SectionTitle           string                 `json:"sectionTitle"`
-	Name                   string                 `json:"name"`
-	Description            *string                `json:"description,omitempty"`
-	Status                 coredata.ControlStatus `json:"status"`
-	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
-	BestPractice           bool                   `json:"bestPractice"`
-	Regulatory             bool                   `json:"regulatory"`
-	Contractual            bool                   `json:"contractual"`
-	RiskAssessment         bool                   `json:"riskAssessment"`
-	Framework              *Framework             `json:"framework"`
-	Measures               *MeasureConnection     `json:"measures"`
-	Documents              *DocumentConnection    `json:"documents"`
-	Audits                 *AuditConnection       `json:"audits"`
-	Obligations            *ObligationConnection  `json:"obligations"`
-	Snapshots              *SnapshotConnection    `json:"snapshots"`
-	CreatedAt              time.Time              `json:"createdAt"`
-	UpdatedAt              time.Time              `json:"updatedAt"`
-	Permission             bool                   `json:"permission"`
+	ID             gid.GID               `json:"id"`
+	Organization   *Organization         `json:"organization,omitempty"`
+	SectionTitle   string                `json:"sectionTitle"`
+	Name           string                `json:"name"`
+	Description    *string               `json:"description,omitempty"`
+	BestPractice   bool                  `json:"bestPractice"`
+	Regulatory     bool                  `json:"regulatory"`
+	Contractual    bool                  `json:"contractual"`
+	RiskAssessment bool                  `json:"riskAssessment"`
+	Framework      *Framework            `json:"framework"`
+	Measures       *MeasureConnection    `json:"measures"`
+	Documents      *DocumentConnection   `json:"documents"`
+	Audits         *AuditConnection      `json:"audits"`
+	Obligations    *ObligationConnection `json:"obligations"`
+	Snapshots      *SnapshotConnection   `json:"snapshots"`
+	CreatedAt      time.Time             `json:"createdAt"`
+	UpdatedAt      time.Time             `json:"updatedAt"`
+	Permission     bool                  `json:"permission"`
 }
 
 func (Control) IsNode()             {}
@@ -288,13 +286,11 @@ type CreateControlDocumentMappingPayload struct {
 }
 
 type CreateControlInput struct {
-	FrameworkID            gid.GID                `json:"frameworkId"`
-	SectionTitle           string                 `json:"sectionTitle"`
-	Name                   string                 `json:"name"`
-	Description            *string                `json:"description,omitempty"`
-	Status                 coredata.ControlStatus `json:"status"`
-	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
-	BestPractice           bool                   `json:"bestPractice"`
+	FrameworkID  gid.GID `json:"frameworkId"`
+	SectionTitle string  `json:"sectionTitle"`
+	Name         string  `json:"name"`
+	Description  *string `json:"description,omitempty"`
+	BestPractice bool    `json:"bestPractice"`
 }
 
 type CreateControlMeasureMappingInput struct {
@@ -1334,14 +1330,6 @@ type GenerateDocumentChangelogPayload struct {
 	Changelog string `json:"changelog"`
 }
 
-type GenerateFrameworkStateOfApplicabilityInput struct {
-	FrameworkID gid.GID `json:"frameworkId"`
-}
-
-type GenerateFrameworkStateOfApplicabilityPayload struct {
-	Data string `json:"data"`
-}
-
 type GetTrustCenterFileInput struct {
 	ID gid.GID `json:"id"`
 }
@@ -1994,13 +1982,11 @@ type UpdateContinualImprovementPayload struct {
 }
 
 type UpdateControlInput struct {
-	ID                     gid.GID                    `json:"id"`
-	SectionTitle           *string                    `json:"sectionTitle,omitempty"`
-	Name                   *string                    `json:"name,omitempty"`
-	Description            graphql.Omittable[*string] `json:"description,omitempty"`
-	Status                 *coredata.ControlStatus    `json:"status,omitempty"`
-	ExclusionJustification *string                    `json:"exclusionJustification,omitempty"`
-	BestPractice           *bool                      `json:"bestPractice,omitempty"`
+	ID           gid.GID                    `json:"id"`
+	SectionTitle *string                    `json:"sectionTitle,omitempty"`
+	Name         *string                    `json:"name,omitempty"`
+	Description  graphql.Omittable[*string] `json:"description,omitempty"`
+	BestPractice *bool                      `json:"bestPractice,omitempty"`
 }
 
 type UpdateControlPayload struct {

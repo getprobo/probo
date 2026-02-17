@@ -105,8 +105,7 @@ const (
 	ActionFrameworkCreate                       = "core:framework:create"
 	ActionFrameworkUpdate                       = "core:framework:update"
 	ActionFrameworkDelete                       = "core:framework:delete"
-	ActionFrameworkStateOfApplicabilityGenerate = "core:framework:generate-state-of-applicability"
-	ActionFrameworkExport                       = "core:framework:export"
+	ActionFrameworkExport = "core:framework:export"
 	ActionFrameworkImport                       = "core:framework:import"
 
 	// Control actions

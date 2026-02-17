@@ -258,26 +258,24 @@ type ComplexityRoot struct {
 	}
 
 	Control struct {
-		Audits                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
-		BestPractice           func(childComplexity int) int
-		Contractual            func(childComplexity int) int
-		CreatedAt              func(childComplexity int) int
-		Description            func(childComplexity int) int
-		Documents              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
-		ExclusionJustification func(childComplexity int) int
-		Framework              func(childComplexity int) int
-		ID                     func(childComplexity int) int
-		Measures               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
-		Name                   func(childComplexity int) int
-		Obligations            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
-		Organization           func(childComplexity int) int
-		Permission             func(childComplexity int, action string) int
-		Regulatory             func(childComplexity int) int
-		RiskAssessment         func(childComplexity int) int
-		SectionTitle           func(childComplexity int) int
-		Snapshots              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
-		Status                 func(childComplexity int) int
-		UpdatedAt              func(childComplexity int) int
+		Audits         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
+		BestPractice   func(childComplexity int) int
+		Contractual    func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Description    func(childComplexity int) int
+		Documents      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
+		Framework      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Measures       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
+		Name           func(childComplexity int) int
+		Obligations    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
+		Organization   func(childComplexity int) int
+		Permission     func(childComplexity int, action string) int
+		Regulatory     func(childComplexity int) int
+		RiskAssessment func(childComplexity int) int
+		SectionTitle   func(childComplexity int) int
+		Snapshots      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
+		UpdatedAt      func(childComplexity int) int
 	}
 
 	ControlConnection struct {
@@ -873,10 +871,6 @@ type ComplexityRoot struct {
 		Changelog func(childComplexity int) int
 	}
 
-	GenerateFrameworkStateOfApplicabilityPayload struct {
-		Data func(childComplexity int) int
-	}
-
 	GetTrustCenterFilePayload struct {
 		TrustCenterFile func(childComplexity int) int
 	}
@@ -1034,7 +1028,6 @@ type ComplexityRoot struct {
 		ExportStateOfApplicabilityPDF            func(childComplexity int, input types.ExportStateOfApplicabilityPDFInput) int
 		ExportTransferImpactAssessmentsPDF       func(childComplexity int, input types.ExportTransferImpactAssessmentsPDFInput) int
 		GenerateDocumentChangelog                func(childComplexity int, input types.GenerateDocumentChangelogInput) int
-		GenerateFrameworkStateOfApplicability    func(childComplexity int, input types.GenerateFrameworkStateOfApplicabilityInput) int
 		GetTrustCenterFile                       func(childComplexity int, input types.GetTrustCenterFileInput) int
 		ImportFramework                          func(childComplexity int, input types.ImportFrameworkInput) int
 		ImportMeasure                            func(childComplexity int, input types.ImportMeasureInput) int
@@ -2164,7 +2157,6 @@ type MutationResolver interface {
 	UpdateFramework(ctx context.Context, input types.UpdateFrameworkInput) (*types.UpdateFrameworkPayload, error)
 	ImportFramework(ctx context.Context, input types.ImportFrameworkInput) (*types.ImportFrameworkPayload, error)
 	DeleteFramework(ctx context.Context, input types.DeleteFrameworkInput) (*types.DeleteFrameworkPayload, error)
-	GenerateFrameworkStateOfApplicability(ctx context.Context, input types.GenerateFrameworkStateOfApplicabilityInput) (*types.GenerateFrameworkStateOfApplicabilityPayload, error)
 	ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error)
 	CreateControl(ctx context.Context, input types.CreateControlInput) (*types.CreateControlPayload, error)
 	UpdateControl(ctx context.Context, input types.UpdateControlInput) (*types.UpdateControlPayload, error)
@@ -3104,12 +3096,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Control.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy), args["filter"].(*types.DocumentFilter)), true
-	case "Control.exclusionJustification":
-		if e.complexity.Control.ExclusionJustification == nil {
-			break
-		}
-
-		return e.complexity.Control.ExclusionJustification(childComplexity), true
 	case "Control.framework":
 		if e.complexity.Control.Framework == nil {
 			break
@@ -3196,12 +3182,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Control.Snapshots(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.SnapshotOrderBy)), true
-	case "Control.status":
-		if e.complexity.Control.Status == nil {
-			break
-		}
-
-		return e.complexity.Control.Status(childComplexity), true
 	case "Control.updatedAt":
 		if e.complexity.Control.UpdatedAt == nil {
 			break
@@ -4887,13 +4867,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.GenerateDocumentChangelogPayload.Changelog(childComplexity), true
 
-	case "GenerateFrameworkStateOfApplicabilityPayload.data":
-		if e.complexity.GenerateFrameworkStateOfApplicabilityPayload.Data == nil {
-			break
-		}
-
-		return e.complexity.GenerateFrameworkStateOfApplicabilityPayload.Data(childComplexity), true
-
 	case "GetTrustCenterFilePayload.trustCenterFile":
 		if e.complexity.GetTrustCenterFilePayload.TrustCenterFile == nil {
 			break
@@ -6182,17 +6155,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.GenerateDocumentChangelog(childComplexity, args["input"].(types.GenerateDocumentChangelogInput)), true
-	case "Mutation.generateFrameworkStateOfApplicability":
-		if e.complexity.Mutation.GenerateFrameworkStateOfApplicability == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_generateFrameworkStateOfApplicability_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.GenerateFrameworkStateOfApplicability(childComplexity, args["input"].(types.GenerateFrameworkStateOfApplicabilityInput)), true
 	case "Mutation.getTrustCenterFile":
 		if e.complexity.Mutation.GetTrustCenterFile == nil {
 			break
@@ -10419,7 +10381,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputExportTransferImpactAssessmentsPDFInput,
 		ec.unmarshalInputFrameworkOrder,
 		ec.unmarshalInputGenerateDocumentChangelogInput,
-		ec.unmarshalInputGenerateFrameworkStateOfApplicabilityInput,
 		ec.unmarshalInputGetTrustCenterFileInput,
 		ec.unmarshalInputImportFrameworkInput,
 		ec.unmarshalInputImportMeasureInput,
@@ -11627,14 +11588,6 @@ enum DataClassification
         )
 }
 
-enum ControlStatus
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlStatus") {
-    INCLUDED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlStatusIncluded")
-    EXCLUDED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlStatusExcluded")
-}
-
 enum AuditOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditOrderField") {
     CREATED_AT
@@ -12648,8 +12601,6 @@ type Control implements Node {
     sectionTitle: String!
     name: String!
     description: String
-    status: ControlStatus!
-    exclusionJustification: String
     bestPractice: Boolean!
     regulatory: Boolean! @goField(forceResolver: true)
     contractual: Boolean! @goField(forceResolver: true)
@@ -13884,9 +13835,6 @@ type Mutation {
     updateFramework(input: UpdateFrameworkInput!): UpdateFrameworkPayload!
     importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!
     deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!
-    generateFrameworkStateOfApplicability(
-        input: GenerateFrameworkStateOfApplicabilityInput!
-    ): GenerateFrameworkStateOfApplicabilityPayload!
     exportFramework(input: ExportFrameworkInput!): ExportFrameworkPayload!
     # Control mutations
     createControl(input: CreateControlInput!): CreateControlPayload!
@@ -14173,14 +14121,6 @@ type Mutation {
 }
 
 # Input Types
-input GenerateFrameworkStateOfApplicabilityInput {
-    frameworkId: ID!
-}
-
-type GenerateFrameworkStateOfApplicabilityPayload {
-    data: String!
-}
-
 input UpdateOrganizationContextInput {
     organizationId: ID!
     summary: String @goField(omittable: true)
@@ -14743,8 +14683,6 @@ input CreateControlInput {
     sectionTitle: String!
     name: String!
     description: String
-    status: ControlStatus!
-    exclusionJustification: String
     bestPractice: Boolean!
 }
 
@@ -14753,8 +14691,6 @@ input UpdateControlInput {
     sectionTitle: String
     name: String
     description: String @goField(omittable: true)
-    status: ControlStatus
-    exclusionJustification: String
     bestPractice: Boolean
 }
 
@@ -17835,17 +17771,6 @@ func (ec *executionContext) field_Mutation_generateDocumentChangelog_args(ctx co
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_generateFrameworkStateOfApplicability_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNGenerateFrameworkStateOfApplicabilityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateFrameworkStateOfApplicabilityInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_getTrustCenterFile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -20211,10 +20136,6 @@ func (ec *executionContext) fieldContext_ApplicabilityStatement_control(_ contex
 				return ec.fieldContext_Control_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Control_description(ctx, field)
-			case "status":
-				return ec.fieldContext_Control_status(ctx, field)
-			case "exclusionJustification":
-				return ec.fieldContext_Control_exclusionJustification(ctx, field)
 			case "bestPractice":
 				return ec.fieldContext_Control_bestPractice(ctx, field)
 			case "regulatory":
@@ -23225,64 +23146,6 @@ func (ec *executionContext) fieldContext_Control_description(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Control_status(ctx context.Context, field graphql.CollectedField, obj *types.Control) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Control_status,
-		func(ctx context.Context) (any, error) {
-			return obj.Status, nil
-		},
-		nil,
-		ec.marshalNControlStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Control_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Control",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ControlStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Control_exclusionJustification(ctx context.Context, field graphql.CollectedField, obj *types.Control) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Control_exclusionJustification,
-		func(ctx context.Context) (any, error) {
-			return obj.ExclusionJustification, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Control_exclusionJustification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Control",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Control_bestPractice(ctx context.Context, field graphql.CollectedField, obj *types.Control) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -23960,10 +23823,6 @@ func (ec *executionContext) fieldContext_ControlEdge_node(_ context.Context, fie
 				return ec.fieldContext_Control_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Control_description(ctx, field)
-			case "status":
-				return ec.fieldContext_Control_status(ctx, field)
-			case "exclusionJustification":
-				return ec.fieldContext_Control_exclusionJustification(ctx, field)
 			case "bestPractice":
 				return ec.fieldContext_Control_bestPractice(ctx, field)
 			case "regulatory":
@@ -32598,35 +32457,6 @@ func (ec *executionContext) fieldContext_GenerateDocumentChangelogPayload_change
 	return fc, nil
 }
 
-func (ec *executionContext) _GenerateFrameworkStateOfApplicabilityPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.GenerateFrameworkStateOfApplicabilityPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_GenerateFrameworkStateOfApplicabilityPayload_data,
-		func(ctx context.Context) (any, error) {
-			return obj.Data, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_GenerateFrameworkStateOfApplicabilityPayload_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GenerateFrameworkStateOfApplicabilityPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _GetTrustCenterFilePayload_trustCenterFile(ctx context.Context, field graphql.CollectedField, obj *types.GetTrustCenterFilePayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -35183,51 +35013,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteFramework(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteFramework_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_generateFrameworkStateOfApplicability(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_generateFrameworkStateOfApplicability,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().GenerateFrameworkStateOfApplicability(ctx, fc.Args["input"].(types.GenerateFrameworkStateOfApplicabilityInput))
-		},
-		nil,
-		ec.marshalNGenerateFrameworkStateOfApplicabilityPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateFrameworkStateOfApplicabilityPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_generateFrameworkStateOfApplicability(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "data":
-				return ec.fieldContext_GenerateFrameworkStateOfApplicabilityPayload_data(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type GenerateFrameworkStateOfApplicabilityPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_generateFrameworkStateOfApplicability_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -53944,10 +53729,6 @@ func (ec *executionContext) fieldContext_UpdateControlPayload_control(_ context.
 				return ec.fieldContext_Control_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Control_description(ctx, field)
-			case "status":
-				return ec.fieldContext_Control_status(ctx, field)
-			case "exclusionJustification":
-				return ec.fieldContext_Control_exclusionJustification(ctx, field)
 			case "bestPractice":
 				return ec.fieldContext_Control_bestPractice(ctx, field)
 			case "regulatory":
@@ -63141,7 +62922,7 @@ func (ec *executionContext) unmarshalInputCreateControlInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"frameworkId", "sectionTitle", "name", "description", "status", "exclusionJustification", "bestPractice"}
+	fieldsInOrder := [...]string{"frameworkId", "sectionTitle", "name", "description", "bestPractice"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63176,20 +62957,6 @@ func (ec *executionContext) unmarshalInputCreateControlInput(ctx context.Context
 				return it, err
 			}
 			it.Description = data
-		case "status":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalNControlStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Status = data
-		case "exclusionJustification":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exclusionJustification"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ExclusionJustification = data
 		case "bestPractice":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bestPractice"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
@@ -66924,33 +66691,6 @@ func (ec *executionContext) unmarshalInputGenerateDocumentChangelogInput(ctx con
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGenerateFrameworkStateOfApplicabilityInput(ctx context.Context, obj any) (types.GenerateFrameworkStateOfApplicabilityInput, error) {
-	var it types.GenerateFrameworkStateOfApplicabilityInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"frameworkId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "frameworkId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frameworkId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FrameworkID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputGetTrustCenterFileInput(ctx context.Context, obj any) (types.GetTrustCenterFileInput, error) {
 	var it types.GetTrustCenterFileInput
 	asMap := map[string]any{}
@@ -68231,7 +67971,7 @@ func (ec *executionContext) unmarshalInputUpdateControlInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "sectionTitle", "name", "description", "status", "exclusionJustification", "bestPractice"}
+	fieldsInOrder := [...]string{"id", "sectionTitle", "name", "description", "bestPractice"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -68266,20 +68006,6 @@ func (ec *executionContext) unmarshalInputUpdateControlInput(ctx context.Context
 				return it, err
 			}
 			it.Description = graphql.OmittableOf(data)
-		case "status":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOControlStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Status = data
-		case "exclusionJustification":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exclusionJustification"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ExclusionJustification = data
 		case "bestPractice":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bestPractice"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -72533,13 +72259,6 @@ func (ec *executionContext) _Control(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "description":
 			out.Values[i] = ec._Control_description(ctx, field, obj)
-		case "status":
-			out.Values[i] = ec._Control_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "exclusionJustification":
-			out.Values[i] = ec._Control_exclusionJustification(ctx, field, obj)
 		case "bestPractice":
 			out.Values[i] = ec._Control_bestPractice(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -79243,45 +78962,6 @@ func (ec *executionContext) _GenerateDocumentChangelogPayload(ctx context.Contex
 	return out
 }
 
-var generateFrameworkStateOfApplicabilityPayloadImplementors = []string{"GenerateFrameworkStateOfApplicabilityPayload"}
-
-func (ec *executionContext) _GenerateFrameworkStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.GenerateFrameworkStateOfApplicabilityPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, generateFrameworkStateOfApplicabilityPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("GenerateFrameworkStateOfApplicabilityPayload")
-		case "data":
-			out.Values[i] = ec._GenerateFrameworkStateOfApplicabilityPayload_data(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var getTrustCenterFilePayloadImplementors = []string{"GetTrustCenterFilePayload"}
 
 func (ec *executionContext) _GetTrustCenterFilePayload(ctx context.Context, sel ast.SelectionSet, obj *types.GetTrustCenterFilePayload) graphql.Marshaler {
@@ -80273,13 +79953,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteFramework":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteFramework(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "generateFrameworkStateOfApplicability":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_generateFrameworkStateOfApplicability(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -93049,34 +92722,6 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNControlStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus(ctx context.Context, v any) (coredata.ControlStatus, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNControlStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNControlStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus(ctx context.Context, sel ast.SelectionSet, v coredata.ControlStatus) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNControlStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNControlStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus = map[string]coredata.ControlStatus{
-		"INCLUDED": coredata.ControlStatusIncluded,
-		"EXCLUDED": coredata.ControlStatusExcluded,
-	}
-	marshalNControlStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus = map[coredata.ControlStatus]string{
-		coredata.ControlStatusIncluded: "INCLUDED",
-		coredata.ControlStatusExcluded: "EXCLUDED",
-	}
-)
-
 func (ec *executionContext) unmarshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx context.Context, v any) (coredata.CountryCode, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode[tmp]
@@ -96472,25 +96117,6 @@ func (ec *executionContext) marshalNGenerateDocumentChangelogPayload2ᚖgoᚗpro
 		return graphql.Null
 	}
 	return ec._GenerateDocumentChangelogPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNGenerateFrameworkStateOfApplicabilityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateFrameworkStateOfApplicabilityInput(ctx context.Context, v any) (types.GenerateFrameworkStateOfApplicabilityInput, error) {
-	res, err := ec.unmarshalInputGenerateFrameworkStateOfApplicabilityInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGenerateFrameworkStateOfApplicabilityPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateFrameworkStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, v types.GenerateFrameworkStateOfApplicabilityPayload) graphql.Marshaler {
-	return ec._GenerateFrameworkStateOfApplicabilityPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNGenerateFrameworkStateOfApplicabilityPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateFrameworkStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, v *types.GenerateFrameworkStateOfApplicabilityPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._GenerateFrameworkStateOfApplicabilityPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNGetTrustCenterFileInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGetTrustCenterFileInput(ctx context.Context, v any) (types.GetTrustCenterFileInput, error) {
@@ -101594,36 +101220,6 @@ func (ec *executionContext) unmarshalOControlOrder2ᚖgoᚗproboᚗincᚋprobo�
 	res, err := ec.unmarshalInputControlOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
-
-func (ec *executionContext) unmarshalOControlStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus(ctx context.Context, v any) (*coredata.ControlStatus, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOControlStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOControlStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.ControlStatus) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	_ = ctx
-	res := graphql.MarshalString(marshalOControlStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus[*v])
-	return res
-}
-
-var (
-	unmarshalOControlStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus = map[string]coredata.ControlStatus{
-		"INCLUDED": coredata.ControlStatusIncluded,
-		"EXCLUDED": coredata.ControlStatusExcluded,
-	}
-	marshalOControlStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus = map[coredata.ControlStatus]string{
-		coredata.ControlStatusIncluded: "INCLUDED",
-		coredata.ControlStatusExcluded: "EXCLUDED",
-	}
-)
 
 func (ec *executionContext) unmarshalOCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx context.Context, v any) ([]coredata.CountryCode, error) {
 	if v == nil {

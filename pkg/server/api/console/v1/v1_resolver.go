@@ -2511,28 +2511,6 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 	}, nil
 }
 
-// GenerateFrameworkStateOfApplicability is the resolver for the generateFrameworkStateOfApplicability field.
-func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Context, input types.GenerateFrameworkStateOfApplicabilityInput) (*types.GenerateFrameworkStateOfApplicabilityPayload, error) {
-	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkStateOfApplicabilityGenerate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
-
-	soa, err := prb.Frameworks.StateOfApplicability(ctx, input.FrameworkID)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate framework SOA: %w", err))
-	}
-
-	return &types.GenerateFrameworkStateOfApplicabilityPayload{
-		Data: fmt.Sprintf(
-			"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,%s",
-			base64.StdEncoding.EncodeToString(soa),
-		),
-	}, nil
-}
-
 // ExportFramework is the resolver for the exportFramework field.
 func (r *mutationResolver) ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error) {
 	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkExport); err != nil {
@@ -2569,13 +2547,11 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 	control, err := prb.Controls.Create(
 		ctx,
 		probo.CreateControlRequest{
-			FrameworkID:            input.FrameworkID,
-			Name:                   input.Name,
-			Description:            input.Description,
-			SectionTitle:           input.SectionTitle,
-			Status:                 &input.Status,
-			ExclusionJustification: input.ExclusionJustification,
-			BestPractice:           input.BestPractice,
+			FrameworkID:  input.FrameworkID,
+			Name:         input.Name,
+			Description:  input.Description,
+			SectionTitle: input.SectionTitle,
+			BestPractice: input.BestPractice,
 		},
 	)
 	if err != nil {
@@ -2603,13 +2579,11 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 	control, err := prb.Controls.Update(
 		ctx,
 		probo.UpdateControlRequest{
-			ID:                     input.ID,
-			Name:                   input.Name,
-			Description:            gqlutils.UnwrapOmittable(input.Description),
-			SectionTitle:           input.SectionTitle,
-			Status:                 input.Status,
-			ExclusionJustification: input.ExclusionJustification,
-			BestPractice:           input.BestPractice,
+			ID:           input.ID,
+			Name:         input.Name,
+			Description:  gqlutils.UnwrapOmittable(input.Description),
+			SectionTitle: input.SectionTitle,
+			BestPractice: input.BestPractice,
 		},
 	)
 

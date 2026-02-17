@@ -2758,13 +2758,6 @@ components:
         audit:
           $ref: "#/components/schemas/Audit"
 
-    ControlStatus:
-      type: string
-      enum:
-        - INCLUDED
-        - EXCLUDED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlStatus
-
     ControlOrderField:
       type: string
       enum:
@@ -2793,7 +2786,6 @@ components:
         - framework_id
         - section_title
         - name
-        - status
         - created_at
         - updated_at
       properties:
@@ -2817,14 +2809,6 @@ components:
             - string
             - "null"
           description: Control description
-        status:
-          $ref: "#/components/schemas/ControlStatus"
-          description: Control status
-        exclusion_justification:
-          type:
-            - string
-            - "null"
-          description: Exclusion justification
         created_at:
           type: string
           format: date-time
@@ -2914,12 +2898,6 @@ components:
         description:
           type: string
           description: Control description
-        status:
-          $ref: "#/components/schemas/ControlStatus"
-          description: Control status
-        exclusion_justification:
-          type: string
-          description: Exclusion justification
 
     AddControlOutput:
       type: object
@@ -2947,16 +2925,6 @@ components:
           type: ["string", "null"]
           description: Control description
           go.probo.inc/mcpgen/omittable: true
-        status:
-          anyOf:
-            - $ref: "#/components/schemas/ControlStatus"
-              description: Control status
-            - type: "null"
-              description: No status
-          description: Control status
-        exclusion_justification:
-          type: string
-          description: Exclusion justification
 
     UpdateControlOutput:
       type: object

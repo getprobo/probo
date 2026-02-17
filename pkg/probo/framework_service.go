@@ -36,12 +36,10 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/slug"
-	"go.probo.inc/probo/pkg/soagen"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
-	maxStateOfApplicabilityLimit  = 10_000
 	frameworkExportEmailExpiresIn = 24 * time.Hour
 )
 
@@ -584,7 +582,6 @@ func (s FrameworkService) Import(
 				SectionTitle:   control.ID,
 				Name:           control.Name,
 				Description:    &description,
-				Status:         coredata.ControlStatusIncluded,
 				BestPractice:   bestPractice,
 				CreatedAt:      now,
 				UpdatedAt:      now,
@@ -603,182 +600,6 @@ func (s FrameworkService) Import(
 	}
 
 	return framework, nil
-}
-
-func (s FrameworkService) StateOfApplicability(ctx context.Context, frameworkID gid.GID) ([]byte, error) {
-	rows := []soagen.SOARowData{}
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(conn pg.Conn) error {
-			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
-				return fmt.Errorf("cannot load framework: %w", err)
-			}
-
-			controls := coredata.Controls{}
-			err := controls.LoadByFrameworkID(
-				ctx,
-				conn,
-				s.svc.scope,
-				frameworkID,
-				page.NewCursor(
-					maxStateOfApplicabilityLimit,
-					nil,
-					page.Head,
-					page.OrderBy[coredata.ControlOrderField]{
-						Field:     coredata.ControlOrderFieldSectionTitle,
-						Direction: page.OrderDirectionAsc,
-					},
-				),
-				coredata.NewControlFilter(nil),
-			)
-
-			if err != nil {
-				return fmt.Errorf("cannot load controls: %w", err)
-			}
-
-			for _, control := range controls {
-				exclusionJustification := ""
-				if control.Status == coredata.ControlStatusExcluded {
-					if control.ExclusionJustification == nil {
-						return fmt.Errorf("exclusion justification is required for excluded controls")
-					}
-					exclusionJustification = *control.ExclusionJustification
-				}
-
-				applicability := soagen.NewApplicability("Yes", true)
-				if control.Status == coredata.ControlStatusExcluded {
-					applicability = soagen.NewApplicability("No", false)
-				}
-
-				bestPractice := ref.Ref(true)
-				if control.Status == coredata.ControlStatusExcluded {
-					bestPractice = ref.Ref(false)
-				}
-
-				row := soagen.SOARowData{
-					SectionTitle:           control.SectionTitle,
-					ControlName:            control.Name,
-					Applicability:          applicability,
-					ExclusionJustification: exclusionJustification,
-					Regulatory:             ref.Ref(false),
-					Contractual:            ref.Ref(false),
-					BestPractice:           bestPractice,
-					RiskAssessment:         ref.Ref(false),
-					SecurityMeasures:       []string{},
-				}
-
-				if control.Status == coredata.ControlStatusExcluded {
-					rows = append(rows, row)
-					continue
-				}
-
-				measures := coredata.Measures{}
-				err = measures.LoadByControlID(
-					ctx,
-					conn,
-					s.svc.scope,
-					control.ID,
-					page.NewCursor(
-						maxStateOfApplicabilityLimit,
-						nil,
-						page.Head,
-						page.OrderBy[coredata.MeasureOrderField]{
-							Field:     coredata.MeasureOrderFieldCreatedAt,
-							Direction: page.OrderDirectionAsc,
-						},
-					),
-					coredata.NewMeasureFilter(nil, nil),
-				)
-				if err != nil {
-					return fmt.Errorf("cannot load measures: %w", err)
-				}
-
-				for _, measure := range measures {
-					risks := coredata.Risks{}
-					var nilSnapshotID *gid.GID = nil
-					risksCount, err := risks.CountByMeasureID(
-						ctx,
-						conn,
-						s.svc.scope,
-						measure.ID,
-						coredata.NewRiskFilter(nil, &nilSnapshotID),
-					)
-					if err != nil {
-						return fmt.Errorf("cannot count risks: %w", err)
-					}
-
-					if risksCount > 0 {
-						row.RiskAssessment = ref.Ref(true)
-					}
-
-					row.SecurityMeasures = append(row.SecurityMeasures, measure.Name)
-				}
-
-				documents := coredata.Documents{}
-				err = documents.LoadByControlID(
-					ctx,
-					conn,
-					s.svc.scope,
-					control.ID,
-					page.NewCursor(
-						0,
-						nil,
-						page.Head,
-						page.OrderBy[coredata.DocumentOrderField]{
-							Field:     coredata.DocumentOrderFieldCreatedAt,
-							Direction: page.OrderDirectionAsc,
-						},
-					),
-					coredata.NewDocumentFilter(nil),
-				)
-				if err != nil {
-					return fmt.Errorf("cannot load documents: %w", err)
-				}
-
-				for _, document := range documents {
-					risks := coredata.Risks{}
-					var nilSnapshotID *gid.GID = nil
-					risksCount, err := risks.CountByDocumentID(
-						ctx,
-						conn,
-						s.svc.scope,
-						document.ID,
-						coredata.NewRiskFilter(nil, &nilSnapshotID),
-					)
-					if err != nil {
-						return fmt.Errorf("cannot count risks: %w", err)
-					}
-
-					if risksCount > 0 {
-						row.RiskAssessment = ref.Ref(true)
-					}
-
-					row.SecurityMeasures = append(row.SecurityMeasures, document.Title)
-				}
-
-				rows = append(rows, row)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	output, err := soagen.GenerateExcel(
-		soagen.SOAData{
-			Rows: rows,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate Excel file: %w", err)
-	}
-
-	return output, nil
 }
 
 func (s FrameworkService) SendExportEmail(

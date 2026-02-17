@@ -1030,14 +1030,6 @@ enum DataClassification
         )
 }
 
-enum ControlStatus
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlStatus") {
-    INCLUDED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlStatusIncluded")
-    EXCLUDED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlStatusExcluded")
-}
-
 enum AuditOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditOrderField") {
     CREATED_AT
@@ -2051,8 +2043,6 @@ type Control implements Node {
     sectionTitle: String!
     name: String!
     description: String
-    status: ControlStatus!
-    exclusionJustification: String
     bestPractice: Boolean!
     regulatory: Boolean! @goField(forceResolver: true)
     contractual: Boolean! @goField(forceResolver: true)
@@ -3287,9 +3277,6 @@ type Mutation {
     updateFramework(input: UpdateFrameworkInput!): UpdateFrameworkPayload!
     importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!
     deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!
-    generateFrameworkStateOfApplicability(
-        input: GenerateFrameworkStateOfApplicabilityInput!
-    ): GenerateFrameworkStateOfApplicabilityPayload!
     exportFramework(input: ExportFrameworkInput!): ExportFrameworkPayload!
     # Control mutations
     createControl(input: CreateControlInput!): CreateControlPayload!
@@ -3576,14 +3563,6 @@ type Mutation {
 }
 
 # Input Types
-input GenerateFrameworkStateOfApplicabilityInput {
-    frameworkId: ID!
-}
-
-type GenerateFrameworkStateOfApplicabilityPayload {
-    data: String!
-}
-
 input UpdateOrganizationContextInput {
     organizationId: ID!
     summary: String @goField(omittable: true)
@@ -4146,8 +4125,6 @@ input CreateControlInput {
     sectionTitle: String!
     name: String!
     description: String
-    status: ControlStatus!
-    exclusionJustification: String
     bestPractice: Boolean!
 }
 
@@ -4156,8 +4133,6 @@ input UpdateControlInput {
     sectionTitle: String
     name: String
     description: String @goField(omittable: true)
-    status: ControlStatus
-    exclusionJustification: String
     bestPractice: Boolean
 }
 

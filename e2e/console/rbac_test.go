@@ -384,7 +384,7 @@ func TestRBAC(t *testing.T) {
 			client: owner,
 			query:  createControlMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Owner"), "status": "INCLUDED", "bestPractice": true}}
+				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Owner"), "bestPractice": true}}
 			},
 			shouldAllow: true,
 		},
@@ -394,7 +394,7 @@ func TestRBAC(t *testing.T) {
 			client: admin,
 			query:  createControlMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Admin"), "status": "INCLUDED", "bestPractice": true}}
+				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Admin"), "bestPractice": true}}
 			},
 			shouldAllow: true,
 		},
@@ -404,7 +404,7 @@ func TestRBAC(t *testing.T) {
 			client: viewer,
 			query:  createControlMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Viewer"), "status": "INCLUDED", "bestPractice": true}}
+				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Viewer"), "bestPractice": true}}
 			},
 			shouldAllow: false,
 		},

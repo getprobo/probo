@@ -205,7 +205,6 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 		"name":         a.getString("name", SafeName("Control")),
 		"description":  a.getString("description", "Test control description"),
 		"sectionTitle": a.getString("sectionTitle", fmt.Sprintf("Section %s", gofakeit.LetterN(3))),
-		"status":       a.getString("status", "INCLUDED"),
 		"bestPractice": a.getBool("bestPractice", true),
 	}
 
