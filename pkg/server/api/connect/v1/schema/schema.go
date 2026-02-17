@@ -108,6 +108,10 @@ type ComplexityRoot struct {
 		Organization func(childComplexity int) int
 	}
 
+	CreatePasswordPayload struct {
+		Success func(childComplexity int) int
+	}
+
 	CreatePersonalAPIKeyPayload struct {
 		PersonalAPIKeyEdge func(childComplexity int) int
 		Token              func(childComplexity int) int
@@ -159,7 +163,7 @@ type ComplexityRoot struct {
 		ID              func(childComplexity int) int
 		Permission      func(childComplexity int, action string) int
 		PersonalAPIKeys func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		Profiles        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) int
+		Profiles        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) int
 		Sessions        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) int
 		UpdatedAt       func(childComplexity int) int
 	}
@@ -499,7 +503,7 @@ type ConnectorResolver interface {
 	Permission(ctx context.Context, obj *types.Connector, action string) (bool, error)
 }
 type IdentityResolver interface {
-	Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error)
+	Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error)
 	Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error)
 	PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error)
 	SsoLoginURL(ctx context.Context, obj *types.Identity) (*string, error)
@@ -727,6 +731,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateOrganizationPayload.Organization(childComplexity), true
 
+	case "CreatePasswordPayload.success":
+		if e.complexity.CreatePasswordPayload.Success == nil {
+			break
+		}
+
+		return e.complexity.CreatePasswordPayload.Success(childComplexity), true
+
 	case "CreatePersonalAPIKeyPayload.personalAPIKeyEdge":
 		if e.complexity.CreatePersonalAPIKeyPayload.PersonalAPIKeyEdge == nil {
 			break
@@ -877,7 +888,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Identity.Profiles(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProfileOrderBy)), true
+		return e.complexity.Identity.Profiles(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProfileOrderBy), args["filter"].(*types.ProfileFilter)), true
 	case "Identity.sessions":
 		if e.complexity.Identity.Sessions == nil {
 			break
@@ -2357,6 +2368,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputForgotPasswordInput,
 		ec.unmarshalInputInvitationOrder,
 		ec.unmarshalInputInviteUserInput,
+		ec.unmarshalInputProfileFilter,
 		ec.unmarshalInputProfileOrder,
 		ec.unmarshalInputRegenerateSCIMTokenInput,
 		ec.unmarshalInputRemoveUserInput,
@@ -2614,6 +2626,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: ProfileOrder
+    filter: ProfileFilter
   ): ProfileConnection @goField(forceResolver: true)
 
   sessions(
@@ -2985,6 +2998,11 @@ enum ProfileOrderField
     )
 }
 
+input ProfileFilter {
+  excludeContractEnded: Boolean
+  state: ProfileState
+}
+
 input ProfileOrder
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.ProfileOrderBy"
@@ -3101,7 +3119,6 @@ input SignUpInput {
 
 input ActivateAccountInput {
   token: String!
-  password: String!
 }
 
 input ForgotPasswordInput {
@@ -3265,6 +3282,10 @@ type SignOutPayload {
 
 type ActivateAccountPayload {
   profile: Profile
+}
+
+type CreatePasswordPayload {
+  success: Boolean!
 }
 
 type ForgotPasswordPayload {
@@ -3557,6 +3578,11 @@ func (ec *executionContext) field_Identity_profiles_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOProfileFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfileFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 
@@ -4730,6 +4756,35 @@ func (ec *executionContext) fieldContext_CreateOrganizationPayload_membership(_ 
 	return fc, nil
 }
 
+func (ec *executionContext) _CreatePasswordPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.CreatePasswordPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreatePasswordPayload_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreatePasswordPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreatePasswordPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreatePersonalAPIKeyPayload_personalAPIKeyEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreatePersonalAPIKeyPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5377,7 +5432,7 @@ func (ec *executionContext) _Identity_profiles(ctx context.Context, field graphq
 		ec.fieldContext_Identity_profiles,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Identity().Profiles(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProfileOrderBy))
+			return ec.resolvers.Identity().Profiles(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProfileOrderBy), fc.Args["filter"].(*types.ProfileFilter))
 		},
 		nil,
 		ec.marshalOProfileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfileConnection,
@@ -15129,7 +15184,7 @@ func (ec *executionContext) unmarshalInputActivateAccountInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"token", "password"}
+	fieldsInOrder := [...]string{"token"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15143,13 +15198,6 @@ func (ec *executionContext) unmarshalInputActivateAccountInput(ctx context.Conte
 				return it, err
 			}
 			it.Token = data
-		case "password":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Password = data
 		}
 	}
 
@@ -15764,6 +15812,40 @@ func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.ProfileID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputProfileFilter(ctx context.Context, obj any) (types.ProfileFilter, error) {
+	var it types.ProfileFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"excludeContractEnded", "state"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "excludeContractEnded":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("excludeContractEnded"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExcludeContractEnded = data
+		case "state":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+			data, err := ec.unmarshalOProfileState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.State = data
 		}
 	}
 
@@ -16929,6 +17011,45 @@ func (ec *executionContext) _CreateOrganizationPayload(ctx context.Context, sel 
 			out.Values[i] = ec._CreateOrganizationPayload_organization(ctx, field, obj)
 		case "membership":
 			out.Values[i] = ec._CreateOrganizationPayload_membership(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createPasswordPayloadImplementors = []string{"CreatePasswordPayload"}
+
+func (ec *executionContext) _CreatePasswordPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreatePasswordPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createPasswordPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreatePasswordPayload")
+		case "success":
+			out.Values[i] = ec._CreatePasswordPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -23298,6 +23419,14 @@ func (ec *executionContext) marshalOProfileConnection2ᚖgoᚗproboᚗincᚋprob
 	return ec._ProfileConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOProfileFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfileFilter(ctx context.Context, v any) (*types.ProfileFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProfileFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfileOrderBy(ctx context.Context, v any) (*types.ProfileOrderBy, error) {
 	if v == nil {
 		return nil, nil
@@ -23305,6 +23434,36 @@ func (ec *executionContext) unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋprobo�
 	res, err := ec.unmarshalInputProfileOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
+
+func (ec *executionContext) unmarshalOProfileState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState(ctx context.Context, v any) (*coredata.ProfileState, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProfileState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProfileState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState(ctx context.Context, sel ast.SelectionSet, v *coredata.ProfileState) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProfileState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState[*v])
+	return res
+}
+
+var (
+	unmarshalOProfileState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState = map[string]coredata.ProfileState{
+		"ACTIVE":   coredata.ProfileStateActive,
+		"INACTIVE": coredata.ProfileStateInactive,
+	}
+	marshalOProfileState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState = map[coredata.ProfileState]string{
+		coredata.ProfileStateActive:   "ACTIVE",
+		coredata.ProfileStateInactive: "INACTIVE",
+	}
+)
 
 func (ec *executionContext) marshalORegenerateSCIMTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRegenerateSCIMTokenPayload(ctx context.Context, sel ast.SelectionSet, v *types.RegenerateSCIMTokenPayload) graphql.Marshaler {
 	if v == nil {

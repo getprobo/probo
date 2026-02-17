@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e920b2bbd380e12014a100bfb963c8f7>>
+ * @generated SignedSource<<b79143becc90a4776f321d0e91db49bd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type ActivateAccountInput = {
-  password: string;
+  password?: string | null | undefined;
   token: string;
 };
 export type ActivateAccountPageMutation$variables = {

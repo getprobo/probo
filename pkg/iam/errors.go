@@ -326,15 +326,15 @@ func (e ErrInvitationNotDeleted) Error() string {
 	return fmt.Sprintf("cannot delete invitation %q in %q status", e.InvitationID, e.Status)
 }
 
-type ErrPasswordRequired struct {
+type ErrPasswordAuthenticationRequired struct {
 	Reason string
 }
 
-func NewPasswordRequiredError(reason string) *ErrPasswordRequired {
-	return &ErrPasswordRequired{Reason: reason}
+func NewPasswordAuthenticationRequiredError(reason string) *ErrPasswordAuthenticationRequired {
+	return &ErrPasswordAuthenticationRequired{Reason: reason}
 }
 
-func (e *ErrPasswordRequired) Error() string {
+func (e *ErrPasswordAuthenticationRequired) Error() string {
 	return fmt.Sprintf("password authentication required: %s", e.Reason)
 }
 

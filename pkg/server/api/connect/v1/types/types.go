@@ -35,8 +35,7 @@ type AcceptInvitationPayload struct {
 }
 
 type ActivateAccountInput struct {
-	Token    string `json:"token"`
-	Password string `json:"password"`
+	Token string `json:"token"`
 }
 
 type ActivateAccountPayload struct {
@@ -90,6 +89,10 @@ type CreateOrganizationInput struct {
 type CreateOrganizationPayload struct {
 	Organization *Organization `json:"organization,omitempty"`
 	Membership   *Membership   `json:"membership"`
+}
+
+type CreatePasswordPayload struct {
+	Success bool `json:"success"`
 }
 
 type CreatePersonalAPIKeyInput struct {
@@ -337,6 +340,11 @@ func (this Profile) GetID() gid.GID { return this.ID }
 type ProfileEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Profile       `json:"node"`
+}
+
+type ProfileFilter struct {
+	ExcludeContractEnded *bool                  `json:"excludeContractEnded,omitempty"`
+	State                *coredata.ProfileState `json:"state,omitempty"`
 }
 
 type Query struct {

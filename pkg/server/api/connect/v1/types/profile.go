@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filters  *coredata.MembershipProfileFilter
 	}
 )
 
@@ -37,6 +38,7 @@ func NewProfileConnection(
 	p *page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField],
 	resolver any,
 	parentID gid.GID,
+	filters *coredata.MembershipProfileFilter,
 ) *ProfileConnection {
 	edges := make([]*ProfileEdge, len(p.Data))
 	for i, profile := range p.Data {
@@ -49,6 +51,7 @@ func NewProfileConnection(
 
 		Resolver: resolver,
 		ParentID: parentID,
+		Filters:  filters,
 	}
 }
 

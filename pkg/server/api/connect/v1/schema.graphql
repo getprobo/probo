@@ -141,6 +141,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: ProfileOrder
+    filter: ProfileFilter
   ): ProfileConnection @goField(forceResolver: true)
 
   sessions(
@@ -512,6 +513,11 @@ enum ProfileOrderField
     )
 }
 
+input ProfileFilter {
+  excludeContractEnded: Boolean
+  state: ProfileState
+}
+
 input ProfileOrder
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.ProfileOrderBy"
@@ -628,7 +634,6 @@ input SignUpInput {
 
 input ActivateAccountInput {
   token: String!
-  password: String!
 }
 
 input ForgotPasswordInput {
@@ -792,6 +797,10 @@ type SignOutPayload {
 
 type ActivateAccountPayload {
   profile: Profile
+}
+
+type CreatePasswordPayload {
+  success: Boolean!
 }
 
 type ForgotPasswordPayload {

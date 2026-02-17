@@ -33,17 +33,24 @@ func (r *connectorResolver) Permission(ctx context.Context, obj *types.Connector
 }
 
 // Profiles is the resolver for the profiles field.
-func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
+func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
-	filter := coredata.NewMembershipProfileFilter(nil)
+	filters := coredata.NewMembershipProfileFilter(nil)
+	if filter != nil {
+		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded)
+		if filter.State != nil {
+			filters.WithState(*filter.State)
+		}
+	}
 
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
+			Filters:  filters,
 		}, nil
 	}
 
@@ -60,13 +67,13 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 
 	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.iam.AccountService.ListProfilesForIdentity(ctx, obj.ID, cursor, filter)
+	page, err := r.iam.AccountService.ListProfilesForIdentity(ctx, obj.ID, cursor, filters)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewProfileConnection(page, r, obj.ID), nil
+	return types.NewProfileConnection(page, r, obj.ID, filters), nil
 }
 
 // Sessions is the resolver for the sessions field.
@@ -381,7 +388,6 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		ctx,
 		&iam.CreateIdentityFromInvitationRequest{
 			InvitationToken: input.Token,
-			Password:        input.Password,
 		},
 	)
 	if err != nil {
@@ -565,19 +571,19 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID, input.Continue)
 	if err != nil {
 		var (
-			errMembershipNotFound         *iam.ErrMembershipNotFound
-			errPasswordRequired           *iam.ErrPasswordRequired
-			errSAMLAuthenticationRequired *iam.ErrSAMLAuthenticationRequired
+			errMembershipNotFound             *iam.ErrMembershipNotFound
+			errPasswordAuthenticationRequired *iam.ErrPasswordAuthenticationRequired
+			errSAMLAuthenticationRequired     *iam.ErrSAMLAuthenticationRequired
 		)
 
 		switch {
 		case errors.As(err, &errMembershipNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
 
-		case errors.As(err, &errPasswordRequired):
+		case errors.As(err, &errPasswordAuthenticationRequired):
 			return &types.AssumeOrganizationSessionPayload{
 				Result: types.PasswordRequired{
-					Reason: types.ReauthenticationReason(errPasswordRequired.Reason),
+					Reason: types.ReauthenticationReason(errPasswordAuthenticationRequired.Reason),
 				},
 			}, nil
 
@@ -1199,7 +1205,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewProfileConnection(page, r, obj.ID), nil
+	return types.NewProfileConnection(page, r, obj.ID, filter), nil
 }
 
 // SamlConfigurations is the resolver for the samlConfigurations field.

@@ -293,7 +293,6 @@ func (i *Invitations) ExpireByUserID(
 	    expires_at = NOW()
 	WHERE
 	    user_id = @user_id
-	    AND organization_id = @organization_id
 	    AND %s
 	    AND %s
 	`

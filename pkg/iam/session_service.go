@@ -573,16 +573,23 @@ func (s SessionService) AssumeOrganizationSession(
 				return fmt.Errorf("cannot load SAML configuration: %w", err)
 			}
 
-			if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyRequired {
-				if rootSession.AuthMethod != coredata.AuthMethodSAML {
-					return NewSAMLAuthenticationRequiredError("policy_requirement")
+			if err == nil {
+				switch samlConfig.EnforcementPolicy {
+				case coredata.SAMLEnforcementPolicyRequired:
+					if rootSession.AuthMethod != coredata.AuthMethodSAML {
+						return NewSAMLAuthenticationRequiredError("policy_requirement")
+					}
+				case coredata.SAMLEnforcementPolicyOptional:
+					// SAML is optional: both PASSWORD and SAML root sessions are allowed.
 				}
-			} else if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyOptional {
-				// SAML is optional: both PASSWORD and SAML root sessions are allowed.
-			} else if rootSession.AuthMethod != coredata.AuthMethodPassword {
-				// No (or non-required) SAML configuration: require a password-authenticated root session
-				// (eg. when switching into a password-based org from a SAML login).
-				return NewPasswordRequiredError("password_authentication_required")
+			} else {
+				switch rootSession.AuthMethod {
+				case coredata.AuthMethodPassword:
+				case coredata.AuthMethodSAML:
+					// No (or non-required) SAML configuration: require a password-authenticated or magic-link root session
+					// (eg. when switching into a password-based org from a SAML login)
+					return NewPasswordAuthenticationRequiredError("password_authentication_required")
+				}
 			}
 
 			tenantID := scope.GetTenantID()

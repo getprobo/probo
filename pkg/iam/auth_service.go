@@ -47,7 +47,6 @@ type (
 
 	CreateIdentityFromInvitationRequest struct {
 		InvitationToken string
-		Password        string
 	}
 
 	LoadOrCreateIdentityRequest struct {
@@ -92,7 +91,6 @@ func (req CreateIdentityFromInvitationRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.InvitationToken, "invitationToken", validator.NotEmpty())
-	v.Check(req.Password, "password", PasswordValidator())
 
 	return v.Error()
 }
@@ -153,11 +151,6 @@ func (s *AuthService) ActivateAccount(
 		now        = time.Now()
 	)
 
-	hashedPassword, err := s.hp.HashPassword([]byte(req.Password))
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot hash password: %w", err)
-	}
-
 	err = s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -197,7 +190,6 @@ func (s *AuthService) ActivateAccount(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			identity.HashedPassword = hashedPassword
 			identity.EmailAddressVerified = true
 			identity.UpdatedAt = now
 
