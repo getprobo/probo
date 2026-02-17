@@ -77,6 +77,7 @@ export function PersonForm(props: {
   connectionId?: DataID;
   disabled?: boolean;
   defaultValues?: z.infer<typeof schema>;
+  onSubmit?: () => void;
 }) {
   const {
     id,
@@ -92,6 +93,7 @@ export function PersonForm(props: {
       contractStartDate: null,
       contractEndDate: null,
     },
+    onSubmit,
   } = props;
 
   const organizationId = useOrganizationId();
@@ -99,7 +101,7 @@ export function PersonForm(props: {
   const { role } = use(CurrentUser);
   const availableRoles = getAssignableRoles(role);
 
-  const { control, formState, handleSubmit, register, reset }
+  const { control, formState, handleSubmit: handleSubmitWrapper, register, reset }
     = useFormWithSchema(schema, { defaultValues });
   const watchedRole = useWatch({
     control,
@@ -120,7 +122,7 @@ export function PersonForm(props: {
       errorMessage: __("Failed to update person"),
     },
   );
-  const onSubmit = handleSubmit(async (data: z.infer<typeof schema>) => {
+  const handleSubmit = handleSubmitWrapper(async (data: z.infer<typeof schema>) => {
     const input = {
       fullName: data.fullName,
       emailAddress: data.emailAddress,
@@ -137,6 +139,7 @@ export function PersonForm(props: {
         variables: { input: { ...input, id } },
         onCompleted: () => {
           reset(data);
+          onSubmit?.();
         },
       });
     } else {
@@ -147,13 +150,14 @@ export function PersonForm(props: {
         },
         onCompleted: () => {
           reset(data);
+          onSubmit?.();
         },
       });
     }
   });
 
   return (
-    <form onSubmit={e => void onSubmit(e)} className="space-y-4">
+    <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
       <Field label={__("Full name *")} {...register("fullName")} type="text" />
       {id
         ? (
