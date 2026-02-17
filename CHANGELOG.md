@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.127.0] - 2026-02-17
+
+### Changed
+
+- Change single document owner to multiple approvers
+
 ## [0.126.1] - 2026-02-16
 
 ### Added
