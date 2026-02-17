@@ -6,11 +6,15 @@ package mcp_v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -1892,16 +1896,6 @@ func (r *Resolver) CancelSignatureRequestTool(ctx context.Context, req *mcp.Call
 	}, nil
 }
 
-func (r *Resolver) ListProfilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListProfilesInput) (*mcp.CallToolResult, types.ListProfilesOutput, error) {
-	return nil, types.ListProfilesOutput{}, fmt.Errorf("listProfiles not implemented")
-}
-func (r *Resolver) GetProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetProfileInput) (*mcp.CallToolResult, types.GetProfileOutput, error) {
-	return nil, types.GetProfileOutput{}, fmt.Errorf("getProfile not implemented")
-}
-func (r *Resolver) UpdateProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProfileInput) (*mcp.CallToolResult, types.UpdateProfileOutput, error) {
-	return nil, types.UpdateProfileOutput{}, fmt.Errorf("updateProfile not implemented")
-}
-
 func (r *Resolver) ListMeetingsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingsInput) (*mcp.CallToolResult, types.ListMeetingsOutput, error) {
 	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMeetingList)
 
@@ -2054,4 +2048,179 @@ func (r *Resolver) DeleteMeasureTool(ctx context.Context, req *mcp.CallToolReque
 	return nil, types.DeleteMeasureOutput{
 		DeletedMeasureID: input.ID,
 	}, nil
+}
+
+func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListUsersInput) (*mcp.CallToolResult, types.ListUsersOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionMembershipProfileList)
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	filter := coredata.NewMembershipProfileFilter(nil)
+	if input.Filter != nil {
+		filter = coredata.NewMembershipProfileFilter(input.Filter.ExcludeContractEnded)
+	}
+
+	pageResult, err := r.iamSvc.OrganizationService.ListProfiles(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		return nil, types.ListUsersOutput{}, fmt.Errorf("list users: %w", err)
+	}
+
+	users := make([]*types.Profile, 0, len(pageResult.Data))
+	for _, p := range pageResult.Data {
+		users = append(users, types.NewProfile(p))
+	}
+	var nextCursor *page.CursorKey
+	if len(pageResult.Data) > 0 && pageResult.Cursor != nil {
+		cursorKey := pageResult.Data[len(pageResult.Data)-1].CursorKey(pageResult.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+	return nil, types.ListUsersOutput{
+		Users:      users,
+		NextCursor: nextCursor,
+	}, nil
+}
+
+func (r *Resolver) GetUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetUserInput) (*mcp.CallToolResult, types.GetUserOutput, error) {
+	profile, err := r.iamSvc.OrganizationService.GetProfile(ctx, input.ID)
+	if err != nil {
+		var errNotFound *iam.ErrProfileNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, types.GetUserOutput{}, fmt.Errorf("user not found: %w", err)
+		}
+		return nil, types.GetUserOutput{}, fmt.Errorf("get user: %w", err)
+	}
+	r.MustAuthorize(ctx, profile.OrganizationID, iam.ActionMembershipProfileGet)
+	return nil, types.GetUserOutput{User: types.NewProfile(profile)}, nil
+}
+
+func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateUserInput) (*mcp.CallToolResult, types.CreateUserOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate)
+
+	var contractStart, contractEnd **time.Time
+	if input.ContractStartDate != nil {
+		contractStart = &input.ContractStartDate
+	}
+	if input.ContractEndDate != nil {
+		contractEnd = &input.ContractEndDate
+	}
+	profile, err := r.iamSvc.OrganizationService.CreateUser(ctx, &iam.CreateUserRequest{
+		OrganizationID:           input.OrganizationID,
+		EmailAddress:             input.EmailAddress,
+		Role:                     input.Role,
+		FullName:                 input.FullName,
+		AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+		Kind:                     input.Kind,
+		Position:                 input.Position,
+		ContractStartDate:        contractStart,
+		ContractEndDate:          contractEnd,
+	})
+	if err != nil {
+		var errAlreadyExists *iam.ErrUserAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, types.CreateUserOutput{}, fmt.Errorf("user with email already exists: %w", err)
+		}
+		return nil, types.CreateUserOutput{}, fmt.Errorf("create user: %w", err)
+	}
+	return nil, types.CreateUserOutput{User: types.NewProfile(profile)}, nil
+}
+
+func (r *Resolver) InviteUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.InviteUserInput) (*mcp.CallToolResult, types.InviteUserOutput, error) {
+	r.MustAuthorize(ctx, input.ProfileID, iam.ActionInvitationCreate)
+
+	invitation, err := r.iamSvc.OrganizationService.InviteUser(ctx, &iam.CreateInvitationRequest{
+		OrganizationID: input.OrganizationID,
+		ProfileID:      input.ProfileID,
+	})
+	if err != nil {
+		var errOrgNotFound *iam.ErrOrganizationNotFound
+		var errUserExists *iam.ErrUserAlreadyExists
+		if errors.As(err, &errOrgNotFound) {
+			return nil, types.InviteUserOutput{}, fmt.Errorf("organization not found: %w", err)
+		}
+		if errors.As(err, &errUserExists) {
+			return nil, types.InviteUserOutput{}, fmt.Errorf("user already in organization: %w", err)
+		}
+		return nil, types.InviteUserOutput{}, fmt.Errorf("invite user: %w", err)
+	}
+	return nil, types.InviteUserOutput{InvitationID: invitation.ID}, nil
+}
+
+func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateUserInput) (*mcp.CallToolResult, types.UpdateUserOutput, error) {
+	r.MustAuthorize(ctx, input.ID, iam.ActionMembershipProfileUpdate)
+
+	var additionalEmails []mail.Addr
+	if input.AdditionalEmailAddresses != nil {
+		additionalEmails = *input.AdditionalEmailAddresses
+	}
+	var position *string
+	if p := UnwrapOmittable(input.Position); p != nil {
+		position = *p
+	}
+	var contractStart, contractEnd **time.Time
+	if p := UnwrapOmittable(input.ContractStartDate); p != nil {
+		contractStart = p
+	}
+	if p := UnwrapOmittable(input.ContractEndDate); p != nil {
+		contractEnd = p
+	}
+	profile, err := r.iamSvc.OrganizationService.UpdateUser(ctx, &iam.UpdateUserRequest{
+		ID:                       input.ID,
+		FullName:                 input.FullName,
+		AdditionalEmailAddresses: additionalEmails,
+		Kind:                     input.Kind,
+		Position:                 position,
+		ContractStartDate:        contractStart,
+		ContractEndDate:          contractEnd,
+	})
+	if err != nil {
+		return nil, types.UpdateUserOutput{}, fmt.Errorf("update user: %w", err)
+	}
+	return nil, types.UpdateUserOutput{User: types.NewProfile(profile)}, nil
+}
+
+func (r *Resolver) UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMembershipInput) (*mcp.CallToolResult, types.UpdateMembershipOutput, error) {
+	r.MustAuthorize(ctx, input.MembershipID, iam.ActionMembershipUpdate)
+	if input.Role == coredata.MembershipRoleOwner {
+		r.MustAuthorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner)
+	}
+
+	membership, err := r.iamSvc.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
+	if err != nil {
+		return nil, types.UpdateMembershipOutput{}, fmt.Errorf("update membership: %w", err)
+	}
+	return nil, types.UpdateMembershipOutput{
+		Membership: &types.Membership{
+			ID:        membership.ID,
+			Role:      membership.Role,
+			CreatedAt: membership.CreatedAt,
+		},
+	}, nil
+}
+
+func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveUserInput) (*mcp.CallToolResult, types.RemoveUserOutput, error) {
+	r.MustAuthorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete)
+
+	err := r.iamSvc.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
+	if err != nil {
+		var errManagedBySCIM *iam.ErrUserManagedBySCIM
+		var errLastOwner *iam.ErrLastActiveOwner
+		if errors.As(err, &errManagedBySCIM) {
+			return nil, types.RemoveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be removed: %w", err)
+		}
+		if errors.As(err, &errLastOwner) {
+			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot remove last active owner: %w", err)
+		}
+		return nil, types.RemoveUserOutput{}, fmt.Errorf("remove user: %w", err)
+	}
+	return nil, types.RemoveUserOutput{DeletedUserID: input.ProfileID}, nil
 }

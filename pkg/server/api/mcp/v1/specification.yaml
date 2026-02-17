@@ -72,6 +72,16 @@ components:
         - SERVICE_ACCOUNT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileKind
 
+    MembershipRole:
+      type: string
+      enum:
+        - OWNER
+        - ADMIN
+        - EMPLOYEE
+        - VIEWER
+        - AUDITOR
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipRole
+
     Profile:
       type: object
       required:
@@ -130,7 +140,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListProfilesInput:
+    ListUsersInput:
       type: object
       required:
         - organization_id
@@ -140,7 +150,7 @@ components:
           description: Organization ID
         order_by:
           $ref: "#/components/schemas/ProfileOrderBy"
-          description: Profile order by
+          description: User order by
         size:
           type: integer
           description: Page size
@@ -152,17 +162,17 @@ components:
           properties:
             exclude_contract_ended:
               type: boolean
-              description: Exclude profiles with ended contracts
+              description: Exclude users with ended contracts
 
-    ListProfilesOutput:
+    ListUsersOutput:
       type: object
       required:
-        - profiles
+        - users
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        profiles:
+        users:
           type: array
           items:
             $ref: "#/components/schemas/Profile"
@@ -599,6 +609,205 @@ components:
       properties:
         vendor:
           $ref: "#/components/schemas/Vendor"
+
+    GetUserInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: User ID (profile ID)
+
+    GetUserOutput:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: "#/components/schemas/Profile"
+
+    CreateUserInput:
+      type: object
+      required:
+        - organization_id
+        - full_name
+        - email_address
+        - role
+        - kind
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        full_name:
+          type: string
+          description: Full name
+        email_address:
+          $ref: "#/components/schemas/EmailAddress"
+          description: Email address
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+          description: Membership role
+        additional_email_addresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmailAddress"
+          description: Additional email addresses
+        kind:
+          $ref: "#/components/schemas/ProfileKind"
+          description: User kind
+        position:
+          type: ["string", "null"]
+          description: Position
+        contract_start_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Contract start date
+        contract_end_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Contract end date
+
+    CreateUserOutput:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: "#/components/schemas/Profile"
+
+    InviteUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to invite
+
+    InviteUserOutput:
+      type: object
+      required:
+        - invitation_id
+      properties:
+        invitation_id:
+          $ref: "#/components/schemas/GID"
+          description: Created invitation ID
+
+    UpdateUserInput:
+      type: object
+      required:
+        - id
+        - full_name
+        - kind
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID
+        full_name:
+          type: string
+          description: Full name
+        additional_email_addresses:
+          anyOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/EmailAddress"
+            - type: "null"
+          description: Additional email addresses
+        kind:
+          $ref: "#/components/schemas/ProfileKind"
+          description: User kind
+        position:
+          type: ["string", "null"]
+          description: Position
+          go.probo.inc/mcpgen/omittable: true
+        contract_start_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Contract start date
+          go.probo.inc/mcpgen/omittable: true
+        contract_end_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Contract end date
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateUserOutput:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: "#/components/schemas/Profile"
+
+    Membership:
+      type: object
+      required:
+        - id
+        - role
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Membership ID
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+          description: Membership role
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    UpdateMembershipInput:
+      type: object
+      required:
+        - organization_id
+        - membership_id
+        - role
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        membership_id:
+          $ref: "#/components/schemas/GID"
+          description: Membership ID
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+          description: New role
+
+    UpdateMembershipOutput:
+      type: object
+      required:
+        - membership
+      properties:
+        membership:
+          $ref: "#/components/schemas/Membership"
+
+    RemoveUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to remove
+
+    RemoveUserOutput:
+      type: object
+      required:
+        - deleted_user_id
+      properties:
+        deleted_user_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted user (profile) ID
 
     GetProfileInput:
       type: object
@@ -4405,15 +4614,64 @@ tools:
       $ref: "#/components/schemas/ListVendorsInput"
     outputSchema:
       $ref: "#/components/schemas/ListVendorsOutput"
-  - name: listProfiles
-    description: List all profiles for the organization
+  - name: listUsers
+    description: List all users for the organization
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListProfilesInput"
+      $ref: "#/components/schemas/ListUsersInput"
     outputSchema:
-      $ref: "#/components/schemas/ListProfilesOutput"
+      $ref: "#/components/schemas/ListUsersOutput"
+  - name: getUser
+    description: Get a user by ID (profile ID)
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetUserOutput"
+  - name: createUser
+    description: Create a new user in the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateUserOutput"
+  - name: inviteUser
+    description: Invite a user (profile) to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/InviteUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/InviteUserOutput"
+  - name: updateUser
+    description: Update an existing user (profile)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateUserOutput"
+  - name: updateMembership
+    description: Update a membership role
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateMembershipInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateMembershipOutput"
+  - name: removeUser
+    description: Remove a user from the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/RemoveUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/RemoveUserOutput"
   - name: addVendor
     description: Add a new vendor to the organization
     hints:
@@ -4430,23 +4688,6 @@ tools:
       $ref: "#/components/schemas/UpdateVendorInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateVendorOutput"
-  - name: getProfile
-    description: Get a profile by ID
-    hints:
-      readonly: true
-      idempotent: true
-    inputSchema:
-      $ref: "#/components/schemas/GetProfileInput"
-    outputSchema:
-      $ref: "#/components/schemas/GetProfileOutput"
-  - name: updateProfile
-    description: Update an existing profile
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/UpdateProfileInput"
-    outputSchema:
-      $ref: "#/components/schemas/UpdateProfileOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:

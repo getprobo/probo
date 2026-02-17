@@ -12,11 +12,15 @@ import (
 type ResolverInterface interface {
 	ListOrganizationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListOrganizationsInput) (*mcp.CallToolResult, types.ListOrganizationsOutput, error)
 	ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorsInput) (*mcp.CallToolResult, types.ListVendorsOutput, error)
-	ListProfilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListProfilesInput) (*mcp.CallToolResult, types.ListProfilesOutput, error)
+	ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListUsersInput) (*mcp.CallToolResult, types.ListUsersOutput, error)
+	GetUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetUserInput) (*mcp.CallToolResult, types.GetUserOutput, error)
+	CreateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateUserInput) (*mcp.CallToolResult, types.CreateUserOutput, error)
+	InviteUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.InviteUserInput) (*mcp.CallToolResult, types.InviteUserOutput, error)
+	UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateUserInput) (*mcp.CallToolResult, types.UpdateUserOutput, error)
+	UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMembershipInput) (*mcp.CallToolResult, types.UpdateMembershipOutput, error)
+	RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveUserInput) (*mcp.CallToolResult, types.RemoveUserOutput, error)
 	AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorInput) (*mcp.CallToolResult, types.AddVendorOutput, error)
 	UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error)
-	GetProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetProfileInput) (*mcp.CallToolResult, types.GetProfileOutput, error)
-	UpdateProfileTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProfileInput) (*mcp.CallToolResult, types.UpdateProfileOutput, error)
 	ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error)
 	GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error)
 	AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error)
@@ -148,16 +152,80 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "listProfiles",
-			Description:  "List all profiles for the organization",
-			InputSchema:  types.ListProfilesToolInputSchema,
-			OutputSchema: types.ListProfilesToolOutputSchema,
+			Name:         "listUsers",
+			Description:  "List all users for the organization",
+			InputSchema:  types.ListUsersToolInputSchema,
+			OutputSchema: types.ListUsersToolOutputSchema,
 			Annotations: &mcp.ToolAnnotations{
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
 			},
 		},
-		resolver.ListProfilesTool,
+		resolver.ListUsersTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getUser",
+			Description:  "Get a user by ID (profile ID)",
+			InputSchema:  types.GetUserToolInputSchema,
+			OutputSchema: types.GetUserToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetUserTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "createUser",
+			Description:  "Create a new user in the organization",
+			InputSchema:  types.CreateUserToolInputSchema,
+			OutputSchema: types.CreateUserToolOutputSchema,
+		},
+		resolver.CreateUserTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "inviteUser",
+			Description:  "Invite a user (profile) to the organization",
+			InputSchema:  types.InviteUserToolInputSchema,
+			OutputSchema: types.InviteUserToolOutputSchema,
+		},
+		resolver.InviteUserTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateUser",
+			Description:  "Update an existing user (profile)",
+			InputSchema:  types.UpdateUserToolInputSchema,
+			OutputSchema: types.UpdateUserToolOutputSchema,
+		},
+		resolver.UpdateUserTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateMembership",
+			Description:  "Update a membership role",
+			InputSchema:  types.UpdateMembershipToolInputSchema,
+			OutputSchema: types.UpdateMembershipToolOutputSchema,
+		},
+		resolver.UpdateMembershipTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "removeUser",
+			Description:  "Remove a user from the organization",
+			InputSchema:  types.RemoveUserToolInputSchema,
+			OutputSchema: types.RemoveUserToolOutputSchema,
+		},
+		resolver.RemoveUserTool,
 	)
 	mcp.AddTool(
 		server,
@@ -178,30 +246,6 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateVendorToolOutputSchema,
 		},
 		resolver.UpdateVendorTool,
-	)
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:         "getProfile",
-			Description:  "Get a profile by ID",
-			InputSchema:  types.GetProfileToolInputSchema,
-			OutputSchema: types.GetProfileToolOutputSchema,
-			Annotations: &mcp.ToolAnnotations{
-				ReadOnlyHint:   true,
-				IdempotentHint: true,
-			},
-		},
-		resolver.GetProfileTool,
-	)
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:         "updateProfile",
-			Description:  "Update an existing profile",
-			InputSchema:  types.UpdateProfileToolInputSchema,
-			OutputSchema: types.UpdateProfileToolOutputSchema,
-		},
-		resolver.UpdateProfileTool,
 	)
 	mcp.AddTool(
 		server,
