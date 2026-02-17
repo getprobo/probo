@@ -796,11 +796,8 @@ type SignOutPayload {
 }
 
 type ActivateAccountPayload {
+  createPasswordToken: String
   profile: Profile
-}
-
-type CreatePasswordPayload {
-  success: Boolean!
 }
 
 type ForgotPasswordPayload {

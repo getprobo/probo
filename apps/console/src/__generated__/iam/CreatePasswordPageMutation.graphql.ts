@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<852ecee082c322aba273f04575353fbd>>
+ * @generated SignedSource<<cde2278cb4ed7c350f1c8727933cd92d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,20 +9,21 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ActivateAccountInput = {
+export type ResetPasswordInput = {
+  password: string;
   token: string;
 };
-export type ActivateAccountPageMutation$variables = {
-  input: ActivateAccountInput;
+export type CreatePasswordPageMutation$variables = {
+  input: ResetPasswordInput;
 };
-export type ActivateAccountPageMutation$data = {
-  readonly activateAccount: {
-    readonly createPasswordToken: string | null | undefined;
+export type CreatePasswordPageMutation$data = {
+  readonly resetPassword: {
+    readonly success: boolean;
   } | null | undefined;
 };
-export type ActivateAccountPageMutation = {
-  response: ActivateAccountPageMutation$data;
-  variables: ActivateAccountPageMutation$variables;
+export type CreatePasswordPageMutation = {
+  response: CreatePasswordPageMutation$data;
+  variables: CreatePasswordPageMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -43,16 +44,16 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "ActivateAccountPayload",
+    "concreteType": "ResetPasswordPayload",
     "kind": "LinkedField",
-    "name": "activateAccount",
+    "name": "resetPassword",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
         "kind": "ScalarField",
-        "name": "createPasswordToken",
+        "name": "success",
         "storageKey": null
       }
     ],
@@ -64,7 +65,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "ActivateAccountPageMutation",
+    "name": "CreatePasswordPageMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -73,20 +74,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "ActivateAccountPageMutation",
+    "name": "CreatePasswordPageMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "388c90522ecf3a3365e171a623fb2d2e",
+    "cacheID": "aedb0b874e2e55a106724665d51f840e",
     "id": null,
     "metadata": {},
-    "name": "ActivateAccountPageMutation",
+    "name": "CreatePasswordPageMutation",
     "operationKind": "mutation",
-    "text": "mutation ActivateAccountPageMutation(\n  $input: ActivateAccountInput!\n) {\n  activateAccount(input: $input) {\n    createPasswordToken\n  }\n}\n"
+    "text": "mutation CreatePasswordPageMutation(\n  $input: ResetPasswordInput!\n) {\n  resetPassword(input: $input) {\n    success\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c27b723383934423bf92926820426653";
+(node as any).hash = "d9bd91787098b9272f0046ad09554a1a";
 
 export default node;

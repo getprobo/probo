@@ -7,16 +7,14 @@ import { useMutation } from "react-relay";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { ActivateAccountPageMutation } from "#/__generated__/iam/ActivateAccountPageMutation.graphql";
+import type { ActivateAccountPageMutation$data, ActivateAccountPageMutation } from "#/__generated__/iam/ActivateAccountPageMutation.graphql";
 
 const activateAccountMutation = graphql`
   mutation ActivateAccountPageMutation(
     $input: ActivateAccountInput!
   ) {
     activateAccount(input: $input) {
-      profile {
-        id
-      }
+      createPasswordToken
     }
   }
 `;
@@ -39,7 +37,7 @@ export default function ActivateAccountPage() {
       variables: {
         input: { token },
       },
-      onCompleted: (_, errors: GraphQLError[] | null) => {
+      onCompleted: (response: ActivateAccountPageMutation$data, errors: GraphQLError[] | null) => {
         if (errors) {
           for (const err of errors) {
             if (err.extensions?.code === "ALREADY_AUTHENTICATED") {
@@ -63,7 +61,21 @@ export default function ActivateAccountPage() {
           ),
           variant: "success",
         });
-        void navigate("/", { replace: true });
+
+        const { activateAccount } = response;
+
+        if (!activateAccount) {
+          throw new Error("mutation data missing");
+        }
+
+        if (activateAccount.createPasswordToken) {
+          void navigate(
+            { pathname: "/auth/create-password", search: `?token=${activateAccount.createPasswordToken}` },
+            { replace: true },
+          );
+        } else {
+          void navigate("/", { replace: true });
+        }
       },
       onError: (e) => {
         toast({

@@ -39,7 +39,8 @@ type ActivateAccountInput struct {
 }
 
 type ActivateAccountPayload struct {
-	Profile *Profile `json:"profile,omitempty"`
+	CreatePasswordToken *string  `json:"createPasswordToken,omitempty"`
+	Profile             *Profile `json:"profile,omitempty"`
 }
 
 type AssumeOrganizationSessionInput struct {
@@ -89,10 +90,6 @@ type CreateOrganizationInput struct {
 type CreateOrganizationPayload struct {
 	Organization *Organization `json:"organization,omitempty"`
 	Membership   *Membership   `json:"membership"`
-}
-
-type CreatePasswordPayload struct {
-	Success bool `json:"success"`
 }
 
 type CreatePersonalAPIKeyInput struct {

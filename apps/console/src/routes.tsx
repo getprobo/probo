@@ -69,6 +69,12 @@ const routes = [
         ),
       },
       {
+        path: "create-password",
+        Component: lazy(
+          () => import("./pages/iam/auth/CreatePasswordPage"),
+        ),
+      },
+      {
         path: "forgot-password",
         Component: lazy(() => import("./pages/iam/auth/ForgotPasswordPage")),
       },

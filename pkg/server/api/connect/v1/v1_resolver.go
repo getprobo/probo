@@ -384,9 +384,9 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 
 // ActivateAccount is the resolver for the signUpFromInvitation field.
 func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.ActivateAccountInput) (*types.ActivateAccountPayload, error) {
-	user, session, err := r.iam.AuthService.ActivateAccount(
+	user, createPasswordToken, err := r.iam.AuthService.ActivateAccount(
 		ctx,
-		&iam.CreateIdentityFromInvitationRequest{
+		&iam.ActivateAccountRequest{
 			InvitationToken: input.Token,
 		},
 	)
@@ -411,11 +411,9 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	r.sessionCookie.Set(w, session)
-
 	return &types.ActivateAccountPayload{
-		Profile: types.NewProfile(user),
+		CreatePasswordToken: createPasswordToken,
+		Profile:             types.NewProfile(user),
 	}, nil
 }
 

@@ -80,7 +80,8 @@ type ComplexityRoot struct {
 	}
 
 	ActivateAccountPayload struct {
-		Profile func(childComplexity int) int
+		CreatePasswordToken func(childComplexity int) int
+		Profile             func(childComplexity int) int
 	}
 
 	AssumeOrganizationSessionPayload struct {
@@ -106,10 +107,6 @@ type ComplexityRoot struct {
 	CreateOrganizationPayload struct {
 		Membership   func(childComplexity int) int
 		Organization func(childComplexity int) int
-	}
-
-	CreatePasswordPayload struct {
-		Success func(childComplexity int) int
 	}
 
 	CreatePersonalAPIKeyPayload struct {
@@ -654,6 +651,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.AcceptInvitationPayload.Membership(childComplexity), true
 
+	case "ActivateAccountPayload.createPasswordToken":
+		if e.complexity.ActivateAccountPayload.CreatePasswordToken == nil {
+			break
+		}
+
+		return e.complexity.ActivateAccountPayload.CreatePasswordToken(childComplexity), true
 	case "ActivateAccountPayload.profile":
 		if e.complexity.ActivateAccountPayload.Profile == nil {
 			break
@@ -730,13 +733,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CreateOrganizationPayload.Organization(childComplexity), true
-
-	case "CreatePasswordPayload.success":
-		if e.complexity.CreatePasswordPayload.Success == nil {
-			break
-		}
-
-		return e.complexity.CreatePasswordPayload.Success(childComplexity), true
 
 	case "CreatePersonalAPIKeyPayload.personalAPIKeyEdge":
 		if e.complexity.CreatePersonalAPIKeyPayload.PersonalAPIKeyEdge == nil {
@@ -3281,11 +3277,8 @@ type SignOutPayload {
 }
 
 type ActivateAccountPayload {
+  createPasswordToken: String
   profile: Profile
-}
-
-type CreatePasswordPayload {
-  success: Boolean!
 }
 
 type ForgotPasswordPayload {
@@ -4327,6 +4320,35 @@ func (ec *executionContext) fieldContext_AcceptInvitationPayload_invitation(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _ActivateAccountPayload_createPasswordToken(ctx context.Context, field graphql.CollectedField, obj *types.ActivateAccountPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ActivateAccountPayload_createPasswordToken,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatePasswordToken, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ActivateAccountPayload_createPasswordToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActivateAccountPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ActivateAccountPayload_profile(ctx context.Context, field graphql.CollectedField, obj *types.ActivateAccountPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4751,35 +4773,6 @@ func (ec *executionContext) fieldContext_CreateOrganizationPayload_membership(_ 
 				return ec.fieldContext_Membership_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreatePasswordPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.CreatePasswordPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CreatePasswordPayload_success,
-		func(ctx context.Context) (any, error) {
-			return obj.Success, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CreatePasswordPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreatePasswordPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6636,6 +6629,8 @@ func (ec *executionContext) fieldContext_Mutation_activateAccount(ctx context.Co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "createPasswordToken":
+				return ec.fieldContext_ActivateAccountPayload_createPasswordToken(ctx, field)
 			case "profile":
 				return ec.fieldContext_ActivateAccountPayload_profile(ctx, field)
 			}
@@ -16764,6 +16759,8 @@ func (ec *executionContext) _ActivateAccountPayload(ctx context.Context, sel ast
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ActivateAccountPayload")
+		case "createPasswordToken":
+			out.Values[i] = ec._ActivateAccountPayload_createPasswordToken(ctx, field, obj)
 		case "profile":
 			out.Values[i] = ec._ActivateAccountPayload_profile(ctx, field, obj)
 		default:
@@ -17011,45 +17008,6 @@ func (ec *executionContext) _CreateOrganizationPayload(ctx context.Context, sel 
 			out.Values[i] = ec._CreateOrganizationPayload_organization(ctx, field, obj)
 		case "membership":
 			out.Values[i] = ec._CreateOrganizationPayload_membership(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var createPasswordPayloadImplementors = []string{"CreatePasswordPayload"}
-
-func (ec *executionContext) _CreatePasswordPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreatePasswordPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createPasswordPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreatePasswordPayload")
-		case "success":
-			out.Values[i] = ec._CreatePasswordPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

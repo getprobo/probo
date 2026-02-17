@@ -45,7 +45,7 @@ type (
 		NewPassword     string
 	}
 
-	CreateIdentityFromInvitationRequest struct {
+	ActivateAccountRequest struct {
 		InvitationToken string
 	}
 
@@ -87,7 +87,7 @@ func NewAuthService(svc *Service) *AuthService {
 	return &AuthService{Service: svc}
 }
 
-func (req CreateIdentityFromInvitationRequest) Validate() error {
+func (req ActivateAccountRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.InvitationToken, "invitationToken", validator.NotEmpty())
@@ -132,8 +132,8 @@ func (req CreateIdentityWithPasswordRequest) Validate() error {
 
 func (s *AuthService) ActivateAccount(
 	ctx context.Context,
-	req *CreateIdentityFromInvitationRequest,
-) (*coredata.MembershipProfile, *coredata.Session, error) {
+	req *ActivateAccountRequest,
+) (*coredata.MembershipProfile, *string, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -144,11 +144,12 @@ func (s *AuthService) ActivateAccount(
 	}
 
 	var (
-		scope      = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
-		invitation = &coredata.Invitation{}
-		profile    *coredata.MembershipProfile
-		session    *coredata.Session
-		now        = time.Now()
+		scope               = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
+		invitation          = &coredata.Invitation{}
+		profile             *coredata.MembershipProfile
+		identity            *coredata.Identity
+		now                 = time.Now()
+		createPasswordToken *string
 	)
 
 	err = s.pg.WithTx(
@@ -185,7 +186,7 @@ func (s *AuthService) ActivateAccount(
 				}
 			}
 
-			identity := &coredata.Identity{}
+			identity = &coredata.Identity{}
 			if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
@@ -220,12 +221,6 @@ func (s *AuthService) ActivateAccount(
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
-			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
-			err = session.Insert(ctx, tx)
-			if err != nil {
-				return fmt.Errorf("cannot insert session: %w", err)
-			}
-
 			return nil
 		},
 	)
@@ -234,7 +229,21 @@ func (s *AuthService) ActivateAccount(
 		return nil, nil, err
 	}
 
-	return profile, session, nil
+	if identity.HashedPassword == nil {
+		token, err := statelesstoken.NewToken(
+			s.tokenSecret,
+			TokenTypePasswordReset,
+			s.passwordResetTokenValidity,
+			PasswordResetData{Email: identity.EmailAddress},
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot generate password create token: %w", err)
+		}
+
+		createPasswordToken = &token
+	}
+
+	return profile, createPasswordToken, nil
 }
 
 func (s AuthService) ResetPassword(
