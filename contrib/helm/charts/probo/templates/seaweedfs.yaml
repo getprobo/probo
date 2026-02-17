@@ -1,0 +1,136 @@
+{{- if .Values.seaweedfs.enabled }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "probo.fullname" . }}-seaweedfs
+  labels:
+    {{- include "probo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: seaweedfs
+stringData:
+  s3.json: |
+    {
+      "identities": [
+        {
+          "name": {{ .Values.seaweedfs.auth.accessKey | quote }},
+          "credentials": [
+            {
+              "accessKey": {{ .Values.seaweedfs.auth.accessKey | quote }},
+              "secretKey": {{ .Values.seaweedfs.auth.secretKey | quote }}
+            }
+          ],
+          "actions": ["Admin", "Read", "Write", "List", "Tagging", "Lock"]
+        }
+      ]
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "probo.fullname" . }}-seaweedfs
+  labels:
+    {{- include "probo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: seaweedfs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "probo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: seaweedfs
+  template:
+    metadata:
+      labels:
+        {{- include "probo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: seaweedfs
+    spec:
+      containers:
+        - name: seaweedfs
+          image: "{{ .Values.seaweedfs.image.repository }}:{{ .Values.seaweedfs.image.tag }}"
+          imagePullPolicy: {{ .Values.seaweedfs.image.pullPolicy }}
+          args:
+            - server
+            - -s3
+            - -s3.config=/etc/seaweedfs/s3.json
+            - -s3.port=8333
+            - -volume.max=100
+            - -master.volumeSizeLimitMB=1024
+            - -dir=/data
+          ports:
+            - name: s3
+              containerPort: 8333
+              protocol: TCP
+            - name: master
+              containerPort: 9333
+              protocol: TCP
+            - name: filer
+              containerPort: 8888
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /cluster/status
+              port: master
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /cluster/status
+              port: master
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.seaweedfs.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/seaweedfs
+              readOnly: true
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: config
+          secret:
+            secretName: {{ include "probo.fullname" . }}-seaweedfs
+        - name: data
+        {{- if .Values.seaweedfs.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "probo.fullname" . }}-seaweedfs
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- if .Values.seaweedfs.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "probo.fullname" . }}-seaweedfs
+  labels:
+    {{- include "probo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: seaweedfs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.seaweedfs.persistence.size }}
+  {{- if .Values.seaweedfs.persistence.storageClass }}
+  storageClassName: {{ .Values.seaweedfs.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "probo.fullname" . }}-seaweedfs
+  labels:
+    {{- include "probo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: seaweedfs
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8333
+      targetPort: s3
+      protocol: TCP
+      name: s3
+  selector:
+    {{- include "probo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: seaweedfs
+{{- end }}

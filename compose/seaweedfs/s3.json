@@ -1,0 +1,21 @@
+{
+  "identities": [
+    {
+      "name": "probod",
+      "credentials": [
+        {
+          "accessKey": "probod",
+          "secretKey": "thisisnotasecret"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "Write",
+        "List",
+        "Tagging",
+        "Lock"
+      ]
+    }
+  ]
+}
