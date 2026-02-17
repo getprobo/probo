@@ -163,7 +163,7 @@ FROM
 ALTER TABLE
     iam_invitations
 ADD
-    COLUMN user_id TEXT REFERENCES iam_membership_profiles(id);
+    COLUMN user_id TEXT REFERENCES iam_membership_profiles(id) ON DELETE CASCADE;
 
 WITH profile_identities AS (
     SELECT
