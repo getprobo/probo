@@ -103,24 +103,19 @@ export class Probo implements INodeType {
 						description: 'Manage meetings',
 					},
 					{
-						name: 'Member',
-						value: 'member',
-						description: 'Manage organization members',
-					},
-					{
 						name: 'Organization',
 						value: 'organization',
 						description: 'Manage organizations',
 					},
 					{
-						name: 'People',
-						value: 'people',
-						description: 'Manage people',
-					},
-					{
 						name: 'Risk',
 						value: 'risk',
 						description: 'Manage risks',
+					},
+					{
+						name: 'User',
+						value: 'user',
+						description: 'Manage organization users (profiles)',
 					},
 					{
 						name: 'Vendor',

@@ -1,4 +1,9 @@
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import type {
+	INodeProperties,
+	IExecuteFunctions,
+	INodeExecutionData,
+	IDataObject,
+} from 'n8n-workflow';
 import { proboConnectApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -8,8 +13,8 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['member'],
-				operation: ['getAll'],
+				resource: ['user'],
+				operation: ['listUsers'],
 			},
 		},
 		default: '',
@@ -22,8 +27,8 @@ export const description: INodeProperties[] = [
 		type: 'boolean',
 		displayOptions: {
 			show: {
-				resource: ['member'],
-				operation: ['getAll'],
+				resource: ['user'],
+				operation: ['listUsers'],
 			},
 		},
 		default: false,
@@ -35,8 +40,8 @@ export const description: INodeProperties[] = [
 		type: 'number',
 		displayOptions: {
 			show: {
-				resource: ['member'],
-				operation: ['getAll'],
+				resource: ['user'],
+				operation: ['listUsers'],
 				returnAll: [false],
 			},
 		},
@@ -57,34 +62,26 @@ export async function execute(
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetMembers($organizationId: ID!, $first: Int, $after: CursorKey) {
+		query ListUsers($organizationId: ID!, $first: Int, $after: CursorKey, $orderBy: ProfileOrder) {
 			node(id: $organizationId) {
 				... on Organization {
-					members(first: $first, after: $after) {
+					profiles(first: $first, after: $after, orderBy: $orderBy) {
 						edges {
 							node {
 								id
-								createdAt
-								role
+								fullName
+								emailAddress
 								source
 								state
-								identity {
-									id
-									email
-									fullName
-									emailVerified
-								}
-								profile {
-									id
-									fullName
-									createdAt
-									updatedAt
-								}
-								organization {
-									id
-									name
-									email
-								}
+								additionalEmailAddresses
+								kind
+								position
+								contractStartDate
+								contractEndDate
+								createdAt
+								updatedAt
+								organization { id name }
+								membership { id role createdAt }
 							}
 						}
 						pageInfo {
@@ -97,21 +94,22 @@ export async function execute(
 		}
 	`;
 
-	const members = await proboConnectApiRequestAllItems.call(
+	const users = await proboConnectApiRequestAllItems.call(
 		this,
 		query,
 		{ organizationId },
-		(response) => {
+		(response: IDataObject) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			return node?.members as IDataObject | undefined;
+			const org = node as IDataObject | undefined;
+			return org?.profiles as IDataObject | undefined;
 		},
 		returnAll,
 		limit,
 	);
 
 	return {
-		json: { members },
+		json: { users },
 		pairedItem: { item: itemIndex },
 	};
 }

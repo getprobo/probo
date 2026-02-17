@@ -16,8 +16,8 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['member'],
-				operation: ['invite'],
+				resource: ['user'],
+				operation: ['updateMembership'],
 			},
 		},
 		default: '',
@@ -25,32 +25,17 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Email',
-		name: 'email',
+		displayName: 'Membership ID',
+		name: 'membershipId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['member'],
-				operation: ['invite'],
+				resource: ['user'],
+				operation: ['updateMembership'],
 			},
 		},
 		default: '',
-		placeholder: 'name@email.com',
-		description: 'Email address of the person to invite',
-		required: true,
-	},
-	{
-		displayName: 'Full Name',
-		name: 'fullName',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['member'],
-				operation: ['invite'],
-			},
-		},
-		default: '',
-		description: 'Full name of the person to invite',
+		description: 'The ID of the membership to update',
 		required: true,
 	},
 	{
@@ -59,13 +44,13 @@ export const description: INodeProperties[] = [
 		type: 'options',
 		displayOptions: {
 			show: {
-				resource: ['member'],
-				operation: ['invite'],
+				resource: ['user'],
+				operation: ['updateMembership'],
 			},
 		},
 		options: roleOptions,
 		default: 'EMPLOYEE',
-		description: 'Role to assign to the member',
+		description: 'New role for the membership',
 		required: true,
 	},
 ];
@@ -75,35 +60,22 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const email = this.getNodeParameter('email', itemIndex) as string;
-	const fullName = this.getNodeParameter('fullName', itemIndex) as string;
+	const membershipId = this.getNodeParameter('membershipId', itemIndex) as string;
 	const role = this.getNodeParameter('role', itemIndex) as string;
 
 	const query = `
-		mutation InviteMember($input: InviteMemberInput!) {
-			inviteMember(input: $input) {
-				invitationEdge {
-					node {
-						id
-						email
-						fullName
-						role
-						expiresAt
-						status
-						createdAt
-					}
+		mutation UpdateMembership($input: UpdateMembershipInput!) {
+			updateMembership(input: $input) {
+				membership {
+					id
+					role
+					createdAt
 				}
 			}
 		}
 	`;
 
-	const input = {
-		organizationId,
-		email,
-		fullName,
-		role,
-	};
-
+	const input = { organizationId, membershipId, role };
 	const responseData = await proboConnectApiRequest.call(this, query, { input });
 
 	return {

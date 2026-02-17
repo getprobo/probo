@@ -8,8 +8,8 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['member'],
-				operation: ['delete'],
+				resource: ['user'],
+				operation: ['inviteUser'],
 			},
 		},
 		default: '',
@@ -17,17 +17,17 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Membership ID',
-		name: 'membershipId',
+		displayName: 'Profile ID',
+		name: 'profileId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['member'],
-				operation: ['delete'],
+				resource: ['user'],
+				operation: ['inviteUser'],
 			},
 		},
 		default: '',
-		description: 'The ID of the membership to remove',
+		description: 'The ID of the user (profile) to invite to the organization',
 		required: true,
 	},
 ];
@@ -37,19 +37,27 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const membershipId = this.getNodeParameter('membershipId', itemIndex) as string;
+	const profileId = this.getNodeParameter('profileId', itemIndex) as string;
 
 	const query = `
-		mutation RemoveMember($input: RemoveMemberInput!) {
-			removeMember(input: $input) {
-				deletedMembershipId
+		mutation InviteUser($input: InviteUserInput!) {
+			inviteUser(input: $input) {
+				invitationEdge {
+					node {
+						id
+						expiresAt
+						status
+						createdAt
+						user { id fullName emailAddress }
+						organization { id name }
+					}
+				}
 			}
 		}
 	`;
 
-	const responseData = await proboConnectApiRequest.call(this, query, {
-		input: { organizationId, membershipId },
-	});
+	const input = { organizationId, profileId };
+	const responseData = await proboConnectApiRequest.call(this, query, { input });
 
 	return {
 		json: responseData,

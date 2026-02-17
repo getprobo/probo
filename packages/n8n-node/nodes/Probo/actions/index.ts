@@ -6,9 +6,9 @@ import * as datum from './datum';
 import * as execute from './execute';
 import * as framework from './framework';
 import * as measure from './measure';
-import * as member from './member';
 import * as meeting from './meeting';
 import * as organization from './organization';
+import * as user from './user';
 import * as risk from './risk';
 import * as vendor from './vendor';
 
@@ -30,9 +30,9 @@ export const resources: Record<string, ResourceModule> = {
 	execute: execute as ResourceModule,
 	framework: framework as ResourceModule,
 	measure: measure as ResourceModule,
-	member: member as ResourceModule,
 	meeting: meeting as ResourceModule,
 	organization: organization as ResourceModule,
+	user: user as ResourceModule,
 	risk: risk as ResourceModule,
 	vendor: vendor as ResourceModule,
 };
