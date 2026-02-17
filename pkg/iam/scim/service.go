@@ -211,6 +211,21 @@ func (s *Service) CreateUser(
 			}
 		}
 
+		if !active {
+			// Expire pending invitations for user
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(profile.OrganizationID),
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+		}
+
 		// Check if membership exists
 		membership = &coredata.Membership{}
 		if err := membership.LoadByIdentityIDAndOrganizationID(
@@ -448,6 +463,21 @@ func (s *Service) updateUser(
 
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update membership profile: %w", err)
+			}
+
+			if shouldDeactivate {
+				// Expire pending invitations for user
+				invitations := &coredata.Invitations{}
+				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+				if err := invitations.ExpireByUserID(
+					ctx,
+					tx,
+					coredata.NewScopeFromObjectID(profile.OrganizationID),
+					profile.ID,
+					onlyPending,
+				); err != nil {
+					return fmt.Errorf("cannot expire pending invitations: %w", err)
+				}
 			}
 
 			needsUpdate := shouldReactivate || shouldDeactivate

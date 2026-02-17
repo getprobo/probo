@@ -376,6 +376,19 @@ func (s *Service) HandleAssertion(
 				}
 			}
 
+			// Expire pending invitations for user (in case source switched to SAML)
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(profile.OrganizationID),
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
 			return nil
 		},
 	)
