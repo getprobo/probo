@@ -1,5 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import * as asset from './asset';
+import * as audit from './audit';
 import * as control from './control';
 import * as datum from './datum';
 import * as execute from './execute';
@@ -23,6 +24,7 @@ export interface OperationModule {
 
 export const resources: Record<string, ResourceModule> = {
 	asset: asset as ResourceModule,
+	audit: audit as ResourceModule,
 	control: control as ResourceModule,
 	datum: datum as ResourceModule,
 	execute: execute as ResourceModule,

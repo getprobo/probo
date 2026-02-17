@@ -68,6 +68,11 @@ export class Probo implements INodeType {
 						description: 'Manage assets',
 					},
 					{
+						name: 'Audit',
+						value: 'audit',
+						description: 'Manage audits',
+					},
+					{
 						name: 'Control',
 						value: 'control',
 						description: 'Manage controls',
