@@ -3,7 +3,6 @@ import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
-  Button,
   DropdownItem,
   IconMail,
   IconTrashCan,
@@ -106,7 +105,7 @@ export function PeopleListItem(props: {
   const { fKey, connectionId } = props;
 
   const organizationId = useOrganizationId();
-  const { __, dateTimeFormat } = useTranslate();
+  const { __ } = useTranslate();
   const confirm = useConfirm();
 
   const { role } = use(CurrentUser);
@@ -117,7 +116,7 @@ export function PeopleListItem(props: {
 
   const isInactive = profile.state === "INACTIVE";
 
-  const [inviteUser, isInviting]
+  const [inviteUser]
     = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {
       successMessage: __("Invitation sent successfully"),
       errorMessage: __("Failed to send invitation"),

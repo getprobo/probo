@@ -1,4 +1,3 @@
-import { useTranslate } from "@probo/i18n";
 import { Layout, Skeleton } from "@probo/ui";
 import { Suspense } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -42,8 +41,6 @@ export function ViewerMembershipLayout(props: {
   queryRef: PreloadedQuery<ViewerMembershipLayoutQuery>;
 }) {
   const { hideSidebar = false, queryRef } = props;
-
-  const { __ } = useTranslate();
 
   const { organization, viewer }
     = usePreloadedQuery<ViewerMembershipLayoutQuery>(
