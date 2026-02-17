@@ -8,7 +8,9 @@
   "files": [
     "base.json",
     "react.json",
-    "library.json"
+    "library.json",
+    "node.json",
+    "app.json"
   ],
   "license": "MIT"
 }

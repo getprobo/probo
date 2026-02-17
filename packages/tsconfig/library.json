@@ -8,6 +8,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "noEmit": false
   }
 }

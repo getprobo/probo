@@ -1,21 +1,7 @@
 {
+  "extends": "@probo/tsconfig/node.json",
   "compilerOptions": {
-    "lib": ["ES2023"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "module": "EsNext",
-    "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": false,
-    "moduleDetection": "force",
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
     "types": ["@probo/eslint-plugin-relay-types"]
   },
-  "include": ["src", "eslint.config.mjs"],
+  "include": ["src", "eslint.config.mjs"]
 }
