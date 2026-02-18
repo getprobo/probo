@@ -1,6 +1,6 @@
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, Avatar, Breadcrumb, Card, DropdownItem, IconTrashCan, useConfirm } from "@probo/ui";
+import { ActionDropdown, Avatar, Badge, Breadcrumb, Card, DropdownItem, IconTrashCan, useConfirm } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -18,9 +18,8 @@ export const personPageQuery = graphql`
       ... on Profile {
         id
         fullName
-        identity @required(action: THROW) {
-          email
-        }
+        emailAddress
+        source
         canDelete: permission(action: "iam:membership-profile:delete")
         ...PersonFormFragment
       }
@@ -100,9 +99,11 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
         <div className="flex items-center gap-6">
           <Avatar name={person.fullName} size="xl" />
           <div>
-
-            <div className="text-2xl">{person.fullName}</div>
-            <div className="text-lg text-txt-secondary">{person.identity.email}</div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{person.fullName}</span>
+              <Badge variant="info">{person.source}</Badge>
+            </div>
+            <div className="text-lg text-txt-secondary">{person.emailAddress}</div>
           </div>
         </div>
         {person.canDelete && (

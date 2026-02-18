@@ -69,6 +69,7 @@ func NewProfile(profile *coredata.MembershipProfile) *Profile {
 	return &Profile{
 		ID:                       profile.ID,
 		FullName:                 profile.FullName,
+		EmailAddress:             profile.EmailAddress,
 		Source:                   profile.Source.String(),
 		State:                    profile.State,
 		AdditionalEmailAddresses: profile.AdditionalEmailAddresses,

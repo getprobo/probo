@@ -177,6 +177,10 @@ func (s *AuthService) ActivateAccount(
 				return fmt.Errorf("cannot load user: %w", err)
 			}
 
+			if profile.Source == coredata.ProfileSourceSCIM {
+				return NewUserManagedBySCIMError(profile.ID)
+			}
+
 			if profile.State == coredata.ProfileStateInactive {
 				profile.State = coredata.ProfileStateActive
 				profile.UpdatedAt = now

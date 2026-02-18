@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<91bec60a40a9170868272814635ea3fa>>
+ * @generated SignedSource<<f8383da9cb37af6caca48c69a809346c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,18 +17,14 @@ export type PeopleListItemFragment$data = {
   readonly canInvite: boolean;
   readonly canUpdate: boolean;
   readonly createdAt: string;
+  readonly emailAddress: string;
   readonly fullName: string;
   readonly id: string;
-  readonly identity: {
-    readonly email: string;
-  };
   readonly lastInvitation: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly acceptedAt: string | null | undefined;
         readonly createdAt: string;
-        readonly expiresAt: string;
         readonly id: string;
       };
     }>;
@@ -102,6 +98,13 @@ return {
       "storageKey": null
     },
     {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "emailAddress",
+      "storageKey": null
+    },
+    {
       "kind": "RequiredField",
       "field": {
         "alias": null,
@@ -131,28 +134,6 @@ return {
             "kind": "ScalarField",
             "name": "permission",
             "storageKey": "permission(action:\"iam:membership:update\")"
-          }
-        ],
-        "storageKey": null
-      },
-      "action": "THROW"
-    },
-    {
-      "kind": "RequiredField",
-      "field": {
-        "alias": null,
-        "args": null,
-        "concreteType": "Identity",
-        "kind": "LinkedField",
-        "name": "identity",
-        "plural": false,
-        "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "email",
-            "storageKey": null
           }
         ],
         "storageKey": null
@@ -195,20 +176,6 @@ return {
                 "plural": false,
                 "selections": [
                   (v0/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "expiresAt",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "acceptedAt",
-                    "storageKey": null
-                  },
                   (v1/*: any*/),
                   {
                     "alias": null,
@@ -318,6 +285,6 @@ return {
 };
 })();
 
-(node as any).hash = "b276a06948260a9d89947b386c6392d1";
+(node as any).hash = "f10aa3067eeb7fc95eb7c7a893e7dd6e";
 
 export default node;

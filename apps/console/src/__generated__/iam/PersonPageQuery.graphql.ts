@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<679cd9698980b9fdf8b330df8df3aac5>>
+ * @generated SignedSource<<aa1188431214a8844e8ee1879bbada7e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,11 +17,10 @@ export type PersonPageQuery$data = {
   readonly person: {
     readonly __typename: "Profile";
     readonly canDelete: boolean;
+    readonly emailAddress: string;
     readonly fullName: string;
     readonly id: string;
-    readonly identity: {
-      readonly email: string;
-    };
+    readonly source: string;
     readonly " $fragmentSpreads": FragmentRefs<"PersonFormFragment">;
   } | {
     // This will never be '%other', but we need some
@@ -74,10 +73,17 @@ v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "email",
+  "name": "emailAddress",
   "storageKey": null
 },
 v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "source",
+  "storageKey": null
+},
+v7 = {
   "alias": "canDelete",
   "args": [
     {
@@ -113,23 +119,9 @@ return {
               "selections": [
                 (v3/*: any*/),
                 (v4/*: any*/),
-                {
-                  "kind": "RequiredField",
-                  "field": {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Identity",
-                    "kind": "LinkedField",
-                    "name": "identity",
-                    "plural": false,
-                    "selections": [
-                      (v5/*: any*/)
-                    ],
-                    "storageKey": null
-                  },
-                  "action": "THROW"
-                },
+                (v5/*: any*/),
                 (v6/*: any*/),
+                (v7/*: any*/),
                 {
                   "args": null,
                   "kind": "FragmentSpread",
@@ -168,27 +160,9 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v4/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "Identity",
-                "kind": "LinkedField",
-                "name": "identity",
-                "plural": false,
-                "selections": [
-                  (v5/*: any*/),
-                  (v3/*: any*/)
-                ],
-                "storageKey": null
-              },
+              (v5/*: any*/),
               (v6/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "emailAddress",
-                "storageKey": null
-              },
+              (v7/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -266,16 +240,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cb1cec2fd7c66b42f61d40e6a22b0d67",
+    "cacheID": "f78728c7deb19de68b5b996c58ebd05e",
     "id": null,
     "metadata": {},
     "name": "PersonPageQuery",
     "operationKind": "query",
-    "text": "query PersonPageQuery(\n  $personId: ID!\n) {\n  person: node(id: $personId) {\n    __typename\n    ... on Profile {\n      id\n      fullName\n      identity {\n        email\n        id\n      }\n      canDelete: permission(action: \"iam:membership-profile:delete\")\n      ...PersonFormFragment\n    }\n    id\n  }\n}\n\nfragment PersonFormFragment on Profile {\n  id\n  fullName\n  emailAddress\n  membership {\n    role\n    id\n  }\n  kind\n  position\n  additionalEmailAddresses\n  contractStartDate\n  contractEndDate\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
+    "text": "query PersonPageQuery(\n  $personId: ID!\n) {\n  person: node(id: $personId) {\n    __typename\n    ... on Profile {\n      id\n      fullName\n      emailAddress\n      source\n      canDelete: permission(action: \"iam:membership-profile:delete\")\n      ...PersonFormFragment\n    }\n    id\n  }\n}\n\nfragment PersonFormFragment on Profile {\n  id\n  fullName\n  emailAddress\n  source\n  membership {\n    role\n    id\n  }\n  kind\n  position\n  additionalEmailAddresses\n  contractStartDate\n  contractEndDate\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c2954bc62ed4a3e3a9b1ca9596b68e1c";
+(node as any).hash = "4aecfb7a9ff05a585ccc6b533fb75bec";
 
 export default node;

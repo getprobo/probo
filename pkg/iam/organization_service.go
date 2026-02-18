@@ -372,6 +372,10 @@ func (s *OrganizationService) InviteUser(
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
+			if profile.Source == coredata.ProfileSourceSCIM {
+				return NewUserManagedBySCIMError(profile.ID)
+			}
+
 			err = invitation.Insert(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot insert invitation: %w", err)

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<85bf3907699ac605e0603c8d1ae6ef8b>>
+ * @generated SignedSource<<7889e38e185230a2c5b41c3b0fb73cca>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -198,6 +198,13 @@ return {
                   {
                     "alias": null,
                     "args": null,
+                    "kind": "ScalarField",
+                    "name": "emailAddress",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
                     "concreteType": "Membership",
                     "kind": "LinkedField",
                     "name": "membership",
@@ -228,25 +235,6 @@ return {
                     "storageKey": null
                   },
                   {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Identity",
-                    "kind": "LinkedField",
-                    "name": "identity",
-                    "plural": false,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "email",
-                        "storageKey": null
-                      },
-                      (v3/*: any*/)
-                    ],
-                    "storageKey": null
-                  },
-                  {
                     "alias": "lastInvitation",
                     "args": (v4/*: any*/),
                     "concreteType": "InvitationConnection",
@@ -271,20 +259,6 @@ return {
                             "plural": false,
                             "selections": [
                               (v3/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "expiresAt",
-                                "storageKey": null
-                              },
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "acceptedAt",
-                                "storageKey": null
-                              },
                               (v5/*: any*/),
                               {
                                 "alias": null,
@@ -425,12 +399,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "afbd8ffc5b5ae7156a108a2d1b25440b",
+    "cacheID": "738254d707f8ed725c30ee87baa585fb",
     "id": null,
     "metadata": {},
     "name": "PersonForm_createMutation",
     "operationKind": "mutation",
-    "text": "mutation PersonForm_createMutation(\n  $input: CreateUserInput!\n) {\n  createUser(input: $input) {\n    profileEdge {\n      node {\n        ...PeopleListItemFragment\n        id\n      }\n    }\n  }\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  source\n  state\n  fullName\n  membership {\n    id\n    role\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  identity {\n    email\n    id\n  }\n  lastInvitation: pendingInvitations(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canInvite: permission(action: \"iam:invitation:create\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
+    "text": "mutation PersonForm_createMutation(\n  $input: CreateUserInput!\n) {\n  createUser(input: $input) {\n    profileEdge {\n      node {\n        ...PeopleListItemFragment\n        id\n      }\n    }\n  }\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  source\n  state\n  fullName\n  emailAddress\n  membership {\n    id\n    role\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  lastInvitation: pendingInvitations(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canInvite: permission(action: \"iam:invitation:create\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
   }
 };
 })();

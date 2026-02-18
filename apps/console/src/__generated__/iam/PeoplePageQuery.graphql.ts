@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e32759f25b173edfe9c63fb659d7e75e>>
+ * @generated SignedSource<<86b86e1209fbe58b62c2be028fb0482c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -269,6 +269,13 @@ return {
                           {
                             "alias": null,
                             "args": null,
+                            "kind": "ScalarField",
+                            "name": "emailAddress",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
                             "concreteType": "Membership",
                             "kind": "LinkedField",
                             "name": "membership",
@@ -299,25 +306,6 @@ return {
                             "storageKey": null
                           },
                           {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "Identity",
-                            "kind": "LinkedField",
-                            "name": "identity",
-                            "plural": false,
-                            "selections": [
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "email",
-                                "storageKey": null
-                              },
-                              (v6/*: any*/)
-                            ],
-                            "storageKey": null
-                          },
-                          {
                             "alias": "lastInvitation",
                             "args": (v8/*: any*/),
                             "concreteType": "InvitationConnection",
@@ -342,20 +330,6 @@ return {
                                     "plural": false,
                                     "selections": [
                                       (v6/*: any*/),
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "kind": "ScalarField",
-                                        "name": "expiresAt",
-                                        "storageKey": null
-                                      },
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "kind": "ScalarField",
-                                        "name": "acceptedAt",
-                                        "storageKey": null
-                                      },
                                       (v9/*: any*/),
                                       (v2/*: any*/)
                                     ],
@@ -489,12 +463,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a5d551184b2abe39feea3dfb05bfe21d",
+    "cacheID": "af366ea24d2c96763b104acc69d9b3ff",
     "id": null,
     "metadata": {},
     "name": "PeoplePageQuery",
     "operationKind": "query",
-    "text": "query PeoplePageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateUser: permission(action: \"iam:membership-profile:create\")\n      ...PeopleListFragment_8lnpd\n    }\n    id\n  }\n}\n\nfragment PeopleListFragment_8lnpd on Organization {\n  profiles(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  source\n  state\n  fullName\n  membership {\n    id\n    role\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  identity {\n    email\n    id\n  }\n  lastInvitation: pendingInvitations(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canInvite: permission(action: \"iam:invitation:create\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
+    "text": "query PeoplePageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateUser: permission(action: \"iam:membership-profile:create\")\n      ...PeopleListFragment_8lnpd\n    }\n    id\n  }\n}\n\nfragment PeopleListFragment_8lnpd on Organization {\n  profiles(first: 20, orderBy: {direction: ASC, field: FULL_NAME}) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  source\n  state\n  fullName\n  emailAddress\n  membership {\n    id\n    role\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  lastInvitation: pendingInvitations(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canInvite: permission(action: \"iam:invitation:create\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
   }
 };
 })();

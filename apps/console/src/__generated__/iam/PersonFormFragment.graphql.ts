@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a8e224db1200fa5aaa6edc17c09e7a35>>
+ * @generated SignedSource<<1eea90ca68f7381b881c68f0489837cb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,7 @@ export type PersonFormFragment$data = {
     readonly role: MembershipRole;
   };
   readonly position: string | null | undefined;
+  readonly source: string;
   readonly " $fragmentType": "PersonFormFragment";
 };
 export type PersonFormFragment$key = {
@@ -57,6 +58,13 @@ const node: ReaderFragment = {
       "args": null,
       "kind": "ScalarField",
       "name": "emailAddress",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "source",
       "storageKey": null
     },
     {
@@ -134,6 +142,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "4f99d9b9ed708290c5a7d7ec258a0b1d";
+(node as any).hash = "37e8a56333b217e5b6d3b94b455d7d40";
 
 export default node;

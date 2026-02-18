@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c5c251783bc35aea15dec0c06f6ef1fb>>
+ * @generated SignedSource<<a32e2b4330ac1d54762817127289b51d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -304,6 +304,13 @@ return {
                           {
                             "alias": null,
                             "args": null,
+                            "kind": "ScalarField",
+                            "name": "emailAddress",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
                             "concreteType": "Membership",
                             "kind": "LinkedField",
                             "name": "membership",
@@ -334,25 +341,6 @@ return {
                             "storageKey": null
                           },
                           {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "Identity",
-                            "kind": "LinkedField",
-                            "name": "identity",
-                            "plural": false,
-                            "selections": [
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "email",
-                                "storageKey": null
-                              },
-                              (v12/*: any*/)
-                            ],
-                            "storageKey": null
-                          },
-                          {
                             "alias": "lastInvitation",
                             "args": (v14/*: any*/),
                             "concreteType": "InvitationConnection",
@@ -377,20 +365,6 @@ return {
                                     "plural": false,
                                     "selections": [
                                       (v12/*: any*/),
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "kind": "ScalarField",
-                                        "name": "expiresAt",
-                                        "storageKey": null
-                                      },
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "kind": "ScalarField",
-                                        "name": "acceptedAt",
-                                        "storageKey": null
-                                      },
                                       (v15/*: any*/),
                                       (v11/*: any*/)
                                     ],
@@ -524,12 +498,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f25ca8641478e79fb2ccf6fa825fe042",
+    "cacheID": "15a5dd79df1b16aa1a66ccb8024f9627",
     "id": null,
     "metadata": {},
     "name": "PeopleListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query PeopleListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ProfileOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleListFragment_16fISc\n    id\n  }\n}\n\nfragment PeopleListFragment_16fISc on Organization {\n  profiles(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  source\n  state\n  fullName\n  membership {\n    id\n    role\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  identity {\n    email\n    id\n  }\n  lastInvitation: pendingInvitations(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canInvite: permission(action: \"iam:invitation:create\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
+    "text": "query PeopleListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ProfileOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleListFragment_16fISc\n    id\n  }\n}\n\nfragment PeopleListFragment_16fISc on Organization {\n  profiles(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...PeopleListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment PeopleListItemFragment on Profile {\n  id\n  source\n  state\n  fullName\n  emailAddress\n  membership {\n    id\n    role\n    canUpdate: permission(action: \"iam:membership:update\")\n  }\n  lastInvitation: pendingInvitations(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership-profile:update\")\n  canInvite: permission(action: \"iam:invitation:create\")\n  canDelete: permission(action: \"iam:membership-profile:delete\")\n}\n"
   }
 };
 })();

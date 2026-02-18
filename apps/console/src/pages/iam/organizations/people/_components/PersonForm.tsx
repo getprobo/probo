@@ -23,6 +23,7 @@ const fragment = graphql`
     id
     fullName
     emailAddress
+    source
     membership @required(action: THROW) {
       role
     }
@@ -268,7 +269,7 @@ export function PersonFormLoader(props: { fragmentRef: PersonFormFragment$key })
   return (
     <PersonForm
       id={person.id}
-      disabled={!person.canUpdate}
+      disabled={!person.canUpdate || person.source === "SCIM"}
       defaultValues={
         {
           kind: person.kind,

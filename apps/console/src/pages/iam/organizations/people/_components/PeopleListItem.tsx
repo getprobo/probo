@@ -29,13 +29,11 @@ const fragment = graphql`
     source
     state
     fullName
+    emailAddress
     membership @required(action: THROW) {
       id
       role
       canUpdate: permission(action: "iam:membership:update")
-    }
-    identity @required(action: THROW) {
-      email
     }
     lastInvitation: pendingInvitations(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
     @required(action: THROW)
@@ -44,8 +42,6 @@ const fragment = graphql`
       edges {
         node {
           id
-          expiresAt
-          acceptedAt
           createdAt
         }
       }
@@ -193,87 +189,85 @@ export function PeopleListItem(props: {
   };
 
   return (
-    <>
-      <Tr to={`/organizations/${organizationId}/people/${profile.id}`}>
-        <Td className={clsx(
+    <Tr to={`/organizations/${organizationId}/people/${profile.id}`}>
+      <Td className={clsx(
+        isRemoving && "opacity-60 pointer-events-none",
+        isInactive && "opacity-50",
+      )}
+      >
+        <span className="font-semibold">{profile.fullName}</span>
+      </Td>
+      <Td>
+        <Badge variant={profile.state === "INACTIVE" ? "neutral" : "success"}>{profile.state}</Badge>
+      </Td>
+      <Td className={clsx(
+        isRemoving && "opacity-60 pointer-events-none",
+        isInactive && "opacity-50",
+      )}
+      >
+        <div className="flex items-center gap-2">
+          {profile.emailAddress}
+          <Badge variant="info">{profile.source}</Badge>
+        </div>
+      </Td>
+      <Td
+        noLink
+        className={clsx(
+          "pr-4",
           isRemoving && "opacity-60 pointer-events-none",
           isInactive && "opacity-50",
         )}
+      >
+        <Select
+          disabled={!profile.membership.canUpdate || isUpdatingRole}
+          value={profile.membership.role}
+          onValueChange={role => void handleUpdateRole(role)}
         >
-          <span className="font-semibold">{profile.fullName}</span>
-        </Td>
-        <Td>
-          <Badge variant={profile.state === "INACTIVE" ? "neutral" : "success"}>{profile.state}</Badge>
-        </Td>
-        <Td className={clsx(
-          isRemoving && "opacity-60 pointer-events-none",
-          isInactive && "opacity-50",
-        )}
-        >
-          <div className="flex items-center gap-2">
-            {profile.identity.email}
-            <Badge variant="info">{profile.source}</Badge>
-          </div>
-        </Td>
-        <Td
-          noLink
-          className={clsx(
-            "pr-4",
-            isRemoving && "opacity-60 pointer-events-none",
-            isInactive && "opacity-50",
+          {availableRoles.includes("OWNER") && (
+            <Option value="OWNER">{__("Owner")}</Option>
           )}
-        >
-          <Select
-            disabled={!profile.membership.canUpdate || isUpdatingRole}
-            value={profile.membership.role}
-            onValueChange={role => void handleUpdateRole(role)}
-          >
-            {availableRoles.includes("OWNER") && (
-              <Option value="OWNER">{__("Owner")}</Option>
-            )}
-            {availableRoles.includes("ADMIN") && (
-              <Option value="ADMIN">{__("Admin")}</Option>
-            )}
-            {availableRoles.includes("VIEWER") && (
-              <Option value="VIEWER">{__("Viewer")}</Option>
-            )}
-            {availableRoles.includes("AUDITOR") && (
-              <Option value="AUDITOR">{__("Auditor")}</Option>
-            )}
-            {availableRoles.includes("EMPLOYEE") && (
-              <Option value="EMPLOYEE">{__("Employee")}</Option>
-            )}
-          </Select>
-        </Td>
-        <Td className={clsx(
-          isRemoving && "opacity-60 pointer-events-none",
-          isInactive && "opacity-50",
-        )}
-        >
-          {new Date(profile.createdAt).toLocaleDateString()}
-        </Td>
-        <Td noLink width={160} className="text-end">
-          <ActionDropdown>
-            {isInactive && (
-              <DropdownItem
-                onClick={handleInvite}
-                icon={IconMail}
-              >
-                {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
-              </DropdownItem>
-            )}
-            {profile.canDelete && (
-              <DropdownItem
-                onClick={handleRemove}
-                variant="danger"
-                icon={IconTrashCan}
-              >
-                {__("Remove person")}
-              </DropdownItem>
-            )}
-          </ActionDropdown>
-        </Td>
-      </Tr>
-    </>
+          {availableRoles.includes("ADMIN") && (
+            <Option value="ADMIN">{__("Admin")}</Option>
+          )}
+          {availableRoles.includes("VIEWER") && (
+            <Option value="VIEWER">{__("Viewer")}</Option>
+          )}
+          {availableRoles.includes("AUDITOR") && (
+            <Option value="AUDITOR">{__("Auditor")}</Option>
+          )}
+          {availableRoles.includes("EMPLOYEE") && (
+            <Option value="EMPLOYEE">{__("Employee")}</Option>
+          )}
+        </Select>
+      </Td>
+      <Td className={clsx(
+        isRemoving && "opacity-60 pointer-events-none",
+        isInactive && "opacity-50",
+      )}
+      >
+        {new Date(profile.createdAt).toLocaleDateString()}
+      </Td>
+      <Td noLink width={160} className="text-end">
+        <ActionDropdown>
+          {isInactive && profile.source !== "SCIM" && profile.canInvite && (
+            <DropdownItem
+              onClick={handleInvite}
+              icon={IconMail}
+            >
+              {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
+            </DropdownItem>
+          )}
+          {profile.canDelete && profile.source !== "SCIM" && (
+            <DropdownItem
+              onClick={handleRemove}
+              variant="danger"
+              icon={IconTrashCan}
+            >
+              {__("Remove person")}
+            </DropdownItem>
+          )}
+        </ActionDropdown>
+      </Td>
+    </Tr>
   );
 }
