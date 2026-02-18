@@ -78,11 +78,15 @@ FROM
         WHERE
             accepted_at IS NULL
         ORDER BY
-            email
+            email,
+            created_at DESC
     ) i ON CONFLICT (email_address) DO
 UPDATE
 SET
-    full_name = EXCLUDED.full_name;
+    full_name = COALESCE(
+        NULLIF(identities.full_name, ''),
+        EXCLUDED.full_name
+    );
 
 -- Create missing profiles
 WITH invitation_identities AS (
@@ -193,7 +197,8 @@ WITH orphan_invitations AS (
         LEFT JOIN identities i ON i.email_address = inv.email
         LEFT JOIN iam_membership_profiles p ON p.identity_id = i.id
     WHERE
-        i.id IS NULL OR p.id IS NULL
+        i.id IS NULL
+        OR p.id IS NULL
 )
 DELETE FROM
     iam_invitations

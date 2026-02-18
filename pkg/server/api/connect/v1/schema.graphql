@@ -489,7 +489,6 @@ type InvitationConnection
   ) {
   edges: [InvitationEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int @goField(forceResolver: true)
 }
 
 type InvitationEdge {

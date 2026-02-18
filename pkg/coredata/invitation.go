@@ -30,7 +30,7 @@ import (
 type (
 	Invitation struct {
 		ID             gid.GID          `db:"id"`
-		OrganizationID gid.GID          `fb:"organization_id"`
+		OrganizationID gid.GID          `db:"organization_id"`
 		UserID         gid.GID          `db:"user_id"`
 		Status         InvitationStatus `db:"status"`
 		ExpiresAt      time.Time        `db:"expires_at"`

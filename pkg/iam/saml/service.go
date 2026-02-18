@@ -308,7 +308,7 @@ func (s *Service) HandleAssertion(
 				}
 
 				profile = &coredata.MembershipProfile{
-					ID:             gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
+					ID:             gid.New(configID.TenantID(), coredata.MembershipProfileEntityType),
 					IdentityID:     identity.ID,
 					OrganizationID: config.OrganizationID,
 					Source:         coredata.ProfileSourceSAML,
@@ -324,7 +324,7 @@ func (s *Service) HandleAssertion(
 				}
 			} else {
 				if profile.State == coredata.ProfileStateInactive {
-					return NewUserInactiveError(membership.ID)
+					return NewUserInactiveError(profile.ID)
 				}
 			}
 

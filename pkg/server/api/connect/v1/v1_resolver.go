@@ -220,11 +220,6 @@ func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitati
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// TotalCount is the resolver for the totalCount field.
-func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (*int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
-}
-
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
 	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
@@ -837,7 +832,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 	if err != nil {
 		var errAlreadyExists *iam.ErrUserAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, gqlutils.Conflictf(ctx, "user %q already exists", input.EmailAddress.String())
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
@@ -1418,13 +1413,6 @@ func (r *profileResolver) PendingInvitations(ctx context.Context, obj *types.Pro
 		return nil, err
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.InvitationConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-		}, nil
-	}
-
 	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
 		Field:     coredata.InvitationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -1450,14 +1438,14 @@ func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, ac
 func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.ProfileConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *identityResolver:
-		count, err := r.iam.AccountService.CountProfiles(ctx, obj.ParentID, coredata.NewMembershipProfileFilter(nil))
+		count, err := r.iam.AccountService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
 		return &count, nil
 	case *organizationResolver:
-		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, coredata.NewMembershipProfileFilter(nil))
+		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -1900,11 +1888,6 @@ func (r *Resolver) Identity() schema.IdentityResolver { return &identityResolver
 // Invitation returns schema.InvitationResolver implementation.
 func (r *Resolver) Invitation() schema.InvitationResolver { return &invitationResolver{r} }
 
-// InvitationConnection returns schema.InvitationConnectionResolver implementation.
-func (r *Resolver) InvitationConnection() schema.InvitationConnectionResolver {
-	return &invitationConnectionResolver{r}
-}
-
 // Membership returns schema.MembershipResolver implementation.
 func (r *Resolver) Membership() schema.MembershipResolver { return &membershipResolver{r} }
 
@@ -1970,7 +1953,6 @@ func (r *Resolver) SessionConnection() schema.SessionConnectionResolver {
 type connectorResolver struct{ *Resolver }
 type identityResolver struct{ *Resolver }
 type invitationResolver struct{ *Resolver }
-type invitationConnectionResolver struct{ *Resolver }
 type membershipResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }

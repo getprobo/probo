@@ -50,7 +50,6 @@ type ResolverRoot interface {
 	Connector() ConnectorResolver
 	Identity() IdentityResolver
 	Invitation() InvitationResolver
-	InvitationConnection() InvitationConnectionResolver
 	Membership() MembershipResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
@@ -172,9 +171,8 @@ type ComplexityRoot struct {
 	}
 
 	InvitationConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
 	}
 
 	InvitationEdge struct {
@@ -506,9 +504,6 @@ type InvitationResolver interface {
 	User(ctx context.Context, obj *types.Invitation) (*types.Profile, error)
 	Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error)
 	Permission(ctx context.Context, obj *types.Invitation, action string) (bool, error)
-}
-type InvitationConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.InvitationConnection) (*int, error)
 }
 type MembershipResolver interface {
 	LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error)
@@ -953,12 +948,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.InvitationConnection.PageInfo(childComplexity), true
-	case "InvitationConnection.totalCount":
-		if e.complexity.InvitationConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.InvitationConnection.TotalCount(childComplexity), true
 
 	case "InvitationEdge.cursor":
 		if e.complexity.InvitationEdge.Cursor == nil {
@@ -2965,7 +2954,6 @@ type InvitationConnection
   ) {
   edges: [InvitationEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int @goField(forceResolver: true)
 }
 
 type InvitationEdge {
@@ -6008,35 +5996,6 @@ func (ec *executionContext) fieldContext_InvitationConnection_pageInfo(_ context
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvitationConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.InvitationConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InvitationConnection_totalCount,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.InvitationConnection().TotalCount(ctx, obj)
-		},
-		nil,
-		ec.marshalOInt2ᚖint,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_InvitationConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvitationConnection",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9967,8 +9926,6 @@ func (ec *executionContext) fieldContext_Profile_pendingInvitations(ctx context.
 				return ec.fieldContext_InvitationConnection_edges(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_InvitationConnection_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_InvitationConnection_totalCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InvitationConnection", field.Name)
 		},
@@ -17787,46 +17744,13 @@ func (ec *executionContext) _InvitationConnection(ctx context.Context, sel ast.S
 		case "edges":
 			out.Values[i] = ec._InvitationConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "pageInfo":
 			out.Values[i] = ec._InvitationConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "totalCount":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitationConnection_totalCount(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

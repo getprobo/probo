@@ -24,9 +24,8 @@ type (
 	InvitationOrderBy OrderBy[coredata.InvitationOrderField]
 
 	InvitationConnection struct {
-		TotalCount int
-		Edges      []*InvitationEdge
-		PageInfo   PageInfo
+		Edges    []*InvitationEdge
+		PageInfo PageInfo
 
 		Resolver any
 		ParentID gid.GID
