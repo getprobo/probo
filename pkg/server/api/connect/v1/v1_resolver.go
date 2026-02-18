@@ -1198,6 +1198,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
+			Filters:  filter,
 		}, nil
 	}
 

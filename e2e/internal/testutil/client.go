@@ -126,16 +126,14 @@ func (c *Client) SetupTestUserInOrg(ownerClient *Client) {
 	password := "TestPassword123!"
 	fullName := fmt.Sprintf("Test User %s", uniqueID)
 
-	// Sign up new user
-	c.userID = c.signUp(email, password, fullName)
-
 	// Owner invites user to organization
-	profileID := ownerClient.createUser(email, fullName, coredata.MembershipRole(c.role))
+	profileID, identityID := ownerClient.createUser(email, fullName, coredata.MembershipRole(c.role))
+	c.userID = identityID
 	ownerClient.inviteUser(profileID)
-
 	token := c.getActivationToken(email)
-
-	c.activateUser(token)
+	passwordToken := c.activateUser(token)
+	c.resetPassword(password, passwordToken)
+	c.signIn(email, password)
 
 	// Assume organization session to use console API
 	c.assumeOrganizationSession()
@@ -171,6 +169,32 @@ func (c *Client) signUp(email, password, fullName string) gid.GID {
 	require.NoError(c.T, err, "cannot parse user ID")
 
 	return userID
+}
+
+func (c *Client) signIn(email string, password string) {
+	const query = `
+		mutation($input: SignInInput!) {
+			signIn(input: $input) {
+				identity { id }
+			}
+		}
+	`
+
+	var result struct {
+		SignIn struct {
+			Identity struct {
+				ID string `json:"id"`
+			} `json:"identity"`
+		} `json:"signIn"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"email":    email,
+			"password": password,
+		},
+	}, &result)
+	require.NoError(c.T, err, "signIn mutation failed")
 }
 
 func (c *Client) createOrganization(name string) gid.GID {
@@ -274,12 +298,17 @@ func (c *Client) updateOwnMembershipRole(role coredata.MembershipRole) {
 	require.NoError(c.T, err, "updateMembership mutation failed")
 }
 
-func (c *Client) createUser(email, fullName string, role coredata.MembershipRole) gid.GID {
+func (c *Client) createUser(email, fullName string, role coredata.MembershipRole) (gid.GID, gid.GID) {
 	const query = `
 		mutation($input: CreateUserInput!) {
 			createUser(input: $input) {
 				profileEdge {
-					node { id }
+					node {
+						id
+						identity {
+							id
+						}
+					}
 				}
 			}
 		}
@@ -289,7 +318,10 @@ func (c *Client) createUser(email, fullName string, role coredata.MembershipRole
 		CreateUser struct {
 			ProfileEdge struct {
 				Node struct {
-					ID string `json:"id"`
+					ID       string `json:"id"`
+					Identity struct {
+						ID string `json:"id"`
+					} `json:"identity"`
 				} `json:"node"`
 			} `json:"profileEdge"`
 		} `json:"createUser"`
@@ -310,7 +342,10 @@ func (c *Client) createUser(email, fullName string, role coredata.MembershipRole
 	profileID, err := gid.ParseGID(result.CreateUser.ProfileEdge.Node.ID)
 	require.NoError(c.T, err, "cannot parse profile ID")
 
-	return profileID
+	identityID, err := gid.ParseGID(result.CreateUser.ProfileEdge.Node.Identity.ID)
+	require.NoError(c.T, err, "cannot parse identity ID")
+
+	return profileID, identityID
 }
 
 func (c *Client) inviteUser(profileID gid.GID) {
@@ -373,22 +408,18 @@ func (c *Client) getActivationToken(email string) string {
 	return ""
 }
 
-func (c *Client) activateUser(token string) {
+func (c *Client) activateUser(token string) string {
 	const query = `
 		mutation($input: ActivateAccountInput!) {
 			activateAccount(input: $input) {
-				profile {
-					id
-				}
+				createPasswordToken
 			}
 		}
 	`
 
 	var result struct {
 		ActivateAccount struct {
-			Profile struct {
-				ID string `json:"id"`
-			} `json:"profile"`
+			CreatePasswordToken string `json:"createPasswordToken"`
 		} `json:"activateAccount"`
 	}
 
@@ -398,6 +429,32 @@ func (c *Client) activateUser(token string) {
 		},
 	}, &result)
 	require.NoError(c.T, err, "activateAccount mutation failed")
+
+	return result.ActivateAccount.CreatePasswordToken
+}
+
+func (c *Client) resetPassword(password string, token string) {
+	const query = `
+		mutation($input: ResetPasswordInput!) {
+			resetPassword(input: $input) {
+				success
+			}
+		}
+	`
+
+	var result struct {
+		ResetPassword struct {
+			Success bool `json:"success"`
+		} `json:"resetPassword"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"token":    token,
+			"password": password,
+		},
+	}, &result)
+	require.NoError(c.T, err, "resetPassword mutation failed")
 }
 
 func (c *Client) assumeOrganizationSession() {
