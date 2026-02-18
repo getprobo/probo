@@ -427,7 +427,7 @@ func (s *OrganizationService) CreateOrganization(
 	ctx context.Context,
 	identityID gid.GID,
 	req *CreateOrganizationRequest,
-) (*coredata.Organization, *coredata.Membership, error) {
+) (*coredata.Organization, *coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -639,7 +639,7 @@ func (s *OrganizationService) CreateOrganization(
 		return nil, nil, fmt.Errorf("cannot insert organization: %w", err)
 	}
 
-	return organization, membership, nil
+	return organization, profile, nil
 }
 
 func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizationID gid.GID, req *UpdateOrganizationRequest) (*coredata.Organization, error) {
@@ -956,6 +956,41 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 				profile.ContractEndDate = *req.ContractEndDate
 			}
 
+			profile.UpdatedAt = time.Now()
+
+			if err := profile.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
+func (s *OrganizationService) UpdateUserState(
+	ctx context.Context,
+	userID gid.GID,
+	state coredata.ProfileState,
+) (*coredata.MembershipProfile, error) {
+	var (
+		scope   = coredata.NewScopeFromObjectID(userID)
+		profile = &coredata.MembershipProfile{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profile.LoadByID(ctx, conn, scope, userID); err != nil {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			profile.State = state
 			profile.UpdatedAt = time.Now()
 
 			if err := profile.Update(ctx, conn, scope); err != nil {

@@ -19,13 +19,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
 // createTestDocument creates a document and returns its ID and the document version ID
 func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, docVersionID string) {
 	t.Helper()
-	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	profileID := factory.CreateUser(owner)
 
 	query := `
 		mutation CreateDocument($input: CreateDocumentInput!) {
@@ -68,7 +69,7 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Test Document",
 			"content":        "Initial content",
-			"approverIds":    []string{profileID.String()},
+			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -263,7 +264,7 @@ func TestDocumentVersion_RequestSignature(t *testing.T) {
 	publishedVersionID := publishResult.PublishDocumentVersion.DocumentVersion.ID
 
 	// Create a person to sign
-	signerProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	signerProfileID := factory.CreateUser(owner)
 
 	query := `
 		mutation RequestSignature($input: RequestSignatureInput!) {
@@ -300,14 +301,14 @@ func TestDocumentVersion_RequestSignature(t *testing.T) {
 	err = owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"documentVersionId": publishedVersionID,
-			"signatoryId":       signerProfileID.String(),
+			"signatoryId":       signerProfileID,
 		},
 	}, &result)
 	require.NoError(t, err)
 
 	assert.NotEmpty(t, result.RequestSignature.DocumentVersionSignatureEdge.Node.ID)
 	assert.Equal(t, "REQUESTED", result.RequestSignature.DocumentVersionSignatureEdge.Node.State)
-	assert.Equal(t, signerProfileID.String(), result.RequestSignature.DocumentVersionSignatureEdge.Node.SignedBy.ID)
+	assert.Equal(t, signerProfileID, result.RequestSignature.DocumentVersionSignatureEdge.Node.SignedBy.ID)
 }
 
 func TestDocumentVersion_BulkPublish(t *testing.T) {
@@ -382,8 +383,8 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create multiple signers
-	signer1ProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-	signer2ProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	signer1ProfileID := factory.CreateUser(owner)
+	signer2ProfileID := factory.CreateUser(owner)
 
 	query := `
 		mutation BulkRequestSignatures($input: BulkRequestSignaturesInput!) {
@@ -412,7 +413,7 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	err = owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"documentIds":  []string{docID},
-			"signatoryIds": []string{signer1ProfileID.String(), signer2ProfileID.String()},
+			"signatoryIds": []string{signer1ProfileID, signer2ProfileID},
 		},
 	}, &result)
 	require.NoError(t, err)

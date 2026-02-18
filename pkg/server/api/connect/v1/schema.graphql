@@ -55,7 +55,7 @@ type Mutation {
   signOut: SignOutPayload @session(required: PRESENT)
   activateAccount(
     input: ActivateAccountInput!
-  ): ActivateAccountPayload @session(required: NONE)
+  ): ActivateAccountPayload @session(required: OPTIONAL)
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
     @session(required: NONE)
   resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
@@ -98,6 +98,7 @@ type Mutation {
     @session(required: PRESENT)
   inviteUser(input: InviteUserInput!): InviteUserPayload
     @session(required: PRESENT)
+  deactivateUser(input: DeactivateUserInput!): DeactivateUserPayload
   updateUser(input: UpdateUserInput!): UpdateUserPayload!
   updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
   removeUser(input: RemoveUserInput!): RemoveUserPayload
@@ -719,6 +720,16 @@ input InviteUserInput {
   profileId: ID!
 }
 
+input ActivateUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
+input DeactivateUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
 input UpdateUserInput {
   id: ID!
   fullName: String!
@@ -738,15 +749,6 @@ input UpdateMembershipInput {
 input RemoveUserInput {
   organizationId: ID!
   profileId: ID!
-}
-
-input AcceptInvitationInput {
-  invitationId: ID!
-}
-
-input DeleteInvitationInput {
-  organizationId: ID!
-  invitationId: ID!
 }
 
 input CreateSAMLConfigurationInput {
@@ -861,7 +863,7 @@ type RevokePersonalAPIKeyPayload {
 
 type CreateOrganizationPayload {
   organization: Organization
-  membership: Membership!
+  profile: Profile!
 }
 
 type UpdateOrganizationPayload {
@@ -884,6 +886,10 @@ type InviteUserPayload {
   invitationEdge: InvitationEdge!
 }
 
+type DeactivateUserPayload {
+  success: Boolean!
+}
+
 type UpdateUserPayload {
   profile: Profile!
 }
@@ -894,15 +900,6 @@ type UpdateMembershipPayload {
 
 type RemoveUserPayload {
   deletedProfileId: ID!
-}
-
-type AcceptInvitationPayload {
-  membership: Membership!
-  invitation: Invitation!
-}
-
-type DeleteInvitationPayload {
-  deletedInvitationId: ID!
 }
 
 type CreateSAMLConfigurationPayload {

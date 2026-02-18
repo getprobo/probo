@@ -221,11 +221,11 @@ const (
 			}
 		}`
 
-	listMembersQuery = `
-		query GetMembers($id: ID!) {
+	listUsersQuery = `
+		query GetProfiles($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					members(first: 10) { totalCount }
+					profiles(first: 10) { totalCount }
 				}
 			}
 		}`
@@ -1063,10 +1063,10 @@ func TestRBAC(t *testing.T) {
 			useConnect:  true,
 		},
 		{
-			name:   "owner can list members",
+			name:   "owner can list users",
 			role:   "owner",
 			client: owner,
-			query:  listMembersQuery,
+			query:  listUsersQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
@@ -1074,10 +1074,10 @@ func TestRBAC(t *testing.T) {
 			useConnect:  true,
 		},
 		{
-			name:   "admin can list members",
+			name:   "admin can list users",
 			role:   "admin",
 			client: admin,
-			query:  listMembersQuery,
+			query:  listUsersQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
@@ -1085,10 +1085,10 @@ func TestRBAC(t *testing.T) {
 			useConnect:  true,
 		},
 		{
-			name:   "viewer can list members",
+			name:   "viewer can list users",
 			role:   "viewer",
 			client: viewer,
-			query:  listMembersQuery,
+			query:  listUsersQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},

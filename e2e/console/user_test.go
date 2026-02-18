@@ -15,32 +15,32 @@
 package console_test
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestMember_UpdateMembership(t *testing.T) {
+func TestUser_UpdateMembership(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create an admin to update
 	_ = testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
 
-	// Get the member ID of the admin
+	// Get the user ID of the admin
 	query := `
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					members(first: 10) {
+					profiles(first: 10) {
 						edges {
 							node {
-								id
-								role
+								membership {
+									id
+									role
+								}
 							}
 						}
 					}
@@ -51,14 +51,16 @@ func TestMember_UpdateMembership(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			Members struct {
+			Profiles struct {
 				Edges []struct {
 					Node struct {
-						ID   string `json:"id"`
-						Role string `json:"role"`
+						Membership struct {
+							ID   string `json:"id"`
+							Role string `json:"role"`
+						} `json:"membership"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"members"`
+			} `json:"profiles"`
 		} `json:"node"`
 	}
 
@@ -67,15 +69,15 @@ func TestMember_UpdateMembership(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 
-	// Find the admin member
-	var adminMemberID string
-	for _, edge := range result.Node.Members.Edges {
-		if edge.Node.Role == "ADMIN" {
-			adminMemberID = edge.Node.ID
+	// Find the admin
+	var adminMembershipID string
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.Membership.Role == "ADMIN" {
+			adminMembershipID = edge.Node.Membership.ID
 			break
 		}
 	}
-	require.NotEmpty(t, adminMemberID, "Should find admin member")
+	require.NotEmpty(t, adminMembershipID, "Should find admin member")
 
 	// Update the member role to VIEWER
 	mutation := `
@@ -101,7 +103,7 @@ func TestMember_UpdateMembership(t *testing.T) {
 	err = owner.ExecuteConnect(mutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"membershipId":   adminMemberID,
+			"membershipId":   adminMembershipID,
 			"role":           "VIEWER",
 		},
 	}, &mutationResult)
@@ -110,24 +112,26 @@ func TestMember_UpdateMembership(t *testing.T) {
 	assert.Equal(t, "VIEWER", mutationResult.UpdateMembership.Membership.Role)
 }
 
-func TestMember_RemoveMember(t *testing.T) {
+func TestUser_RemoveUser(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create a member to remove
-	memberToRemove := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-	_ = memberToRemove
+	// Create a user to remove
+	userToRemove := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	_ = userToRemove
 
-	// Get the member ID
+	// Get the user ID
 	query := `
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					members(first: 50) {
+					profiles(first: 50) {
 						edges {
 							node {
 								id
-								role
+								membership {
+									role
+								}
 							}
 						}
 					}
@@ -138,14 +142,16 @@ func TestMember_RemoveMember(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			Members struct {
+			Profiles struct {
 				Edges []struct {
 					Node struct {
-						ID   string `json:"id"`
-						Role string `json:"role"`
+						ID         string `json:"id"`
+						Membership struct {
+							Role string `json:"role"`
+						} `json:"membership"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"members"`
+			} `json:"profiles"`
 		} `json:"node"`
 	}
 
@@ -154,113 +160,43 @@ func TestMember_RemoveMember(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 
-	// Find a viewer member to remove
-	var memberID string
-	for _, edge := range result.Node.Members.Edges {
-		if edge.Node.Role == "VIEWER" {
-			memberID = edge.Node.ID
+	// Find a viewer user to remove
+	var userID string
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.Membership.Role == "VIEWER" {
+			userID = edge.Node.ID
 			break
 		}
 	}
-	assert.NotEmpty(t, memberID, "Should find viewer member")
+	assert.NotEmpty(t, userID, "Should find viewer member")
 
 	// Remove the member
 	mutation := `
-		mutation($input: RemoveMemberInput!) {
-			removeMember(input: $input) {
-				deletedMembershipId
+		mutation($input: RemoveUserInput!) {
+			removeUser(input: $input) {
+				deletedProfileId
 			}
 		}
 	`
 
 	var mutationResult struct {
-		RemoveMember struct {
-			DeletedMembershipID string `json:"deletedMembershipId"`
-		} `json:"removeMember"`
+		RemoveUser struct {
+			DeletedProfileID string `json:"deletedProfileId"`
+		} `json:"removeUser"`
 	}
 
 	err = owner.ExecuteConnect(mutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"membershipId":   memberID,
+			"profileId":      userID,
 		},
 	}, &mutationResult)
 	require.NoError(t, err)
 
-	assert.Equal(t, memberID, mutationResult.RemoveMember.DeletedMembershipID)
+	assert.Equal(t, userID, mutationResult.RemoveUser.DeletedProfileID)
 }
 
-func TestInvitation_Delete(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	// Create an invitation
-	inviteMutation := `
-		mutation($input: InviteMemberInput!) {
-			inviteMember(input: $input) {
-				invitationEdge {
-					node {
-						id
-						email
-						status
-					}
-				}
-			}
-		}
-	`
-
-	var inviteResult struct {
-		InviteMember struct {
-			InvitationEdge struct {
-				Node struct {
-					ID     string `json:"id"`
-					Email  string `json:"email"`
-					Status string `json:"status"`
-				} `json:"node"`
-			} `json:"invitationEdge"`
-		} `json:"inviteMember"`
-	}
-
-	err := owner.ExecuteConnect(inviteMutation, map[string]any{
-		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"email":          fmt.Sprintf("invite.delete.%d@example.com", time.Now().UnixNano()),
-			"fullName":       "Test User",
-			"role":           "VIEWER",
-		},
-	}, &inviteResult)
-	require.NoError(t, err)
-
-	invitationID := inviteResult.InviteMember.InvitationEdge.Node.ID
-	assert.NotEmpty(t, invitationID)
-
-	// Delete the invitation
-	deleteMutation := `
-		mutation($input: DeleteInvitationInput!) {
-			deleteInvitation(input: $input) {
-				deletedInvitationId
-			}
-		}
-	`
-
-	var deleteResult struct {
-		DeleteInvitation struct {
-			DeletedInvitationID string `json:"deletedInvitationId"`
-		} `json:"deleteInvitation"`
-	}
-
-	err = owner.ExecuteConnect(deleteMutation, map[string]any{
-		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"invitationId":   invitationID,
-		},
-	}, &deleteResult)
-	require.NoError(t, err)
-
-	assert.Equal(t, invitationID, deleteResult.DeleteInvitation.DeletedInvitationID)
-}
-
-func TestMember_List(t *testing.T) {
+func TestUser_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -272,11 +208,13 @@ func TestMember_List(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					members(first: 10) {
+					profiles(first: 10) {
 						edges {
 							node {
 								id
-								role
+								membership {
+									role
+								}
 							}
 						}
 						totalCount
@@ -288,15 +226,17 @@ func TestMember_List(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			Members struct {
+			Profiles struct {
 				Edges []struct {
 					Node struct {
-						ID   string `json:"id"`
-						Role string `json:"role"`
+						ID         string `json:"id"`
+						Membership struct {
+							Role string `json:"role"`
+						} `json:"membership"`
 					} `json:"node"`
 				} `json:"edges"`
 				TotalCount int `json:"totalCount"`
-			} `json:"members"`
+			} `json:"profiles"`
 		} `json:"node"`
 	}
 
@@ -305,5 +245,5 @@ func TestMember_List(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 
-	assert.GreaterOrEqual(t, result.Node.Members.TotalCount, 3, "Should have at least 3 members")
+	assert.GreaterOrEqual(t, result.Node.Profiles.TotalCount, 3, "Should have at least 3 members")
 }

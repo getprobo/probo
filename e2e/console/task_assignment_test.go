@@ -30,7 +30,7 @@ func TestTask_Assign(t *testing.T) {
 	// Create measure and task
 	measureID := factory.NewMeasure(owner).Create()
 	taskID := factory.NewTask(owner, measureID).Create()
-	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	profileID := factory.CreateUser(owner)
 
 	query := `
 		mutation UpdateTask($input: UpdateTaskInput!) {
@@ -61,13 +61,13 @@ func TestTask_Assign(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"taskId":       taskID,
-			"assignedToId": profileID.String(),
+			"assignedToId": profileID,
 		},
 	}, &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, taskID, result.UpdateTask.Task.ID)
-	assert.Equal(t, profileID.String(), result.UpdateTask.Task.AssignedTo.ID)
+	assert.Equal(t, profileID, result.UpdateTask.Task.AssignedTo.ID)
 }
 
 func TestTask_Unassign(t *testing.T) {
@@ -77,7 +77,7 @@ func TestTask_Unassign(t *testing.T) {
 	// Create measure, task, people and assign
 	measureID := factory.NewMeasure(owner).Create()
 	taskID := factory.NewTask(owner, measureID).Create()
-	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	profileID := factory.CreateUser(owner)
 
 	// First assign the task
 	assignQuery := `
@@ -93,7 +93,7 @@ func TestTask_Unassign(t *testing.T) {
 	_, err := owner.Do(assignQuery, map[string]any{
 		"input": map[string]any{
 			"taskId":       taskID,
-			"assignedToId": profileID.String(),
+			"assignedToId": profileID,
 		},
 	})
 	require.NoError(t, err)

@@ -881,7 +881,7 @@ func TestRisk_OmittableOwner(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a people for owner assignment
-	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	profileID := factory.CreateUser(owner)
 	riskID := factory.NewRisk(owner).WithName("Owner Test Risk").Create()
 
 	t.Run("set owner", func(t *testing.T) {
@@ -914,11 +914,11 @@ func TestRisk_OmittableOwner(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":      riskID,
-				"ownerId": profileID.String(),
+				"ownerId": profileID,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, profileID.String(), result.UpdateRisk.Risk.Owner.ID)
+		assert.Equal(t, profileID, result.UpdateRisk.Risk.Owner.ID)
 	})
 
 	t.Run("clear owner with null", func(t *testing.T) {

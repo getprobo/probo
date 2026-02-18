@@ -718,7 +718,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 			Size:        input.HorizontalLogoFile.Size,
 		}
 	}
-	organization, membership, err := r.iam.OrganizationService.CreateOrganization(
+	organization, profile, err := r.iam.OrganizationService.CreateOrganization(
 		ctx,
 		identity.ID,
 		&iam.CreateOrganizationRequest{
@@ -734,7 +734,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 	return &types.CreateOrganizationPayload{
 		Organization: types.NewOrganization(organization),
-		Membership:   types.NewMembership(membership),
+		Profile:      types.NewProfile(profile),
 	}, nil
 }
 
@@ -880,6 +880,28 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 
 	return &types.InviteUserPayload{
 		InvitationEdge: types.NewInvitationEdge(invitation, coredata.InvitationOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeactivateUser is the resolver for the deactivateUser field.
+func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.DeactivateUserInput) (*types.DeactivateUserPayload, error) {
+	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate); err != nil {
+		return nil, err
+	}
+
+	_, err := r.iam.OrganizationService.UpdateUserState(
+		ctx,
+		input.ProfileID,
+		coredata.ProfileStateInactive,
+	)
+
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot deactivate profile", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeactivateUserPayload{
+		Success: true,
 	}, nil
 }
 

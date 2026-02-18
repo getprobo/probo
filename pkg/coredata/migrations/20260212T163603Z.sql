@@ -184,6 +184,27 @@ WHERE
     pi.organization_id = i.organization_id
     AND pi.email_address = i.email;
 
+-- Delete orphan invitations: e.g. expired invitations that were never accepted
+WITH orphan_invitations AS (
+    SELECT
+        inv.id
+    FROM
+        iam_invitations inv
+        LEFT JOIN identities i ON i.email_address = inv.email
+        LEFT JOIN iam_membership_profiles p ON p.identity_id = i.id
+    WHERE
+        i.id IS NULL OR p.id IS NULL
+)
+DELETE FROM
+    iam_invitations
+WHERE
+    id IN (
+        SELECT
+            id
+        FROM
+            orphan_invitations
+    );
+
 ALTER TABLE
     iam_invitations
 ALTER COLUMN

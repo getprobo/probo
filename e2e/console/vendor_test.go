@@ -755,7 +755,7 @@ func TestVendor_OmittableBusinessOwner(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a profile for owner assignment
-	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	profileID := factory.CreateUser(owner)
 	vendorID := factory.NewVendor(owner).
 		WithName("BusinessOwner Test Vendor").
 		Create()
@@ -790,11 +790,11 @@ func TestVendor_OmittableBusinessOwner(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":              vendorID,
-				"businessOwnerId": profileID.String(),
+				"businessOwnerId": profileID,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, profileID.String(), result.UpdateVendor.Vendor.BusinessOwner.ID)
+		assert.Equal(t, profileID, result.UpdateVendor.Vendor.BusinessOwner.ID)
 	})
 
 	t.Run("clear business owner with null", func(t *testing.T) {
@@ -838,7 +838,7 @@ func TestVendor_OmittableSecurityOwner(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a profile for owner assignment
-	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	profileID := factory.CreateUser(owner)
 	vendorID := factory.NewVendor(owner).WithName("SecurityOwner Test Vendor").Create()
 
 	t.Run("set security owner", func(t *testing.T) {
@@ -871,11 +871,11 @@ func TestVendor_OmittableSecurityOwner(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":              vendorID,
-				"securityOwnerId": profileID.String(),
+				"securityOwnerId": profileID,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, profileID.String(), result.UpdateVendor.Vendor.SecurityOwner.ID)
+		assert.Equal(t, profileID, result.UpdateVendor.Vendor.SecurityOwner.ID)
 	})
 
 	t.Run("clear security owner with null", func(t *testing.T) {

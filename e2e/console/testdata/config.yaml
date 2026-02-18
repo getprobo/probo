@@ -57,7 +57,7 @@ probod:
       smtp:
         addr: "localhost:1025"
         tls-required: false
-      mailer-interval: 60
+      mailer-interval: 1
     slack:
       sender-interval: 60
 

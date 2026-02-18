@@ -29,7 +29,7 @@ import (
 func TestDocument_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
 	tests := []struct {
 		name        string
@@ -113,7 +113,7 @@ func TestDocument_Create(t *testing.T) {
 
 			input := map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"approverIds":    []string{approverProfileID.String()},
+				"approverIds":    []string{approverProfileID},
 			}
 			for k, v := range tt.input {
 				input[k] = v
@@ -151,7 +151,7 @@ func TestDocument_Create(t *testing.T) {
 func TestDocument_Create_Validation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
 	tests := []struct {
 		name              string
@@ -293,7 +293,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
 			if !tt.skipApprover {
-				input["approverIds"] = []string{approverProfileID.String()}
+				input["approverIds"] = []string{approverProfileID}
 			}
 			for k, v := range tt.input {
 				input[k] = v
@@ -309,7 +309,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 func TestDocument_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
 	tests := []struct {
 		name        string
@@ -321,7 +321,7 @@ func TestDocument_Update(t *testing.T) {
 		{
 			name: "update title",
 			setup: func() string {
-				return factory.NewDocument(owner, approverProfileID.String()).
+				return factory.NewDocument(owner, approverProfileID).
 					WithTitle("Document to Update").
 					Create()
 			},
@@ -337,7 +337,7 @@ func TestDocument_Update(t *testing.T) {
 		{
 			name: "update document type",
 			setup: func() string {
-				return factory.NewDocument(owner, approverProfileID.String()).
+				return factory.NewDocument(owner, approverProfileID).
 					WithTitle("Type Test").
 					WithDocumentType("POLICY").
 					Create()
@@ -393,8 +393,8 @@ func TestDocument_Update(t *testing.T) {
 func TestDocument_Update_Validation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-	baseDocumentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("Validation Test Document").Create()
+	approverProfileID := factory.CreateUser(owner)
+	baseDocumentID := factory.NewDocument(owner, approverProfileID).WithTitle("Validation Test Document").Create()
 
 	tests := []struct {
 		name              string
@@ -484,10 +484,10 @@ func TestDocument_Update_Validation(t *testing.T) {
 func TestDocument_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
 	t.Run("delete existing document", func(t *testing.T) {
-		documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("Document to Delete").Create()
+		documentID := factory.NewDocument(owner, approverProfileID).WithTitle("Document to Delete").Create()
 
 		query := `
 			mutation DeleteDocument($input: DeleteDocumentInput!) {
@@ -549,11 +549,11 @@ func TestDocument_Delete_Validation(t *testing.T) {
 func TestDocument_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
 	documentTitles := []string{"Document A", "Document B", "Document C"}
 	for _, title := range documentTitles {
-		factory.NewDocument(owner, approverProfileID.String()).WithTitle(title).Create()
+		factory.NewDocument(owner, approverProfileID).WithTitle(title).Create()
 	}
 
 	query := `
@@ -621,7 +621,7 @@ func TestDocument_Query(t *testing.T) {
 func TestDocument_Timestamps(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
 	t.Run("createdAt and updatedAt are set on create", func(t *testing.T) {
 		beforeCreate := time.Now().Add(-time.Second)
@@ -655,7 +655,7 @@ func TestDocument_Timestamps(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"approverIds":    []string{approverProfileID.String()},
+				"approverIds":    []string{approverProfileID},
 				"title":          "Timestamp Test Document",
 				"content":        "Test content",
 				"documentType":   "POLICY",
@@ -669,7 +669,7 @@ func TestDocument_Timestamps(t *testing.T) {
 	})
 
 	t.Run("updatedAt changes on update", func(t *testing.T) {
-		documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("Timestamp Update Test").Create()
+		documentID := factory.NewDocument(owner, approverProfileID).WithTitle("Timestamp Update Test").Create()
 
 		getQuery := `
 			query($id: ID!) {
@@ -733,8 +733,8 @@ func TestDocument_Timestamps(t *testing.T) {
 func TestDocument_SubResolvers(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-	documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("SubResolver Test Document").Create()
+	approverProfileID := factory.CreateUser(owner)
+	documentID := factory.NewDocument(owner, approverProfileID).WithTitle("SubResolver Test Document").Create()
 
 	t.Run("approvers sub-resolver", func(t *testing.T) {
 		query := `
@@ -775,7 +775,7 @@ func TestDocument_SubResolvers(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 1, result.Node.Approvers.TotalCount)
 		require.Len(t, result.Node.Approvers.Edges, 1)
-		assert.Equal(t, approverProfileID.String(), result.Node.Approvers.Edges[0].Node.ID)
+		assert.Equal(t, approverProfileID, result.Node.Approvers.Edges[0].Node.ID)
 	})
 
 	t.Run("organization sub-resolver", func(t *testing.T) {
@@ -816,7 +816,7 @@ func TestDocument_RBAC(t *testing.T) {
 	t.Run("create", func(t *testing.T) {
 		t.Run("owner can create", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+			approverProfileID := factory.CreateUser(owner)
 
 			_, err := owner.Do(`
 				mutation CreateDocument($input: CreateDocumentInput!) {
@@ -827,7 +827,7 @@ func TestDocument_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
-					"approverIds":    []string{approverProfileID.String()},
+					"approverIds":    []string{approverProfileID},
 					"title":          "RBAC Test Document",
 					"content":        "Test content",
 					"documentType":   "POLICY",
@@ -840,7 +840,7 @@ func TestDocument_RBAC(t *testing.T) {
 		t.Run("admin can create", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+			approverProfileID := factory.CreateUser(owner)
 
 			_, err := admin.Do(`
 				mutation CreateDocument($input: CreateDocumentInput!) {
@@ -851,7 +851,7 @@ func TestDocument_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId": admin.GetOrganizationID().String(),
-					"approverIds":    []string{approverProfileID.String()},
+					"approverIds":    []string{approverProfileID},
 					"title":          "RBAC Test Document",
 					"content":        "Test content",
 					"documentType":   "POLICY",
@@ -864,7 +864,7 @@ func TestDocument_RBAC(t *testing.T) {
 		t.Run("viewer cannot create", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+			approverProfileID := factory.CreateUser(owner)
 
 			_, err := viewer.Do(`
 				mutation CreateDocument($input: CreateDocumentInput!) {
@@ -875,7 +875,7 @@ func TestDocument_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId": viewer.GetOrganizationID().String(),
-					"approverIds":    []string{approverProfileID.String()},
+					"approverIds":    []string{approverProfileID},
 					"title":          "RBAC Test Document",
 					"content":        "Test content",
 					"documentType":   "POLICY",
@@ -889,8 +889,8 @@ func TestDocument_RBAC(t *testing.T) {
 	t.Run("update", func(t *testing.T) {
 		t.Run("owner can update", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Update Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Update Test").Create()
 
 			_, err := owner.Do(`
 				mutation UpdateDocument($input: UpdateDocumentInput!) {
@@ -910,8 +910,8 @@ func TestDocument_RBAC(t *testing.T) {
 		t.Run("admin can update", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Update Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Update Test").Create()
 
 			_, err := admin.Do(`
 				mutation UpdateDocument($input: UpdateDocumentInput!) {
@@ -931,8 +931,8 @@ func TestDocument_RBAC(t *testing.T) {
 		t.Run("viewer cannot update", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Update Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Update Test").Create()
 
 			_, err := viewer.Do(`
 				mutation UpdateDocument($input: UpdateDocumentInput!) {
@@ -953,8 +953,8 @@ func TestDocument_RBAC(t *testing.T) {
 	t.Run("delete", func(t *testing.T) {
 		t.Run("owner can delete", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Delete Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Delete Test").Create()
 
 			_, err := owner.Do(`
 				mutation DeleteDocument($input: DeleteDocumentInput!) {
@@ -971,8 +971,8 @@ func TestDocument_RBAC(t *testing.T) {
 		t.Run("admin can delete", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Delete Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Delete Test").Create()
 
 			_, err := admin.Do(`
 				mutation DeleteDocument($input: DeleteDocumentInput!) {
@@ -989,8 +989,8 @@ func TestDocument_RBAC(t *testing.T) {
 		t.Run("viewer cannot delete", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Delete Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Delete Test").Create()
 
 			_, err := viewer.Do(`
 				mutation DeleteDocument($input: DeleteDocumentInput!) {
@@ -1008,8 +1008,8 @@ func TestDocument_RBAC(t *testing.T) {
 	t.Run("read", func(t *testing.T) {
 		t.Run("owner can read", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Read Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Read Test").Create()
 
 			var result struct {
 				Node *struct {
@@ -1032,8 +1032,8 @@ func TestDocument_RBAC(t *testing.T) {
 		t.Run("admin can read", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Read Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Read Test").Create()
 
 			var result struct {
 				Node *struct {
@@ -1056,8 +1056,8 @@ func TestDocument_RBAC(t *testing.T) {
 		t.Run("viewer can read", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
-			documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("RBAC Read Test").Create()
+			approverProfileID := factory.CreateUser(owner)
+			documentID := factory.NewDocument(owner, approverProfileID).WithTitle("RBAC Read Test").Create()
 
 			var result struct {
 				Node *struct {
@@ -1082,7 +1082,7 @@ func TestDocument_RBAC(t *testing.T) {
 func TestDocument_MaxLength_Validation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
 	longTitle := strings.Repeat("a", 1001)
 
@@ -1100,7 +1100,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"approverIds":    []string{approverProfileID.String()},
+				"approverIds":    []string{approverProfileID},
 				"title":          longTitle,
 				"content":        "Test content",
 				"documentType":   "POLICY",
@@ -1112,7 +1112,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 	})
 
 	t.Run("update", func(t *testing.T) {
-		documentID := factory.NewDocument(owner, approverProfileID.String()).WithTitle("Max Length Test").Create()
+		documentID := factory.NewDocument(owner, approverProfileID).WithTitle("Max Length Test").Create()
 
 		query := `
 			mutation UpdateDocument($input: UpdateDocumentInput!) {
@@ -1136,10 +1136,10 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 func TestDocument_Pagination(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
 	for i := 0; i < 5; i++ {
-		factory.NewDocument(owner, approverProfileID.String()).
+		factory.NewDocument(owner, approverProfileID).
 			WithTitle(fmt.Sprintf("Pagination Document %d", i)).
 			Create()
 	}
@@ -1285,8 +1285,8 @@ func TestDocument_TenantIsolation(t *testing.T) {
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, org1Owner).GetProfileID()
-	documentID := factory.NewDocument(org1Owner, approverProfileID.String()).WithTitle("Org1 Document").Create()
+	approverProfileID := factory.CreateUser(org1Owner)
+	documentID := factory.NewDocument(org1Owner, approverProfileID).WithTitle("Org1 Document").Create()
 
 	t.Run("cannot read document from another organization", func(t *testing.T) {
 		query := `
@@ -1392,10 +1392,10 @@ func TestDocument_TenantIsolation(t *testing.T) {
 func TestDocument_Ordering(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	approverProfileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	approverProfileID := factory.CreateUser(owner)
 
-	factory.NewDocument(owner, approverProfileID.String()).WithTitle("AAA Order Test").Create()
-	factory.NewDocument(owner, approverProfileID.String()).WithTitle("ZZZ Order Test").Create()
+	factory.NewDocument(owner, approverProfileID).WithTitle("AAA Order Test").Create()
+	factory.NewDocument(owner, approverProfileID).WithTitle("ZZZ Order Test").Create()
 
 	t.Run("order by created_at descending", func(t *testing.T) {
 		query := `

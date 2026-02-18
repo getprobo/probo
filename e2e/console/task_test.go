@@ -650,7 +650,7 @@ func TestTask_OmittableAssignee(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a profile for assignee
-	profileID := testutil.NewClientInOrg(t, testutil.RoleViewer, owner).GetProfileID()
+	profileID := factory.CreateUser(owner)
 	measureID := factory.NewMeasure(owner).
 		WithName("Task Assignee Test").
 		Create()
@@ -689,11 +689,11 @@ func TestTask_OmittableAssignee(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"taskId":       taskID,
-				"assignedToId": profileID.String(),
+				"assignedToId": profileID,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, profileID.String(), result.UpdateTask.Task.AssignedTo.ID)
+		assert.Equal(t, profileID, result.UpdateTask.Task.AssignedTo.ID)
 	})
 
 	t.Run("clear assignee", func(t *testing.T) {

@@ -167,6 +167,8 @@ var IAMOwnerPolicy = policy.NewPolicy(
 		ActionMembershipProfileCreate,
 		ActionMembershipProfileUpdate,
 		ActionMembershipProfileDelete,
+		ActionMembershipProfileActivate,
+		ActionMembershipProfileDeactivate,
 	).
 		WithSID("full-membership-profile-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
@@ -248,6 +250,8 @@ var IAMAdminPolicy = policy.NewPolicy(
 		ActionMembershipProfileCreate,
 		ActionMembershipProfileUpdate,
 		ActionMembershipProfileDelete,
+		ActionMembershipProfileActivate,
+		ActionMembershipProfileDeactivate,
 	).
 		WithSID("membership-profile-admin-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),

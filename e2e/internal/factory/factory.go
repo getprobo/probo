@@ -22,6 +22,7 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func SafeName(prefix string) string {
@@ -90,6 +91,52 @@ func (a Attrs) getBool(key string, defaultVal bool) bool {
 		}
 	}
 	return defaultVal
+}
+
+func CreateUser(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateUserInput!) {
+			createUser(input: $input) {
+				profileEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId":           c.GetOrganizationID(),
+		"emailAddress":             a.getString("emailAddress", SafeEmail()),
+		"fullName":                 a.getString("fullName", SafeName("User")),
+		"role":                     a.getString("role", "EMPLOYEE"),
+		"kind":                     coredata.MembershipProfileKindEmployee.String(),
+		"additionalEmailAddresses": []string{},
+	}
+	if position := a.getStringPtr("position"); position != nil {
+		input["position"] = *position
+	}
+
+	var result struct {
+		CreateUser struct {
+			ProfileEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"profileEdge"`
+		} `json:"createUser"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createUser mutation failed")
+
+	return result.CreateUser.ProfileEdge.Node.ID
 }
 
 func CreateVendor(c *testutil.Client, attrs ...Attrs) string {

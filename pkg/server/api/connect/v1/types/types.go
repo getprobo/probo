@@ -25,15 +25,6 @@ type Node interface {
 	GetID() gid.GID
 }
 
-type AcceptInvitationInput struct {
-	InvitationID gid.GID `json:"invitationId"`
-}
-
-type AcceptInvitationPayload struct {
-	Membership *Membership `json:"membership"`
-	Invitation *Invitation `json:"invitation"`
-}
-
 type ActivateAccountInput struct {
 	Token string `json:"token"`
 }
@@ -41,6 +32,11 @@ type ActivateAccountInput struct {
 type ActivateAccountPayload struct {
 	CreatePasswordToken *string  `json:"createPasswordToken,omitempty"`
 	Profile             *Profile `json:"profile,omitempty"`
+}
+
+type ActivateUserInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	ProfileID      gid.GID `json:"profileId"`
 }
 
 type AssumeOrganizationSessionInput struct {
@@ -89,7 +85,7 @@ type CreateOrganizationInput struct {
 
 type CreateOrganizationPayload struct {
 	Organization *Organization `json:"organization,omitempty"`
-	Membership   *Membership   `json:"membership"`
+	Profile      *Profile      `json:"profile"`
 }
 
 type CreatePersonalAPIKeyInput struct {
@@ -143,13 +139,13 @@ type CreateUserPayload struct {
 	ProfileEdge *ProfileEdge `json:"profileEdge"`
 }
 
-type DeleteInvitationInput struct {
+type DeactivateUserInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
-	InvitationID   gid.GID `json:"invitationId"`
+	ProfileID      gid.GID `json:"profileId"`
 }
 
-type DeleteInvitationPayload struct {
-	DeletedInvitationID gid.GID `json:"deletedInvitationId"`
+type DeactivateUserPayload struct {
+	Success bool `json:"success"`
 }
 
 type DeleteOrganizationHorizontalLogoInput struct {
