@@ -1,7 +1,8 @@
 {
-  "extends": "@probo/tsconfig/node.json",
+  "extends": "@probo/tsconfig/base.json",
   "compilerOptions": {
-    "types": ["@probo/eslint-plugin-relay-types"]
+    "types": ["node", "@probo/eslint-plugin-relay-types"],
+    "noEmit": true
   },
   "include": ["src", "eslint.config.mjs"]
 }

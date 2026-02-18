@@ -11,7 +11,8 @@
     "preserveConstEnums": true,
     "resolveJsonModule": true,
     "incremental": true,
-    "outDir": "./dist/"
+    "outDir": "./dist/",
+    "noEmit": false
   },
   "include": [
     "credentials/**/*",

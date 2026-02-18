@@ -1,5 +1,5 @@
 {
-  "extends": "@probo/tsconfig/node.json",
+  "extends": "@probo/tsconfig/node-esm.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "types": ["@probo/eslint-plugin-relay-types"]

@@ -10,6 +10,7 @@
     "react.json",
     "library.json",
     "node.json",
+    "node-esm.json",
     "app.json"
   ],
   "license": "MIT"
