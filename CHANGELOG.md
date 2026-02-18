@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.128.0] - 2026-02-17
+
+### Added
+
+- Add audit n8n nodes
+- Add delete measure to mcp
+
 ## [0.127.1] - 2026-02-17
 
 ### Changed
