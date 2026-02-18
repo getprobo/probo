@@ -194,13 +194,13 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	samlConfig := samlConfigs[0]
-	if samlConfig == nil {
+	if len(samlConfigs) == 0 {
 		r.logger.ErrorCtx(ctx, "cannot find SAML config")
 		return nil, gqlutils.NotFoundf(ctx, "cannot find SAML config")
 	}
+	samlConfig := samlConfigs[0]
 
-	loginURL := r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + samlConfig.ID.String()).MustString()
+	loginURL := r.SSOLoginURL(samlConfig.ID)
 	return &loginURL, nil
 }
 
@@ -1757,7 +1757,8 @@ func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*stri
 	}
 
 	samlConfig := samlConfigs[0]
-	loginURL := r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + samlConfig.ID.String()).MustString()
+	loginURL := r.SSOLoginURL(samlConfig.ID)
+
 	return &loginURL, nil
 }
 
