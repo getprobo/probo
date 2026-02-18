@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f6caf8d14eaaea74987cd5f91fedaed3>>
+ * @generated SignedSource<<889efcfe178bb170887494345d05c48b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,12 +9,16 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type ProfileState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type MembershipCardFragment$data = {
-  readonly lastSession: {
-    readonly expiresAt: string;
-    readonly id: string;
-  } | null | undefined;
+  readonly membership: {
+    readonly lastSession: {
+      readonly expiresAt: string;
+      readonly id: string;
+    } | null | undefined;
+  };
+  readonly state: ProfileState;
   readonly " $fragmentType": "MembershipCardFragment";
 };
 export type MembershipCardFragment$key = {
@@ -31,33 +35,55 @@ const node: ReaderFragment = {
     {
       "alias": null,
       "args": null,
-      "concreteType": "Session",
-      "kind": "LinkedField",
-      "name": "lastSession",
-      "plural": false,
-      "selections": [
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "id",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "expiresAt",
-          "storageKey": null
-        }
-      ],
+      "kind": "ScalarField",
+      "name": "state",
       "storageKey": null
+    },
+    {
+      "kind": "RequiredField",
+      "field": {
+        "alias": null,
+        "args": null,
+        "concreteType": "Membership",
+        "kind": "LinkedField",
+        "name": "membership",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "Session",
+            "kind": "LinkedField",
+            "name": "lastSession",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "id",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "expiresAt",
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      },
+      "action": "THROW"
     }
   ],
-  "type": "Membership",
+  "type": "Profile",
   "abstractKey": null
 };
 
-(node as any).hash = "3da5f340850d352daaa553ca7b78aa37";
+(node as any).hash = "2e4f6ddee75ca32542f959c44de58e25";
 
 export default node;

@@ -17,10 +17,13 @@ import type { MembershipCard_organizationFragment$key } from "#/__generated__/ia
 import type { MembershipCardFragment$key } from "#/__generated__/iam/MembershipCardFragment.graphql";
 
 const fragment = graphql`
-  fragment MembershipCardFragment on Membership {
-    lastSession {
-      id
-      expiresAt
+  fragment MembershipCardFragment on Profile {
+    state
+    membership @required(action: THROW) {
+      lastSession {
+        id
+        expiresAt
+      }
     }
   }
 `;
@@ -42,7 +45,7 @@ export function MembershipCard(props: MembershipCardProps) {
   const { fKey, organizationFragmentRef } = props;
   const { __ } = useTranslate();
 
-  const { lastSession } = useFragment<MembershipCardFragment$key>(
+  const { membership, ...user } = useFragment<MembershipCardFragment$key>(
     fragment,
     fKey,
   );
@@ -51,8 +54,8 @@ export function MembershipCard(props: MembershipCardProps) {
     organizationFragmentRef,
   );
   const isExpired
-    = lastSession && parseDate(lastSession.expiresAt) < new Date();
-  const isAssuming = !!lastSession && !isExpired;
+    = membership.lastSession && parseDate(membership.lastSession.expiresAt) < new Date();
+  const isAssuming = !!membership.lastSession && !isExpired;
 
   const getAuthBadge = () => {
     if (isAssuming) {
@@ -94,11 +97,17 @@ export function MembershipCard(props: MembershipCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Link to={`/organizations/${organization.id}`}>
-            {isAssuming
-              ? <Button variant="secondary">{__("Start")}</Button>
-              : <Button>{__("Login")}</Button>}
-          </Link>
+          {user.state === "ACTIVE"
+            ? (
+                <Link to={`/organizations/${organization.id}`}>
+                  {isAssuming
+                    ? <Button variant="secondary">{__("Start")}</Button>
+                    : <Button>{__("Login")}</Button>}
+                </Link>
+              )
+            : (
+                <Button variant="secondary" disabled>{__("Account deactivated")}</Button>
+              )}
         </div>
       </div>
     </Card>

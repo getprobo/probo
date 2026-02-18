@@ -26,9 +26,7 @@ export const membershipsPageQuery = graphql`
         edges @required(action: THROW) {
           node {
             id
-            membership @required(action: THROW) {
             ...MembershipCardFragment
-            }
             organization @required(action: THROW) {
               name
               ...MembershipCard_organizationFragment
@@ -94,7 +92,7 @@ export function MembershipsPage(props: {
                     profiles.map(({ node }) => (
                       <MembershipCard
                         key={node.id}
-                        fKey={node.membership}
+                        fKey={node}
                         organizationFragmentRef={node.organization}
                       />
                     ))

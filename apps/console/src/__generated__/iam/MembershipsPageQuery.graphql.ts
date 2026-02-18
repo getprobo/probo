@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<68acd1fa60fc1efe40e3983441ae01da>>
+ * @generated SignedSource<<0e09a0566214f0c5c5ee2919d75bb85a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,13 +17,11 @@ export type MembershipsPageQuery$data = {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly id: string;
-          readonly membership: {
-            readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
-          };
           readonly organization: {
             readonly name: string;
             readonly " $fragmentSpreads": FragmentRefs<"MembershipCard_organizationFragment">;
           };
+          readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
         };
       }>;
     };
@@ -153,24 +151,9 @@ return {
                           "selections": [
                             (v1/*: any*/),
                             {
-                              "kind": "RequiredField",
-                              "field": {
-                                "alias": null,
-                                "args": null,
-                                "concreteType": "Membership",
-                                "kind": "LinkedField",
-                                "name": "membership",
-                                "plural": false,
-                                "selections": [
-                                  {
-                                    "args": null,
-                                    "kind": "FragmentSpread",
-                                    "name": "MembershipCardFragment"
-                                  }
-                                ],
-                                "storageKey": null
-                              },
-                              "action": "THROW"
+                              "args": null,
+                              "kind": "FragmentSpread",
+                              "name": "MembershipCardFragment"
                             },
                             {
                               "kind": "RequiredField",
@@ -260,6 +243,13 @@ return {
                       {
                         "alias": null,
                         "args": null,
+                        "kind": "ScalarField",
+                        "name": "state",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
                         "concreteType": "Membership",
                         "kind": "LinkedField",
                         "name": "membership",
@@ -338,7 +328,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d3ee4e9e305c7a2f57179cf540f4cd6c",
+    "cacheID": "d10df01cc523419b3f998a26d3ecbf7b",
     "id": null,
     "metadata": {
       "connection": [
@@ -355,11 +345,11 @@ return {
     },
     "name": "MembershipsPageQuery",
     "operationKind": "query",
-    "text": "query MembershipsPageQuery {\n  viewer {\n    profiles(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}) {\n      edges {\n        node {\n          id\n          membership {\n            ...MembershipCardFragment\n            id\n          }\n          organization {\n            name\n            ...MembershipCard_organizationFragment\n            id\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  lastSession {\n    id\n    expiresAt\n  }\n}\n\nfragment MembershipCard_organizationFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
+    "text": "query MembershipsPageQuery {\n  viewer {\n    profiles(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            ...MembershipCard_organizationFragment\n            id\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipCardFragment on Profile {\n  state\n  membership {\n    lastSession {\n      id\n      expiresAt\n    }\n    id\n  }\n}\n\nfragment MembershipCard_organizationFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c87fe091011b4d5e5bffe0309eb4211f";
+(node as any).hash = "578d6a9573ba32c7b017ec0bae079651";
 
 export default node;
