@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d0c32c536987c19da427a6088151bd09>>
+ * @generated SignedSource<<799dc16fa7e9b770dbaba857b2d887ef>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,7 +25,6 @@ export type AssumePageMutation$data = {
     } | {
       readonly __typename: "SAMLAuthenticationRequired";
       readonly reason: ReauthenticationReason;
-      readonly redirectUrl: string;
     } | {
       // This will never be '%other', but we need some
       // value in case none of the concrete values match.
@@ -46,13 +45,15 @@ var v0 = [
     "name": "input"
   }
 ],
-v1 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "reason",
-  "storageKey": null
-},
+v1 = [
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "reason",
+    "storageKey": null
+  }
+],
 v2 = [
   {
     "alias": null,
@@ -85,24 +86,13 @@ v2 = [
           },
           {
             "kind": "InlineFragment",
-            "selections": [
-              (v1/*: any*/)
-            ],
+            "selections": (v1/*: any*/),
             "type": "PasswordRequired",
             "abstractKey": null
           },
           {
             "kind": "InlineFragment",
-            "selections": [
-              (v1/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "redirectUrl",
-                "storageKey": null
-              }
-            ],
+            "selections": (v1/*: any*/),
             "type": "SAMLAuthenticationRequired",
             "abstractKey": null
           }
@@ -131,16 +121,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "073df17c6a8b470ae74d1d39243b3e30",
+    "cacheID": "d8d9f257921f8f642821de2af7f22bcb",
     "id": null,
     "metadata": {},
     "name": "AssumePageMutation",
     "operationKind": "mutation",
-    "text": "mutation AssumePageMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
+    "text": "mutation AssumePageMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e6f39c43ccc7680cd72ad99c84a82780";
+(node as any).hash = "289d3534a87fa6cdb46384af573d5a57";
 
 export default node;

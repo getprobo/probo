@@ -154,6 +154,7 @@ type ComplexityRoot struct {
 		Permission         func(childComplexity int, action string) int
 		PersonalAPIKeys    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Sessions           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) int
+		SsoLoginURL        func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 	}
 
@@ -354,8 +355,7 @@ type ComplexityRoot struct {
 	}
 
 	SAMLAuthenticationRequired struct {
-		Reason      func(childComplexity int) int
-		RedirectURL func(childComplexity int) int
+		Reason func(childComplexity int) int
 	}
 
 	SAMLConfiguration struct {
@@ -506,6 +506,7 @@ type IdentityResolver interface {
 	PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error)
 	Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error)
 	PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error)
+	SsoLoginURL(ctx context.Context, obj *types.Identity) (*string, error)
 	Permission(ctx context.Context, obj *types.Identity, action string) (bool, error)
 }
 type InvitationResolver interface {
@@ -895,6 +896,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Identity.Sessions(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.SessionOrder)), true
+	case "Identity.ssoLoginURL":
+		if e.complexity.Identity.SsoLoginURL == nil {
+			break
+		}
+
+		return e.complexity.Identity.SsoLoginURL(childComplexity), true
 	case "Identity.updatedAt":
 		if e.complexity.Identity.UpdatedAt == nil {
 			break
@@ -1871,12 +1878,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SAMLAuthenticationRequired.Reason(childComplexity), true
-	case "SAMLAuthenticationRequired.redirectUrl":
-		if e.complexity.SAMLAuthenticationRequired.RedirectURL == nil {
-			break
-		}
-
-		return e.complexity.SAMLAuthenticationRequired.RedirectURL(childComplexity), true
 
 	case "SAMLConfiguration.attributeMappings":
 		if e.complexity.SAMLConfiguration.AttributeMappings == nil {
@@ -2654,7 +2655,6 @@ type Mutation {
   updateSCIMBridge(
     input: UpdateSCIMBridgeInput!
   ): UpdateSCIMBridgePayload @session(required: PRESENT)
-
 }
 
 type Identity implements Node {
@@ -2695,6 +2695,10 @@ type Identity implements Node {
     last: Int
     before: CursorKey
   ): PersonalAPIKeyConnection @goField(forceResolver: true)
+
+  ssoLoginURL: String
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -3383,7 +3387,6 @@ type PasswordRequired {
 
 type SAMLAuthenticationRequired {
   reason: ReauthenticationReason!
-  redirectUrl: String!
 }
 
 type AssumeOrganizationSessionPayload {
@@ -3500,8 +3503,6 @@ type RegenerateSCIMTokenPayload {
 type UpdateSCIMBridgePayload {
   scimBridge: SCIMBridge!
 }
-
-
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
 # Include this schema in your gqlgen configuration to enable session-based access control.
@@ -5587,6 +5588,53 @@ func (ec *executionContext) fieldContext_Identity_personalAPIKeys(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Identity_ssoLoginURL(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Identity_ssoLoginURL,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Identity().SsoLoginURL(ctx, obj)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *string
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *string
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Identity_ssoLoginURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Identity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Identity_permission(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6320,6 +6368,8 @@ func (ec *executionContext) fieldContext_Membership_identity(_ context.Context, 
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "ssoLoginURL":
+				return ec.fieldContext_Identity_ssoLoginURL(ctx, field)
 			case "permission":
 				return ec.fieldContext_Identity_permission(ctx, field)
 			}
@@ -7130,6 +7180,8 @@ func (ec *executionContext) fieldContext_MembershipProfile_identity(_ context.Co
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "ssoLoginURL":
+				return ec.fieldContext_Identity_ssoLoginURL(ctx, field)
 			case "permission":
 				return ec.fieldContext_Identity_permission(ctx, field)
 			}
@@ -10565,6 +10617,8 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "ssoLoginURL":
+				return ec.fieldContext_Identity_ssoLoginURL(ctx, field)
 			case "permission":
 				return ec.fieldContext_Identity_permission(ctx, field)
 			}
@@ -11102,35 +11156,6 @@ func (ec *executionContext) fieldContext_SAMLAuthenticationRequired_reason(_ con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ReauthenticationReason does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLAuthenticationRequired_redirectUrl(ctx context.Context, field graphql.CollectedField, obj *types.SAMLAuthenticationRequired) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLAuthenticationRequired_redirectUrl,
-		func(ctx context.Context) (any, error) {
-			return obj.RedirectURL, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLAuthenticationRequired_redirectUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLAuthenticationRequired",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13059,6 +13084,8 @@ func (ec *executionContext) fieldContext_Session_identity(_ context.Context, fie
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "ssoLoginURL":
+				return ec.fieldContext_Identity_ssoLoginURL(ctx, field)
 			case "permission":
 				return ec.fieldContext_Identity_permission(ctx, field)
 			}
@@ -13495,6 +13522,8 @@ func (ec *executionContext) fieldContext_SignInPayload_identity(_ context.Contex
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "ssoLoginURL":
+				return ec.fieldContext_Identity_ssoLoginURL(ctx, field)
 			case "permission":
 				return ec.fieldContext_Identity_permission(ctx, field)
 			}
@@ -13624,6 +13653,8 @@ func (ec *executionContext) fieldContext_SignUpFromInvitationPayload_identity(_ 
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "ssoLoginURL":
+				return ec.fieldContext_Identity_ssoLoginURL(ctx, field)
 			case "permission":
 				return ec.fieldContext_Identity_permission(ctx, field)
 			}
@@ -13677,6 +13708,8 @@ func (ec *executionContext) fieldContext_SignUpPayload_identity(_ context.Contex
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "ssoLoginURL":
+				return ec.fieldContext_Identity_ssoLoginURL(ctx, field)
 			case "permission":
 				return ec.fieldContext_Identity_permission(ctx, field)
 			}
@@ -17738,6 +17771,39 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "ssoLoginURL":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Identity_ssoLoginURL(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "permission":
 			field := field
 
@@ -19916,11 +19982,6 @@ func (ec *executionContext) _SAMLAuthenticationRequired(ctx context.Context, sel
 			out.Values[i] = graphql.MarshalString("SAMLAuthenticationRequired")
 		case "reason":
 			out.Values[i] = ec._SAMLAuthenticationRequired_reason(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "redirectUrl":
-			out.Values[i] = ec._SAMLAuthenticationRequired_redirectUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

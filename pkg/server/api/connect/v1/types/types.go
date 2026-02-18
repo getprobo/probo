@@ -180,6 +180,7 @@ type Identity struct {
 	PendingInvitations *InvitationConnection     `json:"pendingInvitations,omitempty"`
 	Sessions           *SessionConnection        `json:"sessions,omitempty"`
 	PersonalAPIKeys    *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
+	SsoLoginURL        *string                   `json:"ssoLoginURL,omitempty"`
 	Permission         bool                      `json:"permission"`
 }
 
@@ -387,8 +388,7 @@ type SAMLAttributeMappingsInput struct {
 }
 
 type SAMLAuthenticationRequired struct {
-	Reason      ReauthenticationReason `json:"reason"`
-	RedirectURL string                 `json:"redirectUrl"`
+	Reason ReauthenticationReason `json:"reason"`
 }
 
 func (SAMLAuthenticationRequired) IsAssumeOrganizationSessionResult() {}

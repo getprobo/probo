@@ -549,12 +549,7 @@ func (s SessionService) AssumeOrganizationSession(
 
 			if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyRequired {
 				if rootSession.AuthMethod != coredata.AuthMethodSAML {
-					redirectURL, err := s.SAMLService.InitiateLogin(ctx, samlConfig.ID, continueURL)
-					if err != nil {
-						return fmt.Errorf("cannot initiate SAML login: %w", err)
-					}
-
-					return NewSAMLAuthenticationRequiredError("policy_requirement", redirectURL.String())
+					return NewSAMLAuthenticationRequiredError("policy_requirement")
 				}
 			} else if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyOptional {
 				// SAML is optional: both PASSWORD and SAML root sessions are allowed.

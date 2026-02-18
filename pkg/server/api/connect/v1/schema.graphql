@@ -169,6 +169,10 @@ type Identity implements Node {
     before: CursorKey
   ): PersonalAPIKeyConnection @goField(forceResolver: true)
 
+  ssoLoginURL: String
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)
@@ -856,7 +860,6 @@ type PasswordRequired {
 
 type SAMLAuthenticationRequired {
   reason: ReauthenticationReason!
-  redirectUrl: String!
 }
 
 type AssumeOrganizationSessionPayload {

@@ -125,7 +125,7 @@ const routes = [
     children: [
       {
         path: "assume",
-        Component: lazy(() => import("./pages/iam/organizations/AssumePage")),
+        Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
       },
       {
         path: "employee",

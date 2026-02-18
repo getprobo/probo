@@ -160,6 +160,50 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
 }
 
+// SsoLoginURL is the resolver for the ssoLoginURL field.
+func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionIdentityGet); err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if count != 1 {
+		if count == 0 {
+			return nil, graphql.ErrorOnPath(
+				ctx,
+				fmt.Errorf("no SAML configuration for email"),
+			)
+		}
+
+		return nil, graphql.ErrorOnPath(
+			ctx,
+			fmt.Errorf("multiple SSO configurations found for this domain. Please use your organization-specific SSO login URL"),
+		)
+	}
+
+	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	samlConfig := samlConfigs[0]
+	if samlConfig == nil {
+		r.logger.ErrorCtx(ctx, "cannot find SAML config")
+		return nil, gqlutils.NotFoundf(ctx, "cannot find SAML config")
+	}
+
+	loginURL := r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + samlConfig.ID.String()).MustString()
+	return &loginURL, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -749,8 +793,7 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 		case errors.As(err, &errSAMLAuthenticationRequired):
 			return &types.AssumeOrganizationSessionPayload{
 				Result: types.SAMLAuthenticationRequired{
-					Reason:      types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
-					RedirectURL: errSAMLAuthenticationRequired.RedirectURL,
+					Reason: types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
 				},
 			}, nil
 

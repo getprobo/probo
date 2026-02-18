@@ -1,13 +1,13 @@
 import { useTranslate } from "@probo/i18n";
 import { UnAuthenticatedError } from "@probo/relay";
 import { useEffect } from "react";
-import { useMutation } from "react-relay";
+import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { AssumePageMutation } from "#/__generated__/iam/AssumePageMutation.graphql";
+import type { AssumePageQuery } from "#/__generated__/iam/AssumePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import AuthLayout from "../auth/AuthLayout";
 
@@ -23,19 +23,32 @@ const assumeMutation = graphql`
         }
         ... on SAMLAuthenticationRequired {
           reason
-          redirectUrl
         }
       }
     }
   }
 `;
 
-function AssumePageInner() {
+export const assumePageQuery = graphql`
+  query AssumePageQuery {
+    viewer @required(action: THROW) {
+      __typename
+      ... on Identity {
+        ssoLoginURL
+      }
+    }
+  }
+`;
+
+export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> }) {
+  const { queryRef } = props;
+
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { __ } = useTranslate();
 
+  const { viewer } = usePreloadedQuery<AssumePageQuery>(assumePageQuery, queryRef);
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
 
   const continueUrlParam = searchParams.get("continue");
@@ -80,7 +93,10 @@ function AssumePageInner() {
             void navigate({ pathname: "/auth/password-login", search: "?" + search.toString() });
             break;
           case "SAMLAuthenticationRequired":
-            samlSSOLoginURL = new URL(result.redirectUrl);
+            if (!viewer.ssoLoginURL) {
+              throw new Error("missing SSO login URL for user email");
+            }
+            samlSSOLoginURL = new URL(viewer.ssoLoginURL);
             samlSSOLoginURL.search = "?" + searchParams.toString();
 
             window.location.href = samlSSOLoginURL.toString();
@@ -90,7 +106,7 @@ function AssumePageInner() {
         }
       },
     });
-  }, [organizationId, navigate, assumeOrganizationSession, safeContinueUrl, searchParams]);
+  }, [organizationId, navigate, assumeOrganizationSession, safeContinueUrl, searchParams, viewer.ssoLoginURL]);
 
   return (
     <AuthLayout>
@@ -103,13 +119,5 @@ function AssumePageInner() {
         </div>
       </div>
     </AuthLayout>
-  );
-}
-
-export default function AssumePage() {
-  return (
-    <IAMRelayProvider>
-      <AssumePageInner />
-    </IAMRelayProvider>
   );
 }

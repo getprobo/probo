@@ -1301,7 +1301,8 @@ func (s OrganizationService) DeleteSAMLConfiguration(
 
 func (s OrganizationService) ListSAMLConfigurations(
 	ctx context.Context,
-	organizationID gid.GID, cursor *page.Cursor[coredata.SAMLConfigurationOrderField],
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.SAMLConfigurationOrderField],
 ) (*page.Page[*coredata.SAMLConfiguration, coredata.SAMLConfigurationOrderField], error) {
 	var (
 		scope              = coredata.NewScopeFromObjectID(organizationID)

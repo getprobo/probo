@@ -339,12 +339,11 @@ func (e *ErrPasswordRequired) Error() string {
 }
 
 type ErrSAMLAuthenticationRequired struct {
-	Reason      string
-	RedirectURL string
+	Reason string
 }
 
-func NewSAMLAuthenticationRequiredError(reason string, redirectURL string) *ErrSAMLAuthenticationRequired {
-	return &ErrSAMLAuthenticationRequired{Reason: reason, RedirectURL: redirectURL}
+func NewSAMLAuthenticationRequiredError(reason string) *ErrSAMLAuthenticationRequired {
+	return &ErrSAMLAuthenticationRequired{Reason: reason}
 }
 
 func (e *ErrSAMLAuthenticationRequired) Error() string {
