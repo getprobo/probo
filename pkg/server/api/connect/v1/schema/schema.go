@@ -156,6 +156,7 @@ type ComplexityRoot struct {
 		PersonalAPIKeys func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Profiles        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) int
 		Sessions        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) int
+		SsoLoginURL     func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
 	}
 
@@ -875,6 +876,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Identity.Sessions(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.SessionOrder)), true
+	case "Identity.ssoLoginURL":
+		if e.complexity.Identity.SsoLoginURL == nil {
+			break
+		}
+
+		return e.complexity.Identity.SsoLoginURL(childComplexity), true
 	case "Identity.updatedAt":
 		if e.complexity.Identity.UpdatedAt == nil {
 			break
@@ -9786,6 +9793,8 @@ func (ec *executionContext) fieldContext_Profile_identity(_ context.Context, fie
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "ssoLoginURL":
+				return ec.fieldContext_Identity_ssoLoginURL(ctx, field)
 			case "permission":
 				return ec.fieldContext_Identity_permission(ctx, field)
 			}

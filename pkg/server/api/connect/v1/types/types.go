@@ -200,6 +200,7 @@ type Identity struct {
 	Profiles        *ProfileConnection        `json:"profiles,omitempty"`
 	Sessions        *SessionConnection        `json:"sessions,omitempty"`
 	PersonalAPIKeys *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
+	SsoLoginURL     *string                   `json:"ssoLoginURL,omitempty"`
 	Permission      bool                      `json:"permission"`
 }
 
