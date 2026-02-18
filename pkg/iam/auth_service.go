@@ -233,6 +233,15 @@ func (s *AuthService) ActivateAccount(
 		return nil, nil, err
 	}
 
+	count, err := s.AccountService.CountSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot count SAML configurations: %w", err)
+	}
+
+	if count > 0 {
+		return profile, nil, nil
+	}
+
 	if identity.HashedPassword == nil {
 		token, err := statelesstoken.NewToken(
 			s.tokenSecret,
