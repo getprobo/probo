@@ -379,7 +379,7 @@ func (c *Client) inviteUser(profileID gid.GID) {
 }
 
 func (c *Client) getActivationToken(email string) string {
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.Now().Add(10 * time.Second)
 
 	for time.Now().Before(deadline) {
 		searchMails, err := c.SearchMails(fmt.Sprintf("to:%s subject:\"Invitation to join\"", email))
