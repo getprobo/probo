@@ -379,6 +379,24 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 
 // ActivateAccount is the resolver for the signUpFromInvitation field.
 func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.ActivateAccountInput) (*types.ActivateAccountPayload, error) {
+	session := authn.SessionFromContext(ctx)
+
+	if session != nil {
+		// Sign out any other account before activating a new one
+		err := r.iam.SessionService.CloseSession(ctx, session.ID)
+		if err != nil {
+			var ErrSessionNotFound *iam.ErrSessionNotFound
+			if !errors.As(err, &ErrSessionNotFound) {
+				r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+				return nil, gqlutils.Internal(ctx)
+			}
+
+		}
+
+		w := gqlutils.HTTPResponseWriterFromContext(ctx)
+		r.sessionCookie.Clear(w)
+	}
+
 	user, createPasswordToken, err := r.iam.AuthService.ActivateAccount(
 		ctx,
 		&iam.ActivateAccountRequest{
