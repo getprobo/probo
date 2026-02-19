@@ -165,8 +165,7 @@ func (s *Service) CreateUser(
 					UpdatedAt:            now,
 				}
 
-				err = identity.Insert(ctx, tx)
-				if err != nil {
+				if err := identity.Insert(ctx, tx); err != nil {
 					return fmt.Errorf("cannot insert identity: %w", err)
 				}
 			} else {
