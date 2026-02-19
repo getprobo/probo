@@ -17,12 +17,13 @@ export type TrustCenterDocumentAccess = {
   } | null;
   report?: {
     id: string;
-    filename: string;
-    audit?: {
-      id: string;
-      framework: {
-        name: string;
-      };
+    name: string | null | undefined;
+    file?: {
+      fileName: string;
+    } | null;
+    frameworkType?: string | null;
+    framework?: {
+      name: string;
     } | null;
   } | null;
   trustCenterFile?: {

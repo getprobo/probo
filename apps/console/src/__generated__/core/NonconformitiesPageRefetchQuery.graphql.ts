@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<387d8e19371a771747334f0c6499ea76>>
+ * @generated SignedSource<<40b8802a6414a9bdf77708eb89650376>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -259,9 +259,9 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "Audit",
+                            "concreteType": "Report",
                             "kind": "LinkedField",
-                            "name": "audit",
+                            "name": "report",
                             "plural": false,
                             "selections": [
                               (v9/*: any*/),
@@ -416,16 +416,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3876389521eec8e9737e5939cff3d95a",
+    "cacheID": "c1781398225abd99088a4d494f746d8b",
     "id": null,
     "metadata": {},
     "name": "NonconformitiesPageRefetchQuery",
     "operationKind": "query",
-    "text": "query NonconformitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NonconformitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_35e0S5 on Organization {\n  id\n  nonconformities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NonconformitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_35e0S5 on Organization {\n  id\n  nonconformities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        report {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "57f7e0fb2efff357af936edf90e14876";
+(node as any).hash = "1ade1a712cb37a360656d14329c13059";
 
 export default node;

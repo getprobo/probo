@@ -118,8 +118,8 @@ const (
 	ActionControlMeasureMappingDelete    = "core:control:delete-measure-mapping"
 	ActionControlDocumentMappingCreate   = "core:control:create-document-mapping"
 	ActionControlDocumentMappingDelete   = "core:control:delete-document-mapping"
-	ActionControlAuditMappingCreate      = "core:control:create-audit-mapping"
-	ActionControlAuditMappingDelete      = "core:control:delete-audit-mapping"
+	ActionControlReportMappingCreate     = "core:control:create-report-mapping"
+	ActionControlReportMappingDelete     = "core:control:delete-report-mapping"
 	ActionControlSnapshotMappingCreate   = "core:control:create-snapshot-mapping"
 	ActionControlSnapshotMappingDelete   = "core:control:delete-snapshot-mapping"
 	ActionControlObligationMappingCreate = "core:control:create-obligation-mapping"
@@ -201,19 +201,17 @@ const (
 	ActionDatumUpdate = "core:datum:update"
 	ActionDatumDelete = "core:datum:delete"
 
-	// Audit actions
-	ActionAuditGet          = "core:audit:get"
-	ActionAuditList         = "core:audit:list"
-	ActionAuditCreate       = "core:audit:create"
-	ActionAuditUpdate       = "core:audit:update"
-	ActionAuditDelete       = "core:audit:delete"
-	ActionAuditReportUpload = "core:audit:upload-report"
-	ActionAuditReportDelete = "core:audit:delete-report"
-
 	// Report actions
 	ActionReportGet            = "core:report:get"
-	ActionReportGetReportUrl   = "core:report:get-report-url"
-	ActionReportDownloadUrlGet = "core:report:get-download-url"
+	ActionReportList           = "core:report:list"
+	ActionReportCreate         = "core:report:create"
+	ActionReportUpdate         = "core:report:update"
+	ActionReportDelete         = "core:report:delete"
+	ActionReportFileUpload     = "core:report-file:upload"
+	ActionReportFileDelete     = "core:report-file:delete"
+	ActionReportFileGet        = "core:report-file:get"
+	ActionReportFileGetUrl     = "core:report-file:get-url"
+	ActionReportFileDownloadUrlGet = "core:report-file:get-download-url"
 
 	// Nonconformity actions
 	ActionNonconformityGet    = "core:nonconformity:get"

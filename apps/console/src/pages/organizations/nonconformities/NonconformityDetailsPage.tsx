@@ -31,9 +31,9 @@ import { useParams } from "react-router";
 import { z } from "zod";
 
 import type { NonconformityGraphNodeQuery } from "#/__generated__/core/NonconformityGraphNodeQuery.graphql";
-import { AuditSelectField } from "#/components/form/AuditSelectField";
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { ReportSelectField } from "#/components/form/ReportSelectField";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -55,7 +55,7 @@ const updateNonconformitySchema = z.object({
   effectivenessCheck: z.string().optional(),
   status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
   ownerId: z.string().min(1, "Owner is required"),
-  auditId: z.string().optional(),
+  reportId: z.string().optional(),
 });
 
 type Props = {
@@ -96,7 +96,7 @@ export default function NonconformityDetailsPage(props: Props) {
         effectivenessCheck: nonconformity.effectivenessCheck || "",
         status: nonconformity.status || "OPEN",
         ownerId: nonconformity.owner?.id || "",
-        auditId: nonconformity.audit?.id || "",
+        reportId: nonconformity.report?.id || "",
       },
     });
 
@@ -118,7 +118,7 @@ export default function NonconformityDetailsPage(props: Props) {
         effectivenessCheck: formData.effectivenessCheck,
         status: formData.status,
         ownerId: formData.ownerId,
-        auditId: formData.auditId,
+        reportId: formData.reportId,
       });
       reset(formData);
       toast({
@@ -198,12 +198,12 @@ export default function NonconformityDetailsPage(props: Props) {
               />
             </Field>
 
-            <AuditSelectField
+            <ReportSelectField
               organizationId={organizationId}
               control={control}
-              name="auditId"
-              label={__("Audit")}
-              error={formState.errors.auditId?.message}
+              name="reportId"
+              label={__("Report")}
+              error={formState.errors.reportId?.message}
               disabled={isSnapshotMode}
             />
 

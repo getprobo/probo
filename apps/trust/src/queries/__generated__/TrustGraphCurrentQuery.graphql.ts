@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c89278f85dedf2e3c5d8dbd77cd19222>>
+ * @generated SignedSource<<904cff752ac3f75100b22713c47fe39b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,14 +14,6 @@ export type ElectronicSignatureStatus = "ACCEPTED" | "COMPLETED" | "FAILED" | "P
 export type TrustGraphCurrentQuery$variables = Record<PropertyKey, never>;
 export type TrustGraphCurrentQuery$data = {
   readonly currentTrustCenter: {
-    readonly audits: {
-      readonly edges: ReadonlyArray<{
-        readonly node: {
-          readonly id: string;
-          readonly " $fragmentSpreads": FragmentRefs<"AuditRowFragment">;
-        };
-      }>;
-    };
     readonly darkLogoFileUrl: string | null | undefined;
     readonly id: string;
     readonly isViewerMember: boolean;
@@ -39,6 +31,14 @@ export type TrustGraphCurrentQuery$data = {
       readonly headquarterAddress: string | null | undefined;
       readonly name: string;
       readonly websiteUrl: string | null | undefined;
+    };
+    readonly reports: {
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly id: string;
+          readonly " $fragmentSpreads": FragmentRefs<"ReportRowFragment">;
+        };
+      }>;
     };
     readonly slug: string;
     readonly vendorInfo: {
@@ -290,15 +290,15 @@ return {
           {
             "alias": null,
             "args": (v15/*: any*/),
-            "concreteType": "AuditConnection",
+            "concreteType": "ReportConnection",
             "kind": "LinkedField",
-            "name": "audits",
+            "name": "reports",
             "plural": false,
             "selections": [
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "AuditEdge",
+                "concreteType": "ReportEdge",
                 "kind": "LinkedField",
                 "name": "edges",
                 "plural": true,
@@ -306,7 +306,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "Audit",
+                    "concreteType": "Report",
                     "kind": "LinkedField",
                     "name": "node",
                     "plural": false,
@@ -315,7 +315,7 @@ return {
                       {
                         "args": null,
                         "kind": "FragmentSpread",
-                        "name": "AuditRowFragment"
+                        "name": "ReportRowFragment"
                       }
                     ],
                     "storageKey": null
@@ -324,7 +324,7 @@ return {
                 "storageKey": null
               }
             ],
-            "storageKey": "audits(first:50)"
+            "storageKey": "reports(first:50)"
           }
         ],
         "storageKey": null
@@ -606,15 +606,15 @@ return {
           {
             "alias": null,
             "args": (v15/*: any*/),
-            "concreteType": "AuditConnection",
+            "concreteType": "ReportConnection",
             "kind": "LinkedField",
-            "name": "audits",
+            "name": "reports",
             "plural": false,
             "selections": [
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "AuditEdge",
+                "concreteType": "ReportEdge",
                 "kind": "LinkedField",
                 "name": "edges",
                 "plural": true,
@@ -622,7 +622,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "Audit",
+                    "concreteType": "Report",
                     "kind": "LinkedField",
                     "name": "node",
                     "plural": false,
@@ -631,12 +631,18 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Report",
+                        "kind": "ScalarField",
+                        "name": "frameworkType",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "ReportFile",
                         "kind": "LinkedField",
-                        "name": "report",
+                        "name": "file",
                         "plural": false,
                         "selections": [
-                          (v2/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -645,7 +651,8 @@ return {
                             "storageKey": null
                           },
                           (v17/*: any*/),
-                          (v18/*: any*/)
+                          (v18/*: any*/),
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -683,7 +690,7 @@ return {
                 "storageKey": null
               }
             ],
-            "storageKey": "audits(first:50)"
+            "storageKey": "reports(first:50)"
           }
         ],
         "storageKey": null
@@ -691,16 +698,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "011070e93164ecde082cc2e74651ef2e",
+    "cacheID": "e770dbb9fb07ab5e7993aac4d3c4c0e0",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentQuery {\n  viewer {\n    email\n    fullName\n    id\n  }\n  currentTrustCenter {\n    id\n    slug\n    isViewerMember\n    logoFileUrl\n    darkLogoFileUrl\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    organization {\n      name\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    vendorInfo: vendors(first: 0) {\n      totalCount\n    }\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
+    "text": "query TrustGraphCurrentQuery {\n  viewer {\n    email\n    fullName\n    id\n  }\n  currentTrustCenter {\n    id\n    slug\n    isViewerMember\n    logoFileUrl\n    darkLogoFileUrl\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    organization {\n      name\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    vendorInfo: vendors(first: 0) {\n      totalCount\n    }\n    reports(first: 50) {\n      edges {\n        node {\n          id\n          ...ReportRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment ReportRowFragment on Report {\n  id\n  frameworkType\n  file {\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n    id\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6cbe676214b698d12e2cae08060a7285";
+(node as any).hash = "c4606fe79e47f2090250ad13ce2a4ef1";
 
 export default node;

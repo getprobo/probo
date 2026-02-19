@@ -35,7 +35,7 @@ type (
 		SourceID           *gid.GID            `db:"source_id"`
 		ReferenceID        string              `db:"reference_id"`
 		Description        *string             `db:"description"`
-		AuditID            *gid.GID            `db:"audit_id"`
+		ReportID            *gid.GID            `db:"report_id"`
 		DateIdentified     *time.Time          `db:"date_identified"`
 		RootCause          string              `db:"root_cause"`
 		CorrectiveAction   *string             `db:"corrective_action"`
@@ -95,7 +95,7 @@ SELECT
 	source_id,
 	reference_id,
 	description,
-	audit_id,
+	report_id,
 	date_identified,
 	root_cause,
 	corrective_action,
@@ -184,7 +184,7 @@ SELECT
 	source_id,
 	reference_id,
 	description,
-	audit_id,
+	report_id,
 	date_identified,
 	root_cause,
 	corrective_action,
@@ -237,7 +237,7 @@ INSERT INTO nonconformities (
 	organization_id,
 	reference_id,
 	description,
-	audit_id,
+	report_id,
 	date_identified,
 	root_cause,
 	corrective_action,
@@ -253,7 +253,7 @@ INSERT INTO nonconformities (
 	@organization_id,
 	@reference_id,
 	@description,
-	@audit_id,
+	@report_id,
 	@date_identified,
 	@root_cause,
 	@corrective_action,
@@ -272,7 +272,7 @@ INSERT INTO nonconformities (
 		"organization_id":     nc.OrganizationID,
 		"reference_id":        nc.ReferenceID,
 		"description":         nc.Description,
-		"audit_id":            nc.AuditID,
+		"report_id":            nc.ReportID,
 		"date_identified":     nc.DateIdentified,
 		"root_cause":          nc.RootCause,
 		"corrective_action":   nc.CorrectiveAction,
@@ -309,7 +309,7 @@ SET
 	status = @status,
 	effectiveness_check = @effectiveness_check,
 	owner_profile_id = @owner_profile_id,
-	audit_id = @audit_id,
+	report_id = @report_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -330,7 +330,7 @@ WHERE
 		"status":              nc.Status,
 		"effectiveness_check": nc.EffectivenessCheck,
 		"owner_profile_id":    nc.OwnerID,
-		"audit_id":            nc.AuditID,
+		"report_id":            nc.ReportID,
 		"updated_at":          nc.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -378,7 +378,7 @@ INSERT INTO nonconformities (
 	organization_id,
 	reference_id,
 	description,
-	audit_id,
+	report_id,
 	date_identified,
 	root_cause,
 	corrective_action,
@@ -397,7 +397,7 @@ SELECT
 	nc.organization_id,
 	nc.reference_id,
 	nc.description,
-	nc.audit_id,
+	nc.report_id,
 	nc.date_identified,
 	nc.root_cause,
 	nc.corrective_action,

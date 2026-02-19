@@ -599,7 +599,7 @@ func (b *RiskBuilder) Create() string {
 	return CreateRisk(b.client, b.attrs)
 }
 
-func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string {
+func CreateReport(c *testutil.Client, frameworkID string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -608,9 +608,9 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 	}
 
 	const query = `
-		mutation($input: CreateAuditInput!) {
-			createAudit(input: $input) {
-				auditEdge {
+		mutation($input: CreateReportInput!) {
+			createReport(input: $input) {
+				reportEdge {
 					node { id }
 				}
 			}
@@ -620,50 +620,50 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
 		"frameworkId":    frameworkID,
-		"name":           a.getString("name", SafeName("Audit")),
+		"name":           a.getString("name", SafeName("Report")),
 	}
 	if state := a.getStringPtr("state"); state != nil {
 		input["state"] = *state
 	}
 
 	var result struct {
-		CreateAudit struct {
-			AuditEdge struct {
+		CreateReport struct {
+			ReportEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"auditEdge"`
-		} `json:"createAudit"`
+			} `json:"reportEdge"`
+		} `json:"createReport"`
 	}
 
 	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createAudit mutation failed")
+	require.NoError(c.T, err, "createReport mutation failed")
 
-	return result.CreateAudit.AuditEdge.Node.ID
+	return result.CreateReport.ReportEdge.Node.ID
 }
 
-type AuditBuilder struct {
+type ReportBuilder struct {
 	client      *testutil.Client
 	frameworkID string
 	attrs       Attrs
 }
 
-func NewAudit(c *testutil.Client, frameworkID string) *AuditBuilder {
-	return &AuditBuilder{client: c, frameworkID: frameworkID, attrs: Attrs{}}
+func NewReport(c *testutil.Client, frameworkID string) *ReportBuilder {
+	return &ReportBuilder{client: c, frameworkID: frameworkID, attrs: Attrs{}}
 }
 
-func (b *AuditBuilder) WithName(name string) *AuditBuilder {
+func (b *ReportBuilder) WithName(name string) *ReportBuilder {
 	b.attrs["name"] = name
 	return b
 }
 
-func (b *AuditBuilder) WithState(state string) *AuditBuilder {
+func (b *ReportBuilder) WithState(state string) *ReportBuilder {
 	b.attrs["state"] = state
 	return b
 }
 
-func (b *AuditBuilder) Create() string {
-	return CreateAudit(b.client, b.frameworkID, b.attrs)
+func (b *ReportBuilder) Create() string {
+	return CreateReport(b.client, b.frameworkID, b.attrs)
 }
 
 func CreateDatum(c *testutil.Client, ownerID string, attrs ...Attrs) string {

@@ -65,6 +65,7 @@ export async function execute(
 							node {
 								id
 								name
+								frameworkType
 								state
 								validFrom
 								validUntil

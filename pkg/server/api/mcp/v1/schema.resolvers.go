@@ -787,7 +787,7 @@ func (r *Resolver) AddNonconformityTool(ctx context.Context, req *mcp.CallToolRe
 			OrganizationID:     input.OrganizationID,
 			ReferenceID:        input.ReferenceID,
 			Description:        input.Description,
-			AuditID:            input.AuditID,
+			ReportID:           input.ReportID,
 			DateIdentified:     input.DateIdentified,
 			RootCause:          input.RootCause,
 			CorrectiveAction:   input.CorrectiveAction,
@@ -821,7 +821,7 @@ func (r *Resolver) UpdateNonconformityTool(ctx context.Context, req *mcp.CallToo
 			RootCause:          input.RootCause,
 			CorrectiveAction:   UnwrapOmittable(input.CorrectiveAction),
 			OwnerID:            input.OwnerID,
-			AuditID:            UnwrapOmittable(input.AuditID),
+			ReportID:           UnwrapOmittable(input.ReportID),
 			DueDate:            UnwrapOmittable(input.DueDate),
 			Status:             input.Status,
 			EffectivenessCheck: UnwrapOmittable(input.EffectivenessCheck),
@@ -1395,17 +1395,17 @@ func (r *Resolver) UpdateContinualImprovementTool(ctx context.Context, req *mcp.
 	}, nil
 }
 
-func (r *Resolver) ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditsInput) (*mcp.CallToolResult, types.ListAuditsOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAuditList)
+func (r *Resolver) ListReportsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListReportsInput) (*mcp.CallToolResult, types.ListReportsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionReportList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
-	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
-		Field:     coredata.AuditOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ReportOrderField]{
+		Field:     coredata.ReportOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ReportOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -1413,39 +1413,40 @@ func (r *Resolver) ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.Audits.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	reportPage, err := prb.Reports.ListForOrganizationID(ctx, input.OrganizationID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization audits: %w", err))
+		panic(fmt.Errorf("cannot list organization reports: %w", err))
 	}
 
-	return nil, types.NewListAuditsOutput(page), nil
+	return nil, types.NewListReportsOutput(reportPage), nil
 }
 
-func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditInput) (*mcp.CallToolResult, types.GetAuditOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionAuditGet)
+func (r *Resolver) GetReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetReportInput) (*mcp.CallToolResult, types.GetReportOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionReportGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
-	audit, err := prb.Audits.Get(ctx, input.ID)
+	report, err := prb.Reports.Get(ctx, input.ID)
 	if err != nil {
-		return nil, types.GetAuditOutput{}, fmt.Errorf("failed to get audit: %w", err)
+		return nil, types.GetReportOutput{}, fmt.Errorf("failed to get report: %w", err)
 	}
 
-	return nil, types.GetAuditOutput{
-		Audit: types.NewAudit(audit),
+	return nil, types.GetReportOutput{
+		Report: types.NewReport(report),
 	}, nil
 }
 
-func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAuditInput) (*mcp.CallToolResult, types.AddAuditOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAuditCreate)
+func (r *Resolver) AddReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddReportInput) (*mcp.CallToolResult, types.AddReportOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionReportCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
-	audit, err := svc.Audits.Create(
+	report, err := svc.Reports.Create(
 		ctx,
-		&probo.CreateAuditRequest{
+		&probo.CreateReportRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
+			FrameworkType:  input.FrameworkType,
 			ValidFrom:      input.ValidFrom,
 			ValidUntil:     input.ValidUntil,
 			State:          input.State,
@@ -1453,24 +1454,25 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 		},
 	)
 	if err != nil {
-		return nil, types.AddAuditOutput{}, fmt.Errorf("failed to create audit: %w", err)
+		return nil, types.AddReportOutput{}, fmt.Errorf("failed to create report: %w", err)
 	}
 
-	return nil, types.AddAuditOutput{
-		Audit: types.NewAudit(audit),
+	return nil, types.AddReportOutput{
+		Report: types.NewReport(report),
 	}, nil
 }
 
-func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditInput) (*mcp.CallToolResult, types.UpdateAuditOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionAuditUpdate)
+func (r *Resolver) UpdateReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateReportInput) (*mcp.CallToolResult, types.UpdateReportOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionReportUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
-	audit, err := svc.Audits.Update(
+	report, err := svc.Reports.Update(
 		ctx,
-		&probo.UpdateAuditRequest{
+		&probo.UpdateReportRequest{
 			ID:                    input.ID,
 			Name:                  UnwrapOmittable(input.Name),
+			FrameworkType:         UnwrapOmittable(input.FrameworkType),
 			ValidFrom:             input.ValidFrom,
 			ValidUntil:            input.ValidUntil,
 			State:                 input.State,
@@ -1478,11 +1480,11 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		},
 	)
 	if err != nil {
-		return nil, types.UpdateAuditOutput{}, fmt.Errorf("failed to update audit: %w", err)
+		return nil, types.UpdateReportOutput{}, fmt.Errorf("failed to update report: %w", err)
 	}
 
-	return nil, types.UpdateAuditOutput{
-		Audit: types.NewAudit(audit),
+	return nil, types.UpdateReportOutput{
+		Report: types.NewReport(report),
 	}, nil
 }
 
@@ -1630,30 +1632,30 @@ func (r *Resolver) UnlinkControlDocumentTool(ctx context.Context, req *mcp.CallT
 	return nil, types.UnlinkControlDocumentOutput{}, nil
 }
 
-func (r *Resolver) LinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlAuditInput) (*mcp.CallToolResult, types.LinkControlAuditOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate)
+func (r *Resolver) LinkControlReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlReportInput) (*mcp.CallToolResult, types.LinkControlReportOutput, error) {
+	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlReportMappingCreate)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.CreateAuditMapping(ctx, input.ControlID, input.AuditID)
+	_, _, err := svc.Controls.CreateReportMapping(ctx, input.ControlID, input.ReportID)
 	if err != nil {
-		return nil, types.LinkControlAuditOutput{}, fmt.Errorf("failed to link control audit: %w", err)
+		return nil, types.LinkControlReportOutput{}, fmt.Errorf("failed to link control report: %w", err)
 	}
 
-	return nil, types.LinkControlAuditOutput{}, nil
+	return nil, types.LinkControlReportOutput{}, nil
 }
 
-func (r *Resolver) UnlinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlAuditInput) (*mcp.CallToolResult, types.UnlinkControlAuditOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete)
+func (r *Resolver) UnlinkControlReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlReportInput) (*mcp.CallToolResult, types.UnlinkControlReportOutput, error) {
+	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlReportMappingDelete)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.DeleteAuditMapping(ctx, input.ControlID, input.AuditID)
+	_, _, err := svc.Controls.DeleteReportMapping(ctx, input.ControlID, input.ReportID)
 	if err != nil {
-		return nil, types.UnlinkControlAuditOutput{}, fmt.Errorf("failed to unlink control audit: %w", err)
+		return nil, types.UnlinkControlReportOutput{}, fmt.Errorf("failed to unlink control report: %w", err)
 	}
 
-	return nil, types.UnlinkControlAuditOutput{}, nil
+	return nil, types.UnlinkControlReportOutput{}, nil
 }
 
 func (r *Resolver) LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlSnapshotInput) (*mcp.CallToolResult, types.LinkControlSnapshotOutput, error) {

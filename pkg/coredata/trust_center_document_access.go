@@ -200,7 +200,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
-		"report_id":              reportID,
+		"report_id":          reportID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -260,7 +260,7 @@ INSERT INTO trust_center_document_accesses (
 		"organization_id":        tcda.OrganizationID,
 		"trust_center_access_id": tcda.TrustCenterAccessID,
 		"document_id":            tcda.DocumentID,
-		"report_id":              tcda.ReportID,
+		"report_id":          tcda.ReportID,
 		"trust_center_file_id":   tcda.TrustCenterFileID,
 		"status":                 tcda.Status,
 		"created_at":             tcda.CreatedAt,
@@ -481,16 +481,16 @@ all_items AS (
     UNION ALL
 
     SELECT
-        r.report_id AS item_id,
+        r.id AS item_id,
         NULL::text AS document_id,
-        r.report_id AS report_id,
+        r.id AS report_id,
         NULL::text AS trust_center_file_id,
         r.created_at AS item_created_at,
         r.updated_at AS item_updated_at
-    FROM audits r, tenant_organization o
+    FROM reports r, tenant_organization o
     WHERE r.organization_id = o.organization_id
         AND r.trust_center_visibility = 'PRIVATE'::trust_center_visibility
-        AND r.report_id IS NOT NULL
+        AND r.file_id IS NOT NULL
 
     UNION ALL
 
@@ -802,7 +802,6 @@ WHEN NOT MATCHED
         organization_id,
         trust_center_access_id,
         document_id,
-        report_id,
         trust_center_file_id,
         status,
         created_at,
@@ -814,7 +813,6 @@ WHEN NOT MATCHED
         @organization_id,
         @trust_center_access_id,
         data.id,
-        NULL,
         NULL,
         data.status,
         @now::timestamptz,
@@ -860,7 +858,6 @@ WITH document_access_data AS (
         @organization_id AS organization_id,
         @trust_center_access_id AS trust_center_access_id,
         unnest(@document_ids::text[]) AS document_id,
-        null::text AS report_id,
         null::text AS trust_center_file_id,
         @status::trust_center_document_access_status AS status,
         @created_at::timestamptz AS created_at,
@@ -872,7 +869,6 @@ INSERT INTO trust_center_document_accesses (
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
     trust_center_file_id,
     status,
     created_at,
@@ -936,7 +932,6 @@ WHEN NOT MATCHED
         tenant_id,
         organization_id,
         trust_center_access_id,
-        document_id,
         report_id,
         trust_center_file_id,
         status,
@@ -948,7 +943,6 @@ WHEN NOT MATCHED
         @tenant_id,
         @organization_id,
         @trust_center_access_id,
-        NULL,
         data.id,
         NULL,
         data.status,
@@ -1199,7 +1193,6 @@ WHEN NOT MATCHED
         organization_id,
         trust_center_access_id,
         document_id,
-        report_id,
         trust_center_file_id,
         status,
         created_at,
@@ -1210,7 +1203,6 @@ WHEN NOT MATCHED
         @tenant_id,
         @organization_id,
         @trust_center_access_id,
-        NULL,
         NULL,
         data.id,
         data.status,
@@ -1253,7 +1245,6 @@ WITH trust_center_file_access_data AS (
         @organization_id AS organization_id,
         @trust_center_access_id AS trust_center_access_id,
         null::text AS document_id,
-        null::text AS report_id,
         unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
         @status::trust_center_document_access_status AS status,
         @created_at::timestamptz AS created_at,
@@ -1265,7 +1256,6 @@ INSERT INTO trust_center_document_accesses (
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
     trust_center_file_id,
     status,
     created_at,

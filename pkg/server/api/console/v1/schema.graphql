@@ -109,17 +109,17 @@ enum RiskTreatment
         )
 }
 
-enum AuditState @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
+enum ReportState @goModel(model: "go.probo.inc/probo/pkg/coredata.ReportState") {
     NOT_STARTED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateNotStarted")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ReportStateNotStarted")
     IN_PROGRESS
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateInProgress")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ReportStateInProgress")
     COMPLETED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateCompleted")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ReportStateCompleted")
     REJECTED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateRejected")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ReportStateRejected")
     OUTDATED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateOutdated")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ReportStateOutdated")
 }
 
 enum TrustCenterVisibility
@@ -1030,21 +1030,21 @@ enum DataClassification
         )
 }
 
-enum AuditOrderField
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditOrderField") {
+enum ReportOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ReportOrderField") {
     CREATED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldCreatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.ReportOrderFieldCreatedAt"
         )
     VALID_FROM
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidFrom"
+            value: "go.probo.inc/probo/pkg/coredata.ReportOrderFieldValidFrom"
         )
     VALID_UNTIL
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidUntil"
+            value: "go.probo.inc/probo/pkg/coredata.ReportOrderFieldValidUntil"
         )
-    STATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldState")
+    STATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ReportOrderFieldState")
 }
 
 enum NonconformityOrderField
@@ -1367,12 +1367,12 @@ input RiskOrder
     field: RiskOrderField!
 }
 
-input AuditOrder
+input ReportOrder
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditOrderBy"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ReportOrderBy"
     ) {
     direction: OrderDirection!
-    field: AuditOrderField!
+    field: ReportOrderField!
 }
 
 input NonconformityOrder
@@ -1741,13 +1741,13 @@ type Organization implements Node {
         filter: DatumFilter = { snapshotId: null }
     ): DatumConnection! @goField(forceResolver: true)
 
-    audits(
+    reports(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: AuditOrder
-    ): AuditConnection! @goField(forceResolver: true)
+        orderBy: ReportOrder
+    ): ReportConnection! @goField(forceResolver: true)
 
     nonconformities(
         first: Int
@@ -2068,13 +2068,13 @@ type Control implements Node {
         filter: DocumentFilter
     ): DocumentConnection! @goField(forceResolver: true)
 
-    audits(
+    reports(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: AuditOrder
-    ): AuditConnection! @goField(forceResolver: true)
+        orderBy: ReportOrder
+    ): ReportConnection! @goField(forceResolver: true)
 
     obligations(
         first: Int
@@ -2475,16 +2475,17 @@ type Risk implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type Audit implements Node {
+type Report implements Node {
     id: ID!
     name: String
     organization: Organization! @goField(forceResolver: true)
     framework: Framework! @goField(forceResolver: true)
+    frameworkType: String
     validFrom: Datetime
     validUntil: Datetime
-    report: Report @goField(forceResolver: true)
+    file: File @goField(forceResolver: true)
     reportUrl: String @goField(forceResolver: true)
-    state: AuditState!
+    state: ReportState!
 
     controls(
         first: Int
@@ -2508,7 +2509,7 @@ type Nonconformity implements Node {
     organization: Organization! @goField(forceResolver: true)
     referenceId: String!
     description: String
-    audit: Audit @goField(forceResolver: true)
+    report: Report @goField(forceResolver: true)
     dateIdentified: Datetime
     rootCause: String!
     correctiveAction: String
@@ -2669,19 +2670,6 @@ type Snapshot implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type Report implements Node {
-    id: ID!
-    objectKey: String!
-    mimeType: String!
-    filename: String!
-    size: Int!
-    downloadUrl: String @goField(forceResolver: true)
-    createdAt: Datetime!
-    updatedAt: Datetime!
-    audit: Audit @goField(forceResolver: true)
-
-    permission(action: String!): Boolean! @goField(forceResolver: true)
-}
 
 type Viewer {
     id: ID!
@@ -3060,18 +3048,18 @@ type DatumEdge {
     node: Datum!
 }
 
-type AuditConnection
+type ReportConnection
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditConnection"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ReportConnection"
     ) {
     totalCount: Int! @goField(forceResolver: true)
-    edges: [AuditEdge!]!
+    edges: [ReportEdge!]!
     pageInfo: PageInfo!
 }
 
-type AuditEdge {
+type ReportEdge {
     cursor: CursorKey!
-    node: Audit!
+    node: Report!
 }
 
 type NonconformityConnection
@@ -3310,12 +3298,12 @@ type Mutation {
     deleteApplicabilityStatement(
         input: DeleteApplicabilityStatementInput!
     ): DeleteApplicabilityStatementPayload!
-    createControlAuditMapping(
-        input: CreateControlAuditMappingInput!
-    ): CreateControlAuditMappingPayload!
-    deleteControlAuditMapping(
-        input: DeleteControlAuditMappingInput!
-    ): DeleteControlAuditMappingPayload!
+    createControlReportMapping(
+        input: CreateControlReportMappingInput!
+    ): CreateControlReportMappingPayload!
+    deleteControlReportMapping(
+        input: DeleteControlReportMappingInput!
+    ): DeleteControlReportMappingPayload!
     createControlObligationMapping(
         input: CreateControlObligationMappingInput!
     ): CreateControlObligationMappingPayload!
@@ -3478,11 +3466,11 @@ type Mutation {
     createDatum(input: CreateDatumInput!): CreateDatumPayload!
     updateDatum(input: UpdateDatumInput!): UpdateDatumPayload!
     deleteDatum(input: DeleteDatumInput!): DeleteDatumPayload!
-    createAudit(input: CreateAuditInput!): CreateAuditPayload!
-    updateAudit(input: UpdateAuditInput!): UpdateAuditPayload!
-    deleteAudit(input: DeleteAuditInput!): DeleteAuditPayload!
-    uploadAuditReport(input: UploadAuditReportInput!): UploadAuditReportPayload!
-    deleteAuditReport(input: DeleteAuditReportInput!): DeleteAuditReportPayload!
+    createReport(input: CreateReportInput!): CreateReportPayload!
+    updateReport(input: UpdateReportInput!): UpdateReportPayload!
+    deleteReport(input: DeleteReportInput!): DeleteReportPayload!
+    uploadReportFile(input: UploadReportFileInput!): UploadReportFilePayload!
+    deleteReportFile(input: DeleteReportFileInput!): DeleteReportFilePayload!
     # Nonconformity mutations
     createNonconformity(
         input: CreateNonconformityInput!
@@ -3856,14 +3844,14 @@ input DeleteApplicabilityStatementInput {
     applicabilityStatementId: ID!
 }
 
-input CreateControlAuditMappingInput {
+input CreateControlReportMappingInput {
     controlId: ID!
-    auditId: ID!
+    reportId: ID!
 }
 
-input DeleteControlAuditMappingInput {
+input DeleteControlReportMappingInput {
     controlId: ID!
-    auditId: ID!
+    reportId: ID!
 }
 
 input CreateControlObligationMappingInput {
@@ -4141,37 +4129,39 @@ input DeleteControlInput {
     controlId: ID!
 }
 
-# Audit input types
-input CreateAuditInput {
+# Report input types
+input CreateReportInput {
     organizationId: ID!
     frameworkId: ID!
     name: String
+    frameworkType: String
     validFrom: Datetime
     validUntil: Datetime
-    state: AuditState
+    state: ReportState
     trustCenterVisibility: TrustCenterVisibility
 }
 
-input UpdateAuditInput {
+input UpdateReportInput {
     id: ID!
     name: String @goField(omittable: true)
+    frameworkType: String @goField(omittable: true)
     validFrom: Datetime
     validUntil: Datetime
-    state: AuditState
+    state: ReportState
     trustCenterVisibility: TrustCenterVisibility
 }
 
-input DeleteAuditInput {
-    auditId: ID!
+input DeleteReportInput {
+    reportId: ID!
 }
 
-input UploadAuditReportInput {
-    auditId: ID!
+input UploadReportFileInput {
+    reportId: ID!
     file: Upload!
 }
 
-input DeleteAuditReportInput {
-    auditId: ID!
+input DeleteReportFileInput {
+    reportId: ID!
 }
 
 # Nonconformity input types
@@ -4179,7 +4169,7 @@ input CreateNonconformityInput {
     organizationId: ID!
     referenceId: String!
     description: String
-    auditId: ID
+    reportId: ID
     dateIdentified: Datetime
     rootCause: String!
     correctiveAction: String
@@ -4197,7 +4187,7 @@ input UpdateNonconformityInput {
     rootCause: String
     correctiveAction: String @goField(omittable: true)
     ownerId: ID
-    auditId: ID @goField(omittable: true)
+    reportId: ID @goField(omittable: true)
     dueDate: Datetime @goField(omittable: true)
     status: NonconformityStatus
     effectivenessCheck: String @goField(omittable: true)
@@ -4590,14 +4580,14 @@ type DeleteApplicabilityStatementPayload {
     deletedApplicabilityStatementId: ID!
 }
 
-type CreateControlAuditMappingPayload {
+type CreateControlReportMappingPayload {
     controlEdge: ControlEdge!
-    auditEdge: AuditEdge!
+    reportEdge: ReportEdge!
 }
 
-type DeleteControlAuditMappingPayload {
+type DeleteControlReportMappingPayload {
     deletedControlId: ID!
-    deletedAuditId: ID!
+    deletedReportId: ID!
 }
 
 type CreateControlObligationMappingPayload {
@@ -5210,24 +5200,24 @@ type DeleteDatumPayload {
     deletedDatumId: ID!
 }
 
-type CreateAuditPayload {
-    auditEdge: AuditEdge!
+type CreateReportPayload {
+    reportEdge: ReportEdge!
 }
 
-type UpdateAuditPayload {
-    audit: Audit!
+type UpdateReportPayload {
+    report: Report!
 }
 
-type DeleteAuditPayload {
-    deletedAuditId: ID!
+type DeleteReportPayload {
+    deletedReportId: ID!
 }
 
-type UploadAuditReportPayload {
-    audit: Audit!
+type UploadReportFilePayload {
+    report: Report!
 }
 
-type DeleteAuditReportPayload {
-    audit: Audit!
+type DeleteReportFilePayload {
+    report: Report!
 }
 
 # Nonconformity payload types

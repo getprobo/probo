@@ -30,6 +30,13 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Framework Type',
+				name: 'frameworkType',
+				type: 'string',
+				default: '',
+				description: 'The framework type of the audit',
+			},
+			{
 				displayName: 'Name',
 				name: 'name',
 				type: 'string',
@@ -90,6 +97,7 @@ export async function execute(
 	const id = this.getNodeParameter('id', itemIndex) as string;
 	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
 		name?: string;
+		frameworkType?: string;
 		state?: string;
 		validFrom?: string;
 		validUntil?: string;
@@ -101,6 +109,7 @@ export async function execute(
 				audit {
 					id
 					name
+					frameworkType
 					state
 					validFrom
 					validUntil
@@ -115,6 +124,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = { id };
 	if (updateFields.name) input.name = updateFields.name;
+	if (updateFields.frameworkType) input.frameworkType = updateFields.frameworkType;
 	if (updateFields.state) input.state = updateFields.state;
 	if (updateFields.validFrom) input.validFrom = updateFields.validFrom;
 	if (updateFields.validUntil) input.validUntil = updateFields.validUntil;

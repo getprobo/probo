@@ -32,10 +32,10 @@ export const description: INodeProperties[] = [
 				action: 'Delete an audit',
 			},
 			{
-				name: 'Delete Report',
+				name: 'Delete File',
 				value: 'deleteReport',
-				description: 'Delete an audit report',
-				action: 'Delete an audit report',
+				description: 'Delete an audit file',
+				action: 'Delete an audit file',
 			},
 			{
 				name: 'Get',
@@ -56,10 +56,10 @@ export const description: INodeProperties[] = [
 				action: 'Update an audit',
 			},
 			{
-				name: 'Upload Report',
+				name: 'Upload Report File',
 				value: 'uploadReport',
-				description: 'Upload a report for an audit',
-				action: 'Upload an audit report',
+				description: 'Upload a report file for an audit',
+				action: 'Upload an audit report file',
 			},
 		],
 		default: 'create',

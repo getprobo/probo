@@ -49,10 +49,10 @@ type (
 	}
 
 	SlackMessageReport struct {
-		ID      string
-		Title   string
-		AuditID string
-		Status  string
+		ID       string
+		Title    string
+		ReportID string
+		Status   string
 	}
 
 	SlackMessageFile struct {
@@ -323,30 +323,25 @@ func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 		}
 
 		if access.ReportID != nil {
-			rep := &coredata.Report{}
-			if err := rep.LoadByID(ctx, conn, s.svc.scope, *access.ReportID); err != nil {
+			report := &coredata.Report{}
+			if err := report.LoadByID(ctx, conn, s.svc.scope, *access.ReportID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load report: %w", err)
 			}
 
-			audit := &coredata.Audit{}
-			if err := audit.LoadByReportID(ctx, conn, s.svc.scope, *access.ReportID); err != nil {
-				return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
-			}
-
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, s.svc.scope, audit.FrameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, s.svc.scope, report.FrameworkID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
 			}
 
 			label := framework.Name
-			if audit.Name != nil && *audit.Name != "" {
-				label = label + " - " + *audit.Name
+			if report.Name != nil && *report.Name != "" {
+				label = label + " - " + *report.Name
 			}
 			reports = append(reports, SlackMessageReport{
-				ID:      access.ReportID.String(),
-				Title:   label,
-				AuditID: audit.ID.String(),
-				Status:  access.Status.String(),
+				ID:       access.ReportID.String(),
+				Title:    label,
+				ReportID: report.ID.String(),
+				Status:   access.Status.String(),
 			})
 		}
 

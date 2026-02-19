@@ -69,10 +69,10 @@ export function getTrustCenterDocumentAccessInfo(
     return {
       persisted: docAccess.id !== docAccess.report.id,
       variant: "success" as const,
-      name: docAccess.report.filename,
+      name: docAccess.report.file?.fileName ?? docAccess.report.name ?? "",
       type: "report",
       typeLabel: __("Report"),
-      category: docAccess.report.audit?.framework.name ?? "",
+      category: docAccess.report.framework ? `${docAccess.report.framework.name} - ${docAccess.report.frameworkType ?? ""}` : "",
       id: docAccess.report.id,
       status: docAccess.status,
     };

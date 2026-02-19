@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<72da3c2c267ec4fd2da7aee87f38c51b>>
+ * @generated SignedSource<<c83094e249fdd85f4dc538523c881d01>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,25 +15,16 @@ export type FrameworkGraphControlNodeQuery$variables = {
 };
 export type FrameworkGraphControlNodeQuery$data = {
   readonly node: {
-    readonly audits?: {
-      readonly __id: string;
-      readonly edges: ReadonlyArray<{
-        readonly node: {
-          readonly id: string;
-          readonly " $fragmentSpreads": FragmentRefs<"LinkedAuditsCardFragment">;
-        };
-      }>;
-    };
-    readonly canCreateAuditMapping?: boolean;
     readonly canCreateDocumentMapping?: boolean;
     readonly canCreateMeasureMapping?: boolean;
     readonly canCreateObligationMapping?: boolean;
+    readonly canCreateReportMapping?: boolean;
     readonly canCreateSnapshotMapping?: boolean;
     readonly canDelete?: boolean;
-    readonly canDeleteAuditMapping?: boolean;
     readonly canDeleteDocumentMapping?: boolean;
     readonly canDeleteMeasureMapping?: boolean;
     readonly canDeleteObligationMapping?: boolean;
+    readonly canDeleteReportMapping?: boolean;
     readonly canDeleteSnapshotMapping?: boolean;
     readonly canUpdate?: boolean;
     readonly description?: string | null | undefined;
@@ -63,6 +54,15 @@ export type FrameworkGraphControlNodeQuery$data = {
         readonly node: {
           readonly id: string;
           readonly " $fragmentSpreads": FragmentRefs<"LinkedObligationsCardFragment">;
+        };
+      }>;
+    };
+    readonly reports?: {
+      readonly __id: string;
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly id: string;
+          readonly " $fragmentSpreads": FragmentRefs<"LinkedReportsCardFragment">;
         };
       }>;
     };
@@ -206,30 +206,30 @@ v11 = {
   "storageKey": "permission(action:\"core:control:delete-document-mapping\")"
 },
 v12 = {
-  "alias": "canCreateAuditMapping",
+  "alias": "canCreateReportMapping",
   "args": [
     {
       "kind": "Literal",
       "name": "action",
-      "value": "core:control:create-audit-mapping"
+      "value": "core:control:create-report-mapping"
     }
   ],
   "kind": "ScalarField",
   "name": "permission",
-  "storageKey": "permission(action:\"core:control:create-audit-mapping\")"
+  "storageKey": "permission(action:\"core:control:create-report-mapping\")"
 },
 v13 = {
-  "alias": "canDeleteAuditMapping",
+  "alias": "canDeleteReportMapping",
   "args": [
     {
       "kind": "Literal",
       "name": "action",
-      "value": "core:control:delete-audit-mapping"
+      "value": "core:control:delete-report-mapping"
     }
   ],
   "kind": "ScalarField",
   "name": "permission",
-  "storageKey": "permission(action:\"core:control:delete-audit-mapping\")"
+  "storageKey": "permission(action:\"core:control:delete-report-mapping\")"
 },
 v14 = {
   "alias": "canCreateSnapshotMapping",
@@ -488,17 +488,17 @@ return {
                 "storageKey": null
               },
               {
-                "alias": "audits",
+                "alias": "reports",
                 "args": null,
-                "concreteType": "AuditConnection",
+                "concreteType": "ReportConnection",
                 "kind": "LinkedField",
-                "name": "__FrameworkGraphControl_audits_connection",
+                "name": "__FrameworkGraphControl_reports_connection",
                 "plural": false,
                 "selections": [
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "AuditEdge",
+                    "concreteType": "ReportEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -506,7 +506,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Audit",
+                        "concreteType": "Report",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -515,7 +515,7 @@ return {
                           {
                             "args": null,
                             "kind": "FragmentSpread",
-                            "name": "LinkedAuditsCardFragment"
+                            "name": "LinkedReportsCardFragment"
                           },
                           (v18/*: any*/)
                         ],
@@ -823,15 +823,15 @@ return {
               {
                 "alias": null,
                 "args": (v22/*: any*/),
-                "concreteType": "AuditConnection",
+                "concreteType": "ReportConnection",
                 "kind": "LinkedField",
-                "name": "audits",
+                "name": "reports",
                 "plural": false,
                 "selections": [
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "AuditEdge",
+                    "concreteType": "ReportEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -839,7 +839,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Audit",
+                        "concreteType": "Report",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -886,16 +886,16 @@ return {
                   (v20/*: any*/),
                   (v21/*: any*/)
                 ],
-                "storageKey": "audits(first:100)"
+                "storageKey": "reports(first:100)"
               },
               {
                 "alias": null,
                 "args": (v22/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "FrameworkGraphControl_audits",
+                "key": "FrameworkGraphControl_reports",
                 "kind": "LinkedHandle",
-                "name": "audits"
+                "name": "reports"
               },
               {
                 "alias": null,
@@ -1052,7 +1052,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d177e11d82fa12c1622578238707b173",
+    "cacheID": "65c4f8f8dc5e7d3cb2e2eaa6ead8b769",
     "id": null,
     "metadata": {
       "connection": [
@@ -1080,7 +1080,7 @@ return {
           "direction": "forward",
           "path": [
             "node",
-            "audits"
+            "reports"
           ]
         },
         {
@@ -1105,11 +1105,11 @@ return {
     },
     "name": "FrameworkGraphControlNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphControlNodeQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      sectionTitle\n      description\n      canUpdate: permission(action: \"core:control:update\")\n      canDelete: permission(action: \"core:control:delete\")\n      canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n      canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n      canCreateDocumentMapping: permission(action: \"core:control:create-document-mapping\")\n      canDeleteDocumentMapping: permission(action: \"core:control:delete-document-mapping\")\n      canCreateAuditMapping: permission(action: \"core:control:create-audit-mapping\")\n      canDeleteAuditMapping: permission(action: \"core:control:delete-audit-mapping\")\n      canCreateSnapshotMapping: permission(action: \"core:control:create-snapshot-mapping\")\n      canDeleteSnapshotMapping: permission(action: \"core:control:delete-snapshot-mapping\")\n      canCreateObligationMapping: permission(action: \"core:control:create-obligation-mapping\")\n      canDeleteObligationMapping: permission(action: \"core:control:delete-obligation-mapping\")\n      ...FrameworkControlDialogFragment\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedMeasuresCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedDocumentsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedAuditsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      obligations(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedObligationsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      snapshots(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedSnapshotsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  bestPractice\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  createdAt\n  state\n  validFrom\n  validUntil\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  requirement\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n\nfragment LinkedSnapshotsCardFragment on Snapshot {\n  id\n  name\n  description\n  type\n  createdAt\n}\n"
+    "text": "query FrameworkGraphControlNodeQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      sectionTitle\n      description\n      canUpdate: permission(action: \"core:control:update\")\n      canDelete: permission(action: \"core:control:delete\")\n      canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n      canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n      canCreateDocumentMapping: permission(action: \"core:control:create-document-mapping\")\n      canDeleteDocumentMapping: permission(action: \"core:control:delete-document-mapping\")\n      canCreateReportMapping: permission(action: \"core:control:create-report-mapping\")\n      canDeleteReportMapping: permission(action: \"core:control:delete-report-mapping\")\n      canCreateSnapshotMapping: permission(action: \"core:control:create-snapshot-mapping\")\n      canDeleteSnapshotMapping: permission(action: \"core:control:delete-snapshot-mapping\")\n      canCreateObligationMapping: permission(action: \"core:control:create-obligation-mapping\")\n      canDeleteObligationMapping: permission(action: \"core:control:delete-obligation-mapping\")\n      ...FrameworkControlDialogFragment\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedMeasuresCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedDocumentsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      reports(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedReportsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      obligations(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedObligationsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      snapshots(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedSnapshotsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  bestPractice\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  requirement\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n\nfragment LinkedReportsCardFragment on Report {\n  id\n  name\n  createdAt\n  state\n  validFrom\n  validUntil\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedSnapshotsCardFragment on Snapshot {\n  id\n  name\n  description\n  type\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c5a03208206812d371f5133c8963a710";
+(node as any).hash = "bf6c125bb201007e5a62a227d0a1dff4";
 
 export default node;

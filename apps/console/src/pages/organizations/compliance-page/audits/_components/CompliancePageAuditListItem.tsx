@@ -1,13 +1,13 @@
-import { formatDate, getAuditStateLabel, getAuditStateVariant, getTrustCenterVisibilityOptions } from "@probo/helpers";
+import { formatDate, getReportStateLabel, getReportStateVariant, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Field, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePageAuditListItem_auditFragment$key } from "#/__generated__/core/CompliancePageAuditListItem_auditFragment.graphql";
 import type { CompliancePageAuditListItem_compliancePageFragment$key } from "#/__generated__/core/CompliancePageAuditListItem_compliancePageFragment.graphql";
-import type { CompliancePageAuditListItem_updateAuditVisibilityMutation } from "#/__generated__/core/CompliancePageAuditListItem_updateAuditVisibilityMutation.graphql";
+import type { CompliancePageAuditListItem_reportFragment$key } from "#/__generated__/core/CompliancePageAuditListItem_reportFragment.graphql";
+import type { CompliancePageAuditListItem_updateReportVisibilityMutation } from "#/__generated__/core/CompliancePageAuditListItem_updateReportVisibilityMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -17,10 +17,11 @@ const compliancePageFragment = graphql`
   }
 `;
 
-const auditFragment = graphql`
-  fragment CompliancePageAuditListItem_auditFragment on Audit {
+const reportFragment = graphql`
+  fragment CompliancePageAuditListItem_reportFragment on Report {
     id
     name
+    frameworkType
     framework {
       name
     }
@@ -30,21 +31,21 @@ const auditFragment = graphql`
   }
 `;
 
-const updateAuditVisibilityMutation = graphql`
-  mutation CompliancePageAuditListItem_updateAuditVisibilityMutation($input: UpdateAuditInput!) {
-    updateAudit(input: $input) {
-      audit {
-        ...CompliancePageAuditListItem_auditFragment
+const updateReportVisibilityMutation = graphql`
+  mutation CompliancePageAuditListItem_updateReportVisibilityMutation($input: UpdateReportInput!) {
+    updateReport(input: $input) {
+      report {
+        ...CompliancePageAuditListItem_reportFragment
       }
     }
   }
 `;
 
 export function CompliancePageAuditListItem(props: {
-  auditFragmentRef: CompliancePageAuditListItem_auditFragment$key;
+  reportFragmentRef: CompliancePageAuditListItem_reportFragment$key;
   compliancePageFragmentRef: CompliancePageAuditListItem_compliancePageFragment$key;
 }) {
-  const { auditFragmentRef, compliancePageFragmentRef } = props;
+  const { reportFragmentRef, compliancePageFragmentRef } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -53,56 +54,61 @@ export function CompliancePageAuditListItem(props: {
     compliancePageFragment,
     compliancePageFragmentRef,
   );
-  const audit = useFragment<CompliancePageAuditListItem_auditFragment$key>(auditFragment, auditFragmentRef);
+  const report = useFragment<CompliancePageAuditListItem_reportFragment$key>(reportFragment, reportFragmentRef);
 
-  const [updateAuditVisibility, isUpdatingAuditVisibility] = useMutationWithToasts<
-    CompliancePageAuditListItem_updateAuditVisibilityMutation
+  const [updateReportVisibility, isUpdatingReportVisibility] = useMutationWithToasts<
+    CompliancePageAuditListItem_updateReportVisibilityMutation
   >(
-    updateAuditVisibilityMutation,
+    updateReportVisibilityMutation,
     {
-      successMessage: __("Audit visibility updated successfully."),
-      errorMessage: __("Failed to update audit visibility"),
+      successMessage: __("Report visibility updated successfully."),
+      errorMessage: __("Failed to update report visibility"),
     },
   );
   const handleVisibilityChange = useCallback(
     async (value: string) => {
       const stringValue = typeof value === "string" ? value : "";
       const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
-      await updateAuditVisibility({
+      await updateReportVisibility({
         variables: {
           input: {
-            id: audit.id,
+            id: report.id,
             trustCenterVisibility: typedValue,
           },
         },
       });
     },
-    [audit.id, updateAuditVisibility],
+    [report.id, updateReportVisibility],
   );
 
   const visibilityOptions = getTrustCenterVisibilityOptions(__);
-  const validUntilFormatted = audit.validUntil
-    ? formatDate(audit.validUntil)
+  const validUntilFormatted = report.validUntil
+    ? formatDate(report.validUntil)
     : __("No expiry");
 
   return (
-    <Tr to={`/organizations/${organizationId}/audits/${audit.id}`}>
+    <Tr to={`/organizations/${organizationId}/reports/${report.id}`}>
       <Td>
-        <div className="flex gap-4 items-center">{audit.framework.name}</div>
+        <div className="flex gap-1 items-baseline">
+          <span>{report.framework.name}</span>
+          {report.frameworkType && (
+            <span className="text-sm italic text-neutral-500">{report.frameworkType}</span>
+          )}
+        </div>
       </Td>
-      <Td>{audit.name || __("Untitled")}</Td>
+      <Td>{report.name || __("Untitled")}</Td>
       <Td>{validUntilFormatted}</Td>
       <Td>
-        <Badge variant={getAuditStateVariant(audit.state)}>
-          {getAuditStateLabel(__, audit.state)}
+        <Badge variant={getReportStateVariant(report.state)}>
+          {getReportStateLabel(__, report.state)}
         </Badge>
       </Td>
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"
-          value={audit.trustCenterVisibility}
+          value={report.trustCenterVisibility}
           onValueChange={value => void handleVisibilityChange(value)}
-          disabled={isUpdatingAuditVisibility || !compliancePage.canUpdate}
+          disabled={isUpdatingReportVisibility || !compliancePage.canUpdate}
           className="w-[105px]"
         >
           {visibilityOptions.map(option => (

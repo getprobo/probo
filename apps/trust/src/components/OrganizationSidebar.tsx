@@ -17,7 +17,7 @@ import { Viewer } from "#/providers/Viewer";
 import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
-import { AuditRowAvatar } from "./AuditRow";
+import { ReportRowAvatar } from "./ReportRow";
 
 const requestAllAccessesMutation = graphql`
   mutation OrganizationSidebar_requestAllAccessesMutation {
@@ -136,7 +136,7 @@ export function OrganizationSidebar({
         <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
 
         {/* Certifications */}
-        {trustCenter.audits.edges.length > 0 && (
+        {trustCenter.reports.edges.length > 0 && (
           <>
             <div className="space-y-4">
               <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
@@ -149,8 +149,8 @@ export function OrganizationSidebar({
                   gridTemplateColumns: "repeat(auto-fit, 75px",
                 }}
               >
-                {trustCenter.audits.edges.map(audit => (
-                  <AuditRowAvatar key={audit.node.id} audit={audit.node} />
+                {trustCenter.reports.edges.map(report => (
+                  <ReportRowAvatar key={report.node.id} report={report.node} />
                 ))}
               </div>
             </div>

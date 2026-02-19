@@ -3,17 +3,17 @@ import { proboApiMultipartRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Audit ID',
-		name: 'auditId',
+		displayName: 'Report ID',
+		name: 'reportId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['audit'],
+				resource: ['report'],
 				operation: ['uploadReport'],
 			},
 		},
 		default: '',
-		description: 'The ID of the audit to upload the report for',
+		description: 'The ID of the report to upload the file to',
 		required: true,
 	},
 	{
@@ -22,7 +22,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['audit'],
+				resource: ['report'],
 				operation: ['uploadReport'],
 			},
 		},
@@ -36,7 +36,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const reportId = this.getNodeParameter('reportId', itemIndex) as string;
 	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
 
 	const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);
@@ -46,16 +46,15 @@ export async function execute(
 	const mimeType = binaryData.mimeType || 'application/octet-stream';
 
 	const query = `
-		mutation UploadAuditReport($input: UploadAuditReportInput!) {
-			uploadAuditReport(input: $input) {
-				audit {
+		mutation UploadReportFile($input: UploadReportFileInput!) {
+			uploadReportFile(input: $input) {
+				report {
 					id
 					name
 					state
 					validFrom
 					validUntil
 					reportUrl
-					trustCenterVisibility
 					createdAt
 					updatedAt
 				}
@@ -65,7 +64,7 @@ export async function execute(
 
 	const variables = {
 		input: {
-			auditId,
+			reportId,
 			file: null,
 		},
 	};

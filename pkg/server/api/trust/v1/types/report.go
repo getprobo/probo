@@ -16,11 +16,33 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
 )
+
+func NewReportConnection(
+	p *page.Page[*coredata.Report, coredata.ReportOrderField],
+) *ReportConnection {
+	edges := make([]*ReportEdge, len(p.Data))
+	for i, report := range p.Data {
+		edges[i] = NewReportEdge(report, p.Cursor.OrderBy.Field)
+	}
+
+	return &ReportConnection{
+		Edges:    edges,
+		PageInfo: NewPageInfo(p),
+	}
+}
 
 func NewReport(r *coredata.Report) *Report {
 	return &Report{
-		ID:       r.ID,
-		Filename: r.Filename,
+		ID:            r.ID,
+		FrameworkType: r.FrameworkType,
+	}
+}
+
+func NewReportEdge(r *coredata.Report, orderField coredata.ReportOrderField) *ReportEdge {
+	return &ReportEdge{
+		Node:   NewReport(r),
+		Cursor: r.CursorKey(orderField),
 	}
 }

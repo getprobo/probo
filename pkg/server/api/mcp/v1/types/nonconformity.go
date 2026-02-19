@@ -22,10 +22,11 @@ import (
 func NewNonconformity(n *coredata.Nonconformity) *Nonconformity {
 	return &Nonconformity{
 		ID:                 n.ID,
+		OrganizationID:     n.OrganizationID,
 		SnapshotID:         n.SnapshotID,
 		ReferenceID:        n.ReferenceID,
 		Description:        n.Description,
-		AuditID:            n.AuditID,
+		ReportID:           n.ReportID,
 		DateIdentified:     n.DateIdentified,
 		RootCause:          n.RootCause,
 		CorrectiveAction:   n.CorrectiveAction,

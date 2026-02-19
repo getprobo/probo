@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b771321adc35ef32afc60e1b3e0f2a58>>
+ * @generated SignedSource<<c85f7a00f5980e19d9a76b595f3fb32d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,13 +15,6 @@ export type NonconformityGraphNodeQuery$variables = {
 };
 export type NonconformityGraphNodeQuery$data = {
   readonly node: {
-    readonly audit?: {
-      readonly framework: {
-        readonly id: string;
-        readonly name: string;
-      };
-      readonly id: string;
-    } | null | undefined;
     readonly canDelete?: boolean;
     readonly canUpdate?: boolean;
     readonly correctiveAction?: string | null | undefined;
@@ -40,6 +33,13 @@ export type NonconformityGraphNodeQuery$data = {
       readonly id: string;
     };
     readonly referenceId?: string;
+    readonly report?: {
+      readonly framework: {
+        readonly id: string;
+        readonly name: string;
+      };
+      readonly id: string;
+    } | null | undefined;
     readonly rootCause?: string;
     readonly snapshotId?: string | null | undefined;
     readonly status?: NonconformityStatus;
@@ -149,9 +149,9 @@ v12 = [
 v13 = {
   "alias": null,
   "args": null,
-  "concreteType": "Audit",
+  "concreteType": "Report",
   "kind": "LinkedField",
-  "name": "audit",
+  "name": "report",
   "plural": false,
   "selections": [
     (v2/*: any*/),
@@ -334,16 +334,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f917aa1ad5d7628a6193743a18c9aab9",
+    "cacheID": "01f62851247778e25dc4c4f580d640cd",
     "id": null,
     "metadata": {},
     "name": "NonconformityGraphNodeQuery",
     "operationKind": "query",
-    "text": "query NonconformityGraphNodeQuery(\n  $nonconformityId: ID!\n) {\n  node(id: $nonconformityId) {\n    __typename\n    ... on Nonconformity {\n      id\n      snapshotId\n      referenceId\n      description\n      dateIdentified\n      rootCause\n      correctiveAction\n      dueDate\n      status\n      effectivenessCheck\n      audit {\n        id\n        framework {\n          id\n          name\n        }\n      }\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:nonconformity:update\")\n      canDelete: permission(action: \"core:nonconformity:delete\")\n    }\n    id\n  }\n}\n"
+    "text": "query NonconformityGraphNodeQuery(\n  $nonconformityId: ID!\n) {\n  node(id: $nonconformityId) {\n    __typename\n    ... on Nonconformity {\n      id\n      snapshotId\n      referenceId\n      description\n      dateIdentified\n      rootCause\n      correctiveAction\n      dueDate\n      status\n      effectivenessCheck\n      report {\n        id\n        framework {\n          id\n          name\n        }\n      }\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:nonconformity:update\")\n      canDelete: permission(action: \"core:nonconformity:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6d1ecfb7df432a591c7e16461842796d";
+(node as any).hash = "61c9f56eca6605a6d340320daa07f2f1";
 
 export default node;

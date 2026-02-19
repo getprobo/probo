@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1c0b47ff7df79ff30d8f4c3a6138d972>>
+ * @generated SignedSource<<cb8c2281791701191e8ff30daae4a597>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,6 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type NonconformityStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 export type CreateNonconformityInput = {
-  auditId?: string | null | undefined;
   correctiveAction?: string | null | undefined;
   dateIdentified?: string | null | undefined;
   description?: string | null | undefined;
@@ -20,6 +19,7 @@ export type CreateNonconformityInput = {
   organizationId: string;
   ownerId: string;
   referenceId: string;
+  reportId?: string | null | undefined;
   rootCause: string;
   status: NonconformityStatus;
 };
@@ -31,12 +31,6 @@ export type NonconformityGraphCreateMutation$data = {
   readonly createNonconformity: {
     readonly nonconformityEdge: {
       readonly node: {
-        readonly audit: {
-          readonly framework: {
-            readonly name: string;
-          };
-          readonly id: string;
-        } | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
         readonly createdAt: string;
@@ -49,6 +43,12 @@ export type NonconformityGraphCreateMutation$data = {
           readonly id: string;
         };
         readonly referenceId: string;
+        readonly report: {
+          readonly framework: {
+            readonly name: string;
+          };
+          readonly id: string;
+        } | null | undefined;
         readonly rootCause: string;
         readonly status: NonconformityStatus;
       };
@@ -230,9 +230,9 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "Audit",
+                    "concreteType": "Report",
                     "kind": "LinkedField",
-                    "name": "audit",
+                    "name": "report",
                     "plural": false,
                     "selections": [
                       (v3/*: any*/),
@@ -311,9 +311,9 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "Audit",
+                    "concreteType": "Report",
                     "kind": "LinkedField",
-                    "name": "audit",
+                    "name": "report",
                     "plural": false,
                     "selections": [
                       (v3/*: any*/),
@@ -365,16 +365,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a6643ead6aba7ef0e9e25dcf889c51e5",
+    "cacheID": "9c2eac20689ce383207e36639993de03",
     "id": null,
     "metadata": {},
     "name": "NonconformityGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation NonconformityGraphCreateMutation(\n  $input: CreateNonconformityInput!\n) {\n  createNonconformity(input: $input) {\n    nonconformityEdge {\n      node {\n        id\n        referenceId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        audit {\n          id\n          framework {\n            name\n            id\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n      }\n    }\n  }\n}\n"
+    "text": "mutation NonconformityGraphCreateMutation(\n  $input: CreateNonconformityInput!\n) {\n  createNonconformity(input: $input) {\n    nonconformityEdge {\n      node {\n        id\n        referenceId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        report {\n          id\n          framework {\n            name\n            id\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "198593806928185e34490d5c656e70ca";
+(node as any).hash = "806b967342ae79c3a95dd74250025e12";
 
 export default node;

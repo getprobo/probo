@@ -27,48 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/trust"
 )
 
-// Framework is the resolver for the framework field.
-func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	audit, err := trustService.Audits.Get(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	framework, err := trustService.Frameworks.Get(ctx, audit.FrameworkID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewFramework(framework), nil
-}
-
-// Report is the resolver for the report field.
-func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	audit, err := trustService.Audits.Get(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if audit.ReportID == nil {
-		return nil, nil
-	}
-
-	report, err := trustService.Reports.Get(ctx, *audit.ReportID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewReport(report), nil
-}
-
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
@@ -334,14 +292,18 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	audit, err := trustService.Audits.GetByReportID(ctx, input.ReportID)
+	report, err := trustService.Reports.Get(ctx, input.ReportID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		pdf, err := trustService.Reports.ExportPDFWithoutWatermark(ctx, input.ReportID)
+	if report.FileID == nil {
+		return nil, gqlutils.Invalidf(ctx, "report has no associated file")
+	}
+
+	if report.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		pdf, err := trustService.ReportFiles.ExportPDFWithoutWatermark(ctx, *report.FileID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export report PDF", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -375,7 +337,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		return nil, err
 	}
 
-	pdf, err := trustService.Reports.ExportPDF(ctx, input.ReportID, identity.EmailAddress)
+	pdf, err := trustService.ReportFiles.ExportPDF(ctx, *report.FileID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export report PDF", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -496,13 +458,13 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
-	audit, err := trustService.Audits.GetByReportID(ctx, input.ReportID)
+	report, err := trustService.Reports.Get(ctx, input.ReportID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	if report.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
 		return nil, gqlutils.Invalidf(
 			ctx,
 			"report is publicly available and does not require access request",
@@ -521,7 +483,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 			Email:              identity.EmailAddress,
 			FullName:           identity.FullName,
 			DocumentIDs:        []gid.GID{},
-			ReportIDs:          []gid.GID{input.ReportID},
+			ReportIDs:          []gid.GID{report.ID},
 			TrustCenterFileIDs: []gid.GID{},
 		},
 	)
@@ -772,6 +734,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 		return types.NewFramework(framework), nil
 
+	case coredata.FileEntityType:
+		file, err := trustService.ReportFiles.GetFile(ctx, id)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot get report file", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+		return types.NewReportFile(file), nil
+
 	case coredata.ReportEntityType:
 		report, err := trustService.Reports.Get(ctx, id)
 		if err != nil {
@@ -779,14 +749,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return nil, gqlutils.Internal(ctx)
 		}
 		return types.NewReport(report), nil
-
-	case coredata.AuditEntityType:
-		audit, err := trustService.Audits.Get(ctx, id)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot get audit", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-		return types.NewAudit(audit), nil
 
 	case coredata.VendorEntityType:
 		vendor, err := trustService.Vendors.Get(ctx, id)
@@ -839,19 +801,61 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 	return response, nil
 }
 
+// Framework is the resolver for the framework field.
+func (r *reportResolver) Framework(ctx context.Context, obj *types.Report) (*types.Framework, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	report, err := trustService.Reports.Get(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	framework, err := trustService.Frameworks.Get(ctx, report.FrameworkID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFramework(framework), nil
+}
+
+// File is the resolver for the file field.
+func (r *reportResolver) File(ctx context.Context, obj *types.Report) (*types.ReportFile, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	report, err := trustService.Reports.Get(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if report.FileID == nil {
+		return nil, nil
+	}
+
+	file, err := trustService.ReportFiles.GetFile(ctx, *report.FileID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewReportFile(file), nil
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
-func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
+func (r *reportFileResolver) IsUserAuthorized(ctx context.Context, obj *types.ReportFile) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	audit, err := trustService.Audits.GetByReportID(ctx, obj.ID)
+	report, err := trustService.Reports.GetByFileID(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
 		return false, gqlutils.Internal(ctx)
 	}
 
-	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	if report.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
 		return true, nil
 	}
 
@@ -863,7 +867,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 	reportAccess, err := trustService.TrustCenterAccesses.GetReportAccess(ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
-		obj.ID,
+		report.ID,
 	)
 	if err != nil {
 		if errors.Is(err, trust.ErrMembershipNotFound) {
@@ -884,7 +888,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 }
 
 // HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
-func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Report) (bool, error) {
+func (r *reportFileResolver) HasUserRequestedAccess(ctx context.Context, obj *types.ReportFile) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -894,10 +898,16 @@ func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.
 		return false, nil // User is not authenticated, so no access requested
 	}
 
-	_, err := trustService.TrustCenterAccesses.GetReportAccess(ctx,
+	report, err := trustService.Reports.GetByFileID(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+		return false, gqlutils.Internal(ctx)
+	}
+
+	_, err = trustService.TrustCenterAccesses.GetReportAccess(ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
-		obj.ID,
+		report.ID,
 	)
 	if err != nil {
 		// FIXME check for not found and return without error in this case
@@ -975,23 +985,23 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 	return types.NewDocumentConnection(documentPage), nil
 }
 
-// Audits is the resolver for the audits field.
-func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error) {
+// Reports is the resolver for the reports field.
+func (r *trustCenterResolver) Reports(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ReportConnection, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
-		Field:     coredata.AuditOrderFieldValidFrom,
+	pageOrderBy := page.OrderBy[coredata.ReportOrderField]{
+		Field:     coredata.ReportOrderFieldValidFrom,
 		Direction: page.OrderDirectionDesc,
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	auditPage, err := trustService.Audits.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	reportPage, err := trustService.Reports.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list public audits", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list public reports", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewAuditConnection(auditPage), nil
+	return types.NewReportConnection(reportPage), nil
 }
 
 // Vendors is the resolver for the vendors field.
@@ -1155,9 +1165,6 @@ func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.Ve
 	panic(fmt.Errorf("not implemented: TotalCount for parent type %T", obj.Resolver))
 }
 
-// Audit returns schema.AuditResolver implementation.
-func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
-
 // Document returns schema.DocumentResolver implementation.
 func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
 
@@ -1181,6 +1188,9 @@ func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 // Report returns schema.ReportResolver implementation.
 func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
 
+// ReportFile returns schema.ReportFileResolver implementation.
+func (r *Resolver) ReportFile() schema.ReportFileResolver { return &reportFileResolver{r} }
+
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
 
@@ -1199,7 +1209,6 @@ func (r *Resolver) VendorConnection() schema.VendorConnectionResolver {
 	return &vendorConnectionResolver{r}
 }
 
-type auditResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
@@ -1207,6 +1216,7 @@ type nonDisclosureAgreementResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
+type reportFileResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
 type trustCenterFileResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }

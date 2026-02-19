@@ -70,10 +70,10 @@ type ResolverInterface interface {
 	GetContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetContinualImprovementInput) (*mcp.CallToolResult, types.GetContinualImprovementOutput, error)
 	AddContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddContinualImprovementInput) (*mcp.CallToolResult, types.AddContinualImprovementOutput, error)
 	UpdateContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateContinualImprovementInput) (*mcp.CallToolResult, types.UpdateContinualImprovementOutput, error)
-	ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditsInput) (*mcp.CallToolResult, types.ListAuditsOutput, error)
-	GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditInput) (*mcp.CallToolResult, types.GetAuditOutput, error)
-	AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAuditInput) (*mcp.CallToolResult, types.AddAuditOutput, error)
-	UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditInput) (*mcp.CallToolResult, types.UpdateAuditOutput, error)
+	ListReportsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListReportsInput) (*mcp.CallToolResult, types.ListReportsOutput, error)
+	GetReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetReportInput) (*mcp.CallToolResult, types.GetReportOutput, error)
+	AddReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddReportInput) (*mcp.CallToolResult, types.AddReportOutput, error)
+	UpdateReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateReportInput) (*mcp.CallToolResult, types.UpdateReportOutput, error)
 	ListControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlsInput) (*mcp.CallToolResult, types.ListControlsOutput, error)
 	GetControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetControlInput) (*mcp.CallToolResult, types.GetControlOutput, error)
 	AddControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddControlInput) (*mcp.CallToolResult, types.AddControlOutput, error)
@@ -82,8 +82,8 @@ type ResolverInterface interface {
 	UnlinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlMeasureInput) (*mcp.CallToolResult, types.UnlinkControlMeasureOutput, error)
 	LinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlDocumentInput) (*mcp.CallToolResult, types.LinkControlDocumentOutput, error)
 	UnlinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlDocumentInput) (*mcp.CallToolResult, types.UnlinkControlDocumentOutput, error)
-	LinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlAuditInput) (*mcp.CallToolResult, types.LinkControlAuditOutput, error)
-	UnlinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlAuditInput) (*mcp.CallToolResult, types.UnlinkControlAuditOutput, error)
+	LinkControlReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlReportInput) (*mcp.CallToolResult, types.LinkControlReportOutput, error)
+	UnlinkControlReportTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlReportInput) (*mcp.CallToolResult, types.UnlinkControlReportOutput, error)
 	LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlSnapshotInput) (*mcp.CallToolResult, types.LinkControlSnapshotOutput, error)
 	UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlSnapshotInput) (*mcp.CallToolResult, types.UnlinkControlSnapshotOutput, error)
 	ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTasksInput) (*mcp.CallToolResult, types.ListTasksOutput, error)
@@ -860,50 +860,50 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "listAudits",
-			Description:  "List all audits for the organization",
-			InputSchema:  types.ListAuditsToolInputSchema,
-			OutputSchema: types.ListAuditsToolOutputSchema,
+			Name:         "listReports",
+			Description:  "List all reports for the organization",
+			InputSchema:  types.ListReportsToolInputSchema,
+			OutputSchema: types.ListReportsToolOutputSchema,
 			Annotations: &mcp.ToolAnnotations{
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
 			},
 		},
-		resolver.ListAuditsTool,
+		resolver.ListReportsTool,
 	)
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "getAudit",
-			Description:  "Get an audit by ID",
-			InputSchema:  types.GetAuditToolInputSchema,
-			OutputSchema: types.GetAuditToolOutputSchema,
+			Name:         "getReport",
+			Description:  "Get a report by ID",
+			InputSchema:  types.GetReportToolInputSchema,
+			OutputSchema: types.GetReportToolOutputSchema,
 			Annotations: &mcp.ToolAnnotations{
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
 			},
 		},
-		resolver.GetAuditTool,
+		resolver.GetReportTool,
 	)
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "addAudit",
-			Description:  "Add a new audit to the organization",
-			InputSchema:  types.AddAuditToolInputSchema,
-			OutputSchema: types.AddAuditToolOutputSchema,
+			Name:         "addReport",
+			Description:  "Add a new report to the organization",
+			InputSchema:  types.AddReportToolInputSchema,
+			OutputSchema: types.AddReportToolOutputSchema,
 		},
-		resolver.AddAuditTool,
+		resolver.AddReportTool,
 	)
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "updateAudit",
-			Description:  "Update an existing audit",
-			InputSchema:  types.UpdateAuditToolInputSchema,
-			OutputSchema: types.UpdateAuditToolOutputSchema,
+			Name:         "updateReport",
+			Description:  "Update an existing report",
+			InputSchema:  types.UpdateReportToolInputSchema,
+			OutputSchema: types.UpdateReportToolOutputSchema,
 		},
-		resolver.UpdateAuditTool,
+		resolver.UpdateReportTool,
 	)
 	mcp.AddTool(
 		server,
@@ -996,22 +996,22 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "linkControlAudit",
-			Description:  "Link an audit to a control",
-			InputSchema:  types.LinkControlAuditToolInputSchema,
-			OutputSchema: types.LinkControlAuditToolOutputSchema,
+			Name:         "linkControlReport",
+			Description:  "Link a report to a control",
+			InputSchema:  types.LinkControlReportToolInputSchema,
+			OutputSchema: types.LinkControlReportToolOutputSchema,
 		},
-		resolver.LinkControlAuditTool,
+		resolver.LinkControlReportTool,
 	)
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "unlinkControlAudit",
-			Description:  "Unlink an audit from a control",
-			InputSchema:  types.UnlinkControlAuditToolInputSchema,
-			OutputSchema: types.UnlinkControlAuditToolOutputSchema,
+			Name:         "unlinkControlReport",
+			Description:  "Unlink a report from a control",
+			InputSchema:  types.UnlinkControlReportToolInputSchema,
+			OutputSchema: types.UnlinkControlReportToolOutputSchema,
 		},
-		resolver.UnlinkControlAuditTool,
+		resolver.UnlinkControlReportTool,
 	)
 	mcp.AddTool(
 		server,

@@ -866,11 +866,11 @@ WHERE %s
 	return nil
 }
 
-func (c *Controls) CountByAuditID(
+func (c *Controls) CountByReportID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	auditID gid.GID,
+	reportID gid.GID,
 	filter *ControlFilter,
 ) (int, error) {
 	q := `
@@ -882,9 +882,9 @@ WITH ctrl AS (
 		FROM
 			controls c
 		INNER JOIN
-			controls_audits ca ON c.id = ca.control_id
+			controls_reports cr ON c.id = cr.control_id
 		WHERE
-			ca.audit_id = @audit_id
+			cr.report_id = @report_id
 	)
 	SELECT
 		COUNT(id)
@@ -895,7 +895,7 @@ WITH ctrl AS (
 	`
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"audit_id": auditID}
+	args := pgx.NamedArgs{"report_id": reportID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -909,11 +909,11 @@ WITH ctrl AS (
 	return count, nil
 }
 
-func (c *Controls) LoadByAuditID(
+func (c *Controls) LoadByReportID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	auditID gid.GID,
+	reportID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
 	filter *ControlFilter,
 ) error {
@@ -934,9 +934,9 @@ WITH ctrl AS (
 	FROM
 		controls c
 	INNER JOIN
-		controls_audits ca ON c.id = ca.control_id
+		controls_reports cr ON c.id = cr.control_id
 	WHERE
-		ca.audit_id = @audit_id
+		cr.report_id = @report_id
 )
 SELECT
 	id,
@@ -956,7 +956,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"audit_id": auditID}
+	args := pgx.NamedArgs{"report_id": reportID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())

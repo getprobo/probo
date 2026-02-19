@@ -12,11 +12,11 @@ const fragment = graphql`
     compliancePage: trustCenter @required(action: THROW) {
       ...CompliancePageAuditListItem_compliancePageFragment
     }
-    audits(first: 100) {
+    reports(first: 100) {
       edges {
         node {
           id
-          ...CompliancePageAuditListItem_auditFragment
+          ...CompliancePageAuditListItem_reportFragment
         }
       }
     }
@@ -28,7 +28,7 @@ export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAudi
 
   const { __ } = useTranslate();
 
-  const { audits, compliancePage } = useFragment<CompliancePageAuditListFragment$key>(fragment, fragmentRef);
+  const { reports, compliancePage } = useFragment<CompliancePageAuditListFragment$key>(fragment, fragmentRef);
 
   return (
     <div className="space-y-[10px]">
@@ -43,17 +43,17 @@ export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAudi
           </Tr>
         </Thead>
         <Tbody>
-          {audits.edges.length === 0 && (
+          {reports.edges.length === 0 && (
             <Tr>
               <Td colSpan={6} className="text-center text-txt-secondary">
-                {__("No audits available")}
+                {__("No reports available")}
               </Td>
             </Tr>
           )}
-          {audits.edges.map(({ node: audit }) => (
+          {reports.edges.map(({ node: report }) => (
             <CompliancePageAuditListItem
-              key={audit.id}
-              auditFragmentRef={audit}
+              key={report.id}
+              reportFragmentRef={report}
               compliancePageFragmentRef={compliancePage}
             />
           ))}

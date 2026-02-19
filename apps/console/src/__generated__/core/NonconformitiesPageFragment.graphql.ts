@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9820e4e8cd9f971dfd45dbd61643ac41>>
+ * @generated SignedSource<<9f2651a632612aa97fa5ef07ba4d98ad>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,14 +17,6 @@ export type NonconformitiesPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly audit: {
-          readonly framework: {
-            readonly id: string;
-            readonly name: string;
-          };
-          readonly id: string;
-          readonly name: string | null | undefined;
-        } | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
         readonly correctiveAction: string | null | undefined;
@@ -39,6 +31,14 @@ export type NonconformitiesPageFragment$data = {
           readonly id: string;
         };
         readonly referenceId: string;
+        readonly report: {
+          readonly framework: {
+            readonly id: string;
+            readonly name: string;
+          };
+          readonly id: string;
+          readonly name: string | null | undefined;
+        } | null | undefined;
         readonly rootCause: string;
         readonly snapshotId: string | null | undefined;
         readonly status: NonconformityStatus;
@@ -238,9 +238,9 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "concreteType": "Audit",
+                  "concreteType": "Report",
                   "kind": "LinkedField",
-                  "name": "audit",
+                  "name": "report",
                   "plural": false,
                   "selections": [
                     (v1/*: any*/),
@@ -386,6 +386,6 @@ return {
 };
 })();
 
-(node as any).hash = "57f7e0fb2efff357af936edf90e14876";
+(node as any).hash = "1ade1a712cb37a360656d14329c13059";
 
 export default node;

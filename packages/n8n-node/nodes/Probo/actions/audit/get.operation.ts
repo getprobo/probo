@@ -3,17 +3,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Audit ID',
-		name: 'auditId',
+		displayName: 'Report ID',
+		name: 'reportId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['audit'],
+				resource: ['report'],
 				operation: ['get'],
 			},
 		},
 		default: '',
-		description: 'The ID of the audit',
+		description: 'The ID of the report',
 		required: true,
 	},
 ];
@@ -22,14 +22,15 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const reportId = this.getNodeParameter('reportId', itemIndex) as string;
 
 	const query = `
-		query GetAudit($auditId: ID!) {
-			node(id: $auditId) {
-				... on Audit {
+		query GetReport($reportId: ID!) {
+			node(id: $reportId) {
+				... on Report {
 					id
 					name
+					frameworkType
 					state
 					validFrom
 					validUntil
@@ -43,7 +44,7 @@ export async function execute(
 	`;
 
 	const variables = {
-		auditId,
+		reportId,
 	};
 
 	const responseData = await proboApiRequest.call(this, query, variables);

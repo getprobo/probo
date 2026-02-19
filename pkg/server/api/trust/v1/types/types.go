@@ -25,25 +25,6 @@ type AcceptElectronicSignaturePayload struct {
 	Signature *ElectronicSignature `json:"signature"`
 }
 
-type Audit struct {
-	ID        gid.GID    `json:"id"`
-	Framework *Framework `json:"framework"`
-	Report    *Report    `json:"report,omitempty"`
-}
-
-func (Audit) IsNode()             {}
-func (this Audit) GetID() gid.GID { return this.ID }
-
-type AuditConnection struct {
-	Edges    []*AuditEdge `json:"edges"`
-	PageInfo *PageInfo    `json:"pageInfo"`
-}
-
-type AuditEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *Audit         `json:"node"`
-}
-
 type Document struct {
 	ID                     gid.GID               `json:"id"`
 	Title                  string                `json:"title"`
@@ -167,14 +148,34 @@ type RecordSigningEventPayload struct {
 }
 
 type Report struct {
+	ID            gid.GID     `json:"id"`
+	Framework     *Framework  `json:"framework"`
+	FrameworkType *string     `json:"frameworkType,omitempty"`
+	File          *ReportFile `json:"file,omitempty"`
+}
+
+func (Report) IsNode()             {}
+func (this Report) GetID() gid.GID { return this.ID }
+
+type ReportConnection struct {
+	Edges    []*ReportEdge `json:"edges"`
+	PageInfo *PageInfo     `json:"pageInfo"`
+}
+
+type ReportEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Report        `json:"node"`
+}
+
+type ReportFile struct {
 	ID                     gid.GID `json:"id"`
 	Filename               string  `json:"filename"`
 	IsUserAuthorized       bool    `json:"isUserAuthorized"`
 	HasUserRequestedAccess bool    `json:"hasUserRequestedAccess"`
 }
 
-func (Report) IsNode()             {}
-func (this Report) GetID() gid.GID { return this.ID }
+func (ReportFile) IsNode()             {}
+func (this ReportFile) GetID() gid.GID { return this.ID }
 
 type RequestAccessesPayload struct {
 	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
@@ -210,7 +211,7 @@ type TrustCenter struct {
 	IsViewerMember         bool                            `json:"isViewerMember"`
 	Organization           *Organization                   `json:"organization"`
 	Documents              *DocumentConnection             `json:"documents"`
-	Audits                 *AuditConnection                `json:"audits"`
+	Reports                *ReportConnection               `json:"reports"`
 	Vendors                *VendorConnection               `json:"vendors"`
 	References             *TrustCenterReferenceConnection `json:"references"`
 	TrustCenterFiles       *TrustCenterFileConnection      `json:"trustCenterFiles"`

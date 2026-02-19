@@ -34,7 +34,7 @@ export const nonconformityNodeQuery = graphql`
         dueDate
         status
         effectivenessCheck
-        audit {
+        report {
           id
           framework {
             id
@@ -73,7 +73,7 @@ export const createNonconformityMutation = graphql`
           dateIdentified
           dueDate
           rootCause
-          audit {
+          report {
             id
             framework {
               name
@@ -109,7 +109,7 @@ export const updateNonconformityMutation = graphql`
           id
           fullName
         }
-        audit {
+        report {
           id
           framework {
             id
@@ -175,7 +175,7 @@ export const useCreateNonconformity = (connectionId: string) => {
     organizationId: string;
     referenceId: string;
     description?: string;
-    auditId?: string;
+    reportId?: string;
     dateIdentified?: string;
     rootCause: string;
     correctiveAction?: string;
@@ -209,7 +209,7 @@ export const useCreateNonconformity = (connectionId: string) => {
           organizationId: input.organizationId,
           referenceId: input.referenceId,
           description: input.description,
-          auditId: input.auditId || undefined,
+          reportId: input.reportId || undefined,
           dateIdentified: input.dateIdentified,
           rootCause: input.rootCause,
           correctiveAction: input.correctiveAction,
@@ -236,7 +236,7 @@ export const useUpdateNonconformity = () => {
     rootCause?: string;
     correctiveAction?: string;
     ownerId?: string;
-    auditId?: string | null;
+    reportId?: string | null;
     dueDate?: string | null;
     status?: string;
     effectivenessCheck?: string;
@@ -249,7 +249,7 @@ export const useUpdateNonconformity = () => {
       variables: {
         input: {
           ...input,
-          auditId: input.auditId || null,
+          reportId: input.reportId || null,
         },
       },
     });

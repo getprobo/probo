@@ -142,7 +142,7 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 	asset, err := prb.Assets.Get(ctx, obj.ID)
 	if err != nil {
 
-		panic(fmt.Errorf("cannot load audit: %w", err))
+		panic(fmt.Errorf("cannot load asset: %w", err))
 	}
 
 	org, err := prb.Organizations.Get(ctx, asset.OrganizationID)
@@ -185,143 +185,6 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
-}
-
-// Organization is the resolver for the organization field.
-func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		panic(fmt.Errorf("cannot load organization: %w", err))
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
-// Framework is the resolver for the framework field.
-func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	framework, err := prb.Frameworks.Get(ctx, obj.Framework.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		panic(fmt.Errorf("cannot load framework: %w", err))
-	}
-
-	return types.NewFramework(framework), nil
-}
-
-// Report is the resolver for the report field.
-func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionReportGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	if obj.Report == nil {
-		return nil, nil
-	}
-
-	report, err := prb.Reports.Get(ctx, obj.Report.ID)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load report: %w", err))
-	}
-
-	return types.NewReport(report), nil
-}
-
-// ReportURL is the resolver for the reportUrl field.
-func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionReportGetReportUrl); err != nil {
-		return nil, err
-	}
-
-	if obj.Report == nil {
-		return nil, nil
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	url, err := prb.Audits.GenerateReportURL(ctx, obj.ID, 15*time.Minute)
-	if err != nil {
-		panic(fmt.Errorf("cannot generate report URL: %w", err))
-	}
-
-	return url, nil
-}
-
-// Controls is the resolver for the controls field.
-func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
-		Field:     coredata.ControlOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	var controlFilter = coredata.NewControlFilter(nil)
-	if filter != nil {
-		controlFilter = coredata.NewControlFilter(filter.Query)
-	}
-
-	page, err := prb.Controls.ListForAuditID(ctx, obj.ID, cursor, controlFilter)
-	if err != nil {
-		panic(fmt.Errorf("cannot list audit controls: %w", err))
-	}
-
-	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *auditResolver) Permission(ctx context.Context, obj *types.Audit, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionAuditList); err != nil {
-		return 0, err
-	}
-
-	// TODO missing switch case
-
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-	count, err := prb.Audits.CountForOrganizationID(ctx, obj.ParentID)
-	if err != nil {
-		panic(fmt.Errorf("cannot count audits: %w", err))
-	}
-	return count, nil
 }
 
 // Organization is the resolver for the organization field.
@@ -539,20 +402,20 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
 }
 
-// Audits is the resolver for the audits field.
-func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+// Reports is the resolver for the reports field.
+func (r *controlResolver) Reports(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ReportOrderBy) (*types.ReportConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionReportList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
-		Field:     coredata.AuditOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ReportOrderField]{
+		Field:     coredata.ReportOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ReportOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -560,12 +423,12 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Audits.ListForControlID(ctx, obj.ID, cursor)
+	page, err := prb.Reports.ListForControlID(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list control audits: %w", err))
+		panic(fmt.Errorf("cannot list control reports: %w", err))
 	}
 
-	return types.NewAuditConnection(page, r, obj.ID), nil
+	return types.NewReportConnection(page, r, obj.ID), nil
 }
 
 // Obligations is the resolver for the obligations field.
@@ -2899,43 +2762,43 @@ func (r *mutationResolver) DeleteApplicabilityStatement(ctx context.Context, inp
 	}, nil
 }
 
-// CreateControlAuditMapping is the resolver for the createControlAuditMapping field.
-func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input types.CreateControlAuditMappingInput) (*types.CreateControlAuditMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate); err != nil {
+// CreateControlReportMapping is the resolver for the createControlReportMapping field.
+func (r *mutationResolver) CreateControlReportMapping(ctx context.Context, input types.CreateControlReportMappingInput) (*types.CreateControlReportMappingPayload, error) {
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlReportMappingCreate); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.AuditID.TenantID())
+	prb := r.ProboService(ctx, input.ReportID.TenantID())
 
-	control, audit, err := prb.Controls.CreateAuditMapping(ctx, input.ControlID, input.AuditID)
+	control, report, err := prb.Controls.CreateReportMapping(ctx, input.ControlID, input.ReportID)
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create control audit mapping: %w", err))
+		panic(fmt.Errorf("cannot create control report mapping: %w", err))
 	}
 
-	return &types.CreateControlAuditMappingPayload{
+	return &types.CreateControlReportMappingPayload{
 		ControlEdge: types.NewControlEdge(control, coredata.ControlOrderFieldCreatedAt),
-		AuditEdge:   types.NewAuditEdge(audit, coredata.AuditOrderFieldCreatedAt),
+		ReportEdge:  types.NewReportEdge(report, coredata.ReportOrderFieldCreatedAt),
 	}, nil
 }
 
-// DeleteControlAuditMapping is the resolver for the deleteControlAuditMapping field.
-func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input types.DeleteControlAuditMappingInput) (*types.DeleteControlAuditMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete); err != nil {
+// DeleteControlReportMapping is the resolver for the deleteControlReportMapping field.
+func (r *mutationResolver) DeleteControlReportMapping(ctx context.Context, input types.DeleteControlReportMappingInput) (*types.DeleteControlReportMappingPayload, error) {
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlReportMappingDelete); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.AuditID.TenantID())
+	prb := r.ProboService(ctx, input.ReportID.TenantID())
 
-	control, audit, err := prb.Controls.DeleteAuditMapping(ctx, input.ControlID, input.AuditID)
+	control, report, err := prb.Controls.DeleteReportMapping(ctx, input.ControlID, input.ReportID)
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete control audit mapping: %w", err))
+		panic(fmt.Errorf("cannot delete control report mapping: %w", err))
 	}
 
-	return &types.DeleteControlAuditMappingPayload{
+	return &types.DeleteControlReportMappingPayload{
 		DeletedControlID: control.ID,
-		DeletedAuditID:   audit.ID,
+		DeletedReportID:  report.ID,
 	}, nil
 }
 
@@ -4579,92 +4442,94 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 	}, nil
 }
 
-// CreateAudit is the resolver for the createAudit field.
-func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAuditInput) (*types.CreateAuditPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAuditCreate); err != nil {
+// CreateReport is the resolver for the createReport field.
+func (r *mutationResolver) CreateReport(ctx context.Context, input types.CreateReportInput) (*types.CreateReportPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionReportCreate); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	req := probo.CreateAuditRequest{
+	req := probo.CreateReportRequest{
 		OrganizationID:        input.OrganizationID,
 		FrameworkID:           input.FrameworkID,
 		Name:                  input.Name,
+		FrameworkType:         input.FrameworkType,
 		ValidFrom:             input.ValidFrom,
 		ValidUntil:            input.ValidUntil,
 		State:                 input.State,
 		TrustCenterVisibility: input.TrustCenterVisibility,
 	}
 
-	audit, err := prb.Audits.Create(ctx, &req)
+	report, err := prb.Reports.Create(ctx, &req)
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create audit: %w", err))
+		panic(fmt.Errorf("cannot create report: %w", err))
 	}
 
-	return &types.CreateAuditPayload{
-		AuditEdge: types.NewAuditEdge(audit, coredata.AuditOrderFieldCreatedAt),
+	return &types.CreateReportPayload{
+		ReportEdge: types.NewReportEdge(report, coredata.ReportOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateAudit is the resolver for the updateAudit field.
-func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAuditInput) (*types.UpdateAuditPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionAuditUpdate); err != nil {
+// UpdateReport is the resolver for the updateReport field.
+func (r *mutationResolver) UpdateReport(ctx context.Context, input types.UpdateReportInput) (*types.UpdateReportPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionReportUpdate); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	req := probo.UpdateAuditRequest{
+	req := probo.UpdateReportRequest{
 		ID:                    input.ID,
 		Name:                  gqlutils.UnwrapOmittable(input.Name),
+		FrameworkType:         gqlutils.UnwrapOmittable(input.FrameworkType),
 		ValidFrom:             input.ValidFrom,
 		ValidUntil:            input.ValidUntil,
 		State:                 input.State,
 		TrustCenterVisibility: input.TrustCenterVisibility,
 	}
 
-	audit, err := prb.Audits.Update(ctx, &req)
+	report, err := prb.Reports.Update(ctx, &req)
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update audit: %w", err))
+		panic(fmt.Errorf("cannot update report: %w", err))
 	}
 
-	return &types.UpdateAuditPayload{
-		Audit: types.NewAudit(audit),
+	return &types.UpdateReportPayload{
+		Report: types.NewReport(report),
 	}, nil
 }
 
-// DeleteAudit is the resolver for the deleteAudit field.
-func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAuditInput) (*types.DeleteAuditPayload, error) {
-	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditDelete); err != nil {
+// DeleteReport is the resolver for the deleteReport field.
+func (r *mutationResolver) DeleteReport(ctx context.Context, input types.DeleteReportInput) (*types.DeleteReportPayload, error) {
+	if err := r.authorize(ctx, input.ReportID, probo.ActionReportDelete); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.AuditID.TenantID())
+	prb := r.ProboService(ctx, input.ReportID.TenantID())
 
-	err := prb.Audits.Delete(ctx, input.AuditID)
+	err := prb.Reports.Delete(ctx, input.ReportID)
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete audit: %w", err))
+		panic(fmt.Errorf("cannot delete report: %w", err))
 	}
 
-	return &types.DeleteAuditPayload{
-		DeletedAuditID: input.AuditID,
+	return &types.DeleteReportPayload{
+		DeletedReportID: input.ReportID,
 	}, nil
 }
 
-// UploadAuditReport is the resolver for the uploadAuditReport field.
-func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.UploadAuditReportInput) (*types.UploadAuditReportPayload, error) {
-	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditReportUpload); err != nil {
+// UploadReportFile is the resolver for the uploadReportFile field.
+func (r *mutationResolver) UploadReportFile(ctx context.Context, input types.UploadReportFileInput) (*types.UploadReportFilePayload, error) {
+	if err := r.authorize(ctx, input.ReportID, probo.ActionReportFileUpload); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.AuditID.TenantID())
+	prb := r.ProboService(ctx, input.ReportID.TenantID())
 
-	req := probo.UploadAuditReportRequest{
-		AuditID: input.AuditID,
+	req := probo.UploadReportFileRequest{
+		ReportID: input.ReportID,
 		File: probo.File{
 			Content:     input.File.File,
 			Filename:    input.File.Filename,
@@ -4673,33 +4538,32 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 		},
 	}
 
-	audit, err := prb.Audits.UploadReport(ctx, req)
+	report, err := prb.Reports.UploadFile(ctx, req)
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot upload audit report: %w", err))
+		panic(fmt.Errorf("cannot upload report file: %w", err))
 	}
 
-	return &types.UploadAuditReportPayload{
-		Audit: types.NewAudit(audit),
+	return &types.UploadReportFilePayload{
+		Report: types.NewReport(report),
 	}, nil
 }
 
-// DeleteAuditReport is the resolver for the deleteAuditReport field.
-func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.DeleteAuditReportInput) (*types.DeleteAuditReportPayload, error) {
-	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditReportDelete); err != nil {
+// DeleteReportFile is the resolver for the deleteReportFile field.
+func (r *mutationResolver) DeleteReportFile(ctx context.Context, input types.DeleteReportFileInput) (*types.DeleteReportFilePayload, error) {
+	if err := r.authorize(ctx, input.ReportID, probo.ActionReportFileDelete); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.AuditID.TenantID())
+	prb := r.ProboService(ctx, input.ReportID.TenantID())
 
-	audit, err := prb.Audits.DeleteReport(ctx, input.AuditID)
+	report, err := prb.Reports.DeleteFile(ctx, input.ReportID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete audit report: %w", err))
+		panic(fmt.Errorf("cannot delete report file: %w", err))
 	}
 
-	return &types.DeleteAuditReportPayload{
-		Audit: types.NewAudit(audit),
+	return &types.DeleteReportFilePayload{
+		Report: types.NewReport(report),
 	}, nil
 }
 
@@ -4715,7 +4579,7 @@ func (r *mutationResolver) CreateNonconformity(ctx context.Context, input types.
 		OrganizationID:     input.OrganizationID,
 		ReferenceID:        input.ReferenceID,
 		Description:        input.Description,
-		AuditID:            input.AuditID,
+		ReportID:           input.ReportID,
 		DateIdentified:     input.DateIdentified,
 		RootCause:          input.RootCause,
 		CorrectiveAction:   input.CorrectiveAction,
@@ -4752,7 +4616,7 @@ func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.
 		RootCause:          input.RootCause,
 		CorrectiveAction:   gqlutils.UnwrapOmittable(input.CorrectiveAction),
 		OwnerID:            input.OwnerID,
-		AuditID:            gqlutils.UnwrapOmittable(input.AuditID),
+		ReportID:           gqlutils.UnwrapOmittable(input.ReportID),
 		DueDate:            gqlutils.UnwrapOmittable(input.DueDate),
 		Status:             input.Status,
 		EffectivenessCheck: gqlutils.UnwrapOmittable(input.EffectivenessCheck),
@@ -5408,29 +5272,29 @@ func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Non
 	return types.NewOrganization(organization), nil
 }
 
-// Audit is the resolver for the audit field.
-func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconformity) (*types.Audit, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditGet); err != nil {
+// Report is the resolver for the report field.
+func (r *nonconformityResolver) Report(ctx context.Context, obj *types.Nonconformity) (*types.Report, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionReportGet); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	if obj.Audit == nil {
+	if obj.Report == nil {
 		return nil, nil
 	}
 
-	audit, err := prb.Audits.Get(ctx, obj.Audit.ID)
+	report, err := prb.Reports.Get(ctx, obj.Report.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get nonconformity audit: %w", err))
+		panic(fmt.Errorf("cannot get nonconformity report: %w", err))
 	}
 
-	return types.NewAudit(audit), nil
+	return types.NewReport(report), nil
 }
 
 // Owner is the resolver for the owner field.
@@ -6052,20 +5916,20 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 	return types.NewDataConnection(page, r, obj.ID, filter), nil
 }
 
-// Audits is the resolver for the audits field.
-func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+// Reports is the resolver for the reports field.
+func (r *organizationResolver) Reports(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ReportOrderBy) (*types.ReportConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionReportList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
-		Field:     coredata.AuditOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ReportOrderField]{
+		Field:     coredata.ReportOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ReportOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -6073,13 +5937,13 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Audits.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.Reports.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization audits: %w", err))
+		panic(fmt.Errorf("cannot list organization reports: %w", err))
 	}
 
-	return types.NewAuditConnection(page, r, obj.ID), nil
+	return types.NewReportConnection(page, r, obj.ID), nil
 }
 
 // Nonconformities is the resolver for the nonconformities field.
@@ -6788,14 +6652,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewDatum(datum), nil
 		}
-	case coredata.AuditEntityType:
-		action = probo.ActionAuditList
+	case coredata.ReportEntityType:
+		action = probo.ActionReportGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			audit, err := prb.Audits.Get(ctx, id)
+			report, err := prb.Reports.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewAudit(audit), nil
+			return types.NewReport(report), nil
 		}
 	case coredata.NonconformityEntityType:
 		action = probo.ActionNonconformityList
@@ -6823,15 +6687,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 			return types.NewContinualImprovement(continualImprovement), nil
-		}
-	case coredata.ReportEntityType:
-		action = probo.ActionReportGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			report, err := prb.Reports.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewReport(report), nil
 		}
 	case coredata.ProcessingActivityEntityType:
 		action = probo.ActionProcessingActivityList
@@ -6963,43 +6818,146 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	return &types.Viewer{ID: viewerID}, nil
 }
 
-// DownloadURL is the resolver for the downloadUrl field.
-func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionReportDownloadUrlGet); err != nil {
+// Organization is the resolver for the organization field.
+func (r *reportResolver) Organization(ctx context.Context, obj *types.Report) (*types.Organization, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	url, err := prb.Reports.GenerateDownloadURL(ctx, obj.ID, 15*time.Minute)
+	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot generate download URL: %w", err))
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Framework is the resolver for the framework field.
+func (r *reportResolver) Framework(ctx context.Context, obj *types.Report) (*types.Framework, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	framework, err := prb.Frameworks.Get(ctx, obj.Framework.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFramework(framework), nil
+}
+
+// File is the resolver for the file field.
+func (r *reportResolver) File(ctx context.Context, obj *types.Report) (*types.File, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionReportFileGet); err != nil {
+		return nil, err
+	}
+
+	if obj.File == nil {
+		return nil, nil
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	file, err := prb.Files.Get(ctx, obj.File.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFile(file), nil
+}
+
+// ReportURL is the resolver for the reportUrl field.
+func (r *reportResolver) ReportURL(ctx context.Context, obj *types.Report) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionReportFileGetUrl); err != nil {
+		return nil, err
+	}
+
+	if obj.File == nil {
+		return nil, nil
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	url, err := prb.Reports.GenerateFileURL(ctx, obj.ID, 15*time.Minute)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot generate report URL", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return url, nil
 }
 
-// Audit is the resolver for the audit field.
-func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.Audit, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditGet); err != nil {
+// Controls is the resolver for the controls field.
+func (r *reportResolver) Controls(ctx context.Context, obj *types.Report, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	audit, err := prb.Audits.GetByReportID(ctx, obj.ID)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot load audit for report: %w", err))
+	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
+		Field:     coredata.ControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
 	}
 
-	return types.NewAudit(audit), nil
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var controlFilter = coredata.NewControlFilter(nil)
+	if filter != nil {
+		controlFilter = coredata.NewControlFilter(filter.Query)
+	}
+
+	page, err := prb.Controls.ListForReportID(ctx, obj.ID, cursor, controlFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list report controls", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
 // Permission is the resolver for the permission field.
 func (r *reportResolver) Permission(ctx context.Context, obj *types.Report, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *reportConnectionResolver) TotalCount(ctx context.Context, obj *types.ReportConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionReportList); err != nil {
+		return 0, err
+	}
+
+	// TODO missing switch case
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.Reports.CountForOrganizationID(ctx, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count reports", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+	return count, nil
 }
 
 // Organization is the resolver for the organization field.
@@ -8768,14 +8726,6 @@ func (r *Resolver) AssetConnection() schema.AssetConnectionResolver {
 	return &assetConnectionResolver{r}
 }
 
-// Audit returns schema.AuditResolver implementation.
-func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
-
-// AuditConnection returns schema.AuditConnectionResolver implementation.
-func (r *Resolver) AuditConnection() schema.AuditConnectionResolver {
-	return &auditConnectionResolver{r}
-}
-
 // ContinualImprovement returns schema.ContinualImprovementResolver implementation.
 func (r *Resolver) ContinualImprovement() schema.ContinualImprovementResolver {
 	return &continualImprovementResolver{r}
@@ -8929,6 +8879,11 @@ func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 // Report returns schema.ReportResolver implementation.
 func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
 
+// ReportConnection returns schema.ReportConnectionResolver implementation.
+func (r *Resolver) ReportConnection() schema.ReportConnectionResolver {
+	return &reportConnectionResolver{r}
+}
+
 // RightsRequest returns schema.RightsRequestResolver implementation.
 func (r *Resolver) RightsRequest() schema.RightsRequestResolver { return &rightsRequestResolver{r} }
 
@@ -9076,8 +9031,6 @@ type applicabilityStatementResolver struct{ *Resolver }
 type applicabilityStatementConnectionResolver struct{ *Resolver }
 type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
-type auditResolver struct{ *Resolver }
-type auditConnectionResolver struct{ *Resolver }
 type continualImprovementResolver struct{ *Resolver }
 type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
@@ -9115,6 +9068,7 @@ type profileResolver struct{ *Resolver }
 type profileConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
+type reportConnectionResolver struct{ *Resolver }
 type rightsRequestResolver struct{ *Resolver }
 type rightsRequestConnectionResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }

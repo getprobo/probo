@@ -93,10 +93,9 @@ type (
 		Connectors                        *ConnectorService
 		Assets                            *AssetService
 		Data                              *DatumService
-		Audits                            *AuditService
+		Reports                           *ReportService
 		Meetings                          *MeetingService
 		WebhookSubscriptions              *WebhookSubscriptionService
-		Reports                           *ReportService
 		TrustCenters                      *TrustCenterService
 		TrustCenterAccesses               *TrustCenterAccessService
 		TrustCenterReferences             *TrustCenterReferenceService
@@ -218,10 +217,9 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Connectors = &ConnectorService{svc: tenantService}
 	tenantService.Assets = &AssetService{svc: tenantService}
 	tenantService.Data = &DatumService{svc: tenantService}
-	tenantService.Audits = &AuditService{svc: tenantService}
+	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.Meetings = &MeetingService{svc: tenantService}
 	tenantService.WebhookSubscriptions = &WebhookSubscriptionService{svc: tenantService}
-	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6356fdb9136b757a766816656cdf9eea>>
+ * @generated SignedSource<<6064ab68a3870e66aac58cec9f6255e1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -27,14 +27,15 @@ export type CompliancePageAccessEditDialogQuery$data = {
           } | null | undefined;
           readonly id: string;
           readonly report: {
-            readonly audit: {
-              readonly framework: {
-                readonly name: string;
-              };
-              readonly id: string;
+            readonly file: {
+              readonly fileName: string;
             } | null | undefined;
-            readonly filename: string;
+            readonly framework: {
+              readonly name: string;
+            };
+            readonly frameworkType: string | null | undefined;
             readonly id: string;
+            readonly name: string | null | undefined;
           } | null | undefined;
           readonly status: TrustCenterDocumentAccessStatus;
           readonly trustCenterFile: {
@@ -130,17 +131,24 @@ v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "filename",
+  "name": "name",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "fileName",
   "storageKey": null
 },
 v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "frameworkType",
+  "storageKey": null
+},
+v9 = {
   "alias": null,
   "args": null,
   "concreteType": "TrustCenterFile",
@@ -149,7 +157,7 @@ v8 = {
   "plural": false,
   "selections": [
     (v2/*: any*/),
-    (v7/*: any*/),
+    (v6/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -235,31 +243,32 @@ return {
                               {
                                 "alias": null,
                                 "args": null,
-                                "concreteType": "Audit",
+                                "concreteType": "File",
                                 "kind": "LinkedField",
-                                "name": "audit",
+                                "name": "file",
                                 "plural": false,
                                 "selections": [
-                                  (v2/*: any*/),
-                                  {
-                                    "alias": null,
-                                    "args": null,
-                                    "concreteType": "Framework",
-                                    "kind": "LinkedField",
-                                    "name": "framework",
-                                    "plural": false,
-                                    "selections": [
-                                      (v7/*: any*/)
-                                    ],
-                                    "storageKey": null
-                                  }
+                                  (v7/*: any*/)
+                                ],
+                                "storageKey": null
+                              },
+                              (v8/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "concreteType": "Framework",
+                                "kind": "LinkedField",
+                                "name": "framework",
+                                "plural": false,
+                                "selections": [
+                                  (v6/*: any*/)
                                 ],
                                 "storageKey": null
                               }
                             ],
                             "storageKey": null
                           },
-                          (v8/*: any*/)
+                          (v9/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -405,32 +414,34 @@ return {
                               {
                                 "alias": null,
                                 "args": null,
-                                "concreteType": "Audit",
+                                "concreteType": "File",
                                 "kind": "LinkedField",
-                                "name": "audit",
+                                "name": "file",
                                 "plural": false,
                                 "selections": [
-                                  (v2/*: any*/),
-                                  {
-                                    "alias": null,
-                                    "args": null,
-                                    "concreteType": "Framework",
-                                    "kind": "LinkedField",
-                                    "name": "framework",
-                                    "plural": false,
-                                    "selections": [
-                                      (v7/*: any*/),
-                                      (v2/*: any*/)
-                                    ],
-                                    "storageKey": null
-                                  }
+                                  (v7/*: any*/),
+                                  (v2/*: any*/)
+                                ],
+                                "storageKey": null
+                              },
+                              (v8/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "concreteType": "Framework",
+                                "kind": "LinkedField",
+                                "name": "framework",
+                                "plural": false,
+                                "selections": [
+                                  (v6/*: any*/),
+                                  (v2/*: any*/)
                                 ],
                                 "storageKey": null
                               }
                             ],
                             "storageKey": null
                           },
-                          (v8/*: any*/)
+                          (v9/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -450,16 +461,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2c1a84490b7c138adbd06cd36a247f8b",
+    "cacheID": "0ed281c87f3fca8891bb195b4d63a0fe",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAccessEditDialogQuery",
     "operationKind": "query",
-    "text": "query CompliancePageAccessEditDialogQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      ndaSignature {\n        ...ElectronicSignatureSectionFragment\n        id\n      }\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment ElectronicSignatureSectionFragment on ElectronicSignature {\n  status\n  signedAt\n  certificateFileUrl\n  events {\n    id\n    eventType\n    actorEmail\n    occurredAt\n  }\n}\n"
+    "text": "query CompliancePageAccessEditDialogQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      ndaSignature {\n        ...ElectronicSignatureSectionFragment\n        id\n      }\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              name\n              file {\n                fileName\n                id\n              }\n              frameworkType\n              framework {\n                name\n                id\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment ElectronicSignatureSectionFragment on ElectronicSignature {\n  status\n  signedAt\n  certificateFileUrl\n  events {\n    id\n    eventType\n    actorEmail\n    occurredAt\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "22c0951e589902a84654ef96af8887a7";
+(node as any).hash = "44c3332f016cacb11b67d0260dcfd6e3";
 
 export default node;

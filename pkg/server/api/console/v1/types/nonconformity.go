@@ -84,9 +84,9 @@ func NewNonconformity(nr *coredata.Nonconformity) *Nonconformity {
 		UpdatedAt:          nr.UpdatedAt,
 	}
 
-	if nr.AuditID != nil {
-		nc.Audit = &Audit{
-			ID: *nr.AuditID,
+	if nr.ReportID != nil {
+		nc.Report = &Report{
+			ID: *nr.ReportID,
 		}
 	}
 

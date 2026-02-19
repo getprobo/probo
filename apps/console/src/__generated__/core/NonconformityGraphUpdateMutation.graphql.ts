@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<86c2716d4118ff957765ad2e0577fb05>>
+ * @generated SignedSource<<f4103af9a0e07b642227ac14fed0e346>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,6 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type NonconformityStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 export type UpdateNonconformityInput = {
-  auditId?: string | null | undefined;
   correctiveAction?: string | null | undefined;
   dateIdentified?: string | null | undefined;
   description?: string | null | undefined;
@@ -20,6 +19,7 @@ export type UpdateNonconformityInput = {
   id: string;
   ownerId?: string | null | undefined;
   referenceId?: string | null | undefined;
+  reportId?: string | null | undefined;
   rootCause?: string | null | undefined;
   status?: NonconformityStatus | null | undefined;
 };
@@ -29,13 +29,6 @@ export type NonconformityGraphUpdateMutation$variables = {
 export type NonconformityGraphUpdateMutation$data = {
   readonly updateNonconformity: {
     readonly nonconformity: {
-      readonly audit: {
-        readonly framework: {
-          readonly id: string;
-          readonly name: string;
-        };
-        readonly id: string;
-      } | null | undefined;
       readonly correctiveAction: string | null | undefined;
       readonly dateIdentified: string | null | undefined;
       readonly description: string | null | undefined;
@@ -47,6 +40,13 @@ export type NonconformityGraphUpdateMutation$data = {
         readonly id: string;
       };
       readonly referenceId: string;
+      readonly report: {
+        readonly framework: {
+          readonly id: string;
+          readonly name: string;
+        };
+        readonly id: string;
+      } | null | undefined;
       readonly rootCause: string;
       readonly status: NonconformityStatus;
       readonly updatedAt: string;
@@ -175,9 +175,9 @@ v2 = [
           {
             "alias": null,
             "args": null,
-            "concreteType": "Audit",
+            "concreteType": "Report",
             "kind": "LinkedField",
-            "name": "audit",
+            "name": "report",
             "plural": false,
             "selections": [
               (v1/*: any*/),
@@ -235,16 +235,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "db365ab97fb067ad2e9b1daa68f64ed9",
+    "cacheID": "953824db812e3bef3bb1f73d2e8b6ab0",
     "id": null,
     "metadata": {},
     "name": "NonconformityGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation NonconformityGraphUpdateMutation(\n  $input: UpdateNonconformityInput!\n) {\n  updateNonconformity(input: $input) {\n    nonconformity {\n      id\n      referenceId\n      description\n      dateIdentified\n      rootCause\n      correctiveAction\n      dueDate\n      status\n      effectivenessCheck\n      owner {\n        id\n        fullName\n      }\n      audit {\n        id\n        framework {\n          id\n          name\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation NonconformityGraphUpdateMutation(\n  $input: UpdateNonconformityInput!\n) {\n  updateNonconformity(input: $input) {\n    nonconformity {\n      id\n      referenceId\n      description\n      dateIdentified\n      rootCause\n      correctiveAction\n      dueDate\n      status\n      effectivenessCheck\n      owner {\n        id\n        fullName\n      }\n      report {\n        id\n        framework {\n          id\n          name\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5803de6f6f017148cca1e3066a6b3967";
+(node as any).hash = "219eaba2425975695c238fc918814ffa";
 
 export default node;

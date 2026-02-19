@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<de9ca0854fde114ecd6fc68643f999d3>>
+ * @generated SignedSource<<8b10e9b6a697cad0ac99c0db67dea3c9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ import { FragmentRefs } from "relay-runtime";
 export type SidebarFragment$data = {
   readonly canGetTrustCenter: boolean;
   readonly canListAssets: boolean;
-  readonly canListAudits: boolean;
   readonly canListContinualImprovements: boolean;
   readonly canListData: boolean;
   readonly canListDocuments: boolean;
@@ -24,6 +23,7 @@ export type SidebarFragment$data = {
   readonly canListNonconformities: boolean;
   readonly canListObligations: boolean;
   readonly canListProcessingActivities: boolean;
+  readonly canListReports: boolean;
   readonly canListRightsRequests: boolean;
   readonly canListRisks: boolean;
   readonly canListSnapshots: boolean;
@@ -175,17 +175,17 @@ const node: ReaderFragment = {
       "storageKey": "permission(action:\"core:datum:list\")"
     },
     {
-      "alias": "canListAudits",
+      "alias": "canListReports",
       "args": [
         {
           "kind": "Literal",
           "name": "action",
-          "value": "core:audit:list"
+          "value": "core:report:list"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"core:audit:list\")"
+      "storageKey": "permission(action:\"core:report:list\")"
     },
     {
       "alias": "canListNonconformities",
@@ -309,6 +309,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "73a632deb40d322a670cd72fd855723f";
+(node as any).hash = "bad1302f85ebf1e901fdf2a1b98718b1";
 
 export default node;

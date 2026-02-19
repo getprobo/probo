@@ -20,8 +20,8 @@ import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
 import { z } from "zod";
 
-import { AuditSelectField } from "#/components/form/AuditSelectField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { ReportSelectField } from "#/components/form/ReportSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import { useCreateNonconformity } from "../../../../hooks/graph/NonconformityGraph";
@@ -29,7 +29,7 @@ import { useCreateNonconformity } from "../../../../hooks/graph/NonconformityGra
 const schema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
   description: z.string().optional(),
-  auditId: z.string().optional(),
+  reportId: z.string().optional(),
   dateIdentified: z.string().optional(),
   rootCause: z.string().min(1, "Root cause is required"),
   correctiveAction: z.string().optional(),
@@ -63,7 +63,7 @@ export function CreateNonconformityDialog({
     defaultValues: {
       referenceId: "",
       description: "",
-      auditId: "",
+      reportId: "",
       dateIdentified: "",
       rootCause: "",
       correctiveAction: "",
@@ -80,7 +80,7 @@ export function CreateNonconformityDialog({
         organizationId,
         referenceId: formData.referenceId,
         description: formData.description || undefined,
-        auditId: formData.auditId || undefined,
+        reportId: formData.reportId || undefined,
         dateIdentified: formatDatetime(formData.dateIdentified),
         rootCause: formData.rootCause,
         correctiveAction: formData.correctiveAction || undefined,
@@ -124,12 +124,12 @@ export function CreateNonconformityDialog({
             required
           />
 
-          <AuditSelectField
+          <ReportSelectField
             organizationId={organizationId}
             control={control}
-            name="auditId"
-            label={__("Audit")}
-            error={formState.errors.auditId?.message}
+            name="reportId"
+            label={__("Report")}
+            error={formState.errors.reportId?.message}
           />
 
           <div className="space-y-2">

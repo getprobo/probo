@@ -505,13 +505,13 @@ func (s ControlService) DeleteDocumentMapping(
 	return control, document, nil
 }
 
-func (s ControlService) CreateAuditMapping(
+func (s ControlService) CreateReportMapping(
 	ctx context.Context,
 	controlID gid.GID,
-	auditID gid.GID,
-) (*coredata.Control, *coredata.Audit, error) {
+	reportID gid.GID,
+) (*coredata.Control, *coredata.Report, error) {
 	control := &coredata.Control{}
-	audit := &coredata.Audit{}
+	report := &coredata.Report{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -520,19 +520,19 @@ func (s ControlService) CreateAuditMapping(
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
-				return fmt.Errorf("cannot load audit: %w", err)
+			if err := report.LoadByID(ctx, conn, s.svc.scope, reportID); err != nil {
+				return fmt.Errorf("cannot load report: %w", err)
 			}
 
-			controlAudit := &coredata.ControlAudit{
+			controlReport := &coredata.ControlReport{
 				ControlID:      controlID,
-				AuditID:        auditID,
+				ReportID:       reportID,
 				OrganizationID: control.OrganizationID,
 				CreatedAt:      time.Now(),
 			}
 
-			if err := controlAudit.Upsert(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot create control audit mapping: %w", err)
+			if err := controlReport.Upsert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot create control report mapping: %w", err)
 			}
 
 			return nil
@@ -543,16 +543,16 @@ func (s ControlService) CreateAuditMapping(
 		return nil, nil, err
 	}
 
-	return control, audit, nil
+	return control, report, nil
 }
 
-func (s ControlService) DeleteAuditMapping(
+func (s ControlService) DeleteReportMapping(
 	ctx context.Context,
 	controlID gid.GID,
-	auditID gid.GID,
-) (*coredata.Control, *coredata.Audit, error) {
+	reportID gid.GID,
+) (*coredata.Control, *coredata.Report, error) {
 	control := &coredata.Control{}
-	audit := &coredata.Audit{}
+	report := &coredata.Report{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -561,13 +561,13 @@ func (s ControlService) DeleteAuditMapping(
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
-				return fmt.Errorf("cannot load audit: %w", err)
+			if err := report.LoadByID(ctx, conn, s.svc.scope, reportID); err != nil {
+				return fmt.Errorf("cannot load report: %w", err)
 			}
 
-			controlAudit := &coredata.ControlAudit{}
-			if err := controlAudit.Delete(ctx, conn, s.svc.scope, control.ID, audit.ID); err != nil {
-				return fmt.Errorf("cannot delete control audit mapping: %w", err)
+			controlReport := &coredata.ControlReport{}
+			if err := controlReport.Delete(ctx, conn, s.svc.scope, control.ID, report.ID); err != nil {
+				return fmt.Errorf("cannot delete control report mapping: %w", err)
 			}
 
 			return nil
@@ -575,10 +575,10 @@ func (s ControlService) DeleteAuditMapping(
 	)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot delete control audit mapping: %w", err)
+		return nil, nil, fmt.Errorf("cannot delete control report mapping: %w", err)
 	}
 
-	return control, audit, nil
+	return control, report, nil
 }
 
 func (s ControlService) CreateObligationMapping(
@@ -656,22 +656,22 @@ func (s ControlService) DeleteObligationMapping(
 	return control, obligation, nil
 }
 
-func (s ControlService) ListForAuditID(
+func (s ControlService) ListForReportID(
 	ctx context.Context,
-	auditID gid.GID,
+	reportID gid.GID,
 	cursor *page.Cursor[coredata.ControlOrderField],
 	filter *coredata.ControlFilter,
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
-	audit := &coredata.Audit{}
+	report := &coredata.Report{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
-				return fmt.Errorf("cannot load audit: %w", err)
+			if err := report.LoadByID(ctx, conn, s.svc.scope, reportID); err != nil {
+				return fmt.Errorf("cannot load report: %w", err)
 			}
-			if err := controls.LoadByAuditID(ctx, conn, s.svc.scope, auditID, cursor, filter); err != nil {
+			if err := controls.LoadByReportID(ctx, conn, s.svc.scope, reportID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load controls: %w", err)
 			}
 

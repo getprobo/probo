@@ -444,7 +444,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 	})
 }
 
-func TestControlAuditMapping_CreateDelete(t *testing.T) {
+func TestControlReportMapping_CreateDelete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -471,7 +471,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 	`, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"name":           "Framework for ControlAudit Mapping",
+			"name":           "Framework for ControlReport Mapping",
 		},
 	}, &createFrameworkResult)
 	require.NoError(t, err)
@@ -499,7 +499,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 	`, map[string]any{
 		"input": map[string]any{
 			"frameworkId":  frameworkID,
-			"name":         "Control for Audit Mapping",
+			"name":         "Control for Report Mapping",
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
 			"bestPractice": true,
@@ -508,20 +508,20 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 	require.NoError(t, err)
 	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
 
-	// Create an audit
-	var createAuditResult struct {
-		CreateAudit struct {
-			AuditEdge struct {
+	// Create a report
+	var createReportResult struct {
+		CreateReport struct {
+			ReportEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"auditEdge"`
-		} `json:"createAudit"`
+			} `json:"reportEdge"`
+		} `json:"createReport"`
 	}
 	err = owner.Execute(`
-		mutation($input: CreateAuditInput!) {
-			createAudit(input: $input) {
-				auditEdge {
+		mutation($input: CreateReportInput!) {
+			createReport(input: $input) {
+				reportEdge {
 					node {
 						id
 					}
@@ -532,22 +532,22 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"frameworkId":    frameworkID,
-			"name":           "Audit for Control Mapping",
+			"name":           "Report for Control Mapping",
 		},
-	}, &createAuditResult)
+	}, &createReportResult)
 	require.NoError(t, err)
-	auditID := createAuditResult.CreateAudit.AuditEdge.Node.ID
+	reportID := createReportResult.CreateReport.ReportEdge.Node.ID
 
 	t.Run("create mapping", func(t *testing.T) {
 		_, err := owner.Do(`
-			mutation($input: CreateControlAuditMappingInput!) {
-				createControlAuditMapping(input: $input) {
+			mutation($input: CreateControlReportMappingInput!) {
+				createControlReportMapping(input: $input) {
 					controlEdge {
 						node {
 							id
 						}
 					}
-					auditEdge {
+					reportEdge {
 						node {
 							id
 						}
@@ -557,7 +557,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 		`, map[string]any{
 			"input": map[string]any{
 				"controlId": controlID,
-				"auditId":   auditID,
+				"reportId":  reportID,
 			},
 		})
 		require.NoError(t, err)
@@ -565,16 +565,16 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 
 	t.Run("delete mapping", func(t *testing.T) {
 		_, err := owner.Do(`
-			mutation($input: DeleteControlAuditMappingInput!) {
-				deleteControlAuditMapping(input: $input) {
+			mutation($input: DeleteControlReportMappingInput!) {
+				deleteControlReportMapping(input: $input) {
 					deletedControlId
-					deletedAuditId
+					deletedReportId
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
 				"controlId": controlID,
-				"auditId":   auditID,
+				"reportId":  reportID,
 			},
 		})
 		require.NoError(t, err)

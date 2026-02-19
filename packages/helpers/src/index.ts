@@ -42,10 +42,10 @@ export {
   validateSnapshotConsistency,
 } from "./snapshots";
 export {
-  getAuditStateLabel,
-  getAuditStateVariant,
-  auditStates,
-} from "./audits";
+  getReportStateLabel,
+  getReportStateVariant,
+  reportStates,
+} from "./reports";
 export {
   getStatusVariant,
   getStatusLabel,

@@ -81,27 +81,28 @@ type Framework implements Node {
   darkLogoURL: String @goField(forceResolver: true)
 }
 
-type Report implements Node {
+type ReportFile implements Node {
   id: ID!
   filename: String!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
-type Audit implements Node {
+type Report implements Node {
   id: ID!
   framework: Framework! @goField(forceResolver: true)
-  report: Report @goField(forceResolver: true)
+  frameworkType: String
+  file: ReportFile @goField(forceResolver: true)
 }
 
-type AuditConnection {
-  edges: [AuditEdge!]!
+type ReportConnection {
+  edges: [ReportEdge!]!
   pageInfo: PageInfo!
 }
 
-type AuditEdge {
+type ReportEdge {
   cursor: CursorKey!
-  node: Audit!
+  node: Report!
 }
 
 enum CountryCode
@@ -513,12 +514,12 @@ type TrustCenter implements Node {
     before: CursorKey
   ): DocumentConnection! @goField(forceResolver: true)
 
-  audits(
+  reports(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): AuditConnection! @goField(forceResolver: true)
+  ): ReportConnection! @goField(forceResolver: true)
 
   vendors(
     first: Int

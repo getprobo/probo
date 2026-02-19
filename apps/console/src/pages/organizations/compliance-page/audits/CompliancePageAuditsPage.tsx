@@ -24,9 +24,9 @@ export function CompliancePageAuditsPage(props: { queryRef: PreloadedQuery<Compl
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-medium">{__("Audits")}</h3>
+          <h3 className="text-base font-medium">{__("Reports")}</h3>
           <p className="text-sm text-txt-tertiary">
-            {__("Manage audit reports and compliance certifications")}
+            {__("Manage reports and compliance certifications")}
           </p>
         </div>
       </div>

@@ -11,8 +11,8 @@ import { useFragment } from "react-relay";
 import { Link, useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 
-import { AuditRow } from "#/components/AuditRow";
 import { DocumentRow } from "#/components/DocumentRow";
+import { ReportRow } from "#/components/ReportRow";
 import { RowHeader } from "#/components/RowHeader";
 import { Rows } from "#/components/Rows";
 import { TrustCenterFileRow } from "#/components/TrustCenterFileRow";
@@ -79,7 +79,7 @@ export function OverviewPage() {
         references={fragment.references.edges.map(edge => edge.node)}
       />
       <Documents
-        audits={trustCenter.audits.edges}
+        reports={trustCenter.reports.edges}
         documents={fragment.documents.edges}
         files={fragment.trustCenterFiles.edges}
         url={getTrustCenterUrl("documents")}
@@ -96,14 +96,14 @@ export function OverviewPage() {
 function Documents({
   documents,
   files,
-  audits,
+  reports,
   url,
 }: {
   documents: OverviewPageFragment$data["documents"]["edges"];
   files: OverviewPageFragment$data["trustCenterFiles"]["edges"];
-  audits: NonNullable<
+  reports: NonNullable<
     TrustGraphCurrentQuery$data["currentTrustCenter"]
-  >["audits"]["edges"];
+  >["reports"]["edges"];
   url: string;
 }) {
   const { __ } = useTranslate();
@@ -115,8 +115,8 @@ function Documents({
     files.map(edge => edge.node),
     node => node.category,
   );
-  const hasAudits = audits.length > 0;
-  const hasDocuments = hasAudits || documents.length > 0 || files.length > 0;
+  const hasReports = reports.length > 0;
+  const hasDocuments = hasReports || documents.length > 0 || files.length > 0;
 
   if (!hasDocuments) {
     return null;
@@ -129,11 +129,11 @@ function Documents({
         {__("Security and compliance documentation:")}
       </p>
       <Rows className="mb-8">
-        {audits.length > 0 && (
+        {reports.length > 0 && (
           <>
             <RowHeader>{__("Compliance")}</RowHeader>
-            {audits.map(audit => (
-              <AuditRow key={audit.node.id} audit={audit.node} />
+            {reports.map(report => (
+              <ReportRow key={report.node.id} report={report.node} />
             ))}
           </>
         )}

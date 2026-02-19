@@ -78,31 +78,6 @@ type AssetFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
-type Audit struct {
-	ID                    gid.GID                        `json:"id"`
-	Name                  *string                        `json:"name,omitempty"`
-	Organization          *Organization                  `json:"organization"`
-	Framework             *Framework                     `json:"framework"`
-	ValidFrom             *time.Time                     `json:"validFrom,omitempty"`
-	ValidUntil            *time.Time                     `json:"validUntil,omitempty"`
-	Report                *Report                        `json:"report,omitempty"`
-	ReportURL             *string                        `json:"reportUrl,omitempty"`
-	State                 coredata.AuditState            `json:"state"`
-	Controls              *ControlConnection             `json:"controls"`
-	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
-	CreatedAt             time.Time                      `json:"createdAt"`
-	UpdatedAt             time.Time                      `json:"updatedAt"`
-	Permission            bool                           `json:"permission"`
-}
-
-func (Audit) IsNode()             {}
-func (this Audit) GetID() gid.GID { return this.ID }
-
-type AuditEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *Audit         `json:"node"`
-}
-
 type BulkDeleteDocumentsInput struct {
 	DocumentIds []gid.GID `json:"documentIds"`
 }
@@ -191,7 +166,7 @@ type Control struct {
 	Framework      *Framework            `json:"framework"`
 	Measures       *MeasureConnection    `json:"measures"`
 	Documents      *DocumentConnection   `json:"documents"`
-	Audits         *AuditConnection      `json:"audits"`
+	Reports        *ReportConnection     `json:"reports"`
 	Obligations    *ObligationConnection `json:"obligations"`
 	Snapshots      *SnapshotConnection   `json:"snapshots"`
 	CreatedAt      time.Time             `json:"createdAt"`
@@ -236,20 +211,6 @@ type CreateAssetPayload struct {
 	AssetEdge *AssetEdge `json:"assetEdge"`
 }
 
-type CreateAuditInput struct {
-	OrganizationID        gid.GID                         `json:"organizationId"`
-	FrameworkID           gid.GID                         `json:"frameworkId"`
-	Name                  *string                         `json:"name,omitempty"`
-	ValidFrom             *time.Time                      `json:"validFrom,omitempty"`
-	ValidUntil            *time.Time                      `json:"validUntil,omitempty"`
-	State                 *coredata.AuditState            `json:"state,omitempty"`
-	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
-}
-
-type CreateAuditPayload struct {
-	AuditEdge *AuditEdge `json:"auditEdge"`
-}
-
 type CreateContinualImprovementInput struct {
 	OrganizationID gid.GID                               `json:"organizationId"`
 	ReferenceID    string                                `json:"referenceId"`
@@ -263,16 +224,6 @@ type CreateContinualImprovementInput struct {
 
 type CreateContinualImprovementPayload struct {
 	ContinualImprovementEdge *ContinualImprovementEdge `json:"continualImprovementEdge"`
-}
-
-type CreateControlAuditMappingInput struct {
-	ControlID gid.GID `json:"controlId"`
-	AuditID   gid.GID `json:"auditId"`
-}
-
-type CreateControlAuditMappingPayload struct {
-	ControlEdge *ControlEdge `json:"controlEdge"`
-	AuditEdge   *AuditEdge   `json:"auditEdge"`
 }
 
 type CreateControlDocumentMappingInput struct {
@@ -315,6 +266,16 @@ type CreateControlObligationMappingPayload struct {
 
 type CreateControlPayload struct {
 	ControlEdge *ControlEdge `json:"controlEdge"`
+}
+
+type CreateControlReportMappingInput struct {
+	ControlID gid.GID `json:"controlId"`
+	ReportID  gid.GID `json:"reportId"`
+}
+
+type CreateControlReportMappingPayload struct {
+	ControlEdge *ControlEdge `json:"controlEdge"`
+	ReportEdge  *ReportEdge  `json:"reportEdge"`
 }
 
 type CreateControlSnapshotMappingInput struct {
@@ -421,7 +382,7 @@ type CreateNonconformityInput struct {
 	OrganizationID     gid.GID                      `json:"organizationId"`
 	ReferenceID        string                       `json:"referenceId"`
 	Description        *string                      `json:"description,omitempty"`
-	AuditID            *gid.GID                     `json:"auditId,omitempty"`
+	ReportID           *gid.GID                     `json:"reportId,omitempty"`
 	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
 	RootCause          string                       `json:"rootCause"`
 	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
@@ -479,6 +440,21 @@ type CreateProcessingActivityInput struct {
 
 type CreateProcessingActivityPayload struct {
 	ProcessingActivityEdge *ProcessingActivityEdge `json:"processingActivityEdge"`
+}
+
+type CreateReportInput struct {
+	OrganizationID        gid.GID                         `json:"organizationId"`
+	FrameworkID           gid.GID                         `json:"frameworkId"`
+	Name                  *string                         `json:"name,omitempty"`
+	FrameworkType         *string                         `json:"frameworkType,omitempty"`
+	ValidFrom             *time.Time                      `json:"validFrom,omitempty"`
+	ValidUntil            *time.Time                      `json:"validUntil,omitempty"`
+	State                 *coredata.ReportState           `json:"state,omitempty"`
+	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
+}
+
+type CreateReportPayload struct {
+	ReportEdge *ReportEdge `json:"reportEdge"`
 }
 
 type CreateRightsRequestInput struct {
@@ -773,38 +749,12 @@ type DeleteAssetPayload struct {
 	DeletedAssetID gid.GID `json:"deletedAssetId"`
 }
 
-type DeleteAuditInput struct {
-	AuditID gid.GID `json:"auditId"`
-}
-
-type DeleteAuditPayload struct {
-	DeletedAuditID gid.GID `json:"deletedAuditId"`
-}
-
-type DeleteAuditReportInput struct {
-	AuditID gid.GID `json:"auditId"`
-}
-
-type DeleteAuditReportPayload struct {
-	Audit *Audit `json:"audit"`
-}
-
 type DeleteContinualImprovementInput struct {
 	ContinualImprovementID gid.GID `json:"continualImprovementId"`
 }
 
 type DeleteContinualImprovementPayload struct {
 	DeletedContinualImprovementID gid.GID `json:"deletedContinualImprovementId"`
-}
-
-type DeleteControlAuditMappingInput struct {
-	ControlID gid.GID `json:"controlId"`
-	AuditID   gid.GID `json:"auditId"`
-}
-
-type DeleteControlAuditMappingPayload struct {
-	DeletedControlID gid.GID `json:"deletedControlId"`
-	DeletedAuditID   gid.GID `json:"deletedAuditId"`
 }
 
 type DeleteControlDocumentMappingInput struct {
@@ -843,6 +793,16 @@ type DeleteControlObligationMappingPayload struct {
 
 type DeleteControlPayload struct {
 	DeletedControlID gid.GID `json:"deletedControlId"`
+}
+
+type DeleteControlReportMappingInput struct {
+	ControlID gid.GID `json:"controlId"`
+	ReportID  gid.GID `json:"reportId"`
+}
+
+type DeleteControlReportMappingPayload struct {
+	DeletedControlID gid.GID `json:"deletedControlId"`
+	DeletedReportID  gid.GID `json:"deletedReportId"`
 }
 
 type DeleteControlSnapshotMappingInput struct {
@@ -949,6 +909,22 @@ type DeleteProcessingActivityInput struct {
 
 type DeleteProcessingActivityPayload struct {
 	DeletedProcessingActivityID gid.GID `json:"deletedProcessingActivityId"`
+}
+
+type DeleteReportFileInput struct {
+	ReportID gid.GID `json:"reportId"`
+}
+
+type DeleteReportFilePayload struct {
+	Report *Report `json:"report"`
+}
+
+type DeleteReportInput struct {
+	ReportID gid.GID `json:"reportId"`
+}
+
+type DeleteReportPayload struct {
+	DeletedReportID gid.GID `json:"deletedReportId"`
 }
 
 type DeleteRightsRequestInput struct {
@@ -1440,7 +1416,7 @@ type Nonconformity struct {
 	Organization       *Organization                `json:"organization"`
 	ReferenceID        string                       `json:"referenceId"`
 	Description        *string                      `json:"description,omitempty"`
-	Audit              *Audit                       `json:"audit,omitempty"`
+	Report             *Report                      `json:"report,omitempty"`
 	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
 	RootCause          string                       `json:"rootCause"`
 	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
@@ -1520,7 +1496,7 @@ type Organization struct {
 	Tasks                           *TaskConnection                           `json:"tasks"`
 	Assets                          *AssetConnection                          `json:"assets"`
 	Data                            *DatumConnection                          `json:"data"`
-	Audits                          *AuditConnection                          `json:"audits"`
+	Reports                         *ReportConnection                         `json:"reports"`
 	Nonconformities                 *NonconformityConnection                  `json:"nonconformities"`
 	Obligations                     *ObligationConnection                     `json:"obligations"`
 	ContinualImprovements           *ContinualImprovementConnection           `json:"continualImprovements"`
@@ -1637,20 +1613,30 @@ type Query struct {
 }
 
 type Report struct {
-	ID          gid.GID   `json:"id"`
-	ObjectKey   string    `json:"objectKey"`
-	MimeType    string    `json:"mimeType"`
-	Filename    string    `json:"filename"`
-	Size        int       `json:"size"`
-	DownloadURL *string   `json:"downloadUrl,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	Audit       *Audit    `json:"audit,omitempty"`
-	Permission  bool      `json:"permission"`
+	ID                    gid.GID                        `json:"id"`
+	Name                  *string                        `json:"name,omitempty"`
+	Organization          *Organization                  `json:"organization"`
+	Framework             *Framework                     `json:"framework"`
+	FrameworkType         *string                        `json:"frameworkType,omitempty"`
+	ValidFrom             *time.Time                     `json:"validFrom,omitempty"`
+	ValidUntil            *time.Time                     `json:"validUntil,omitempty"`
+	File                  *File                          `json:"file,omitempty"`
+	ReportURL             *string                        `json:"reportUrl,omitempty"`
+	State                 coredata.ReportState           `json:"state"`
+	Controls              *ControlConnection             `json:"controls"`
+	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
+	CreatedAt             time.Time                      `json:"createdAt"`
+	UpdatedAt             time.Time                      `json:"updatedAt"`
+	Permission            bool                           `json:"permission"`
 }
 
 func (Report) IsNode()             {}
 func (this Report) GetID() gid.GID { return this.ID }
+
+type ReportEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Report        `json:"node"`
+}
 
 type RequestSignatureInput struct {
 	DocumentVersionID gid.GID `json:"documentVersionId"`
@@ -1981,19 +1967,6 @@ type UpdateAssetPayload struct {
 	Asset *Asset `json:"asset"`
 }
 
-type UpdateAuditInput struct {
-	ID                    gid.GID                         `json:"id"`
-	Name                  graphql.Omittable[*string]      `json:"name,omitempty"`
-	ValidFrom             *time.Time                      `json:"validFrom,omitempty"`
-	ValidUntil            *time.Time                      `json:"validUntil,omitempty"`
-	State                 *coredata.AuditState            `json:"state,omitempty"`
-	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
-}
-
-type UpdateAuditPayload struct {
-	Audit *Audit `json:"audit"`
-}
-
 type UpdateContinualImprovementInput struct {
 	ID          gid.GID                                `json:"id"`
 	ReferenceID *string                                `json:"referenceId,omitempty"`
@@ -2111,7 +2084,7 @@ type UpdateNonconformityInput struct {
 	RootCause          *string                       `json:"rootCause,omitempty"`
 	CorrectiveAction   graphql.Omittable[*string]    `json:"correctiveAction,omitempty"`
 	OwnerID            *gid.GID                      `json:"ownerId,omitempty"`
-	AuditID            graphql.Omittable[*gid.GID]   `json:"auditId,omitempty"`
+	ReportID           graphql.Omittable[*gid.GID]   `json:"reportId,omitempty"`
 	DueDate            graphql.Omittable[*time.Time] `json:"dueDate,omitempty"`
 	Status             *coredata.NonconformityStatus `json:"status,omitempty"`
 	EffectivenessCheck graphql.Omittable[*string]    `json:"effectivenessCheck,omitempty"`
@@ -2174,6 +2147,20 @@ type UpdateProcessingActivityInput struct {
 
 type UpdateProcessingActivityPayload struct {
 	ProcessingActivity *ProcessingActivity `json:"processingActivity"`
+}
+
+type UpdateReportInput struct {
+	ID                    gid.GID                         `json:"id"`
+	Name                  graphql.Omittable[*string]      `json:"name,omitempty"`
+	FrameworkType         graphql.Omittable[*string]      `json:"frameworkType,omitempty"`
+	ValidFrom             *time.Time                      `json:"validFrom,omitempty"`
+	ValidUntil            *time.Time                      `json:"validUntil,omitempty"`
+	State                 *coredata.ReportState           `json:"state,omitempty"`
+	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
+}
+
+type UpdateReportPayload struct {
+	Report *Report `json:"report"`
 }
 
 type UpdateRightsRequestInput struct {
@@ -2385,15 +2372,6 @@ type UpdateWebhookSubscriptionPayload struct {
 	WebhookSubscription *WebhookSubscription `json:"webhookSubscription"`
 }
 
-type UploadAuditReportInput struct {
-	AuditID gid.GID        `json:"auditId"`
-	File    graphql.Upload `json:"file"`
-}
-
-type UploadAuditReportPayload struct {
-	Audit *Audit `json:"audit"`
-}
-
 type UploadMeasureEvidenceInput struct {
 	MeasureID gid.GID        `json:"measureId"`
 	File      graphql.Upload `json:"file"`
@@ -2401,6 +2379,15 @@ type UploadMeasureEvidenceInput struct {
 
 type UploadMeasureEvidencePayload struct {
 	EvidenceEdge *EvidenceEdge `json:"evidenceEdge"`
+}
+
+type UploadReportFileInput struct {
+	ReportID gid.GID        `json:"reportId"`
+	File     graphql.Upload `json:"file"`
+}
+
+type UploadReportFilePayload struct {
+	Report *Report `json:"report"`
 }
 
 type UploadTrustCenterNDAInput struct {

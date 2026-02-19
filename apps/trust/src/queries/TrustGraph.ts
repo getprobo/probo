@@ -31,11 +31,11 @@ export const currentTrustGraphQuery = graphql`
       vendorInfo: vendors(first: 0) {
         totalCount
       }
-      audits(first: 50) {
+      reports(first: 50) {
         edges {
           node {
             id
-            ...AuditRowFragment
+            ...ReportRowFragment
           }
         }
       }

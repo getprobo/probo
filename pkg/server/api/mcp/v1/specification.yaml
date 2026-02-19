@@ -1980,13 +1980,13 @@ components:
             - string
             - "null"
           description: Description
-        audit_id:
+        report_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
-              description: Audit ID
+              description: Report ID
             - type: "null"
-              description: No audit
-          description: Audit ID
+              description: No report
+          description: Report ID
         date_identified:
           type:
             - string
@@ -2099,13 +2099,13 @@ components:
         description:
           type: string
           description: Description
-        audit_id:
+        report_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
-              description: Audit ID
+              description: Report ID
             - type: "null"
-              description: No audit
-          description: Audit ID
+              description: No report
+          description: Report ID
         date_identified:
           type: string
           format: date-time
@@ -2175,12 +2175,12 @@ components:
               $ref: "#/components/schemas/GID"
             - type: "null"
           description: Owner ID
-        audit_id:
+        report_id:
           anyOf:
             - type: string
               $ref: "#/components/schemas/GID"
             - type: "null"
-          description: Audit ID
+          description: Report ID
           go.probo.inc/mcpgen/omittable: true
         due_date:
           type: ["string", "null"]
@@ -3559,7 +3559,7 @@ components:
         continual_improvement:
           $ref: "#/components/schemas/ContinualImprovement"
 
-    AuditState:
+    ReportState:
       type: string
       enum:
         - NOT_STARTED
@@ -3567,7 +3567,7 @@ components:
         - COMPLETED
         - REJECTED
         - OUTDATED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditState
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ReportState
 
     TrustCenterVisibility:
       type: string
@@ -3577,29 +3577,29 @@ components:
         - PUBLIC
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TrustCenterVisibility
 
-    AuditOrderField:
+    ReportOrderField:
       type: string
       enum:
         - CREATED_AT
         - VALID_FROM
         - VALID_UNTIL
         - STATE
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ReportOrderField
 
-    AuditOrderBy:
+    ReportOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/AuditOrderField"
-          description: Audit order field
+          $ref: "#/components/schemas/ReportOrderField"
+          description: Report order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Audit order direction
+          description: Report order direction
 
-    Audit:
+    Report:
       type: object
       required:
         - id
@@ -3612,7 +3612,7 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Audit ID
+          description: Report ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
@@ -3623,7 +3623,12 @@ components:
           type:
             - string
             - "null"
-          description: Audit name
+          description: Report name
+        framework_type:
+          type:
+            - string
+            - "null"
+          description: Framework type
         valid_from:
           type:
             - string
@@ -3637,8 +3642,8 @@ components:
           format: date-time
           description: Valid until date
         state:
-          $ref: "#/components/schemas/AuditState"
-          description: Audit state
+          $ref: "#/components/schemas/ReportState"
+          description: Report state
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
           description: Trust center visibility
@@ -3651,7 +3656,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListAuditsInput:
+    ListReportsInput:
       type: object
       required:
         - organization_id
@@ -3660,8 +3665,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/AuditOrderBy"
-          description: Audit order by
+          $ref: "#/components/schemas/ReportOrderBy"
+          description: Report order by
         size:
           type: integer
           description: Page size
@@ -3669,37 +3674,37 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListAuditsOutput:
+    ListReportsOutput:
       type: object
       required:
-        - audits
+        - reports
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        audits:
+        reports:
           type: array
           items:
-            $ref: "#/components/schemas/Audit"
+            $ref: "#/components/schemas/Report"
 
-    GetAuditInput:
+    GetReportInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Audit ID
+          description: Report ID
 
-    GetAuditOutput:
+    GetReportOutput:
       type: object
       required:
-        - audit
+        - report
       properties:
-        audit:
-          $ref: "#/components/schemas/Audit"
+        report:
+          $ref: "#/components/schemas/Report"
 
-    AddAuditInput:
+    AddReportInput:
       type: object
       required:
         - organization_id
@@ -3713,7 +3718,10 @@ components:
           description: Framework ID
         name:
           type: string
-          description: Audit name
+          description: Report name
+        framework_type:
+          type: string
+          description: Framework type
         valid_from:
           type: string
           format: date-time
@@ -3723,28 +3731,32 @@ components:
           format: date-time
           description: Valid until date
         state:
-          $ref: "#/components/schemas/AuditState"
-          description: Audit state
+          $ref: "#/components/schemas/ReportState"
+          description: Report state
 
-    AddAuditOutput:
+    AddReportOutput:
       type: object
       required:
-        - audit
+        - report
       properties:
-        audit:
-          $ref: "#/components/schemas/Audit"
+        report:
+          $ref: "#/components/schemas/Report"
 
-    UpdateAuditInput:
+    UpdateReportInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Audit ID
+          description: Report ID
         name:
           type: ["string", "null"]
-          description: Audit name
+          description: Report name
+          go.probo.inc/mcpgen/omittable: true
+        framework_type:
+          type: ["string", "null"]
+          description: Framework type
           go.probo.inc/mcpgen/omittable: true
         valid_from:
           type:
@@ -3760,11 +3772,11 @@ components:
           description: Valid until date
         state:
           anyOf:
-            - $ref: "#/components/schemas/AuditState"
-              description: Audit state
+            - $ref: "#/components/schemas/ReportState"
+              description: Report state
             - type: "null"
               description: No state
-          description: Audit state
+          description: Report state
         trust_center_visibility:
           anyOf:
             - $ref: "#/components/schemas/TrustCenterVisibility"
@@ -3773,13 +3785,13 @@ components:
               description: No trust center visibility
           description: Trust center visibility
 
-    UpdateAuditOutput:
+    UpdateReportOutput:
       type: object
       required:
-        - audit
+        - report
       properties:
-        audit:
-          $ref: "#/components/schemas/Audit"
+        report:
+          $ref: "#/components/schemas/Report"
 
     ControlOrderField:
       type: string
@@ -4021,36 +4033,36 @@ components:
     UnlinkControlDocumentOutput:
       type: object
 
-    LinkControlAuditInput:
+    LinkControlReportInput:
       type: object
       required:
         - control_id
-        - audit_id
+        - report_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        audit_id:
+        report_id:
           $ref: "#/components/schemas/GID"
-          description: Audit ID
+          description: Report ID
 
-    LinkControlAuditOutput:
+    LinkControlReportOutput:
       type: object
 
-    UnlinkControlAuditInput:
+    UnlinkControlReportInput:
       type: object
       required:
         - control_id
-        - audit_id
+        - report_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        audit_id:
+        report_id:
           $ref: "#/components/schemas/GID"
-          description: Audit ID
+          description: Report ID
 
-    UnlinkControlAuditOutput:
+    UnlinkControlReportOutput:
       type: object
 
     LinkControlSnapshotInput:
@@ -6279,40 +6291,40 @@ tools:
       $ref: "#/components/schemas/UpdateContinualImprovementInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateContinualImprovementOutput"
-  - name: listAudits
-    description: List all audits for the organization
+  - name: listReports
+    description: List all reports for the organization
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListAuditsInput"
+      $ref: "#/components/schemas/ListReportsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListAuditsOutput"
-  - name: getAudit
-    description: Get an audit by ID
+      $ref: "#/components/schemas/ListReportsOutput"
+  - name: getReport
+    description: Get a report by ID
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/GetAuditInput"
+      $ref: "#/components/schemas/GetReportInput"
     outputSchema:
-      $ref: "#/components/schemas/GetAuditOutput"
-  - name: addAudit
-    description: Add a new audit to the organization
+      $ref: "#/components/schemas/GetReportOutput"
+  - name: addReport
+    description: Add a new report to the organization
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddAuditInput"
+      $ref: "#/components/schemas/AddReportInput"
     outputSchema:
-      $ref: "#/components/schemas/AddAuditOutput"
-  - name: updateAudit
-    description: Update an existing audit
+      $ref: "#/components/schemas/AddReportOutput"
+  - name: updateReport
+    description: Update an existing report
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateAuditInput"
+      $ref: "#/components/schemas/UpdateReportInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateAuditOutput"
+      $ref: "#/components/schemas/UpdateReportOutput"
   - name: listControls
     description: List all controls for the organization or framework
     hints:
@@ -6379,22 +6391,22 @@ tools:
       $ref: "#/components/schemas/UnlinkControlDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkControlDocumentOutput"
-  - name: linkControlAudit
-    description: Link an audit to a control
+  - name: linkControlReport
+    description: Link a report to a control
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/LinkControlAuditInput"
+      $ref: "#/components/schemas/LinkControlReportInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkControlAuditOutput"
-  - name: unlinkControlAudit
-    description: Unlink an audit from a control
+      $ref: "#/components/schemas/LinkControlReportOutput"
+  - name: unlinkControlReport
+    description: Unlink a report from a control
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UnlinkControlAuditInput"
+      $ref: "#/components/schemas/UnlinkControlReportInput"
     outputSchema:
-      $ref: "#/components/schemas/UnlinkControlAuditOutput"
+      $ref: "#/components/schemas/UnlinkControlReportOutput"
   - name: linkControlSnapshot
     description: Link a snapshot to a control
     hints:

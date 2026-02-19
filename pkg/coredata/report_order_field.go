@@ -14,12 +14,17 @@
 
 package coredata
 
-type (
-	ReportOrderField string
+import (
+	"fmt"
 )
 
+type ReportOrderField string
+
 const (
-	ReportOrderFieldID ReportOrderField = "ID"
+	ReportOrderFieldCreatedAt  ReportOrderField = "CREATED_AT"
+	ReportOrderFieldValidFrom  ReportOrderField = "VALID_FROM"
+	ReportOrderFieldValidUntil ReportOrderField = "VALID_UNTIL"
+	ReportOrderFieldState      ReportOrderField = "STATE"
 )
 
 func (p ReportOrderField) Column() string {
@@ -35,6 +40,14 @@ func (p ReportOrderField) MarshalText() ([]byte, error) {
 }
 
 func (p *ReportOrderField) UnmarshalText(text []byte) error {
-	*p = ReportOrderField(text)
-	return nil
+	val := string(text)
+	switch val {
+	case string(ReportOrderFieldCreatedAt),
+		string(ReportOrderFieldValidFrom),
+		string(ReportOrderFieldValidUntil),
+		string(ReportOrderFieldState):
+		*p = ReportOrderField(val)
+		return nil
+	}
+	return fmt.Errorf("invalid ReportOrderField value: %q", val)
 }

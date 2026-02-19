@@ -43,8 +43,8 @@ const (
 	DocumentVersionSignatureEntityType         uint16 = 17
 	AssetEntityType                            uint16 = 18
 	DatumEntityType                            uint16 = 19
-	AuditEntityType                            uint16 = 20
-	ReportEntityType                           uint16 = 21
+	ReportEntityType                           uint16 = 20
+	_                                          uint16 = 21 // was old ReportEntityType for reports table, now consolidated into files
 	TrustCenterEntityType                      uint16 = 22
 	TrustCenterAccessEntityType                uint16 = 23
 	VendorBusinessAssociateAgreementEntityType uint16 = 24
@@ -127,8 +127,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Asset{ID: id}, true
 	case DatumEntityType:
 		return &Datum{ID: id}, true
-	case AuditEntityType:
-		return &Audit{ID: id}, true
 	case ReportEntityType:
 		return &Report{ID: id}, true
 	case TrustCenterEntityType:

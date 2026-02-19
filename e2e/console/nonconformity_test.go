@@ -25,8 +25,8 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// createAuditForNC creates a framework and audit for nonconformity testing
-func createAuditForNC(t *testing.T, owner *testutil.Client, name string) string {
+// createReportForNC creates a framework and report for nonconformity testing
+func createReportForNC(t *testing.T, owner *testutil.Client, name string) string {
 	t.Helper()
 
 	// Create a framework first
@@ -61,11 +61,11 @@ func createAuditForNC(t *testing.T, owner *testutil.Client, name string) string 
 	require.NoError(t, err)
 	frameworkID := createFrameworkResult.CreateFramework.FrameworkEdge.Node.ID
 
-	// Create an audit
-	createAuditQuery := `
-		mutation CreateAudit($input: CreateAuditInput!) {
-			createAudit(input: $input) {
-				auditEdge {
+	// Create a report
+	createReportQuery := `
+		mutation CreateReport($input: CreateReportInput!) {
+			createReport(input: $input) {
+				reportEdge {
 					node {
 						id
 					}
@@ -74,34 +74,34 @@ func createAuditForNC(t *testing.T, owner *testutil.Client, name string) string 
 		}
 	`
 
-	var createAuditResult struct {
-		CreateAudit struct {
-			AuditEdge struct {
+	var createReportResult struct {
+		CreateReport struct {
+			ReportEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"auditEdge"`
-		} `json:"createAudit"`
+			} `json:"reportEdge"`
+		} `json:"createReport"`
 	}
 
-	err = owner.Execute(createAuditQuery, map[string]any{
+	err = owner.Execute(createReportQuery, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"frameworkId":    frameworkID,
 			"name":           name,
 			"state":          "NOT_STARTED",
 		},
-	}, &createAuditResult)
+	}, &createReportResult)
 	require.NoError(t, err)
 
-	return createAuditResult.CreateAudit.AuditEdge.Node.ID
+	return createReportResult.CreateReport.ReportEdge.Node.ID
 }
 
 func TestNonconformity_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	profileID := factory.CreateUser(owner)
-	auditID := createAuditForNC(t, owner, "NC Test Audit")
+	reportID := createReportForNC(t, owner, "NC Test Report")
 
 	query := `
 		mutation CreateNonconformity($input: CreateNonconformityInput!) {
@@ -140,7 +140,7 @@ func TestNonconformity_Create(t *testing.T) {
 			"organizationId":   owner.GetOrganizationID().String(),
 			"referenceId":      fmt.Sprintf("NC-%d", time.Now().UnixNano()),
 			"description":      "Unauthorized access detected",
-			"auditId":          auditID,
+			"reportId":         reportID,
 			"rootCause":        "Insufficient access controls",
 			"correctiveAction": "Implement MFA",
 			"ownerId":          profileID,
@@ -160,7 +160,7 @@ func TestNonconformity_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	profileID := factory.CreateUser(owner)
-	auditID := createAuditForNC(t, owner, "NC Update Test Audit")
+	reportID := createReportForNC(t, owner, "NC Update Test Report")
 
 	// Create a nonconformity to update
 	createQuery := `
@@ -189,7 +189,7 @@ func TestNonconformity_Update(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"referenceId":    fmt.Sprintf("NC-UPDATE-%d", time.Now().UnixNano()),
-			"auditId":        auditID,
+			"reportId":       reportID,
 			"rootCause":      "Original root cause",
 			"ownerId":        profileID,
 			"status":         "OPEN",
@@ -243,7 +243,7 @@ func TestNonconformity_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	profileID := factory.CreateUser(owner)
-	auditID := createAuditForNC(t, owner, "NC Delete Test Audit")
+	reportID := createReportForNC(t, owner, "NC Delete Test Report")
 
 	// Create a nonconformity to delete
 	createQuery := `
@@ -272,7 +272,7 @@ func TestNonconformity_Delete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"referenceId":    fmt.Sprintf("NC-DELETE-%d", time.Now().UnixNano()),
-			"auditId":        auditID,
+			"reportId":       reportID,
 			"rootCause":      "Test root cause",
 			"ownerId":        profileID,
 			"status":         "OPEN",
@@ -308,7 +308,7 @@ func TestNonconformity_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	profileID := factory.CreateUser(owner)
-	auditID := createAuditForNC(t, owner, "NC List Test Audit")
+	reportID := createReportForNC(t, owner, "NC List Test Report")
 
 	// Create multiple nonconformities
 	createQuery := `
@@ -338,7 +338,7 @@ func TestNonconformity_List(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"referenceId":    fmt.Sprintf("NC-LIST-%d-%d", i, time.Now().UnixNano()),
-				"auditId":        auditID,
+				"reportId":       reportID,
 				"rootCause":      fmt.Sprintf("Root cause %d", i),
 				"ownerId":        profileID,
 				"status":         "OPEN",
@@ -392,7 +392,7 @@ func TestNonconformity_StatusValues(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	profileID := factory.CreateUser(owner)
-	auditID := createAuditForNC(t, owner, "NC Status Test Audit")
+	reportID := createReportForNC(t, owner, "NC Status Test Report")
 
 	statuses := []string{"OPEN", "IN_PROGRESS", "CLOSED"}
 
@@ -426,7 +426,7 @@ func TestNonconformity_StatusValues(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
 					"referenceId":    fmt.Sprintf("NC-STATUS-%s-%d", status, time.Now().UnixNano()),
-					"auditId":        auditID,
+					"reportId":       reportID,
 					"rootCause":      "Test root cause",
 					"ownerId":        profileID,
 					"status":         status,

@@ -16,16 +16,73 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
-func NewReport(r *coredata.Report) *Report {
-	return &Report{
-		ID:        r.ID,
-		ObjectKey: r.ObjectKey,
-		MimeType:  r.MimeType,
-		Filename:  r.Filename,
-		Size:      int(r.Size),
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+type (
+	ReportOrderBy OrderBy[coredata.ReportOrderField]
+
+	ReportConnection struct {
+		TotalCount int
+		Edges      []*ReportEdge
+		PageInfo   PageInfo
+
+		Resolver any
+		ParentID gid.GID
 	}
+)
+
+func NewReportConnection(
+	p *page.Page[*coredata.Report, coredata.ReportOrderField],
+	parentType any,
+	parentID gid.GID,
+) *ReportConnection {
+	edges := make([]*ReportEdge, len(p.Data))
+	for i, report := range p.Data {
+		edges[i] = NewReportEdge(report, p.Cursor.OrderBy.Field)
+	}
+
+	return &ReportConnection{
+		Edges:    edges,
+		PageInfo: *NewPageInfo(p),
+
+		Resolver: parentType,
+		ParentID: parentID,
+	}
+}
+
+func NewReportEdge(r *coredata.Report, orderField coredata.ReportOrderField) *ReportEdge {
+	return &ReportEdge{
+		Node:   NewReport(r),
+		Cursor: r.CursorKey(orderField),
+	}
+}
+
+func NewReport(r *coredata.Report) *Report {
+	node := &Report{
+		ID: r.ID,
+		Organization: &Organization{
+			ID: r.OrganizationID,
+		},
+		Framework: &Framework{
+			ID: r.FrameworkID,
+		},
+		FrameworkType:         r.FrameworkType,
+		ValidFrom:             r.ValidFrom,
+		ValidUntil:            r.ValidUntil,
+		State:                 r.State,
+		Name:                  r.Name,
+		TrustCenterVisibility: r.TrustCenterVisibility,
+		CreatedAt:             r.CreatedAt,
+		UpdatedAt:             r.UpdatedAt,
+	}
+
+	if r.FileID != nil {
+		node.File = &File{
+			ID: *r.FileID,
+		}
+	}
+
+	return node
 }

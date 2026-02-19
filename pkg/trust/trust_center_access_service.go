@@ -183,18 +183,18 @@ func (s TrustCenterAccessService) Request(
 
 			reportIDs := req.ReportIDs
 			if req.ReportIDs == nil {
-				var allAudits coredata.Audits
-				auditFilter := coredata.NewAuditTrustCenterFilter()
+			var allReports coredata.Reports
+			reportFilter := coredata.NewReportTrustCenterFilter()
 
-				if err := allAudits.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, auditFilter); err != nil {
-					return fmt.Errorf("cannot list audits: %w", err)
-				}
+			if err := allReports.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, reportFilter); err != nil {
+				return fmt.Errorf("cannot list reports: %w", err)
+			}
 
-				for _, audit := range allAudits {
-					if audit.ReportID != nil {
-						reportIDs = append(reportIDs, *audit.ReportID)
-					}
+			for _, report := range allReports {
+				if report.FileID != nil {
+					reportIDs = append(reportIDs, *report.FileID)
 				}
+			}
 			}
 
 			trustCenterFileIDs := req.TrustCenterFileIDs
@@ -589,13 +589,13 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 			fileNames = append(fileNames, d.Title)
 		}
 	}
-	var reports coredata.Reports
 	if len(reportIDs) > 0 {
-		if err := reports.LoadByIDs(ctx, tx, s.svc.scope, reportIDs); err != nil {
-			return fmt.Errorf("cannot load reports by IDs: %w", err)
+		var reportFiles coredata.Files
+		if err := reportFiles.LoadByIDs(ctx, tx, s.svc.scope, reportIDs); err != nil {
+			return fmt.Errorf("cannot load report files by IDs: %w", err)
 		}
-		for _, r := range reports {
-			fileNames = append(fileNames, r.Filename)
+		for _, f := range reportFiles {
+			fileNames = append(fileNames, f.FileName)
 		}
 	}
 	var files coredata.TrustCenterFiles

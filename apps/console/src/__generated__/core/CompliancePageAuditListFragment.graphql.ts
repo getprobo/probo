@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e625c06ddb883a0e59e945eeda97f519>>
+ * @generated SignedSource<<bd4c4d5ded5e4c1ed8ce6d4fe2fbb15c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,16 +11,16 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageAuditListFragment$data = {
-  readonly audits: {
+  readonly compliancePage: {
+    readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAuditListItem_compliancePageFragment">;
+  };
+  readonly reports: {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAuditListItem_auditFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAuditListItem_reportFragment">;
       };
     }>;
-  };
-  readonly compliancePage: {
-    readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAuditListItem_compliancePageFragment">;
   };
   readonly " $fragmentType": "CompliancePageAuditListFragment";
 };
@@ -64,15 +64,15 @@ const node: ReaderFragment = {
           "value": 100
         }
       ],
-      "concreteType": "AuditConnection",
+      "concreteType": "ReportConnection",
       "kind": "LinkedField",
-      "name": "audits",
+      "name": "reports",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "concreteType": "AuditEdge",
+          "concreteType": "ReportEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -80,7 +80,7 @@ const node: ReaderFragment = {
             {
               "alias": null,
               "args": null,
-              "concreteType": "Audit",
+              "concreteType": "Report",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -95,7 +95,7 @@ const node: ReaderFragment = {
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "CompliancePageAuditListItem_auditFragment"
+                  "name": "CompliancePageAuditListItem_reportFragment"
                 }
               ],
               "storageKey": null
@@ -104,13 +104,13 @@ const node: ReaderFragment = {
           "storageKey": null
         }
       ],
-      "storageKey": "audits(first:100)"
+      "storageKey": "reports(first:100)"
     }
   ],
   "type": "Organization",
   "abstractKey": null
 };
 
-(node as any).hash = "b66fddcbd57e4fd5af9f2a91663cb65b";
+(node as any).hash = "68ab2f8338ef800af42336443cd89c80";
 
 export default node;

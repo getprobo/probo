@@ -52,12 +52,13 @@ const compliancePageAccessEditDialogQuery = graphql`
               }
               report {
                 id
-                filename
-                audit {
-                  id
-                  framework {
-                    name
-                  }
+                name
+                file {
+                  fileName
+                }
+                frameworkType
+                framework {
+                  name
                 }
               }
               trustCenterFile {

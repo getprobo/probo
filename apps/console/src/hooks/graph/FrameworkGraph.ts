@@ -115,11 +115,11 @@ export const frameworkControlNodeQuery = graphql`
         canDeleteDocumentMapping: permission(
           action: "core:control:delete-document-mapping"
         )
-        canCreateAuditMapping: permission(
-          action: "core:control:create-audit-mapping"
+        canCreateReportMapping: permission(
+          action: "core:control:create-report-mapping"
         )
-        canDeleteAuditMapping: permission(
-          action: "core:control:delete-audit-mapping"
+        canDeleteReportMapping: permission(
+          action: "core:control:delete-report-mapping"
         )
         canCreateSnapshotMapping: permission(
           action: "core:control:create-snapshot-mapping"
@@ -154,12 +154,12 @@ export const frameworkControlNodeQuery = graphql`
             }
           }
         }
-        audits(first: 100) @connection(key: "FrameworkGraphControl_audits") {
+        reports(first: 100) @connection(key: "FrameworkGraphControl_reports") {
           __id
           edges {
             node {
               id
-              ...LinkedAuditsCardFragment
+              ...LinkedReportsCardFragment
             }
           }
         }

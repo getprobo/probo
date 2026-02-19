@@ -3,17 +3,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Audit ID',
-		name: 'auditId',
+		displayName: 'Report ID',
+		name: 'reportId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['audit'],
+				resource: ['report'],
 				operation: ['deleteReport'],
 			},
 		},
 		default: '',
-		description: 'The ID of the audit whose report to delete',
+		description: 'The ID of the audit report file to delete',
 		required: true,
 	},
 ];
@@ -22,12 +22,12 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const reportId = this.getNodeParameter('reportId', itemIndex) as string;
 
 	const query = `
 		mutation DeleteAuditReport($input: DeleteAuditReportInput!) {
 			deleteAuditReport(input: $input) {
-				audit {
+				report {
 					id
 					name
 					state
@@ -42,7 +42,7 @@ export async function execute(
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { input: { auditId } });
+	const responseData = await proboApiRequest.call(this, query, { input: { reportId } });
 
 	return {
 		json: responseData,

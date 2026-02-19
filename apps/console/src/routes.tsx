@@ -18,7 +18,6 @@ import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { assetRoutes } from "./routes/assetRoutes";
-import { auditRoutes } from "./routes/auditRoutes";
 import { continualImprovementRoutes } from "./routes/continualImprovementRoutes";
 import { dataRoutes } from "./routes/dataRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
@@ -28,6 +27,7 @@ import { meetingsRoutes } from "./routes/meetingsRoutes";
 import { nonconformityRoutes } from "./routes/nonconformityRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
+import { reportRoutes } from "./routes/reportRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { riskRoutes } from "./routes/riskRoutes";
 import { snapshotsRoutes } from "./routes/snapshotsRoutes";
@@ -229,7 +229,7 @@ const routes = [
           ...taskRoutes,
           ...assetRoutes,
           ...dataRoutes,
-          ...auditRoutes,
+          ...reportRoutes,
           ...meetingsRoutes,
           ...nonconformityRoutes,
           ...obligationRoutes,

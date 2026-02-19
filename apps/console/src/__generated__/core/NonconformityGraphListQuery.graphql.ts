@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8c7e1d681649a3b5981a153314c2325a>>
+ * @generated SignedSource<<ad211a4714e772044fa5288ef75875b1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -251,9 +251,9 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "Audit",
+                            "concreteType": "Report",
                             "kind": "LinkedField",
-                            "name": "audit",
+                            "name": "report",
                             "plural": false,
                             "selections": [
                               (v5/*: any*/),
@@ -408,12 +408,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "96b967c48f7366ffeab39d39fa7221b2",
+    "cacheID": "0569c21cac6c57fef931fb5c3bc2fa9d",
     "id": null,
     "metadata": {},
     "name": "NonconformityGraphListQuery",
     "operationKind": "query",
-    "text": "query NonconformityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateNonconformity: permission(action: \"core:nonconformity:create\")\n      ...NonconformitiesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_3iomuz on Organization {\n  id\n  nonconformities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateNonconformity: permission(action: \"core:nonconformity:create\")\n      ...NonconformitiesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_3iomuz on Organization {\n  id\n  nonconformities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        report {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

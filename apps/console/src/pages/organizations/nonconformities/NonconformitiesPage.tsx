@@ -89,7 +89,7 @@ const nonconformitiesPageFragment = graphql`
           rootCause
           correctiveAction
           effectivenessCheck
-          audit {
+          report {
             id
             name
             framework {
@@ -186,7 +186,7 @@ export default function NonconformitiesPage({
                     <Th>{__("Reference ID")}</Th>
                     <Th>{__("Description")}</Th>
                     <Th>{__("Status")}</Th>
-                    <Th>{__("Audit")}</Th>
+                    <Th>{__("Report")}</Th>
                     <Th>{__("Owner")}</Th>
                     <Th>{__("Due Date")}</Th>
                     {hasAnyAction && <Th>{__("Actions")}</Th>}
@@ -288,18 +288,18 @@ function NonconformityRow({
         </Badge>
       </Td>
       <Td>
-        {nonconformity.audit
+        {nonconformity.report
           ? (
-              nonconformity.audit.name
+              nonconformity.report.name
                 ? (
-                    `${nonconformity.audit.framework?.name} - ${nonconformity.audit.name}`
+                    `${nonconformity.report.framework?.name} - ${nonconformity.report.name}`
                   )
                 : (
-                    nonconformity.audit.framework?.name
+                    nonconformity.report.framework?.name
                   )
             )
           : (
-              <span className="text-txt-tertiary">{__("No audit")}</span>
+              <span className="text-txt-tertiary">{__("No report")}</span>
             )}
       </Td>
       <Td>{nonconformity.owner.fullName}</Td>

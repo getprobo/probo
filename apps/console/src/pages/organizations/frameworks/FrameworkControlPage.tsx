@@ -21,10 +21,10 @@ import { graphql, type MutationParameters } from "relay-runtime";
 
 import type { FrameworkDetailPageFragment$data } from "#/__generated__/core/FrameworkDetailPageFragment.graphql";
 import type { FrameworkGraphControlNodeQuery } from "#/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
-import { LinkedAuditsCard } from "#/components/audits/LinkedAuditsCard";
 import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
 import { LinkedObligationsCard } from "#/components/obligations/LinkedObligationsCard";
+import { LinkedReportsCard } from "#/components/reports/LinkedReportsCard";
 import { LinkedSnapshotsCard } from "#/components/snapshots/LinkedSnapshotsCard";
 import { frameworkControlNodeQuery } from "#/hooks/graph/FrameworkGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -85,29 +85,29 @@ const detachDocumentMutation = graphql`
   }
 `;
 
-const attachAuditMutation = graphql`
-  mutation FrameworkControlPageAttachAuditMutation(
-      $input: CreateControlAuditMappingInput!
+const attachReportMutation = graphql`
+  mutation FrameworkControlPageAttachReportMutation(
+      $input: CreateControlReportMappingInput!
       $connections: [ID!]!
   ) {
-      createControlAuditMapping(input: $input) {
-          auditEdge @prependEdge(connections: $connections) {
+      createControlReportMapping(input: $input) {
+          reportEdge @prependEdge(connections: $connections) {
               node {
                   id
-                  ...LinkedAuditsCardFragment
+                  ...LinkedReportsCardFragment
               }
           }
       }
   }
 `;
 
-const detachAuditMutation = graphql`
-  mutation FrameworkControlPageDetachAuditMutation(
-      $input: DeleteControlAuditMappingInput!
+const detachReportMutation = graphql`
+  mutation FrameworkControlPageDetachReportMutation(
+      $input: DeleteControlReportMappingInput!
       $connections: [ID!]!
   ) {
-      deleteControlAuditMapping(input: $input) {
-          deletedAuditId @deleteEdge(connections: $connections)
+      deleteControlReportMapping(input: $input) {
+          deletedReportId @deleteEdge(connections: $connections)
       }
   }
 `;
@@ -207,8 +207,8 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const [attachDocument, isAttachingDocument] = useMutation(
     attachDocumentMutation,
   );
-  const [detachAudit, isDetachingAudit] = useMutation(detachAuditMutation);
-  const [attachAudit, isAttachingAudit] = useMutation(attachAuditMutation);
+  const [detachReport, isDetachingReport] = useMutation(detachReportMutation);
+  const [attachReport, isAttachingReport] = useMutation(attachReportMutation);
   const [detachSnapshot, isDetachingSnapshot] = useMutation(
     detachSnapshotMutation,
   );
@@ -232,9 +232,9 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const canUnlinkDocument = control.canDeleteDocumentMapping;
   const documentsReadOnly = !canLinkDocument && !canUnlinkDocument;
 
-  const canLinkAudit = control.canCreateAuditMapping;
-  const canUnlinkAudit = control.canDeleteAuditMapping;
-  const auditsReadOnly = !canLinkAudit && !canUnlinkAudit;
+  const canLinkReport = control.canCreateReportMapping;
+  const canUnlinkReport = control.canDeleteReportMapping;
+  const reportsReadOnly = !canLinkReport && !canUnlinkReport;
 
   const canLinkSnapshot = control.canCreateSnapshotMapping;
   const canUnlinkSnapshot = control.canDeleteSnapshotMapping;
@@ -386,23 +386,23 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           />
         </div>
         <div className="mb-4">
-          <LinkedAuditsCard
+          <LinkedReportsCard
             variant="card"
-            audits={
-              control.audits?.edges.map(edge => edge.node) ?? []
+            reports={
+              control.reports?.edges.map(edge => edge.node) ?? []
             }
             params={{ controlId: control.id }}
-            connectionId={control.audits?.__id ?? ""}
+            connectionId={control.reports?.__id ?? ""}
             onAttach={withErrorHandling(
-              attachAudit,
-              __("Failed to link audit"),
+              attachReport,
+              __("Failed to link report"),
             )}
             onDetach={withErrorHandling(
-              detachAudit,
-              __("Failed to unlink audit"),
+              detachReport,
+              __("Failed to unlink report"),
             )}
-            disabled={isAttachingAudit || isDetachingAudit}
-            readOnly={auditsReadOnly}
+            disabled={isAttachingReport || isDetachingReport}
+            readOnly={reportsReadOnly}
           />
         </div>
         <div className="mb-4">
