@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dcdbded62e85b824993721946b5e5e2e>>
+ * @generated SignedSource<<d7c7a74300c4b145c88eca24f58a9e55>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -36,6 +36,13 @@ export type MembershipsDropdownMenuQuery = {
 
 const node: ConcreteRequest = (function(){
 var v0 = [
+  {
+    "kind": "Literal",
+    "name": "filter",
+    "value": {
+      "state": "ACTIVE"
+    }
+  },
   {
     "kind": "Literal",
     "name": "first",
@@ -164,7 +171,7 @@ return {
                     "action": "THROW"
                   }
                 ],
-                "storageKey": "profiles(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
+                "storageKey": "profiles(filter:{\"state\":\"ACTIVE\"},first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
               },
               "action": "THROW"
             }
@@ -274,7 +281,7 @@ return {
                 "storageKey": null
               }
             ],
-            "storageKey": "profiles(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
+            "storageKey": "profiles(filter:{\"state\":\"ACTIVE\"},first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
           },
           (v1/*: any*/)
         ],
@@ -283,16 +290,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "aaad8b2150ade721cdcbd9c3eb35318d",
+    "cacheID": "b62c27cc3a20f286290bf579d2f528d3",
     "id": null,
     "metadata": {},
     "name": "MembershipsDropdownMenuQuery",
     "operationKind": "query",
-    "text": "query MembershipsDropdownMenuQuery {\n  viewer {\n    profiles(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            ...MembershipsDropdownMenuItem_organizationFragment\n            id\n          }\n          membership {\n            ...MembershipsDropdownMenuItemFragment\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n}\n\nfragment MembershipsDropdownMenuItem_organizationFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
+    "text": "query MembershipsDropdownMenuQuery {\n  viewer {\n    profiles(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}, filter: {state: ACTIVE}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            ...MembershipsDropdownMenuItem_organizationFragment\n            id\n          }\n          membership {\n            ...MembershipsDropdownMenuItemFragment\n            id\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n}\n\nfragment MembershipsDropdownMenuItem_organizationFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
   }
 };
 })();
 
-(node as any).hash = "11d7ec7c24e0e539fd42e428d71998e1";
+(node as any).hash = "b51ef962fc8bf18c380b7373135373a3";
 
 export default node;

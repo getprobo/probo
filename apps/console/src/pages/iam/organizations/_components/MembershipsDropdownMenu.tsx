@@ -11,6 +11,7 @@ export const membershipsDropdownMenuQuery = graphql`
       profiles(
         first: 1000
         orderBy: { direction: ASC, field: ORGANIZATION_NAME }
+        filter: { state: ACTIVE }
       ) @required(action: THROW) {
         edges @required(action: THROW) {
           node @required(action: THROW) {
