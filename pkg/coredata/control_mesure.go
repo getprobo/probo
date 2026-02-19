@@ -150,7 +150,7 @@ func (cwrs *ControlsWithRisk) LoadByControlIDs(
 	controlIDs []gid.GID,
 ) error {
 	q := `
-WITH control_risks AS (
+WITH control_risks_via_measures AS (
 	SELECT DISTINCT
 		cm.control_id,
 		rm.risk_id,
@@ -163,6 +163,25 @@ WITH control_risks AS (
 		risks r ON rm.risk_id = r.id
 	WHERE
 		cm.control_id = ANY(@control_ids)
+),
+control_risks_via_documents AS (
+	SELECT DISTINCT
+		cd.control_id,
+		rd.risk_id,
+		r.tenant_id
+	FROM
+		controls_documents cd
+	INNER JOIN
+		risks_documents rd ON cd.document_id = rd.document_id
+	INNER JOIN
+		risks r ON rd.risk_id = r.id
+	WHERE
+		cd.control_id = ANY(@control_ids)
+),
+control_risks AS (
+	SELECT control_id, risk_id, tenant_id FROM control_risks_via_measures
+	UNION
+	SELECT control_id, risk_id, tenant_id FROM control_risks_via_documents
 )
 SELECT DISTINCT
 	control_id
