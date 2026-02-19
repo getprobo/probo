@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.129.0] - 2026-02-19
+
+### Added
+
+- n8n operations for users (profiles)
+- MCP operations for users (profiles)
+- SCIM user title synchronization
+
+### Changed
+
+- Dropped minio in favor of seaweedFS
+- Profile data model linked to org and identity instead of membership
+- Moved state and source on profiles instead of memberships
+- Refactored invitations into account activations
+
 ## [0.128.0] - 2026-02-17
 
 ### Added
