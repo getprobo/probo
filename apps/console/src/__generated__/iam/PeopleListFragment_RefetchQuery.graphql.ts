@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a32e2b4330ac1d54762817127289b51d>>
+ * @generated SignedSource<<167a4c7cc44ce2cc44e9b4680b6fc285>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type OrderDirection = "ASC" | "DESC";
-export type ProfileOrderField = "CREATED_AT" | "FULL_NAME" | "KIND" | "ORGANIZATION_NAME";
+export type ProfileOrderField = "CREATED_AT" | "FULL_NAME" | "KIND" | "ORGANIZATION_NAME" | "STATE";
 export type ProfileOrder = {
   direction: OrderDirection;
   field: ProfileOrderField;

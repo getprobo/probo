@@ -23,6 +23,7 @@ const (
 	MembershipProfileOrderFieldFullName         MembershipProfileOrderField = "FULL_NAME"
 	MembershipProfileOrderFieldKind             MembershipProfileOrderField = "KIND"
 	MembershipProfileOrderFieldOrganizationName MembershipProfileOrderField = "ORGANIZATION_NAME"
+	MembershipProfileOrderFieldState            MembershipProfileOrderField = "STATE"
 )
 
 func (p MembershipProfileOrderField) Column() string {

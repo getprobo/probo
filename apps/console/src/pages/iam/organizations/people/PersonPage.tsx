@@ -106,7 +106,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
             <div className="text-lg text-txt-secondary">{person.emailAddress}</div>
           </div>
         </div>
-        {person.canDelete && (
+        {person.canDelete && person.source !== "SCIM" && (
           <ActionDropdown variant="secondary">
             <DropdownItem
               variant="danger"

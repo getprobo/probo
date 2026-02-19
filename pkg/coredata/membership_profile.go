@@ -61,6 +61,8 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 		return page.NewCursorKey(p.ID, p.Kind)
 	case MembershipProfileOrderFieldOrganizationName:
 		return page.NewCursorKey(p.ID, p.OrganizationName)
+	case MembershipProfileOrderFieldState:
+		return page.NewCursorKey(p.ID, p.State)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

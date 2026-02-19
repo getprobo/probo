@@ -83,7 +83,7 @@ export function PeopleList(props: {
       <Thead>
         <Tr>
           <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{__("Name")}</SortableTh>
-          <SortableTh field="STATUS">{__("Status")}</SortableTh>
+          <SortableTh field="STATE">{__("Status")}</SortableTh>
           <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{__("Email")}</SortableTh>
           <SortableTh field="ROLE" onOrderChange={handleOrderChange}>{__("Role")}</SortableTh>
           <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{__("Created on")}</SortableTh>

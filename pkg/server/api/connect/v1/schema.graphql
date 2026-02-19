@@ -511,6 +511,10 @@ enum ProfileOrderField
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldOrganizationName"
     )
+  STATE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldState"
+    )
 }
 
 input ProfileFilter {

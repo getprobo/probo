@@ -2983,6 +2983,10 @@ enum ProfileOrderField
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldOrganizationName"
     )
+  STATE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldState"
+    )
 }
 
 input ProfileFilter {
@@ -22105,12 +22109,14 @@ var (
 		"CREATED_AT":        coredata.MembershipProfileOrderFieldCreatedAt,
 		"KIND":              coredata.MembershipProfileOrderFieldKind,
 		"ORGANIZATION_NAME": coredata.MembershipProfileOrderFieldOrganizationName,
+		"STATE":             coredata.MembershipProfileOrderFieldState,
 	}
 	marshalNProfileOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileOrderField = map[coredata.MembershipProfileOrderField]string{
 		coredata.MembershipProfileOrderFieldFullName:         "FULL_NAME",
 		coredata.MembershipProfileOrderFieldCreatedAt:        "CREATED_AT",
 		coredata.MembershipProfileOrderFieldKind:             "KIND",
 		coredata.MembershipProfileOrderFieldOrganizationName: "ORGANIZATION_NAME",
+		coredata.MembershipProfileOrderFieldState:            "STATE",
 	}
 )
 

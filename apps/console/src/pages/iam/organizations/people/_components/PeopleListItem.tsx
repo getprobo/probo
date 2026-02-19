@@ -112,6 +112,9 @@ export function PeopleListItem(props: {
 
   const isInactive = profile.state === "INACTIVE";
 
+  const canSendActivationMail = isInactive && profile.source !== "SCIM" && profile.canInvite;
+  const canDelete = profile.canDelete && profile.source !== "SCIM";
+
   const [inviteUser]
     = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {
       successMessage: __("Invitation sent successfully"),
@@ -248,25 +251,27 @@ export function PeopleListItem(props: {
         {new Date(profile.createdAt).toLocaleDateString()}
       </Td>
       <Td noLink width={160} className="text-end">
-        <ActionDropdown>
-          {isInactive && profile.source !== "SCIM" && profile.canInvite && (
-            <DropdownItem
-              onClick={handleInvite}
-              icon={IconMail}
-            >
-              {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
-            </DropdownItem>
-          )}
-          {profile.canDelete && profile.source !== "SCIM" && (
-            <DropdownItem
-              onClick={handleRemove}
-              variant="danger"
-              icon={IconTrashCan}
-            >
-              {__("Remove person")}
-            </DropdownItem>
-          )}
-        </ActionDropdown>
+        {(canSendActivationMail || canDelete) && (
+          <ActionDropdown>
+            {canSendActivationMail && (
+              <DropdownItem
+                onClick={handleInvite}
+                icon={IconMail}
+              >
+                {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
+              </DropdownItem>
+            )}
+            {canDelete && (
+              <DropdownItem
+                onClick={handleRemove}
+                variant="danger"
+                icon={IconTrashCan}
+              >
+                {__("Remove person")}
+              </DropdownItem>
+            )}
+          </ActionDropdown>
+        )}
       </Td>
     </Tr>
   );
