@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.129.2] - 2026-02-19
+
+### Added
+
+- Add access to SOA for auditor
+
 ## [0.129.1] - 2026-02-19
 
 ### Fixed
