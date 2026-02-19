@@ -2501,6 +2501,798 @@ components:
         obligation:
           $ref: "#/components/schemas/Obligation"
 
+    ProcessingActivityRole:
+      type: string
+      enum:
+        - CONTROLLER
+        - PROCESSOR
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityRole
+
+    ProcessingActivityLawfulBasis:
+      type: string
+      enum:
+        - LEGITIMATE_INTEREST
+        - CONSENT
+        - CONTRACTUAL_NECESSITY
+        - LEGAL_OBLIGATION
+        - VITAL_INTERESTS
+        - PUBLIC_TASK
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasis
+
+    ProcessingActivitySpecialOrCriminalDatum:
+      type: string
+      enum:
+        - YES
+        - NO
+        - POSSIBLE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatum
+
+    ProcessingActivityTransferSafeguard:
+      type: string
+      enum:
+        - STANDARD_CONTRACTUAL_CLAUSES
+        - BINDING_CORPORATE_RULES
+        - ADEQUACY_DECISION
+        - DEROGATIONS
+        - CODES_OF_CONDUCT
+        - CERTIFICATION_MECHANISMS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguard
+
+    ProcessingActivityDataProtectionImpactAssessmentNeeded:
+      type: string
+      enum:
+        - NEEDED
+        - NOT_NEEDED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment
+
+    ProcessingActivityTransferImpactAssessmentNeeded:
+      type: string
+      enum:
+        - NEEDED
+        - NOT_NEEDED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment
+
+    ProcessingActivityOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderField
+
+    ProcessingActivityOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ProcessingActivityOrderField"
+          description: Processing activity order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    ProcessingActivity:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - special_or_criminal_data
+        - lawful_basis
+        - international_transfers
+        - data_protection_impact_assessment_needed
+        - transfer_impact_assessment_needed
+        - role
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Processing activity ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        purpose:
+          type:
+            - string
+            - "null"
+          description: Purpose
+        data_subject_category:
+          type:
+            - string
+            - "null"
+          description: Data subject category
+        personal_data_category:
+          type:
+            - string
+            - "null"
+          description: Personal data category
+        special_or_criminal_data:
+          $ref: "#/components/schemas/ProcessingActivitySpecialOrCriminalDatum"
+          description: Special or criminal data
+        consent_evidence_link:
+          type:
+            - string
+            - "null"
+          description: Consent evidence link
+        lawful_basis:
+          $ref: "#/components/schemas/ProcessingActivityLawfulBasis"
+          description: Lawful basis
+        recipients:
+          type:
+            - string
+            - "null"
+          description: Recipients
+        location:
+          type:
+            - string
+            - "null"
+          description: Location
+        international_transfers:
+          type: boolean
+          description: International transfers
+        transfer_safeguard:
+          anyOf:
+            - $ref: "#/components/schemas/ProcessingActivityTransferSafeguard"
+            - type: "null"
+          description: Transfer safeguard
+        retention_period:
+          type:
+            - string
+            - "null"
+          description: Retention period
+        security_measures:
+          type:
+            - string
+            - "null"
+          description: Security measures
+        data_protection_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
+          description: DPIA needed
+        transfer_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityTransferImpactAssessmentNeeded"
+          description: TIA needed
+        last_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Last review date
+        next_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Next review date
+        role:
+          $ref: "#/components/schemas/ProcessingActivityRole"
+          description: Role
+        data_protection_officer_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Data protection officer profile ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListProcessingActivitiesInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/ProcessingActivityOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListProcessingActivitiesOutput:
+      type: object
+      required:
+        - processing_activities
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        processing_activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessingActivity"
+
+    GetProcessingActivityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Processing activity ID
+
+    GetProcessingActivityOutput:
+      type: object
+      required:
+        - processing_activity
+      properties:
+        processing_activity:
+          $ref: "#/components/schemas/ProcessingActivity"
+
+    AddProcessingActivityInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - special_or_criminal_data
+        - lawful_basis
+        - international_transfers
+        - data_protection_impact_assessment_needed
+        - transfer_impact_assessment_needed
+        - role
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        purpose:
+          type: string
+          description: Purpose
+        data_subject_category:
+          type: string
+          description: Data subject category
+        personal_data_category:
+          type: string
+          description: Personal data category
+        special_or_criminal_data:
+          $ref: "#/components/schemas/ProcessingActivitySpecialOrCriminalDatum"
+          description: Special or criminal data
+        consent_evidence_link:
+          type: string
+          description: Consent evidence link
+        lawful_basis:
+          $ref: "#/components/schemas/ProcessingActivityLawfulBasis"
+          description: Lawful basis
+        recipients:
+          type: string
+          description: Recipients
+        location:
+          type: string
+          description: Location
+        international_transfers:
+          type: boolean
+          description: International transfers
+        transfer_safeguard:
+          anyOf:
+            - $ref: "#/components/schemas/ProcessingActivityTransferSafeguard"
+            - type: "null"
+          description: Transfer safeguard
+        retention_period:
+          type: string
+          description: Retention period
+        security_measures:
+          type: string
+          description: Security measures
+        data_protection_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
+          description: DPIA needed
+        transfer_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityTransferImpactAssessmentNeeded"
+          description: TIA needed
+        last_review_date:
+          type: string
+          format: date-time
+          description: Last review date
+        next_review_date:
+          type: string
+          format: date-time
+          description: Next review date
+        role:
+          $ref: "#/components/schemas/ProcessingActivityRole"
+          description: Role
+        data_protection_officer_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Data protection officer profile ID
+        vendor_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Vendor IDs
+
+    AddProcessingActivityOutput:
+      type: object
+      required:
+        - processing_activity
+      properties:
+        processing_activity:
+          $ref: "#/components/schemas/ProcessingActivity"
+
+    UpdateProcessingActivityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Processing activity ID
+        name:
+          type: string
+        purpose:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        data_subject_category:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        personal_data_category:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        special_or_criminal_data:
+          $ref: "#/components/schemas/ProcessingActivitySpecialOrCriminalDatum"
+        consent_evidence_link:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        lawful_basis:
+          $ref: "#/components/schemas/ProcessingActivityLawfulBasis"
+        recipients:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        location:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        international_transfers:
+          type: boolean
+        transfer_safeguard:
+          anyOf:
+            - $ref: "#/components/schemas/ProcessingActivityTransferSafeguard"
+            - type: "null"
+          go.probo.inc/mcpgen/omittable: true
+        retention_period:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        security_measures:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        data_protection_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
+        transfer_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityTransferImpactAssessmentNeeded"
+        last_review_date:
+          type: ["string", "null"]
+          format: date-time
+          go.probo.inc/mcpgen/omittable: true
+        next_review_date:
+          type: ["string", "null"]
+          format: date-time
+          go.probo.inc/mcpgen/omittable: true
+        role:
+          $ref: "#/components/schemas/ProcessingActivityRole"
+        data_protection_officer_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          go.probo.inc/mcpgen/omittable: true
+        vendor_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+
+    UpdateProcessingActivityOutput:
+      type: object
+      required:
+        - processing_activity
+      properties:
+        processing_activity:
+          $ref: "#/components/schemas/ProcessingActivity"
+
+    DeleteProcessingActivityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Processing activity ID
+
+    DeleteProcessingActivityOutput:
+      type: object
+      required:
+        - deleted_processing_activity_id
+      properties:
+        deleted_processing_activity_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted processing activity ID
+
+    DataProtectionImpactAssessmentResidualRisk:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRisk
+
+    DataProtectionImpactAssessmentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentOrderField
+
+    DataProtectionImpactAssessmentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DataProtectionImpactAssessmentOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    DataProtectionImpactAssessment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - processing_activity_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        processing_activity_id:
+          $ref: "#/components/schemas/GID"
+        description:
+          type:
+            - string
+            - "null"
+        necessity_and_proportionality:
+          type:
+            - string
+            - "null"
+        potential_risk:
+          type:
+            - string
+            - "null"
+        mitigations:
+          type:
+            - string
+            - "null"
+        residual_risk:
+          anyOf:
+            - $ref: "#/components/schemas/DataProtectionImpactAssessmentResidualRisk"
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListDataProtectionImpactAssessmentsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/DataProtectionImpactAssessmentOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+
+    ListDataProtectionImpactAssessmentsOutput:
+      type: object
+      required:
+        - data_protection_impact_assessments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        data_protection_impact_assessments:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataProtectionImpactAssessment"
+
+    GetDataProtectionImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetDataProtectionImpactAssessmentOutput:
+      type: object
+      required:
+        - data_protection_impact_assessment
+      properties:
+        data_protection_impact_assessment:
+          $ref: "#/components/schemas/DataProtectionImpactAssessment"
+
+    AddDataProtectionImpactAssessmentInput:
+      type: object
+      required:
+        - processing_activity_id
+      properties:
+        processing_activity_id:
+          $ref: "#/components/schemas/GID"
+        description:
+          type: string
+        necessity_and_proportionality:
+          type: string
+        potential_risk:
+          type: string
+        mitigations:
+          type: string
+        residual_risk:
+          anyOf:
+            - $ref: "#/components/schemas/DataProtectionImpactAssessmentResidualRisk"
+            - type: "null"
+
+    AddDataProtectionImpactAssessmentOutput:
+      type: object
+      required:
+        - data_protection_impact_assessment
+      properties:
+        data_protection_impact_assessment:
+          $ref: "#/components/schemas/DataProtectionImpactAssessment"
+
+    UpdateDataProtectionImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        description:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        necessity_and_proportionality:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        potential_risk:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        mitigations:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        residual_risk:
+          $ref: "#/components/schemas/DataProtectionImpactAssessmentResidualRisk"
+
+    UpdateDataProtectionImpactAssessmentOutput:
+      type: object
+      required:
+        - data_protection_impact_assessment
+      properties:
+        data_protection_impact_assessment:
+          $ref: "#/components/schemas/DataProtectionImpactAssessment"
+
+    DeleteDataProtectionImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteDataProtectionImpactAssessmentOutput:
+      type: object
+      required:
+        - deleted_data_protection_impact_assessment_id
+      properties:
+        deleted_data_protection_impact_assessment_id:
+          $ref: "#/components/schemas/GID"
+
+    TransferImpactAssessmentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderField
+
+    TransferImpactAssessmentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TransferImpactAssessmentOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    TransferImpactAssessment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - processing_activity_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        processing_activity_id:
+          $ref: "#/components/schemas/GID"
+        data_subjects:
+          type:
+            - string
+            - "null"
+        legal_mechanism:
+          type:
+            - string
+            - "null"
+        transfer:
+          type:
+            - string
+            - "null"
+        local_law_risk:
+          type:
+            - string
+            - "null"
+        supplementary_measures:
+          type:
+            - string
+            - "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListTransferImpactAssessmentsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/TransferImpactAssessmentOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+
+    ListTransferImpactAssessmentsOutput:
+      type: object
+      required:
+        - transfer_impact_assessments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        transfer_impact_assessments:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransferImpactAssessment"
+
+    GetTransferImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetTransferImpactAssessmentOutput:
+      type: object
+      required:
+        - transfer_impact_assessment
+      properties:
+        transfer_impact_assessment:
+          $ref: "#/components/schemas/TransferImpactAssessment"
+
+    AddTransferImpactAssessmentInput:
+      type: object
+      required:
+        - processing_activity_id
+      properties:
+        processing_activity_id:
+          $ref: "#/components/schemas/GID"
+        data_subjects:
+          type: string
+        legal_mechanism:
+          type: string
+        transfer:
+          type: string
+        local_law_risk:
+          type: string
+        supplementary_measures:
+          type: string
+
+    AddTransferImpactAssessmentOutput:
+      type: object
+      required:
+        - transfer_impact_assessment
+      properties:
+        transfer_impact_assessment:
+          $ref: "#/components/schemas/TransferImpactAssessment"
+
+    UpdateTransferImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        data_subjects:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        legal_mechanism:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        transfer:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        local_law_risk:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        supplementary_measures:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateTransferImpactAssessmentOutput:
+      type: object
+      required:
+        - transfer_impact_assessment
+      properties:
+        transfer_impact_assessment:
+          $ref: "#/components/schemas/TransferImpactAssessment"
+
+    DeleteTransferImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteTransferImpactAssessmentOutput:
+      type: object
+      required:
+        - deleted_transfer_impact_assessment_id
+      properties:
+        deleted_transfer_impact_assessment_id:
+          $ref: "#/components/schemas/GID"
+
     ContinualImprovementStatus:
       type: string
       enum:
@@ -4944,6 +5736,132 @@ tools:
       $ref: "#/components/schemas/UpdateObligationInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateObligationOutput"
+  - name: listProcessingActivities
+    description: List all processing activities for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListProcessingActivitiesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListProcessingActivitiesOutput"
+  - name: getProcessingActivity
+    description: Get a processing activity by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetProcessingActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetProcessingActivityOutput"
+  - name: addProcessingActivity
+    description: Add a new processing activity to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddProcessingActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddProcessingActivityOutput"
+  - name: updateProcessingActivity
+    description: Update an existing processing activity
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateProcessingActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateProcessingActivityOutput"
+  - name: deleteProcessingActivity
+    description: Delete a processing activity
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteProcessingActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteProcessingActivityOutput"
+  - name: listDataProtectionImpactAssessments
+    description: List all data protection impact assessments (DPIAs) for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListDataProtectionImpactAssessmentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDataProtectionImpactAssessmentsOutput"
+  - name: getDataProtectionImpactAssessment
+    description: Get a data protection impact assessment (DPIA) by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetDataProtectionImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDataProtectionImpactAssessmentOutput"
+  - name: addDataProtectionImpactAssessment
+    description: Add a new data protection impact assessment (DPIA) for a processing activity
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddDataProtectionImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddDataProtectionImpactAssessmentOutput"
+  - name: updateDataProtectionImpactAssessment
+    description: Update an existing data protection impact assessment (DPIA)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateDataProtectionImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateDataProtectionImpactAssessmentOutput"
+  - name: deleteDataProtectionImpactAssessment
+    description: Delete a data protection impact assessment (DPIA) by ID
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDataProtectionImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDataProtectionImpactAssessmentOutput"
+  - name: listTransferImpactAssessments
+    description: List all transfer impact assessments (TIAs) for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListTransferImpactAssessmentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTransferImpactAssessmentsOutput"
+  - name: getTransferImpactAssessment
+    description: Get a transfer impact assessment (TIA) by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetTransferImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTransferImpactAssessmentOutput"
+  - name: addTransferImpactAssessment
+    description: Add a new transfer impact assessment (TIA) for a processing activity
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTransferImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTransferImpactAssessmentOutput"
+  - name: updateTransferImpactAssessment
+    description: Update an existing transfer impact assessment (TIA)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTransferImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTransferImpactAssessmentOutput"
+  - name: deleteTransferImpactAssessment
+    description: Delete a transfer impact assessment (TIA)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTransferImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTransferImpactAssessmentOutput"
   - name: listContinualImprovements
     description: List all continual improvements for the organization
     hints:

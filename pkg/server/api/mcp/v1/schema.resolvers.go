@@ -941,6 +941,359 @@ func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRe
 	}, nil
 }
 
+func (r *Resolver) ListProcessingActivitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListProcessingActivitiesInput) (*mcp.CallToolResult, types.ListProcessingActivitiesOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionProcessingActivityList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
+		Field:     coredata.ProcessingActivityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ProcessingActivityOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var filter = coredata.NewProcessingActivityFilter(nil)
+	if input.Filter != nil {
+		filter = coredata.NewProcessingActivityFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization processing activities: %w", err))
+	}
+
+	return nil, types.NewListProcessingActivitiesOutput(page), nil
+}
+
+func (r *Resolver) GetProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetProcessingActivityInput) (*mcp.CallToolResult, types.GetProcessingActivityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	processingActivity, err := prb.ProcessingActivities.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetProcessingActivityOutput{}, fmt.Errorf("failed to get processing activity: %w", err)
+	}
+
+	return nil, types.GetProcessingActivityOutput{
+		ProcessingActivity: types.NewProcessingActivity(processingActivity),
+	}, nil
+}
+
+func (r *Resolver) AddProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddProcessingActivityInput) (*mcp.CallToolResult, types.AddProcessingActivityOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionProcessingActivityCreate)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	processingActivity, err := svc.ProcessingActivities.Create(
+		ctx,
+		&probo.CreateProcessingActivityRequest{
+			OrganizationID:                       input.OrganizationID,
+			Name:                                 input.Name,
+			Purpose:                              input.Purpose,
+			DataSubjectCategory:                  input.DataSubjectCategory,
+			PersonalDataCategory:                 input.PersonalDataCategory,
+			SpecialOrCriminalData:                input.SpecialOrCriminalData,
+			ConsentEvidenceLink:                  input.ConsentEvidenceLink,
+			LawfulBasis:                          input.LawfulBasis,
+			Recipients:                           input.Recipients,
+			Location:                             input.Location,
+			InternationalTransfers:               input.InternationalTransfers,
+			TransferSafeguard:                    input.TransferSafeguard,
+			RetentionPeriod:                      input.RetentionPeriod,
+			SecurityMeasures:                     input.SecurityMeasures,
+			DataProtectionImpactAssessmentNeeded: input.DataProtectionImpactAssessmentNeeded,
+			TransferImpactAssessmentNeeded:       input.TransferImpactAssessmentNeeded,
+			LastReviewDate:                       input.LastReviewDate,
+			NextReviewDate:                       input.NextReviewDate,
+			Role:                                 input.Role,
+			DataProtectionOfficerID:              input.DataProtectionOfficerID,
+			VendorIDs:                            input.VendorIds,
+		},
+	)
+	if err != nil {
+		return nil, types.AddProcessingActivityOutput{}, fmt.Errorf("failed to create processing activity: %w", err)
+	}
+
+	return nil, types.AddProcessingActivityOutput{
+		ProcessingActivity: types.NewProcessingActivity(processingActivity),
+	}, nil
+}
+
+func (r *Resolver) UpdateProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProcessingActivityInput) (*mcp.CallToolResult, types.UpdateProcessingActivityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	var vendorIDs *[]gid.GID
+	if input.VendorIds != nil {
+		vendorIDs = &input.VendorIds
+	}
+
+	processingActivity, err := svc.ProcessingActivities.Update(
+		ctx,
+		&probo.UpdateProcessingActivityRequest{
+			ID:                                   input.ID,
+			Name:                                 input.Name,
+			Purpose:                              UnwrapOmittable(input.Purpose),
+			DataSubjectCategory:                  UnwrapOmittable(input.DataSubjectCategory),
+			PersonalDataCategory:                 UnwrapOmittable(input.PersonalDataCategory),
+			SpecialOrCriminalData:                input.SpecialOrCriminalData,
+			ConsentEvidenceLink:                  UnwrapOmittable(input.ConsentEvidenceLink),
+			LawfulBasis:                          input.LawfulBasis,
+			Recipients:                           UnwrapOmittable(input.Recipients),
+			Location:                             UnwrapOmittable(input.Location),
+			InternationalTransfers:               input.InternationalTransfers,
+			TransferSafeguard:                    UnwrapOmittable(input.TransferSafeguard),
+			RetentionPeriod:                      UnwrapOmittable(input.RetentionPeriod),
+			SecurityMeasures:                     UnwrapOmittable(input.SecurityMeasures),
+			DataProtectionImpactAssessmentNeeded: input.DataProtectionImpactAssessmentNeeded,
+			TransferImpactAssessmentNeeded:       input.TransferImpactAssessmentNeeded,
+			LastReviewDate:                       UnwrapOmittable(input.LastReviewDate),
+			NextReviewDate:                       UnwrapOmittable(input.NextReviewDate),
+			Role:                                 input.Role,
+			DataProtectionOfficerID:              UnwrapOmittable(input.DataProtectionOfficerID),
+			VendorIDs:                            vendorIDs,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateProcessingActivityOutput{}, fmt.Errorf("failed to update processing activity: %w", err)
+	}
+
+	return nil, types.UpdateProcessingActivityOutput{
+		ProcessingActivity: types.NewProcessingActivity(processingActivity),
+	}, nil
+}
+
+func (r *Resolver) DeleteProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteProcessingActivityInput) (*mcp.CallToolResult, types.DeleteProcessingActivityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.ProcessingActivities.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteProcessingActivityOutput{}, fmt.Errorf("failed to delete processing activity: %w", err)
+	}
+
+	return nil, types.DeleteProcessingActivityOutput{
+		DeletedProcessingActivityID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListDataProtectionImpactAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDataProtectionImpactAssessmentsInput) (*mcp.CallToolResult, types.ListDataProtectionImpactAssessmentsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDataProtectionImpactAssessmentList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
+		Field:     coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var filter = coredata.NewDataProtectionImpactAssessmentFilter(nil)
+	if input.Filter != nil {
+		filter = coredata.NewDataProtectionImpactAssessmentFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization data protection impact assessments: %w", err))
+	}
+
+	return nil, types.NewListDataProtectionImpactAssessmentsOutput(page), nil
+}
+
+func (r *Resolver) GetDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.GetDataProtectionImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetDataProtectionImpactAssessmentOutput{}, fmt.Errorf("failed to get data protection impact assessment: %w", err)
+	}
+
+	return nil, types.GetDataProtectionImpactAssessmentOutput{
+		DataProtectionImpactAssessment: types.NewDataProtectionImpactAssessment(dpia),
+	}, nil
+}
+
+func (r *Resolver) AddDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.AddDataProtectionImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionDataProtectionImpactAssessmentCreate)
+
+	svc := r.ProboService(ctx, input.ProcessingActivityID)
+
+	dpia, err := svc.DataProtectionImpactAssessments.Create(
+		ctx,
+		&probo.CreateDataProtectionImpactAssessmentRequest{
+			ProcessingActivityID:        input.ProcessingActivityID,
+			Description:                 input.Description,
+			NecessityAndProportionality: input.NecessityAndProportionality,
+			PotentialRisk:               input.PotentialRisk,
+			Mitigations:                 input.Mitigations,
+			ResidualRisk:                input.ResidualRisk,
+		},
+	)
+	if err != nil {
+		return nil, types.AddDataProtectionImpactAssessmentOutput{}, fmt.Errorf("failed to create data protection impact assessment: %w", err)
+	}
+
+	return nil, types.AddDataProtectionImpactAssessmentOutput{
+		DataProtectionImpactAssessment: types.NewDataProtectionImpactAssessment(dpia),
+	}, nil
+}
+
+func (r *Resolver) UpdateDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.UpdateDataProtectionImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	dpia, err := svc.DataProtectionImpactAssessments.Update(
+		ctx,
+		&probo.UpdateDataProtectionImpactAssessmentRequest{
+			ID:                          input.ID,
+			Description:                 UnwrapOmittable(input.Description),
+			NecessityAndProportionality: UnwrapOmittable(input.NecessityAndProportionality),
+			PotentialRisk:               UnwrapOmittable(input.PotentialRisk),
+			Mitigations:                 UnwrapOmittable(input.Mitigations),
+			ResidualRisk:                input.ResidualRisk,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateDataProtectionImpactAssessmentOutput{}, fmt.Errorf("failed to update data protection impact assessment: %w", err)
+	}
+
+	return nil, types.UpdateDataProtectionImpactAssessmentOutput{
+		DataProtectionImpactAssessment: types.NewDataProtectionImpactAssessment(dpia),
+	}, nil
+}
+
+func (r *Resolver) ListTransferImpactAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTransferImpactAssessmentsInput) (*mcp.CallToolResult, types.ListTransferImpactAssessmentsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTransferImpactAssessmentList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
+		Field:     coredata.TransferImpactAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var filter = coredata.NewTransferImpactAssessmentFilter(nil)
+	if input.Filter != nil {
+		filter = coredata.NewTransferImpactAssessmentFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization transfer impact assessments: %w", err))
+	}
+
+	return nil, types.NewListTransferImpactAssessmentsOutput(page), nil
+}
+
+func (r *Resolver) GetTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTransferImpactAssessmentInput) (*mcp.CallToolResult, types.GetTransferImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTransferImpactAssessmentGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	tia, err := prb.TransferImpactAssessments.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetTransferImpactAssessmentOutput{}, fmt.Errorf("failed to get transfer impact assessment: %w", err)
+	}
+
+	return nil, types.GetTransferImpactAssessmentOutput{
+		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
+	}, nil
+}
+
+func (r *Resolver) AddTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTransferImpactAssessmentInput) (*mcp.CallToolResult, types.AddTransferImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionTransferImpactAssessmentCreate)
+
+	svc := r.ProboService(ctx, input.ProcessingActivityID)
+
+	tia, err := svc.TransferImpactAssessments.Create(
+		ctx,
+		&probo.CreateTransferImpactAssessmentRequest{
+			ProcessingActivityID:  input.ProcessingActivityID,
+			DataSubjects:          input.DataSubjects,
+			LegalMechanism:        input.LegalMechanism,
+			Transfer:              input.Transfer,
+			LocalLawRisk:          input.LocalLawRisk,
+			SupplementaryMeasures: input.SupplementaryMeasures,
+		},
+	)
+	if err != nil {
+		return nil, types.AddTransferImpactAssessmentOutput{}, fmt.Errorf("failed to create transfer impact assessment: %w", err)
+	}
+
+	return nil, types.AddTransferImpactAssessmentOutput{
+		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
+	}, nil
+}
+
+func (r *Resolver) UpdateTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTransferImpactAssessmentInput) (*mcp.CallToolResult, types.UpdateTransferImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTransferImpactAssessmentUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	tia, err := svc.TransferImpactAssessments.Update(
+		ctx,
+		&probo.UpdateTransferImpactAssessmentRequest{
+			ID:                    input.ID,
+			DataSubjects:          UnwrapOmittable(input.DataSubjects),
+			LegalMechanism:        UnwrapOmittable(input.LegalMechanism),
+			Transfer:              UnwrapOmittable(input.Transfer),
+			LocalLawRisk:          UnwrapOmittable(input.LocalLawRisk),
+			SupplementaryMeasures: UnwrapOmittable(input.SupplementaryMeasures),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateTransferImpactAssessmentOutput{}, fmt.Errorf("failed to update transfer impact assessment: %w", err)
+	}
+
+	return nil, types.UpdateTransferImpactAssessmentOutput{
+		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
+	}, nil
+}
+
+func (r *Resolver) DeleteTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTransferImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteTransferImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTransferImpactAssessmentDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.TransferImpactAssessments.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteTransferImpactAssessmentOutput{}, fmt.Errorf("failed to delete transfer impact assessment: %w", err)
+	}
+
+	return nil, types.DeleteTransferImpactAssessmentOutput{
+		DeletedTransferImpactAssessmentID: input.ID,
+	}, nil
+}
+
 func (r *Resolver) ListContinualImprovementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListContinualImprovementsInput) (*mcp.CallToolResult, types.ListContinualImprovementsOutput, error) {
 	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionContinualImprovementList)
 
@@ -2223,4 +2576,19 @@ func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.RemoveUserOutput{}, fmt.Errorf("remove user: %w", err)
 	}
 	return nil, types.RemoveUserOutput{DeletedUserID: input.ProfileID}, nil
+}
+
+func (r *Resolver) DeleteDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteDataProtectionImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.DataProtectionImpactAssessments.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteDataProtectionImpactAssessmentOutput{}, fmt.Errorf("failed to delete data protection impact assessment: %w", err)
+	}
+
+	return nil, types.DeleteDataProtectionImpactAssessmentOutput{
+		DeletedDataProtectionImpactAssessmentID: input.ID,
+	}, nil
 }

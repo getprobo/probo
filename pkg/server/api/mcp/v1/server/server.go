@@ -51,6 +51,21 @@ type ResolverInterface interface {
 	GetObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetObligationInput) (*mcp.CallToolResult, types.GetObligationOutput, error)
 	AddObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddObligationInput) (*mcp.CallToolResult, types.AddObligationOutput, error)
 	UpdateObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateObligationInput) (*mcp.CallToolResult, types.UpdateObligationOutput, error)
+	ListProcessingActivitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListProcessingActivitiesInput) (*mcp.CallToolResult, types.ListProcessingActivitiesOutput, error)
+	GetProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetProcessingActivityInput) (*mcp.CallToolResult, types.GetProcessingActivityOutput, error)
+	AddProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddProcessingActivityInput) (*mcp.CallToolResult, types.AddProcessingActivityOutput, error)
+	UpdateProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProcessingActivityInput) (*mcp.CallToolResult, types.UpdateProcessingActivityOutput, error)
+	DeleteProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteProcessingActivityInput) (*mcp.CallToolResult, types.DeleteProcessingActivityOutput, error)
+	ListDataProtectionImpactAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDataProtectionImpactAssessmentsInput) (*mcp.CallToolResult, types.ListDataProtectionImpactAssessmentsOutput, error)
+	GetDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.GetDataProtectionImpactAssessmentOutput, error)
+	AddDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.AddDataProtectionImpactAssessmentOutput, error)
+	UpdateDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.UpdateDataProtectionImpactAssessmentOutput, error)
+	DeleteDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteDataProtectionImpactAssessmentOutput, error)
+	ListTransferImpactAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTransferImpactAssessmentsInput) (*mcp.CallToolResult, types.ListTransferImpactAssessmentsOutput, error)
+	GetTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTransferImpactAssessmentInput) (*mcp.CallToolResult, types.GetTransferImpactAssessmentOutput, error)
+	AddTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTransferImpactAssessmentInput) (*mcp.CallToolResult, types.AddTransferImpactAssessmentOutput, error)
+	UpdateTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTransferImpactAssessmentInput) (*mcp.CallToolResult, types.UpdateTransferImpactAssessmentOutput, error)
+	DeleteTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTransferImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteTransferImpactAssessmentOutput, error)
 	ListContinualImprovementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListContinualImprovementsInput) (*mcp.CallToolResult, types.ListContinualImprovementsOutput, error)
 	GetContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetContinualImprovementInput) (*mcp.CallToolResult, types.GetContinualImprovementOutput, error)
 	AddContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddContinualImprovementInput) (*mcp.CallToolResult, types.AddContinualImprovementOutput, error)
@@ -608,6 +623,180 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateObligationToolOutputSchema,
 		},
 		resolver.UpdateObligationTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listProcessingActivities",
+			Description:  "List all processing activities for the organization",
+			InputSchema:  types.ListProcessingActivitiesToolInputSchema,
+			OutputSchema: types.ListProcessingActivitiesToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListProcessingActivitiesTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getProcessingActivity",
+			Description:  "Get a processing activity by ID",
+			InputSchema:  types.GetProcessingActivityToolInputSchema,
+			OutputSchema: types.GetProcessingActivityToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetProcessingActivityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addProcessingActivity",
+			Description:  "Add a new processing activity to the organization",
+			InputSchema:  types.AddProcessingActivityToolInputSchema,
+			OutputSchema: types.AddProcessingActivityToolOutputSchema,
+		},
+		resolver.AddProcessingActivityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateProcessingActivity",
+			Description:  "Update an existing processing activity",
+			InputSchema:  types.UpdateProcessingActivityToolInputSchema,
+			OutputSchema: types.UpdateProcessingActivityToolOutputSchema,
+		},
+		resolver.UpdateProcessingActivityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteProcessingActivity",
+			Description:  "Delete a processing activity",
+			InputSchema:  types.DeleteProcessingActivityToolInputSchema,
+			OutputSchema: types.DeleteProcessingActivityToolOutputSchema,
+		},
+		resolver.DeleteProcessingActivityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listDataProtectionImpactAssessments",
+			Description:  "List all data protection impact assessments (DPIAs) for the organization",
+			InputSchema:  types.ListDataProtectionImpactAssessmentsToolInputSchema,
+			OutputSchema: types.ListDataProtectionImpactAssessmentsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListDataProtectionImpactAssessmentsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getDataProtectionImpactAssessment",
+			Description:  "Get a data protection impact assessment (DPIA) by ID",
+			InputSchema:  types.GetDataProtectionImpactAssessmentToolInputSchema,
+			OutputSchema: types.GetDataProtectionImpactAssessmentToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetDataProtectionImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addDataProtectionImpactAssessment",
+			Description:  "Add a new data protection impact assessment (DPIA) for a processing activity",
+			InputSchema:  types.AddDataProtectionImpactAssessmentToolInputSchema,
+			OutputSchema: types.AddDataProtectionImpactAssessmentToolOutputSchema,
+		},
+		resolver.AddDataProtectionImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateDataProtectionImpactAssessment",
+			Description:  "Update an existing data protection impact assessment (DPIA)",
+			InputSchema:  types.UpdateDataProtectionImpactAssessmentToolInputSchema,
+			OutputSchema: types.UpdateDataProtectionImpactAssessmentToolOutputSchema,
+		},
+		resolver.UpdateDataProtectionImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteDataProtectionImpactAssessment",
+			Description:  "Delete a data protection impact assessment (DPIA) by ID",
+			InputSchema:  types.DeleteDataProtectionImpactAssessmentToolInputSchema,
+			OutputSchema: types.DeleteDataProtectionImpactAssessmentToolOutputSchema,
+		},
+		resolver.DeleteDataProtectionImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listTransferImpactAssessments",
+			Description:  "List all transfer impact assessments (TIAs) for the organization",
+			InputSchema:  types.ListTransferImpactAssessmentsToolInputSchema,
+			OutputSchema: types.ListTransferImpactAssessmentsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListTransferImpactAssessmentsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getTransferImpactAssessment",
+			Description:  "Get a transfer impact assessment (TIA) by ID",
+			InputSchema:  types.GetTransferImpactAssessmentToolInputSchema,
+			OutputSchema: types.GetTransferImpactAssessmentToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetTransferImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addTransferImpactAssessment",
+			Description:  "Add a new transfer impact assessment (TIA) for a processing activity",
+			InputSchema:  types.AddTransferImpactAssessmentToolInputSchema,
+			OutputSchema: types.AddTransferImpactAssessmentToolOutputSchema,
+		},
+		resolver.AddTransferImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateTransferImpactAssessment",
+			Description:  "Update an existing transfer impact assessment (TIA)",
+			InputSchema:  types.UpdateTransferImpactAssessmentToolInputSchema,
+			OutputSchema: types.UpdateTransferImpactAssessmentToolOutputSchema,
+		},
+		resolver.UpdateTransferImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteTransferImpactAssessment",
+			Description:  "Delete a transfer impact assessment (TIA)",
+			InputSchema:  types.DeleteTransferImpactAssessmentToolInputSchema,
+			OutputSchema: types.DeleteTransferImpactAssessmentToolOutputSchema,
+		},
+		resolver.DeleteTransferImpactAssessmentTool,
 	)
 	mcp.AddTool(
 		server,
