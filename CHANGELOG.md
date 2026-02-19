@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.129.1] - 2026-02-19
+
+### Fixed
+
+- Do not display inactive profiles on iam home page
+- Fix profile update additional email addresses coalesce missing
+
 ## [0.129.0] - 2026-02-19
 
 ### Added
