@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.129.3] - 2026-02-19
+
+### Fixed
+
+- Console org dropdown query
+
 ## [0.129.2] - 2026-02-19
 
 ### Added
