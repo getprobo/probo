@@ -1388,7 +1388,7 @@ func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*ty
 
 // Organization is the resolver for the organization field.
 func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
+	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 

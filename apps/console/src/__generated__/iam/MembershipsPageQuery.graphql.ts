@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0e09a0566214f0c5c5ee2919d75bb85a>>
+ * @generated SignedSource<<63cc59b828971b5b1c0983e2a439f95d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -35,41 +35,48 @@ export type MembershipsPageQuery = {
 const node: ConcreteRequest = (function(){
 var v0 = {
   "kind": "Literal",
+  "name": "filter",
+  "value": {
+    "state": "ACTIVE"
+  }
+},
+v1 = {
+  "kind": "Literal",
   "name": "orderBy",
   "value": {
     "direction": "ASC",
     "field": "ORGANIZATION_NAME"
   }
 },
-v1 = {
+v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v2 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -94,13 +101,14 @@ v5 = {
   ],
   "storageKey": null
 },
-v6 = [
+v7 = [
+  (v0/*: any*/),
   {
     "kind": "Literal",
     "name": "first",
     "value": 1000
   },
-  (v0/*: any*/)
+  (v1/*: any*/)
 ];
 return {
   "fragment": {
@@ -124,7 +132,8 @@ return {
               "field": {
                 "alias": "profiles",
                 "args": [
-                  (v0/*: any*/)
+                  (v0/*: any*/),
+                  (v1/*: any*/)
                 ],
                 "concreteType": "ProfileConnection",
                 "kind": "LinkedField",
@@ -149,7 +158,7 @@ return {
                           "name": "node",
                           "plural": false,
                           "selections": [
-                            (v1/*: any*/),
+                            (v2/*: any*/),
                             {
                               "args": null,
                               "kind": "FragmentSpread",
@@ -165,7 +174,7 @@ return {
                                 "name": "organization",
                                 "plural": false,
                                 "selections": [
-                                  (v2/*: any*/),
+                                  (v3/*: any*/),
                                   {
                                     "args": null,
                                     "kind": "FragmentSpread",
@@ -176,19 +185,19 @@ return {
                               },
                               "action": "THROW"
                             },
-                            (v3/*: any*/)
+                            (v4/*: any*/)
                           ],
                           "storageKey": null
                         },
-                        (v4/*: any*/)
+                        (v5/*: any*/)
                       ],
                       "storageKey": null
                     },
                     "action": "THROW"
                   },
-                  (v5/*: any*/)
+                  (v6/*: any*/)
                 ],
-                "storageKey": "__MembershipsPage_profiles_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
+                "storageKey": "__MembershipsPage_profiles_connection(filter:{\"state\":\"ACTIVE\"},orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
               },
               "action": "THROW"
             }
@@ -217,7 +226,7 @@ return {
         "selections": [
           {
             "alias": null,
-            "args": (v6/*: any*/),
+            "args": (v7/*: any*/),
             "concreteType": "ProfileConnection",
             "kind": "LinkedField",
             "name": "profiles",
@@ -239,7 +248,7 @@ return {
                     "name": "node",
                     "plural": false,
                     "selections": [
-                      (v1/*: any*/),
+                      (v2/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -263,7 +272,7 @@ return {
                             "name": "lastSession",
                             "plural": false,
                             "selections": [
-                              (v1/*: any*/),
+                              (v2/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -274,7 +283,7 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v1/*: any*/)
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -286,8 +295,8 @@ return {
                         "name": "organization",
                         "plural": false,
                         "selections": [
+                          (v3/*: any*/),
                           (v2/*: any*/),
-                          (v1/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -298,37 +307,38 @@ return {
                         ],
                         "storageKey": null
                       },
-                      (v3/*: any*/)
+                      (v4/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v4/*: any*/)
+                  (v5/*: any*/)
                 ],
                 "storageKey": null
               },
-              (v5/*: any*/)
+              (v6/*: any*/)
             ],
-            "storageKey": "profiles(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
+            "storageKey": "profiles(filter:{\"state\":\"ACTIVE\"},first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
           },
           {
             "alias": null,
-            "args": (v6/*: any*/),
+            "args": (v7/*: any*/),
             "filters": [
-              "orderBy"
+              "orderBy",
+              "filter"
             ],
             "handle": "connection",
             "key": "MembershipsPage_profiles",
             "kind": "LinkedHandle",
             "name": "profiles"
           },
-          (v1/*: any*/)
+          (v2/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "d10df01cc523419b3f998a26d3ecbf7b",
+    "cacheID": "70c954537c603303bcd55418f6bd73cf",
     "id": null,
     "metadata": {
       "connection": [
@@ -345,11 +355,11 @@ return {
     },
     "name": "MembershipsPageQuery",
     "operationKind": "query",
-    "text": "query MembershipsPageQuery {\n  viewer {\n    profiles(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            ...MembershipCard_organizationFragment\n            id\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipCardFragment on Profile {\n  state\n  membership {\n    lastSession {\n      id\n      expiresAt\n    }\n    id\n  }\n}\n\nfragment MembershipCard_organizationFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
+    "text": "query MembershipsPageQuery {\n  viewer {\n    profiles(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}, filter: {state: ACTIVE}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            ...MembershipCard_organizationFragment\n            id\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipCardFragment on Profile {\n  state\n  membership {\n    lastSession {\n      id\n      expiresAt\n    }\n    id\n  }\n}\n\nfragment MembershipCard_organizationFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
   }
 };
 })();
 
-(node as any).hash = "578d6a9573ba32c7b017ec0bae079651";
+(node as any).hash = "c82587c425f688858d4625426153dbdc";
 
 export default node;

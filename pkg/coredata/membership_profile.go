@@ -945,7 +945,7 @@ SET
     state = @state,
     full_name = @full_name,
     kind = @kind,
-    additional_email_addresses = @additional_email_addresses,
+    additional_email_addresses = COALESCE(@additional_email_addresses, '{}'::CITEXT[]),
     position = @position,
     contract_start_date = @contract_start_date,
     contract_end_date = @contract_end_date,
