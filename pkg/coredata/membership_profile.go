@@ -289,22 +289,22 @@ WITH profiles AS (
         AND %s
 )
 SELECT
-    p.id,
-    p.identity_id,
-    p.organization_id,
-    p.email_address,
-    p.source,
-    p.state,
-    p.full_name,
-    p.kind,
-    p.additional_email_addresses,
-    p.position,
-    p.contract_start_date,
-    p.contract_end_date,
+    id,
+    identity_id,
+    organization_id,
+    email_address,
+    source,
+    state,
+    full_name,
+    kind,
+    additional_email_addresses,
+    position,
+    contract_start_date,
+    contract_end_date,
     '' AS organization_name,
-    p.created_at,
-    p.updated_at
-FROM profiles p
+    created_at,
+    updated_at
+FROM profiles
 WHERE
     %s
 `
@@ -313,6 +313,8 @@ WHERE
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -385,6 +387,8 @@ WHERE
 	q = fmt.Sprintf(q, filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"identity_id": identityID}
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

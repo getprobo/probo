@@ -79,8 +79,8 @@ func (f *MembershipProfileFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @filter_email::text IS NOT NULL THEN
-			i.email_address = @filter_email::text
+		WHEN @filter_email::citext IS NOT NULL THEN
+			i.email_address = @filter_email::citext
 		ELSE TRUE
 	END
 )
