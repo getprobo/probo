@@ -18,6 +18,7 @@ package googleworkspace
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -82,6 +83,36 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 				continue
 			}
 
+			var title string
+
+			if u.Organizations == nil {
+				title = ""
+			}
+
+			data, err := json.Marshal(u.Organizations)
+			if err != nil {
+				title = ""
+			}
+
+			var orgs []admin.UserOrganization
+			if err := json.Unmarshal(data, &orgs); err != nil {
+				title = ""
+			}
+
+			// Prefer the primary organization's title
+			for _, org := range orgs {
+				if org.Primary && org.Title != "" {
+					title = org.Title
+				}
+			}
+
+			// Fall back to the first organization with a title
+			for _, org := range orgs {
+				if org.Title != "" {
+					title = org.Title
+				}
+			}
+
 			allUsers = append(
 				allUsers,
 				scimclient.User{
@@ -90,6 +121,7 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 					GivenName:   u.Name.GivenName,
 					FamilyName:  u.Name.FamilyName,
 					Active:      !u.Suspended && !u.Archived,
+					Title:       title,
 				},
 			)
 		}

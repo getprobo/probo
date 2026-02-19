@@ -128,7 +128,7 @@ func (s *Service) CreateUser(
 	config *coredata.SCIMConfiguration,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	email, fullName, active := ParseUserFromAttributes(attributes)
+	email, fullName, active, title := ParseUserFromAttributes(attributes)
 	if email == "" {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("userName or email is required")
 	}
@@ -190,6 +190,7 @@ func (s *Service) CreateUser(
 					Source:         coredata.ProfileSourceSCIM,
 					State:          profileState,
 					FullName:       fullName,
+					Position:       &title,
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
@@ -204,6 +205,8 @@ func (s *Service) CreateUser(
 		} else {
 			profile.Source = coredata.ProfileSourceSCIM
 			profile.State = profileState
+			profile.FullName = fullName
+			profile.Position = &title
 			profile.UpdatedAt = now
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
@@ -379,8 +382,8 @@ func (s *Service) ReplaceUser(
 	profileID gid.GID,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	fullName, active := ParseUserFromReplaceAttributes(attributes)
-	profile, err := s.updateUser(ctx, config, profileID, fullName, active)
+	fullName, active, title := ParseUserFromReplaceAttributes(attributes)
+	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -394,8 +397,8 @@ func (s *Service) PatchUser(
 	profileID gid.GID,
 	operations []scim.PatchOperation,
 ) (scim.Resource, error) {
-	fullName, active := ParseUserFromPatchOperations(operations)
-	profile, err := s.updateUser(ctx, config, profileID, fullName, active)
+	fullName, active, title := ParseUserFromPatchOperations(operations)
+	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -409,6 +412,7 @@ func (s *Service) updateUser(
 	profileID gid.GID,
 	fullName string,
 	active *bool,
+	title string,
 ) (*coredata.MembershipProfile, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
@@ -445,6 +449,12 @@ func (s *Service) updateUser(
 			if fullName != "" {
 				profile.FullName = fullName
 				profile.UpdatedAt = now
+			}
+
+			if title == "" {
+				profile.Position = nil
+			} else {
+				profile.Position = &title
 			}
 
 			if shouldReactivate {
@@ -598,7 +608,7 @@ func (s *Service) createEvent(
 	return event
 }
 
-func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string, active bool) {
+func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string, active bool, title string) {
 	userName, _ := attributes["userName"].(string)
 	displayName, _ := attributes["displayName"].(string)
 
@@ -646,10 +656,14 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 		fullName = userName
 	}
 
-	return email, fullName, active
+	if t, ok := attributes["title"].(string); ok {
+		title = t
+	}
+
+	return email, fullName, active, title
 }
 
-func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool) {
+func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool, title string) {
 	displayName, _ := attributes["displayName"].(string)
 
 	var givenName, familyName string
@@ -668,10 +682,14 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullNam
 		activeVal = a
 	}
 
-	return fullName, &activeVal
+	if t, ok := attributes["title"].(string); ok {
+		title = t
+	}
+
+	return fullName, &activeVal, title
 }
 
-func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool) {
+func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool, title string) {
 	var givenName, familyName string
 
 	for _, op := range operations {
@@ -720,6 +738,10 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 				if name, ok := op.Value.(string); ok {
 					familyName = name
 				}
+			case "title":
+				if t, ok := op.Value.(string); ok {
+					title = t
+				}
 			}
 		}
 	}
@@ -729,7 +751,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 		fullName = strings.TrimSpace(givenName + " " + familyName)
 	}
 
-	return fullName, active
+	return fullName, active, title
 }
 
 func userToResource(p *coredata.MembershipProfile) scim.Resource {
@@ -750,6 +772,7 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 					"primary": true,
 				},
 			},
+			"title": p.Position,
 		},
 		Meta: scim.Meta{
 			Created:      &p.CreatedAt,

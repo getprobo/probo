@@ -39,6 +39,7 @@ type (
 		GivenName   string `json:"-"`
 		FamilyName  string `json:"-"`
 		Active      bool   `json:"active"`
+		Title       string `json:"title"`
 	}
 
 	Users []User
@@ -130,6 +131,7 @@ func (c *Client) CreateUser(ctx context.Context, user *User) error {
 				"primary": true,
 			},
 		},
+		"title": user.Title,
 	}
 
 	body, err := json.Marshal(payload)
@@ -178,6 +180,7 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 				"primary": true,
 			},
 		},
+		"title": user.Title,
 	}
 
 	body, err := json.Marshal(payload)
