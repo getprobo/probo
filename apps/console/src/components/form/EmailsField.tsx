@@ -4,6 +4,7 @@ import type { ArrayPath, Control, FieldValue, FieldValues, Path, UseFormRegister
 import { useFieldArray } from "react-hook-form";
 
 type Props<TFieldValues extends FieldValues = FieldValues> = {
+  disabled: boolean;
   control: Control<TFieldValues>;
   register: UseFormRegister<TFieldValues>;
 };
@@ -13,7 +14,7 @@ type Props<TFieldValues extends FieldValues = FieldValues> = {
  */
 export function EmailsField<
   TFieldValues extends FieldValues = FieldValues,
->({ control, register }: Props<TFieldValues>) {
+>({ control, register, disabled }: Props<TFieldValues>) {
   const { __ } = useTranslate();
   const { fields, append, remove } = useFieldArray({
     name: "additionalEmailAddresses" as ArrayPath<TFieldValues>,
@@ -29,11 +30,13 @@ export function EmailsField<
             className="w-full"
             {...register(`additionalEmailAddresses.${index}` as Path<TFieldValues>)}
             type="email"
+            disabled={disabled}
           />
           <Button
             icon={IconTrashCan}
             variant="tertiary"
             onClick={() => remove(index)}
+            disabled={disabled}
           />
         </div>
       ))}
@@ -42,6 +45,7 @@ export function EmailsField<
         type="button"
         icon={IconPlusLarge}
         onClick={() => append("" as FieldValue<TFieldValues>)}
+        disabled={disabled}
       >
         {__("Add email")}
       </Button>

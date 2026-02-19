@@ -159,7 +159,7 @@ export function PersonForm(props: {
 
   return (
     <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-      <Field label={__("Full name *")} {...register("fullName")} type="text" />
+      <Field label={__("Full name *")} {...register("fullName")} type="text" disabled={disabled} />
       {id
         ? (
             <>
@@ -235,7 +235,7 @@ export function PersonForm(props: {
         placeholder={__("e.g. CEO, CFO, etc.")}
         disabled={disabled}
       />
-      <EmailsField control={control} register={register} />
+      <EmailsField control={control} register={register} disabled={disabled} />
       <Field label={__("Contract start date")}>
         <Input
           {...register("contractStartDate")}
