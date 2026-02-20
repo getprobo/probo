@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.130.3] - 2026-02-20
+
+### Fixed
+
+- Add mcp bearer header
+
 ## [0.130.2] - 2026-02-20
 
 ### Fixed
