@@ -133,12 +133,13 @@ func (g *CertificateGenerator) Generate(
 		ctx,
 		htmlBuf.Bytes(),
 		html2pdf.RenderConfig{
-			PageFormat:   html2pdf.PageFormatA4,
-			Orientation:  html2pdf.OrientationPortrait,
-			MarginTop:    html2pdf.NewMarginMillimeters(20),
-			MarginBottom: html2pdf.NewMarginMillimeters(20),
-			MarginLeft:   html2pdf.NewMarginMillimeters(20),
-			MarginRight:  html2pdf.NewMarginMillimeters(20),
+			PageFormat:      html2pdf.PageFormatA4,
+			Orientation:     html2pdf.OrientationPortrait,
+			MarginTop:       html2pdf.NewMarginMillimeters(20),
+			MarginBottom:    html2pdf.NewMarginMillimeters(20),
+			MarginLeft:      html2pdf.NewMarginMillimeters(20),
+			MarginRight:     html2pdf.NewMarginMillimeters(20),
+			PrintBackground: true,
 		},
 	)
 	if err != nil {
