@@ -16,7 +16,6 @@ package trust
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -155,13 +154,8 @@ func (s TrustCenterAccessService) Request(
 					UpdatedAt:                         now,
 				}
 
-				if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot insert trust center access: %w", err)
-				}
-
-				// Create PENDING electronic signature when NDA is configured.
 				if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
-					_, err := s.svc.esign.CreateSignature(
+					sig, err := s.svc.esign.CreateSignature(
 						ctx,
 						tx,
 						&esign.CreateSignatureRequest{
@@ -174,6 +168,11 @@ func (s TrustCenterAccessService) Request(
 					if err != nil {
 						return fmt.Errorf("cannot create pending signature: %w", err)
 					}
+					access.ElectronicSignatureID = &sig.ID
+				}
+
+				if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert trust center access: %w", err)
 				}
 			}
 
@@ -243,93 +242,21 @@ func (s TrustCenterAccessService) Request(
 	return access, nil
 }
 
-func (s TrustCenterAccessService) HasAcceptedNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email mail.Addr) (bool, error) {
+func (s TrustCenterAccessService) GetAccess(
+	ctx context.Context,
+	trustCenterID gid.GID,
+	email mail.Addr,
+) (coredata.TrustCenterAccess, error) {
 	var access coredata.TrustCenterAccess
+
 	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
 		return access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
 	})
 
-	if err != nil {
-		return false, nil
-	}
-
-	// Legacy path: check the old boolean field.
-	if access.HasAcceptedNonDisclosureAgreement {
-		return true, nil
-	}
-
-	// New path: check for an electronic signature in ACCEPTED or later status.
-	if s.svc.esign != nil {
-		trustCenter := &coredata.TrustCenter{}
-		err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-			return trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID)
-		})
-		if err != nil {
-			return false, nil
-		}
-
-		if trustCenter.NonDisclosureAgreementFileID != nil {
-			sig, err := s.svc.esign.LoadSignatureByOrgEmailAndDocType(
-				ctx,
-				trustCenter.OrganizationID,
-				email.String(),
-				coredata.ElectronicSignatureDocumentTypeNDA,
-				*trustCenter.NonDisclosureAgreementFileID,
-			)
-			if err == nil {
-				switch sig.Status {
-				case coredata.ElectronicSignatureStatusAccepted,
-					coredata.ElectronicSignatureStatusProcessing,
-					coredata.ElectronicSignatureStatusCompleted:
-					return true, nil
-				}
-			}
-		}
-	}
-
-	return false, nil
+	return access, err
 }
 
-type AcceptNDARequest struct {
-	TrustCenterID gid.GID
-	Email         mail.Addr
-	IPAddr        string
-}
-
-func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Context, req *AcceptNDARequest) error {
-	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
-		access := &coredata.TrustCenterAccess{}
-		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, req.TrustCenterID, req.Email); err != nil {
-			return fmt.Errorf("cannot load trust center access: %w", err)
-		}
-
-		trustCenter := &coredata.TrustCenter{}
-		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
-			return fmt.Errorf("cannot load trust center: %w", err)
-		}
-
-		acceptationLogs, err := json.Marshal(map[string]string{
-			"email":     req.Email.String(),
-			"timestamp": time.Now().Format(time.RFC3339),
-			"ip":        req.IPAddr,
-		})
-		if err != nil {
-			return fmt.Errorf("cannot marshal non disclosure agreement acceptation logs: %w", err)
-		}
-
-		access.HasAcceptedNonDisclosureAgreement = true
-		access.UpdatedAt = time.Now()
-		access.HasAcceptedNonDisclosureAgreementMetadata = acceptationLogs
-		access.NDAFileID = trustCenter.NonDisclosureAgreementFileID
-		if err := access.Update(ctx, tx, s.svc.scope); err != nil {
-			return fmt.Errorf("cannot update trust center access: %w", err)
-		}
-
-		return nil
-	})
-}
-
-func (s TrustCenterAccessService) LoadDocumentAccess(
+func (s TrustCenterAccessService) GetDocumentAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
 	email mail.Addr,
@@ -372,7 +299,7 @@ func (s TrustCenterAccessService) LoadDocumentAccess(
 	return documentAccess, nil
 }
 
-func (s TrustCenterAccessService) LoadReportAccess(
+func (s TrustCenterAccessService) GetReportAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
 	email mail.Addr,
@@ -415,7 +342,7 @@ func (s TrustCenterAccessService) LoadReportAccess(
 	return reportAccess, nil
 }
 
-func (s TrustCenterAccessService) LoadTrustCenterFileAccess(
+func (s TrustCenterAccessService) GetTrustCenterFileAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
 	email mail.Addr,

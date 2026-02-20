@@ -27,12 +27,9 @@ export function MainLayout(props: Props) {
     return null;
   }
 
-  const ndaSig = trustCenter.ndaSignature;
-  const hasPendingNDA
-    = trustCenter.isViewerMember
-      && trustCenter.ndaFileUrl
-      && ndaSig
-      && ndaSig.status !== "COMPLETED";
+  const nda = trustCenter.nonDisclosureAgreement;
+  const hasPendingNDA = nda?.viewerSignature
+    && (nda.viewerSignature.status === "PENDING" || nda.viewerSignature.status === "FAILED");
 
   if (hasPendingNDA) {
     return <Navigate to="/nda" replace />;

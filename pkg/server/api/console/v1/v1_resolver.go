@@ -1243,7 +1243,7 @@ func (r *documentVersionSignatureConnectionResolver) TotalCount(ctx context.Cont
 
 // CertificateFileURL is the resolver for the certificateFileUrl field.
 func (r *electronicSignatureResolver) CertificateFileURL(ctx context.Context, obj *types.ElectronicSignature) (*string, error) {
-	sig, err := r.esign.LoadSignatureByID(ctx, obj.ID)
+	sig, err := r.esign.GetSignatureByID(ctx, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load signature: %w", err)
 	}
@@ -1262,7 +1262,7 @@ func (r *electronicSignatureResolver) CertificateFileURL(ctx context.Context, ob
 
 // Events is the resolver for the events field.
 func (r *electronicSignatureResolver) Events(ctx context.Context, obj *types.ElectronicSignature) ([]*types.ElectronicSignatureEvent, error) {
-	events, err := r.esign.LoadEventsBySignatureID(ctx, obj.ID)
+	events, err := r.esign.GetEventsBySignatureID(ctx, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load signature events: %w", err)
 	}
@@ -6394,13 +6394,13 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	trustCenter, file, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
+	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
 		panic(fmt.Errorf("cannot get trust center: %w", err))
 	}
 
-	return types.NewTrustCenter(trustCenter, file), nil
+	return types.NewTrustCenter(trustCenter, nil), nil
 }
 
 // CustomDomain is the resolver for the customDomain field.
@@ -6874,11 +6874,11 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.TrustCenterEntityType:
 		action = probo.ActionTrustCenterGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			trustCenter, file, err := prb.TrustCenters.Get(ctx, id)
+			trustCenter, err := prb.TrustCenters.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewTrustCenter(trustCenter, file), nil
+			return types.NewTrustCenter(trustCenter, nil), nil
 		}
 	case coredata.TrustCenterAccessEntityType:
 		action = probo.ActionTrustCenterAccessGet
@@ -7739,7 +7739,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	trustCenter, _, err := prb.TrustCenters.Get(ctx, obj.ID)
+	trustCenter, err := prb.TrustCenters.Get(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get trust center: %w", err))
 	}
@@ -7832,24 +7832,13 @@ func (r *trustCenterAccessResolver) NdaSignature(ctx context.Context, obj *types
 		return nil, fmt.Errorf("cannot load trust center access: %w", err)
 	}
 
-	trustCenter, _, err := prb.TrustCenters.Get(ctx, access.TrustCenterID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center: %w", err)
-	}
-
-	if trustCenter.NonDisclosureAgreementFileID == nil {
+	if access.ElectronicSignatureID == nil {
 		return nil, nil
 	}
 
-	sig, err := r.esign.LoadSignatureByOrgEmailAndDocType(
-		ctx,
-		access.OrganizationID,
-		string(access.Email),
-		coredata.ElectronicSignatureDocumentTypeNDA,
-		*trustCenter.NonDisclosureAgreementFileID,
-	)
+	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
 	if err != nil {
-		return nil, nil // No signature row — pre-existing access
+		return nil, nil
 	}
 
 	return types.NewElectronicSignature(sig), nil

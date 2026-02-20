@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f1cae8462501cdf634eb02eb143c3806>>
+ * @generated SignedSource<<10a0ee1dfa19239c5c5820f3d58a1e19>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,12 @@ export type ElectronicSignatureStatus = "ACCEPTED" | "COMPLETED" | "FAILED" | "P
 export type NDAPageQuery$variables = Record<PropertyKey, never>;
 export type NDAPageQuery$data = {
   readonly currentTrustCenter: {
-    readonly ndaFileName: string | null | undefined;
-    readonly ndaFileUrl: string | null | undefined;
-    readonly ndaSignature: {
-      readonly status: ElectronicSignatureStatus;
+    readonly nonDisclosureAgreement: {
+      readonly fileName: string;
+      readonly fileUrl: string;
+      readonly viewerSignature: {
+        readonly status: ElectronicSignatureStatus;
+      } | null | undefined;
     } | null | undefined;
     readonly organization: {
       readonly name: string;
@@ -52,14 +54,14 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "ndaFileUrl",
+  "name": "fileName",
   "storageKey": null
 },
 v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "ndaFileName",
+  "name": "fileUrl",
   "storageKey": null
 },
 v4 = {
@@ -117,17 +119,28 @@ return {
               ],
               "storageKey": null
             },
-            (v2/*: any*/),
-            (v3/*: any*/),
             {
               "alias": null,
               "args": null,
-              "concreteType": "ElectronicSignature",
+              "concreteType": "NonDisclosureAgreement",
               "kind": "LinkedField",
-              "name": "ndaSignature",
+              "name": "nonDisclosureAgreement",
               "plural": false,
               "selections": [
-                (v4/*: any*/)
+                (v2/*: any*/),
+                (v3/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "ElectronicSignature",
+                  "kind": "LinkedField",
+                  "name": "viewerSignature",
+                  "plural": false,
+                  "selections": [
+                    (v4/*: any*/)
+                  ],
+                  "storageKey": null
+                }
               ],
               "storageKey": null
             },
@@ -185,30 +198,41 @@ return {
             ],
             "storageKey": null
           },
-          (v2/*: any*/),
-          (v3/*: any*/),
           {
             "alias": null,
             "args": null,
-            "concreteType": "ElectronicSignature",
+            "concreteType": "NonDisclosureAgreement",
             "kind": "LinkedField",
-            "name": "ndaSignature",
+            "name": "nonDisclosureAgreement",
             "plural": false,
             "selections": [
-              (v4/*: any*/),
-              (v5/*: any*/),
+              (v2/*: any*/),
+              (v3/*: any*/),
               {
                 "alias": null,
                 "args": null,
-                "kind": "ScalarField",
-                "name": "consentText",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "lastError",
+                "concreteType": "ElectronicSignature",
+                "kind": "LinkedField",
+                "name": "viewerSignature",
+                "plural": false,
+                "selections": [
+                  (v4/*: any*/),
+                  (v5/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "consentText",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "lastError",
+                    "storageKey": null
+                  }
+                ],
                 "storageKey": null
               }
             ],
@@ -221,16 +245,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c0b175c435c5730e390fcfde596d8bc3",
+    "cacheID": "e1ab3a5206a4ea200ebdb991023a0e99",
     "id": null,
     "metadata": {},
     "name": "NDAPageQuery",
     "operationKind": "query",
-    "text": "query NDAPageQuery {\n  viewer {\n    fullName\n    id\n  }\n  currentTrustCenter {\n    organization {\n      name\n      id\n    }\n    ndaFileUrl\n    ndaFileName\n    ndaSignature {\n      status\n      id\n    }\n    ...NDAPageFragment\n    id\n  }\n}\n\nfragment NDAPageFragment on TrustCenter {\n  ndaSignature {\n    id\n    status\n    consentText\n    lastError\n  }\n  id\n}\n"
+    "text": "query NDAPageQuery {\n  viewer {\n    fullName\n    id\n  }\n  currentTrustCenter {\n    organization {\n      name\n      id\n    }\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    ...NDAPageFragment\n    id\n  }\n}\n\nfragment NDAPageFragment on TrustCenter {\n  nonDisclosureAgreement {\n    viewerSignature {\n      id\n      status\n      consentText\n      lastError\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a78bf8b65feba4627ecb265ca882f645";
+(node as any).hash = "4f0f0dd672862fb6c3fb5ef2eff80cd9";
 
 export default node;

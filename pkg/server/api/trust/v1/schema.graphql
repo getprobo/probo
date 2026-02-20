@@ -488,18 +488,23 @@ type TrustCenterFileEdge {
   node: TrustCenterFile!
 }
 
+type NonDisclosureAgreement {
+  fileName: String!
+  fileUrl: String! @goField(forceResolver: true)
+  viewerSignature: ElectronicSignature @goField(forceResolver: true)
+}
+
 type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
   logoFileUrl: String @goField(forceResolver: true)
   darkLogoFileUrl: String @goField(forceResolver: true)
-  ndaFileName: String
-  ndaFileUrl: String @goField(forceResolver: true)
-  ndaSignature: ElectronicSignature @goField(forceResolver: true)
-  organization: Organization! @goField(forceResolver: true)
+
+  nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
+
   isViewerMember: Boolean! @goField(forceResolver: true)
-  hasAcceptedNonDisclosureAgreement: Boolean! @goField(forceResolver: true)
+  organization: Organization! @goField(forceResolver: true)
 
   documents(
     first: Int
@@ -599,14 +604,6 @@ type ExportReportPDFPayload {
 
 type ExportTrustCenterFilePayload {
   data: String!
-}
-
-input AcceptNonDisclosureAgreementInput {
-  fullName: String!
-}
-
-type AcceptNonDisclosureAgreementPayload {
-  success: Boolean!
 }
 
 # Electronic Signature
@@ -770,11 +767,7 @@ type Mutation {
     input: ExportTrustCenterFileInput!
   ): ExportTrustCenterFilePayload! @session(required: OPTIONAL)
 
-  acceptNonDisclosureAgreement(
-    input: AcceptNonDisclosureAgreementInput!
-  ): AcceptNonDisclosureAgreementPayload @session(required: PRESENT)
-
-  requestDocumentAccess(
+    requestDocumentAccess(
     input: RequestDocumentAccessInput!
   ): RequestAccessesPayload! @session(required: PRESENT)
 
