@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.130.0] - 2026-02-20
+
+### Added
+
+- Add processing activities to mcp
+
 ## [0.129.3] - 2026-02-19
 
 ### Fixed
