@@ -217,6 +217,7 @@ const (
 	subjectTrustCenterAccess                 = "Compliance Page Access Invitation - %s"
 	subjectTrustCenterDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
 	subjectMagicLink                         = "Connect to %s"
+	subjectElectronicSignatureCertificate    = "Your signed %s - Certificate of Completion"
 )
 
 var (
@@ -238,6 +239,8 @@ var (
 	trustCenterDocumentAccessRejectedTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-document-access-rejected.txt.tmpl"))
 	magicLinkHTMLTemplate                         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/magic-link.html.tmpl"))
 	magicLinkTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/magic-link.txt.tmpl"))
+	electronicSignatureCertificateHTMLTemplate    = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/electronic-signature-certificate.html.tmpl"))
+	electronicSignatureCertificateTextTemplate    = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/electronic-signature-certificate.txt.tmpl"))
 )
 
 func (p *Presenter) getCommonVariables(ctx context.Context) (*CommonVariables, error) {
@@ -458,6 +461,26 @@ func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string
 
 	textBody, htmlBody, err = renderEmail(magicLinkTextTemplate, magicLinkHTMLTemplate, data)
 	return fmt.Sprintf(subjectMagicLink, organizationName), textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, signerName string, documentType string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		SignerName   string
+		DocumentType string
+	}{
+		CommonVariables: vars,
+		SignerName:      signerName,
+		DocumentType:    documentType,
+	}
+
+	textBody, htmlBody, err = renderEmail(electronicSignatureCertificateTextTemplate, electronicSignatureCertificateHTMLTemplate, data)
+	return fmt.Sprintf(subjectElectronicSignatureCertificate, documentType), textBody, htmlBody, err
 }
 
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {

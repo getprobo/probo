@@ -23,6 +23,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -46,6 +47,7 @@ type (
 
 	Resolver struct {
 		trust         *trust.Service
+		esign         *esign.Service
 		logger        *log.Logger
 		iam           *iam.Service
 		sessionCookie *authn.Cookie
@@ -75,6 +77,7 @@ func NewMux(
 	logger *log.Logger,
 	iamSvc *iam.Service,
 	trustSvc *trust.Service,
+	esignSvc *esign.Service,
 	cookieConfig securecookie.Config,
 	baseURL *baseurl.BaseURL,
 ) *chi.Mux {
@@ -84,7 +87,7 @@ func NewMux(
 	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 	r.Use(compliancepage.NewMembershipMiddleware(trustSvc, logger))
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, logger, baseURL, cookieConfig)
+	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, logger, baseURL, cookieConfig)
 
 	r.Handle("/graphql", graphqlHandler)
 

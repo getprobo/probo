@@ -12,6 +12,7 @@ import Invitation from "../src/Invitation";
 import PasswordReset from "../src/PasswordReset";
 import TrustCenterAccess from "../src/TrustCenterAccess";
 import TrustCenterDocumentAccessRejected from "../src/TrustCenterDocumentAccessRejected";
+import ElectronicSignatureCertificate from "../src/ElectronicSignatureCertificate";
 import MagicLink from "../src/MagicLink";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,6 +59,10 @@ const templates: TemplateConfig[] = [
   {
     name: "magic-link",
     render: () => MagicLink(),
+  },
+  {
+    name: "electronic-signature-certificate",
+    render: () => ElectronicSignatureCertificate(),
   },
 ];
 

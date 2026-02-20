@@ -16,12 +16,13 @@ type Node interface {
 	GetID() gid.GID
 }
 
-type AcceptNonDisclosureAgreementInput struct {
-	FullName string `json:"fullName"`
+type AcceptElectronicSignatureInput struct {
+	SignatureID gid.GID `json:"signatureId"`
+	FullName    string  `json:"fullName"`
 }
 
-type AcceptNonDisclosureAgreementPayload struct {
-	Success bool `json:"success"`
+type AcceptElectronicSignaturePayload struct {
+	Signature *ElectronicSignature `json:"signature"`
 }
 
 type Audit struct {
@@ -63,6 +64,20 @@ type DocumentEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Document      `json:"node"`
 }
+
+type ElectronicSignature struct {
+	ID           gid.GID                                  `json:"id"`
+	Status       coredata.ElectronicSignatureStatus       `json:"status"`
+	DocumentType coredata.ElectronicSignatureDocumentType `json:"documentType"`
+	ConsentText  string                                   `json:"consentText"`
+	LastError    *string                                  `json:"lastError,omitempty"`
+	SignedAt     *time.Time                               `json:"signedAt,omitempty"`
+	CreatedAt    time.Time                                `json:"createdAt"`
+	UpdatedAt    time.Time                                `json:"updatedAt"`
+}
+
+func (ElectronicSignature) IsNode()             {}
+func (this ElectronicSignature) GetID() gid.GID { return this.ID }
 
 type ExportDocumentPDFInput struct {
 	DocumentID gid.GID `json:"documentId"`
@@ -113,6 +128,12 @@ func (this Identity) GetID() gid.GID { return this.ID }
 type Mutation struct {
 }
 
+type NonDisclosureAgreement struct {
+	FileName        string               `json:"fileName"`
+	FileURL         string               `json:"fileUrl"`
+	ViewerSignature *ElectronicSignature `json:"viewerSignature,omitempty"`
+}
+
 type Organization struct {
 	ID                 gid.GID `json:"id"`
 	Name               string  `json:"name"`
@@ -134,6 +155,15 @@ type PageInfo struct {
 }
 
 type Query struct {
+}
+
+type RecordSigningEventInput struct {
+	SignatureID gid.GID                               `json:"signatureId"`
+	EventType   coredata.ElectronicSignatureEventType `json:"eventType"`
+}
+
+type RecordSigningEventPayload struct {
+	Success bool `json:"success"`
 }
 
 type Report struct {
@@ -171,21 +201,19 @@ type SendMagicLinkPayload struct {
 }
 
 type TrustCenter struct {
-	ID                                gid.GID                         `json:"id"`
-	Active                            bool                            `json:"active"`
-	Slug                              string                          `json:"slug"`
-	LogoFileURL                       *string                         `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL                   *string                         `json:"darkLogoFileUrl,omitempty"`
-	NdaFileName                       *string                         `json:"ndaFileName,omitempty"`
-	NdaFileURL                        *string                         `json:"ndaFileUrl,omitempty"`
-	Organization                      *Organization                   `json:"organization"`
-	IsViewerMember                    bool                            `json:"isViewerMember"`
-	HasAcceptedNonDisclosureAgreement bool                            `json:"hasAcceptedNonDisclosureAgreement"`
-	Documents                         *DocumentConnection             `json:"documents"`
-	Audits                            *AuditConnection                `json:"audits"`
-	Vendors                           *VendorConnection               `json:"vendors"`
-	References                        *TrustCenterReferenceConnection `json:"references"`
-	TrustCenterFiles                  *TrustCenterFileConnection      `json:"trustCenterFiles"`
+	ID                     gid.GID                         `json:"id"`
+	Active                 bool                            `json:"active"`
+	Slug                   string                          `json:"slug"`
+	LogoFileURL            *string                         `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL        *string                         `json:"darkLogoFileUrl,omitempty"`
+	NonDisclosureAgreement *NonDisclosureAgreement         `json:"nonDisclosureAgreement,omitempty"`
+	IsViewerMember         bool                            `json:"isViewerMember"`
+	Organization           *Organization                   `json:"organization"`
+	Documents              *DocumentConnection             `json:"documents"`
+	Audits                 *AuditConnection                `json:"audits"`
+	Vendors                *VendorConnection               `json:"vendors"`
+	References             *TrustCenterReferenceConnection `json:"references"`
+	TrustCenterFiles       *TrustCenterFileConnection      `json:"trustCenterFiles"`
 }
 
 func (TrustCenter) IsNode()             {}

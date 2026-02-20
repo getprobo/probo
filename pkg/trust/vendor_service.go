@@ -92,7 +92,7 @@ func (s VendorService) CountForTrustCenterId(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			trustCenter, _, err := s.svc.TrustCenters.Get(ctx, trustCenterID)
+			trustCenter, err := s.svc.TrustCenters.Get(ctx, trustCenterID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}

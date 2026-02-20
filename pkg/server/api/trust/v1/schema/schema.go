@@ -51,6 +51,7 @@ type ResolverRoot interface {
 	Document() DocumentResolver
 	Framework() FrameworkResolver
 	Mutation() MutationResolver
+	NonDisclosureAgreement() NonDisclosureAgreementResolver
 	Organization() OrganizationResolver
 	Query() QueryResolver
 	Report() ReportResolver
@@ -65,8 +66,8 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	AcceptNonDisclosureAgreementPayload struct {
-		Success func(childComplexity int) int
+	AcceptElectronicSignaturePayload struct {
+		Signature func(childComplexity int) int
 	}
 
 	Audit struct {
@@ -103,6 +104,17 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	ElectronicSignature struct {
+		ConsentText  func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		DocumentType func(childComplexity int) int
+		ID           func(childComplexity int) int
+		LastError    func(childComplexity int) int
+		SignedAt     func(childComplexity int) int
+		Status       func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+	}
+
 	ExportDocumentPDFPayload struct {
 		Data func(childComplexity int) int
 	}
@@ -132,16 +144,23 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptNonDisclosureAgreement func(childComplexity int, input types.AcceptNonDisclosureAgreementInput) int
+		AcceptElectronicSignature    func(childComplexity int, input types.AcceptElectronicSignatureInput) int
 		ExportDocumentPDF            func(childComplexity int, input types.ExportDocumentPDFInput) int
 		ExportReportPDF              func(childComplexity int, input types.ExportReportPDFInput) int
 		ExportTrustCenterFile        func(childComplexity int, input types.ExportTrustCenterFileInput) int
+		RecordSigningEvent           func(childComplexity int, input types.RecordSigningEventInput) int
 		RequestAllAccesses           func(childComplexity int) int
 		RequestDocumentAccess        func(childComplexity int, input types.RequestDocumentAccessInput) int
 		RequestReportAccess          func(childComplexity int, input types.RequestReportAccessInput) int
 		RequestTrustCenterFileAccess func(childComplexity int, input types.RequestTrustCenterFileAccessInput) int
 		SendMagicLink                func(childComplexity int, input types.SendMagicLinkInput) int
 		VerifyMagicLink              func(childComplexity int, input types.VerifyMagicLinkInput) int
+	}
+
+	NonDisclosureAgreement struct {
+		FileName        func(childComplexity int) int
+		FileURL         func(childComplexity int) int
+		ViewerSignature func(childComplexity int) int
 	}
 
 	Organization struct {
@@ -167,6 +186,10 @@ type ComplexityRoot struct {
 		Viewer             func(childComplexity int) int
 	}
 
+	RecordSigningEventPayload struct {
+		Success func(childComplexity int) int
+	}
+
 	Report struct {
 		Filename               func(childComplexity int) int
 		HasUserRequestedAccess func(childComplexity int) int
@@ -183,21 +206,19 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenter struct {
-		Active                            func(childComplexity int) int
-		Audits                            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		DarkLogoFileURL                   func(childComplexity int) int
-		Documents                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		HasAcceptedNonDisclosureAgreement func(childComplexity int) int
-		ID                                func(childComplexity int) int
-		IsViewerMember                    func(childComplexity int) int
-		LogoFileURL                       func(childComplexity int) int
-		NdaFileName                       func(childComplexity int) int
-		NdaFileURL                        func(childComplexity int) int
-		Organization                      func(childComplexity int) int
-		References                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		Slug                              func(childComplexity int) int
-		TrustCenterFiles                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		Vendors                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Active                 func(childComplexity int) int
+		Audits                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		DarkLogoFileURL        func(childComplexity int) int
+		Documents              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		ID                     func(childComplexity int) int
+		IsViewerMember         func(childComplexity int) int
+		LogoFileURL            func(childComplexity int) int
+		NonDisclosureAgreement func(childComplexity int) int
+		Organization           func(childComplexity int) int
+		References             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Slug                   func(childComplexity int) int
+		TrustCenterFiles       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Vendors                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 	}
 
 	TrustCenterAccess struct {
@@ -289,10 +310,15 @@ type MutationResolver interface {
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
 	ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error)
 	ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error)
-	AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error)
 	RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestAccessesPayload, error)
 	RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestAccessesPayload, error)
 	RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error)
+	AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error)
+	RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error)
+}
+type NonDisclosureAgreementResolver interface {
+	FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error)
+	ViewerSignature(ctx context.Context, obj *types.NonDisclosureAgreement) (*types.ElectronicSignature, error)
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
@@ -309,11 +335,9 @@ type ReportResolver interface {
 type TrustCenterResolver interface {
 	LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
-
-	NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
-	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
+	NonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (*types.NonDisclosureAgreement, error)
 	IsViewerMember(ctx context.Context, obj *types.TrustCenter) (bool, error)
-	HasAcceptedNonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (bool, error)
+	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error)
 	Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error)
 	Vendors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.VendorConnection, error)
@@ -350,12 +374,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
-	case "AcceptNonDisclosureAgreementPayload.success":
-		if e.complexity.AcceptNonDisclosureAgreementPayload.Success == nil {
+	case "AcceptElectronicSignaturePayload.signature":
+		if e.complexity.AcceptElectronicSignaturePayload.Signature == nil {
 			break
 		}
 
-		return e.complexity.AcceptNonDisclosureAgreementPayload.Success(childComplexity), true
+		return e.complexity.AcceptElectronicSignaturePayload.Signature(childComplexity), true
 
 	case "Audit.framework":
 		if e.complexity.Audit.Framework == nil {
@@ -459,6 +483,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DocumentEdge.Node(childComplexity), true
 
+	case "ElectronicSignature.consentText":
+		if e.complexity.ElectronicSignature.ConsentText == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.ConsentText(childComplexity), true
+	case "ElectronicSignature.createdAt":
+		if e.complexity.ElectronicSignature.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.CreatedAt(childComplexity), true
+	case "ElectronicSignature.documentType":
+		if e.complexity.ElectronicSignature.DocumentType == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.DocumentType(childComplexity), true
+	case "ElectronicSignature.id":
+		if e.complexity.ElectronicSignature.ID == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.ID(childComplexity), true
+	case "ElectronicSignature.lastError":
+		if e.complexity.ElectronicSignature.LastError == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.LastError(childComplexity), true
+	case "ElectronicSignature.signedAt":
+		if e.complexity.ElectronicSignature.SignedAt == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.SignedAt(childComplexity), true
+	case "ElectronicSignature.status":
+		if e.complexity.ElectronicSignature.Status == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.Status(childComplexity), true
+	case "ElectronicSignature.updatedAt":
+		if e.complexity.ElectronicSignature.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ElectronicSignature.UpdatedAt(childComplexity), true
+
 	case "ExportDocumentPDFPayload.data":
 		if e.complexity.ExportDocumentPDFPayload.Data == nil {
 			break
@@ -542,17 +615,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Identity.UpdatedAt(childComplexity), true
 
-	case "Mutation.acceptNonDisclosureAgreement":
-		if e.complexity.Mutation.AcceptNonDisclosureAgreement == nil {
+	case "Mutation.acceptElectronicSignature":
+		if e.complexity.Mutation.AcceptElectronicSignature == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_acceptNonDisclosureAgreement_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_acceptElectronicSignature_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AcceptNonDisclosureAgreement(childComplexity, args["input"].(types.AcceptNonDisclosureAgreementInput)), true
+		return e.complexity.Mutation.AcceptElectronicSignature(childComplexity, args["input"].(types.AcceptElectronicSignatureInput)), true
 	case "Mutation.exportDocumentPDF":
 		if e.complexity.Mutation.ExportDocumentPDF == nil {
 			break
@@ -586,6 +659,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ExportTrustCenterFile(childComplexity, args["input"].(types.ExportTrustCenterFileInput)), true
+	case "Mutation.recordSigningEvent":
+		if e.complexity.Mutation.RecordSigningEvent == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_recordSigningEvent_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RecordSigningEvent(childComplexity, args["input"].(types.RecordSigningEventInput)), true
 	case "Mutation.requestAllAccesses":
 		if e.complexity.Mutation.RequestAllAccesses == nil {
 			break
@@ -647,6 +731,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.VerifyMagicLink(childComplexity, args["input"].(types.VerifyMagicLinkInput)), true
+
+	case "NonDisclosureAgreement.fileName":
+		if e.complexity.NonDisclosureAgreement.FileName == nil {
+			break
+		}
+
+		return e.complexity.NonDisclosureAgreement.FileName(childComplexity), true
+	case "NonDisclosureAgreement.fileUrl":
+		if e.complexity.NonDisclosureAgreement.FileURL == nil {
+			break
+		}
+
+		return e.complexity.NonDisclosureAgreement.FileURL(childComplexity), true
+	case "NonDisclosureAgreement.viewerSignature":
+		if e.complexity.NonDisclosureAgreement.ViewerSignature == nil {
+			break
+		}
+
+		return e.complexity.NonDisclosureAgreement.ViewerSignature(childComplexity), true
 
 	case "Organization.description":
 		if e.complexity.Organization.Description == nil {
@@ -740,6 +843,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Viewer(childComplexity), true
 
+	case "RecordSigningEventPayload.success":
+		if e.complexity.RecordSigningEventPayload.Success == nil {
+			break
+		}
+
+		return e.complexity.RecordSigningEventPayload.Success(childComplexity), true
+
 	case "Report.filename":
 		if e.complexity.Report.Filename == nil {
 			break
@@ -813,12 +923,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
-	case "TrustCenter.hasAcceptedNonDisclosureAgreement":
-		if e.complexity.TrustCenter.HasAcceptedNonDisclosureAgreement == nil {
-			break
-		}
-
-		return e.complexity.TrustCenter.HasAcceptedNonDisclosureAgreement(childComplexity), true
 	case "TrustCenter.id":
 		if e.complexity.TrustCenter.ID == nil {
 			break
@@ -837,18 +941,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.LogoFileURL(childComplexity), true
-	case "TrustCenter.ndaFileName":
-		if e.complexity.TrustCenter.NdaFileName == nil {
+	case "TrustCenter.nonDisclosureAgreement":
+		if e.complexity.TrustCenter.NonDisclosureAgreement == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.NdaFileName(childComplexity), true
-	case "TrustCenter.ndaFileUrl":
-		if e.complexity.TrustCenter.NdaFileURL == nil {
-			break
-		}
-
-		return e.complexity.TrustCenter.NdaFileURL(childComplexity), true
+		return e.complexity.TrustCenter.NonDisclosureAgreement(childComplexity), true
 	case "TrustCenter.organization":
 		if e.complexity.TrustCenter.Organization == nil {
 			break
@@ -1130,10 +1228,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputAcceptNonDisclosureAgreementInput,
+		ec.unmarshalInputAcceptElectronicSignatureInput,
 		ec.unmarshalInputExportDocumentPDFInput,
 		ec.unmarshalInputExportReportPDFInput,
 		ec.unmarshalInputExportTrustCenterFileInput,
+		ec.unmarshalInputRecordSigningEventInput,
 		ec.unmarshalInputRequestDocumentAccessInput,
 		ec.unmarshalInputRequestReportAccessInput,
 		ec.unmarshalInputRequestTrustCenterFileAccessInput,
@@ -1726,17 +1825,23 @@ type TrustCenterFileEdge {
   node: TrustCenterFile!
 }
 
+type NonDisclosureAgreement {
+  fileName: String!
+  fileUrl: String! @goField(forceResolver: true)
+  viewerSignature: ElectronicSignature @goField(forceResolver: true)
+}
+
 type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
   logoFileUrl: String @goField(forceResolver: true)
   darkLogoFileUrl: String @goField(forceResolver: true)
-  ndaFileName: String
-  ndaFileUrl: String @goField(forceResolver: true)
-  organization: Organization! @goField(forceResolver: true)
+
+  nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
+
   isViewerMember: Boolean! @goField(forceResolver: true)
-  hasAcceptedNonDisclosureAgreement: Boolean! @goField(forceResolver: true)
+  organization: Organization! @goField(forceResolver: true)
 
   documents(
     first: Int
@@ -1838,11 +1943,140 @@ type ExportTrustCenterFilePayload {
   data: String!
 }
 
-input AcceptNonDisclosureAgreementInput {
+# Electronic Signature
+
+enum ElectronicSignatureStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatus"
+  ) {
+  PENDING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusPending"
+    )
+  ACCEPTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusAccepted"
+    )
+  PROCESSING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusProcessing"
+    )
+  COMPLETED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusCompleted"
+    )
+  FAILED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureStatusFailed"
+    )
+}
+
+enum ElectronicSignatureDocumentType
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentType"
+  ) {
+  NDA
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeNDA"
+    )
+  DPA
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeDPA"
+    )
+  MSA
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeMSA"
+    )
+  SOW
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeSOW"
+    )
+  SLA
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeSLA"
+    )
+  TOS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeTOS"
+    )
+  PRIVACY_POLICY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypePrivacyPolicy"
+    )
+  OTHER
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureDocumentTypeOther"
+    )
+}
+
+enum ElectronicSignatureEventType
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventType"
+  ) {
+  DOCUMENT_VIEWED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeDocumentViewed"
+    )
+  CONSENT_GIVEN
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeConsentGiven"
+    )
+  FULL_NAME_TYPED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeFullNameTyped"
+    )
+  SIGNATURE_ACCEPTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSignatureAccepted"
+    )
+  SIGNATURE_COMPLETED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSignatureCompleted"
+    )
+  SEAL_COMPUTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeSealComputed"
+    )
+  TIMESTAMP_REQUESTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeTimestampRequested"
+    )
+  CERTIFICATE_GENERATED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeCertificateGenerated"
+    )
+  PROCESSING_ERROR
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ElectronicSignatureEventTypeProcessingError"
+    )
+}
+
+type ElectronicSignature implements Node {
+  id: ID!
+  status: ElectronicSignatureStatus!
+  documentType: ElectronicSignatureDocumentType!
+  consentText: String!
+  lastError: String
+  signedAt: Datetime
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+input AcceptElectronicSignatureInput {
+  signatureId: ID!
   fullName: String!
 }
 
-type AcceptNonDisclosureAgreementPayload {
+type AcceptElectronicSignaturePayload {
+  signature: ElectronicSignature!
+}
+
+input RecordSigningEventInput {
+  signatureId: ID!
+  eventType: ElectronicSignatureEventType!
+}
+
+type RecordSigningEventPayload {
   success: Boolean!
 }
 
@@ -1870,11 +2104,7 @@ type Mutation {
     input: ExportTrustCenterFileInput!
   ): ExportTrustCenterFilePayload! @session(required: OPTIONAL)
 
-  acceptNonDisclosureAgreement(
-    input: AcceptNonDisclosureAgreementInput!
-  ): AcceptNonDisclosureAgreementPayload @session(required: PRESENT)
-
-  requestDocumentAccess(
+    requestDocumentAccess(
     input: RequestDocumentAccessInput!
   ): RequestAccessesPayload! @session(required: PRESENT)
 
@@ -1885,6 +2115,14 @@ type Mutation {
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
   ): RequestAccessesPayload! @session(required: PRESENT)
+
+  acceptElectronicSignature(
+    input: AcceptElectronicSignatureInput!
+  ): AcceptElectronicSignaturePayload @session(required: PRESENT)
+
+  recordSigningEvent(
+    input: RecordSigningEventInput!
+  ): RecordSigningEventPayload @session(required: PRESENT)
 }
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
@@ -1944,10 +2182,10 @@ func (ec *executionContext) dir_session_args(ctx context.Context, rawArgs map[st
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_acceptNonDisclosureAgreement_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_acceptElectronicSignature_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNAcceptNonDisclosureAgreementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNAcceptElectronicSignatureInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptElectronicSignatureInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1981,6 +2219,17 @@ func (ec *executionContext) field_Mutation_exportTrustCenterFile_args(ctx contex
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportTrustCenterFileInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFileInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_recordSigningEvent_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRecordSigningEventInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRecordSigningEventInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2247,30 +2496,48 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _AcceptNonDisclosureAgreementPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.AcceptNonDisclosureAgreementPayload) (ret graphql.Marshaler) {
+func (ec *executionContext) _AcceptElectronicSignaturePayload_signature(ctx context.Context, field graphql.CollectedField, obj *types.AcceptElectronicSignaturePayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_AcceptNonDisclosureAgreementPayload_success,
+		ec.fieldContext_AcceptElectronicSignaturePayload_signature,
 		func(ctx context.Context) (any, error) {
-			return obj.Success, nil
+			return obj.Signature, nil
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalNElectronicSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐElectronicSignature,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_AcceptNonDisclosureAgreementPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AcceptElectronicSignaturePayload_signature(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AcceptNonDisclosureAgreementPayload",
+		Object:     "AcceptElectronicSignaturePayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ElectronicSignature_id(ctx, field)
+			case "status":
+				return ec.fieldContext_ElectronicSignature_status(ctx, field)
+			case "documentType":
+				return ec.fieldContext_ElectronicSignature_documentType(ctx, field)
+			case "consentText":
+				return ec.fieldContext_ElectronicSignature_consentText(ctx, field)
+			case "lastError":
+				return ec.fieldContext_ElectronicSignature_lastError(ctx, field)
+			case "signedAt":
+				return ec.fieldContext_ElectronicSignature_signedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ElectronicSignature_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ElectronicSignature_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ElectronicSignature", field.Name)
 		},
 	}
 	return fc, nil
@@ -2807,6 +3074,238 @@ func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, fi
 				return ec.fieldContext_Document_hasUserRequestedAccess(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_id(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_status(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ElectronicSignatureStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_documentType(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_documentType,
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentType, nil
+		},
+		nil,
+		ec.marshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_documentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ElectronicSignatureDocumentType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_consentText(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_consentText,
+		func(ctx context.Context) (any, error) {
+			return obj.ConsentText, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_consentText(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_lastError(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_lastError,
+		func(ctx context.Context) (any, error) {
+			return obj.LastError, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_lastError(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_signedAt(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_signedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.SignedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_signedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ElectronicSignature_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ElectronicSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ElectronicSignature_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ElectronicSignature_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ElectronicSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3555,69 +4054,6 @@ func (ec *executionContext) fieldContext_Mutation_exportTrustCenterFile(ctx cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_acceptNonDisclosureAgreement,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().AcceptNonDisclosureAgreement(ctx, fc.Args["input"].(types.AcceptNonDisclosureAgreementInput))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
-				if err != nil {
-					var zeroVal *types.AcceptNonDisclosureAgreementPayload
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.AcceptNonDisclosureAgreementPayload
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalOAcceptNonDisclosureAgreementPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_acceptNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "success":
-				return ec.fieldContext_AcceptNonDisclosureAgreementPayload_success(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type AcceptNonDisclosureAgreementPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_acceptNonDisclosureAgreement_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3803,6 +4239,237 @@ func (ec *executionContext) fieldContext_Mutation_requestTrustCenterFileAccess(c
 	if fc.Args, err = ec.field_Mutation_requestTrustCenterFileAccess_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_acceptElectronicSignature(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_acceptElectronicSignature,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().AcceptElectronicSignature(ctx, fc.Args["input"].(types.AcceptElectronicSignatureInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.AcceptElectronicSignaturePayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.AcceptElectronicSignaturePayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOAcceptElectronicSignaturePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptElectronicSignaturePayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_acceptElectronicSignature(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "signature":
+				return ec.fieldContext_AcceptElectronicSignaturePayload_signature(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AcceptElectronicSignaturePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_acceptElectronicSignature_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_recordSigningEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_recordSigningEvent,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RecordSigningEvent(ctx, fc.Args["input"].(types.RecordSigningEventInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.RecordSigningEventPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.RecordSigningEventPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalORecordSigningEventPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRecordSigningEventPayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_recordSigningEvent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_RecordSigningEventPayload_success(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RecordSigningEventPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_recordSigningEvent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonDisclosureAgreement_fileName(ctx context.Context, field graphql.CollectedField, obj *types.NonDisclosureAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_NonDisclosureAgreement_fileName,
+		func(ctx context.Context) (any, error) {
+			return obj.FileName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_NonDisclosureAgreement_fileName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonDisclosureAgreement",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonDisclosureAgreement_fileUrl(ctx context.Context, field graphql.CollectedField, obj *types.NonDisclosureAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_NonDisclosureAgreement_fileUrl,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.NonDisclosureAgreement().FileURL(ctx, obj)
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_NonDisclosureAgreement_fileUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonDisclosureAgreement",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonDisclosureAgreement_viewerSignature(ctx context.Context, field graphql.CollectedField, obj *types.NonDisclosureAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_NonDisclosureAgreement_viewerSignature,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.NonDisclosureAgreement().ViewerSignature(ctx, obj)
+		},
+		nil,
+		ec.marshalOElectronicSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐElectronicSignature,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_NonDisclosureAgreement_viewerSignature(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonDisclosureAgreement",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ElectronicSignature_id(ctx, field)
+			case "status":
+				return ec.fieldContext_ElectronicSignature_status(ctx, field)
+			case "documentType":
+				return ec.fieldContext_ElectronicSignature_documentType(ctx, field)
+			case "consentText":
+				return ec.fieldContext_ElectronicSignature_consentText(ctx, field)
+			case "lastError":
+				return ec.fieldContext_ElectronicSignature_lastError(ctx, field)
+			case "signedAt":
+				return ec.fieldContext_ElectronicSignature_signedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ElectronicSignature_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ElectronicSignature_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ElectronicSignature", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -4244,16 +4911,12 @@ func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_logoFileUrl(ctx, field)
 			case "darkLogoFileUrl":
 				return ec.fieldContext_TrustCenter_darkLogoFileUrl(ctx, field)
-			case "ndaFileName":
-				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
-			case "ndaFileUrl":
-				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
-			case "organization":
-				return ec.fieldContext_TrustCenter_organization(ctx, field)
+			case "nonDisclosureAgreement":
+				return ec.fieldContext_TrustCenter_nonDisclosureAgreement(ctx, field)
 			case "isViewerMember":
 				return ec.fieldContext_TrustCenter_isViewerMember(ctx, field)
-			case "hasAcceptedNonDisclosureAgreement":
-				return ec.fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement(ctx, field)
+			case "organization":
+				return ec.fieldContext_TrustCenter_organization(ctx, field)
 			case "documents":
 				return ec.fieldContext_TrustCenter_documents(ctx, field)
 			case "audits":
@@ -4374,6 +5037,35 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RecordSigningEventPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.RecordSigningEventPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RecordSigningEventPayload_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RecordSigningEventPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RecordSigningEventPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4710,59 +5402,67 @@ func (ec *executionContext) fieldContext_TrustCenter_darkLogoFileUrl(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenter_ndaFileName(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+func (ec *executionContext) _TrustCenter_nonDisclosureAgreement(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_TrustCenter_ndaFileName,
+		ec.fieldContext_TrustCenter_nonDisclosureAgreement,
 		func(ctx context.Context) (any, error) {
-			return obj.NdaFileName, nil
+			return ec.resolvers.TrustCenter().NonDisclosureAgreement(ctx, obj)
 		},
 		nil,
-		ec.marshalOString2ᚖstring,
+		ec.marshalONonDisclosureAgreement2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNonDisclosureAgreement,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_TrustCenter_ndaFileName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenter",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenter_ndaFileUrl(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenter_ndaFileUrl,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().NdaFileURL(ctx, obj)
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenter_ndaFileUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TrustCenter_nonDisclosureAgreement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenter",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "fileName":
+				return ec.fieldContext_NonDisclosureAgreement_fileName(ctx, field)
+			case "fileUrl":
+				return ec.fieldContext_NonDisclosureAgreement_fileUrl(ctx, field)
+			case "viewerSignature":
+				return ec.fieldContext_NonDisclosureAgreement_viewerSignature(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NonDisclosureAgreement", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_isViewerMember(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_isViewerMember,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.TrustCenter().IsViewerMember(ctx, obj)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_isViewerMember(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4808,64 +5508,6 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenter_isViewerMember(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenter_isViewerMember,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().IsViewerMember(ctx, obj)
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenter_isViewerMember(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenter",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenter_hasAcceptedNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().HasAcceptedNonDisclosureAgreement(ctx, obj)
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenter",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7686,20 +8328,27 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputAcceptNonDisclosureAgreementInput(ctx context.Context, obj any) (types.AcceptNonDisclosureAgreementInput, error) {
-	var it types.AcceptNonDisclosureAgreementInput
+func (ec *executionContext) unmarshalInputAcceptElectronicSignatureInput(ctx context.Context, obj any) (types.AcceptElectronicSignatureInput, error) {
+	var it types.AcceptElectronicSignatureInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"fullName"}
+	fieldsInOrder := [...]string{"signatureId", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "signatureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signatureId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SignatureID = data
 		case "fullName":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -7788,6 +8437,40 @@ func (ec *executionContext) unmarshalInputExportTrustCenterFileInput(ctx context
 				return it, err
 			}
 			it.TrustCenterFileID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRecordSigningEventInput(ctx context.Context, obj any) (types.RecordSigningEventInput, error) {
+	var it types.RecordSigningEventInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"signatureId", "eventType"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "signatureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signatureId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SignatureID = data
+		case "eventType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eventType"))
+			data, err := ec.unmarshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EventType = data
 		}
 	}
 
@@ -8000,6 +8683,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Framework(ctx, sel, obj)
+	case types.ElectronicSignature:
+		return ec._ElectronicSignature(ctx, sel, &obj)
+	case *types.ElectronicSignature:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ElectronicSignature(ctx, sel, obj)
 	case types.Document:
 		return ec._Document(ctx, sel, &obj)
 	case *types.Document:
@@ -8027,19 +8717,19 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 
 // region    **************************** object.gotpl ****************************
 
-var acceptNonDisclosureAgreementPayloadImplementors = []string{"AcceptNonDisclosureAgreementPayload"}
+var acceptElectronicSignaturePayloadImplementors = []string{"AcceptElectronicSignaturePayload"}
 
-func (ec *executionContext) _AcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, obj *types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, acceptNonDisclosureAgreementPayloadImplementors)
+func (ec *executionContext) _AcceptElectronicSignaturePayload(ctx context.Context, sel ast.SelectionSet, obj *types.AcceptElectronicSignaturePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, acceptElectronicSignaturePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("AcceptNonDisclosureAgreementPayload")
-		case "success":
-			out.Values[i] = ec._AcceptNonDisclosureAgreementPayload_success(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("AcceptElectronicSignaturePayload")
+		case "signature":
+			out.Values[i] = ec._AcceptElectronicSignaturePayload_signature(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -8471,6 +9161,74 @@ func (ec *executionContext) _DocumentEdge(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var electronicSignatureImplementors = []string{"ElectronicSignature", "Node"}
+
+func (ec *executionContext) _ElectronicSignature(ctx context.Context, sel ast.SelectionSet, obj *types.ElectronicSignature) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, electronicSignatureImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ElectronicSignature")
+		case "id":
+			out.Values[i] = ec._ElectronicSignature_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._ElectronicSignature_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "documentType":
+			out.Values[i] = ec._ElectronicSignature_documentType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "consentText":
+			out.Values[i] = ec._ElectronicSignature_consentText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastError":
+			out.Values[i] = ec._ElectronicSignature_lastError(ctx, field, obj)
+		case "signedAt":
+			out.Values[i] = ec._ElectronicSignature_signedAt(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._ElectronicSignature_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ElectronicSignature_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var exportDocumentPDFPayloadImplementors = []string{"ExportDocumentPDFPayload"}
 
 func (ec *executionContext) _ExportDocumentPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportDocumentPDFPayload) graphql.Marshaler {
@@ -8817,10 +9575,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "acceptNonDisclosureAgreement":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_acceptNonDisclosureAgreement(ctx, field)
-			})
 		case "requestDocumentAccess":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_requestDocumentAccess(ctx, field)
@@ -8842,6 +9596,122 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "acceptElectronicSignature":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_acceptElectronicSignature(ctx, field)
+			})
+		case "recordSigningEvent":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_recordSigningEvent(ctx, field)
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var nonDisclosureAgreementImplementors = []string{"NonDisclosureAgreement"}
+
+func (ec *executionContext) _NonDisclosureAgreement(ctx context.Context, sel ast.SelectionSet, obj *types.NonDisclosureAgreement) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, nonDisclosureAgreementImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NonDisclosureAgreement")
+		case "fileName":
+			out.Values[i] = ec._NonDisclosureAgreement_fileName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fileUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NonDisclosureAgreement_fileUrl(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "viewerSignature":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NonDisclosureAgreement_viewerSignature(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9085,6 +9955,45 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var recordSigningEventPayloadImplementors = []string{"RecordSigningEventPayload"}
+
+func (ec *executionContext) _RecordSigningEventPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RecordSigningEventPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, recordSigningEventPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RecordSigningEventPayload")
+		case "success":
+			out.Values[i] = ec._RecordSigningEventPayload_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9394,9 +10303,7 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "ndaFileName":
-			out.Values[i] = ec._TrustCenter_ndaFileName(ctx, field, obj)
-		case "ndaFileUrl":
+		case "nonDisclosureAgreement":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -9405,43 +10312,7 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._TrustCenter_ndaFileUrl(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "organization":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._TrustCenter_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
+				res = ec._TrustCenter_nonDisclosureAgreement(ctx, field, obj)
 				return res
 			}
 
@@ -9501,7 +10372,7 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "hasAcceptedNonDisclosureAgreement":
+		case "organization":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -9510,7 +10381,7 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._TrustCenter_hasAcceptedNonDisclosureAgreement(ctx, field, obj)
+				res = ec._TrustCenter_organization(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -10741,8 +11612,8 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAcceptNonDisclosureAgreementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput(ctx context.Context, v any) (types.AcceptNonDisclosureAgreementInput, error) {
-	res, err := ec.unmarshalInputAcceptNonDisclosureAgreementInput(ctx, v)
+func (ec *executionContext) unmarshalNAcceptElectronicSignatureInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptElectronicSignatureInput(ctx context.Context, v any) (types.AcceptElectronicSignatureInput, error) {
+	res, err := ec.unmarshalInputAcceptElectronicSignatureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -11563,6 +12434,132 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalNElectronicSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐElectronicSignature(ctx context.Context, sel ast.SelectionSet, v *types.ElectronicSignature) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ElectronicSignature(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType(ctx context.Context, v any) (coredata.ElectronicSignatureDocumentType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType(ctx context.Context, sel ast.SelectionSet, v coredata.ElectronicSignatureDocumentType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType = map[string]coredata.ElectronicSignatureDocumentType{
+		"NDA":            coredata.ElectronicSignatureDocumentTypeNDA,
+		"DPA":            coredata.ElectronicSignatureDocumentTypeDPA,
+		"MSA":            coredata.ElectronicSignatureDocumentTypeMSA,
+		"SOW":            coredata.ElectronicSignatureDocumentTypeSOW,
+		"SLA":            coredata.ElectronicSignatureDocumentTypeSLA,
+		"TOS":            coredata.ElectronicSignatureDocumentTypeTOS,
+		"PRIVACY_POLICY": coredata.ElectronicSignatureDocumentTypePrivacyPolicy,
+		"OTHER":          coredata.ElectronicSignatureDocumentTypeOther,
+	}
+	marshalNElectronicSignatureDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureDocumentType = map[coredata.ElectronicSignatureDocumentType]string{
+		coredata.ElectronicSignatureDocumentTypeNDA:           "NDA",
+		coredata.ElectronicSignatureDocumentTypeDPA:           "DPA",
+		coredata.ElectronicSignatureDocumentTypeMSA:           "MSA",
+		coredata.ElectronicSignatureDocumentTypeSOW:           "SOW",
+		coredata.ElectronicSignatureDocumentTypeSLA:           "SLA",
+		coredata.ElectronicSignatureDocumentTypeTOS:           "TOS",
+		coredata.ElectronicSignatureDocumentTypePrivacyPolicy: "PRIVACY_POLICY",
+		coredata.ElectronicSignatureDocumentTypeOther:         "OTHER",
+	}
+)
+
+func (ec *executionContext) unmarshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType(ctx context.Context, v any) (coredata.ElectronicSignatureEventType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType(ctx context.Context, sel ast.SelectionSet, v coredata.ElectronicSignatureEventType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType = map[string]coredata.ElectronicSignatureEventType{
+		"DOCUMENT_VIEWED":       coredata.ElectronicSignatureEventTypeDocumentViewed,
+		"CONSENT_GIVEN":         coredata.ElectronicSignatureEventTypeConsentGiven,
+		"FULL_NAME_TYPED":       coredata.ElectronicSignatureEventTypeFullNameTyped,
+		"SIGNATURE_ACCEPTED":    coredata.ElectronicSignatureEventTypeSignatureAccepted,
+		"SIGNATURE_COMPLETED":   coredata.ElectronicSignatureEventTypeSignatureCompleted,
+		"SEAL_COMPUTED":         coredata.ElectronicSignatureEventTypeSealComputed,
+		"TIMESTAMP_REQUESTED":   coredata.ElectronicSignatureEventTypeTimestampRequested,
+		"CERTIFICATE_GENERATED": coredata.ElectronicSignatureEventTypeCertificateGenerated,
+		"PROCESSING_ERROR":      coredata.ElectronicSignatureEventTypeProcessingError,
+	}
+	marshalNElectronicSignatureEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureEventType = map[coredata.ElectronicSignatureEventType]string{
+		coredata.ElectronicSignatureEventTypeDocumentViewed:       "DOCUMENT_VIEWED",
+		coredata.ElectronicSignatureEventTypeConsentGiven:         "CONSENT_GIVEN",
+		coredata.ElectronicSignatureEventTypeFullNameTyped:        "FULL_NAME_TYPED",
+		coredata.ElectronicSignatureEventTypeSignatureAccepted:    "SIGNATURE_ACCEPTED",
+		coredata.ElectronicSignatureEventTypeSignatureCompleted:   "SIGNATURE_COMPLETED",
+		coredata.ElectronicSignatureEventTypeSealComputed:         "SEAL_COMPUTED",
+		coredata.ElectronicSignatureEventTypeTimestampRequested:   "TIMESTAMP_REQUESTED",
+		coredata.ElectronicSignatureEventTypeCertificateGenerated: "CERTIFICATE_GENERATED",
+		coredata.ElectronicSignatureEventTypeProcessingError:      "PROCESSING_ERROR",
+	}
+)
+
+func (ec *executionContext) unmarshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus(ctx context.Context, v any) (coredata.ElectronicSignatureStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus(ctx context.Context, sel ast.SelectionSet, v coredata.ElectronicSignatureStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus = map[string]coredata.ElectronicSignatureStatus{
+		"PENDING":    coredata.ElectronicSignatureStatusPending,
+		"ACCEPTED":   coredata.ElectronicSignatureStatusAccepted,
+		"PROCESSING": coredata.ElectronicSignatureStatusProcessing,
+		"COMPLETED":  coredata.ElectronicSignatureStatusCompleted,
+		"FAILED":     coredata.ElectronicSignatureStatusFailed,
+	}
+	marshalNElectronicSignatureStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐElectronicSignatureStatus = map[coredata.ElectronicSignatureStatus]string{
+		coredata.ElectronicSignatureStatusPending:    "PENDING",
+		coredata.ElectronicSignatureStatusAccepted:   "ACCEPTED",
+		coredata.ElectronicSignatureStatusProcessing: "PROCESSING",
+		coredata.ElectronicSignatureStatusCompleted:  "COMPLETED",
+		coredata.ElectronicSignatureStatusFailed:     "FAILED",
+	}
+)
+
 func (ec *executionContext) unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (mail.Addr, error) {
 	res, err := mail1.UnmarshalAddrScalar(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11718,6 +12715,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkg�
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRecordSigningEventInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRecordSigningEventInput(ctx context.Context, v any) (types.RecordSigningEventInput, error) {
+	res, err := ec.unmarshalInputRecordSigningEventInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNRequestAccessesPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx context.Context, sel ast.SelectionSet, v types.RequestAccessesPayload) graphql.Marshaler {
@@ -12370,11 +13372,11 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOAcceptNonDisclosureAgreementPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOAcceptElectronicSignaturePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptElectronicSignaturePayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptElectronicSignaturePayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._AcceptNonDisclosureAgreementPayload(ctx, sel, v)
+	return ec._AcceptElectronicSignaturePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
@@ -12425,6 +13427,31 @@ func (ec *executionContext) marshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkg�
 	return res
 }
 
+func (ec *executionContext) unmarshalODatetime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODatetime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalTime(*v)
+	return res
+}
+
+func (ec *executionContext) marshalOElectronicSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐElectronicSignature(ctx context.Context, sel ast.SelectionSet, v *types.ElectronicSignature) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ElectronicSignature(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐIdentity(ctx context.Context, sel ast.SelectionSet, v *types.Identity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -12448,6 +13475,20 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalONonDisclosureAgreement2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNonDisclosureAgreement(ctx context.Context, sel ast.SelectionSet, v *types.NonDisclosureAgreement) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._NonDisclosureAgreement(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORecordSigningEventPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRecordSigningEventPayload(ctx context.Context, sel ast.SelectionSet, v *types.RecordSigningEventPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RecordSigningEventPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐReport(ctx context.Context, sel ast.SelectionSet, v *types.Report) graphql.Marshaler {

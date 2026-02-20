@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<006540288cfca33589264e1f596e1028>>
+ * @generated SignedSource<<c89278f85dedf2e3c5d8dbd77cd19222>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,6 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
+export type ElectronicSignatureStatus = "ACCEPTED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING";
 export type TrustGraphCurrentQuery$variables = Record<PropertyKey, never>;
 export type TrustGraphCurrentQuery$data = {
   readonly currentTrustCenter: {
@@ -22,12 +23,16 @@ export type TrustGraphCurrentQuery$data = {
       }>;
     };
     readonly darkLogoFileUrl: string | null | undefined;
-    readonly hasAcceptedNonDisclosureAgreement: boolean;
     readonly id: string;
     readonly isViewerMember: boolean;
     readonly logoFileUrl: string | null | undefined;
-    readonly ndaFileName: string | null | undefined;
-    readonly ndaFileUrl: string | null | undefined;
+    readonly nonDisclosureAgreement: {
+      readonly fileName: string;
+      readonly fileUrl: string;
+      readonly viewerSignature: {
+        readonly status: ElectronicSignatureStatus;
+      } | null | undefined;
+    } | null | undefined;
     readonly organization: {
       readonly description: string | null | undefined;
       readonly email: string | null | undefined;
@@ -91,35 +96,35 @@ v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "hasAcceptedNonDisclosureAgreement",
+  "name": "logoFileUrl",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "logoFileUrl",
+  "name": "darkLogoFileUrl",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "darkLogoFileUrl",
+  "name": "fileName",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "ndaFileName",
+  "name": "fileUrl",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "ndaFileUrl",
+  "name": "status",
   "storageKey": null
 },
 v10 = {
@@ -235,9 +240,31 @@ return {
           (v4/*: any*/),
           (v5/*: any*/),
           (v6/*: any*/),
-          (v7/*: any*/),
-          (v8/*: any*/),
-          (v9/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "NonDisclosureAgreement",
+            "kind": "LinkedField",
+            "name": "nonDisclosureAgreement",
+            "plural": false,
+            "selections": [
+              (v7/*: any*/),
+              (v8/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "ElectronicSignature",
+                "kind": "LinkedField",
+                "name": "viewerSignature",
+                "plural": false,
+                "selections": [
+                  (v9/*: any*/)
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          },
           {
             "alias": null,
             "args": null,
@@ -339,9 +366,32 @@ return {
           (v4/*: any*/),
           (v5/*: any*/),
           (v6/*: any*/),
-          (v7/*: any*/),
-          (v8/*: any*/),
-          (v9/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "NonDisclosureAgreement",
+            "kind": "LinkedField",
+            "name": "nonDisclosureAgreement",
+            "plural": false,
+            "selections": [
+              (v7/*: any*/),
+              (v8/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "ElectronicSignature",
+                "kind": "LinkedField",
+                "name": "viewerSignature",
+                "plural": false,
+                "selections": [
+                  (v9/*: any*/),
+                  (v2/*: any*/)
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          },
           {
             "alias": null,
             "args": null,
@@ -641,16 +691,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "af3118fae0bbc255713aae845ab83032",
+    "cacheID": "011070e93164ecde082cc2e74651ef2e",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentQuery {\n  viewer {\n    email\n    fullName\n    id\n  }\n  currentTrustCenter {\n    id\n    slug\n    isViewerMember\n    hasAcceptedNonDisclosureAgreement\n    logoFileUrl\n    darkLogoFileUrl\n    ndaFileName\n    ndaFileUrl\n    organization {\n      name\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    vendorInfo: vendors(first: 0) {\n      totalCount\n    }\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
+    "text": "query TrustGraphCurrentQuery {\n  viewer {\n    email\n    fullName\n    id\n  }\n  currentTrustCenter {\n    id\n    slug\n    isViewerMember\n    logoFileUrl\n    darkLogoFileUrl\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    organization {\n      name\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    vendorInfo: vendors(first: 0) {\n      totalCount\n    }\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
   }
 };
 })();
 
-(node as any).hash = "566fdb9af999e51fdf50e2eccca60941";
+(node as any).hash = "6cbe676214b698d12e2cae08060a7285";
 
 export default node;

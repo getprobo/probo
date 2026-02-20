@@ -173,16 +173,16 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		chromedp.ActionFunc(
 			func(ctx context.Context) (err error) {
 				pdfBytes, _, err = page.PrintToPDF().
-					WithPrintBackground(cfg.PrintBackground).
-					WithPaperWidth(width).
-					WithPaperHeight(height).
-					WithMarginTop(marginTop).
-					WithMarginBottom(marginBottom).
-					WithMarginLeft(marginLeft).
-					WithMarginRight(marginRight).
-					WithScale(scale).
-					WithPreferCSSPageSize(false).
-					Do(ctx)
+				WithPrintBackground(cfg.PrintBackground).
+				WithPaperWidth(width).
+				WithPaperHeight(height).
+				WithMarginTop(marginTop).
+				WithMarginBottom(marginBottom).
+				WithMarginLeft(marginLeft).
+				WithMarginRight(marginRight).
+				WithScale(scale).
+				WithPreferCSSPageSize(false).
+				Do(ctx)
 
 				return err
 			},

@@ -107,9 +107,8 @@ func (req *UpdateTrustCenterBrandRequest) Validate() error {
 func (s TrustCenterService) Get(
 	ctx context.Context,
 	trustCenterID gid.GID,
-) (*coredata.TrustCenter, *coredata.File, error) {
+) (*coredata.TrustCenter, error) {
 	var trustCenter *coredata.TrustCenter
-	var file *coredata.File
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -119,30 +118,22 @@ func (s TrustCenterService) Get(
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			if trustCenter.NonDisclosureAgreementFileID != nil {
-				file = &coredata.File{}
-				if err := file.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
-					return fmt.Errorf("cannot load file: %w", err)
-				}
-			}
-
 			return nil
 		},
 	)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot load trust center: %w", err)
+		return nil, fmt.Errorf("cannot load trust center: %w", err)
 	}
 
-	return trustCenter, file, nil
+	return trustCenter, nil
 }
 
 func (s TrustCenterService) GetByOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-) (*coredata.TrustCenter, *coredata.File, error) {
+) (*coredata.TrustCenter, error) {
 	var trustCenter *coredata.TrustCenter
-	var file *coredata.File
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -152,22 +143,15 @@ func (s TrustCenterService) GetByOrganizationID(
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			if trustCenter.NonDisclosureAgreementFileID != nil {
-				file = &coredata.File{}
-				if err := file.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
-					return fmt.Errorf("cannot load file: %w", err)
-				}
-			}
-
 			return nil
 		},
 	)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return trustCenter, file, nil
+	return trustCenter, nil
 }
 
 func (s TrustCenterService) Update(

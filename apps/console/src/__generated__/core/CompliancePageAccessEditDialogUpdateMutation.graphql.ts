@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8060916e92063b503b064a3ce7675e1a>>
+ * @generated SignedSource<<7c575bd72e0d697cf92b9dd57038995c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,10 +23,10 @@ export type TrustCenterDocumentAccessInput = {
   id: string;
   status: TrustCenterDocumentAccessStatus;
 };
-export type TrustCenterAccessGraphUpdateMutation$variables = {
+export type CompliancePageAccessEditDialogUpdateMutation$variables = {
   input: UpdateTrustCenterAccessInput;
 };
-export type TrustCenterAccessGraphUpdateMutation$data = {
+export type CompliancePageAccessEditDialogUpdateMutation$data = {
   readonly updateTrustCenterAccess: {
     readonly trustCenterAccess: {
       readonly activeCount: number;
@@ -41,9 +41,9 @@ export type TrustCenterAccessGraphUpdateMutation$data = {
     };
   };
 };
-export type TrustCenterAccessGraphUpdateMutation = {
-  response: TrustCenterAccessGraphUpdateMutation$data;
-  variables: TrustCenterAccessGraphUpdateMutation$variables;
+export type CompliancePageAccessEditDialogUpdateMutation = {
+  response: CompliancePageAccessEditDialogUpdateMutation$data;
+  variables: CompliancePageAccessEditDialogUpdateMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -152,7 +152,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterAccessGraphUpdateMutation",
+    "name": "CompliancePageAccessEditDialogUpdateMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -161,20 +161,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "TrustCenterAccessGraphUpdateMutation",
+    "name": "CompliancePageAccessEditDialogUpdateMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "bfc1209ce4d692ddb3692305aff7a33d",
+    "cacheID": "e8401f17211bce414eee9048b939235a",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterAccessGraphUpdateMutation",
+    "name": "CompliancePageAccessEditDialogUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      state\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      pendingRequestCount\n      activeCount\n    }\n  }\n}\n"
+    "text": "mutation CompliancePageAccessEditDialogUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      state\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      pendingRequestCount\n      activeCount\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "750e100701bf905c8fff08f3f5155b5b";
+(node as any).hash = "e511d9060cc29db26cd6ff281fe2722b";
 
 export default node;

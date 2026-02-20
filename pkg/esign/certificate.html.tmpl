@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @page {
+        @bottom-right {
+          content: counter(page) "/" counter(pages);
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 8px;
+          color: #777;
+        }
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 9.5px;
+        color: #000;
+        line-height: 1.4;
+      }
+
+      /* -- Logo row -- */
+      .logo-row {
+        text-align: right;
+        padding-bottom: 8px;
+      }
+
+      .logo-row svg {
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      /* -- Title bar -- */
+      .title-bar {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 4px;
+      }
+
+      .title-bar td {
+        padding: 5px 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #000;
+        background: #ccc;
+      }
+
+      /* -- Meta table -- */
+      .meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2px;
+      }
+
+      .meta-table td {
+        padding: 2px 6px;
+        vertical-align: top;
+        font-size: 9.5px;
+        line-height: 1.5;
+      }
+
+      .meta-table .lbl {
+        width: 130px;
+        font-weight: 700;
+        color: #333;
+        white-space: nowrap;
+      }
+
+      .meta-table .val {
+        word-break: break-all;
+      }
+
+      /* -- Section header bar -- */
+      .section-bar {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+
+      .section-bar td {
+        padding: 5px 6px;
+        font-size: 9.5px;
+        font-weight: 700;
+        color: #000;
+        background: #ccc;
+      }
+
+      /* -- Signer content -- */
+      .signer-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .signer-table td {
+        padding: 3px 6px;
+        vertical-align: top;
+        font-size: 9.5px;
+        line-height: 1.5;
+      }
+
+      .signer-table .lbl {
+        width: 130px;
+        font-weight: 700;
+        color: #333;
+        white-space: nowrap;
+      }
+
+      /* -- Events table -- */
+      .events-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+      }
+
+      .events-table thead td {
+        padding: 5px 6px;
+        font-weight: 700;
+        color: #000;
+        background: #ccc;
+      }
+
+      .events-table tbody td {
+        padding: 4px 6px;
+        border-bottom: 1px solid #ddd;
+        font-size: 9px;
+      }
+
+      /* -- Detail table (key-value) -- */
+      .detail-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .detail-table td {
+        padding: 3px 6px;
+        vertical-align: top;
+        font-size: 9px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .detail-table .lbl {
+        width: 130px;
+        font-weight: 700;
+        color: #333;
+        white-space: nowrap;
+      }
+
+      /* -- Mono -- */
+      .mono {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 8.5px;
+        word-break: break-all;
+      }
+
+      /* -- Consent -- */
+      .consent-box {
+        padding: 6px;
+        font-size: 9px;
+        line-height: 1.6;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+      }
+
+      /* -- Verification -- */
+      .verification-box {
+        padding: 6px;
+        font-size: 9px;
+        line-height: 1.6;
+        color: #333;
+      }
+
+      .verification-box ol {
+        margin: 4px 0 0 18px;
+        padding: 0;
+      }
+
+      /* -- ERSD -- */
+      .ersd-section {
+        page-break-before: always;
+      }
+
+      .ersd-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #000;
+        border-bottom: 2px solid #000;
+        padding-bottom: 4px;
+        margin-bottom: 10px;
+      }
+
+      .ersd-body {
+        font-size: 9.5px;
+        color: #000;
+        line-height: 1.7;
+      }
+
+      .ersd-body p {
+        margin-bottom: 6px;
+      }
+
+      .ersd-body h3 {
+        font-size: 9.5px;
+        font-weight: 700;
+        margin-top: 10px;
+        margin-bottom: 2px;
+      }
+
+      .ersd-body ul {
+        margin: 2px 0 6px 18px;
+        padding: 0;
+      }
+
+      /* -- Footer -- */
+      .footer {
+        margin-top: 16px;
+        padding-top: 6px;
+        border-top: 1px solid #999;
+        font-size: 8px;
+        color: #777;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Probo logo top-right -->
+    <div class="logo-row">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="90" height="24" viewBox="0 0 90 24">
+        <g clip-path="url(#clip-a)">
+          <rect width="24" height="24" x=".85" fill="#1a1a1a" rx="5.14"/>
+          <path stroke="#ffffff" stroke-width="3.53" d="M20.57 6.17c2.96 4.47-6.43 13.97-20.32 5.66"/>
+          <path stroke="url(#grad-b)" stroke-width="3.53" d="M20.57 6.17c2.96 4.47-6.43 13.97-20.32 5.66"/>
+          <path fill="#ffffff" d="M19.07 7.1a1.77 1.77 0 0 0 3-1.86l-1.5.93-1.5.94ZM8.82 25.18l1.71-.41c-2.3-9.67.01-14.66 2.54-16.83A6.25 6.25 0 0 1 17 6.33c1.22-.01 1.87.44 2.08.78l1.5-.94 1.5-.93c-1.1-1.74-3.16-2.46-5.13-2.44-2.03.03-4.26.81-6.17 2.45-3.9 3.35-6.16 9.92-3.67 20.33l1.72-.41Z"/>
+        </g>
+        <path fill="#1a1a1a" d="M66.87 0v7.32a4.84 4.84 0 0 1 1.48-.74 5.63 5.63 0 0 1 1.76-.28c1.63 0 3 .55 4.1 1.68a5.5 5.5 0 0 1 1.67 4.06c0 1.6-.56 2.93-1.69 4.06a5.49 5.49 0 0 1-4.08 1.69 5.8 5.8 0 0 1-4.06-1.56 5.48 5.48 0 0 1-1.71-4.27V0h2.53Zm3.24 8.72a3.2 3.2 0 0 0-3.24 3.32 3.18 3.18 0 0 0 3.24 3.32 3.2 3.2 0 0 0 3.24-3.32c0-1.9-1.43-3.32-3.24-3.32ZM52.75 7.98a5.53 5.53 0 0 1 4.08-1.68c1.61 0 2.93.55 4.06 1.68a5.51 5.51 0 0 1 1.69 4.06c0 1.58-.55 2.95-1.69 4.09a5.59 5.59 0 0 1-4.06 1.66 5.64 5.64 0 0 1-4.08-1.66 5.53 5.53 0 0 1-1.69-4.09c0-1.6.56-2.92 1.7-4.06Zm.84 4.06c0 .98.32 1.77.93 2.4.63.6 1.4.92 2.31.92.92 0 1.7-.31 2.3-.92.63-.64.94-1.42.94-2.4 0-.97-.31-1.76-.94-2.37a3.03 3.03 0 0 0-2.3-.95 3.22 3.22 0 0 0-3.24 3.32ZM79.32 7.98A5.53 5.53 0 0 1 83.4 6.3c1.6 0 2.93.55 4.06 1.68a5.51 5.51 0 0 1 1.69 4.06c0 1.58-.56 2.95-1.7 4.09a5.59 5.59 0 0 1-4.05 1.66 5.64 5.64 0 0 1-4.08-1.66 5.53 5.53 0 0 1-1.69-4.09c0-1.6.55-2.92 1.69-4.06Zm.84 4.06c0 .98.32 1.77.92 2.4.64.6 1.4.92 2.32.92.92 0 1.69-.31 2.3-.92.63-.64.94-1.42.94-2.4 0-.97-.31-1.76-.95-2.37a3.03 3.03 0 0 0-2.29-.95 3.22 3.22 0 0 0-3.24 3.32ZM34.24 16.76V24h-2.53V12.12c0-1.82.58-3.24 1.71-4.27a5.87 5.87 0 0 1 4.06-1.55c1.56 0 2.98.55 4.08 1.68a5.51 5.51 0 0 1 1.7 4.06 5.66 5.66 0 0 1-5.77 5.75 5.43 5.43 0 0 1-2.88-.77l-.36-.26Zm3.24-8.04a3.2 3.2 0 0 0-3.24 3.32c0 1.9 1.42 3.32 3.24 3.32a3.2 3.2 0 0 0 3.24-3.32 3.2 3.2 0 0 0-3.24-3.32ZM47.4 17.65h-2.5v-6.7c0-3.23 1.82-4.52 4.27-4.52h.6v2.42h-.47c-1.26 0-1.9.71-1.9 2.1v6.7Z"/>
+        <defs>
+          <linearGradient id="grad-b" x1="18.77" x2="1.2" y1="13.56" y2="13.56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#101E1C" stop-opacity="0"/>
+            <stop offset="1" stop-color="#ffffff"/>
+          </linearGradient>
+          <clipPath id="clip-a">
+            <rect width="24" height="24" x=".85" fill="#fff" rx="5.14"/>
+          </clipPath>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- Title bar -->
+    <table class="title-bar">
+      <tr>
+        <td>Certificate Of Completion</td>
+      </tr>
+    </table>
+
+    <!-- Metadata -->
+    <table class="meta-table">
+      <tr>
+        <td class="lbl">Status</td>
+        <td class="val">Completed</td>
+      </tr>
+      <tr>
+        <td class="lbl">Subject</td>
+        <td class="val">{{.DocumentTypeName}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Document Type</td>
+        <td class="val">{{.DocumentType}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Signature Id</td>
+        <td class="val mono">{{.SignatureID}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Organization Id</td>
+        <td class="val mono">{{.OrganizationID}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">File Id</td>
+        <td class="val mono">{{.FileID}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">File Hash (SHA-256)</td>
+        <td class="val mono">{{.FileHash}}</td>
+      </tr>
+    </table>
+
+    <!-- Signer Events -->
+    <table class="section-bar">
+      <tr>
+        <td>Signer</td>
+      </tr>
+    </table>
+    <table class="signer-table">
+      <tr>
+        <td class="lbl">Name</td>
+        <td>{{.SignerFullName}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Email</td>
+        <td>{{.SignerEmail}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Signed At</td>
+        <td>{{.SignedAt}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Security Level</td>
+        <td>Email, Account Authentication</td>
+      </tr>
+      <tr>
+        <td class="lbl">IP Address</td>
+        <td class="mono">{{.SignerIPAddress}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">User Agent</td>
+        <td style="font-size: 8.5px;">{{.SignerUserAgent}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">ERSD Consent</td>
+        <td>Accepted</td>
+      </tr>
+    </table>
+
+    <!-- Electronic Consent -->
+    <table class="section-bar">
+      <tr>
+        <td>Electronic Consent</td>
+      </tr>
+    </table>
+    <div class="consent-box">{{.ConsentText}}</div>
+
+    <!-- Signing Summary Events -->
+    <table class="events-table">
+      <thead>
+        <tr>
+          <td>Signing Summary Events</td>
+          <td>Status</td>
+          <td>Timestamps</td>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Events}}
+        <tr>
+          <td>{{.EventType}}</td>
+          <td>{{.Source}}</td>
+          <td>{{.OccurredAt}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+
+    <!-- Integrity Verification -->
+    <table class="section-bar">
+      <tr>
+        <td>Integrity Verification</td>
+      </tr>
+    </table>
+    <table class="detail-table">
+      <tr>
+        <td class="lbl">Seal (SHA-256, v{{.SealVersion}})</td>
+        <td><span class="mono">{{.Seal}}</span></td>
+      </tr>
+      {{if .TSAAuthority}}
+      <tr>
+        <td class="lbl">TSA Authority</td>
+        <td>{{.TSAAuthority}}</td>
+      </tr>
+      {{end}}
+      {{if .TSATime}}
+      <tr>
+        <td class="lbl">TSA Timestamp</td>
+        <td>{{.TSATime}}</td>
+      </tr>
+      {{end}}
+      {{if .TSASerial}}
+      <tr>
+        <td class="lbl">TSA Serial Number</td>
+        <td>{{.TSASerial}}</td>
+      </tr>
+      {{end}}
+    </table>
+
+    <!-- Seal Verification -->
+    <table class="section-bar">
+      <tr>
+        <td>Seal Verification (v{{.SealVersion}})</td>
+      </tr>
+    </table>
+    <div class="verification-box">
+      To independently verify the integrity seal, compute the SHA-256 hash of
+      the following fields joined by newline characters (<span class="mono">\n</span>),
+      in this exact order:
+      <ol>
+        <li>Signature ID</li>
+        <li>Organization ID</li>
+        <li>Document Type (the raw value, e.g. <span class="mono">NDA</span>)</li>
+        <li>File ID</li>
+        <li>File Hash (SHA-256, lowercase hex)</li>
+        <li>Signer Full Name</li>
+        <li>Signer Email (lowercased)</li>
+        <li>Signer IP Address</li>
+        <li>Signer User Agent</li>
+        <li>Consent Text (the full text shown above)</li>
+        <li>Signed At (UTC, RFC 3339 with nanoseconds, truncated to microsecond precision)</li>
+      </ol>
+      <div style="margin-top: 4px;">
+        The resulting lowercase hex-encoded SHA-256 digest must match the seal
+        shown above.
+      </div>
+    </div>
+
+    <!-- Electronic Record and Signature Disclosure -->
+    <div class="ersd-section">
+      <div class="ersd-title">Electronic Record and Signature Disclosure</div>
+      <div class="ersd-body">
+        <p>
+          From time to time, the organization identified in this certificate (we, us, or
+          the Company) may be required by law to provide to you certain written notices or
+          disclosures. Described below are the terms and conditions for providing to you
+          such notices and disclosures electronically through the Probo platform. Please
+          read the information below carefully and thoroughly.
+        </p>
+
+        <h3>Withdrawing your consent</h3>
+        <p>
+          If you decide to receive notices and disclosures from us electronically, you may
+          at any time change your mind and tell us that you wish to withdraw your consent to
+          receive notices and disclosures electronically. How you must inform us of your
+          decision is described below.
+        </p>
+
+        <h3>All notices and disclosures will be sent to you electronically</h3>
+        <p>
+          Unless you tell us otherwise in accordance with the procedures described herein, we
+          will provide electronically to you through the Probo platform all required notices,
+          disclosures, authorizations, acknowledgements, and other documents that are required
+          to be provided or made available to you during the course of our relationship with
+          you. To reduce the chance of you inadvertently not receiving any notice or
+          disclosure, we prefer to provide all of the required notices and disclosures to you
+          by the same method and to the same address that you have given us.
+        </p>
+
+        <h3>How to contact us</h3>
+        <p>
+          You may contact us to let us know of your changes as to how we may contact you
+          electronically, and to withdraw your prior consent to receive notices and
+          disclosures electronically. To reach us, please send an email to
+          <strong>legal@getprobo.com</strong>.
+        </p>
+
+        <h3>To advise us of your new email address</h3>
+        <p>
+          To let us know of a change in your email address where we should send notices and
+          disclosures electronically to you, you must send an email message to us at
+          legal@getprobo.com and in the body of such request you must state your previous
+          email address and your new email address. We do not require any other information
+          from you to change your email address.
+        </p>
+
+        <h3>To withdraw your consent</h3>
+        <p>
+          To inform us that you no longer wish to receive future notices and disclosures in
+          electronic format you may:
+        </p>
+        <ul>
+          <li>
+            decline to sign a document from within your signing session, and on the
+            subsequent page, indicate you wish to withdraw your consent; or
+          </li>
+          <li>
+            send us an email to legal@getprobo.com and in the body of such request you
+            must state your email, full name, mailing address, and telephone number. We do
+            not need any other information from you to withdraw consent. The consequences of
+            your withdrawing consent for online documents will be that transactions may take
+            a longer time to process.
+          </li>
+        </ul>
+
+        <h3>Acknowledging your access and consent to receive and sign documents electronically</h3>
+        <p>
+          By signing the document electronically through the Probo platform, you confirm
+          that:
+        </p>
+        <ul>
+          <li>
+            You can access and read this Electronic Record and Signature Disclosure; and
+          </li>
+          <li>
+            You can print on paper this Electronic Record and Signature Disclosure, or save
+            or send this Electronic Record and Signature Disclosure to a location where you
+            can print it, for future reference and access; and
+          </li>
+          <li>
+            Until or unless you notify us as described above, you consent to receive
+            exclusively through electronic means all notices, disclosures, authorizations,
+            acknowledgements, and other documents that are required to be provided or made
+            available to you during the course of your relationship with us.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      This certificate was generated automatically by Probo. The integrity
+      seal and TSA timestamp provide tamper-evident proof of the signing
+      event. All information required to independently recompute and verify
+      the seal is included in this document.
+    </div>
+  </body>
+</html>
