@@ -29,6 +29,7 @@ import {
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
+import { ElectronicSignatureSection } from "#/pages/organizations/compliance-page/access/_components/ElectronicSignatureSection";
 import { TrustCenterDocumentAccessList } from "./TrustCenterDocumentAccessList";
 
 interface TrustCenterAccessEditDialogProps {
@@ -222,6 +223,10 @@ export function TrustCenterAccessEditForm(
           />
 
         </div>
+
+        {data.node.ndaSignature && (
+          <ElectronicSignatureSection fragmentRef={data.node.ndaSignature} />
+        )}
 
         <TrustCenterDocumentAccessList
           documentAccesses={documentAccesses}
