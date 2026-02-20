@@ -157,22 +157,12 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	var continueURLString *string
-	if input.Continue != nil {
-		safeURL, ok := r.safeRedirect.Validate(*input.Continue)
-		if !ok {
-			return nil, gqlutils.Invalidf(ctx, "invalid continue URL")
-		}
-
-		continueURLString = &safeURL
-	}
-
 	req := &iam.SendMagicLinkRequest{
 		Email:            input.Email,
 		CompliancePageID: &trustCenter.ID,
 		OrganizationID:   trustCenter.OrganizationID,
 		URLPath:          "verify-magic-link",
-		Continue:         continueURLString,
+		Continue:         input.Continue,
 	}
 
 	if err := r.iam.AuthService.SendMagicLink(ctx, req); err != nil {
