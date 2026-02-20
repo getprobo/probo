@@ -193,7 +193,8 @@ type RequestTrustCenterFileAccessInput struct {
 }
 
 type SendMagicLinkInput struct {
-	Email mail.Addr `json:"email"`
+	Email    mail.Addr `json:"email"`
+	Continue *string   `json:"continue,omitempty"`
 }
 
 type SendMagicLinkPayload struct {
@@ -295,5 +296,5 @@ type VerifyMagicLinkInput struct {
 }
 
 type VerifyMagicLinkPayload struct {
-	Success bool `json:"success"`
+	Continue *string `json:"continue,omitempty"`
 }
