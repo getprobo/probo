@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"text/template"
+	"html/template"
 	"time"
 
 	"github.com/digitorus/timestamp"
