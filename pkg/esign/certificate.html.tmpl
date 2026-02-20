@@ -3,6 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      @page {
+        @bottom-right {
+          content: counter(page) "/" counter(pages);
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 8px;
+          color: #777;
+        }
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -16,95 +25,55 @@
         line-height: 1.4;
       }
 
-      /* -- Top bar -- */
-      .top-bar {
-        border-top: 4px solid #000;
-        padding-top: 10px;
-        margin-bottom: 6px;
-        display: table;
-        width: 100%;
-      }
-
-      .top-bar-left {
-        display: table-cell;
-        vertical-align: top;
-      }
-
-      .top-bar-right {
-        display: table-cell;
-        vertical-align: top;
+      /* -- Logo row -- */
+      .logo-row {
         text-align: right;
-        width: 120px;
+        padding-bottom: 8px;
       }
 
-      .brand {
-        font-size: 14px;
-        font-weight: 700;
-        color: #000;
-        letter-spacing: 0.5px;
-      }
-
-      .cert-title {
-        font-size: 16px;
-        font-weight: 700;
-        font-style: italic;
-        color: #000;
-        border-bottom: 2px solid #000;
-        padding-bottom: 4px;
+      .logo-row svg {
         display: inline-block;
-        margin-bottom: 6px;
+        vertical-align: middle;
       }
 
-      /* -- Meta line (ID + Status) -- */
-      .meta-line {
-        display: table;
+      /* -- Title bar -- */
+      .title-bar {
         width: 100%;
-        margin-bottom: 2px;
-        font-size: 9.5px;
+        border-collapse: collapse;
+        margin-bottom: 4px;
       }
 
-      .meta-left {
-        display: table-cell;
-        vertical-align: top;
+      .title-bar td {
+        padding: 5px 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #000;
+        background: #ccc;
       }
 
-      .meta-right {
-        display: table-cell;
-        vertical-align: top;
-        text-align: right;
-      }
-
-      /* -- Info rows -- */
-      .info-row {
-        font-size: 9.5px;
-        line-height: 1.5;
-        margin-bottom: 1px;
-      }
-
-      /* -- Info grid (multi-column) -- */
-      .info-grid {
-        display: table;
+      /* -- Meta table -- */
+      .meta-table {
         width: 100%;
+        border-collapse: collapse;
         margin-bottom: 2px;
       }
 
-      .info-col {
-        display: table-cell;
+      .meta-table td {
+        padding: 2px 6px;
         vertical-align: top;
         font-size: 9.5px;
         line-height: 1.5;
       }
 
-      .info-col-left {
-        width: 38%;
+      .meta-table .lbl {
+        width: 130px;
+        font-weight: 700;
+        color: #333;
+        white-space: nowrap;
       }
 
-      .info-col-mid {
-        width: 30%;
-      }
-
-      .info-col-right {
-        width: 32%;
+      .meta-table .val {
+        word-break: break-all;
       }
 
       /* -- Section header bar -- */
@@ -119,8 +88,7 @@
         font-size: 9.5px;
         font-weight: 700;
         color: #000;
-        background: #e8e8e8;
-        border-top: 2px solid #000;
+        background: #ccc;
       }
 
       /* -- Signer content -- */
@@ -130,15 +98,17 @@
       }
 
       .signer-table td {
-        padding: 6px 6px;
+        padding: 3px 6px;
         vertical-align: top;
         font-size: 9.5px;
         line-height: 1.5;
       }
 
-      .signer-name {
+      .signer-table .lbl {
+        width: 130px;
         font-weight: 700;
-        font-size: 9.5px;
+        color: #333;
+        white-space: nowrap;
       }
 
       /* -- Events table -- */
@@ -152,8 +122,7 @@
         padding: 5px 6px;
         font-weight: 700;
         color: #000;
-        background: #e8e8e8;
-        border-top: 2px solid #000;
+        background: #ccc;
       }
 
       .events-table tbody td {
@@ -176,9 +145,10 @@
       }
 
       .detail-table .lbl {
-        width: 170px;
+        width: 130px;
         font-weight: 700;
         color: #333;
+        white-space: nowrap;
       }
 
       /* -- Mono -- */
@@ -259,74 +229,101 @@
     </style>
   </head>
   <body>
-    <!-- Top bar with title and brand -->
-    <div class="top-bar">
-      <div class="top-bar-left">
-        <div class="cert-title">Certificate Of Completion</div>
-      </div>
-      <div class="top-bar-right">
-        <div class="brand">probo</div>
-      </div>
+    <!-- Probo logo top-right -->
+    <div class="logo-row">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="90" height="24" viewBox="0 0 90 24">
+        <g clip-path="url(#clip-a)">
+          <rect width="24" height="24" x=".85" fill="#1a1a1a" rx="5.14"/>
+          <path stroke="#ffffff" stroke-width="3.53" d="M20.57 6.17c2.96 4.47-6.43 13.97-20.32 5.66"/>
+          <path stroke="url(#grad-b)" stroke-width="3.53" d="M20.57 6.17c2.96 4.47-6.43 13.97-20.32 5.66"/>
+          <path fill="#ffffff" d="M19.07 7.1a1.77 1.77 0 0 0 3-1.86l-1.5.93-1.5.94ZM8.82 25.18l1.71-.41c-2.3-9.67.01-14.66 2.54-16.83A6.25 6.25 0 0 1 17 6.33c1.22-.01 1.87.44 2.08.78l1.5-.94 1.5-.93c-1.1-1.74-3.16-2.46-5.13-2.44-2.03.03-4.26.81-6.17 2.45-3.9 3.35-6.16 9.92-3.67 20.33l1.72-.41Z"/>
+        </g>
+        <path fill="#1a1a1a" d="M66.87 0v7.32a4.84 4.84 0 0 1 1.48-.74 5.63 5.63 0 0 1 1.76-.28c1.63 0 3 .55 4.1 1.68a5.5 5.5 0 0 1 1.67 4.06c0 1.6-.56 2.93-1.69 4.06a5.49 5.49 0 0 1-4.08 1.69 5.8 5.8 0 0 1-4.06-1.56 5.48 5.48 0 0 1-1.71-4.27V0h2.53Zm3.24 8.72a3.2 3.2 0 0 0-3.24 3.32 3.18 3.18 0 0 0 3.24 3.32 3.2 3.2 0 0 0 3.24-3.32c0-1.9-1.43-3.32-3.24-3.32ZM52.75 7.98a5.53 5.53 0 0 1 4.08-1.68c1.61 0 2.93.55 4.06 1.68a5.51 5.51 0 0 1 1.69 4.06c0 1.58-.55 2.95-1.69 4.09a5.59 5.59 0 0 1-4.06 1.66 5.64 5.64 0 0 1-4.08-1.66 5.53 5.53 0 0 1-1.69-4.09c0-1.6.56-2.92 1.7-4.06Zm.84 4.06c0 .98.32 1.77.93 2.4.63.6 1.4.92 2.31.92.92 0 1.7-.31 2.3-.92.63-.64.94-1.42.94-2.4 0-.97-.31-1.76-.94-2.37a3.03 3.03 0 0 0-2.3-.95 3.22 3.22 0 0 0-3.24 3.32ZM79.32 7.98A5.53 5.53 0 0 1 83.4 6.3c1.6 0 2.93.55 4.06 1.68a5.51 5.51 0 0 1 1.69 4.06c0 1.58-.56 2.95-1.7 4.09a5.59 5.59 0 0 1-4.05 1.66 5.64 5.64 0 0 1-4.08-1.66 5.53 5.53 0 0 1-1.69-4.09c0-1.6.55-2.92 1.69-4.06Zm.84 4.06c0 .98.32 1.77.92 2.4.64.6 1.4.92 2.32.92.92 0 1.69-.31 2.3-.92.63-.64.94-1.42.94-2.4 0-.97-.31-1.76-.95-2.37a3.03 3.03 0 0 0-2.29-.95 3.22 3.22 0 0 0-3.24 3.32ZM34.24 16.76V24h-2.53V12.12c0-1.82.58-3.24 1.71-4.27a5.87 5.87 0 0 1 4.06-1.55c1.56 0 2.98.55 4.08 1.68a5.51 5.51 0 0 1 1.7 4.06 5.66 5.66 0 0 1-5.77 5.75 5.43 5.43 0 0 1-2.88-.77l-.36-.26Zm3.24-8.04a3.2 3.2 0 0 0-3.24 3.32c0 1.9 1.42 3.32 3.24 3.32a3.2 3.2 0 0 0 3.24-3.32 3.2 3.2 0 0 0-3.24-3.32ZM47.4 17.65h-2.5v-6.7c0-3.23 1.82-4.52 4.27-4.52h.6v2.42h-.47c-1.26 0-1.9.71-1.9 2.1v6.7Z"/>
+        <defs>
+          <linearGradient id="grad-b" x1="18.77" x2="1.2" y1="13.56" y2="13.56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#101E1C" stop-opacity="0"/>
+            <stop offset="1" stop-color="#ffffff"/>
+          </linearGradient>
+          <clipPath id="clip-a">
+            <rect width="24" height="24" x=".85" fill="#fff" rx="5.14"/>
+          </clipPath>
+        </defs>
+      </svg>
     </div>
 
-    <!-- Signature ID + Status -->
-    <div class="meta-line">
-      <div class="meta-left">
-        Signature Id: {{.SignatureID}}
-      </div>
-      <div class="meta-right">
-        <strong>Status: Completed</strong>
-      </div>
-    </div>
+    <!-- Title bar -->
+    <table class="title-bar">
+      <tr>
+        <td>Certificate Of Completion</td>
+      </tr>
+    </table>
 
-    <!-- Subject -->
-    <div class="info-row">
-      <strong>Subject:</strong> {{.DocumentTypeName}}
-    </div>
-
-    <!-- Document / Source info grid -->
-    <div class="info-grid" style="margin-top: 4px;">
-      <div class="info-col info-col-left">
-        <div>Document Type: {{.DocumentType}}</div>
-        <div>File Hash (SHA-256):</div>
-        <div class="mono">{{.FileHash}}</div>
-      </div>
-      <div class="info-col info-col-mid">
-        &nbsp;
-      </div>
-      <div class="info-col info-col-right">
-        <div>Organization Id:</div>
-        <div class="mono">{{.OrganizationID}}</div>
-        <div style="margin-top: 2px;">File Id:</div>
-        <div class="mono">{{.FileID}}</div>
-      </div>
-    </div>
+    <!-- Metadata -->
+    <table class="meta-table">
+      <tr>
+        <td class="lbl">Status</td>
+        <td class="val">Completed</td>
+      </tr>
+      <tr>
+        <td class="lbl">Subject</td>
+        <td class="val">{{.DocumentTypeName}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Document Type</td>
+        <td class="val">{{.DocumentType}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Signature Id</td>
+        <td class="val mono">{{.SignatureID}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Organization Id</td>
+        <td class="val mono">{{.OrganizationID}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">File Id</td>
+        <td class="val mono">{{.FileID}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">File Hash (SHA-256)</td>
+        <td class="val mono">{{.FileHash}}</td>
+      </tr>
+    </table>
 
     <!-- Signer Events -->
     <table class="section-bar">
       <tr>
-        <td style="width: 40%;">Signer Events</td>
-        <td style="width: 60%;">Timestamp</td>
+        <td>Signer</td>
       </tr>
     </table>
     <table class="signer-table">
       <tr>
-        <td style="width: 40%;">
-          <div class="signer-name">{{.SignerFullName}}</div>
-          <div>{{.SignerEmail}}</div>
-          <div>Security Level: Email, Account Authentication</div>
-          <div>Using IP Address: {{.SignerIPAddress}}</div>
-          <div style="margin-top: 6px; font-size: 8.5px;">
-            <strong>Electronic Record and Signature Disclosure:</strong><br/>
-            Accepted
-          </div>
-        </td>
-        <td style="width: 60%;">
-          <div><strong>Signed:</strong> {{.SignedAt}}</div>
-          <div style="margin-top: 8px; font-size: 8.5px;">
-            User Agent: {{.SignerUserAgent}}
-          </div>
-        </td>
+        <td class="lbl">Name</td>
+        <td>{{.SignerFullName}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Email</td>
+        <td>{{.SignerEmail}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Signed At</td>
+        <td>{{.SignedAt}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Security Level</td>
+        <td>Email, Account Authentication</td>
+      </tr>
+      <tr>
+        <td class="lbl">IP Address</td>
+        <td class="mono">{{.SignerIPAddress}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">User Agent</td>
+        <td style="font-size: 8.5px;">{{.SignerUserAgent}}</td>
+      </tr>
+      <tr>
+        <td class="lbl">ERSD Consent</td>
+        <td>Accepted</td>
       </tr>
     </table>
 

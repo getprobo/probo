@@ -132,7 +132,7 @@ export function NDAPage(props: {
 
   useEffect(() => {
     if (isCompleted) {
-      navigate("/overview", { replace: true });
+      void navigate("/overview", { replace: true });
     }
   }, [isCompleted, navigate]);
 
