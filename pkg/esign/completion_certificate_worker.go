@@ -115,12 +115,11 @@ LOOP:
 	case <-time.After(w.interval):
 		// From there we should not accept cancelations anymore.
 		nonCancelableCtx := context.WithoutCancel(ctx)
-
 		w.recoverStaleCertificateRows(nonCancelableCtx)
 		for {
-			if err := w.processNext(nonCancelableCtx, sem, &wg); err != nil {
+			if err := w.processNext(ctx, sem, &wg); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					w.logger.ErrorCtx(nonCancelableCtx, "cannot process certificate", log.Error(err))
+					w.logger.ErrorCtx(ctx, "cannot process certificate", log.Error(err))
 				}
 				break
 			}
@@ -132,26 +131,29 @@ LOOP:
 func (w *CompletionCertificateWorker) processNext(ctx context.Context, sem chan struct{}, wg *sync.WaitGroup) error {
 	select {
 	case sem <- struct{}{}:
-	case <-ctx.Done():
+	case <-ctx.Done(): // FIXME: this will never be fired
 		return ctx.Err()
 	}
 
 	var (
 		signature coredata.ElectronicSignature
 		now       = time.Now()
+
+		// From there we should not accept cancelations anymore.
+		nonCancelableCtx = context.WithoutCancel(ctx)
 	)
 
 	if err := w.pg.WithTx(
-		ctx,
+		nonCancelableCtx,
 		func(tx pg.Conn) error {
-			if err := signature.LoadNextCompletedWithoutCertificateForUpdate(ctx, tx); err != nil {
+			if err := signature.LoadNextCompletedWithoutCertificateForUpdate(nonCancelableCtx, tx); err != nil {
 				return err
 			}
 			scope := coredata.NewScopeFromObjectID(signature.ID)
 			signature.CertificateProcessingStartedAt = &now
 			signature.UpdatedAt = now
 
-			if err := signature.Update(ctx, tx, scope); err != nil {
+			if err := signature.Update(nonCancelableCtx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
@@ -169,9 +171,9 @@ func (w *CompletionCertificateWorker) processNext(ctx context.Context, sem chan 
 
 		scope := coredata.NewScopeFromObjectID(signature.ID)
 
-		if err := w.generateAndCommit(ctx, &signature); err != nil {
-			if err := w.handleCertFailure(ctx, &signature, scope, err); err != nil {
-				w.logger.ErrorCtx(ctx, "cannot handle certificate failure", log.Error(err))
+		if err := w.generateAndCommit(nonCancelableCtx, &signature); err != nil {
+			if err := w.handleCertFailure(nonCancelableCtx, &signature, scope, err); err != nil {
+				w.logger.ErrorCtx(nonCancelableCtx, "cannot handle certificate failure", log.Error(err))
 			}
 		}
 	}(signature)

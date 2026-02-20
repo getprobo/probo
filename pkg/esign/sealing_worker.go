@@ -114,10 +114,10 @@ LOOP:
 	case <-time.After(w.interval):
 		// From there we should not accept cancelations anymore.
 		nonCancelableCtx := context.WithoutCancel(ctx)
-
 		w.recoverStaleRows(nonCancelableCtx)
+
 		for {
-			if err := w.processNext(nonCancelableCtx, sem, &wg); err != nil {
+			if err := w.processNext(ctx, sem, &wg); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					w.logger.ErrorCtx(nonCancelableCtx, "cannot claim signature", log.Error(err))
 				}
@@ -139,12 +139,15 @@ func (w *SealingWorker) processNext(ctx context.Context, sem chan struct{}, wg *
 	var (
 		signature = coredata.ElectronicSignature{}
 		now       = time.Now()
+
+		// From there we should not accept cancelations anymore.
+		nonCancelableCtx = context.WithoutCancel(ctx)
 	)
 
 	if err := w.pg.WithTx(
-		ctx,
+		nonCancelableCtx,
 		func(tx pg.Conn) error {
-			if err := signature.LoadNextAcceptedForUpdateSkipLocked(ctx, tx); err != nil {
+			if err := signature.LoadNextAcceptedForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
 				return err
 			}
 
@@ -153,7 +156,7 @@ func (w *SealingWorker) processNext(ctx context.Context, sem chan struct{}, wg *
 			signature.AttemptCount++
 			signature.LastAttemptedAt = &now
 			signature.UpdatedAt = now
-			if err := signature.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := signature.Update(nonCancelableCtx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
@@ -169,9 +172,9 @@ func (w *SealingWorker) processNext(ctx context.Context, sem chan struct{}, wg *
 		defer wg.Done()
 		defer func() { <-sem }()
 
-		if err := w.sealAndCommit(ctx, &signature); err != nil {
-			if err := w.failSignature(ctx, &signature, err); err != nil {
-				w.logger.ErrorCtx(ctx, "cannot fail signature", log.Error(err))
+		if err := w.sealAndCommit(nonCancelableCtx, &signature); err != nil {
+			if err := w.failSignature(nonCancelableCtx, &signature, err); err != nil {
+				w.logger.ErrorCtx(nonCancelableCtx, "cannot fail signature", log.Error(err))
 			}
 		}
 	}(signature)
