@@ -47,7 +47,7 @@ const ndaPageFragment = graphql`
   fragment NDAPageFragment on TrustCenter
   @refetchable(queryName: "NDAPageRefetchQuery") {
     nonDisclosureAgreement @required(action: THROW) {
-      viewerSignature @required(action: THROW) {
+      viewerSignature {
         id
         status
         consentText
@@ -124,11 +124,11 @@ export function NDAPage(props: {
   );
 
   const isProcessing
-    = ndaSignature.status === "ACCEPTED"
-      || ndaSignature.status === "PROCESSING";
+    = ndaSignature?.status === "ACCEPTED"
+      || ndaSignature?.status === "PROCESSING";
 
-  const isFailed = ndaSignature.status === "FAILED";
-  const isCompleted = ndaSignature.status === "COMPLETED";
+  const isFailed = ndaSignature?.status === "FAILED";
+  const isCompleted = ndaSignature?.status === "COMPLETED";
 
   useEffect(() => {
     if (isCompleted) {
@@ -200,11 +200,11 @@ export function NDAPage(props: {
   });
 
   const nda = trustCenter.nonDisclosureAgreement;
-  if (
-    !nda
-    || !nda.viewerSignature
-    || nda.viewerSignature.status === "COMPLETED"
-  ) {
+  if (!viewer) {
+    return <Navigate to="/connect" replace />;
+  }
+
+  if (!nda || !nda.viewerSignature || nda.viewerSignature.status === "COMPLETED") {
     return <Navigate to="/overview" replace />;
   }
 

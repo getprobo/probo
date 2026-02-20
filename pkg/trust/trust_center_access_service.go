@@ -60,6 +60,87 @@ func (tcar *TrustCenterAccessRequest) Validate() error {
 	return v.Error()
 }
 
+func (s TrustCenterAccessService) ensureAccessInTx(
+	ctx context.Context,
+	tx pg.Conn,
+	trustCenterID gid.GID,
+	email mail.Addr,
+	fullName string,
+) (*coredata.TrustCenterAccess, *coredata.TrustCenter, error) {
+	now := time.Now()
+
+	trustCenter := &coredata.TrustCenter{}
+	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, trustCenterID); err != nil {
+		return nil, nil, fmt.Errorf("cannot load trust center: %w", err)
+	}
+
+	existingAccess := &coredata.TrustCenterAccess{}
+	err := existingAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, email)
+	if err == nil {
+		return existingAccess, trustCenter, nil
+	}
+
+	if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, nil, fmt.Errorf("cannot load trust center access: %w", err)
+	}
+
+	access := &coredata.TrustCenterAccess{
+		ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+		OrganizationID:                    trustCenter.OrganizationID,
+		TenantID:                          s.svc.scope.GetTenantID(),
+		TrustCenterID:                     trustCenterID,
+		Email:                             email,
+		Name:                              fullName,
+		State:                             coredata.TrustCenterAccessStateActive,
+		HasAcceptedNonDisclosureAgreement: false,
+		CreatedAt:                         now,
+		UpdatedAt:                         now,
+	}
+
+	if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
+		sig, err := s.svc.esign.CreateSignature(
+			ctx,
+			tx,
+			&esign.CreateSignatureRequest{
+				OrganizationID: access.OrganizationID,
+				DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
+				FileID:         *trustCenter.NonDisclosureAgreementFileID,
+				SignerEmail:    access.Email,
+			},
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot create pending signature: %w", err)
+		}
+		access.ElectronicSignatureID = &sig.ID
+	}
+
+	if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
+		return nil, nil, fmt.Errorf("cannot insert trust center access: %w", err)
+	}
+
+	return access, trustCenter, nil
+}
+
+func (s TrustCenterAccessService) EnsureAccess(
+	ctx context.Context,
+	trustCenterID gid.GID,
+	email mail.Addr,
+	fullName string,
+) (*coredata.TrustCenterAccess, error) {
+	var access *coredata.TrustCenterAccess
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			var err error
+			access, _, err = s.ensureAccessInTx(ctx, tx, trustCenterID, email, fullName)
+			return err
+		},
+	)
+
+	return access, err
+}
+
 func (s TrustCenterAccessService) Request(
 	ctx context.Context,
 	req *TrustCenterAccessRequest,
@@ -69,20 +150,20 @@ func (s TrustCenterAccessService) Request(
 	}
 
 	var (
-		now         = time.Now()
-		access      *coredata.TrustCenterAccess
-		trustCenter *coredata.TrustCenter
+		now    = time.Now()
+		access *coredata.TrustCenterAccess
 	)
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
-			}
+			var trustCenter *coredata.TrustCenter
+			var err error
 
-			// TODO: load document to ensure they are requestable
+			access, trustCenter, err = s.ensureAccessInTx(ctx, tx, req.TrustCenterID, req.Email, req.FullName)
+			if err != nil {
+				return err
+			}
 
 			organizationID := trustCenter.OrganizationID
 
@@ -129,50 +210,6 @@ func (s TrustCenterAccessService) Request(
 
 				for _, file := range allTrustCenterFiles {
 					trustCenterFileIDs = append(trustCenterFileIDs, file.ID)
-				}
-			}
-
-			existingAccess := &coredata.TrustCenterAccess{}
-			err := existingAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, req.TrustCenterID, req.Email)
-			if err == nil {
-				access = existingAccess
-			} else {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load trust center access: %w", err)
-				}
-
-				access = &coredata.TrustCenterAccess{
-					ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-					OrganizationID:                    organizationID,
-					TenantID:                          s.svc.scope.GetTenantID(),
-					TrustCenterID:                     req.TrustCenterID,
-					Email:                             req.Email,
-					Name:                              req.FullName,
-					State:                             coredata.TrustCenterAccessStateActive,
-					HasAcceptedNonDisclosureAgreement: false,
-					CreatedAt:                         now,
-					UpdatedAt:                         now,
-				}
-
-				if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
-					sig, err := s.svc.esign.CreateSignature(
-						ctx,
-						tx,
-						&esign.CreateSignatureRequest{
-							OrganizationID: access.OrganizationID,
-							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
-							FileID:         *trustCenter.NonDisclosureAgreementFileID,
-							SignerEmail:    access.Email,
-						},
-					)
-					if err != nil {
-						return fmt.Errorf("cannot create pending signature: %w", err)
-					}
-					access.ElectronicSignatureID = &sig.ID
-				}
-
-				if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot insert trust center access: %w", err)
 				}
 			}
 

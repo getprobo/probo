@@ -28,7 +28,7 @@ export function MainLayout(props: Props) {
   }
 
   const nda = trustCenter.nonDisclosureAgreement;
-  const hasPendingNDA = nda
+  const hasPendingNDA = data.viewer && nda
     && (!nda.viewerSignature || nda.viewerSignature.status === "PENDING" || nda.viewerSignature.status === "FAILED");
 
   if (hasPendingNDA) {
