@@ -26,26 +26,23 @@ import (
 
 type (
 	EmailAttachment struct {
-		ID       gid.GID `db:"id"`
-		EmailID  gid.GID `db:"email_id"`
-		FileID   gid.GID `db:"file_id"`
-		Filename string  `db:"filename"`
-		// TODO (to drop)
-		ContentType string    `db:"content_type"`
-		CreatedAt   time.Time `db:"created_at"`
+		ID        gid.GID   `db:"id"`
+		EmailID   gid.GID   `db:"email_id"`
+		FileID    gid.GID   `db:"file_id"`
+		Filename  string    `db:"filename"`
+		CreatedAt time.Time `db:"created_at"`
 	}
 
 	EmailAttachments []*EmailAttachment
 )
 
-func NewEmailAttachment(emailID, fileID gid.GID, filename, contentType string) *EmailAttachment {
+func NewEmailAttachment(emailID, fileID gid.GID, filename string) *EmailAttachment {
 	return &EmailAttachment{
-		ID:          gid.New(gid.NilTenant, EmailAttachmentEntityType),
-		EmailID:     emailID,
-		FileID:      fileID,
-		Filename:    filename,
-		ContentType: contentType,
-		CreatedAt:   time.Now(),
+		ID:        gid.New(gid.NilTenant, EmailAttachmentEntityType),
+		EmailID:   emailID,
+		FileID:    fileID,
+		Filename:  filename,
+		CreatedAt: time.Now(),
 	}
 }
 
@@ -54,16 +51,15 @@ func (a *EmailAttachment) Insert(
 	conn pg.Conn,
 ) error {
 	q := `
-INSERT INTO email_attachments (id, email_id, file_id, filename, content_type, created_at)
-VALUES (@id, @email_id, @file_id, @filename, @content_type, @created_at)
+INSERT INTO email_attachments (id, email_id, file_id, filename, created_at)
+VALUES (@id, @email_id, @file_id, @filename, @created_at)
 `
 	args := pgx.StrictNamedArgs{
-		"id":           a.ID,
-		"email_id":     a.EmailID,
-		"file_id":      a.FileID,
-		"filename":     a.Filename,
-		"content_type": a.ContentType,
-		"created_at":   a.CreatedAt,
+		"id":         a.ID,
+		"email_id":   a.EmailID,
+		"file_id":    a.FileID,
+		"filename":   a.Filename,
+		"created_at": a.CreatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -80,7 +76,7 @@ func (a *EmailAttachments) LoadByEmailID(
 	emailID gid.GID,
 ) error {
 	q := `
-SELECT id, email_id, file_id, filename, content_type, created_at
+SELECT id, email_id, file_id, filename, created_at
 FROM email_attachments
 WHERE email_id = @email_id
 ORDER BY created_at ASC
