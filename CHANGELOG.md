@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.130.2] - 2026-02-20
+
+### Fixed
+
+- Fix MCP authentication error
+
 ## [0.130.1] - 2026-02-20
 
 ### Fixed
