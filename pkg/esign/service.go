@@ -17,6 +17,7 @@ package esign
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -338,6 +339,10 @@ func (s *Service) GetSignatureByID(ctx context.Context, id gid.GID) (*coredata.E
 		ctx,
 		func(conn pg.Conn) error {
 			if err := signature.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrElectronicSignatureNotFound
+				}
+
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
 

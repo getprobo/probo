@@ -12,15 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package trust
+package esign
 
 import "errors"
 
 var (
-	ErrCustomDomainNotFound   = errors.New("custom domain not found")
-	ErrPageNotFound           = errors.New("page not found")
-	ErrMembershipNotFound     = errors.New("membership not found")
-	ErrMembershipInactive     = errors.New("membership inactive")
-	ErrDocumentAccessNotFound = errors.New("document access not found")
-	ErrNDAFileNotFound        = errors.New("NDA file not found")
+	ErrElectronicSignatureNotFound = errors.New("electronic signature not found")
 )
