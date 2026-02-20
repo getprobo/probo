@@ -301,7 +301,7 @@ SET status = 'ACCEPTED', processing_started_at = NULL, updated_at = NOW()
 WHERE status = 'PROCESSING'
 	AND processing_started_at < NOW() - $1::interval
 `
-	_, err := conn.Exec(ctx, q, staleAfter.String())
+	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale processing signatures: %w", err)
 	}
@@ -363,7 +363,7 @@ WHERE status = 'COMPLETED'
 	AND certificate_processing_started_at IS NOT NULL
 	AND certificate_processing_started_at < NOW() - $1::interval
 `
-	_, err := conn.Exec(ctx, q, staleAfter.String())
+	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale certificate processing: %w", err)
 	}
