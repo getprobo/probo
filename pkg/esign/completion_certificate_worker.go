@@ -151,6 +151,8 @@ func (w *CompletionCertificateWorker) processNext(ctx context.Context, sem chan 
 			}
 			scope := coredata.NewScopeFromObjectID(signature.ID)
 			signature.CertificateProcessingStartedAt = &now
+			signature.AttemptCount++
+			signature.LastAttemptedAt = &now
 			signature.UpdatedAt = now
 
 			if err := signature.Update(nonCancelableCtx, tx, scope); err != nil {
@@ -353,8 +355,14 @@ func (w *CompletionCertificateWorker) handleCertFailure(
 	return w.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
+			errStr := processingError.Error()
+			signature.LastError = &errStr
 			signature.CertificateProcessingStartedAt = nil
 			signature.UpdatedAt = time.Now()
+
+			if signature.AttemptCount >= signature.MaxAttempts {
+				signature.Status = coredata.ElectronicSignatureStatusFailed
+			}
 
 			if err := signature.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
