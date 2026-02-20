@@ -63,7 +63,7 @@ func (c *TSAClient) Timestamp(ctx context.Context, data []byte) ([]byte, error) 
 	if err != nil {
 		return nil, fmt.Errorf("esign: TSA request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("esign: TSA returned HTTP %d", resp.StatusCode)

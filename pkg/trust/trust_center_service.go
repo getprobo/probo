@@ -34,9 +34,8 @@ type TrustCenterService struct {
 func (s TrustCenterService) Get(
 	ctx context.Context,
 	trustCenterID gid.GID,
-) (*coredata.TrustCenter, *coredata.File, error) {
+) (*coredata.TrustCenter, error) {
 	var trustCenter *coredata.TrustCenter
-	var file *coredata.File
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -46,22 +45,15 @@ func (s TrustCenterService) Get(
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			if trustCenter.NonDisclosureAgreementFileID != nil {
-				file = &coredata.File{}
-				if err := file.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
-					return fmt.Errorf("cannot load file: %w", err)
-				}
-			}
-
 			return nil
 		},
 	)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot load trust center: %w", err)
+		return nil, fmt.Errorf("cannot load trust center: %w", err)
 	}
 
-	return trustCenter, file, nil
+	return trustCenter, nil
 }
 
 func (s TrustCenterService) GetByOrganizationID(
@@ -87,6 +79,39 @@ func (s TrustCenterService) GetByOrganizationID(
 	}
 
 	return trustCenter, nil
+}
+
+func (s TrustCenterService) GetNDAFile(
+	ctx context.Context,
+	trustCenterID gid.GID,
+) (*coredata.File, error) {
+	var file *coredata.File
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			trustCenter := &coredata.TrustCenter{}
+			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			if trustCenter.NonDisclosureAgreementFileID == nil {
+				return nil
+			}
+
+			file = &coredata.File{}
+			if err := file.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
 }
 
 func (s TrustCenterService) GenerateNDAFileURL(

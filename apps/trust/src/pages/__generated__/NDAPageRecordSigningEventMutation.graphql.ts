@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d2d531924e3667658020b431850c193e>>
+ * @generated SignedSource<<58dbdcc5fc52f0dab9eb156856522fd1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ElectronicSignatureEventType = "CERTIFICATE_GENERATED" | "CONSENT_GIVEN" | "DOCUMENT_VIEWED" | "FULL_NAME_TYPED" | "SEAL_COMPUTED" | "SIGNATURE_ACCEPTED" | "SIGNATURE_COMPLETED" | "TIMESTAMP_REQUESTED";
+export type ElectronicSignatureEventType = "CERTIFICATE_GENERATED" | "CONSENT_GIVEN" | "DOCUMENT_VIEWED" | "FULL_NAME_TYPED" | "PROCESSING_ERROR" | "SEAL_COMPUTED" | "SIGNATURE_ACCEPTED" | "SIGNATURE_COMPLETED" | "TIMESTAMP_REQUESTED";
 export type RecordSigningEventInput = {
   eventType: ElectronicSignatureEventType;
   signatureId: string;
