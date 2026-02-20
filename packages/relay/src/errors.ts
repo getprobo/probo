@@ -6,6 +6,14 @@ export class UnAuthenticatedError extends Error {
   }
 }
 
+export class NDASignatureRequiredError extends Error {
+  constructor(message?: string) {
+    super(message || "NDA_SIGNATURE_REQUIRED");
+    this.name = "NDASignatureRequiredError";
+    Object.setPrototypeOf(this, NDASignatureRequiredError.prototype);
+  }
+}
+
 export class InternalServerError extends Error {
   constructor() {
     super("INTERNAL_SERVER_ERROR");

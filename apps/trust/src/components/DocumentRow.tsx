@@ -1,5 +1,6 @@
 import { downloadFile, formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+import { UnAuthenticatedError } from "@probo/relay";
 import {
   Button,
   IconArrowInbox,
@@ -8,12 +9,12 @@ import {
   Spinner,
   useToast,
 } from "@probo/ui";
-import { use, useState } from "react";
+import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
+import { useLocation, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
-import { Viewer } from "#/providers/Viewer";
 
 import type { DocumentRow_requestAccessMutation } from "./__generated__/DocumentRow_requestAccessMutation.graphql";
 import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";
@@ -50,8 +51,9 @@ const documentRowFragment = graphql`
 
 export function DocumentRow(props: { document: DocumentRowFragment$key }) {
   const { __ } = useTranslate();
-  const viewer = use(Viewer);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const document = useFragment(documentRowFragment, props.document);
   const [hasRequested, setHasRequested] = useState(
@@ -87,6 +89,13 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
         });
       },
       onError: (error) => {
+        if (error instanceof UnAuthenticatedError) {
+          const searchParams = new URLSearchParams([[
+            "continue", window.location.origin + location.pathname + location.search,
+          ]]);
+          void navigate(`/connect?${searchParams.toString()}`);
+        }
+
         toast({
           title: __("Error"),
           description: error.message ?? __("Cannot request access"),
@@ -127,28 +136,17 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
               {downloading ? __("Downloading") : __("Download")}
             </Button>
           )
-        : viewer
-          ? (
-              <Button
-                disabled={hasRequested || isRequestingAccess}
-                className="w-full md:w-max"
-                variant="secondary"
-                icon={IconLock}
-                onClick={handleRequestAccess}
-              >
-                {hasRequested ? __("Access requested") : __("Request access")}
-              </Button>
-            )
-          : (
-              <Button
-                className="w-full md:w-max"
-                variant="secondary"
-                icon={IconLock}
-                to="/connect"
-              >
-                {hasRequested ? __("Access requested") : __("Request access")}
-              </Button>
-            )}
+        : (
+            <Button
+              disabled={hasRequested || isRequestingAccess}
+              className="w-full md:w-max"
+              variant="secondary"
+              icon={IconLock}
+              onClick={handleRequestAccess}
+            >
+              {hasRequested ? __("Access requested") : __("Request access")}
+            </Button>
+          )}
     </div>
   );
 }

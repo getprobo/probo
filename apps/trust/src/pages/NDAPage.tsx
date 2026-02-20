@@ -8,13 +8,14 @@ import {
   usePreloadedQuery,
   useRefetchableFragment,
 } from "react-relay";
-import { Navigate, useNavigate } from "react-router";
+import { Navigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { useWindowSize } from "usehooks-ts";
 import { z } from "zod";
 
 import { PDFPreview } from "#/components/PDFPreview";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { NDAPageAcceptElectronicSignatureMutation } from "./__generated__/NDAPageAcceptElectronicSignatureMutation.graphql";
 import type { NDAPageFragment$key } from "./__generated__/NDAPageFragment.graphql";
@@ -88,8 +89,11 @@ export function NDAPage(props: {
   queryRef: PreloadedQuery<NDAPageQueryType>;
 }) {
   const { __ } = useTranslate();
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const documentViewedRef = useRef(false);
+  const { width } = useWindowSize();
+  const isMobile = width < 1100;
+  const isDesktop = !isMobile;
 
   const queryData = usePreloadedQuery(ndaPageQuery, props.queryRef);
   const trustCenter = queryData.currentTrustCenter;
@@ -101,19 +105,14 @@ export function NDAPage(props: {
   );
   const ndaSignature = data.nonDisclosureAgreement.viewerSignature;
 
-  const { width } = useWindowSize();
-  const isMobile = width < 1100;
-  const isDesktop = !isMobile;
-
-  const {
-    handleSubmit: handleSubmitWrapper,
-    register,
-    formState,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      fullName: viewer?.fullName,
-    },
-  });
+  const continueUrlParam = searchParams.get("continue");
+  let safeContinueUrl: string;
+  if (continueUrlParam) {
+    const continueUrl = new URL(continueUrlParam);
+    safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
+  } else {
+    safeContinueUrl = window.location.origin + getPathPrefix();
+  }
 
   const [acceptSignature, isAccepting] = useMutation<NDAPageAcceptElectronicSignatureMutation>(
     acceptElectronicSignatureMutation,
@@ -130,11 +129,21 @@ export function NDAPage(props: {
   const isFailed = ndaSignature?.status === "FAILED";
   const isCompleted = ndaSignature?.status === "COMPLETED";
 
+  const {
+    handleSubmit: handleSubmitWrapper,
+    register,
+    formState,
+  } = useFormWithSchema(schema, {
+    defaultValues: {
+      fullName: viewer?.fullName,
+    },
+  });
+
   useEffect(() => {
     if (isCompleted) {
-      void navigate("/overview", { replace: true });
+      window.location.href = safeContinueUrl;
     }
-  }, [isCompleted, navigate]);
+  }, [isCompleted, safeContinueUrl]);
 
   useEffect(() => {
     if (!isProcessing) return;
