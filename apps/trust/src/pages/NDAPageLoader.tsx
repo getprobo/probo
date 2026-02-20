@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import { RelayProvider } from "#/providers/RelayProviders";

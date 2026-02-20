@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<99908411212decf464eafa45b1fc0e04>>
+ * @generated SignedSource<<e22127e4a2337413e7cbe8d64f43fa95>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type NDAPageFragment$data = {
       readonly id: string;
       readonly lastError: string | null | undefined;
       readonly status: ElectronicSignatureStatus;
-    };
+    } | null | undefined;
   };
   readonly " $fragmentType": "NDAPageFragment";
 };
@@ -67,41 +67,37 @@ return {
         "plural": false,
         "selections": [
           {
-            "kind": "RequiredField",
-            "field": {
-              "alias": null,
-              "args": null,
-              "concreteType": "ElectronicSignature",
-              "kind": "LinkedField",
-              "name": "viewerSignature",
-              "plural": false,
-              "selections": [
-                (v0/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "status",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "consentText",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "lastError",
-                  "storageKey": null
-                }
-              ],
-              "storageKey": null
-            },
-            "action": "THROW"
+            "alias": null,
+            "args": null,
+            "concreteType": "ElectronicSignature",
+            "kind": "LinkedField",
+            "name": "viewerSignature",
+            "plural": false,
+            "selections": [
+              (v0/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "status",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "consentText",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "lastError",
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
           }
         ],
         "storageKey": null
@@ -115,6 +111,6 @@ return {
 };
 })();
 
-(node as any).hash = "503859b8c00b27214f9f3253bffcb670";
+(node as any).hash = "37f6ca36229313e341797c28d789035d";
 
 export default node;
