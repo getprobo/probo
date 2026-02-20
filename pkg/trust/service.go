@@ -300,3 +300,43 @@ func (s *Service) GetMembershipByCompliancePageIDAndEmail(ctx context.Context, c
 
 	return membership, nil
 }
+
+func (s *Service) GetNDAFile(
+	ctx context.Context,
+	compliancePageID gid.GID,
+) (*coredata.File, error) {
+	var (
+		file  *coredata.File
+		scope = coredata.NewScopeFromObjectID(compliancePageID)
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			trustCenter := &coredata.TrustCenter{}
+			if err := trustCenter.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			if trustCenter.NonDisclosureAgreementFileID == nil {
+				return nil
+			}
+
+			file = &coredata.File{}
+			if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrNDAFileNotFound
+				}
+
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}

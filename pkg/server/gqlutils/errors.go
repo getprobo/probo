@@ -66,6 +66,20 @@ func AssumptionRequiredf(ctx context.Context, format string, a ...any) *gqlerror
 	return AssumptionRequired(ctx, fmt.Errorf(format, a...))
 }
 
+func NDASignatureRequired(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "NDA_SIGNATURE_REQUIRED",
+		},
+	}
+}
+
+func NDASignatureRequiredf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return NDASignatureRequired(ctx, fmt.Errorf(format, a...))
+}
+
 func Forbidden(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),

@@ -8,8 +8,8 @@ import { OrganizationSidebar } from "#/components/OrganizationSidebar";
 import { useRequestAccessCallback } from "#/hooks/useRequestAccessCallback";
 import { TrustCenterProvider } from "#/providers/TrustCenterProvider";
 import { Viewer } from "#/providers/Viewer";
-import type { TrustGraphCurrentQuery } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 import { currentTrustGraphQuery } from "#/queries/TrustGraph";
+import type { TrustGraphCurrentQuery } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphCurrentQuery>;
