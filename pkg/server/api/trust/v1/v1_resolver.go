@@ -174,7 +174,7 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 
 // VerifyMagicLink is the resolver for the verifyMagicLink field.
 func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.VerifyMagicLinkInput) (*types.VerifyMagicLinkPayload, error) {
-	_, session, err := r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
+	identity, session, err := r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 	if err != nil {
 		var errInvalidToken *iam.ErrInvalidToken
 		if errors.As(err, &errInvalidToken) {
@@ -183,6 +183,13 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 
 		r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+
+	if _, err := trustService.TrustCenterAccesses.EnsureAccess(ctx, trustCenter.ID, identity.EmailAddress, identity.FullName); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot ensure trust center access", log.Error(err))
 	}
 
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)
