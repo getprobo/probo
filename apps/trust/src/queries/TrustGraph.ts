@@ -7,7 +7,7 @@ export const currentTrustGraphQuery = graphql`
       email
       fullName
     }
-    currentTrustCenter {
+    currentTrustCenter @required(action: THROW) {
       id
       slug
       isViewerMember
