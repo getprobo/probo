@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.130.1] - 2026-02-20
+
+### Fixed
+
+- CreateUser sets profile EmailAddress field
+- Invitation GraphQL type fix: remove organization & user fields
+
 ## [0.130.0] - 2026-02-20
 
 ### Added
