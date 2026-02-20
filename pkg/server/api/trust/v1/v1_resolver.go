@@ -245,7 +245,7 @@ func (r *mutationResolver) checkNDASignature(
 	}
 
 	if access.ElectronicSignatureID == nil {
-		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
+		return nil
 	}
 
 	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
