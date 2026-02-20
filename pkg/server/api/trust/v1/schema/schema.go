@@ -277,7 +277,7 @@ type ComplexityRoot struct {
 	}
 
 	VerifyMagicLinkPayload struct {
-		Success func(childComplexity int) int
+		Continue func(childComplexity int) int
 	}
 }
 
@@ -1205,12 +1205,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.VendorEdge.Node(childComplexity), true
 
-	case "VerifyMagicLinkPayload.success":
-		if e.ComplexityRoot.VerifyMagicLinkPayload.Success == nil {
+	case "VerifyMagicLinkPayload.continue":
+		if e.ComplexityRoot.VerifyMagicLinkPayload.Continue == nil {
 			break
 		}
 
-		return e.ComplexityRoot.VerifyMagicLinkPayload.Success(childComplexity), true
+		return e.ComplexityRoot.VerifyMagicLinkPayload.Continue(childComplexity), true
 
 	}
 	return 0, false
@@ -1860,6 +1860,7 @@ type TrustCenterAccess implements Node {
 
 input SendMagicLinkInput {
   email: EmailAddr!
+  continue: String
 }
 
 type SendMagicLinkPayload {
@@ -1871,7 +1872,7 @@ input VerifyMagicLinkInput {
 }
 
 type VerifyMagicLinkPayload {
-  success: Boolean!
+  continue: String
 }
 
 type RequestAccessesPayload {
@@ -3796,8 +3797,8 @@ func (ec *executionContext) fieldContext_Mutation_verifyMagicLink(ctx context.Co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "success":
-				return ec.fieldContext_VerifyMagicLinkPayload_success(ctx, field)
+			case "continue":
+				return ec.fieldContext_VerifyMagicLinkPayload_continue(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VerifyMagicLinkPayload", field.Name)
 		},
@@ -6855,30 +6856,30 @@ func (ec *executionContext) fieldContext_VendorEdge_node(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _VerifyMagicLinkPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.VerifyMagicLinkPayload) (ret graphql.Marshaler) {
+func (ec *executionContext) _VerifyMagicLinkPayload_continue(ctx context.Context, field graphql.CollectedField, obj *types.VerifyMagicLinkPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_VerifyMagicLinkPayload_success,
+		ec.fieldContext_VerifyMagicLinkPayload_continue,
 		func(ctx context.Context) (any, error) {
-			return obj.Success, nil
+			return obj.Continue, nil
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalOString2ᚖstring,
 		true,
-		true,
+		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_VerifyMagicLinkPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VerifyMagicLinkPayload_continue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "VerifyMagicLinkPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8559,7 +8560,7 @@ func (ec *executionContext) unmarshalInputSendMagicLinkInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"email"}
+	fieldsInOrder := [...]string{"email", "continue"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8573,6 +8574,13 @@ func (ec *executionContext) unmarshalInputSendMagicLinkInput(ctx context.Context
 				return it, err
 			}
 			it.Email = data
+		case "continue":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("continue"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Continue = data
 		}
 	}
 	return it, nil
@@ -11243,11 +11251,8 @@ func (ec *executionContext) _VerifyMagicLinkPayload(ctx context.Context, sel ast
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("VerifyMagicLinkPayload")
-		case "success":
-			out.Values[i] = ec._VerifyMagicLinkPayload_success(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
+		case "continue":
+			out.Values[i] = ec._VerifyMagicLinkPayload_continue(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

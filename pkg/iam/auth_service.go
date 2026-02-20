@@ -64,6 +64,7 @@ type (
 		Email          mail.Addr
 		URLPath        string
 		OrganizationID gid.GID
+		Continue       *string
 		// If users tries to connect to compliance page, we must brand the emails accordingly
 		CompliancePageID *gid.GID
 	}
@@ -73,7 +74,8 @@ type (
 	}
 
 	MagicLinkData struct {
-		Email mail.Addr `json:"email"`
+		Email    mail.Addr `json:"email"`
+		Continue *string   `json:"continue"`
 	}
 )
 
@@ -593,7 +595,8 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 		TokenTypeMagicLink,
 		s.magicLinkTokenValidity,
 		MagicLinkData{
-			Email: req.Email,
+			Email:    req.Email,
+			Continue: req.Continue,
 		},
 	)
 	if err != nil {
@@ -670,16 +673,16 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 	)
 }
 
-func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString string) (*coredata.Identity, *coredata.Session, error) {
+func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString string) (*coredata.Identity, *coredata.Session, *string, error) {
 	var (
 		now      = time.Now()
-		identity = &coredata.Identity{}
 		session  = &coredata.Session{}
+		identity = &coredata.Identity{}
 	)
 
 	payload, err := statelesstoken.ValidateToken[MagicLinkData](s.tokenSecret, TokenTypeMagicLink, tokenString)
 	if err != nil {
-		return nil, nil, NewInvalidTokenError()
+		return nil, nil, nil, NewInvalidTokenError()
 	}
 
 	if err := s.pg.WithTx(
@@ -737,10 +740,10 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 			return nil
 		},
 	); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return identity, session, nil
+	return identity, session, payload.Data.Continue, nil
 }
 
 func (s *AuthService) UpdateIdentity(ctx context.Context, identityID gid.GID, fullName string) (*coredata.Identity, error) {
