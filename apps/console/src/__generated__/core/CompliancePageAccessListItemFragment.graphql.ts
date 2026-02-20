@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d6d18b9131581530d367e10380f14077>>
+ * @generated SignedSource<<97bc9b075b82bb1543c80843430ced5d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type ElectronicSignatureStatus = "ACCEPTED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING";
 export type TrustCenterAccessState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageAccessListItemFragment$data = {
@@ -16,9 +17,11 @@ export type CompliancePageAccessListItemFragment$data = {
   readonly canUpdate: boolean;
   readonly createdAt: string;
   readonly email: string;
-  readonly hasAcceptedNonDisclosureAgreement: boolean;
   readonly id: string;
   readonly name: string;
+  readonly ndaSignature: {
+    readonly status: ElectronicSignatureStatus;
+  } | null | undefined;
   readonly pendingRequestCount: number;
   readonly state: TrustCenterAccessState;
   readonly " $fragmentType": "CompliancePageAccessListItemFragment";
@@ -86,8 +89,19 @@ const node: ReaderFragment = {
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
-      "name": "hasAcceptedNonDisclosureAgreement",
+      "concreteType": "ElectronicSignature",
+      "kind": "LinkedField",
+      "name": "ndaSignature",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "status",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     },
     {
@@ -108,6 +122,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "2492ed4967d57febe8f1153f75280410";
+(node as any).hash = "9047d3d3f232d43c6f951c74b0395b58";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6bb56648c233a0887b8579cb6fa2e9ab>>
+ * @generated SignedSource<<9b82b09c2b56467a1dfa0fcdf809bc34>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -201,8 +201,20 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "hasAcceptedNonDisclosureAgreement",
+                    "concreteType": "ElectronicSignature",
+                    "kind": "LinkedField",
+                    "name": "ndaSignature",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "status",
+                        "storageKey": null
+                      },
+                      (v4/*: any*/)
+                    ],
                     "storageKey": null
                   },
                   {
@@ -246,12 +258,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "22a7b4c8022edd73d37f5a8ebb5fe57a",
+    "cacheID": "685bbdb5f629501f61631592530f46a7",
     "id": null,
     "metadata": {},
     "name": "NewCompliancePageAccessDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation NewCompliancePageAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
+    "text": "mutation NewCompliancePageAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
   }
 };
 })();
