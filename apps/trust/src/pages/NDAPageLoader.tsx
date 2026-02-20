@@ -18,11 +18,7 @@ function NDAPageQueryLoader() {
 
   if (!queryRef) return null;
 
-  return (
-    <Suspense>
-      <NDAPage queryRef={queryRef} />
-    </Suspense>
-  );
+  return <NDAPage queryRef={queryRef} />;
 }
 
 export default function NDAPageLoader() {
