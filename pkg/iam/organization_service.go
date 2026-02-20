@@ -880,6 +880,7 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 				ID:                       gid.New(req.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
 				IdentityID:               identity.ID,
 				OrganizationID:           req.OrganizationID,
+				EmailAddress:             req.EmailAddress,
 				Source:                   coredata.ProfileSourceManual,
 				FullName:                 req.FullName,
 				Kind:                     req.Kind,
