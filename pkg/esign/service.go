@@ -15,11 +15,13 @@
 package esign
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
@@ -123,12 +125,6 @@ func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterCon
 	return g.Wait()
 }
 
-// CreateSignatureRequest contains the parameters for creating a PENDING
-// electronic signature.
-
-// CreateSignature creates a PENDING electronic signature row. The conn
-// parameter allows the caller to include this insert inside its own
-// transaction.
 func (s *Service) CreateSignature(
 	ctx context.Context,
 	conn pg.Conn,
@@ -142,8 +138,6 @@ func (s *Service) CreateSignature(
 			return nil, fmt.Errorf("cannot derive consent text: %w", err)
 		}
 	} else {
-		// Caller provided explicit text; append e-sign process consent
-		// suffix if not already present.
 		if !strings.HasSuffix(consentText, coredata.ESignProcessConsentText) {
 			consentText = consentText + " " + coredata.ESignProcessConsentText
 		}
@@ -152,12 +146,19 @@ func (s *Service) CreateSignature(
 	now := time.Now()
 	scope := coredata.NewScopeFromObjectID(req.OrganizationID)
 
+	signatureID := gid.New(scope.GetTenantID(), coredata.ElectronicSignatureEntityType)
+
+	stampedFileID, err := s.createStampedDocument(ctx, conn, scope, req.OrganizationID, req.FileID, signatureID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create stamped document: %w", err)
+	}
+
 	sig := &coredata.ElectronicSignature{
-		ID:             gid.New(scope.GetTenantID(), coredata.ElectronicSignatureEntityType),
+		ID:             signatureID,
 		OrganizationID: req.OrganizationID,
 		Status:         coredata.ElectronicSignatureStatusPending,
 		DocumentType:   req.DocumentType,
-		FileID:         req.FileID,
+		FileID:         stampedFileID,
 		SignerEmail:    req.SignerEmail.String(),
 		ConsentText:    consentText,
 		SealVersion:    1,
@@ -172,6 +173,63 @@ func (s *Service) CreateSignature(
 	}
 
 	return sig, nil
+}
+
+func (s *Service) createStampedDocument(
+	ctx context.Context,
+	conn pg.Conn,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	originalFileID gid.GID,
+	signatureID gid.GID,
+) (gid.GID, error) {
+	var originalFile coredata.File
+	if err := originalFile.LoadByID(ctx, conn, scope, originalFileID); err != nil {
+		return gid.GID{}, fmt.Errorf("cannot load original file: %w", err)
+	}
+
+	pdfData, err := s.fileManager.GetFileBytes(ctx, &originalFile)
+	if err != nil {
+		return gid.GID{}, fmt.Errorf("cannot download original file: %w", err)
+	}
+
+	stampedData, err := StampSignatureID(pdfData, signatureID.String())
+	if err != nil {
+		return gid.GID{}, fmt.Errorf("cannot stamp signature ID: %w", err)
+	}
+
+	now := time.Now()
+	stampedFile := coredata.File{
+		ID:             gid.New(scope.GetTenantID(), coredata.FileEntityType),
+		OrganizationID: organizationID,
+		BucketName:     s.bucket,
+		MimeType:       "application/pdf",
+		FileName:       originalFile.FileName,
+		FileKey:        uuid.MustNewV4().String(),
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	stampedSize, err := s.fileManager.PutFile(
+		ctx,
+		&stampedFile,
+		bytes.NewReader(stampedData),
+		map[string]string{
+			"type":         "stamped-document",
+			"signature-id": signatureID.String(),
+		},
+	)
+	if err != nil {
+		return gid.GID{}, fmt.Errorf("cannot upload stamped file: %w", err)
+	}
+
+	stampedFile.FileSize = stampedSize
+
+	if err := stampedFile.Insert(ctx, conn, scope); err != nil {
+		return gid.GID{}, fmt.Errorf("cannot insert stamped file record: %w", err)
+	}
+
+	return stampedFile.ID, nil
 }
 
 func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureRequest) (*coredata.ElectronicSignature, error) {
@@ -318,6 +376,43 @@ func (s *Service) GenerateCertificateFileURL(
 	url, err := s.fileManager.GenerateFileUrl(ctx, &file, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate certificate file URL: %w", err)
+	}
+
+	return url, nil
+}
+
+func (s *Service) GenerateSignatureFileURL(
+	ctx context.Context,
+	signatureID gid.GID,
+	expiresIn time.Duration,
+) (string, error) {
+	var (
+		scope     = coredata.NewScopeFromObjectID(signatureID)
+		signature coredata.ElectronicSignature
+		file      coredata.File
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := signature.LoadByID(ctx, conn, scope, signatureID); err != nil {
+				return fmt.Errorf("cannot load electronic signature: %w", err)
+			}
+
+			if err := file.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+				return fmt.Errorf("cannot load signature file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	url, err := s.fileManager.GenerateFileUrl(ctx, &file, expiresIn)
+	if err != nil {
+		return "", fmt.Errorf("cannot generate signature file URL: %w", err)
 	}
 
 	return url, nil
