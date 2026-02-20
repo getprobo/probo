@@ -70,7 +70,7 @@ const store = new Store(source, {
 });
 
 export const consoleEnvironment = new Environment({
-  configName: "trust",
+  configName: "compliance-page",
   network: Network.create(makeFetchQuery(buildEndpoint())),
   store,
 });

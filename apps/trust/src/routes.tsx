@@ -7,7 +7,7 @@ import {
 } from "@probo/routes";
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import { createBrowserRouter, redirect, useRouteError } from "react-router";
+import { createBrowserRouter, redirect } from "react-router";
 
 import { MainLayout } from "#/layouts/MainLayout";
 import { DocumentsPage } from "#/pages/DocumentsPage";
@@ -20,18 +20,10 @@ import {
 } from "#/queries/TrustGraph";
 
 import { PageError } from "./components/PageError";
+import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton";
 import { TabSkeleton } from "./components/Skeletons/TabSkeleton";
 import { consoleEnvironment } from "./providers/RelayProviders";
-
-/**
- * Top level error boundary
- */
-function ErrorBoundary() {
-  const error = useRouteError();
-
-  return <PageError error={error instanceof Error ? error : new Error("unkown error")} />;
-}
 
 const routes = [
   {
@@ -54,12 +46,12 @@ const routes = [
       throw redirect("/overview");
     },
     Component: Fragment,
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
   },
   {
     path: "/nda",
     Component: lazy(() => import("#/pages/NDAPageLoader")),
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
   },
   // Custom domain routes (subdomain-based)
   {
@@ -69,7 +61,7 @@ const routes = [
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
     children: [
       {
         path: "",
@@ -85,7 +77,7 @@ const routes = [
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
     children: [
       {
         path: "",
@@ -104,7 +96,7 @@ const routes = [
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
     children: [
       {
         path: "",
