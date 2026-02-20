@@ -11,10 +11,11 @@ import {
 } from "@probo/ui";
 import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
+import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { DocumentRow_requestAccessMutation } from "./__generated__/DocumentRow_requestAccessMutation.graphql";
 import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";
@@ -54,6 +55,7 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const document = useFragment(documentRowFragment, props.document);
   const [hasRequested, setHasRequested] = useState(
@@ -90,10 +92,15 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
-          const searchParams = new URLSearchParams([[
-            "continue", window.location.origin + location.pathname + location.search,
+          const pathPrefix = getPathPrefix();
+          searchParams.set("request-document-id", document.id);
+          const urlSearchParams = new URLSearchParams([[
+            "continue",
+            window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
           ]]);
-          void navigate(`/connect?${searchParams.toString()}`);
+          void navigate(`/connect?${urlSearchParams.toString()}`);
+
+          return;
         }
 
         toast({

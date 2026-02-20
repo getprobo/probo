@@ -5,6 +5,7 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Navigate, Outlet } from "react-router";
 
 import { OrganizationSidebar } from "#/components/OrganizationSidebar";
+import { useRequestAccessCallback } from "#/hooks/useRequestAccessCallback";
 import { TrustCenterProvider } from "#/providers/TrustCenterProvider";
 import { Viewer } from "#/providers/Viewer";
 import type { TrustGraphCurrentQuery } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
@@ -21,11 +22,12 @@ export function MainLayout(props: Props) {
 
   const theme = useSystemTheme();
 
-  useFavicon(theme === "dark" ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl) : trustCenter?.logoFileUrl);
-
-  if (!trustCenter) {
-    return null;
-  }
+  useFavicon(
+    theme === "dark"
+      ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl)
+      : trustCenter?.logoFileUrl,
+  );
+  useRequestAccessCallback();
 
   const nda = trustCenter.nonDisclosureAgreement;
   const hasPendingNDA = nda?.viewerSignature
