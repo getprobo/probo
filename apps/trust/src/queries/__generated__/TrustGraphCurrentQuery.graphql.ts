@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c89278f85dedf2e3c5d8dbd77cd19222>>
+ * @generated SignedSource<<8cdc4505736f9b7b220946d464c949f9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -45,7 +45,7 @@ export type TrustGraphCurrentQuery$data = {
       readonly totalCount: number;
     };
     readonly " $fragmentSpreads": FragmentRefs<"OverviewPageFragment">;
-  } | null | undefined;
+  };
   readonly viewer: {
     readonly email: any;
     readonly fullName: string;
@@ -228,106 +228,110 @@ return {
         "storageKey": null
       },
       {
-        "alias": null,
-        "args": null,
-        "concreteType": "TrustCenter",
-        "kind": "LinkedField",
-        "name": "currentTrustCenter",
-        "plural": false,
-        "selections": [
-          (v2/*: any*/),
-          (v3/*: any*/),
-          (v4/*: any*/),
-          (v5/*: any*/),
-          (v6/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "NonDisclosureAgreement",
-            "kind": "LinkedField",
-            "name": "nonDisclosureAgreement",
-            "plural": false,
-            "selections": [
-              (v7/*: any*/),
-              (v8/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "ElectronicSignature",
-                "kind": "LinkedField",
-                "name": "viewerSignature",
-                "plural": false,
-                "selections": [
-                  (v9/*: any*/)
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "Organization",
-            "kind": "LinkedField",
-            "name": "organization",
-            "plural": false,
-            "selections": [
-              (v10/*: any*/),
-              (v11/*: any*/),
-              (v12/*: any*/),
-              (v0/*: any*/),
-              (v13/*: any*/)
-            ],
-            "storageKey": null
-          },
-          {
-            "args": null,
-            "kind": "FragmentSpread",
-            "name": "OverviewPageFragment"
-          },
-          (v14/*: any*/),
-          {
-            "alias": null,
-            "args": (v15/*: any*/),
-            "concreteType": "AuditConnection",
-            "kind": "LinkedField",
-            "name": "audits",
-            "plural": false,
-            "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "AuditEdge",
-                "kind": "LinkedField",
-                "name": "edges",
-                "plural": true,
-                "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Audit",
-                    "kind": "LinkedField",
-                    "name": "node",
-                    "plural": false,
-                    "selections": [
-                      (v2/*: any*/),
-                      {
-                        "args": null,
-                        "kind": "FragmentSpread",
-                        "name": "AuditRowFragment"
-                      }
-                    ],
-                    "storageKey": null
-                  }
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": "audits(first:50)"
-          }
-        ],
-        "storageKey": null
+        "kind": "RequiredField",
+        "field": {
+          "alias": null,
+          "args": null,
+          "concreteType": "TrustCenter",
+          "kind": "LinkedField",
+          "name": "currentTrustCenter",
+          "plural": false,
+          "selections": [
+            (v2/*: any*/),
+            (v3/*: any*/),
+            (v4/*: any*/),
+            (v5/*: any*/),
+            (v6/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "NonDisclosureAgreement",
+              "kind": "LinkedField",
+              "name": "nonDisclosureAgreement",
+              "plural": false,
+              "selections": [
+                (v7/*: any*/),
+                (v8/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "ElectronicSignature",
+                  "kind": "LinkedField",
+                  "name": "viewerSignature",
+                  "plural": false,
+                  "selections": [
+                    (v9/*: any*/)
+                  ],
+                  "storageKey": null
+                }
+              ],
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "Organization",
+              "kind": "LinkedField",
+              "name": "organization",
+              "plural": false,
+              "selections": [
+                (v10/*: any*/),
+                (v11/*: any*/),
+                (v12/*: any*/),
+                (v0/*: any*/),
+                (v13/*: any*/)
+              ],
+              "storageKey": null
+            },
+            {
+              "args": null,
+              "kind": "FragmentSpread",
+              "name": "OverviewPageFragment"
+            },
+            (v14/*: any*/),
+            {
+              "alias": null,
+              "args": (v15/*: any*/),
+              "concreteType": "AuditConnection",
+              "kind": "LinkedField",
+              "name": "audits",
+              "plural": false,
+              "selections": [
+                {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "AuditEdge",
+                  "kind": "LinkedField",
+                  "name": "edges",
+                  "plural": true,
+                  "selections": [
+                    {
+                      "alias": null,
+                      "args": null,
+                      "concreteType": "Audit",
+                      "kind": "LinkedField",
+                      "name": "node",
+                      "plural": false,
+                      "selections": [
+                        (v2/*: any*/),
+                        {
+                          "args": null,
+                          "kind": "FragmentSpread",
+                          "name": "AuditRowFragment"
+                        }
+                      ],
+                      "storageKey": null
+                    }
+                  ],
+                  "storageKey": null
+                }
+              ],
+              "storageKey": "audits(first:50)"
+            }
+          ],
+          "storageKey": null
+        },
+        "action": "THROW"
       }
     ],
     "type": "Query",
@@ -701,6 +705,6 @@ return {
 };
 })();
 
-(node as any).hash = "6cbe676214b698d12e2cae08060a7285";
+(node as any).hash = "64b166174da80cd3082ab4becf716b1c";
 
 export default node;

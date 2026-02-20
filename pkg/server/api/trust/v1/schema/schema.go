@@ -2105,7 +2105,7 @@ type Mutation {
     input: ExportTrustCenterFileInput!
   ): ExportTrustCenterFilePayload! @session(required: OPTIONAL)
 
-    requestDocumentAccess(
+  requestDocumentAccess(
     input: RequestDocumentAccessInput!
   ): RequestAccessesPayload! @session(required: PRESENT)
 
