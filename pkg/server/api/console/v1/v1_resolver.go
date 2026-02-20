@@ -1243,16 +1243,16 @@ func (r *documentVersionSignatureConnectionResolver) TotalCount(ctx context.Cont
 
 // CertificateFileURL is the resolver for the certificateFileUrl field.
 func (r *electronicSignatureResolver) CertificateFileURL(ctx context.Context, obj *types.ElectronicSignature) (*string, error) {
-	sig, err := r.esign.GetSignatureByID(ctx, obj.ID)
+	signature, err := r.esign.GetSignatureByID(ctx, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load signature: %w", err)
 	}
 
-	if sig.CertificateFileID == nil {
+	if signature.CertificateFileID == nil {
 		return nil, nil
 	}
 
-	url, err := r.esign.GenerateCertificateFileURL(ctx, *sig.CertificateFileID, 1*time.Hour)
+	url, err := r.esign.GenerateCertificateFileURL(ctx, *signature.CertificateFileID, 1*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate certificate file URL: %w", err)
 	}
