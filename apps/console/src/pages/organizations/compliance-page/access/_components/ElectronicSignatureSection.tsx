@@ -22,6 +22,16 @@ const fragment = graphql`
   }
 `;
 
+function getFilenameFromUrl(url: string): string | null {
+  try {
+    const disposition = new URL(url).searchParams.get("response-content-disposition");
+    const match = disposition?.match(/filename="([^"]+)"/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function ElectronicSignatureSection({
   fragmentRef,
 }: {
@@ -55,9 +65,10 @@ export function ElectronicSignatureSection({
               href={signature.certificateFileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-txt-accent hover:underline"
+              className="text-sm text-txt-primary hover:underline"
+              download
             >
-              {__("Download")}
+              {getFilenameFromUrl(signature.certificateFileUrl) ?? __("Download")}
             </a>
           </div>
         )}
