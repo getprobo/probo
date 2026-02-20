@@ -8,13 +8,14 @@ import {
   useMutation,
   usePreloadedQuery,
 } from "react-relay";
+import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
-import type { ConnectPageMutation } from "./__generated__/ConnectPageMutation.graphql";
+import type { ConnectPageMutation, SendMagicLinkInput } from "./__generated__/ConnectPageMutation.graphql";
 import type { ConnectPageQuery } from "./__generated__/ConnectPageQuery.graphql";
 
 export const connectPageQuery = graphql`
@@ -53,10 +54,21 @@ export function ConnectPage(props: {
   const [magicLinkSent, setMagicLinkSent] = useState<boolean>(false);
   const interval = useRef<NodeJS.Timeout>(undefined);
   const [timer, setTimer] = useState<number>(timerDurationSeconds);
+  const [searchParams] = useSearchParams();
 
   const {
     currentTrustCenter: { organization },
   } = usePreloadedQuery<ConnectPageQuery>(connectPageQuery, queryRef);
+
+  const continueUrlParam = searchParams.get("continue");
+  let safeContinueUrl: string;
+  if (continueUrlParam) {
+    const continueUrl = new URL(continueUrlParam);
+    safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
+  } else {
+    const pathPrefix = getPathPrefix();
+    safeContinueUrl = window.location.origin + pathPrefix ? getPathPrefix() : "/";
+  }
 
   useEffect(() => {
     if (!magicLinkSent && interval.current) {
@@ -92,14 +104,18 @@ export function ConnectPage(props: {
   );
 
   const handleSubmit = handleSubmitWrapper(({ email }: FormData) => {
+    const input: SendMagicLinkInput = { email };
+    if (safeContinueUrl) {
+      input.continue = safeContinueUrl;
+    }
     sendMagicLink({
       variables: {
         input: {
           email,
+          continue: safeContinueUrl,
         },
       },
-      onCompleted: (data, errors: GraphQLError[] | null) => {
-        console.log(data, errors);
+      onCompleted: (_, errors: GraphQLError[] | null) => {
         if (errors) {
           for (const err of errors) {
             if (err.extensions?.code === "ALREADY_AUTHENTICATED") {

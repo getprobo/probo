@@ -14,7 +14,7 @@ import type { VerifyMagicLinkPageMutation } from "./__generated__/VerifyMagicLin
 const verifyMagicLinkMutation = graphql`
   mutation VerifyMagicLinkPageMutation($input: VerifyMagicLinkInput!) {
     verifyMagicLink(input: $input) {
-      success
+      continue
     }
   }
 `;
@@ -38,7 +38,7 @@ export default function VerifyMagicLinkPagePageMutation() {
       variables: {
         input: { token },
       },
-      onCompleted: (_, errors: GraphQLError[] | null) => {
+      onCompleted: (response, errors: GraphQLError[] | null) => {
         if (errors) {
           for (const err of errors) {
             if (err.extensions?.code === "ALREADY_AUTHENTICATED") {
@@ -55,13 +55,21 @@ export default function VerifyMagicLinkPagePageMutation() {
           return;
         }
 
+        const { verifyMagicLink } = response;
+
         toast({
           title: __("Success"),
           description: __("Your have successfully signed in"),
           variant: "success",
         });
-        const pathPrefix = getPathPrefix();
-        window.location.href = pathPrefix ? getPathPrefix() : "/";
+
+        if (verifyMagicLink?.continue) {
+          const continueUrl = new URL(verifyMagicLink.continue);
+          window.location.href = window.location.origin + continueUrl.pathname + continueUrl.search;
+        } else {
+          const pathPrefix = getPathPrefix();
+          window.location.href = pathPrefix ? getPathPrefix() : "/";
+        }
       },
       onError: (err) => {
         toast({

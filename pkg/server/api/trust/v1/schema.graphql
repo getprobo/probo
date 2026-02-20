@@ -552,6 +552,7 @@ type TrustCenterAccess implements Node {
 
 input SendMagicLinkInput {
   email: EmailAddr!
+  continue: String
 }
 
 type SendMagicLinkPayload {
@@ -563,7 +564,7 @@ input VerifyMagicLinkInput {
 }
 
 type VerifyMagicLinkPayload {
-  success: Boolean!
+  continue: String
 }
 
 type RequestAccessesPayload {

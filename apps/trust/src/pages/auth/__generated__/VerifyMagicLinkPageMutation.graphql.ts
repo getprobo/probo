@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5037d9722f3c6cc15c2a323ef954e3d6>>
+ * @generated SignedSource<<5570f368d6cc3c3be80a32390e12c8f9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type VerifyMagicLinkPageMutation$variables = {
 };
 export type VerifyMagicLinkPageMutation$data = {
   readonly verifyMagicLink: {
-    readonly success: boolean;
+    readonly continue: string | null | undefined;
   } | null | undefined;
 };
 export type VerifyMagicLinkPageMutation = {
@@ -52,7 +52,7 @@ v1 = [
         "alias": null,
         "args": null,
         "kind": "ScalarField",
-        "name": "success",
+        "name": "continue",
         "storageKey": null
       }
     ],
@@ -77,16 +77,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "07cf89de3f37725d847cda46557467f5",
+    "cacheID": "05d0e504b6f11ad7dd11ed84059a96ac",
     "id": null,
     "metadata": {},
     "name": "VerifyMagicLinkPageMutation",
     "operationKind": "mutation",
-    "text": "mutation VerifyMagicLinkPageMutation(\n  $input: VerifyMagicLinkInput!\n) {\n  verifyMagicLink(input: $input) {\n    success\n  }\n}\n"
+    "text": "mutation VerifyMagicLinkPageMutation(\n  $input: VerifyMagicLinkInput!\n) {\n  verifyMagicLink(input: $input) {\n    continue\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "074415601c4d50f50d177c06dfab64ef";
+(node as any).hash = "cc9e7f7886d9d61b95f13c5ba66c41ec";
 
 export default node;

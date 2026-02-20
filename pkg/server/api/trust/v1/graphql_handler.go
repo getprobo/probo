@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
@@ -38,6 +39,7 @@ func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, esignSvc *e
 			logger:        logger,
 			baseURL:       baseURL,
 			sessionCookie: authn.NewCookie(&cookieConfig),
+			safeRedirect:  &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()},
 		},
 		Directives: schema.DirectiveRoot{
 			Session: session.Directive,
