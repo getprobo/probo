@@ -97,7 +97,9 @@ func NewService(
 func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterConfigFunc) error {
 	g := errgroup.Group{}
 
-	sealingWorkerCtx, stopSealingWorker := context.WithCancel(context.Background())
+	nonCancelableCtx := context.WithoutCancel(ctx)
+
+	sealingWorkerCtx, stopSealingWorker := context.WithCancel(nonCancelableCtx)
 	sealingWorker := NewSealingWorker(
 		s.pg,
 		s.fileManager,
@@ -106,7 +108,7 @@ func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterCon
 	)
 	g.Go(func() error { return sealingWorker.Run(sealingWorkerCtx) })
 
-	certWorkerCtx, stopCertWorker := context.WithCancel(context.Background())
+	certWorkerCtx, stopCertWorker := context.WithCancel(nonCancelableCtx)
 	certWorker := NewCompletionCertificateWorker(
 		s.pg,
 		s.fileManager,
