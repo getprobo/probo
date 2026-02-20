@@ -3,7 +3,7 @@ import { getTrustCenterDocumentAccessStatusBadgeVariant, getTrustCenterDocumentA
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 
-interface TrustCenterDocumentAccessListProps {
+interface CompliancePageDocumentAccessListProps {
   documentAccesses: TrustCenterDocumentAccessInfo[];
   initialStatusByID: Record<string, TrustCenterDocumentAccessStatus>;
   onGrantAll: () => void;
@@ -11,7 +11,7 @@ interface TrustCenterDocumentAccessListProps {
   onUpdateStatus: (docAccess: TrustCenterDocumentAccessInfo, status: TrustCenterDocumentAccessStatus) => void;
 }
 
-export function TrustCenterDocumentAccessList(props: TrustCenterDocumentAccessListProps) {
+export function CompliancePageDocumentAccessList(props: CompliancePageDocumentAccessListProps) {
   const { documentAccesses, initialStatusByID, onGrantAll, onRejectOrRevokeAll, onUpdateStatus } = props;
 
   const { __ } = useTranslate();

@@ -18,39 +18,96 @@ import {
   usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
+import { graphql } from "relay-runtime";
 import { z } from "zod";
 
+import type { CompliancePageAccessEditDialogQuery as CompliancePageAccessEditDialogQueryType } from "#/__generated__/core/CompliancePageAccessEditDialogQuery.graphql";
+import type { CompliancePageAccessEditDialogUpdateMutation } from "#/__generated__/core/CompliancePageAccessEditDialogUpdateMutation.graphql";
 import type { CompliancePageAccessListItemFragment$data } from "#/__generated__/core/CompliancePageAccessListItemFragment.graphql";
-import type { TrustCenterAccessGraphLoadDocumentAccessesQuery } from "#/__generated__/core/TrustCenterAccessGraphLoadDocumentAccessesQuery.graphql";
-import {
-  loadTrustCenterAccessDocumentAccessesQuery,
-  updateTrustCenterAccessMutation,
-} from "#/hooks/graph/TrustCenterAccessGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-
+import { CompliancePageDocumentAccessList } from "#/pages/organizations/compliance-page/access/_components/CompliancePageDocumentAccessList";
 import { ElectronicSignatureSection } from "#/pages/organizations/compliance-page/access/_components/ElectronicSignatureSection";
-import { TrustCenterDocumentAccessList } from "./TrustCenterDocumentAccessList";
 
-interface TrustCenterAccessEditDialogProps {
+const compliancePageAccessEditDialogQuery = graphql`
+  query CompliancePageAccessEditDialogQuery($accessId: ID!) {
+    node(id: $accessId) {
+      ... on TrustCenterAccess {
+        id
+        ndaSignature {
+          ...ElectronicSignatureSectionFragment
+        }
+        availableDocumentAccesses(
+          first: 100
+          orderBy: { field: CREATED_AT, direction: DESC }
+        ) {
+          edges {
+            node {
+              id
+              status
+              document {
+                id
+                title
+                documentType
+              }
+              report {
+                id
+                filename
+                audit {
+                  id
+                  framework {
+                    name
+                  }
+                }
+              }
+              trustCenterFile {
+                id
+                name
+                category
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const updateAccessMutation = graphql`
+  mutation CompliancePageAccessEditDialogUpdateMutation(
+    $input: UpdateTrustCenterAccessInput!
+  ) {
+    updateTrustCenterAccess(input: $input) {
+      trustCenterAccess {
+        id
+        email
+        name
+        state
+        hasAcceptedNonDisclosureAgreement
+        createdAt
+        updatedAt
+        pendingRequestCount
+        activeCount
+      }
+    }
+  }
+`;
+
+export function CompliancePageAccessEditDialog(props: {
   access: CompliancePageAccessListItemFragment$data;
   onClose: () => void;
-}
-
-export function TrustCenterAccessEditDialog(
-  props: TrustCenterAccessEditDialogProps,
-) {
+}) {
   const { access, onClose } = props;
 
   const { __ } = useTranslate();
 
-  const [queryRef, loadDocumentAccessesQuery]
-    = useQueryLoader<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
-      loadTrustCenterAccessDocumentAccessesQuery,
+  const [queryRef, loadQuery]
+    = useQueryLoader<CompliancePageAccessEditDialogQueryType>(
+      compliancePageAccessEditDialogQuery,
     );
 
   useEffect(() => {
-    loadDocumentAccessesQuery(
+    loadQuery(
       {
         accessId: access.id,
       },
@@ -58,13 +115,13 @@ export function TrustCenterAccessEditDialog(
         fetchPolicy: "network-only",
       },
     );
-  }, [access.id, loadDocumentAccessesQuery]);
+  }, [access.id, loadQuery]);
 
   return (
     <Dialog defaultOpen={true} title={__("Edit Access")} onClose={onClose}>
       {queryRef && (
         <Suspense>
-          <TrustCenterAccessEditForm
+          <CompliancePageAccessEditForm
             access={access}
             queryRef={queryRef}
             onSubmit={onClose}
@@ -75,21 +132,17 @@ export function TrustCenterAccessEditDialog(
   );
 }
 
-interface TrustCenterAccessEditFormProps {
+function CompliancePageAccessEditForm(props: {
   access: CompliancePageAccessListItemFragment$data;
   onSubmit: () => void;
-  queryRef: PreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>;
-}
-
-export function TrustCenterAccessEditForm(
-  props: TrustCenterAccessEditFormProps,
-) {
+  queryRef: PreloadedQuery<CompliancePageAccessEditDialogQueryType>;
+}) {
   const { access, onSubmit, queryRef } = props;
 
   const { __ } = useTranslate();
   const data
-    = usePreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
-      loadTrustCenterAccessDocumentAccessesQuery,
+    = usePreloadedQuery<CompliancePageAccessEditDialogQueryType>(
+      compliancePageAccessEditDialogQuery,
       queryRef,
     );
 
@@ -154,8 +207,8 @@ export function TrustCenterAccessEditForm(
     defaultValues: { name: access.name, active: access.state === "ACTIVE" },
   });
 
-  const [updateTrustCenterAccess, isUpdating] = useMutationWithToasts(
-    updateTrustCenterAccessMutation,
+  const [updateTrustCenterAccess, isUpdating] = useMutationWithToasts<CompliancePageAccessEditDialogUpdateMutation>(
+    updateAccessMutation,
     {
       successMessage: __("Access updated successfully"),
       errorMessage: __("Failed to update access"),
@@ -228,7 +281,7 @@ export function TrustCenterAccessEditForm(
           <ElectronicSignatureSection fragmentRef={data.node.ndaSignature} />
         )}
 
-        <TrustCenterDocumentAccessList
+        <CompliancePageDocumentAccessList
           documentAccesses={documentAccesses}
           initialStatusByID={initialStatusByID}
           onGrantAll={handleGrantAllDocumentAccess}
