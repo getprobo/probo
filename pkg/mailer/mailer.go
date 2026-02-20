@@ -180,8 +180,8 @@ func (m *Mailer) batchSendEmails(ctx context.Context) error {
 						return fmt.Errorf("cannot download attachment %s: %w", att.Filename, err)
 					}
 
-					// TODO [esign] maybe use AddAttachmentWithReader instead?
-					mail = mail.AddAttachment(data, att.ContentType, att.Filename)
+					//	TODO [esign] maybe use AddAttachmentWithReader instead?
+					mail = mail.AddAttachment(data, file.MimeType, att.Filename)
 				}
 
 				envelope, err := mail.Build()
