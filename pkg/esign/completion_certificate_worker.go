@@ -328,13 +328,11 @@ func (w *CompletionCertificateWorker) generateCertificate(
 			email.ID,
 			signedFile.ID,
 			signedFile.FileName,
-			signedFile.MimeType,
 		),
 		coredata.NewEmailAttachment(
 			email.ID,
 			certificateOfCompletionFile.ID,
 			certificateFilename,
-			"application/pdf",
 		),
 	}
 
