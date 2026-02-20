@@ -199,19 +199,6 @@ export function NDAPage(props: {
     });
   });
 
-  const handleTryAgain = () => {
-    if (ndaSignature && viewer?.fullName) {
-      acceptSignature({
-        variables: {
-          input: {
-            signatureId: ndaSignature.id,
-            fullName: viewer.fullName,
-          },
-        },
-      });
-    }
-  };
-
   const nda = trustCenter.nonDisclosureAgreement;
   if (
     !nda
@@ -257,14 +244,7 @@ export function NDAPage(props: {
               </Card>
             )}
             <form
-              onSubmit={
-                isFailed
-                  ? (e) => {
-                      e.preventDefault();
-                      handleTryAgain();
-                    }
-                  : e => void handleSubmit(e)
-              }
+              onSubmit={e => void handleSubmit(e)}
               className="mt-8"
             >
               <Field
