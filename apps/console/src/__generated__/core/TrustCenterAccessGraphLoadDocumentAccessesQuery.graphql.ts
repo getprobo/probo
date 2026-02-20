@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<72bab693664bbf68879e863c85f980b5>>
+ * @generated SignedSource<<88767d7e81f9900c5bd01a14ffb14bfa>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+import { FragmentRefs } from "relay-runtime";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterDocumentAccessStatus = "GRANTED" | "REJECTED" | "REQUESTED" | "REVOKED";
 export type TrustCenterAccessGraphLoadDocumentAccessesQuery$variables = {
@@ -45,6 +46,9 @@ export type TrustCenterAccessGraphLoadDocumentAccessesQuery$data = {
       }>;
     };
     readonly id?: string;
+    readonly ndaSignature?: {
+      readonly " $fragmentSpreads": FragmentRefs<"ElectronicSignatureSectionFragment">;
+    } | null | undefined;
   };
 };
 export type TrustCenterAccessGraphLoadDocumentAccessesQuery = {
@@ -177,6 +181,22 @@ return {
               (v2/*: any*/),
               {
                 "alias": null,
+                "args": null,
+                "concreteType": "ElectronicSignature",
+                "kind": "LinkedField",
+                "name": "ndaSignature",
+                "plural": false,
+                "selections": [
+                  {
+                    "args": null,
+                    "kind": "FragmentSpread",
+                    "name": "ElectronicSignatureSectionFragment"
+                  }
+                ],
+                "storageKey": null
+              },
+              {
+                "alias": null,
                 "args": (v3/*: any*/),
                 "concreteType": "TrustCenterDocumentAccessConnection",
                 "kind": "LinkedField",
@@ -287,6 +307,66 @@ return {
             "selections": [
               {
                 "alias": null,
+                "args": null,
+                "concreteType": "ElectronicSignature",
+                "kind": "LinkedField",
+                "name": "ndaSignature",
+                "plural": false,
+                "selections": [
+                  (v4/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "signedAt",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "certificateFileUrl",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "ElectronicSignatureEvent",
+                    "kind": "LinkedField",
+                    "name": "events",
+                    "plural": true,
+                    "selections": [
+                      (v2/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "eventType",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "actorEmail",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "occurredAt",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  },
+                  (v2/*: any*/)
+                ],
+                "storageKey": null
+              },
+              {
+                "alias": null,
                 "args": (v3/*: any*/),
                 "concreteType": "TrustCenterDocumentAccessConnection",
                 "kind": "LinkedField",
@@ -370,16 +450,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a3c6d83c3fae9bd8ab3e474706423115",
+    "cacheID": "175c4de41f02ea26f9a4ebc2124d6a51",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphLoadDocumentAccessesQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphLoadDocumentAccessesQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query TrustCenterAccessGraphLoadDocumentAccessesQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      ndaSignature {\n        ...ElectronicSignatureSectionFragment\n        id\n      }\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment ElectronicSignatureSectionFragment on ElectronicSignature {\n  status\n  signedAt\n  certificateFileUrl\n  events {\n    id\n    eventType\n    actorEmail\n    occurredAt\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f2fad3a04a700d1a9b045d1fa09e470c";
+(node as any).hash = "d104626a4915648265550778f1ce6606";
 
 export default node;

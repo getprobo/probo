@@ -1,6 +1,6 @@
 import { formatDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, DropdownItem, IconArchive, IconCheckmark1, IconPencil, IconRotateCw, Td, Tr } from "@probo/ui";
+import { ActionDropdown, DropdownItem, IconArchive, IconPencil, IconRotateCw, Td, Tr } from "@probo/ui";
 import { useCallback, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -11,6 +11,8 @@ import { updateTrustCenterAccessMutation } from "#/hooks/graph/TrustCenterAccess
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { TrustCenterAccessEditDialog } from "#/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessEditDialog";
 
+import { NdaSignatureBadge } from "./NdaSignatureBadge";
+
 const fragment = graphql`
   fragment CompliancePageAccessListItemFragment on TrustCenterAccess {
     id
@@ -20,7 +22,9 @@ const fragment = graphql`
     state
     activeCount
     pendingRequestCount
-    hasAcceptedNonDisclosureAgreement
+    ndaSignature {
+      status
+    }
     canUpdate: permission(action: "core:trust-center-access:update")
   }
 `;
@@ -78,9 +82,13 @@ export function CompliancePageAccessListItem(props: {
         </Td>
         <Td>
           <div className="flex justify-center">
-            {access.hasAcceptedNonDisclosureAgreement && (
-              <IconCheckmark1 size={16} className="text-txt-success" />
-            )}
+            {access.ndaSignature
+              ? (
+                  <NdaSignatureBadge status={access.ndaSignature.status} />
+                )
+              : (
+                  <span className="text-txt-tertiary">-</span>
+                )}
           </div>
         </Td>
         <Td noLink width={160} className="text-end">

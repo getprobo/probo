@@ -25,6 +25,9 @@ export const loadTrustCenterAccessDocumentAccessesQuery = graphql`
     node(id: $accessId) {
       ... on TrustCenterAccess {
         id
+        ndaSignature {
+          ...ElectronicSignatureSectionFragment
+        }
         availableDocumentAccesses(
           first: 100
           orderBy: { field: CREATED_AT, direction: DESC }
