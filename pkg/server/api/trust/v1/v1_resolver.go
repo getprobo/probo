@@ -648,6 +648,21 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 // FileURL is the resolver for the fileUrl field.
 func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+	if identity := authn.IdentityFromContext(ctx); identity != nil && r.esign != nil {
+		trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+
+		access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.EmailAddress)
+		if err == nil && access.ElectronicSignatureID != nil {
+			fileURL, err := r.esign.GenerateSignatureFileURL(ctx, *access.ElectronicSignatureID, 15*time.Minute)
+			if err == nil {
+				return fileURL, nil
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot generate signature file URL, falling back to original NDA", log.Error(err))
+		}
+	}
+
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, trustCenter.ID, 15*time.Minute)
