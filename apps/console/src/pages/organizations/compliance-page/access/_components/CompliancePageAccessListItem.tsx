@@ -6,11 +6,10 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageAccessListItemFragment$key } from "#/__generated__/core/CompliancePageAccessListItemFragment.graphql";
-import type { TrustCenterAccessGraphUpdateMutation } from "#/__generated__/core/TrustCenterAccessGraphUpdateMutation.graphql";
-import { updateTrustCenterAccessMutation } from "#/hooks/graph/TrustCenterAccessGraph";
+import type { CompliancePageAccessListItemUpdateMutation } from "#/__generated__/core/CompliancePageAccessListItemUpdateMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-import { TrustCenterAccessEditDialog } from "#/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessEditDialog";
 
+import { CompliancePageAccessEditDialog } from "./CompliancePageAccessEditDialog";
 import { NdaSignatureBadge } from "./NdaSignatureBadge";
 
 const fragment = graphql`
@@ -29,6 +28,26 @@ const fragment = graphql`
   }
 `;
 
+const toggleAccessStateMutation = graphql`
+  mutation CompliancePageAccessListItemUpdateMutation(
+    $input: UpdateTrustCenterAccessInput!
+  ) {
+    updateTrustCenterAccess(input: $input) {
+      trustCenterAccess {
+        id
+        email
+        name
+        state
+        hasAcceptedNonDisclosureAgreement
+        createdAt
+        updatedAt
+        pendingRequestCount
+        activeCount
+      }
+    }
+  }
+`;
+
 export function CompliancePageAccessListItem(props: {
   fragmentRef: CompliancePageAccessListItemFragment$key;
   dialogOpen: boolean;
@@ -42,8 +61,8 @@ export function CompliancePageAccessListItem(props: {
 
   const isActive = access.state === "ACTIVE";
 
-  const [updateAccess, isUpdating] = useMutationWithToasts<TrustCenterAccessGraphUpdateMutation>(
-    updateTrustCenterAccessMutation,
+  const [toggleAccessState, isToggling] = useMutationWithToasts<CompliancePageAccessListItemUpdateMutation>(
+    toggleAccessStateMutation,
     {
       successMessage: isActive
         ? __("Access deactivated successfully")
@@ -55,7 +74,7 @@ export function CompliancePageAccessListItem(props: {
   );
 
   const handleToggleState = useCallback(() => {
-    void updateAccess({
+    void toggleAccessState({
       variables: {
         input: {
           id: access.id,
@@ -64,7 +83,7 @@ export function CompliancePageAccessListItem(props: {
         },
       },
     });
-  }, [updateAccess, access.id, access.name, isActive]);
+  }, [toggleAccessState, access.id, access.name, isActive]);
 
   return (
     <>
@@ -109,7 +128,7 @@ export function CompliancePageAccessListItem(props: {
                 <DropdownItem
                   icon={isActive ? IconArchive : IconRotateCw}
                   onClick={handleToggleState}
-                  disabled={isUpdating}
+                  disabled={isToggling}
                   variant={isActive ? "danger" : "primary"}
                 >
                   {isActive ? __("Deactivate") : __("Activate")}
@@ -121,7 +140,7 @@ export function CompliancePageAccessListItem(props: {
       </Tr>
 
       {access.canUpdate && isActive && dialogOpen && (
-        <TrustCenterAccessEditDialog
+        <CompliancePageAccessEditDialog
           access={access}
           onClose={() => setDialogOpen(false)}
         />

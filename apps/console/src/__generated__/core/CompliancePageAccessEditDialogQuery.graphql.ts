@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<88767d7e81f9900c5bd01a14ffb14bfa>>
+ * @generated SignedSource<<6356fdb9136b757a766816656cdf9eea>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,10 +12,10 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterDocumentAccessStatus = "GRANTED" | "REJECTED" | "REQUESTED" | "REVOKED";
-export type TrustCenterAccessGraphLoadDocumentAccessesQuery$variables = {
+export type CompliancePageAccessEditDialogQuery$variables = {
   accessId: string;
 };
-export type TrustCenterAccessGraphLoadDocumentAccessesQuery$data = {
+export type CompliancePageAccessEditDialogQuery$data = {
   readonly node: {
     readonly availableDocumentAccesses?: {
       readonly edges: ReadonlyArray<{
@@ -51,9 +51,9 @@ export type TrustCenterAccessGraphLoadDocumentAccessesQuery$data = {
     } | null | undefined;
   };
 };
-export type TrustCenterAccessGraphLoadDocumentAccessesQuery = {
-  response: TrustCenterAccessGraphLoadDocumentAccessesQuery$data;
-  variables: TrustCenterAccessGraphLoadDocumentAccessesQuery$variables;
+export type CompliancePageAccessEditDialogQuery = {
+  response: CompliancePageAccessEditDialogQuery$data;
+  variables: CompliancePageAccessEditDialogQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -165,7 +165,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterAccessGraphLoadDocumentAccessesQuery",
+    "name": "CompliancePageAccessEditDialogQuery",
     "selections": [
       {
         "alias": null,
@@ -284,7 +284,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "TrustCenterAccessGraphLoadDocumentAccessesQuery",
+    "name": "CompliancePageAccessEditDialogQuery",
     "selections": [
       {
         "alias": null,
@@ -450,16 +450,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "175c4de41f02ea26f9a4ebc2124d6a51",
+    "cacheID": "2c1a84490b7c138adbd06cd36a247f8b",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterAccessGraphLoadDocumentAccessesQuery",
+    "name": "CompliancePageAccessEditDialogQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphLoadDocumentAccessesQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      ndaSignature {\n        ...ElectronicSignatureSectionFragment\n        id\n      }\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment ElectronicSignatureSectionFragment on ElectronicSignature {\n  status\n  signedAt\n  certificateFileUrl\n  events {\n    id\n    eventType\n    actorEmail\n    occurredAt\n  }\n}\n"
+    "text": "query CompliancePageAccessEditDialogQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      ndaSignature {\n        ...ElectronicSignatureSectionFragment\n        id\n      }\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment ElectronicSignatureSectionFragment on ElectronicSignature {\n  status\n  signedAt\n  certificateFileUrl\n  events {\n    id\n    eventType\n    actorEmail\n    occurredAt\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d104626a4915648265550778f1ce6606";
+(node as any).hash = "22c0951e589902a84654ef96af8887a7";
 
 export default node;
