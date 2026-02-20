@@ -73,12 +73,17 @@ func (t ElectronicSignatureEventType) String() string {
 }
 
 func (t *ElectronicSignatureEventType) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for ElectronicSignatureEventType, expected string got %T", value)
+	var s string
+	switch v := value.(type) {
+	case string:
+		s = v
+	case []byte:
+		s = string(v)
+	default:
+		return fmt.Errorf("invalid scan source for ElectronicSignatureEventType, expected string or []byte got %T", value)
 	}
 
-	return t.UnmarshalText([]byte(val))
+	return t.UnmarshalText([]byte(s))
 }
 
 func (t ElectronicSignatureEventType) Value() (driver.Value, error) {
