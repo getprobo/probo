@@ -31,10 +31,12 @@ export const ndaPageQuery = graphql`
       organization {
         name
       }
-      ndaFileUrl
-      ndaFileName
-      ndaSignature {
-        status
+      nonDisclosureAgreement {
+        fileName
+        fileUrl
+        viewerSignature {
+          status
+        }
       }
       ...NDAPageFragment
     }
@@ -44,11 +46,13 @@ export const ndaPageQuery = graphql`
 const ndaPageFragment = graphql`
   fragment NDAPageFragment on TrustCenter
   @refetchable(queryName: "NDAPageRefetchQuery") {
-    ndaSignature @required(action: THROW) {
-      id
-      status
-      consentText
-      lastError
+    nonDisclosureAgreement @required(action: THROW) {
+      viewerSignature @required(action: THROW) {
+        id
+        status
+        consentText
+        lastError
+      }
     }
   }
 `;
@@ -95,7 +99,7 @@ export function NDAPage(props: {
     ndaPageFragment,
     trustCenter,
   );
-  const ndaSignature = data.ndaSignature;
+  const ndaSignature = data.nonDisclosureAgreement.viewerSignature;
 
   const { width } = useWindowSize();
   const isMobile = width < 1100;
@@ -208,10 +212,11 @@ export function NDAPage(props: {
     }
   };
 
+  const nda = trustCenter.nonDisclosureAgreement;
   if (
-    !trustCenter.ndaFileUrl
-    || !trustCenter.ndaSignature
-    || trustCenter.ndaSignature.status === "COMPLETED"
+    !nda
+    || !nda.viewerSignature
+    || nda.viewerSignature.status === "COMPLETED"
   ) {
     return <Navigate to="/overview" replace />;
   }
@@ -241,11 +246,11 @@ export function NDAPage(props: {
                 trustCenter.organization.name,
               )}
             </p>
-            {isMobile && trustCenter.ndaFileUrl && (
+            {isMobile && nda?.fileUrl && (
               <Card className="flex justify-between py-3 px-4 text-sm items-center mt-6">
-                {trustCenter.ndaFileName}
+                {nda?.fileName}
                 <Button variant="secondary" asChild>
-                  <a target="_blank" rel="noopener noreferrer" href={trustCenter.ndaFileUrl}>
+                  <a target="_blank" rel="noopener noreferrer" href={nda.fileUrl}>
                     {__("View document")}
                   </a>
                 </Button>
@@ -323,7 +328,7 @@ export function NDAPage(props: {
         </div>
         {isDesktop && (
           <div className="bg-subtle h-full border-l border-border-solid min-h-0">
-            {trustCenter.ndaFileUrl && <PDFPreview src={trustCenter.ndaFileUrl} name={trustCenter.ndaFileName ?? ""} />}
+            {nda?.fileUrl && <PDFPreview src={nda.fileUrl} name={nda.fileName ?? ""} />}
           </div>
         )}
       </div>

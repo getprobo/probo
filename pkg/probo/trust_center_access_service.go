@@ -250,12 +250,8 @@ func (s TrustCenterAccessService) Create(
 				UpdatedAt:                         now,
 			}
 
-			if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert trust center access: %w", err)
-			}
-
 			if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
-				_, err := s.svc.esign.CreateSignature(
+				sig, err := s.svc.esign.CreateSignature(
 					ctx,
 					tx,
 					&esign.CreateSignatureRequest{
@@ -265,10 +261,14 @@ func (s TrustCenterAccessService) Create(
 						SignerEmail:    access.Email,
 					},
 				)
-
 				if err != nil {
 					return fmt.Errorf("cannot create pending signature: %w", err)
 				}
+				access.ElectronicSignatureID = &sig.ID
+			}
+
+			if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert trust center access: %w", err)
 			}
 
 			return nil

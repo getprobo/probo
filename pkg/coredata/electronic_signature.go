@@ -216,58 +216,6 @@ LIMIT 1
 	return nil
 }
 
-func (es *ElectronicSignature) LoadByOrgEmailAndDocType(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	orgID gid.GID,
-	email string,
-	docType ElectronicSignatureDocumentType,
-	fileID gid.GID,
-) error {
-	q := `
-SELECT
-	id, tenant_id, organization_id, status, document_type, file_id,
-	signer_email, consent_text, signer_full_name, signer_ip_address,
-	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
-	certificate_file_id, certificate_processing_started_at,
-	attempt_count, max_attempts, last_attempted_at, last_error,
-	processing_started_at, created_at, updated_at
-FROM electronic_signatures
-WHERE %s
-	AND organization_id = @organization_id
-	AND signer_email = @signer_email
-	AND document_type = @document_type
-	AND file_id = @file_id
-LIMIT 1
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id": orgID,
-		"signer_email":    email,
-		"document_type":   docType,
-		"file_id":         fileID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query electronic signature: %w", err)
-	}
-
-	sig, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ElectronicSignature])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-		return fmt.Errorf("cannot collect electronic signature: %w", err)
-	}
-
-	*es = sig
-	return nil
-}
-
 func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Conn,

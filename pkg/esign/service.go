@@ -174,16 +174,16 @@ func (s *Service) CreateSignature(
 	return sig, nil
 }
 
-func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureRequest) error {
+func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureRequest) (*coredata.ElectronicSignature, error) {
 	var (
-		scope = coredata.NewScopeFromObjectID(req.SignatureID)
-		now   = time.Now()
+		scope     = coredata.NewScopeFromObjectID(req.SignatureID)
+		now       = time.Now()
+		signature = coredata.ElectronicSignature{}
 	)
 
-	return s.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			var signature coredata.ElectronicSignature
 			if err := signature.LoadByID(ctx, tx, scope, req.SignatureID); err != nil {
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
@@ -193,7 +193,6 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 				return fmt.Errorf("cannot accept electronic signature in status %s", signature.Status)
 			}
 
-			// If retrying from FAILED, reset attempt tracking.
 			if signature.Status == coredata.ElectronicSignatureStatusFailed {
 				signature.AttemptCount = 0
 				signature.LastError = nil
@@ -210,7 +209,7 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
-			s.recordEvent(
+			if err := s.recordEvent(
 				ctx,
 				tx,
 				&RecordEventRequest{
@@ -221,11 +220,18 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 					ActorIPAddr: req.SignerIPAddr,
 					ActorUA:     req.SignerUA,
 				},
-			)
+			); err != nil {
+				return fmt.Errorf("cannot record event: %w", err)
+			}
 
 			return nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &signature, nil
 }
 
 func (s *Service) RecordEvent(ctx context.Context, req *RecordEventRequest) error {
@@ -262,7 +268,7 @@ func (s *Service) recordEvent(ctx context.Context, tx pg.Conn, req *RecordEventR
 	return nil
 }
 
-func (s *Service) LoadSignatureByID(ctx context.Context, id gid.GID) (*coredata.ElectronicSignature, error) {
+func (s *Service) GetSignatureByID(ctx context.Context, id gid.GID) (*coredata.ElectronicSignature, error) {
 	var (
 		scope     = coredata.NewScopeFromObjectID(id)
 		signature = coredata.ElectronicSignature{}
@@ -285,36 +291,28 @@ func (s *Service) LoadSignatureByID(ctx context.Context, id gid.GID) (*coredata.
 	return &signature, nil
 }
 
-func (s *Service) LoadSignatureByOrgEmailAndDocType(
-	ctx context.Context,
-	orgID gid.GID,
-	email string,
-	docType coredata.ElectronicSignatureDocumentType,
-	fileID gid.GID,
-) (*coredata.ElectronicSignature, error) {
-	scope := coredata.NewScopeFromObjectID(orgID)
-	var sig coredata.ElectronicSignature
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return sig.LoadByOrgEmailAndDocType(ctx, conn, scope, orgID, email, docType, fileID)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &sig, nil
-}
-
 func (s *Service) GenerateCertificateFileURL(
 	ctx context.Context,
 	certificateFileID gid.GID,
 	expiresIn time.Duration,
 ) (string, error) {
-	scope := coredata.NewScopeFromObjectID(certificateFileID)
-	var file coredata.File
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return file.LoadByID(ctx, conn, scope, certificateFileID)
-	})
+	var (
+		scope = coredata.NewScopeFromObjectID(certificateFileID)
+		file  = coredata.File{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := file.LoadByID(ctx, conn, scope, certificateFileID); err != nil {
+				return fmt.Errorf("cannot load certificate file: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
-		return "", fmt.Errorf("cannot load certificate file: %w", err)
+		return "", err
 	}
 
 	url, err := s.fileManager.GenerateFileUrl(ctx, &file, expiresIn)
@@ -325,7 +323,7 @@ func (s *Service) GenerateCertificateFileURL(
 	return url, nil
 }
 
-func (s *Service) LoadEventsBySignatureID(
+func (s *Service) GetEventsBySignatureID(
 	ctx context.Context,
 	signatureID gid.GID,
 ) (coredata.ElectronicSignatureEvents, error) {

@@ -42,6 +42,7 @@ type (
 		HasAcceptedNonDisclosureAgreement         bool                   `db:"has_accepted_non_disclosure_agreement"`
 		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage        `db:"has_accepted_non_disclosure_agreement_metadata"`
 		NDAFileID                                 *gid.GID               `db:"nda_file_id"`
+		ElectronicSignatureID                     *gid.GID               `db:"electronic_signature_id"`
 		CreatedAt                                 time.Time              `db:"created_at"`
 		UpdatedAt                                 time.Time              `db:"updated_at"`
 	}
@@ -90,6 +91,7 @@ SELECT
 	has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
+	electronic_signature_id,
 	created_at,
 	updated_at
 FROM
@@ -143,6 +145,7 @@ SELECT
 	has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
+	electronic_signature_id,
 	created_at,
 	updated_at
 FROM
@@ -196,6 +199,7 @@ INSERT INTO trust_center_accesses (
 	name,
 	state,
 	has_accepted_non_disclosure_agreement,
+	electronic_signature_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -207,6 +211,7 @@ INSERT INTO trust_center_accesses (
 	@name,
 	@state,
 	@has_accepted_non_disclosure_agreement,
+	@electronic_signature_id,
 	@created_at,
 	@updated_at
 )
@@ -221,6 +226,7 @@ INSERT INTO trust_center_accesses (
 		"name":                                  tca.Name,
 		"state":                                 tca.State,
 		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
+		"electronic_signature_id":               tca.ElectronicSignatureID,
 		"created_at":                            tca.CreatedAt,
 		"updated_at":                            tca.UpdatedAt,
 	}
@@ -251,7 +257,8 @@ UPDATE trust_center_accesses SET
 	updated_at = @updated_at,
 	has_accepted_non_disclosure_agreement = @has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata = @has_accepted_non_disclosure_agreement_metadata,
-	nda_file_id = @nda_file_id
+	nda_file_id = @nda_file_id,
+	electronic_signature_id = @electronic_signature_id
 WHERE
 	%s
 	AND id = @id
@@ -266,7 +273,8 @@ WHERE
 		"updated_at":                            tca.UpdatedAt,
 		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
 		"has_accepted_non_disclosure_agreement_metadata": tca.HasAcceptedNonDisclosureAgreementMetadata,
-		"nda_file_id": tca.NDAFileID,
+		"nda_file_id":             tca.NDAFileID,
+		"electronic_signature_id": tca.ElectronicSignatureID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -324,6 +332,7 @@ SELECT
 	has_accepted_non_disclosure_agreement,
 	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
+	electronic_signature_id,
 	created_at,
 	updated_at
 FROM

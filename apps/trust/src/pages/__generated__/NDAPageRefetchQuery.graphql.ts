@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<47d15b007fc81de3850393c9b158726c>>
+ * @generated SignedSource<<5c6134b4d6615f24a63ea534c80e76c1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -100,31 +100,42 @@ return {
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "ElectronicSignature",
+                "concreteType": "NonDisclosureAgreement",
                 "kind": "LinkedField",
-                "name": "ndaSignature",
+                "name": "nonDisclosureAgreement",
                 "plural": false,
                 "selections": [
-                  (v2/*: any*/),
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "status",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "consentText",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "lastError",
+                    "concreteType": "ElectronicSignature",
+                    "kind": "LinkedField",
+                    "name": "viewerSignature",
+                    "plural": false,
+                    "selections": [
+                      (v2/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "status",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "consentText",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "lastError",
+                        "storageKey": null
+                      }
+                    ],
                     "storageKey": null
                   }
                 ],
@@ -140,16 +151,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "1c61baa555ad2b24794ce0bf5ecc14ac",
+    "cacheID": "fcf227efd02b14a0cb1599e4a5f944bd",
     "id": null,
     "metadata": {},
     "name": "NDAPageRefetchQuery",
     "operationKind": "query",
-    "text": "query NDAPageRefetchQuery(\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NDAPageFragment\n    id\n  }\n}\n\nfragment NDAPageFragment on TrustCenter {\n  ndaSignature {\n    id\n    status\n    consentText\n    lastError\n  }\n  id\n}\n"
+    "text": "query NDAPageRefetchQuery(\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NDAPageFragment\n    id\n  }\n}\n\nfragment NDAPageFragment on TrustCenter {\n  nonDisclosureAgreement {\n    viewerSignature {\n      id\n      status\n      consentText\n      lastError\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b53a5f455508ed45124b7d09cfb573da";
+(node as any).hash = "503859b8c00b27214f9f3253bffcb670";
 
 export default node;

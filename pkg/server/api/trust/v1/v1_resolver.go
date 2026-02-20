@@ -88,7 +88,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 		return false, nil
 	}
 
-	documentAccess, err := trustService.TrustCenterAccesses.LoadDocumentAccess(
+	documentAccess, err := trustService.TrustCenterAccesses.GetDocumentAccess(
 		ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
@@ -123,7 +123,7 @@ func (r *documentResolver) HasUserRequestedAccess(ctx context.Context, obj *type
 	}
 
 	// Try to load document access - if it exists (regardless of active status), user has requested it
-	_, err := trustService.TrustCenterAccesses.LoadDocumentAccess(
+	_, err := trustService.TrustCenterAccesses.GetDocumentAccess(
 		ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
@@ -228,6 +228,41 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.Reque
 	}, nil
 }
 
+func (r *mutationResolver) checkNDASignature(
+	ctx context.Context,
+	trustCenter *coredata.TrustCenter,
+	identity *coredata.Identity,
+) error {
+	if trustCenter.NonDisclosureAgreementFileID == nil {
+		return nil
+	}
+
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+
+	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.EmailAddress)
+	if err != nil {
+		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
+	}
+
+	if access.ElectronicSignatureID == nil {
+		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
+	}
+
+	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
+	if err != nil {
+		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
+	}
+
+	switch sig.Status {
+	case coredata.ElectronicSignatureStatusAccepted,
+		coredata.ElectronicSignatureStatusProcessing,
+		coredata.ElectronicSignatureStatusCompleted:
+		return nil
+	default:
+		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
+	}
+}
+
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
 func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error) {
 	trustService := r.TrustService(ctx, input.DocumentID.TenantID())
@@ -256,35 +291,13 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
 	}
 
-	ndaExists := true
-	hasAcceptedNDA := false
-
-	if trustCenter.NonDisclosureAgreementFileID == nil {
-		ndaExists = false
-	}
-
-	if ndaExists {
-		hasAcceptedNDA, err = trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(
-			ctx,
-			trustCenter.ID,
-			identity.EmailAddress,
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot check if user has accepted NDA", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	documentAccess, err := trustService.TrustCenterAccesses.LoadDocumentAccess(
+	documentAccess, err := trustService.TrustCenterAccesses.GetDocumentAccess(
 		ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		input.DocumentID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check document access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
 		return nil, nil
 	}
 
@@ -292,8 +305,8 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this document")
 	}
 
-	if ndaExists && !hasAcceptedNDA {
-		return nil, gqlutils.Forbiddenf(ctx, "user has not accepted NDA")
+	if err := r.checkNDASignature(ctx, trustCenter, identity); err != nil {
+		return nil, err
 	}
 
 	pdf, err := trustService.Documents.ExportPDF(ctx, input.DocumentID, identity.EmailAddress)
@@ -336,35 +349,13 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
-	ndaExists := true
-	hasAcceptedNDA := false
-
-	if trustCenter.NonDisclosureAgreementFileID == nil {
-		ndaExists = false
-	}
-
-	if ndaExists {
-		hasAcceptedNDA, err = trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(
-			ctx,
-			trustCenter.ID,
-			identity.EmailAddress,
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot check if user has accepted NDA", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	reportAccess, err := trustService.TrustCenterAccesses.LoadReportAccess(
+	reportAccess, err := trustService.TrustCenterAccesses.GetReportAccess(
 		ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		input.ReportID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check report access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
 		return nil, nil
 	}
 
@@ -372,8 +363,8 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this report")
 	}
 
-	if ndaExists && !hasAcceptedNDA {
-		return nil, gqlutils.Forbiddenf(ctx, "user has not accepted NDA")
+	if err := r.checkNDASignature(ctx, trustCenter, identity); err != nil {
+		return nil, err
 	}
 
 	pdf, err := trustService.Reports.ExportPDF(ctx, input.ReportID, identity.EmailAddress)
@@ -415,33 +406,12 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
-	ndaExists := true
-	hasAcceptedNDA := false
-
-	if trustCenter.NonDisclosureAgreementFileID == nil {
-		ndaExists = false
-	}
-
-	if ndaExists {
-		hasAcceptedNDA, err = trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx,
-			trustCenter.ID,
-			identity.EmailAddress,
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot check if user has accepted NDA", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	fileAccess, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
+	fileAccess, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		input.TrustCenterFileID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check trust center file access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
 		return nil, nil
 	}
 
@@ -449,8 +419,8 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this file")
 	}
 
-	if ndaExists && !hasAcceptedNDA {
-		return nil, gqlutils.Forbiddenf(ctx, "user has not accepted NDA")
+	if err := r.checkNDASignature(ctx, trustCenter, identity); err != nil {
+		return nil, err
 	}
 
 	fileData, err := trustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, identity.EmailAddress)
@@ -462,42 +432,6 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 	return &types.ExportTrustCenterFilePayload{
 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
 	}, nil
-}
-
-// AcceptNonDisclosureAgreement is the resolver for the acceptNonDisclosureAgreement field.
-func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
-	}
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
-
-	httpReq := gqlutils.HTTPRequestFromContext(ctx)
-
-	if _, err := r.iam.AuthService.UpdateIdentity(ctx, identity.ID, input.FullName); err != nil {
-		var errNotFound *iam.ErrIdentityNotFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if err := trustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(
-		ctx,
-		&trust.AcceptNDARequest{
-			TrustCenterID: trustCenter.ID,
-			Email:         identity.EmailAddress,
-			IPAddr:        httpReq.RemoteAddr,
-		},
-	); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot accept NDA", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.AcceptNonDisclosureAgreementPayload{Success: true}, nil
 }
 
 // RequestDocumentAccess is the resolver for the requestDocumentAccess field.
@@ -651,12 +585,10 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 
 // AcceptElectronicSignature is the resolver for the acceptElectronicSignature field.
 func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
-	}
-
-	httpReq := gqlutils.HTTPRequestFromContext(ctx)
+	var (
+		identity = authn.IdentityFromContext(ctx)
+		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
+	)
 
 	if _, err := r.iam.AuthService.UpdateIdentity(ctx, identity.ID, input.FullName); err != nil {
 		var errNotFound *iam.ErrIdentityNotFound
@@ -668,50 +600,89 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if err := r.esign.AcceptSignature(ctx, &esign.AcceptSignatureRequest{
-		SignatureID:    input.SignatureID,
-		SignerFullName: input.FullName,
-		SignerEmail:    identity.EmailAddress,
-		SignerIPAddr:   httpReq.RemoteAddr,
-		SignerUA:       httpReq.UserAgent(),
-	}); err != nil {
+	signature, err := r.esign.AcceptSignature(
+		ctx,
+		&esign.AcceptSignatureRequest{
+			SignatureID:    input.SignatureID,
+			SignerFullName: input.FullName,
+			SignerEmail:    identity.EmailAddress,
+			SignerIPAddr:   httpReq.RemoteAddr,
+			SignerUA:       httpReq.UserAgent(),
+		},
+	)
+	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	sig, err := r.esign.LoadSignatureByID(ctx, input.SignatureID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load electronic signature", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
 	return &types.AcceptElectronicSignaturePayload{
-		Signature: types.NewElectronicSignature(sig),
+		Signature: types.NewElectronicSignature(signature),
 	}, nil
 }
 
 // RecordSigningEvent is the resolver for the recordSigningEvent field.
 func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
-	}
+	var (
+		identity = authn.IdentityFromContext(ctx)
+		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
+	)
 
-	httpReq := gqlutils.HTTPRequestFromContext(ctx)
-
-	if err := r.esign.RecordEvent(ctx, &esign.RecordEventRequest{
-		SignatureID: input.SignatureID,
-		EventType:   input.EventType,
-		EventSource: coredata.ElectronicSignatureEventSourceClient,
-		ActorEmail:  identity.EmailAddress,
-		ActorIPAddr: httpReq.RemoteAddr,
-		ActorUA:     httpReq.UserAgent(),
-	}); err != nil {
+	if err := r.esign.RecordEvent(
+		ctx,
+		&esign.RecordEventRequest{
+			SignatureID: input.SignatureID,
+			EventType:   input.EventType,
+			EventSource: coredata.ElectronicSignatureEventSourceClient,
+			ActorEmail:  identity.EmailAddress,
+			ActorIPAddr: httpReq.RemoteAddr,
+			ActorUA:     httpReq.UserAgent(),
+		},
+	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.RecordSigningEventPayload{Success: true}, nil
+}
+
+// FileURL is the resolver for the fileUrl field.
+func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+
+	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, trustCenter.ID, 15*time.Minute)
+	if err != nil {
+		return "", gqlutils.Internal(ctx)
+	}
+
+	return fileURL, nil
+}
+
+// ViewerSignature is the resolver for the viewerSignature field.
+func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, obj *types.NonDisclosureAgreement) (*types.ElectronicSignature, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, nil
+	}
+
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+
+	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.EmailAddress)
+	if err != nil {
+		return nil, nil
+	}
+
+	if access.ElectronicSignatureID == nil {
+		return nil, nil
+	}
+
+	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
+	if err != nil {
+		return nil, nil
+	}
+
+	return types.NewElectronicSignature(sig), nil
 }
 
 // LogoURL is the resolver for the logoUrl field.
@@ -793,12 +764,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		return types.NewVendor(vendor), nil
 
 	case coredata.TrustCenterEntityType:
-		trustCenter, file, err := trustService.TrustCenters.Get(ctx, id)
+		trustCenter, err := trustService.TrustCenters.Get(ctx, id)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
-		return types.NewTrustCenter(trustCenter, file), nil
+		return types.NewTrustCenter(trustCenter), nil
 
 	case coredata.TrustCenterReferenceEntityType:
 		reference, err := trustService.TrustCenterReferences.Get(ctx, id)
@@ -824,12 +795,12 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
-	trustCenter, file, err := trustService.TrustCenters.Get(ctx, trustCenter.ID)
+	trustCenter, err = trustService.TrustCenters.Get(ctx, trustCenter.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get trust center: %w", err))
 	}
 
-	response := types.NewTrustCenter(trustCenter, file)
+	response := types.NewTrustCenter(trustCenter)
 	response.Organization = types.NewOrganization(org)
 
 	return response, nil
@@ -856,7 +827,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 		return false, nil
 	}
 
-	reportAccess, err := trustService.TrustCenterAccesses.LoadReportAccess(ctx,
+	reportAccess, err := trustService.TrustCenterAccesses.GetReportAccess(ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
@@ -890,7 +861,7 @@ func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.
 		return false, nil // User is not authenticated, so no access requested
 	}
 
-	_, err := trustService.TrustCenterAccesses.LoadReportAccess(ctx,
+	_, err := trustService.TrustCenterAccesses.GetReportAccess(ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
@@ -919,50 +890,25 @@ func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.Tr
 	return trustService.TrustCenters.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
 }
 
-// NdaFileURL is the resolver for the ndaFileUrl field.
-func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+// NonDisclosureAgreement is the resolver for the nonDisclosureAgreement field.
+func (r *trustCenterResolver) NonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (*types.NonDisclosureAgreement, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.NonDisclosureAgreementFileID == nil {
+		return nil, nil
+	}
+
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, obj.ID, 15*time.Minute)
+	file, err := trustService.TrustCenters.GetNDAFile(ctx, obj.ID)
 	if err != nil {
-		// FIXME: add error not found check etc
-		// r.logger.ErrorCtx(ctx, "cannot generate NDA file URL", log.Error(err))
-		// return nil, gqlutils.Internal(ctx)
+		r.logger.ErrorCtx(ctx, "cannot load NDA file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	if file == nil {
 		return nil, nil
 	}
 
-	return &fileURL, nil
-}
-
-// NdaSignature is the resolver for the ndaSignature field.
-func (r *trustCenterResolver) NdaSignature(ctx context.Context, obj *types.TrustCenter) (*types.ElectronicSignature, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, nil
-	}
-
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	if trustCenter == nil || trustCenter.NonDisclosureAgreementFileID == nil {
-		return nil, nil
-	}
-
-	sig, err := r.esign.LoadSignatureByOrgEmailAndDocType(
-		ctx,
-		trustCenter.OrganizationID,
-		identity.EmailAddress.String(),
-		coredata.ElectronicSignatureDocumentTypeNDA,
-		*trustCenter.NonDisclosureAgreementFileID,
-	)
-	if err != nil {
-		return nil, nil
-	}
-
-	return types.NewElectronicSignature(sig), nil
-}
-
-// Organization is the resolver for the organization field.
-func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
-	return obj.Organization, nil
+	return types.NewNonDisclosureAgreement(file), nil
 }
 
 // IsViewerMember is the resolver for the isViewerMember field.
@@ -972,22 +918,9 @@ func (r *trustCenterResolver) IsViewerMember(ctx context.Context, obj *types.Tru
 	return membership != nil, nil
 }
 
-// HasAcceptedNonDisclosureAgreement is the resolver for the hasAcceptedNonDisclosureAgreement field.
-func (r *trustCenterResolver) HasAcceptedNonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (bool, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return false, nil // User is not authenticated, so no NDA accepted
-	}
-
-	hasAcceptedNDA, err := trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, obj.ID, identity.EmailAddress)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot check if user has accepted NDA", log.Error(err))
-		return false, gqlutils.Internal(ctx)
-	}
-
-	return hasAcceptedNDA, nil
+// Organization is the resolver for the organization field.
+func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
+	return obj.Organization, nil
 }
 
 // Documents is the resolver for the documents field.
@@ -1112,7 +1045,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 		return false, nil
 	}
 
-	fileAccess, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
+	fileAccess, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
@@ -1146,7 +1079,7 @@ func (r *trustCenterFileResolver) HasUserRequestedAccess(ctx context.Context, ob
 		return false, nil // User is not authenticated, so no access requested
 	}
 
-	_, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
+	_, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
@@ -1201,6 +1134,11 @@ func (r *Resolver) Framework() schema.FrameworkResolver { return &frameworkResol
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
+// NonDisclosureAgreement returns schema.NonDisclosureAgreementResolver implementation.
+func (r *Resolver) NonDisclosureAgreement() schema.NonDisclosureAgreementResolver {
+	return &nonDisclosureAgreementResolver{r}
+}
+
 // Organization returns schema.OrganizationResolver implementation.
 func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
 
@@ -1232,6 +1170,7 @@ type auditResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type nonDisclosureAgreementResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
