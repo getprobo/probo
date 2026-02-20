@@ -268,6 +268,7 @@ FROM electronic_signatures
 WHERE status = 'COMPLETED'
 	AND certificate_file_id IS NULL
 	AND certificate_processing_started_at IS NULL
+	AND attempt_count < max_attempts
 ORDER BY signed_at ASC
 LIMIT 1
 FOR UPDATE SKIP LOCKED
@@ -362,6 +363,7 @@ WHERE status = 'COMPLETED'
 	AND certificate_file_id IS NULL
 	AND certificate_processing_started_at IS NOT NULL
 	AND certificate_processing_started_at < NOW() - $1::interval
+	AND attempt_count < max_attempts
 `
 	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
