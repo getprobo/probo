@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -600,13 +601,18 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
+	if signerIP == "" {
+		signerIP = httpReq.RemoteAddr
+	}
+
 	signature, err := r.esign.AcceptSignature(
 		ctx,
 		&esign.AcceptSignatureRequest{
 			SignatureID:    input.SignatureID,
 			SignerFullName: input.FullName,
 			SignerEmail:    identity.EmailAddress,
-			SignerIPAddr:   httpReq.RemoteAddr,
+			SignerIPAddr:   signerIP,
 			SignerUA:       httpReq.UserAgent(),
 		},
 	)
@@ -627,6 +633,11 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
 	)
 
+	actorIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
+	if actorIP == "" {
+		actorIP = httpReq.RemoteAddr
+	}
+
 	if err := r.esign.RecordEvent(
 		ctx,
 		&esign.RecordEventRequest{
@@ -634,7 +645,7 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 			EventType:   input.EventType,
 			EventSource: coredata.ElectronicSignatureEventSourceClient,
 			ActorEmail:  identity.EmailAddress,
-			ActorIPAddr: httpReq.RemoteAddr,
+			ActorIPAddr: actorIP,
 			ActorUA:     httpReq.UserAgent(),
 		},
 	); err != nil {
