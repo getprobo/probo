@@ -189,32 +189,6 @@ func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, 
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// User is the resolver for the user field.
-func (r *invitationResolver) User(ctx context.Context, obj *types.Invitation) (*types.Profile, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
-}
-
-// Organization is the resolver for the organization field.
-func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyIDSelected(ctx) {
-		return &types.Organization{
-			ID: obj.Organization.ID,
-		}, nil
-	}
-
-	organization, err := r.iam.OrganizationService.GetOrganizationForInvitation(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get organization for invitation", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
 // Permission is the resolver for the permission field.
 func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitation, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)

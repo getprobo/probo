@@ -68,11 +68,5 @@ func NewInvitation(invitation *coredata.Invitation) *Invitation {
 		AcceptedAt: invitation.AcceptedAt,
 		CreatedAt:  invitation.CreatedAt,
 		Status:     invitation.Status,
-		User: &Profile{
-			ID: invitation.UserID,
-		},
-		Organization: &Organization{
-			ID: invitation.OrganizationID,
-		},
 	}
 }

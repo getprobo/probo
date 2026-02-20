@@ -208,14 +208,12 @@ func (Identity) IsNode()             {}
 func (this Identity) GetID() gid.GID { return this.ID }
 
 type Invitation struct {
-	ID           gid.GID                   `json:"id"`
-	ExpiresAt    time.Time                 `json:"expiresAt"`
-	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
-	CreatedAt    time.Time                 `json:"createdAt"`
-	Status       coredata.InvitationStatus `json:"status"`
-	User         *Profile                  `json:"user,omitempty"`
-	Organization *Organization             `json:"organization,omitempty"`
-	Permission   bool                      `json:"permission"`
+	ID         gid.GID                   `json:"id"`
+	ExpiresAt  time.Time                 `json:"expiresAt"`
+	AcceptedAt *time.Time                `json:"acceptedAt,omitempty"`
+	CreatedAt  time.Time                 `json:"createdAt"`
+	Status     coredata.InvitationStatus `json:"status"`
+	Permission bool                      `json:"permission"`
 }
 
 func (Invitation) IsNode()             {}

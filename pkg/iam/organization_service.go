@@ -1163,45 +1163,6 @@ func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, 
 	return organization, nil
 }
 
-func (s *OrganizationService) GetOrganizationForInvitation(ctx context.Context, invitationID gid.GID) (*coredata.Organization, error) {
-	var (
-		scope        = coredata.NewScopeFromObjectID(invitationID)
-		organization = &coredata.Organization{}
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			invitation := &coredata.Invitation{}
-			err := invitation.LoadByID(ctx, conn, scope, invitationID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewInvitationNotFoundError(invitationID)
-				}
-
-				return fmt.Errorf("cannot load invitation: %w", err)
-			}
-
-			err = organization.LoadByID(ctx, conn, scope, invitation.OrganizationID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewOrganizationNotFoundError(invitation.OrganizationID)
-				}
-
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return organization, nil
-}
-
 func (s OrganizationService) GenerateLogoURL(
 	ctx context.Context,
 	organizationID gid.GID,

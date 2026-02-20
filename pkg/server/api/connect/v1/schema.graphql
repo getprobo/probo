@@ -291,9 +291,6 @@ type Invitation implements Node {
   createdAt: Datetime!
   status: InvitationStatus!
 
-  user: Profile @goField(forceResolver: true)
-  organization: Organization @goField(forceResolver: true)
-
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)

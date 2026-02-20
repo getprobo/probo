@@ -161,14 +161,12 @@ type ComplexityRoot struct {
 	}
 
 	Invitation struct {
-		AcceptedAt   func(childComplexity int) int
-		CreatedAt    func(childComplexity int) int
-		ExpiresAt    func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Organization func(childComplexity int) int
-		Permission   func(childComplexity int, action string) int
-		Status       func(childComplexity int) int
-		User         func(childComplexity int) int
+		AcceptedAt func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		ExpiresAt  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
+		Status     func(childComplexity int) int
 	}
 
 	InvitationConnection struct {
@@ -502,8 +500,6 @@ type IdentityResolver interface {
 	Permission(ctx context.Context, obj *types.Identity, action string) (bool, error)
 }
 type InvitationResolver interface {
-	User(ctx context.Context, obj *types.Invitation) (*types.Profile, error)
-	Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error)
 	Permission(ctx context.Context, obj *types.Invitation, action string) (bool, error)
 }
 type MembershipResolver interface {
@@ -913,12 +909,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Invitation.ID(childComplexity), true
-	case "Invitation.organization":
-		if e.complexity.Invitation.Organization == nil {
-			break
-		}
-
-		return e.complexity.Invitation.Organization(childComplexity), true
 	case "Invitation.permission":
 		if e.complexity.Invitation.Permission == nil {
 			break
@@ -936,12 +926,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Invitation.Status(childComplexity), true
-	case "Invitation.user":
-		if e.complexity.Invitation.User == nil {
-			break
-		}
-
-		return e.complexity.Invitation.User(childComplexity), true
 
 	case "InvitationConnection.edges":
 		if e.complexity.InvitationConnection.Edges == nil {
@@ -2762,9 +2746,6 @@ type Invitation implements Node {
   acceptedAt: Datetime
   createdAt: Datetime!
   status: InvitationStatus!
-
-  user: Profile @goField(forceResolver: true)
-  organization: Organization @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -5753,132 +5734,6 @@ func (ec *executionContext) fieldContext_Invitation_status(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Invitation_user(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_user,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Invitation().User(ctx, obj)
-		},
-		nil,
-		ec.marshalOProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfile,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Profile_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Profile_fullName(ctx, field)
-			case "emailAddress":
-				return ec.fieldContext_Profile_emailAddress(ctx, field)
-			case "source":
-				return ec.fieldContext_Profile_source(ctx, field)
-			case "state":
-				return ec.fieldContext_Profile_state(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_Profile_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_Profile_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_Profile_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_Profile_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Profile_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Profile_updatedAt(ctx, field)
-			case "identity":
-				return ec.fieldContext_Profile_identity(ctx, field)
-			case "organization":
-				return ec.fieldContext_Profile_organization(ctx, field)
-			case "membership":
-				return ec.fieldContext_Profile_membership(ctx, field)
-			case "pendingInvitations":
-				return ec.fieldContext_Profile_pendingInvitations(ctx, field)
-			case "permission":
-				return ec.fieldContext_Profile_permission(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_organization(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_organization,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Invitation().Organization(ctx, obj)
-		},
-		nil,
-		ec.marshalOOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			case "profiles":
-				return ec.fieldContext_Organization_profiles(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "scimConfiguration":
-				return ec.fieldContext_Organization_scimConfiguration(ctx, field)
-			case "viewer":
-				return ec.fieldContext_Organization_viewer(ctx, field)
-			case "permission":
-				return ec.fieldContext_Organization_permission(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Invitation_permission(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6046,10 +5901,6 @@ func (ec *executionContext) fieldContext_InvitationEdge_node(_ context.Context, 
 				return ec.fieldContext_Invitation_createdAt(ctx, field)
 			case "status":
 				return ec.fieldContext_Invitation_status(ctx, field)
-			case "user":
-				return ec.fieldContext_Invitation_user(ctx, field)
-			case "organization":
-				return ec.fieldContext_Invitation_organization(ctx, field)
 			case "permission":
 				return ec.fieldContext_Invitation_permission(ctx, field)
 			}
@@ -17618,72 +17469,6 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "user":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Invitation_user(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "organization":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Invitation_organization(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "permission":
 			field := field
 

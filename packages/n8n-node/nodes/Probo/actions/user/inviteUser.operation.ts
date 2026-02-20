@@ -48,8 +48,6 @@ export async function execute(
 						expiresAt
 						status
 						createdAt
-						user { id fullName emailAddress }
-						organization { id name }
 					}
 				}
 			}
