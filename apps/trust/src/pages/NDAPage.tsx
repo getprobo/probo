@@ -204,7 +204,11 @@ export function NDAPage(props: {
     return <Navigate to="/connect" replace />;
   }
 
-  if (!nda || !nda.viewerSignature || nda.viewerSignature.status === "COMPLETED") {
+  if (
+    !nda
+    || !nda.viewerSignature
+    || nda.viewerSignature.status === "COMPLETED"
+  ) {
     return <Navigate to="/overview" replace />;
   }
 
