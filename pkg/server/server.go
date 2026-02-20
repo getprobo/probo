@@ -60,7 +60,6 @@ type Server struct {
 	extraHeaderFields map[string]string
 	proboService      *probo.Service
 	trustService      *trust.Service
-	baseURL           *baseurl.BaseURL
 	logger            *log.Logger
 }
 
@@ -104,7 +103,6 @@ func NewServer(cfg Config) (*Server, error) {
 		extraHeaderFields: cfg.ExtraHeaderFields,
 		proboService:      cfg.Probo,
 		trustService:      cfg.Trust,
-		baseURL:           cfg.BaseURL,
 		logger:            cfg.Logger,
 	}
 
@@ -116,14 +114,6 @@ func NewServer(cfg Config) (*Server, error) {
 func (s *Server) setupRoutes() {
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 
-	// OAuth 2.0 Protected Resource Metadata (RFC 9728) for the MCP endpoint.
-	// MCP clients fetch this before connecting to discover auth requirements.
-	s.router.Get("/.well-known/oauth-protected-resource/api/mcp/v1", s.handleMCPOAuthProtectedResourceMetadata)
-
-	// OAuth 2.0 Authorization Server Metadata (RFC 8414).
-	// MCP clients fall back to this when the server URL itself is treated as the authorization server.
-	s.router.Get("/.well-known/oauth-authorization-server", s.handleOAuthAuthorizationServerMetadata)
-
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
 		r.Use(compliancepage.NewIDMiddleware(s.trustService))
 		r.Use(s.stripTrustPrefix)
@@ -131,35 +121,6 @@ func (s *Server) setupRoutes() {
 	})
 
 	s.router.Mount("/", s.consoleWebServer)
-}
-
-func (s *Server) handleMCPOAuthProtectedResourceMetadata(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	httpserver.RenderJSON(
-		w,
-		http.StatusOK,
-		map[string]any{
-			"resource":                 s.baseURL.WithPath("/api/mcp/v1").MustString(),
-			"bearer_methods_supported": []string{"header"},
-		},
-	)
-}
-
-func (s *Server) handleOAuthAuthorizationServerMetadata(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	httpserver.RenderJSON(
-		w,
-		http.StatusOK,
-		map[string]any{
-			"issuer":                   s.baseURL.String(),
-			"response_types_supported": []string{"token"},
-			"grant_types_supported":    []string{"client_credentials"},
-		},
-	)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
