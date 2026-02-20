@@ -2,7 +2,7 @@ import { useFavicon, useSystemTheme } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Logo, TabLink, Tabs } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Navigate, Outlet } from "react-router";
+import { Outlet } from "react-router";
 
 import { OrganizationSidebar } from "#/components/OrganizationSidebar";
 import { useRequestAccessCallback } from "#/hooks/useRequestAccessCallback";
@@ -28,14 +28,6 @@ export function MainLayout(props: Props) {
       : trustCenter?.logoFileUrl,
   );
   useRequestAccessCallback();
-
-  const nda = trustCenter.nonDisclosureAgreement;
-  const hasPendingNDA = nda?.viewerSignature
-    && (nda.viewerSignature.status === "PENDING" || nda.viewerSignature.status === "FAILED");
-
-  if (hasPendingNDA) {
-    return <Navigate to="/nda" replace />;
-  }
 
   return (
     <Viewer value={data.viewer}>

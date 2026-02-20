@@ -2,9 +2,9 @@ import { type FetchFunction } from "relay-runtime";
 import {
     InternalServerError,
     UnAuthenticatedError,
-    UnauthorizedError,
     ForbiddenError,
     AssumptionRequiredError,
+    NDASignatureRequiredError,
 } from "./errors";
 import { GraphQLError } from "graphql";
 
@@ -14,8 +14,8 @@ const hasUnauthenticatedError = (error: GraphQLError) =>
 const hasAssumptionRequiredError = (error: GraphQLError) =>
     error.extensions?.code == "ASSUMPTION_REQUIRED";
 
-const hasUnauthorizedError = (error: GraphQLError) =>
-    error.extensions?.code == "UNAUTHORIZED";
+const hasNDASignatureRequiredError = (error: GraphQLError) =>
+    error.extensions?.code == "NDA_SIGNATURE_REQUIRED";
 
 const hasForbiddenError = (error: GraphQLError) =>
     error.extensions?.code == "FORBIDDEN";
@@ -88,9 +88,9 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
                 throw new AssumptionRequiredError(assumptionRequiredError.message)
             }
 
-            const unauthorizedError = errors.find(hasUnauthorizedError);
-            if (unauthorizedError) {
-                throw new UnauthorizedError(unauthorizedError.message);
+            const ndaSignatureRequiredError = errors.find(hasNDASignatureRequiredError);
+            if (ndaSignatureRequiredError) {
+                throw new NDASignatureRequiredError(ndaSignatureRequiredError.message);
             }
 
             const forbiddenError = errors.find(hasForbiddenError);

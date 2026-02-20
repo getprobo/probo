@@ -324,10 +324,6 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this document")
 	}
 
-	if err := r.checkNDASignature(ctx, trustCenter, identity); err != nil {
-		return nil, err
-	}
-
 	pdf, err := trustService.Documents.ExportPDF(ctx, input.DocumentID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export document PDF", log.Error(err))
@@ -382,10 +378,6 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this report")
 	}
 
-	if err := r.checkNDASignature(ctx, trustCenter, identity); err != nil {
-		return nil, err
-	}
-
 	pdf, err := trustService.Reports.ExportPDF(ctx, input.ReportID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export report PDF", log.Error(err))
@@ -436,10 +428,6 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 
 	if fileAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this file")
-	}
-
-	if err := r.checkNDASignature(ctx, trustCenter, identity); err != nil {
-		return nil, err
 	}
 
 	fileData, err := trustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, identity.EmailAddress)
