@@ -117,6 +117,17 @@ type ResolverInterface interface {
 	UpdateMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeetingInput) (*mcp.CallToolResult, types.UpdateMeetingOutput, error)
 	DeleteMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeetingInput) (*mcp.CallToolResult, types.DeleteMeetingOutput, error)
 	ListMeetingAttendeesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingAttendeesInput) (*mcp.CallToolResult, types.ListMeetingAttendeesOutput, error)
+	ListStatesOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListStatesOfApplicabilityInput) (*mcp.CallToolResult, types.ListStatesOfApplicabilityOutput, error)
+	GetStateOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetStateOfApplicabilityInput) (*mcp.CallToolResult, types.GetStateOfApplicabilityOutput, error)
+	AddStateOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddStateOfApplicabilityInput) (*mcp.CallToolResult, types.AddStateOfApplicabilityOutput, error)
+	UpdateStateOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateStateOfApplicabilityInput) (*mcp.CallToolResult, types.UpdateStateOfApplicabilityOutput, error)
+	DeleteStateOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteStateOfApplicabilityInput) (*mcp.CallToolResult, types.DeleteStateOfApplicabilityOutput, error)
+	ExportStateOfApplicabilityPDFTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ExportStateOfApplicabilityPDFInput) (*mcp.CallToolResult, types.ExportStateOfApplicabilityPDFOutput, error)
+	ListApplicabilityStatementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListApplicabilityStatementsInput) (*mcp.CallToolResult, types.ListApplicabilityStatementsOutput, error)
+	GetApplicabilityStatementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetApplicabilityStatementInput) (*mcp.CallToolResult, types.GetApplicabilityStatementOutput, error)
+	AddApplicabilityStatementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddApplicabilityStatementInput) (*mcp.CallToolResult, types.AddApplicabilityStatementOutput, error)
+	UpdateApplicabilityStatementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateApplicabilityStatementInput) (*mcp.CallToolResult, types.UpdateApplicabilityStatementOutput, error)
+	DeleteApplicabilityStatementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteApplicabilityStatementInput) (*mcp.CallToolResult, types.DeleteApplicabilityStatementOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -1395,6 +1406,142 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			},
 		},
 		resolver.ListMeetingAttendeesTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listStatesOfApplicability",
+			Description:  "List all states of applicability for the organization",
+			InputSchema:  types.ListStatesOfApplicabilityToolInputSchema,
+			OutputSchema: types.ListStatesOfApplicabilityToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListStatesOfApplicabilityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getStateOfApplicability",
+			Description:  "Get a state of applicability by ID",
+			InputSchema:  types.GetStateOfApplicabilityToolInputSchema,
+			OutputSchema: types.GetStateOfApplicabilityToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetStateOfApplicabilityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addStateOfApplicability",
+			Description:  "Add a new state of applicability to the organization",
+			InputSchema:  types.AddStateOfApplicabilityToolInputSchema,
+			OutputSchema: types.AddStateOfApplicabilityToolOutputSchema,
+		},
+		resolver.AddStateOfApplicabilityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateStateOfApplicability",
+			Description:  "Update an existing state of applicability",
+			InputSchema:  types.UpdateStateOfApplicabilityToolInputSchema,
+			OutputSchema: types.UpdateStateOfApplicabilityToolOutputSchema,
+		},
+		resolver.UpdateStateOfApplicabilityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteStateOfApplicability",
+			Description:  "Delete a state of applicability",
+			InputSchema:  types.DeleteStateOfApplicabilityToolInputSchema,
+			OutputSchema: types.DeleteStateOfApplicabilityToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteStateOfApplicabilityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "exportStateOfApplicabilityPDF",
+			Description:  "Export a state of applicability as a PDF document",
+			InputSchema:  types.ExportStateOfApplicabilityPDFToolInputSchema,
+			OutputSchema: types.ExportStateOfApplicabilityPDFToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ExportStateOfApplicabilityPDFTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listApplicabilityStatements",
+			Description:  "List all applicability statements for a state of applicability",
+			InputSchema:  types.ListApplicabilityStatementsToolInputSchema,
+			OutputSchema: types.ListApplicabilityStatementsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListApplicabilityStatementsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getApplicabilityStatement",
+			Description:  "Get an applicability statement by ID",
+			InputSchema:  types.GetApplicabilityStatementToolInputSchema,
+			OutputSchema: types.GetApplicabilityStatementToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetApplicabilityStatementTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addApplicabilityStatement",
+			Description:  "Add a control to a state of applicability with an applicability decision",
+			InputSchema:  types.AddApplicabilityStatementToolInputSchema,
+			OutputSchema: types.AddApplicabilityStatementToolOutputSchema,
+		},
+		resolver.AddApplicabilityStatementTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateApplicabilityStatement",
+			Description:  "Update the applicability and justification of an applicability statement",
+			InputSchema:  types.UpdateApplicabilityStatementToolInputSchema,
+			OutputSchema: types.UpdateApplicabilityStatementToolOutputSchema,
+		},
+		resolver.UpdateApplicabilityStatementTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteApplicabilityStatement",
+			Description:  "Delete an applicability statement from a state of applicability",
+			InputSchema:  types.DeleteApplicabilityStatementToolInputSchema,
+			OutputSchema: types.DeleteApplicabilityStatementToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteApplicabilityStatementTool,
 	)
 }
 

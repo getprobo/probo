@@ -272,6 +272,25 @@ func (s StateOfApplicabilityService) Delete(
 	return nil
 }
 
+func (s StateOfApplicabilityService) GetApplicabilityStatement(
+	ctx context.Context,
+	applicabilityStatementID gid.GID,
+) (*coredata.ApplicabilityStatement, error) {
+	applicabilityStatement := &coredata.ApplicabilityStatement{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return applicabilityStatement.LoadByID(ctx, conn, s.svc.scope, applicabilityStatementID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return applicabilityStatement, nil
+}
+
 func (s StateOfApplicabilityService) ListApplicabilityStatements(
 	ctx context.Context,
 	stateOfApplicabilityID gid.GID,

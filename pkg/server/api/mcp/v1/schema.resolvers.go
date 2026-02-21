@@ -6,6 +6,7 @@ package mcp_v1
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
@@ -2590,5 +2591,217 @@ func (r *Resolver) DeleteDataProtectionImpactAssessmentTool(ctx context.Context,
 
 	return nil, types.DeleteDataProtectionImpactAssessmentOutput{
 		DeletedDataProtectionImpactAssessmentID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListStatesOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListStatesOfApplicabilityInput) (*mcp.CallToolResult, types.ListStatesOfApplicabilityOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionStateOfApplicabilityList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.StateOfApplicabilityOrderField]{
+		Field:     coredata.StateOfApplicabilityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.StateOfApplicabilityOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pg, err := prb.StatesOfApplicability.ListForOrganizationID(ctx, input.OrganizationID, cursor, coredata.NewStateOfApplicabilityFilter(nil))
+	if err != nil {
+		return nil, types.ListStatesOfApplicabilityOutput{}, fmt.Errorf("failed to list states of applicability: %w", err)
+	}
+
+	return nil, types.NewListStatesOfApplicabilityOutput(pg), nil
+}
+
+func (r *Resolver) GetStateOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetStateOfApplicabilityInput) (*mcp.CallToolResult, types.GetStateOfApplicabilityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionStateOfApplicabilityGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	soa, err := prb.StatesOfApplicability.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetStateOfApplicabilityOutput{}, fmt.Errorf("failed to get state of applicability: %w", err)
+	}
+
+	return nil, types.GetStateOfApplicabilityOutput{
+		StateOfApplicability: types.NewStateOfApplicability(soa),
+	}, nil
+}
+
+func (r *Resolver) AddStateOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddStateOfApplicabilityInput) (*mcp.CallToolResult, types.AddStateOfApplicabilityOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionStateOfApplicabilityCreate)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	soa, err := svc.StatesOfApplicability.Create(ctx, probo.CreateStateOfApplicabilityRequest{
+		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
+		OwnerID:        input.OwnerID,
+	})
+	if err != nil {
+		return nil, types.AddStateOfApplicabilityOutput{}, fmt.Errorf("failed to create state of applicability: %w", err)
+	}
+
+	return nil, types.AddStateOfApplicabilityOutput{
+		StateOfApplicability: types.NewStateOfApplicability(soa),
+	}, nil
+}
+
+func (r *Resolver) UpdateStateOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateStateOfApplicabilityInput) (*mcp.CallToolResult, types.UpdateStateOfApplicabilityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionStateOfApplicabilityUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	soa, err := svc.StatesOfApplicability.Update(ctx, probo.UpdateStateOfApplicabilityRequest{
+		StateOfApplicabilityID: input.ID,
+		Name:                   input.Name,
+		OwnerID:                input.OwnerID,
+	})
+	if err != nil {
+		return nil, types.UpdateStateOfApplicabilityOutput{}, fmt.Errorf("failed to update state of applicability: %w", err)
+	}
+
+	return nil, types.UpdateStateOfApplicabilityOutput{
+		StateOfApplicability: types.NewStateOfApplicability(soa),
+	}, nil
+}
+
+func (r *Resolver) DeleteStateOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteStateOfApplicabilityInput) (*mcp.CallToolResult, types.DeleteStateOfApplicabilityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionStateOfApplicabilityDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.StatesOfApplicability.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteStateOfApplicabilityOutput{}, fmt.Errorf("failed to delete state of applicability: %w", err)
+	}
+
+	return nil, types.DeleteStateOfApplicabilityOutput{
+		DeletedStateOfApplicabilityID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ExportStateOfApplicabilityPDFTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ExportStateOfApplicabilityPDFInput) (*mcp.CallToolResult, types.ExportStateOfApplicabilityPDFOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionStateOfApplicabilityExport)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	soa, err := svc.StatesOfApplicability.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.ExportStateOfApplicabilityPDFOutput{}, fmt.Errorf("failed to get state of applicability: %w", err)
+	}
+
+	pdfData, err := svc.StatesOfApplicability.ExportPDF(ctx, input.ID)
+	if err != nil {
+		return nil, types.ExportStateOfApplicabilityPDFOutput{}, fmt.Errorf("failed to export state of applicability PDF: %w", err)
+	}
+
+	return nil, types.ExportStateOfApplicabilityPDFOutput{
+		PdfBase64: base64.StdEncoding.EncodeToString(pdfData),
+		Filename:  soa.Name + ".pdf",
+	}, nil
+}
+
+func (r *Resolver) ListApplicabilityStatementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListApplicabilityStatementsInput) (*mcp.CallToolResult, types.ListApplicabilityStatementsOutput, error) {
+	r.MustAuthorize(ctx, input.StateOfApplicabilityID, probo.ActionApplicabilityStatementList)
+
+	prb := r.ProboService(ctx, input.StateOfApplicabilityID)
+
+	pageOrderBy := page.OrderBy[coredata.ApplicabilityStatementOrderField]{
+		Field:     coredata.ApplicabilityStatementOrderFieldControlSectionTitle,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ApplicabilityStatementOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pg, err := prb.StatesOfApplicability.ListApplicabilityStatements(ctx, input.StateOfApplicabilityID, cursor)
+	if err != nil {
+		return nil, types.ListApplicabilityStatementsOutput{}, fmt.Errorf("failed to list applicability statements: %w", err)
+	}
+
+	return nil, types.NewListApplicabilityStatementsOutput(pg), nil
+}
+
+func (r *Resolver) GetApplicabilityStatementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetApplicabilityStatementInput) (*mcp.CallToolResult, types.GetApplicabilityStatementOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionApplicabilityStatementGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	stmt, err := prb.StatesOfApplicability.GetApplicabilityStatement(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetApplicabilityStatementOutput{}, fmt.Errorf("failed to get applicability statement: %w", err)
+	}
+
+	return nil, types.GetApplicabilityStatementOutput{
+		ApplicabilityStatement: types.NewApplicabilityStatement(stmt),
+	}, nil
+}
+
+func (r *Resolver) AddApplicabilityStatementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddApplicabilityStatementInput) (*mcp.CallToolResult, types.AddApplicabilityStatementOutput, error) {
+	r.MustAuthorize(ctx, input.StateOfApplicabilityID, probo.ActionApplicabilityStatementCreate)
+
+	svc := r.ProboService(ctx, input.StateOfApplicabilityID)
+
+	stmt, err := svc.StatesOfApplicability.CreateApplicabilityStatement(
+		ctx,
+		input.StateOfApplicabilityID,
+		input.ControlID,
+		input.Applicability,
+		input.Justification,
+	)
+	if err != nil {
+		return nil, types.AddApplicabilityStatementOutput{}, fmt.Errorf("failed to create applicability statement: %w", err)
+	}
+
+	return nil, types.AddApplicabilityStatementOutput{
+		ApplicabilityStatement: types.NewApplicabilityStatement(stmt),
+	}, nil
+}
+
+func (r *Resolver) UpdateApplicabilityStatementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateApplicabilityStatementInput) (*mcp.CallToolResult, types.UpdateApplicabilityStatementOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionApplicabilityStatementUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	stmt, err := svc.StatesOfApplicability.UpdateApplicabilityStatement(
+		ctx,
+		input.ID,
+		input.Applicability,
+		input.Justification,
+	)
+	if err != nil {
+		return nil, types.UpdateApplicabilityStatementOutput{}, fmt.Errorf("failed to update applicability statement: %w", err)
+	}
+
+	return nil, types.UpdateApplicabilityStatementOutput{
+		ApplicabilityStatement: types.NewApplicabilityStatement(stmt),
+	}, nil
+}
+
+func (r *Resolver) DeleteApplicabilityStatementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteApplicabilityStatementInput) (*mcp.CallToolResult, types.DeleteApplicabilityStatementOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionApplicabilityStatementDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.StatesOfApplicability.DeleteApplicabilityStatement(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteApplicabilityStatementOutput{}, fmt.Errorf("failed to delete applicability statement: %w", err)
+	}
+
+	return nil, types.DeleteApplicabilityStatementOutput{
+		DeletedApplicabilityStatementID: input.ID,
 	}, nil
 }

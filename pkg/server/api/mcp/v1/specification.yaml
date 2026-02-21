@@ -5387,6 +5387,385 @@ components:
             $ref: "#/components/schemas/Profile"
           description: List of attendee profiles
 
+    StateOfApplicabilityOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderField
+
+    StateOfApplicabilityOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/StateOfApplicabilityOrderField"
+          description: State of applicability order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    StateOfApplicability:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - owner_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: State of applicability ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: State of applicability name
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        snapshot_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Snapshot ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListStatesOfApplicabilityInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/StateOfApplicabilityOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListStatesOfApplicabilityOutput:
+      type: object
+      required:
+        - states_of_applicability
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        states_of_applicability:
+          type: array
+          items:
+            $ref: "#/components/schemas/StateOfApplicability"
+
+    GetStateOfApplicabilityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: State of applicability ID
+
+    GetStateOfApplicabilityOutput:
+      type: object
+      required:
+        - state_of_applicability
+      properties:
+        state_of_applicability:
+          $ref: "#/components/schemas/StateOfApplicability"
+
+    AddStateOfApplicabilityInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - owner_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: State of applicability name
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+
+    AddStateOfApplicabilityOutput:
+      type: object
+      required:
+        - state_of_applicability
+      properties:
+        state_of_applicability:
+          $ref: "#/components/schemas/StateOfApplicability"
+
+    UpdateStateOfApplicabilityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: State of applicability ID
+        name:
+          type: string
+          description: State of applicability name
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+
+    UpdateStateOfApplicabilityOutput:
+      type: object
+      required:
+        - state_of_applicability
+      properties:
+        state_of_applicability:
+          $ref: "#/components/schemas/StateOfApplicability"
+
+    DeleteStateOfApplicabilityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: State of applicability ID
+
+    DeleteStateOfApplicabilityOutput:
+      type: object
+      required:
+        - deleted_state_of_applicability_id
+      properties:
+        deleted_state_of_applicability_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted state of applicability ID
+
+    ExportStateOfApplicabilityPDFInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: State of applicability ID
+
+    ExportStateOfApplicabilityPDFOutput:
+      type: object
+      required:
+        - pdf_base64
+        - filename
+      properties:
+        pdf_base64:
+          type: string
+          description: Base64-encoded PDF content
+        filename:
+          type: string
+          description: Suggested filename for the PDF
+
+    ApplicabilityStatementOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - CONTROL_SECTION_TITLE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderField
+
+    ApplicabilityStatementOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ApplicabilityStatementOrderField"
+          description: Applicability statement order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    ApplicabilityStatement:
+      type: object
+      required:
+        - id
+        - state_of_applicability_id
+        - control_id
+        - organization_id
+        - applicability
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Applicability statement ID
+        state_of_applicability_id:
+          $ref: "#/components/schemas/GID"
+          description: State of applicability ID
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        snapshot_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Snapshot ID
+        applicability:
+          type: boolean
+          description: Whether the control is applicable
+        justification:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Justification for the applicability decision
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListApplicabilityStatementsInput:
+      type: object
+      required:
+        - state_of_applicability_id
+      properties:
+        state_of_applicability_id:
+          $ref: "#/components/schemas/GID"
+          description: State of applicability ID
+        order_by:
+          $ref: "#/components/schemas/ApplicabilityStatementOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListApplicabilityStatementsOutput:
+      type: object
+      required:
+        - applicability_statements
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        applicability_statements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicabilityStatement"
+
+    GetApplicabilityStatementInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Applicability statement ID
+
+    GetApplicabilityStatementOutput:
+      type: object
+      required:
+        - applicability_statement
+      properties:
+        applicability_statement:
+          $ref: "#/components/schemas/ApplicabilityStatement"
+
+    AddApplicabilityStatementInput:
+      type: object
+      required:
+        - state_of_applicability_id
+        - control_id
+        - applicability
+      properties:
+        state_of_applicability_id:
+          $ref: "#/components/schemas/GID"
+          description: State of applicability ID
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        applicability:
+          type: boolean
+          description: Whether the control is applicable
+        justification:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Justification for the applicability decision
+
+    AddApplicabilityStatementOutput:
+      type: object
+      required:
+        - applicability_statement
+      properties:
+        applicability_statement:
+          $ref: "#/components/schemas/ApplicabilityStatement"
+
+    UpdateApplicabilityStatementInput:
+      type: object
+      required:
+        - id
+        - applicability
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Applicability statement ID
+        applicability:
+          type: boolean
+          description: Whether the control is applicable
+        justification:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Justification for the applicability decision
+
+    UpdateApplicabilityStatementOutput:
+      type: object
+      required:
+        - applicability_statement
+      properties:
+        applicability_statement:
+          $ref: "#/components/schemas/ApplicabilityStatement"
+
+    DeleteApplicabilityStatementInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Applicability statement ID
+
+    DeleteApplicabilityStatementOutput:
+      type: object
+      required:
+        - deleted_applicability_statement_id
+      properties:
+        deleted_applicability_statement_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted applicability statement ID
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -6293,3 +6672,98 @@ tools:
       $ref: "#/components/schemas/ListMeetingAttendeesInput"
     outputSchema:
       $ref: "#/components/schemas/ListMeetingAttendeesOutput"
+  - name: listStatesOfApplicability
+    description: List all states of applicability for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListStatesOfApplicabilityInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListStatesOfApplicabilityOutput"
+  - name: getStateOfApplicability
+    description: Get a state of applicability by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetStateOfApplicabilityInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetStateOfApplicabilityOutput"
+  - name: addStateOfApplicability
+    description: Add a new state of applicability to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddStateOfApplicabilityInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddStateOfApplicabilityOutput"
+  - name: updateStateOfApplicability
+    description: Update an existing state of applicability
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateStateOfApplicabilityInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateStateOfApplicabilityOutput"
+  - name: deleteStateOfApplicability
+    description: Delete a state of applicability
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteStateOfApplicabilityInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteStateOfApplicabilityOutput"
+  - name: exportStateOfApplicabilityPDF
+    description: Export a state of applicability as a PDF document
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ExportStateOfApplicabilityPDFInput"
+    outputSchema:
+      $ref: "#/components/schemas/ExportStateOfApplicabilityPDFOutput"
+  - name: listApplicabilityStatements
+    description: List all applicability statements for a state of applicability
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListApplicabilityStatementsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListApplicabilityStatementsOutput"
+  - name: getApplicabilityStatement
+    description: Get an applicability statement by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetApplicabilityStatementInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetApplicabilityStatementOutput"
+  - name: addApplicabilityStatement
+    description: Add a control to a state of applicability with an applicability decision
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddApplicabilityStatementInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddApplicabilityStatementOutput"
+  - name: updateApplicabilityStatement
+    description: Update the applicability and justification of an applicability statement
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateApplicabilityStatementInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateApplicabilityStatementOutput"
+  - name: deleteApplicabilityStatement
+    description: Delete an applicability statement from a state of applicability
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteApplicabilityStatementInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteApplicabilityStatementOutput"
