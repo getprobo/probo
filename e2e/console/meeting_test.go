@@ -690,8 +690,8 @@ func TestMeeting_SubResolvers_WithData(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	attendee1 := factory.NewPeople(owner).WithFullName("Attendee One").Create()
-	attendee2 := factory.NewPeople(owner).WithFullName("Attendee Two").Create()
+	attendee1ProfileID := factory.CreateUser(owner)
+	attendee2ProfileID := factory.CreateUser(owner)
 
 	var result struct {
 		CreateMeeting struct {
@@ -730,7 +730,7 @@ func TestMeeting_SubResolvers_WithData(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"name":           "Meeting With Attendees",
 			"date":           time.Now().Format(time.RFC3339Nano),
-			"attendeeIds":    []string{attendee1, attendee2},
+			"attendeeIds":    []string{attendee1ProfileID, attendee2ProfileID},
 		},
 	}, &result)
 	require.NoError(t, err)

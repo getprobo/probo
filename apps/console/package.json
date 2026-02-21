@@ -48,13 +48,13 @@
     "@types/react-dom": "^19.1.2",
     "@types/react-relay": "^18.2.1",
     "@types/relay-runtime": "^19.0.1",
-    "@vitejs/plugin-react": "^4.4.1",
+    "@vitejs/plugin-react": "^5.1.4",
     "babel-plugin-relay": "^19.0.0",
     "eslint": "^9.39.2",
     "graphql": "^16.11.0",
     "relay-compiler": "^19.0.0",
     "tailwindcss": "^4.1.7",
     "typescript": "~5.8.3",
-    "vite": "^6.4.1"
+    "vite": "^7.3.1"
   }
 }

@@ -336,23 +336,13 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         </div>
       </div>
 
-      {control.status === "EXCLUDED" && (
-        <div className="bg-danger border border-border-danger rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="font-medium text-txt-danger">
-              {__("This control is excluded")}
-            </div>
+      <div>
+        <div className="text-base mb-1">{control.name}</div>
+        {control.description && (
+          <div className="text-sm text-txt-secondary mb-4 whitespace-pre-wrap">
+            {control.description}
           </div>
-          <div className="text-sm">
-            <strong>{__("Justification:")}</strong>
-            {" "}
-            {control.exclusionJustification
-              || __("No justification provided")}
-          </div>
-        </div>
-      )}
-      <div className={control.status === "EXCLUDED" ? "opacity-60" : ""}>
-        <div className="text-base mb-4">{control.name}</div>
+        )}
         <div className="mb-4">
           <LinkedMeasuresCard
             variant="card"

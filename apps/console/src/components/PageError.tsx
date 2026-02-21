@@ -1,5 +1,4 @@
 import { useTranslate } from "@probo/i18n";
-import { AuthenticationRequiredError } from "@probo/relay";
 import { IconPageCross } from "@probo/ui";
 import { useEffect, useRef } from "react";
 import { useLocation, useRouteError } from "react-router";
@@ -32,27 +31,6 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
       resetErrorBoundary();
     }
   }, [location, resetErrorBoundary]);
-
-  useEffect(() => {
-    if (error instanceof AuthenticationRequiredError) {
-      window.location.href = error.redirectUrl;
-    }
-  }, [error]);
-
-  if (error instanceof AuthenticationRequiredError) {
-    return (
-      <div className={classNames.wrapper}>
-        <h1 className={classNames.title}>
-          {__("Additional authentication required")}
-        </h1>
-        <p className={classNames.description}>
-          {error.requiresSaml
-            ? __("Redirecting to SAML authentication...")
-            : __("Redirecting to login...")}
-        </p>
-      </div>
-    );
-  }
 
   if (!error || (error instanceof Error && error.message.includes("PAGE_NOT_FOUND"))) {
     return (

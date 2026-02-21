@@ -56,7 +56,7 @@ type Asset struct {
 	SnapshotID      *gid.GID           `json:"snapshotId,omitempty"`
 	Name            string             `json:"name"`
 	Amount          int                `json:"amount"`
-	Owner           *People            `json:"owner"`
+	Owner           *Profile           `json:"owner"`
 	Vendors         *VendorConnection  `json:"vendors"`
 	AssetType       coredata.AssetType `json:"assetType"`
 	DataTypesStored string             `json:"dataTypesStored"`
@@ -157,7 +157,7 @@ type ContinualImprovement struct {
 	ReferenceID  string                                `json:"referenceId"`
 	Description  *string                               `json:"description,omitempty"`
 	Source       *string                               `json:"source,omitempty"`
-	Owner        *People                               `json:"owner"`
+	Owner        *Profile                              `json:"owner"`
 	TargetDate   *time.Time                            `json:"targetDate,omitempty"`
 	Status       coredata.ContinualImprovementStatus   `json:"status"`
 	Priority     coredata.ContinualImprovementPriority `json:"priority"`
@@ -179,26 +179,24 @@ type ContinualImprovementFilter struct {
 }
 
 type Control struct {
-	ID                     gid.GID                `json:"id"`
-	Organization           *Organization          `json:"organization,omitempty"`
-	SectionTitle           string                 `json:"sectionTitle"`
-	Name                   string                 `json:"name"`
-	Description            *string                `json:"description,omitempty"`
-	Status                 coredata.ControlStatus `json:"status"`
-	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
-	BestPractice           bool                   `json:"bestPractice"`
-	Regulatory             bool                   `json:"regulatory"`
-	Contractual            bool                   `json:"contractual"`
-	RiskAssessment         bool                   `json:"riskAssessment"`
-	Framework              *Framework             `json:"framework"`
-	Measures               *MeasureConnection     `json:"measures"`
-	Documents              *DocumentConnection    `json:"documents"`
-	Audits                 *AuditConnection       `json:"audits"`
-	Obligations            *ObligationConnection  `json:"obligations"`
-	Snapshots              *SnapshotConnection    `json:"snapshots"`
-	CreatedAt              time.Time              `json:"createdAt"`
-	UpdatedAt              time.Time              `json:"updatedAt"`
-	Permission             bool                   `json:"permission"`
+	ID             gid.GID               `json:"id"`
+	Organization   *Organization         `json:"organization,omitempty"`
+	SectionTitle   string                `json:"sectionTitle"`
+	Name           string                `json:"name"`
+	Description    *string               `json:"description,omitempty"`
+	BestPractice   bool                  `json:"bestPractice"`
+	Regulatory     bool                  `json:"regulatory"`
+	Contractual    bool                  `json:"contractual"`
+	RiskAssessment bool                  `json:"riskAssessment"`
+	Framework      *Framework            `json:"framework"`
+	Measures       *MeasureConnection    `json:"measures"`
+	Documents      *DocumentConnection   `json:"documents"`
+	Audits         *AuditConnection      `json:"audits"`
+	Obligations    *ObligationConnection `json:"obligations"`
+	Snapshots      *SnapshotConnection   `json:"snapshots"`
+	CreatedAt      time.Time             `json:"createdAt"`
+	UpdatedAt      time.Time             `json:"updatedAt"`
+	Permission     bool                  `json:"permission"`
 }
 
 func (Control) IsNode()             {}
@@ -288,13 +286,11 @@ type CreateControlDocumentMappingPayload struct {
 }
 
 type CreateControlInput struct {
-	FrameworkID            gid.GID                `json:"frameworkId"`
-	SectionTitle           string                 `json:"sectionTitle"`
-	Name                   string                 `json:"name"`
-	Description            *string                `json:"description,omitempty"`
-	Status                 coredata.ControlStatus `json:"status"`
-	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
-	BestPractice           bool                   `json:"bestPractice"`
+	FrameworkID  gid.GID `json:"frameworkId"`
+	SectionTitle string  `json:"sectionTitle"`
+	Name         string  `json:"name"`
+	Description  *string `json:"description,omitempty"`
+	BestPractice bool    `json:"bestPractice"`
 }
 
 type CreateControlMeasureMappingInput struct {
@@ -369,7 +365,7 @@ type CreateDocumentInput struct {
 	OrganizationID        gid.GID                         `json:"organizationId"`
 	Title                 string                          `json:"title"`
 	Content               string                          `json:"content"`
-	OwnerID               gid.GID                         `json:"ownerId"`
+	ApproverIds           []gid.GID                       `json:"approverIds"`
 	DocumentType          coredata.DocumentType           `json:"documentType"`
 	Classification        coredata.DocumentClassification `json:"classification"`
 	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
@@ -455,21 +451,6 @@ type CreateObligationInput struct {
 
 type CreateObligationPayload struct {
 	ObligationEdge *ObligationEdge `json:"obligationEdge"`
-}
-
-type CreatePeopleInput struct {
-	OrganizationID           gid.GID             `json:"organizationId"`
-	FullName                 string              `json:"fullName"`
-	PrimaryEmailAddress      mail.Addr           `json:"primaryEmailAddress"`
-	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses"`
-	Kind                     coredata.PeopleKind `json:"kind"`
-	Position                 *string             `json:"position,omitempty"`
-	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`
-	ContractEndDate          *time.Time          `json:"contractEndDate,omitempty"`
-}
-
-type CreatePeoplePayload struct {
-	PeopleEdge *PeopleEdge `json:"peopleEdge"`
 }
 
 type CreateProcessingActivityInput struct {
@@ -706,6 +687,16 @@ type CreateVendorServiceInput struct {
 
 type CreateVendorServicePayload struct {
 	VendorServiceEdge *VendorServiceEdge `json:"vendorServiceEdge"`
+}
+
+type CreateWebhookSubscriptionInput struct {
+	OrganizationID gid.GID                     `json:"organizationId"`
+	EndpointURL    string                      `json:"endpointUrl"`
+	SelectedEvents []coredata.WebhookEventType `json:"selectedEvents"`
+}
+
+type CreateWebhookSubscriptionPayload struct {
+	WebhookSubscriptionEdge *WebhookSubscriptionEdge `json:"webhookSubscriptionEdge"`
 }
 
 type CustomDomain struct {
@@ -952,14 +943,6 @@ type DeleteObligationPayload struct {
 	DeletedObligationID gid.GID `json:"deletedObligationId"`
 }
 
-type DeletePeopleInput struct {
-	PeopleID gid.GID `json:"peopleId"`
-}
-
-type DeletePeoplePayload struct {
-	DeletedPeopleID gid.GID `json:"deletedPeopleId"`
-}
-
 type DeleteProcessingActivityInput struct {
 	ProcessingActivityID gid.GID `json:"processingActivityId"`
 }
@@ -1126,6 +1109,14 @@ type DeleteVendorServicePayload struct {
 	DeletedVendorServiceID gid.GID `json:"deletedVendorServiceId"`
 }
 
+type DeleteWebhookSubscriptionInput struct {
+	WebhookSubscriptionID gid.GID `json:"webhookSubscriptionId"`
+}
+
+type DeleteWebhookSubscriptionPayload struct {
+	DeletedWebhookSubscriptionID gid.GID `json:"deletedWebhookSubscriptionId"`
+}
+
 type Document struct {
 	ID                      gid.GID                         `json:"id"`
 	Title                   string                          `json:"title"`
@@ -1134,7 +1125,7 @@ type Document struct {
 	Classification          coredata.DocumentClassification `json:"classification"`
 	CurrentPublishedVersion *int                            `json:"currentPublishedVersion,omitempty"`
 	TrustCenterVisibility   coredata.TrustCenterVisibility  `json:"trustCenterVisibility"`
-	Owner                   *People                         `json:"owner"`
+	Approvers               *ProfileConnection              `json:"approvers"`
 	Organization            *Organization                   `json:"organization"`
 	Versions                *DocumentVersionConnection      `json:"versions"`
 	Controls                *ControlConnection              `json:"controls"`
@@ -1164,7 +1155,7 @@ type DocumentVersion struct {
 	Changelog      string                              `json:"changelog"`
 	Title          string                              `json:"title"`
 	Classification coredata.DocumentClassification     `json:"classification"`
-	Owner          *People                             `json:"owner"`
+	Approvers      *ProfileConnection                  `json:"approvers"`
 	Signatures     *DocumentVersionSignatureConnection `json:"signatures"`
 	Signed         bool                                `json:"signed"`
 	PublishedAt    *time.Time                          `json:"publishedAt,omitempty"`
@@ -1189,7 +1180,7 @@ type DocumentVersionSignature struct {
 	ID              gid.GID                                `json:"id"`
 	DocumentVersion *DocumentVersion                       `json:"documentVersion"`
 	State           coredata.DocumentVersionSignatureState `json:"state"`
-	SignedBy        *People                                `json:"signedBy"`
+	SignedBy        *Profile                               `json:"signedBy"`
 	SignedAt        *time.Time                             `json:"signedAt,omitempty"`
 	RequestedAt     time.Time                              `json:"requestedAt"`
 	CreatedAt       time.Time                              `json:"createdAt"`
@@ -1339,14 +1330,6 @@ type GenerateDocumentChangelogPayload struct {
 	Changelog string `json:"changelog"`
 }
 
-type GenerateFrameworkStateOfApplicabilityInput struct {
-	FrameworkID gid.GID `json:"frameworkId"`
-}
-
-type GenerateFrameworkStateOfApplicabilityPayload struct {
-	Data string `json:"data"`
-}
-
 type GetTrustCenterFileInput struct {
 	ID gid.GID `json:"id"`
 }
@@ -1406,7 +1389,7 @@ type Meeting struct {
 	Name         string        `json:"name"`
 	Date         time.Time     `json:"date"`
 	Minutes      *string       `json:"minutes,omitempty"`
-	Attendees    []*People     `json:"attendees"`
+	Attendees    []*Profile    `json:"attendees"`
 	Organization *Organization `json:"organization"`
 	CreatedAt    time.Time     `json:"createdAt"`
 	UpdatedAt    time.Time     `json:"updatedAt"`
@@ -1434,7 +1417,7 @@ type Nonconformity struct {
 	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
 	RootCause          string                       `json:"rootCause"`
 	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
-	Owner              *People                      `json:"owner"`
+	Owner              *Profile                     `json:"owner"`
 	DueDate            *time.Time                   `json:"dueDate,omitempty"`
 	Status             coredata.NonconformityStatus `json:"status"`
 	EffectivenessCheck *string                      `json:"effectivenessCheck,omitempty"`
@@ -1465,7 +1448,7 @@ type Obligation struct {
 	Requirement            *string                   `json:"requirement,omitempty"`
 	ActionsToBeImplemented *string                   `json:"actionsToBeImplemented,omitempty"`
 	Regulator              *string                   `json:"regulator,omitempty"`
-	Owner                  *People                   `json:"owner"`
+	Owner                  *Profile                  `json:"owner"`
 	LastReviewDate         *time.Time                `json:"lastReviewDate,omitempty"`
 	DueDate                *time.Time                `json:"dueDate,omitempty"`
 	Status                 coredata.ObligationStatus `json:"status"`
@@ -1497,11 +1480,11 @@ type Organization struct {
 	Email                           *string                                   `json:"email,omitempty"`
 	HeadquarterAddress              *string                                   `json:"headquarterAddress,omitempty"`
 	Context                         *OrganizationContext                      `json:"context,omitempty"`
+	Profiles                        *ProfileConnection                        `json:"profiles"`
 	SlackConnections                *SlackConnectionConnection                `json:"slackConnections"`
 	Frameworks                      *FrameworkConnection                      `json:"frameworks"`
 	Controls                        *ControlConnection                        `json:"controls"`
 	Vendors                         *VendorConnection                         `json:"vendors"`
-	Peoples                         *PeopleConnection                         `json:"peoples"`
 	Documents                       *DocumentConnection                       `json:"documents"`
 	Meetings                        *MeetingConnection                        `json:"meetings"`
 	StatesOfApplicability           *StateOfApplicabilityConnection           `json:"statesOfApplicability"`
@@ -1522,6 +1505,7 @@ type Organization struct {
 	TrustCenterFiles                *TrustCenterFileConnection                `json:"trustCenterFiles"`
 	TrustCenter                     *TrustCenter                              `json:"trustCenter,omitempty"`
 	CustomDomain                    *CustomDomain                             `json:"customDomain,omitempty"`
+	WebhookSubscriptions            *WebhookSubscriptionConnection            `json:"webhookSubscriptions"`
 	CreatedAt                       time.Time                                 `json:"createdAt"`
 	UpdatedAt                       time.Time                                 `json:"updatedAt"`
 	Permission                      bool                                      `json:"permission"`
@@ -1540,32 +1524,6 @@ type PageInfo struct {
 	HasPreviousPage bool            `json:"hasPreviousPage"`
 	StartCursor     *page.CursorKey `json:"startCursor,omitempty"`
 	EndCursor       *page.CursorKey `json:"endCursor,omitempty"`
-}
-
-type People struct {
-	ID                       gid.GID             `json:"id"`
-	FullName                 string              `json:"fullName"`
-	PrimaryEmailAddress      mail.Addr           `json:"primaryEmailAddress"`
-	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses"`
-	Kind                     coredata.PeopleKind `json:"kind"`
-	Position                 *string             `json:"position,omitempty"`
-	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`
-	ContractEndDate          *time.Time          `json:"contractEndDate,omitempty"`
-	CreatedAt                time.Time           `json:"createdAt"`
-	UpdatedAt                time.Time           `json:"updatedAt"`
-	Permission               bool                `json:"permission"`
-}
-
-func (People) IsNode()             {}
-func (this People) GetID() gid.GID { return this.ID }
-
-type PeopleEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *People        `json:"node"`
-}
-
-type PeopleFilter struct {
-	ExcludeContractEnded *bool `json:"excludeContractEnded,omitempty"`
 }
 
 type ProcessingActivity struct {
@@ -1591,7 +1549,7 @@ type ProcessingActivity struct {
 	LastReviewDate                       *time.Time                                                `json:"lastReviewDate,omitempty"`
 	NextReviewDate                       *time.Time                                                `json:"nextReviewDate,omitempty"`
 	Role                                 coredata.ProcessingActivityRole                           `json:"role"`
-	DataProtectionOfficer                *People                                                   `json:"dataProtectionOfficer,omitempty"`
+	DataProtectionOfficer                *Profile                                                  `json:"dataProtectionOfficer,omitempty"`
 	Vendors                              *VendorConnection                                         `json:"vendors"`
 	DataProtectionImpactAssessment       *DataProtectionImpactAssessment                           `json:"dataProtectionImpactAssessment,omitempty"`
 	TransferImpactAssessment             *TransferImpactAssessment                                 `json:"transferImpactAssessment,omitempty"`
@@ -1610,6 +1568,32 @@ type ProcessingActivityEdge struct {
 
 type ProcessingActivityFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
+type Profile struct {
+	ID                       gid.GID                        `json:"id"`
+	FullName                 string                         `json:"fullName"`
+	EmailAddress             mail.Addr                      `json:"emailAddress"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 *string                        `json:"position,omitempty"`
+	ContractStartDate        *time.Time                     `json:"contractStartDate,omitempty"`
+	ContractEndDate          *time.Time                     `json:"contractEndDate,omitempty"`
+	CreatedAt                time.Time                      `json:"createdAt"`
+	UpdatedAt                time.Time                      `json:"updatedAt"`
+	Permission               bool                           `json:"permission"`
+}
+
+func (Profile) IsNode()             {}
+func (this Profile) GetID() gid.GID { return this.ID }
+
+type ProfileEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Profile       `json:"node"`
+}
+
+type ProfileFilter struct {
+	ExcludeContractEnded *bool `json:"excludeContractEnded,omitempty"`
 }
 
 type PublishDocumentVersionInput struct {
@@ -1687,7 +1671,7 @@ type Risk struct {
 	ResidualImpact     int                    `json:"residualImpact"`
 	ResidualRiskScore  int                    `json:"residualRiskScore"`
 	Note               string                 `json:"note"`
-	Owner              *People                `json:"owner,omitempty"`
+	Owner              *Profile               `json:"owner,omitempty"`
 	Organization       *Organization          `json:"organization"`
 	Measures           *MeasureConnection     `json:"measures"`
 	Documents          *DocumentConnection    `json:"documents"`
@@ -1770,7 +1754,7 @@ type StateOfApplicability struct {
 	SourceID                *gid.GID                          `json:"sourceId,omitempty"`
 	SnapshotID              *gid.GID                          `json:"snapshotId,omitempty"`
 	Organization            *Organization                     `json:"organization,omitempty"`
-	Owner                   *People                           `json:"owner"`
+	Owner                   *Profile                          `json:"owner"`
 	CreatedAt               time.Time                         `json:"createdAt"`
 	UpdatedAt               time.Time                         `json:"updatedAt"`
 	ApplicabilityStatements *ApplicabilityStatementConnection `json:"applicabilityStatements"`
@@ -1796,7 +1780,7 @@ type Task struct {
 	State        coredata.TaskState  `json:"state"`
 	TimeEstimate *time.Duration      `json:"timeEstimate,omitempty"`
 	Deadline     *time.Time          `json:"deadline,omitempty"`
-	AssignedTo   *People             `json:"assignedTo,omitempty"`
+	AssignedTo   *Profile            `json:"assignedTo,omitempty"`
 	Organization *Organization       `json:"organization"`
 	Measure      *Measure            `json:"measure,omitempty"`
 	Evidences    *EvidenceConnection `json:"evidences"`
@@ -1998,13 +1982,11 @@ type UpdateContinualImprovementPayload struct {
 }
 
 type UpdateControlInput struct {
-	ID                     gid.GID                    `json:"id"`
-	SectionTitle           *string                    `json:"sectionTitle,omitempty"`
-	Name                   *string                    `json:"name,omitempty"`
-	Description            graphql.Omittable[*string] `json:"description,omitempty"`
-	Status                 *coredata.ControlStatus    `json:"status,omitempty"`
-	ExclusionJustification *string                    `json:"exclusionJustification,omitempty"`
-	BestPractice           *bool                      `json:"bestPractice,omitempty"`
+	ID           gid.GID                    `json:"id"`
+	SectionTitle *string                    `json:"sectionTitle,omitempty"`
+	Name         *string                    `json:"name,omitempty"`
+	Description  graphql.Omittable[*string] `json:"description,omitempty"`
+	BestPractice *bool                      `json:"bestPractice,omitempty"`
 }
 
 type UpdateControlPayload struct {
@@ -2040,7 +2022,7 @@ type UpdateDocumentInput struct {
 	ID                    gid.GID                          `json:"id"`
 	Title                 *string                          `json:"title,omitempty"`
 	Content               *string                          `json:"content,omitempty"`
-	OwnerID               *gid.GID                         `json:"ownerId,omitempty"`
+	ApproverIds           []gid.GID                        `json:"approverIds,omitempty"`
 	DocumentType          *coredata.DocumentType           `json:"documentType,omitempty"`
 	Classification        *coredata.DocumentClassification `json:"classification,omitempty"`
 	TrustCenterVisibility *coredata.TrustCenterVisibility  `json:"trustCenterVisibility,omitempty"`
@@ -2136,21 +2118,6 @@ type UpdateOrganizationContextInput struct {
 
 type UpdateOrganizationContextPayload struct {
 	Context *OrganizationContext `json:"context"`
-}
-
-type UpdatePeopleInput struct {
-	ID                       gid.GID                        `json:"id"`
-	FullName                 *string                        `json:"fullName,omitempty"`
-	PrimaryEmailAddress      *mail.Addr                     `json:"primaryEmailAddress,omitempty"`
-	AdditionalEmailAddresses graphql.Omittable[[]mail.Addr] `json:"additionalEmailAddresses,omitempty"`
-	Kind                     *coredata.PeopleKind           `json:"kind,omitempty"`
-	Position                 graphql.Omittable[*string]     `json:"position,omitempty"`
-	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
-	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
-}
-
-type UpdatePeoplePayload struct {
-	People *People `json:"people"`
 }
 
 type UpdateProcessingActivityInput struct {
@@ -2380,6 +2347,16 @@ type UpdateVendorServicePayload struct {
 	VendorService *VendorService `json:"vendorService"`
 }
 
+type UpdateWebhookSubscriptionInput struct {
+	ID             gid.GID                     `json:"id"`
+	EndpointURL    *string                     `json:"endpointUrl,omitempty"`
+	SelectedEvents []coredata.WebhookEventType `json:"selectedEvents,omitempty"`
+}
+
+type UpdateWebhookSubscriptionPayload struct {
+	WebhookSubscription *WebhookSubscription `json:"webhookSubscription"`
+}
+
 type UploadAuditReportInput struct {
 	AuditID gid.GID        `json:"auditId"`
 	File    graphql.Upload `json:"file"`
@@ -2457,8 +2434,8 @@ type Vendor struct {
 	Contacts                      *VendorContactConnection          `json:"contacts"`
 	Services                      *VendorServiceConnection          `json:"services"`
 	RiskAssessments               *VendorRiskAssessmentConnection   `json:"riskAssessments"`
-	BusinessOwner                 *People                           `json:"businessOwner,omitempty"`
-	SecurityOwner                 *People                           `json:"securityOwner,omitempty"`
+	BusinessOwner                 *Profile                          `json:"businessOwner,omitempty"`
+	SecurityOwner                 *Profile                          `json:"securityOwner,omitempty"`
 	StatusPageURL                 *string                           `json:"statusPageUrl,omitempty"`
 	TermsOfServiceURL             *string                           `json:"termsOfServiceUrl,omitempty"`
 	PrivacyPolicyURL              *string                           `json:"privacyPolicyUrl,omitempty"`
@@ -2630,4 +2607,40 @@ type Viewer struct {
 	ID                gid.GID                     `json:"id"`
 	SignableDocuments *SignableDocumentConnection `json:"signableDocuments"`
 	SignableDocument  *SignableDocument           `json:"signableDocument,omitempty"`
+}
+
+type WebhookEvent struct {
+	ID                    gid.GID                     `json:"id"`
+	WebhookSubscriptionID gid.GID                     `json:"webhookSubscriptionId"`
+	Status                coredata.WebhookEventStatus `json:"status"`
+	Response              *string                     `json:"response,omitempty"`
+	CreatedAt             time.Time                   `json:"createdAt"`
+}
+
+func (WebhookEvent) IsNode()             {}
+func (this WebhookEvent) GetID() gid.GID { return this.ID }
+
+type WebhookEventEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *WebhookEvent  `json:"node"`
+}
+
+type WebhookSubscription struct {
+	ID             gid.GID                     `json:"id"`
+	Organization   *Organization               `json:"organization,omitempty"`
+	EndpointURL    string                      `json:"endpointUrl"`
+	SigningSecret  string                      `json:"signingSecret"`
+	SelectedEvents []coredata.WebhookEventType `json:"selectedEvents"`
+	CreatedAt      time.Time                   `json:"createdAt"`
+	UpdatedAt      time.Time                   `json:"updatedAt"`
+	Events         *WebhookEventConnection     `json:"events"`
+	Permission     bool                        `json:"permission"`
+}
+
+func (WebhookSubscription) IsNode()             {}
+func (this WebhookSubscription) GetID() gid.GID { return this.ID }
+
+type WebhookSubscriptionEdge struct {
+	Cursor page.CursorKey       `json:"cursor"`
+	Node   *WebhookSubscription `json:"node"`
 }

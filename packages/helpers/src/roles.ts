@@ -7,6 +7,13 @@ export const Role = {
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role];
+export const roles = [
+  "OWNER",
+  "ADMIN",
+  "VIEWER",
+  "AUDITOR",
+  "EMPLOYEE",
+] as const
 
 export function getAssignableRoles(currentRole: Role): Role[] {
   if (currentRole === Role.OWNER) {

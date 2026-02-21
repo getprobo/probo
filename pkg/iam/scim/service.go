@@ -19,6 +19,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -127,7 +128,7 @@ func (s *Service) CreateUser(
 	config *coredata.SCIMConfiguration,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	email, fullName := ParseUserFromAttributes(attributes)
+	email, fullName, active, title := ParseUserFromAttributes(attributes)
 	if email == "" {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("userName or email is required")
 	}
@@ -138,101 +139,121 @@ func (s *Service) CreateUser(
 	}
 	now := time.Now()
 
+	profileState := coredata.ProfileStateActive
+	if !active {
+		profileState = coredata.ProfileStateInactive
+	}
+
 	var membership *coredata.Membership
+	var profile *coredata.MembershipProfile
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	err = s.pg.WithTx(ctx, func(tx pg.Conn) error {
 		// Check if identity exists
 		identity := &coredata.Identity{}
-		err := identity.LoadByEmail(ctx, tx, emailAddr)
+		if err := identity.LoadByEmail(ctx, tx, emailAddr); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				// Create new identity
+				identity = &coredata.Identity{
+					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
+					EmailAddress:         emailAddr,
+					FullName:             fullName,
+					HashedPassword:       nil,
+					EmailAddressVerified: false,
+					CreatedAt:            now,
+					UpdatedAt:            now,
+				}
 
-		if err == coredata.ErrResourceNotFound {
-			// Create new identity
-			identity = &coredata.Identity{
-				ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
-				EmailAddress:         emailAddr,
-				FullName:             fullName,
-				HashedPassword:       nil,
-				EmailAddressVerified: false,
-				CreatedAt:            now,
-				UpdatedAt:            now,
+				if err := identity.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert identity: %w", err)
+				}
+			} else {
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
+		}
 
-			err = identity.Insert(ctx, tx)
-			if err != nil {
-				return fmt.Errorf("cannot insert identity: %w", err)
+		// Check if profile exists
+		profile = &coredata.MembershipProfile{}
+		if err := profile.LoadByIdentityIDAndOrganizationID(
+			ctx,
+			tx,
+			coredata.NewScopeFromObjectID(config.OrganizationID),
+			identity.ID,
+			config.OrganizationID,
+		); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				profile = &coredata.MembershipProfile{
+					ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
+					IdentityID:     identity.ID,
+					OrganizationID: config.OrganizationID,
+					Source:         coredata.ProfileSourceSCIM,
+					State:          profileState,
+					FullName:       fullName,
+					Position:       &title,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				err = profile.Insert(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("cannot insert profile: %w", err)
+				}
+			} else {
+				return fmt.Errorf("cannot load profile: %w", err)
 			}
-		} else if err != nil {
-			return fmt.Errorf("cannot load identity: %w", err)
+		} else {
+			profile.Source = coredata.ProfileSourceSCIM
+			profile.State = profileState
+			profile.FullName = fullName
+			profile.Position = &title
+			profile.UpdatedAt = now
+			if err := profile.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update profile: %w", err)
+			}
+		}
+
+		if !active {
+			// Expire pending invitations for user
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(profile.OrganizationID),
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
 		}
 
 		// Check if membership exists
 		membership = &coredata.Membership{}
-		err = membership.LoadByIdentityAndOrg(ctx, tx, scope, identity.ID, config.OrganizationID)
+		if err := membership.LoadByIdentityIDAndOrganizationID(
+			ctx,
+			tx,
+			scope,
+			identity.ID,
+			config.OrganizationID,
+		); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				// Create new membership
+				membership = &coredata.Membership{
+					ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipEntityType),
+					IdentityID:     identity.ID,
+					OrganizationID: config.OrganizationID,
+					Role:           coredata.MembershipRoleEmployee,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
 
-		if err == coredata.ErrResourceNotFound {
-			// Create new membership
-			membership = &coredata.Membership{
-				ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipEntityType),
-				IdentityID:     identity.ID,
-				OrganizationID: config.OrganizationID,
-				Role:           coredata.MembershipRoleEmployee,
-				Source:         coredata.MembershipSourceSCIM,
-				State:          coredata.MembershipStateActive,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
-			err = membership.Insert(ctx, tx, scope)
-			if err != nil {
-				return fmt.Errorf("cannot insert membership: %w", err)
-			}
-
-			// Create membership profile
-			membershipProfile := &coredata.MembershipProfile{
-				ID:           gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
-				MembershipID: membership.ID,
-				FullName:     fullName,
-				CreatedAt:    now,
-				UpdatedAt:    now,
-			}
-
-			err = membershipProfile.Insert(ctx, tx)
-			if err != nil {
-				return fmt.Errorf("cannot insert membership profile: %w", err)
-			}
-
-			// Expire all pending invitations for email in organization
-			invitations := &coredata.Invitations{}
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			err := invitations.ExpireByEmailAndOrganization(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(config.OrganizationID),
-				emailAddr,
-				config.OrganizationID,
-				onlyPending,
-			)
-
-			if err != nil {
-				return fmt.Errorf("cannot expire pending invitations by email")
-			}
-		} else if err != nil {
-			return fmt.Errorf("cannot load membership: %w", err)
-		} else {
-			// Update existing membership - reactivate if inactive, update source to SCIM
-			wasInactive := membership.State == coredata.MembershipStateInactive
-			membership.Source = coredata.MembershipSourceSCIM
-			membership.State = coredata.MembershipStateActive
-			if wasInactive {
-				membership.Role = coredata.MembershipRoleEmployee
-			}
-			membership.UpdatedAt = now
-
-			err = membership.Update(ctx, tx, scope)
-			if err != nil {
-				return fmt.Errorf("cannot update membership: %w", err)
+				err = membership.Insert(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot insert membership: %w", err)
+				}
+			} else {
+				return fmt.Errorf("cannot load membership: %w", err)
 			}
 		}
 
@@ -243,32 +264,45 @@ func (s *Service) CreateUser(
 		return scim.Resource{}, err
 	}
 
-	return membershipToResource(membership), nil
+	return userToResource(profile), nil
 }
 
 func (s *Service) GetUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
-	membershipID gid.GID,
+	profileID gid.GID,
 ) (scim.Resource, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	var membership *coredata.Membership
+	var (
+		profile    *coredata.MembershipProfile
+		membership *coredata.Membership
+	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			membership = &coredata.Membership{}
-			err := membership.LoadByID(ctx, conn, scope, membershipID)
-			if err != nil {
+			profile = &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, conn, scope, profileID); err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return scimerrors.ScimErrorResourceNotFound(membershipID.String())
+					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			if membership.OrganizationID != config.OrganizationID {
-				return scimerrors.ScimErrorResourceNotFound(membershipID.String())
+			if profile.OrganizationID != config.OrganizationID {
+				return scimerrors.ScimErrorResourceNotFound(profileID.String())
+			}
+
+			membership = &coredata.Membership{}
+			if err := membership.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				scope,
+				profile.IdentityID,
+				profile.OrganizationID,
+			); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
 			return nil
@@ -279,7 +313,7 @@ func (s *Service) GetUser(
 		return scim.Resource{}, err
 	}
 
-	return membershipToResource(membership), nil
+	return userToResource(profile), nil
 }
 
 func (s *Service) ListUsers(
@@ -299,31 +333,31 @@ func (s *Service) ListUsers(
 	//    when they don't exist in the identity provider.
 	// 2. When a manual user exists in the identity provider but not in the
 	//    SCIM list, CreateUser is called which enrolls them into SCIM management.
-	filter.WithSource(coredata.MembershipSourceSCIM)
+	filter.WithSource(coredata.ProfileSourceSCIM)
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	var memberships coredata.Memberships
+	var profiles coredata.MembershipProfiles
 	var totalCount int
 
 	err = s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
 			var err error
-			totalCount, err = memberships.CountByOrganizationID(ctx, conn, scope, config.OrganizationID, filter)
+			totalCount, err = profiles.CountByOrganizationID(ctx, conn, scope, config.OrganizationID, filter)
 			if err != nil {
-				return fmt.Errorf("cannot count memberships: %w", err)
+				return fmt.Errorf("cannot count profiles: %w", err)
 			}
 
-			orderBy := page.OrderBy[coredata.MembershipOrderField]{
-				Field:     coredata.MembershipOrderFieldCreatedAt,
+			orderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+				Field:     coredata.MembershipProfileOrderFieldCreatedAt,
 				Direction: page.OrderDirectionDesc,
 			}
 			cursor := page.NewCursor(count, nil, page.Head, orderBy)
 
-			err = memberships.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor, filter)
+			err = profiles.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor, filter)
 			if err != nil {
-				return fmt.Errorf("cannot load memberships: %w", err)
+				return fmt.Errorf("cannot load profiles: %w", err)
 			}
 
 			return nil
@@ -334,9 +368,9 @@ func (s *Service) ListUsers(
 		return nil, 0, err
 	}
 
-	resources := make([]scim.Resource, 0, len(memberships))
-	for _, m := range memberships {
-		resources = append(resources, membershipToResource(m))
+	resources := make([]scim.Resource, 0, len(profiles))
+	for _, p := range profiles {
+		resources = append(resources, userToResource(p))
 	}
 
 	return resources, totalCount, nil
@@ -345,61 +379,117 @@ func (s *Service) ListUsers(
 func (s *Service) ReplaceUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
-	membershipID gid.GID,
+	profileID gid.GID,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	fullName, active := ParseUserFromReplaceAttributes(attributes)
-	membership, err := s.updateUser(ctx, config, membershipID, fullName, active)
+	fullName, active, title := ParseUserFromReplaceAttributes(attributes)
+	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title)
 	if err != nil {
 		return scim.Resource{}, err
 	}
 
-	return membershipToResource(membership), nil
+	return userToResource(profile), nil
 }
 
 func (s *Service) PatchUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
-	membershipID gid.GID,
+	profileID gid.GID,
 	operations []scim.PatchOperation,
 ) (scim.Resource, error) {
-	fullName, active := ParseUserFromPatchOperations(operations)
-	membership, err := s.updateUser(ctx, config, membershipID, fullName, active)
+	fullName, active, title := ParseUserFromPatchOperations(operations)
+	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title)
 	if err != nil {
 		return scim.Resource{}, err
 	}
 
-	return membershipToResource(membership), nil
+	return userToResource(profile), nil
 }
 
 func (s *Service) updateUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
-	membershipID gid.GID,
+	profileID gid.GID,
 	fullName string,
 	active *bool,
-) (*coredata.Membership, error) {
+	title string,
+) (*coredata.MembershipProfile, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
 
-	var membership *coredata.Membership
+	var (
+		membership *coredata.Membership
+		profile    *coredata.MembershipProfile
+	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			membership = &coredata.Membership{}
-			if err := membership.LoadByID(ctx, tx, scope, membershipID); err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return scimerrors.ScimErrorResourceNotFound(membershipID.String())
+			profile = &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.OrganizationID != config.OrganizationID {
+				return scimerrors.ScimErrorResourceNotFound(profileID.String())
+			}
+
+			membership = &coredata.Membership{}
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			if membership.OrganizationID != config.OrganizationID {
-				return scimerrors.ScimErrorResourceNotFound(membershipID.String())
+			shouldReactivate := active != nil && *active && profile.State == coredata.ProfileStateInactive
+			shouldDeactivate := active != nil && !*active && profile.State == coredata.ProfileStateActive
+
+			if fullName != "" {
+				profile.FullName = fullName
+				profile.UpdatedAt = now
 			}
 
-			needsUpdate := false
+			if title == "" {
+				profile.Position = nil
+			} else {
+				profile.Position = &title
+			}
+
+			if shouldReactivate {
+				profile.State = coredata.ProfileStateActive
+				profile.UpdatedAt = now
+			} else if shouldDeactivate {
+				profile.State = coredata.ProfileStateInactive
+				profile.UpdatedAt = now
+			}
+
+			if profile.Source != coredata.ProfileSourceSCIM {
+				profile.Source = coredata.ProfileSourceSCIM
+				profile.UpdatedAt = now
+			}
+
+			if err := profile.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update membership profile: %w", err)
+			}
+
+			if shouldDeactivate {
+				// Expire pending invitations for user
+				invitations := &coredata.Invitations{}
+				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+				if err := invitations.ExpireByUserID(
+					ctx,
+					tx,
+					coredata.NewScopeFromObjectID(profile.OrganizationID),
+					profile.ID,
+					onlyPending,
+				); err != nil {
+					return fmt.Errorf("cannot expire pending invitations: %w", err)
+				}
+			}
+
+			needsUpdate := shouldReactivate || shouldDeactivate
 
 			if active != nil {
 				identity := &coredata.Identity{}
@@ -407,65 +497,15 @@ func (s *Service) updateUser(
 					return fmt.Errorf("cannot load identity: %w", err)
 				}
 
-				if *active && membership.State == coredata.MembershipStateInactive {
-					membership.State = coredata.MembershipStateActive
+				if shouldReactivate {
 					membership.Role = coredata.MembershipRoleEmployee
-					needsUpdate = true
-
-					// Expire all pending invitations for email in organization
-					invitations := &coredata.Invitations{}
-					onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-					if err := invitations.ExpireByEmailAndOrganization(
-						ctx,
-						tx,
-						coredata.NewScopeFromObjectID(config.OrganizationID),
-						identity.EmailAddress,
-						config.OrganizationID,
-						onlyPending,
-					); err != nil {
-						return fmt.Errorf("cannot expire pending invitations by email: %w", err)
-					}
-				} else if !*active && membership.State == coredata.MembershipStateActive {
-					membership.State = coredata.MembershipStateInactive
-					needsUpdate = true
-
-					// Expire all pending invitations for email in organization
-					invitations := &coredata.Invitations{}
-					onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-					if err := invitations.ExpireByEmailAndOrganization(
-						ctx,
-						tx,
-						coredata.NewScopeFromObjectID(config.OrganizationID),
-						identity.EmailAddress,
-						config.OrganizationID,
-						onlyPending,
-					); err != nil {
-						return fmt.Errorf("cannot expire pending invitations: %w", err)
-					}
 				}
-			}
-
-			if membership.Source != coredata.MembershipSourceSCIM {
-				membership.Source = coredata.MembershipSourceSCIM
-				needsUpdate = true
 			}
 
 			if needsUpdate {
 				membership.UpdatedAt = now
 				if err := membership.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update membership: %w", err)
-				}
-			}
-
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByMembershipID(ctx, tx, scope, membershipID); err == nil {
-				if fullName != "" {
-					profile.FullName = fullName
-					profile.UpdatedAt = now
-
-					if err := profile.Update(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot update membership profile: %w", err)
-					}
 				}
 			}
 
@@ -477,7 +517,7 @@ func (s *Service) updateUser(
 		return nil, err
 	}
 
-	return membership, nil
+	return profile, nil
 }
 
 func (s *Service) DeleteUser(
@@ -508,24 +548,6 @@ func (s *Service) DeleteUser(
 				return fmt.Errorf("cannot delete membership: %w", err)
 			}
 
-			// Expire all pending invitations for email in organization
-			identity := &coredata.Identity{}
-			if err := identity.LoadByID(ctx, tx, membership.IdentityID); err != nil {
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-			invitations := &coredata.Invitations{}
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			if err := invitations.ExpireByEmailAndOrganization(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(config.OrganizationID),
-				identity.EmailAddress,
-				config.OrganizationID,
-				onlyPending,
-			); err != nil {
-				return fmt.Errorf("cannot expire pending invitations: %w", err)
-			}
-
 			return nil
 		},
 	)
@@ -536,19 +558,14 @@ func (s *Service) LogEvent(
 	config *coredata.SCIMConfiguration,
 	method string,
 	path string,
-	membershipID *gid.GID,
+	userName string,
 	ipAddress net.IP,
 	statusCode int,
 	errorMessage *string,
 ) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	var mID gid.GID
-	if membershipID != nil {
-		mID = *membershipID
-	}
-
-	event := s.createEvent(config, method, path, mID, ipAddress, statusCode, errorMessage)
+	event := s.createEvent(config, method, path, userName, ipAddress, statusCode, errorMessage)
 
 	err := s.pg.WithConn(
 		ctx,
@@ -570,7 +587,7 @@ func (s *Service) createEvent(
 	config *coredata.SCIMConfiguration,
 	method string,
 	path string,
-	membershipID gid.GID,
+	userName string,
 	ipAddress net.IP,
 	statusCode int,
 	errorMessage *string,
@@ -584,19 +601,22 @@ func (s *Service) createEvent(
 		StatusCode:          statusCode,
 		ErrorMessage:        errorMessage,
 		IPAddress:           ipAddress,
+		UserName:            userName,
 		CreatedAt:           time.Now(),
-	}
-
-	if membershipID != gid.Nil {
-		event.MembershipID = &membershipID
 	}
 
 	return event
 }
 
-func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string) {
+func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string, active bool, title string) {
 	userName, _ := attributes["userName"].(string)
 	displayName, _ := attributes["displayName"].(string)
+
+	// Default to active if the attribute is not present.
+	active = true
+	if a, ok := attributes["active"].(bool); ok {
+		active = a
+	}
 
 	var givenName, familyName string
 	if name, ok := attributes["name"].(map[string]any); ok {
@@ -636,10 +656,14 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 		fullName = userName
 	}
 
-	return email, fullName
+	if t, ok := attributes["title"].(string); ok {
+		title = t
+	}
+
+	return email, fullName, active, title
 }
 
-func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool) {
+func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool, title string) {
 	displayName, _ := attributes["displayName"].(string)
 
 	var givenName, familyName string
@@ -658,10 +682,14 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullNam
 		activeVal = a
 	}
 
-	return fullName, &activeVal
+	if t, ok := attributes["title"].(string); ok {
+		title = t
+	}
+
+	return fullName, &activeVal, title
 }
 
-func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool) {
+func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool, title string) {
 	var givenName, familyName string
 
 	for _, op := range operations {
@@ -710,6 +738,10 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 				if name, ok := op.Value.(string); ok {
 					familyName = name
 				}
+			case "title":
+				if t, ok := op.Value.(string); ok {
+					title = t
+				}
 			}
 		}
 	}
@@ -719,31 +751,32 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 		fullName = strings.TrimSpace(givenName + " " + familyName)
 	}
 
-	return fullName, active
+	return fullName, active, title
 }
 
-func membershipToResource(m *coredata.Membership) scim.Resource {
+func userToResource(p *coredata.MembershipProfile) scim.Resource {
 	return scim.Resource{
-		ID:         m.ID.String(),
-		ExternalID: optional.NewString(m.ID.String()),
+		ID:         p.ID.String(),
+		ExternalID: optional.NewString(p.ID.String()),
 		Attributes: scim.ResourceAttributes{
-			"userName":    m.EmailAddress.String(),
-			"displayName": m.FullName,
-			"active":      m.State == coredata.MembershipStateActive,
+			"userName":    p.EmailAddress.String(),
+			"displayName": p.FullName,
+			"active":      p.State == coredata.ProfileStateActive,
 			"name": map[string]any{
-				"formatted": m.FullName,
+				"formatted": p.FullName,
 			},
 			"emails": []map[string]any{
 				{
-					"value":   m.EmailAddress.String(),
+					"value":   p.EmailAddress.String(),
 					"type":    "work",
 					"primary": true,
 				},
 			},
+			"title": p.Position,
 		},
 		Meta: scim.Meta{
-			Created:      &m.CreatedAt,
-			LastModified: &m.UpdatedAt,
+			Created:      &p.CreatedAt,
+			LastModified: &p.UpdatedAt,
 		},
 	}
 }

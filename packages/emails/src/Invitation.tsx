@@ -6,17 +6,17 @@ export const Invitation = () => {
   return (
     <EmailLayout subject={'Invitation to join {{.OrganizationName}} on Probo'}>
       <Text style={bodyText}>
-        You have been invited to join organization <strong>{'{{.OrganizationName}}'}</strong> on Probo. Click the button below to accept the invitation:
+        You have been invited to join organization <strong>{'{{.OrganizationName}}'}</strong> on Probo. Click the button below to activate your account:
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href={'{{.InvitationUrl}}'}>
-          Accept Invitation
+          Activate Account
         </Button>
       </Section>
 
       <Text style={footerText}>
-        If you don't want to accept the invitation, you can ignore this email.
+        If you don't want to do so, you can ignore this email.
       </Text>
     </EmailLayout>
   );

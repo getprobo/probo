@@ -43,6 +43,7 @@ func RequireAPIKeyHandler(
 		apiKey := authn.APIKeyFromContext(ctx)
 		identity := authn.IdentityFromContext(ctx)
 		if identity == nil {
+			w.Header().Set("WWW-Authenticate", "Bearer")
 			httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication required"))
 			return
 		}

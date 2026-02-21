@@ -32,7 +32,6 @@ type (
 	Document struct {
 		ID                      gid.GID                `db:"id"`
 		OrganizationID          gid.GID                `db:"organization_id"`
-		OwnerID                 gid.GID                `db:"owner_id"`
 		Title                   string                 `db:"title"`
 		DocumentType            DocumentType           `db:"document_type"`
 		Classification          DocumentClassification `db:"classification"`
@@ -83,7 +82,6 @@ func (p *Document) LoadByID(
 SELECT
     id,
     organization_id,
-    owner_id,
     title,
     document_type,
     classification,
@@ -135,7 +133,6 @@ func (p *Document) LoadByIDWithFilter(
 SELECT
     id,
     organization_id,
-    owner_id,
     title,
     document_type,
     classification,
@@ -188,7 +185,6 @@ func (p *Documents) LoadByIDs(
 SELECT
     id,
     organization_id,
-    owner_id,
     title,
     document_type,
     classification,
@@ -270,7 +266,6 @@ func (p *Documents) LoadByOrganizationID(
 SELECT
 	id,
     organization_id,
-    owner_id,
     title,
     document_type,
     classification,
@@ -321,7 +316,6 @@ func (p *Documents) LoadAllByOrganizationID(
 SELECT
 	id,
     organization_id,
-    owner_id,
     title,
     document_type,
     classification,
@@ -371,7 +365,6 @@ INSERT INTO
         tenant_id,
 		id,
 		organization_id,
-		owner_id,
 		title,
 		document_type,
 		classification,
@@ -384,7 +377,6 @@ VALUES (
     @tenant_id,
     @document_id,
     @organization_id,
-    @owner_id,
     @title,
     @document_type,
     @classification,
@@ -399,7 +391,6 @@ VALUES (
 		"tenant_id":                 scope.GetTenantID(),
 		"document_id":               p.ID,
 		"organization_id":           p.OrganizationID,
-		"owner_id":                  p.OwnerID,
 		"title":                     p.Title,
 		"document_type":             p.DocumentType,
 		"classification":            p.Classification,
@@ -460,7 +451,6 @@ UPDATE
 SET
 	title = @title,
 	current_published_version = @current_published_version,
-	owner_id = @owner_id,
 	document_type = @document_type,
 	classification = @classification,
 	trust_center_visibility = @trust_center_visibility,
@@ -477,7 +467,6 @@ WHERE
 		"updated_at":                time.Now(),
 		"title":                     p.Title,
 		"current_published_version": p.CurrentPublishedVersion,
-		"owner_id":                  p.OwnerID,
 		"document_type":             p.DocumentType,
 		"classification":            p.Classification,
 		"trust_center_visibility":   p.TrustCenterVisibility,
@@ -548,7 +537,6 @@ WITH scoped_documents AS (
 SELECT
 	scoped_documents.id,
 	scoped_documents.organization_id,
-	scoped_documents.owner_id,
 	scoped_documents.title,
 	scoped_documents.document_type,
 	scoped_documents.classification,
@@ -638,7 +626,6 @@ WITH scoped_documents AS (
 SELECT
 	scoped_documents.id,
 	scoped_documents.organization_id,
-	scoped_documents.owner_id,
 	scoped_documents.title,
 	scoped_documents.document_type,
 	scoped_documents.classification,
@@ -713,16 +700,18 @@ WITH last_signable_version AS (
 	FROM documents d
 	INNER JOIN document_versions dv ON dv.document_id = d.id
 	INNER JOIN document_version_signatures dvs ON dvs.document_version_id = dv.id
-	INNER JOIN peoples p ON dvs.signed_by = p.id
+	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+	INNER JOIN identities i ON p.identity_id = i.id
 	WHERE d.id = @document_id
-		AND p.primary_email_address = @user_email
+		AND i.email_address = @user_email::CITEXT
 		AND dv.version_number = (
 			SELECT MAX(dv2.version_number)
 			FROM document_versions dv2
 			INNER JOIN document_version_signatures dvs2 ON dvs2.document_version_id = dv2.id
-			INNER JOIN peoples p2 ON dvs2.signed_by = p2.id
+			INNER JOIN iam_membership_profiles p2 ON dvs2.signed_by_profile_id = p2.id
+			INNER JOIN identities i2 ON p2.identity_id = i2.id
 			WHERE dv2.document_id = d.id
-				AND p2.primary_email_address = @user_email
+				AND i2.email_address = @user_email::CITEXT
 		)
 )
 SELECT EXISTS (

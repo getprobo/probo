@@ -93,7 +93,7 @@ func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity
 	}
 
 	if par.DataProtectionOfficerID != nil {
-		object.DataProtectionOfficer = &People{
+		object.DataProtectionOfficer = &Profile{
 			ID: *par.DataProtectionOfficerID,
 		}
 	}

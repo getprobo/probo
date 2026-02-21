@@ -34,7 +34,7 @@ type (
 		SourceID        *gid.GID  `db:"source_id"`
 		Name            string    `db:"name"`
 		Amount          int       `db:"amount"`
-		OwnerID         gid.GID   `db:"owner_id"`
+		OwnerID         gid.GID   `db:"owner_profile_id"`
 		OrganizationID  gid.GID   `db:"organization_id"`
 		AssetType       AssetType `db:"asset_type"`
 		DataTypesStored string    `db:"data_types_stored"`
@@ -84,7 +84,7 @@ SELECT
 	source_id,
 	name,
 	organization_id,
-	owner_id,
+	owner_profile_id,
 	amount,
 	asset_type,
 	data_types_stored,
@@ -134,7 +134,7 @@ SELECT
 	source_id,
 	name,
 	organization_id,
-	owner_id,
+	owner_profile_id,
 	amount,
 	asset_type,
 	data_types_stored,
@@ -144,13 +144,13 @@ FROM
 	assets
 WHERE
 	%s
-	AND owner_id = @owner_id
+	AND owner_profile_id = @owner_profile_id
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"owner_id": a.OwnerID}
+	args := pgx.StrictNamedArgs{"owner_profile_id": a.OwnerID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -221,7 +221,7 @@ SELECT
 	source_id,
 	name,
 	organization_id,
-	owner_id,
+	owner_profile_id,
 	amount,
 	asset_type,
 	data_types_stored,
@@ -269,7 +269,7 @@ INSERT INTO assets (
 	tenant_id,
 	name,
 	organization_id,
-	owner_id,
+	owner_profile_id,
 	amount,
 	asset_type,
 	data_types_stored,
@@ -280,7 +280,7 @@ INSERT INTO assets (
 	@tenant_id,
 	@name,
 	@organization_id,
-	@owner_id,
+	@owner_profile_id,
 	@amount,
 	@asset_type,
 	@data_types_stored,
@@ -294,7 +294,7 @@ INSERT INTO assets (
 		"tenant_id":         scope.GetTenantID(),
 		"organization_id":   a.OrganizationID,
 		"name":              a.Name,
-		"owner_id":          a.OwnerID,
+		"owner_profile_id":  a.OwnerID,
 		"amount":            a.Amount,
 		"asset_type":        a.AssetType,
 		"data_types_stored": a.DataTypesStored,
@@ -319,7 +319,7 @@ func (a *Asset) Update(
 UPDATE assets
 SET
 	name = @name,
-	owner_id = @owner_id,
+	owner_profile_id = @owner_profile_id,
 	amount = @amount,
 	asset_type = @asset_type,
 	data_types_stored = @data_types_stored,
@@ -334,7 +334,7 @@ RETURNING
 	source_id,
 	name,
 	organization_id,
-	owner_id,
+	owner_profile_id,
 	amount,
 	asset_type,
 	data_types_stored,
@@ -347,7 +347,7 @@ RETURNING
 	args := pgx.StrictNamedArgs{
 		"id":                a.ID,
 		"name":              a.Name,
-		"owner_id":          a.OwnerID,
+		"owner_profile_id":  a.OwnerID,
 		"amount":            a.Amount,
 		"asset_type":        a.AssetType,
 		"data_types_stored": a.DataTypesStored,
@@ -429,7 +429,7 @@ INSERT INTO assets (
 	source_id,
 	name,
 	organization_id,
-	owner_id,
+	owner_profile_id,
 	amount,
 	asset_type,
 	data_types_stored,
@@ -443,7 +443,7 @@ SELECT
 	a.id,
 	a.name,
 	a.organization_id,
-	a.owner_id,
+	a.owner_profile_id,
 	a.amount,
 	a.asset_type,
 	a.data_types_stored,

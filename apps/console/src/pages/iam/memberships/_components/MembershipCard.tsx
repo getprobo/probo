@@ -9,108 +9,56 @@ import {
   IconClock,
   IconLock,
 } from "@probo/ui";
-import { useCallback } from "react";
-import { useFragment, useMutation } from "react-relay";
-import { Link, useNavigate } from "react-router";
+import { useFragment } from "react-relay";
+import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { MembershipCard_assumeMutation } from "#/__generated__/iam/MembershipCard_assumeMutation.graphql";
+import type { MembershipCard_organizationFragment$key } from "#/__generated__/iam/MembershipCard_organizationFragment.graphql";
 import type { MembershipCardFragment$key } from "#/__generated__/iam/MembershipCardFragment.graphql";
 
 const fragment = graphql`
-  fragment MembershipCardFragment on Membership {
-    lastSession {
-      id
-      expiresAt
-    }
-    organization @required(action: THROW) {
-      id
-      name
-      logoUrl
-    }
-  }
-`;
-
-const assumeOrganizationSessionMutation = graphql`
-  mutation MembershipCard_assumeMutation(
-    $input: AssumeOrganizationSessionInput!
-  ) {
-    assumeOrganizationSession(input: $input) {
-      result {
-        __typename
-        ... on OrganizationSessionCreated {
-          membership {
-            id
-            lastSession {
-              id
-              expiresAt
-            }
-          }
-        }
-        ... on PasswordRequired {
-          reason
-        }
-        ... on SAMLAuthenticationRequired {
-          reason
-          redirectUrl
-        }
+  fragment MembershipCardFragment on Profile {
+    state
+    membership @required(action: THROW) {
+      lastSession {
+        id
+        expiresAt
       }
     }
   }
 `;
 
+const organizationFragment = graphql`
+  fragment MembershipCard_organizationFragment on Organization {
+    id
+    name
+    logoUrl
+  }
+`;
+
 interface MembershipCardProps {
   fKey: MembershipCardFragment$key;
+  organizationFragmentRef: MembershipCard_organizationFragment$key;
 }
 
 export function MembershipCard(props: MembershipCardProps) {
-  const { fKey } = props;
+  const { fKey, organizationFragmentRef } = props;
   const { __ } = useTranslate();
-  const navigate = useNavigate();
 
-  const { lastSession, organization } = useFragment<MembershipCardFragment$key>(
+  const { membership, ...user } = useFragment<MembershipCardFragment$key>(
     fragment,
     fKey,
   );
-  const isAuthenticated = !!lastSession;
+  const organization = useFragment<MembershipCard_organizationFragment$key>(
+    organizationFragment,
+    organizationFragmentRef,
+  );
   const isExpired
-    = lastSession && parseDate(lastSession.expiresAt) < new Date();
-
-  const [assumeOrganizationSession]
-    = useMutation<MembershipCard_assumeMutation>(
-      assumeOrganizationSessionMutation,
-    );
-
-  const handleAssumeOrganizationSession = useCallback(() => {
-    assumeOrganizationSession({
-      variables: {
-        input: {
-          organizationId: organization.id,
-        },
-      },
-      onCompleted: ({ assumeOrganizationSession }) => {
-        if (!assumeOrganizationSession) {
-          throw new Error("complete mutation result is empty");
-        }
-
-        const { result } = assumeOrganizationSession;
-
-        switch (result.__typename) {
-          case "PasswordRequired":
-            void navigate("auth/login");
-            break;
-          case "SAMLAuthenticationRequired":
-            window.location.href = result.redirectUrl;
-            break;
-          default:
-            void navigate(`/organizations/${organization.id}`);
-        }
-      },
-    });
-  }, [assumeOrganizationSession, navigate, organization.id]);
+    = membership.lastSession && parseDate(membership.lastSession.expiresAt) < new Date();
+  const isAssuming = !!membership.lastSession && !isExpired;
 
   const getAuthBadge = () => {
-    if (isAuthenticated) {
+    if (isAssuming) {
       return (
         <Badge variant="success" className="flex items-center gap-1">
           <IconCheckmark1 size={14} />
@@ -149,16 +97,16 @@ export function MembershipCard(props: MembershipCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {isAuthenticated
+          {user.state === "ACTIVE"
             ? (
                 <Link to={`/organizations/${organization.id}`}>
-                  <Button variant="secondary">{__("Start")}</Button>
+                  {isAssuming
+                    ? <Button variant="secondary">{__("Start")}</Button>
+                    : <Button>{__("Login")}</Button>}
                 </Link>
               )
             : (
-                <Button onClick={handleAssumeOrganizationSession}>
-                  {__("Login")}
-                </Button>
+                <Button variant="secondary" disabled>{__("Account deactivated")}</Button>
               )}
         </div>
       </div>

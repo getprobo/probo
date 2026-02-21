@@ -43,42 +43,52 @@ components:
           $ref: "#/components/schemas/OrderDirection"
           description: Vendor order direction
 
-    PeopleOrderBy:
+    ProfileOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/PeopleOrderField"
-          description: People order field
+          $ref: "#/components/schemas/ProfileOrderField"
+          description: Profile order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: People order direction
+          description: Profile order direction
 
-    PeopleOrderField:
+    ProfileOrderField:
       type: string
       enum:
         - CREATED_AT
         - FULL_NAME
         - KIND
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.PeopleOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField
 
-    PeopleKind:
+    ProfileKind:
       type: string
       enum:
         - EMPLOYEE
         - CONTRACTOR
         - SERVICE_ACCOUNT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.PeopleKind
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileKind
 
-    People:
+    MembershipRole:
+      type: string
+      enum:
+        - OWNER
+        - ADMIN
+        - EMPLOYEE
+        - VIEWER
+        - AUDITOR
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipRole
+
+    Profile:
       type: object
       required:
         - id
         - organization_id
         - full_name
-        - primary_email_address
+        - email_address
         - additional_email_addresses
         - kind
         - created_at
@@ -86,14 +96,14 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: People ID
+          description: Profile ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         full_name:
           type: string
           description: Full name
-        primary_email_address:
+        email_address:
           $ref: "#/components/schemas/EmailAddress"
           description: Primary email address
         additional_email_addresses:
@@ -102,8 +112,8 @@ components:
             $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/PeopleKind"
-          description: People kind
+          $ref: "#/components/schemas/ProfileKind"
+          description: Profile kind
         position:
           type:
             - string
@@ -130,7 +140,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListPeopleInput:
+    ListUsersInput:
       type: object
       required:
         - organization_id
@@ -139,8 +149,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/PeopleOrderBy"
-          description: People order by
+          $ref: "#/components/schemas/ProfileOrderBy"
+          description: User order by
         size:
           type: integer
           description: Page size
@@ -152,20 +162,20 @@ components:
           properties:
             exclude_contract_ended:
               type: boolean
-              description: Exclude people with ended contracts
+              description: Exclude users with ended contracts
 
-    ListPeopleOutput:
+    ListUsersOutput:
       type: object
       required:
-        - people
+        - users
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        people:
+        users:
           type: array
           items:
-            $ref: "#/components/schemas/People"
+            $ref: "#/components/schemas/Profile"
 
     GID:
       type: string
@@ -600,29 +610,30 @@ components:
         vendor:
           $ref: "#/components/schemas/Vendor"
 
-    GetPeopleInput:
+    GetUserInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: People ID
+          description: User ID (profile ID)
 
-    GetPeopleOutput:
+    GetUserOutput:
       type: object
       required:
-        - people
+        - user
       properties:
-        people:
-          $ref: "#/components/schemas/People"
+        user:
+          $ref: "#/components/schemas/Profile"
 
-    AddPeopleInput:
+    CreateUserInput:
       type: object
       required:
         - organization_id
         - full_name
-        - primary_email_address
+        - email_address
+        - role
         - kind
       properties:
         organization_id:
@@ -631,51 +642,201 @@ components:
         full_name:
           type: string
           description: Full name
-        primary_email_address:
+        email_address:
           $ref: "#/components/schemas/EmailAddress"
-          description: Primary email address
+          description: Email address
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+          description: Membership role
         additional_email_addresses:
           type: array
           items:
             $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/PeopleKind"
-          description: People kind
+          $ref: "#/components/schemas/ProfileKind"
+          description: User kind
         position:
-          type: string
+          type: ["string", "null"]
           description: Position
         contract_start_date:
-          type: string
+          type: ["string", "null"]
           format: date-time
           description: Contract start date
         contract_end_date:
-          type: string
+          type: ["string", "null"]
           format: date-time
           description: Contract end date
 
-    AddPeopleOutput:
+    CreateUserOutput:
       type: object
       required:
-        - people
+        - user
       properties:
-        people:
-          $ref: "#/components/schemas/People"
+        user:
+          $ref: "#/components/schemas/Profile"
 
-    UpdatePeopleInput:
+    InviteUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to invite
+
+    InviteUserOutput:
+      type: object
+      required:
+        - invitation_id
+      properties:
+        invitation_id:
+          $ref: "#/components/schemas/GID"
+          description: Created invitation ID
+
+    UpdateUserInput:
+      type: object
+      required:
+        - id
+        - full_name
+        - kind
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID
+        full_name:
+          type: string
+          description: Full name
+        additional_email_addresses:
+          anyOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/EmailAddress"
+            - type: "null"
+          description: Additional email addresses
+        kind:
+          $ref: "#/components/schemas/ProfileKind"
+          description: User kind
+        position:
+          type: ["string", "null"]
+          description: Position
+          go.probo.inc/mcpgen/omittable: true
+        contract_start_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Contract start date
+          go.probo.inc/mcpgen/omittable: true
+        contract_end_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Contract end date
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateUserOutput:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          $ref: "#/components/schemas/Profile"
+
+    Membership:
+      type: object
+      required:
+        - id
+        - role
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Membership ID
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+          description: Membership role
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    UpdateMembershipInput:
+      type: object
+      required:
+        - organization_id
+        - membership_id
+        - role
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        membership_id:
+          $ref: "#/components/schemas/GID"
+          description: Membership ID
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+          description: New role
+
+    UpdateMembershipOutput:
+      type: object
+      required:
+        - membership
+      properties:
+        membership:
+          $ref: "#/components/schemas/Membership"
+
+    RemoveUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to remove
+
+    RemoveUserOutput:
+      type: object
+      required:
+        - deleted_user_id
+      properties:
+        deleted_user_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted user (profile) ID
+
+    GetProfileInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: People ID
+          description: Profile ID
+
+    GetProfileOutput:
+      type: object
+      required:
+        - profile
+      properties:
+        profile:
+          $ref: "#/components/schemas/Profile"
+
+    UpdateProfileInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Profile ID
         full_name:
           type: string
           description: Full name
-        primary_email_address:
-          $ref: "#/components/schemas/EmailAddress"
-          description: Primary email address
         additional_email_addresses:
           anyOf:
             - type: array
@@ -685,8 +846,8 @@ components:
               description: No additional email addresses
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/PeopleKind"
-          description: People kind
+          $ref: "#/components/schemas/ProfileKind"
+          description: Profile kind
         position:
           type: ["string", "null"]
           description: Position
@@ -702,13 +863,13 @@ components:
           description: Contract end date
           go.probo.inc/mcpgen/omittable: true
 
-    UpdatePeopleOutput:
+    UpdateProfileOutput:
       type: object
       required:
-        - people
+        - profile
       properties:
-        people:
-          $ref: "#/components/schemas/People"
+        profile:
+          $ref: "#/components/schemas/Profile"
 
     RiskOrderField:
       type: string
@@ -987,6 +1148,24 @@ components:
         risk:
           $ref: "#/components/schemas/Risk"
 
+    DeleteRiskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+
+    DeleteRiskOutput:
+      type: object
+      required:
+        - deleted_risk_id
+      properties:
+        deleted_risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk ID
+
     MeasureState:
       type: string
       enum:
@@ -1166,6 +1345,24 @@ components:
       properties:
         measure:
           $ref: "#/components/schemas/Measure"
+
+    DeleteMeasureInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+
+    DeleteMeasureOutput:
+      type: object
+      required:
+        - deleted_measure_id
+      properties:
+        deleted_measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted measure ID
 
     FrameworkOrderField:
       type: string
@@ -2304,6 +2501,798 @@ components:
         obligation:
           $ref: "#/components/schemas/Obligation"
 
+    ProcessingActivityRole:
+      type: string
+      enum:
+        - CONTROLLER
+        - PROCESSOR
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityRole
+
+    ProcessingActivityLawfulBasis:
+      type: string
+      enum:
+        - LEGITIMATE_INTEREST
+        - CONSENT
+        - CONTRACTUAL_NECESSITY
+        - LEGAL_OBLIGATION
+        - VITAL_INTERESTS
+        - PUBLIC_TASK
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasis
+
+    ProcessingActivitySpecialOrCriminalDatum:
+      type: string
+      enum:
+        - YES
+        - NO
+        - POSSIBLE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatum
+
+    ProcessingActivityTransferSafeguard:
+      type: string
+      enum:
+        - STANDARD_CONTRACTUAL_CLAUSES
+        - BINDING_CORPORATE_RULES
+        - ADEQUACY_DECISION
+        - DEROGATIONS
+        - CODES_OF_CONDUCT
+        - CERTIFICATION_MECHANISMS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguard
+
+    ProcessingActivityDataProtectionImpactAssessmentNeeded:
+      type: string
+      enum:
+        - NEEDED
+        - NOT_NEEDED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment
+
+    ProcessingActivityTransferImpactAssessmentNeeded:
+      type: string
+      enum:
+        - NEEDED
+        - NOT_NEEDED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment
+
+    ProcessingActivityOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderField
+
+    ProcessingActivityOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ProcessingActivityOrderField"
+          description: Processing activity order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    ProcessingActivity:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - special_or_criminal_data
+        - lawful_basis
+        - international_transfers
+        - data_protection_impact_assessment_needed
+        - transfer_impact_assessment_needed
+        - role
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Processing activity ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        purpose:
+          type:
+            - string
+            - "null"
+          description: Purpose
+        data_subject_category:
+          type:
+            - string
+            - "null"
+          description: Data subject category
+        personal_data_category:
+          type:
+            - string
+            - "null"
+          description: Personal data category
+        special_or_criminal_data:
+          $ref: "#/components/schemas/ProcessingActivitySpecialOrCriminalDatum"
+          description: Special or criminal data
+        consent_evidence_link:
+          type:
+            - string
+            - "null"
+          description: Consent evidence link
+        lawful_basis:
+          $ref: "#/components/schemas/ProcessingActivityLawfulBasis"
+          description: Lawful basis
+        recipients:
+          type:
+            - string
+            - "null"
+          description: Recipients
+        location:
+          type:
+            - string
+            - "null"
+          description: Location
+        international_transfers:
+          type: boolean
+          description: International transfers
+        transfer_safeguard:
+          anyOf:
+            - $ref: "#/components/schemas/ProcessingActivityTransferSafeguard"
+            - type: "null"
+          description: Transfer safeguard
+        retention_period:
+          type:
+            - string
+            - "null"
+          description: Retention period
+        security_measures:
+          type:
+            - string
+            - "null"
+          description: Security measures
+        data_protection_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
+          description: DPIA needed
+        transfer_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityTransferImpactAssessmentNeeded"
+          description: TIA needed
+        last_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Last review date
+        next_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Next review date
+        role:
+          $ref: "#/components/schemas/ProcessingActivityRole"
+          description: Role
+        data_protection_officer_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Data protection officer profile ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListProcessingActivitiesInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/ProcessingActivityOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListProcessingActivitiesOutput:
+      type: object
+      required:
+        - processing_activities
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        processing_activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessingActivity"
+
+    GetProcessingActivityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Processing activity ID
+
+    GetProcessingActivityOutput:
+      type: object
+      required:
+        - processing_activity
+      properties:
+        processing_activity:
+          $ref: "#/components/schemas/ProcessingActivity"
+
+    AddProcessingActivityInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - special_or_criminal_data
+        - lawful_basis
+        - international_transfers
+        - data_protection_impact_assessment_needed
+        - transfer_impact_assessment_needed
+        - role
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        purpose:
+          type: string
+          description: Purpose
+        data_subject_category:
+          type: string
+          description: Data subject category
+        personal_data_category:
+          type: string
+          description: Personal data category
+        special_or_criminal_data:
+          $ref: "#/components/schemas/ProcessingActivitySpecialOrCriminalDatum"
+          description: Special or criminal data
+        consent_evidence_link:
+          type: string
+          description: Consent evidence link
+        lawful_basis:
+          $ref: "#/components/schemas/ProcessingActivityLawfulBasis"
+          description: Lawful basis
+        recipients:
+          type: string
+          description: Recipients
+        location:
+          type: string
+          description: Location
+        international_transfers:
+          type: boolean
+          description: International transfers
+        transfer_safeguard:
+          anyOf:
+            - $ref: "#/components/schemas/ProcessingActivityTransferSafeguard"
+            - type: "null"
+          description: Transfer safeguard
+        retention_period:
+          type: string
+          description: Retention period
+        security_measures:
+          type: string
+          description: Security measures
+        data_protection_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
+          description: DPIA needed
+        transfer_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityTransferImpactAssessmentNeeded"
+          description: TIA needed
+        last_review_date:
+          type: string
+          format: date-time
+          description: Last review date
+        next_review_date:
+          type: string
+          format: date-time
+          description: Next review date
+        role:
+          $ref: "#/components/schemas/ProcessingActivityRole"
+          description: Role
+        data_protection_officer_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Data protection officer profile ID
+        vendor_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Vendor IDs
+
+    AddProcessingActivityOutput:
+      type: object
+      required:
+        - processing_activity
+      properties:
+        processing_activity:
+          $ref: "#/components/schemas/ProcessingActivity"
+
+    UpdateProcessingActivityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Processing activity ID
+        name:
+          type: string
+        purpose:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        data_subject_category:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        personal_data_category:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        special_or_criminal_data:
+          $ref: "#/components/schemas/ProcessingActivitySpecialOrCriminalDatum"
+        consent_evidence_link:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        lawful_basis:
+          $ref: "#/components/schemas/ProcessingActivityLawfulBasis"
+        recipients:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        location:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        international_transfers:
+          type: boolean
+        transfer_safeguard:
+          anyOf:
+            - $ref: "#/components/schemas/ProcessingActivityTransferSafeguard"
+            - type: "null"
+          go.probo.inc/mcpgen/omittable: true
+        retention_period:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        security_measures:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        data_protection_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
+        transfer_impact_assessment_needed:
+          $ref: "#/components/schemas/ProcessingActivityTransferImpactAssessmentNeeded"
+        last_review_date:
+          type: ["string", "null"]
+          format: date-time
+          go.probo.inc/mcpgen/omittable: true
+        next_review_date:
+          type: ["string", "null"]
+          format: date-time
+          go.probo.inc/mcpgen/omittable: true
+        role:
+          $ref: "#/components/schemas/ProcessingActivityRole"
+        data_protection_officer_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          go.probo.inc/mcpgen/omittable: true
+        vendor_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+
+    UpdateProcessingActivityOutput:
+      type: object
+      required:
+        - processing_activity
+      properties:
+        processing_activity:
+          $ref: "#/components/schemas/ProcessingActivity"
+
+    DeleteProcessingActivityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Processing activity ID
+
+    DeleteProcessingActivityOutput:
+      type: object
+      required:
+        - deleted_processing_activity_id
+      properties:
+        deleted_processing_activity_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted processing activity ID
+
+    DataProtectionImpactAssessmentResidualRisk:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRisk
+
+    DataProtectionImpactAssessmentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentOrderField
+
+    DataProtectionImpactAssessmentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DataProtectionImpactAssessmentOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    DataProtectionImpactAssessment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - processing_activity_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        processing_activity_id:
+          $ref: "#/components/schemas/GID"
+        description:
+          type:
+            - string
+            - "null"
+        necessity_and_proportionality:
+          type:
+            - string
+            - "null"
+        potential_risk:
+          type:
+            - string
+            - "null"
+        mitigations:
+          type:
+            - string
+            - "null"
+        residual_risk:
+          anyOf:
+            - $ref: "#/components/schemas/DataProtectionImpactAssessmentResidualRisk"
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListDataProtectionImpactAssessmentsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/DataProtectionImpactAssessmentOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+
+    ListDataProtectionImpactAssessmentsOutput:
+      type: object
+      required:
+        - data_protection_impact_assessments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        data_protection_impact_assessments:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataProtectionImpactAssessment"
+
+    GetDataProtectionImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetDataProtectionImpactAssessmentOutput:
+      type: object
+      required:
+        - data_protection_impact_assessment
+      properties:
+        data_protection_impact_assessment:
+          $ref: "#/components/schemas/DataProtectionImpactAssessment"
+
+    AddDataProtectionImpactAssessmentInput:
+      type: object
+      required:
+        - processing_activity_id
+      properties:
+        processing_activity_id:
+          $ref: "#/components/schemas/GID"
+        description:
+          type: string
+        necessity_and_proportionality:
+          type: string
+        potential_risk:
+          type: string
+        mitigations:
+          type: string
+        residual_risk:
+          anyOf:
+            - $ref: "#/components/schemas/DataProtectionImpactAssessmentResidualRisk"
+            - type: "null"
+
+    AddDataProtectionImpactAssessmentOutput:
+      type: object
+      required:
+        - data_protection_impact_assessment
+      properties:
+        data_protection_impact_assessment:
+          $ref: "#/components/schemas/DataProtectionImpactAssessment"
+
+    UpdateDataProtectionImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        description:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        necessity_and_proportionality:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        potential_risk:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        mitigations:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        residual_risk:
+          $ref: "#/components/schemas/DataProtectionImpactAssessmentResidualRisk"
+
+    UpdateDataProtectionImpactAssessmentOutput:
+      type: object
+      required:
+        - data_protection_impact_assessment
+      properties:
+        data_protection_impact_assessment:
+          $ref: "#/components/schemas/DataProtectionImpactAssessment"
+
+    DeleteDataProtectionImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteDataProtectionImpactAssessmentOutput:
+      type: object
+      required:
+        - deleted_data_protection_impact_assessment_id
+      properties:
+        deleted_data_protection_impact_assessment_id:
+          $ref: "#/components/schemas/GID"
+
+    TransferImpactAssessmentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderField
+
+    TransferImpactAssessmentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TransferImpactAssessmentOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    TransferImpactAssessment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - processing_activity_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        processing_activity_id:
+          $ref: "#/components/schemas/GID"
+        data_subjects:
+          type:
+            - string
+            - "null"
+        legal_mechanism:
+          type:
+            - string
+            - "null"
+        transfer:
+          type:
+            - string
+            - "null"
+        local_law_risk:
+          type:
+            - string
+            - "null"
+        supplementary_measures:
+          type:
+            - string
+            - "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListTransferImpactAssessmentsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/TransferImpactAssessmentOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+
+    ListTransferImpactAssessmentsOutput:
+      type: object
+      required:
+        - transfer_impact_assessments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        transfer_impact_assessments:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransferImpactAssessment"
+
+    GetTransferImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    GetTransferImpactAssessmentOutput:
+      type: object
+      required:
+        - transfer_impact_assessment
+      properties:
+        transfer_impact_assessment:
+          $ref: "#/components/schemas/TransferImpactAssessment"
+
+    AddTransferImpactAssessmentInput:
+      type: object
+      required:
+        - processing_activity_id
+      properties:
+        processing_activity_id:
+          $ref: "#/components/schemas/GID"
+        data_subjects:
+          type: string
+        legal_mechanism:
+          type: string
+        transfer:
+          type: string
+        local_law_risk:
+          type: string
+        supplementary_measures:
+          type: string
+
+    AddTransferImpactAssessmentOutput:
+      type: object
+      required:
+        - transfer_impact_assessment
+      properties:
+        transfer_impact_assessment:
+          $ref: "#/components/schemas/TransferImpactAssessment"
+
+    UpdateTransferImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        data_subjects:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        legal_mechanism:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        transfer:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        local_law_risk:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+        supplementary_measures:
+          type: ["string", "null"]
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateTransferImpactAssessmentOutput:
+      type: object
+      required:
+        - transfer_impact_assessment
+      properties:
+        transfer_impact_assessment:
+          $ref: "#/components/schemas/TransferImpactAssessment"
+
+    DeleteTransferImpactAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+
+    DeleteTransferImpactAssessmentOutput:
+      type: object
+      required:
+        - deleted_transfer_impact_assessment_id
+      properties:
+        deleted_transfer_impact_assessment_id:
+          $ref: "#/components/schemas/GID"
+
     ContinualImprovementStatus:
       type: string
       enum:
@@ -2788,13 +3777,6 @@ components:
         audit:
           $ref: "#/components/schemas/Audit"
 
-    ControlStatus:
-      type: string
-      enum:
-        - INCLUDED
-        - EXCLUDED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlStatus
-
     ControlOrderField:
       type: string
       enum:
@@ -2823,7 +3805,6 @@ components:
         - framework_id
         - section_title
         - name
-        - status
         - created_at
         - updated_at
       properties:
@@ -2847,14 +3828,6 @@ components:
             - string
             - "null"
           description: Control description
-        status:
-          $ref: "#/components/schemas/ControlStatus"
-          description: Control status
-        exclusion_justification:
-          type:
-            - string
-            - "null"
-          description: Exclusion justification
         created_at:
           type: string
           format: date-time
@@ -2944,12 +3917,6 @@ components:
         description:
           type: string
           description: Control description
-        status:
-          $ref: "#/components/schemas/ControlStatus"
-          description: Control status
-        exclusion_justification:
-          type: string
-          description: Exclusion justification
 
     AddControlOutput:
       type: object
@@ -2977,16 +3944,6 @@ components:
           type: ["string", "null"]
           description: Control description
           go.probo.inc/mcpgen/omittable: true
-        status:
-          anyOf:
-            - $ref: "#/components/schemas/ControlStatus"
-              description: Control status
-            - type: "null"
-              description: No status
-          description: Control status
-        exclusion_justification:
-          type: string
-          description: Exclusion justification
 
     UpdateControlOutput:
       type: object
@@ -3416,6 +4373,24 @@ components:
         task:
           $ref: "#/components/schemas/Task"
 
+    DeleteTaskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    DeleteTaskOutput:
+      type: object
+      required:
+        - deleted_task_id
+      properties:
+        deleted_task_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted task ID
+
     SnapshotsType:
       type: string
       enum:
@@ -3661,7 +4636,7 @@ components:
       required:
         - id
         - organization_id
-        - owner_id
+        - approver_ids
         - title
         - document_type
         - classification
@@ -3675,9 +4650,11 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver IDs
         title:
           type: string
           description: Document title
@@ -3711,7 +4688,7 @@ components:
         - organization_id
         - document_id
         - title
-        - owner_id
+        - approver_ids
         - version_number
         - classification
         - content
@@ -3732,9 +4709,11 @@ components:
         title:
           type: string
           description: Document version title
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver IDs
         version_number:
           type: integer
           description: Version number
@@ -3876,7 +4855,7 @@ components:
         - organization_id
         - title
         - content
-        - owner_id
+        - approver_ids
         - classification
         - document_type
       properties:
@@ -3889,9 +4868,11 @@ components:
         content:
           type: string
           description: Document content
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver IDs
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -3924,9 +4905,11 @@ components:
         title:
           type: string
           description: Document title
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Approver IDs
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -4160,7 +5143,7 @@ components:
           description: Document version ID
         signatory_id:
           $ref: "#/components/schemas/GID"
-          description: Signatory ID (People ID)
+          description: Signatory ID (Profile ID)
 
     RequestDocumentVersionSignatureOutput:
       type: object
@@ -4188,6 +5171,222 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted document version signature ID
 
+    MeetingOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - DATE
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MeetingOrderField
+
+    MeetingOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/MeetingOrderField"
+          description: Meeting order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Meeting order direction
+
+    Meeting:
+      type: object
+      required:
+        - id
+        - name
+        - date
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+        name:
+          type: string
+          description: Meeting name
+        date:
+          type: string
+          format: date-time
+          description: Meeting date
+        minutes:
+          anyOf:
+            - type: string
+              description: Meeting minutes
+            - type: "null"
+              description: No minutes
+          description: Meeting minutes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListMeetingsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/MeetingOrderBy"
+          description: Meeting order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListMeetingsOutput:
+      type: object
+      required:
+        - meetings
+      properties:
+        meetings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Meeting"
+          description: List of meetings
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetMeetingInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+
+    GetMeetingOutput:
+      type: object
+      required:
+        - meeting
+      properties:
+        meeting:
+          $ref: "#/components/schemas/Meeting"
+
+    AddMeetingInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - date
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Meeting name
+        date:
+          type: string
+          format: date-time
+          description: Meeting date
+        attendee_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: List of attendee profile IDs
+        minutes:
+          anyOf:
+            - type: string
+              description: Meeting minutes
+            - type: "null"
+              description: No minutes
+          description: Meeting minutes
+
+    AddMeetingOutput:
+      type: object
+      required:
+        - meeting
+      properties:
+        meeting:
+          $ref: "#/components/schemas/Meeting"
+
+    UpdateMeetingInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+        name:
+          type: string
+          description: Meeting name
+        date:
+          type: string
+          format: date-time
+          description: Meeting date
+        attendee_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: List of attendee profile IDs
+        minutes:
+          type: ["string", "null"]
+          description: Meeting minutes
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateMeetingOutput:
+      type: object
+      required:
+        - meeting
+      properties:
+        meeting:
+          $ref: "#/components/schemas/Meeting"
+
+    DeleteMeetingInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+
+    DeleteMeetingOutput:
+      type: object
+      required:
+        - deleted_meeting_id
+      properties:
+        deleted_meeting_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted meeting ID
+
+    ListMeetingAttendeesInput:
+      type: object
+      required:
+        - meeting_id
+      properties:
+        meeting_id:
+          $ref: "#/components/schemas/GID"
+          description: Meeting ID
+
+    ListMeetingAttendeesOutput:
+      type: object
+      required:
+        - attendees
+      properties:
+        attendees:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+          description: List of attendee profiles
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -4207,15 +5406,64 @@ tools:
       $ref: "#/components/schemas/ListVendorsInput"
     outputSchema:
       $ref: "#/components/schemas/ListVendorsOutput"
-  - name: listPeople
-    description: List all people for the organization
+  - name: listUsers
+    description: List all users for the organization
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListPeopleInput"
+      $ref: "#/components/schemas/ListUsersInput"
     outputSchema:
-      $ref: "#/components/schemas/ListPeopleOutput"
+      $ref: "#/components/schemas/ListUsersOutput"
+  - name: getUser
+    description: Get a user by ID (profile ID)
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetUserOutput"
+  - name: createUser
+    description: Create a new user in the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateUserOutput"
+  - name: inviteUser
+    description: Invite a user (profile) to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/InviteUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/InviteUserOutput"
+  - name: updateUser
+    description: Update an existing user (profile)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateUserOutput"
+  - name: updateMembership
+    description: Update a membership role
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateMembershipInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateMembershipOutput"
+  - name: removeUser
+    description: Remove a user from the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/RemoveUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/RemoveUserOutput"
   - name: addVendor
     description: Add a new vendor to the organization
     hints:
@@ -4232,31 +5480,6 @@ tools:
       $ref: "#/components/schemas/UpdateVendorInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateVendorOutput"
-  - name: getPeople
-    description: Get a people by ID
-    hints:
-      readonly: true
-      idempotent: true
-    inputSchema:
-      $ref: "#/components/schemas/GetPeopleInput"
-    outputSchema:
-      $ref: "#/components/schemas/GetPeopleOutput"
-  - name: addPeople
-    description: Add a new people to the organization
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/AddPeopleInput"
-    outputSchema:
-      $ref: "#/components/schemas/AddPeopleOutput"
-  - name: updatePeople
-    description: Update an existing people
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/UpdatePeopleInput"
-    outputSchema:
-      $ref: "#/components/schemas/UpdatePeopleOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:
@@ -4291,6 +5514,15 @@ tools:
       $ref: "#/components/schemas/UpdateRiskInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskOutput"
+  - name: deleteRisk
+    description: Delete a risk
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskOutput"
   - name: listMeasures
     description: List all measures for the organization
     hints:
@@ -4325,6 +5557,15 @@ tools:
       $ref: "#/components/schemas/UpdateMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateMeasureOutput"
+  - name: deleteMeasure
+    description: Delete a measure
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteMeasureInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteMeasureOutput"
   - name: listFrameworks
     description: List all frameworks for the organization
     hints:
@@ -4495,6 +5736,132 @@ tools:
       $ref: "#/components/schemas/UpdateObligationInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateObligationOutput"
+  - name: listProcessingActivities
+    description: List all processing activities for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListProcessingActivitiesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListProcessingActivitiesOutput"
+  - name: getProcessingActivity
+    description: Get a processing activity by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetProcessingActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetProcessingActivityOutput"
+  - name: addProcessingActivity
+    description: Add a new processing activity to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddProcessingActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddProcessingActivityOutput"
+  - name: updateProcessingActivity
+    description: Update an existing processing activity
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateProcessingActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateProcessingActivityOutput"
+  - name: deleteProcessingActivity
+    description: Delete a processing activity
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteProcessingActivityInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteProcessingActivityOutput"
+  - name: listDataProtectionImpactAssessments
+    description: List all data protection impact assessments (DPIAs) for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListDataProtectionImpactAssessmentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDataProtectionImpactAssessmentsOutput"
+  - name: getDataProtectionImpactAssessment
+    description: Get a data protection impact assessment (DPIA) by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetDataProtectionImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDataProtectionImpactAssessmentOutput"
+  - name: addDataProtectionImpactAssessment
+    description: Add a new data protection impact assessment (DPIA) for a processing activity
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddDataProtectionImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddDataProtectionImpactAssessmentOutput"
+  - name: updateDataProtectionImpactAssessment
+    description: Update an existing data protection impact assessment (DPIA)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateDataProtectionImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateDataProtectionImpactAssessmentOutput"
+  - name: deleteDataProtectionImpactAssessment
+    description: Delete a data protection impact assessment (DPIA) by ID
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDataProtectionImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDataProtectionImpactAssessmentOutput"
+  - name: listTransferImpactAssessments
+    description: List all transfer impact assessments (TIAs) for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListTransferImpactAssessmentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTransferImpactAssessmentsOutput"
+  - name: getTransferImpactAssessment
+    description: Get a transfer impact assessment (TIA) by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetTransferImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTransferImpactAssessmentOutput"
+  - name: addTransferImpactAssessment
+    description: Add a new transfer impact assessment (TIA) for a processing activity
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTransferImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTransferImpactAssessmentOutput"
+  - name: updateTransferImpactAssessment
+    description: Update an existing transfer impact assessment (TIA)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTransferImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTransferImpactAssessmentOutput"
+  - name: deleteTransferImpactAssessment
+    description: Delete a transfer impact assessment (TIA)
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTransferImpactAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTransferImpactAssessmentOutput"
   - name: listContinualImprovements
     description: List all continual improvements for the organization
     hints:
@@ -4711,6 +6078,15 @@ tools:
       $ref: "#/components/schemas/UnassignTaskInput"
     outputSchema:
       $ref: "#/components/schemas/UnassignTaskOutput"
+  - name: deleteTask
+    description: Delete a task
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTaskOutput"
   - name: listSnapshots
     description: List all snapshots for the organization
     hints:
@@ -4865,3 +6241,55 @@ tools:
       $ref: "#/components/schemas/CancelSignatureRequestInput"
     outputSchema:
       $ref: "#/components/schemas/CancelSignatureRequestOutput"
+  - name: listMeetings
+    description: List all meetings for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeetingsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeetingsOutput"
+  - name: getMeeting
+    description: Get a meeting by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetMeetingInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetMeetingOutput"
+  - name: addMeeting
+    description: Add a new meeting to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddMeetingInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddMeetingOutput"
+  - name: updateMeeting
+    description: Update an existing meeting
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateMeetingInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateMeetingOutput"
+  - name: deleteMeeting
+    description: Delete a meeting
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteMeetingInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteMeetingOutput"
+  - name: listMeetingAttendees
+    description: List all attendees for a meeting
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeetingAttendeesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeetingAttendeesOutput"

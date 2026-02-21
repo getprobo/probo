@@ -69,14 +69,14 @@ enum EvidenceState
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested")
 }
 
-enum PeopleKind @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleKind") {
+enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
     EMPLOYEE
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindEmployee")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
     CONTRACTOR
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindContractor")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
     SERVICE_ACCOUNT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.PeopleKindServiceAccount"
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
         )
 }
 
@@ -402,17 +402,17 @@ enum ProcessingActivityRole
 }
 
 # Order Field Enums
-enum PeopleOrderField
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleOrderField") {
+enum ProfileOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField") {
     FULL_NAME
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldFullName"
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldFullName"
         )
     CREATED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldCreatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
         )
-    KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldKind")
+    KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
 }
 
 enum VendorOrderField
@@ -485,6 +485,16 @@ enum MeetingOrderField
     CREATED_AT
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.MeetingOrderFieldCreatedAt"
+        )
+}
+
+enum WebhookSubscriptionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.WebhookSubscriptionOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.WebhookSubscriptionOrderFieldCreatedAt"
         )
 }
 
@@ -604,6 +614,10 @@ enum ApplicabilityStatementOrderField
     CREATED_AT
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderFieldCreatedAt"
+        )
+    CONTROL_SECTION_TITLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ApplicabilityStatementOrderFieldControlSectionTitle"
         )
 }
 
@@ -1016,14 +1030,6 @@ enum DataClassification
         )
 }
 
-enum ControlStatus
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlStatus") {
-    INCLUDED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlStatusIncluded")
-    EXCLUDED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlStatusExcluded")
-}
-
 enum AuditOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditOrderField") {
     CREATED_AT
@@ -1281,12 +1287,12 @@ enum SnapshotOrderField
 }
 
 # Input Types
-input PeopleOrder
+input ProfileOrder
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleOrderBy"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileOrderBy"
     ) {
     direction: OrderDirection!
-    field: PeopleOrderField!
+    field: ProfileOrderField!
 }
 
 input VendorOrder
@@ -1343,6 +1349,14 @@ input MeetingOrder
     ) {
     direction: OrderDirection!
     field: MeetingOrderField!
+}
+
+input WebhookSubscriptionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookSubscriptionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: WebhookSubscriptionOrderField!
 }
 
 input RiskOrder
@@ -1528,7 +1542,7 @@ input RiskFilter {
     snapshotId: ID
 }
 
-input PeopleFilter {
+input ProfileFilter {
     excludeContractEnded: Boolean
 }
 
@@ -1615,6 +1629,15 @@ type Organization implements Node {
     headquarterAddress: String
     context: OrganizationContext @goField(forceResolver: true)
 
+    profiles(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+        filter: ProfileFilter
+    ): ProfileConnection! @goField(forceResolver: true)
+
     slackConnections(
         first: Int
         after: CursorKey
@@ -1647,15 +1670,6 @@ type Organization implements Node {
         orderBy: VendorOrder
         filter: VendorFilter = { snapshotId: null }
     ): VendorConnection! @goField(forceResolver: true)
-
-    peoples(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: PeopleOrder
-        filter: PeopleFilter
-    ): PeopleConnection! @goField(forceResolver: true)
 
     documents(
         first: Int
@@ -1817,6 +1831,14 @@ type Organization implements Node {
 
     customDomain: CustomDomain @goField(forceResolver: true)
 
+    webhookSubscriptions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: WebhookSubscriptionOrder
+    ): WebhookSubscriptionConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -1841,12 +1863,12 @@ type SlackConnectionEdge {
     node: SlackConnection!
 }
 
-type People implements Node {
+type Profile implements Node {
     id: ID!
     fullName: String!
-    primaryEmailAddress: EmailAddr!
+    emailAddress: EmailAddr!
     additionalEmailAddresses: [EmailAddr!]!
-    kind: PeopleKind!
+    kind: ProfileKind!
     position: String
     contractStartDate: Datetime
     contractEndDate: Datetime
@@ -1902,8 +1924,8 @@ type Vendor implements Node {
         orderBy: VendorRiskAssessmentOrder
     ): VendorRiskAssessmentConnection! @goField(forceResolver: true)
 
-    businessOwner: People @goField(forceResolver: true)
-    securityOwner: People @goField(forceResolver: true)
+    businessOwner: Profile @goField(forceResolver: true)
+    securityOwner: Profile @goField(forceResolver: true)
 
     statusPageUrl: String
     termsOfServiceUrl: String
@@ -2021,8 +2043,6 @@ type Control implements Node {
     sectionTitle: String!
     name: String!
     description: String
-    status: ControlStatus!
-    exclusionJustification: String
     bestPractice: Boolean!
     regulatory: Boolean! @goField(forceResolver: true)
     contractual: Boolean! @goField(forceResolver: true)
@@ -2133,7 +2153,7 @@ type Task implements Node {
     state: TaskState!
     timeEstimate: Duration
     deadline: Datetime
-    assignedTo: People @goField(forceResolver: true)
+    assignedTo: Profile @goField(forceResolver: true)
 
     organization: Organization! @goField(forceResolver: true)
     measure: Measure @goField(forceResolver: true)
@@ -2178,7 +2198,13 @@ type Document implements Node {
     classification: DocumentClassification!
     currentPublishedVersion: Int
     trustCenterVisibility: TrustCenterVisibility!
-    owner: People! @goField(forceResolver: true)
+    approvers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+    ): ProfileConnection! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     versions(
@@ -2234,12 +2260,112 @@ type Meeting implements Node {
     name: String!
     date: Datetime!
     minutes: String
-    attendees: [People!]! @goField(forceResolver: true)
+    attendees: [Profile!]! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum WebhookEventType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookEventType") {
+    MEETING_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingCreated")
+    MEETING_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingUpdated")
+    MEETING_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMeetingDeleted")
+    VENDOR_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorCreated")
+    VENDOR_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorUpdated")
+    VENDOR_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorDeleted")
+}
+
+type WebhookSubscription implements Node {
+    id: ID!
+    organization: Organization @goField(forceResolver: true)
+    endpointUrl: String!
+    signingSecret: String! @goField(forceResolver: true)
+    selectedEvents: [WebhookEventType!]!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    events(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: WebhookEventOrder
+    ): WebhookEventConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type WebhookSubscriptionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookSubscriptionConnection"
+    ) {
+    edges: [WebhookSubscriptionEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type WebhookSubscriptionEdge {
+    cursor: CursorKey!
+    node: WebhookSubscription!
+}
+
+enum WebhookEventStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.WebhookEventStatus") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusPending")
+    SUCCEEDED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusSucceeded")
+    FAILED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventStatusFailed")
+}
+
+enum WebhookEventOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.WebhookEventOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.WebhookEventOrderFieldCreatedAt"
+        )
+}
+
+input WebhookEventOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookEventOrderBy"
+    ) {
+    field: WebhookEventOrderField!
+    direction: OrderDirection!
+}
+
+type WebhookEvent implements Node {
+    id: ID!
+    webhookSubscriptionId: ID!
+    status: WebhookEventStatus!
+    response: String
+    createdAt: Datetime!
+}
+
+type WebhookEventConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.WebhookEventConnection"
+    ) {
+    edges: [WebhookEventEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type WebhookEventEdge {
+    cursor: CursorKey!
+    node: WebhookEvent!
 }
 
 type StateOfApplicability implements Node {
@@ -2248,7 +2374,7 @@ type StateOfApplicability implements Node {
     sourceId: ID
     snapshotId: ID
     organization: Organization @goField(forceResolver: true)
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -2304,7 +2430,7 @@ type Risk implements Node {
     residualRiskScore: Int!
     note: String!
 
-    owner: People @goField(forceResolver: true)
+    owner: Profile @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     measures(
@@ -2386,7 +2512,7 @@ type Nonconformity implements Node {
     dateIdentified: Datetime
     rootCause: String!
     correctiveAction: String
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     dueDate: Datetime
     status: NonconformityStatus!
     effectivenessCheck: String
@@ -2406,7 +2532,7 @@ type Obligation implements Node {
     requirement: String
     actionsToBeImplemented: String
     regulator: String
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     lastReviewDate: Datetime
     dueDate: Datetime
     status: ObligationStatus!
@@ -2425,7 +2551,7 @@ type ContinualImprovement implements Node {
     referenceId: String!
     description: String
     source: String
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     targetDate: Datetime
     status: ContinualImprovementStatus!
     priority: ContinualImprovementPriority!
@@ -2474,7 +2600,7 @@ type ProcessingActivity implements Node {
     lastReviewDate: Datetime
     nextReviewDate: Datetime
     role: ProcessingActivityRole!
-    dataProtectionOfficer: People @goField(forceResolver: true)
+    dataProtectionOfficer: Profile @goField(forceResolver: true)
     vendors(
         first: Int
         after: CursorKey
@@ -2694,18 +2820,18 @@ type TrustCenterFileEdge {
     node: TrustCenterFile!
 }
 
-type PeopleConnection
+type ProfileConnection
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleConnection"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProfileConnection"
     ) {
     totalCount: Int! @goField(forceResolver: true)
-    edges: [PeopleEdge!]!
+    edges: [ProfileEdge!]!
     pageInfo: PageInfo!
 }
 
-type PeopleEdge {
+type ProfileEdge {
     cursor: CursorKey!
-    node: People!
+    node: Profile!
 }
 
 type VendorConnection
@@ -3122,10 +3248,6 @@ type Mutation {
         input: DeleteTrustCenterFileInput!
     ): DeleteTrustCenterFilePayload!
 
-    # People mutations
-    createPeople(input: CreatePeopleInput!): CreatePeoplePayload!
-    updatePeople(input: UpdatePeopleInput!): UpdatePeoplePayload!
-    deletePeople(input: DeletePeopleInput!): DeletePeoplePayload!
     # Vendor mutations
     createVendor(input: CreateVendorInput!): CreateVendorPayload!
     updateVendor(input: UpdateVendorInput!): UpdateVendorPayload!
@@ -3155,9 +3277,6 @@ type Mutation {
     updateFramework(input: UpdateFrameworkInput!): UpdateFrameworkPayload!
     importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!
     deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!
-    generateFrameworkStateOfApplicability(
-        input: GenerateFrameworkStateOfApplicabilityInput!
-    ): GenerateFrameworkStateOfApplicabilityPayload!
     exportFramework(input: ExportFrameworkInput!): ExportFrameworkPayload!
     # Control mutations
     createControl(input: CreateControlInput!): CreateControlPayload!
@@ -3274,6 +3393,16 @@ type Mutation {
     createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
     updateMeeting(input: UpdateMeetingInput!): UpdateMeetingPayload!
     deleteMeeting(input: DeleteMeetingInput!): DeleteMeetingPayload!
+    # WebhookSubscription mutations
+    createWebhookSubscription(
+        input: CreateWebhookSubscriptionInput!
+    ): CreateWebhookSubscriptionPayload!
+    updateWebhookSubscription(
+        input: UpdateWebhookSubscriptionInput!
+    ): UpdateWebhookSubscriptionPayload!
+    deleteWebhookSubscription(
+        input: DeleteWebhookSubscriptionInput!
+    ): DeleteWebhookSubscriptionPayload!
     # StateOfApplicability mutations
     createStateOfApplicability(
         input: CreateStateOfApplicabilityInput!
@@ -3434,14 +3563,6 @@ type Mutation {
 }
 
 # Input Types
-input GenerateFrameworkStateOfApplicabilityInput {
-    frameworkId: ID!
-}
-
-type GenerateFrameworkStateOfApplicabilityPayload {
-    data: String!
-}
-
 input UpdateOrganizationContextInput {
     organizationId: ID!
     summary: String @goField(omittable: true)
@@ -3625,32 +3746,6 @@ input UpdateVendorServiceInput {
 
 input DeleteVendorServiceInput {
     vendorServiceId: ID!
-}
-
-input CreatePeopleInput {
-    organizationId: ID!
-    fullName: String!
-    primaryEmailAddress: EmailAddr!
-    additionalEmailAddresses: [EmailAddr!]!
-    kind: PeopleKind!
-    position: String
-    contractStartDate: Datetime
-    contractEndDate: Datetime
-}
-
-input UpdatePeopleInput {
-    id: ID!
-    fullName: String
-    primaryEmailAddress: EmailAddr
-    additionalEmailAddresses: [EmailAddr!] @goField(omittable: true)
-    kind: PeopleKind
-    position: String @goField(omittable: true)
-    contractStartDate: Datetime @goField(omittable: true)
-    contractEndDate: Datetime @goField(omittable: true)
-}
-
-input DeletePeopleInput {
-    peopleId: ID!
 }
 
 input CreateFrameworkInput {
@@ -3908,7 +4003,7 @@ input CreateDocumentInput {
     organizationId: ID!
     title: String!
     content: String!
-    ownerId: ID!
+    approverIds: [ID!]!
     documentType: DocumentType!
     classification: DocumentClassification!
     trustCenterVisibility: TrustCenterVisibility
@@ -3918,7 +4013,7 @@ input UpdateDocumentInput {
     id: ID!
     title: String
     content: String
-    ownerId: ID
+    approverIds: [ID!]
     documentType: DocumentType
     classification: DocumentClassification
     trustCenterVisibility: TrustCenterVisibility
@@ -4030,8 +4125,6 @@ input CreateControlInput {
     sectionTitle: String!
     name: String!
     description: String
-    status: ControlStatus!
-    exclusionJustification: String
     bestPractice: Boolean!
 }
 
@@ -4040,8 +4133,6 @@ input UpdateControlInput {
     sectionTitle: String
     name: String
     description: String @goField(omittable: true)
-    status: ControlStatus
-    exclusionJustification: String
     bestPractice: Boolean
 }
 
@@ -4422,18 +4513,6 @@ type DeleteVendorServicePayload {
     deletedVendorServiceId: ID!
 }
 
-type CreatePeoplePayload {
-    peopleEdge: PeopleEdge!
-}
-
-type UpdatePeoplePayload {
-    people: People!
-}
-
-type DeletePeoplePayload {
-    deletedPeopleId: ID!
-}
-
 type CreateFrameworkPayload {
     frameworkEdge: FrameworkEdge!
 }
@@ -4663,6 +4742,34 @@ type DeleteMeetingPayload {
     deletedMeetingId: ID!
 }
 
+input CreateWebhookSubscriptionInput {
+    organizationId: ID!
+    endpointUrl: String!
+    selectedEvents: [WebhookEventType!]!
+}
+
+input UpdateWebhookSubscriptionInput {
+    id: ID!
+    endpointUrl: String
+    selectedEvents: [WebhookEventType!]
+}
+
+input DeleteWebhookSubscriptionInput {
+    webhookSubscriptionId: ID!
+}
+
+type CreateWebhookSubscriptionPayload {
+    webhookSubscriptionEdge: WebhookSubscriptionEdge!
+}
+
+type UpdateWebhookSubscriptionPayload {
+    webhookSubscription: WebhookSubscription!
+}
+
+type DeleteWebhookSubscriptionPayload {
+    deletedWebhookSubscriptionId: ID!
+}
+
 type CreateStateOfApplicabilityPayload {
     stateOfApplicabilityEdge: StateOfApplicabilityEdge!
 }
@@ -4736,7 +4843,13 @@ type DocumentVersion implements Node {
     changelog: String!
     title: String!
     classification: DocumentClassification!
-    owner: People! @goField(forceResolver: true)
+    approvers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ProfileOrder
+    ): ProfileConnection! @goField(forceResolver: true)
 
     signatures(
         first: Int
@@ -4812,7 +4925,7 @@ type DocumentVersionSignature implements Node {
     id: ID!
     documentVersion: DocumentVersion! @goField(forceResolver: true)
     state: DocumentVersionSignatureState!
-    signedBy: People! @goField(forceResolver: true)
+    signedBy: Profile! @goField(forceResolver: true)
     signedAt: Datetime
     requestedAt: Datetime!
     createdAt: Datetime!
@@ -4958,7 +5071,7 @@ type Asset implements Node {
     snapshotId: ID
     name: String!
     amount: Int!
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     vendors(
         first: Int
         after: CursorKey
@@ -5041,7 +5154,7 @@ type Datum implements Node
     snapshotId: ID
     name: String!
     dataClassification: DataClassification!
-    owner: People! @goField(forceResolver: true)
+    owner: Profile! @goField(forceResolver: true)
     vendors(
         first: Int
         after: CursorKey

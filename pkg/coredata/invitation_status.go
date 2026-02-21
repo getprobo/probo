@@ -21,7 +21,7 @@ import (
 )
 
 type (
-	InvitationStatus  string
+	InvitationStatus   string
 	InvitationStatuses []InvitationStatus
 )
 
@@ -74,7 +74,7 @@ func (statuses InvitationStatuses) Value() (driver.Value, error) {
 		if i > 0 {
 			result.WriteString(",")
 		}
-		result.WriteString(fmt.Sprintf("%q", status.String()))
+		fmt.Fprintf(&result, "%q", status.String())
 	}
 	result.WriteString("}")
 	return result.String(), nil

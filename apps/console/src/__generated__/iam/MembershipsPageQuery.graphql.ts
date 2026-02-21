@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3a268aba389df25968eb44b454150288>>
+ * @generated SignedSource<<63cc59b828971b5b1c0983e2a439f95d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,24 +13,15 @@ import { FragmentRefs } from "relay-runtime";
 export type MembershipsPageQuery$variables = Record<PropertyKey, never>;
 export type MembershipsPageQuery$data = {
   readonly viewer: {
-    readonly memberships: {
-      readonly __id: string;
+    readonly profiles: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly id: string;
           readonly organization: {
             readonly name: string;
+            readonly " $fragmentSpreads": FragmentRefs<"MembershipCard_organizationFragment">;
           };
           readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
-        };
-      }>;
-    };
-    readonly pendingInvitations: {
-      readonly __id: string;
-      readonly edges: ReadonlyArray<{
-        readonly node: {
-          readonly id: string;
-          readonly " $fragmentSpreads": FragmentRefs<"InvitationCardFragment">;
         };
       }>;
     };
@@ -44,41 +35,48 @@ export type MembershipsPageQuery = {
 const node: ConcreteRequest = (function(){
 var v0 = {
   "kind": "Literal",
+  "name": "filter",
+  "value": {
+    "state": "ACTIVE"
+  }
+},
+v1 = {
+  "kind": "Literal",
   "name": "orderBy",
   "value": {
     "direction": "ASC",
     "field": "ORGANIZATION_NAME"
   }
 },
-v1 = {
+v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v2 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -103,41 +101,14 @@ v5 = {
   ],
   "storageKey": null
 },
-v6 = {
-  "kind": "ClientExtension",
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "__id",
-      "storageKey": null
-    }
-  ]
-},
-v7 = {
-  "kind": "Literal",
-  "name": "orderBy",
-  "value": {
-    "direction": "DESC",
-    "field": "CREATED_AT"
-  }
-},
-v8 = {
-  "kind": "Literal",
-  "name": "first",
-  "value": 1000
-},
-v9 = [
-  (v8/*: any*/),
-  (v0/*: any*/)
-],
-v10 = [
-  "orderBy"
-],
-v11 = [
-  (v8/*: any*/),
-  (v7/*: any*/)
+v7 = [
+  (v0/*: any*/),
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 1000
+  },
+  (v1/*: any*/)
 ];
 return {
   "fragment": {
@@ -159,13 +130,14 @@ return {
             {
               "kind": "RequiredField",
               "field": {
-                "alias": "memberships",
+                "alias": "profiles",
                 "args": [
-                  (v0/*: any*/)
+                  (v0/*: any*/),
+                  (v1/*: any*/)
                 ],
-                "concreteType": "MembershipConnection",
+                "concreteType": "ProfileConnection",
                 "kind": "LinkedField",
-                "name": "__MembershipsPage_memberships_connection",
+                "name": "__MembershipsPage_profiles_connection",
                 "plural": false,
                 "selections": [
                   {
@@ -173,7 +145,7 @@ return {
                     "field": {
                       "alias": null,
                       "args": null,
-                      "concreteType": "MembershipEdge",
+                      "concreteType": "ProfileEdge",
                       "kind": "LinkedField",
                       "name": "edges",
                       "plural": true,
@@ -181,12 +153,12 @@ return {
                         {
                           "alias": null,
                           "args": null,
-                          "concreteType": "Membership",
+                          "concreteType": "Profile",
                           "kind": "LinkedField",
                           "name": "node",
                           "plural": false,
                           "selections": [
-                            (v1/*: any*/),
+                            (v2/*: any*/),
                             {
                               "args": null,
                               "kind": "FragmentSpread",
@@ -202,79 +174,30 @@ return {
                                 "name": "organization",
                                 "plural": false,
                                 "selections": [
-                                  (v2/*: any*/)
+                                  (v3/*: any*/),
+                                  {
+                                    "args": null,
+                                    "kind": "FragmentSpread",
+                                    "name": "MembershipCard_organizationFragment"
+                                  }
                                 ],
                                 "storageKey": null
                               },
                               "action": "THROW"
                             },
-                            (v3/*: any*/)
+                            (v4/*: any*/)
                           ],
                           "storageKey": null
                         },
-                        (v4/*: any*/)
+                        (v5/*: any*/)
                       ],
                       "storageKey": null
                     },
                     "action": "THROW"
                   },
-                  (v5/*: any*/),
                   (v6/*: any*/)
                 ],
-                "storageKey": "__MembershipsPage_memberships_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
-              },
-              "action": "THROW"
-            },
-            {
-              "kind": "RequiredField",
-              "field": {
-                "alias": "pendingInvitations",
-                "args": [
-                  (v7/*: any*/)
-                ],
-                "concreteType": "InvitationConnection",
-                "kind": "LinkedField",
-                "name": "__MembershipsPage_pendingInvitations_connection",
-                "plural": false,
-                "selections": [
-                  {
-                    "kind": "RequiredField",
-                    "field": {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "InvitationEdge",
-                      "kind": "LinkedField",
-                      "name": "edges",
-                      "plural": true,
-                      "selections": [
-                        {
-                          "alias": null,
-                          "args": null,
-                          "concreteType": "Invitation",
-                          "kind": "LinkedField",
-                          "name": "node",
-                          "plural": false,
-                          "selections": [
-                            (v1/*: any*/),
-                            {
-                              "args": null,
-                              "kind": "FragmentSpread",
-                              "name": "InvitationCardFragment"
-                            },
-                            (v3/*: any*/)
-                          ],
-                          "storageKey": null
-                        },
-                        (v4/*: any*/)
-                      ],
-                      "storageKey": null
-                    },
-                    "action": "THROW"
-                  },
-                  (v5/*: any*/),
-                  (v6/*: any*/)
-                ],
-                "storageKey": "__MembershipsPage_pendingInvitations_connection(orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "__MembershipsPage_profiles_connection(filter:{\"state\":\"ACTIVE\"},orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
               },
               "action": "THROW"
             }
@@ -303,16 +226,16 @@ return {
         "selections": [
           {
             "alias": null,
-            "args": (v9/*: any*/),
-            "concreteType": "MembershipConnection",
+            "args": (v7/*: any*/),
+            "concreteType": "ProfileConnection",
             "kind": "LinkedField",
-            "name": "memberships",
+            "name": "profiles",
             "plural": false,
             "selections": [
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "MembershipEdge",
+                "concreteType": "ProfileEdge",
                 "kind": "LinkedField",
                 "name": "edges",
                 "plural": true,
@@ -320,28 +243,47 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "Membership",
+                    "concreteType": "Profile",
                     "kind": "LinkedField",
                     "name": "node",
                     "plural": false,
                     "selections": [
-                      (v1/*: any*/),
+                      (v2/*: any*/),
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Session",
+                        "kind": "ScalarField",
+                        "name": "state",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Membership",
                         "kind": "LinkedField",
-                        "name": "lastSession",
+                        "name": "membership",
                         "plural": false,
                         "selections": [
-                          (v1/*: any*/),
                           {
                             "alias": null,
                             "args": null,
-                            "kind": "ScalarField",
-                            "name": "expiresAt",
+                            "concreteType": "Session",
+                            "kind": "LinkedField",
+                            "name": "lastSession",
+                            "plural": false,
+                            "selections": [
+                              (v2/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "expiresAt",
+                                "storageKey": null
+                              }
+                            ],
                             "storageKey": null
-                          }
+                          },
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -353,7 +295,7 @@ return {
                         "name": "organization",
                         "plural": false,
                         "selections": [
-                          (v1/*: any*/),
+                          (v3/*: any*/),
                           (v2/*: any*/),
                           {
                             "alias": null,
@@ -365,110 +307,38 @@ return {
                         ],
                         "storageKey": null
                       },
-                      (v3/*: any*/)
+                      (v4/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v4/*: any*/)
+                  (v5/*: any*/)
                 ],
                 "storageKey": null
               },
-              (v5/*: any*/),
               (v6/*: any*/)
             ],
-            "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
+            "storageKey": "profiles(filter:{\"state\":\"ACTIVE\"},first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"ORGANIZATION_NAME\"})"
           },
           {
             "alias": null,
-            "args": (v9/*: any*/),
-            "filters": (v10/*: any*/),
-            "handle": "connection",
-            "key": "MembershipsPage_memberships",
-            "kind": "LinkedHandle",
-            "name": "memberships"
-          },
-          {
-            "alias": null,
-            "args": (v11/*: any*/),
-            "concreteType": "InvitationConnection",
-            "kind": "LinkedField",
-            "name": "pendingInvitations",
-            "plural": false,
-            "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "InvitationEdge",
-                "kind": "LinkedField",
-                "name": "edges",
-                "plural": true,
-                "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Invitation",
-                    "kind": "LinkedField",
-                    "name": "node",
-                    "plural": false,
-                    "selections": [
-                      (v1/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "role",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "createdAt",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Organization",
-                        "kind": "LinkedField",
-                        "name": "organization",
-                        "plural": false,
-                        "selections": [
-                          (v1/*: any*/),
-                          (v2/*: any*/)
-                        ],
-                        "storageKey": null
-                      },
-                      (v3/*: any*/)
-                    ],
-                    "storageKey": null
-                  },
-                  (v4/*: any*/)
-                ],
-                "storageKey": null
-              },
-              (v5/*: any*/),
-              (v6/*: any*/)
+            "args": (v7/*: any*/),
+            "filters": [
+              "orderBy",
+              "filter"
             ],
-            "storageKey": "pendingInvitations(first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
-          },
-          {
-            "alias": null,
-            "args": (v11/*: any*/),
-            "filters": (v10/*: any*/),
             "handle": "connection",
-            "key": "MembershipsPage_pendingInvitations",
+            "key": "MembershipsPage_profiles",
             "kind": "LinkedHandle",
-            "name": "pendingInvitations"
+            "name": "profiles"
           },
-          (v1/*: any*/)
+          (v2/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "9807cdf4aa713babb1639e4effd96e54",
+    "cacheID": "70c954537c603303bcd55418f6bd73cf",
     "id": null,
     "metadata": {
       "connection": [
@@ -478,27 +348,18 @@ return {
           "direction": "forward",
           "path": [
             "viewer",
-            "memberships"
-          ]
-        },
-        {
-          "count": null,
-          "cursor": null,
-          "direction": "forward",
-          "path": [
-            "viewer",
-            "pendingInvitations"
+            "profiles"
           ]
         }
       ]
     },
     "name": "MembershipsPageQuery",
     "operationKind": "query",
-    "text": "query MembershipsPageQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            id\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    pendingInvitations(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...InvitationCardFragment\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationCardFragment on Invitation {\n  id\n  role\n  createdAt\n  organization {\n    id\n    name\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    name\n    logoUrl\n  }\n}\n"
+    "text": "query MembershipsPageQuery {\n  viewer {\n    profiles(first: 1000, orderBy: {direction: ASC, field: ORGANIZATION_NAME}, filter: {state: ACTIVE}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            ...MembershipCard_organizationFragment\n            id\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipCardFragment on Profile {\n  state\n  membership {\n    lastSession {\n      id\n      expiresAt\n    }\n    id\n  }\n}\n\nfragment MembershipCard_organizationFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7956b20535004550c271e1a520c95fe4";
+(node as any).hash = "c82587c425f688858d4625426153dbdc";
 
 export default node;

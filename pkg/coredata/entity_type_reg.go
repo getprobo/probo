@@ -31,7 +31,7 @@ const (
 	ConnectorEntityType                        uint16 = 5
 	VendorRiskAssessmentEntityType             uint16 = 6
 	VendorEntityType                           uint16 = 7
-	PeopleEntityType                           uint16 = 8
+	_                                          uint16 = 8 // PeopleEntityType - removed
 	VendorComplianceReportEntityType           uint16 = 9
 	DocumentEntityType                         uint16 = 10
 	IdentityEntityType                         uint16 = 11
@@ -79,6 +79,9 @@ const (
 	SCIMEventEntityType                        uint16 = 53
 	TokenEntityType                            uint16 = 54
 	SCIMBridgeEntityType                       uint16 = 55
+	WebhookSubscriptionEntityType              uint16 = 56
+	WebhookDataEntityType                      uint16 = 57
+	WebhookEventEntityType                     uint16 = 58
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -99,8 +102,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &VendorRiskAssessment{ID: id}, true
 	case VendorEntityType:
 		return &Vendor{ID: id}, true
-	case PeopleEntityType:
-		return &People{ID: id}, true
 	case VendorComplianceReportEntityType:
 		return &VendorComplianceReport{ID: id}, true
 	case DocumentEntityType:
@@ -193,6 +194,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Token{ID: id}, true
 	case SCIMBridgeEntityType:
 		return &SCIMBridge{ID: id}, true
+	case WebhookSubscriptionEntityType:
+		return &WebhookSubscription{ID: id}, true
+	case WebhookDataEntityType:
+		return &WebhookData{ID: id}, true
+	case WebhookEventEntityType:
+		return &WebhookEvent{ID: id}, true
 	default:
 		return nil, false
 	}

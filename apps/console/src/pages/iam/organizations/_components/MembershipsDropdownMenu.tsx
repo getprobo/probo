@@ -8,17 +8,21 @@ import { MembershipsDropdownMenuItem } from "./MembershipsDropdownMenuItem";
 export const membershipsDropdownMenuQuery = graphql`
   query MembershipsDropdownMenuQuery {
     viewer @required(action: THROW) {
-      memberships(
+      profiles(
         first: 1000
         orderBy: { direction: ASC, field: ORGANIZATION_NAME }
+        filter: { state: ACTIVE }
       ) @required(action: THROW) {
         edges @required(action: THROW) {
           node @required(action: THROW) {
             id
             organization @required(action: THROW) {
               name
+              ...MembershipsDropdownMenuItem_organizationFragment
             }
-            ...MembershipsDropdownMenuItemFragment
+            membership @required(action: THROW) {
+              ...MembershipsDropdownMenuItemFragment
+            }
           }
         }
       }
@@ -36,27 +40,27 @@ export function MembershipsDropdownMenu(props: MembershipsDropdownMenuProps) {
 
   const {
     viewer: {
-      memberships: { edges: initialMemberships },
+      profiles: { edges: initialProfiles },
     },
   } = usePreloadedQuery<MembershipsDropdownMenuQuery>(
     membershipsDropdownMenuQuery,
     queryRef,
   );
 
-  const memberships = useMemo(() => {
+  const profiles = useMemo(() => {
     if (!search) {
-      return initialMemberships;
+      return initialProfiles;
     }
 
-    return initialMemberships.filter(({ node: { organization } }) =>
+    return initialProfiles.filter(({ node: { organization } }) =>
       organization.name.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [initialMemberships, search]);
+  }, [initialProfiles, search]);
 
   return (
     <>
-      {memberships.map(({ node }) => (
-        <MembershipsDropdownMenuItem fKey={node} key={node.id} />
+      {profiles.map(({ node }) => (
+        <MembershipsDropdownMenuItem fKey={node.membership} organizationFragmentRef={node.organization} key={node.id} />
       ))}
     </>
   );

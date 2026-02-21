@@ -60,6 +60,7 @@ import (
 	"go.probo.inc/probo/pkg/server"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
+	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -153,6 +154,10 @@ func New() *Implm {
 				},
 				Slack: slackConfig{
 					SenderInterval: 60,
+				},
+				Webhook: webhookConfig{
+					SenderInterval: 5,
+					CacheTTL:       86400,
 				},
 			},
 			CustomDomains: customDomainsConfig{
@@ -479,6 +484,20 @@ func (impl *Implm) Run(
 		},
 	)
 
+	webhookSenderCtx, stopWebhookSender := context.WithCancel(context.Background())
+	webhookSender := webhook.NewSender(pgClient, l.Named("webhook-sender"), webhook.Config{
+		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
+		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
+		EncryptionKey: impl.cfg.EncryptionKey,
+	})
+	wg.Go(
+		func() {
+			if err := webhookSender.Run(webhookSenderCtx); err != nil {
+				cancel(fmt.Errorf("webhook sender crashed: %w", err))
+			}
+		},
+	)
+
 	exportJobExporterCtx, stopExportJobExporter := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
@@ -511,6 +530,7 @@ func (impl *Implm) Run(
 
 	stopMailer()
 	stopSlackSender()
+	stopWebhookSender()
 	stopExportJobExporter()
 	stopIAMService()
 	stopApiServer()

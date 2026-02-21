@@ -31,15 +31,15 @@ import (
 
 type (
 	DocumentVersionSignature struct {
-		ID                gid.GID                       `json:"id"`
-		OrganizationID    gid.GID                       `json:"-"`
-		DocumentVersionID gid.GID                       `json:"document_version_id"`
-		State             DocumentVersionSignatureState `json:"state"`
-		SignedBy          gid.GID                       `json:"signed_by"`
-		SignedAt          *time.Time                    `json:"signed_at"`
-		RequestedAt       time.Time                     `json:"requested_at"`
-		CreatedAt         time.Time                     `json:"created_at"`
-		UpdatedAt         time.Time                     `json:"updated_at"`
+		ID                gid.GID                       `json:"id" db:"id"`
+		OrganizationID    gid.GID                       `json:"-" db:"organization_id"`
+		DocumentVersionID gid.GID                       `json:"document_version_id" db:"document_version_id"`
+		State             DocumentVersionSignatureState `json:"state" db:"state"`
+		SignedBy          gid.GID                       `json:"signed_by" db:"signed_by_profile_id"`
+		SignedAt          *time.Time                    `json:"signed_at" db:"signed_at"`
+		RequestedAt       time.Time                     `json:"requested_at" db:"requested_at"`
+		CreatedAt         time.Time                     `json:"created_at" db:"created_at"`
+		UpdatedAt         time.Time                     `json:"updated_at" db:"updated_at"`
 	}
 
 	DocumentVersionSignatures []*DocumentVersionSignature
@@ -91,7 +91,7 @@ SELECT
 	organization_id,
 	document_version_id,
 	state,
-	signed_by,
+	signed_by_profile_id,
 	signed_at,
 	requested_at,
 	created_at,
@@ -101,7 +101,7 @@ FROM
 WHERE
 	%s
 	AND document_version_id = @document_version_id
-	AND signed_by = @signatory
+	AND signed_by_profile_id = @signatory
 LIMIT 1
 `
 
@@ -137,7 +137,7 @@ SELECT
 	organization_id,
 	document_version_id,
 	state,
-	signed_by,
+	signed_by_profile_id,
 	signed_at,
 	requested_at,
 	created_at,
@@ -181,7 +181,7 @@ INSERT INTO document_version_signatures (
 	organization_id,
 	document_version_id,
 	state,
-	signed_by,
+	signed_by_profile_id,
 	signed_at,
 	requested_at,
 	created_at,
@@ -192,7 +192,7 @@ INSERT INTO document_version_signatures (
 	@organization_id,
 	@document_version_id,
 	@state,
-	@signed_by,
+	@signed_by_profile_id,
 	@signed_at,
 	@requested_at,
 	@created_at,
@@ -201,16 +201,16 @@ INSERT INTO document_version_signatures (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                  pvs.ID,
-		"tenant_id":           scope.GetTenantID(),
-		"organization_id":     pvs.OrganizationID,
-		"document_version_id": pvs.DocumentVersionID,
-		"state":               pvs.State,
-		"signed_by":           pvs.SignedBy,
-		"signed_at":           pvs.SignedAt,
-		"requested_at":        pvs.RequestedAt,
-		"created_at":          pvs.CreatedAt,
-		"updated_at":          pvs.UpdatedAt,
+		"id":                   pvs.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      pvs.OrganizationID,
+		"document_version_id":  pvs.DocumentVersionID,
+		"state":                pvs.State,
+		"signed_by_profile_id": pvs.SignedBy,
+		"signed_at":            pvs.SignedAt,
+		"requested_at":         pvs.RequestedAt,
+		"created_at":           pvs.CreatedAt,
+		"updated_at":           pvs.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -241,7 +241,7 @@ SELECT
 	organization_id,
 	document_version_id,
 	state,
-	signed_by,
+	signed_by_profile_id,
 	signed_at,
 	requested_at,
 	created_at,
@@ -286,7 +286,7 @@ func (pvs *DocumentVersionSignature) Update(
 UPDATE document_version_signatures
 SET
 	state = @state,
-	signed_by = @signed_by,
+	signed_by_profile_id = @signed_by_profile_id,
 	signed_at = @signed_at,
 	updated_at = @updated_at
 WHERE
@@ -297,11 +297,11 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":         pvs.ID,
-		"state":      pvs.State,
-		"signed_by":  pvs.SignedBy,
-		"signed_at":  pvs.SignedAt,
-		"updated_at": pvs.UpdatedAt,
+		"id":                   pvs.ID,
+		"state":                pvs.State,
+		"signed_by_profile_id": pvs.SignedBy,
+		"signed_at":            pvs.SignedAt,
+		"updated_at":           pvs.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -355,7 +355,7 @@ WITH sigs AS (
 		dvs.tenant_id,
 		dvs.document_version_id,
 		dvs.state,
-		dvs.signed_by,
+		dvs.signed_by_profile_id,
 		dvs.signed_at,
 		dvs.requested_at,
 		dvs.created_at,
@@ -364,7 +364,7 @@ WITH sigs AS (
 	FROM
 		document_version_signatures dvs
 	INNER JOIN
-		peoples p ON dvs.signed_by = p.id
+		iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
 	WHERE
 		dvs.document_version_id = @document_version_id
 	ORDER BY
@@ -376,7 +376,7 @@ SELECT
 	organization_id,
 	document_version_id,
 	state,
-	signed_by,
+	signed_by_profile_id,
 	signed_at,
 	requested_at,
 	created_at,
@@ -422,9 +422,10 @@ func (pvs *DocumentVersionSignature) IsSignedByUserEmail(
 SELECT EXISTS (
 	SELECT 1
 	FROM document_version_signatures dvs
-	INNER JOIN peoples p ON dvs.signed_by = p.id
+	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+	INNER JOIN identities i ON p.identity_id = i.id
 	WHERE dvs.document_version_id = @document_version_id
-		AND p.primary_email_address = @user_email
+		AND i.email_address = @user_email::CITEXT
 		AND dvs.state = 'SIGNED'
 		AND dvs.tenant_id = @tenant_id
 ) AS signed

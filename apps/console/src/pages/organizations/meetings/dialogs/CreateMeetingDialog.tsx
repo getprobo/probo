@@ -104,6 +104,7 @@ export function CreateMeetingDialog({ children, connectionId }: Props) {
             control={control}
             organizationId={organizationId}
             label={__("Attendees")}
+            placeholder={__("Add attendees...")}
           />
         </DialogContent>
         <DialogFooter>

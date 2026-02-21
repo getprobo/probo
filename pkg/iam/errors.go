@@ -123,28 +123,28 @@ func (e ErrMembershipNotFound) Error() string {
 	return fmt.Sprintf("membership %q not found", e.MembershipID)
 }
 
-type ErrMembershipInactive struct {
-	MembershipID gid.GID
+type ErrUserInactive struct {
+	ProfileID gid.GID
 }
 
-func NewMembershipInactiveError(membershipID gid.GID) error {
-	return &ErrMembershipInactive{MembershipID: membershipID}
+func NewUserInactiveError(profileID gid.GID) error {
+	return &ErrUserInactive{ProfileID: profileID}
 }
 
-func (e ErrMembershipInactive) Error() string {
-	return fmt.Sprintf("membership %q is inactive", e.MembershipID)
+func (e ErrUserInactive) Error() string {
+	return fmt.Sprintf("user %q is inactive", e.ProfileID)
 }
 
-type ErrMembershipManagedBySCIM struct {
-	MembershipID gid.GID
+type ErrUserManagedBySCIM struct {
+	ProfileID gid.GID
 }
 
-func NewMembershipManagedBySCIMError(membershipID gid.GID) error {
-	return &ErrMembershipManagedBySCIM{MembershipID: membershipID}
+func NewUserManagedBySCIMError(profileID gid.GID) error {
+	return &ErrUserManagedBySCIM{ProfileID: profileID}
 }
 
-func (e ErrMembershipManagedBySCIM) Error() string {
-	return fmt.Sprintf("membership %q is managed by SCIM and cannot be deleted manually", e.MembershipID)
+func (e ErrUserManagedBySCIM) Error() string {
+	return fmt.Sprintf("user %q is managed by SCIM and cannot be deleted manually", e.ProfileID)
 }
 
 type ErrLastActiveOwner struct {
@@ -156,7 +156,7 @@ func NewLastActiveOwnerError(membershipID gid.GID) error {
 }
 
 func (e ErrLastActiveOwner) Error() string {
-	return fmt.Sprintf("cannot remove membership %q: last active owner of the organization", e.MembershipID)
+	return fmt.Sprintf("cannot remove profile %q: last active owner of the organization", e.MembershipID)
 }
 
 type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
@@ -183,6 +183,19 @@ func (e ErrInsufficientPermissions) Error() string {
 	return fmt.Sprintf("identity %q does not have sufficient permissions to perform action %s on entity %q", e.IdentityID, e.Action, e.EntityID)
 }
 
+type ErrAssumptionRequired struct {
+	IdentityID   gid.GID
+	MembershipID gid.GID
+}
+
+func NewAssumptionRequiredError(identityID gid.GID, membershipID gid.GID) error {
+	return &ErrAssumptionRequired{IdentityID: identityID, MembershipID: membershipID}
+}
+
+func (e ErrAssumptionRequired) Error() string {
+	return fmt.Sprintf("assumption for identity %q required for membership %q", e.IdentityID, e.MembershipID)
+}
+
 type ErrSessionNotFound struct{ SessionID gid.GID }
 
 func NewSessionNotFoundError(sessionID gid.GID) error {
@@ -207,17 +220,17 @@ func (e ErrSessionExpired) Error() string {
 	return fmt.Sprintf("session %q expired", e.SessionID)
 }
 
-type ErrMembershipAlreadyExists struct {
+type ErrUserAlreadyExists struct {
 	IdentityID     gid.GID
 	OrganizationID gid.GID
 }
 
-func NewMembershipAlreadyExistsError(identityID gid.GID, organizationID gid.GID) error {
-	return &ErrMembershipAlreadyExists{IdentityID: identityID, OrganizationID: organizationID}
+func NewUserAlreadyExistsError(identityID gid.GID, organizationID gid.GID) error {
+	return &ErrUserAlreadyExists{IdentityID: identityID, OrganizationID: organizationID}
 }
 
-func (e ErrMembershipAlreadyExists) Error() string {
-	return fmt.Sprintf("membership already exists for identity %q in organization %q", e.IdentityID, e.OrganizationID)
+func (e ErrUserAlreadyExists) Error() string {
+	return fmt.Sprintf("user already exists for identity %q in organization %q", e.IdentityID, e.OrganizationID)
 }
 
 type ErrSAMLConfigurationNotFound struct{ ConfigID gid.GID }
@@ -240,14 +253,14 @@ func (e ErrPersonalAPIKeyNotFound) Error() string {
 	return fmt.Sprintf("personal API key %q not found", e.PersonalAPIKeyID)
 }
 
-type ErrProfileNotFound struct{ MembershipID gid.GID }
+type ErrProfileNotFound struct{ ProfileID gid.GID }
 
-func NewProfileNotFoundError(membershipID gid.GID) error {
-	return &ErrProfileNotFound{MembershipID: membershipID}
+func NewProfileNotFoundError(profileID gid.GID) error {
+	return &ErrProfileNotFound{ProfileID: profileID}
 }
 
 func (e ErrProfileNotFound) Error() string {
-	return fmt.Sprintf("profile for membership %q not found", e.MembershipID)
+	return fmt.Sprintf("profile %q not found", e.ProfileID)
 }
 
 type ErrPersonalAPIKeyExpired struct{ PersonalAPIKeyID gid.GID }
@@ -313,25 +326,24 @@ func (e ErrInvitationNotDeleted) Error() string {
 	return fmt.Sprintf("cannot delete invitation %q in %q status", e.InvitationID, e.Status)
 }
 
-type ErrPasswordRequired struct {
+type ErrPasswordAuthenticationRequired struct {
 	Reason string
 }
 
-func NewPasswordRequiredError(reason string) *ErrPasswordRequired {
-	return &ErrPasswordRequired{Reason: reason}
+func NewPasswordAuthenticationRequiredError(reason string) *ErrPasswordAuthenticationRequired {
+	return &ErrPasswordAuthenticationRequired{Reason: reason}
 }
 
-func (e *ErrPasswordRequired) Error() string {
+func (e *ErrPasswordAuthenticationRequired) Error() string {
 	return fmt.Sprintf("password authentication required: %s", e.Reason)
 }
 
 type ErrSAMLAuthenticationRequired struct {
-	Reason      string
-	RedirectURL string
+	Reason string
 }
 
-func NewSAMLAuthenticationRequiredError(reason string, redirectURL string) *ErrSAMLAuthenticationRequired {
-	return &ErrSAMLAuthenticationRequired{Reason: reason, RedirectURL: redirectURL}
+func NewSAMLAuthenticationRequiredError(reason string) *ErrSAMLAuthenticationRequired {
+	return &ErrSAMLAuthenticationRequired{Reason: reason}
 }
 
 func (e *ErrSAMLAuthenticationRequired) Error() string {

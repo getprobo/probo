@@ -12,40 +12,26 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQuery.graphql";
 
-import { InvitationCard } from "./_components/InvitationCard";
 import { MembershipCard } from "./_components/MembershipCard";
 
 export const membershipsPageQuery = graphql`
   query MembershipsPageQuery {
     viewer @required(action: THROW) {
-      memberships(
+      profiles(
         first: 1000
         orderBy: { direction: ASC, field: ORGANIZATION_NAME }
+        filter: { state: ACTIVE }
       )
-        @connection(key: "MembershipsPage_memberships")
+        @connection(key: "MembershipsPage_profiles")
         @required(action: THROW) {
-        __id
         edges @required(action: THROW) {
           node {
             id
             ...MembershipCardFragment
             organization @required(action: THROW) {
               name
+              ...MembershipCard_organizationFragment
             }
-          }
-        }
-      }
-      pendingInvitations(
-        first: 1000
-        orderBy: { direction: DESC, field: CREATED_AT }
-      )
-        @connection(key: "MembershipsPage_pendingInvitations")
-        @required(action: THROW) {
-        __id
-        edges @required(action: THROW) {
-          node {
-            id
-            ...InvitationCardFragment
           }
         }
       }
@@ -64,22 +50,18 @@ export function MembershipsPage(props: {
   const { queryRef } = props;
   const {
     viewer: {
-      memberships: { __id: membershipConnectionId, edges: initialMemberships },
-      pendingInvitations: {
-        __id: pendingInvitationsConnectionId,
-        edges: invitations,
-      },
+      profiles: { edges: initialProfiles },
     },
   } = usePreloadedQuery<MembershipsPageQuery>(membershipsPageQuery, queryRef);
 
-  const memberships = useMemo(() => {
+  const profiles = useMemo(() => {
     if (!search.trim()) {
-      return initialMemberships;
+      return initialProfiles;
     }
-    return initialMemberships.filter(({ node }) =>
+    return initialProfiles.filter(({ node }) =>
       node.organization.name.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [initialMemberships, search]);
+  }, [initialProfiles, search]);
 
   return (
     <>
@@ -88,24 +70,7 @@ export function MembershipsPage(props: {
           {__("Select an organization")}
         </h1>
         <div className="space-y-4 w-full">
-          {invitations.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-xl font-semibold">
-                {__("Pending invitations")}
-              </h2>
-              {invitations.map(({ node }) => (
-                <InvitationCard
-                  pendingInvitationsConnectionId={
-                    pendingInvitationsConnectionId
-                  }
-                  membershipConnectionId={membershipConnectionId}
-                  key={node.id}
-                  fKey={node}
-                />
-              ))}
-            </div>
-          )}
-          {initialMemberships.length > 0 && (
+          {initialProfiles.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xl font-semibold">
                 {__("Your organizations")}
@@ -118,15 +83,19 @@ export function MembershipsPage(props: {
                   onValueChange={setSearch}
                 />
               </div>
-              {memberships.length === 0
+              {profiles.length === 0
                 ? (
                     <div className="text-center text-txt-secondary py-4">
                       {__("No organizations found")}
                     </div>
                   )
                 : (
-                    memberships.map(({ node }) => (
-                      <MembershipCard key={node.id} fKey={node} />
+                    profiles.map(({ node }) => (
+                      <MembershipCard
+                        key={node.id}
+                        fKey={node}
+                        organizationFragmentRef={node.organization}
+                      />
                     ))
                   )}
             </div>

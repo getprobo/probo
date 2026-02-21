@@ -39,7 +39,7 @@ type (
 		State          TaskState      `db:"state"`
 		ReferenceID    string         `db:"reference_id"`
 		TimeEstimate   *time.Duration `db:"time_estimate"`
-		AssignedToID   *gid.GID       `db:"assigned_to"`
+		AssignedToID   *gid.GID       `db:"assigned_to_profile_id"`
 		Deadline       *time.Time     `db:"deadline"`
 		CreatedAt      time.Time      `db:"created_at"`
 		UpdatedAt      time.Time      `db:"updated_at"`
@@ -87,7 +87,7 @@ SELECT
     state,
     reference_id,
     time_estimate,
-    assigned_to,
+    assigned_to_profile_id,
     deadline,
     created_at,
     updated_at
@@ -140,7 +140,7 @@ INSERT INTO
         reference_id,
         state,
         time_estimate,
-        assigned_to,
+        assigned_to_profile_id,
         deadline,
         created_at,
         updated_at
@@ -155,7 +155,7 @@ VALUES (
     @reference_id,
     @state,
     @time_estimate,
-    @assigned_to,
+    @assigned_to_profile_id,
     @deadline,
     @created_at,
     @updated_at
@@ -163,19 +163,19 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"task_id":         c.ID,
-		"organization_id": c.OrganizationID,
-		"measure_id":      c.MeasureID,
-		"name":            c.Name,
-		"description":     c.Description,
-		"reference_id":    c.ReferenceID,
-		"state":           c.State,
-		"time_estimate":   c.TimeEstimate,
-		"assigned_to":     c.AssignedToID,
-		"deadline":        c.Deadline,
-		"created_at":      c.CreatedAt,
-		"updated_at":      c.UpdatedAt,
+		"tenant_id":              scope.GetTenantID(),
+		"task_id":                c.ID,
+		"organization_id":        c.OrganizationID,
+		"measure_id":             c.MeasureID,
+		"name":                   c.Name,
+		"description":            c.Description,
+		"reference_id":           c.ReferenceID,
+		"state":                  c.State,
+		"time_estimate":          c.TimeEstimate,
+		"assigned_to_profile_id": c.AssignedToID,
+		"deadline":               c.Deadline,
+		"created_at":             c.CreatedAt,
+		"updated_at":             c.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 
@@ -209,7 +209,7 @@ INSERT INTO
         reference_id,
         state,
         time_estimate,
-        assigned_to,
+        assigned_to_profile_id,
         deadline,
         created_at,
         updated_at
@@ -224,7 +224,7 @@ VALUES (
     @reference_id,
     @state,
     @time_estimate,
-    @assigned_to,
+    @assigned_to_profile_id,
     @deadline,
     @created_at,
     @updated_at
@@ -243,26 +243,26 @@ RETURNING
     reference_id,
     state,
     time_estimate,
-    assigned_to,
+    assigned_to_profile_id,
     deadline,
     created_at,
     updated_at
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"task_id":         c.ID,
-		"organization_id": c.OrganizationID,
-		"measure_id":      c.MeasureID,
-		"name":            c.Name,
-		"description":     c.Description,
-		"reference_id":    c.ReferenceID,
-		"state":           c.State,
-		"time_estimate":   c.TimeEstimate,
-		"assigned_to":     c.AssignedToID,
-		"deadline":        c.Deadline,
-		"created_at":      c.CreatedAt,
-		"updated_at":      c.UpdatedAt,
+		"tenant_id":              scope.GetTenantID(),
+		"task_id":                c.ID,
+		"organization_id":        c.OrganizationID,
+		"measure_id":             c.MeasureID,
+		"name":                   c.Name,
+		"description":            c.Description,
+		"reference_id":           c.ReferenceID,
+		"state":                  c.State,
+		"time_estimate":          c.TimeEstimate,
+		"assigned_to_profile_id": c.AssignedToID,
+		"deadline":               c.Deadline,
+		"created_at":             c.CreatedAt,
+		"updated_at":             c.UpdatedAt,
 	}
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -328,7 +328,7 @@ func (c *Tasks) LoadByOrganizationID(
 		state,
 		reference_id,
 		time_estimate,
-		assigned_to,
+		assigned_to_profile_id,
 		deadline,
 		created_at,
 		updated_at
@@ -409,7 +409,7 @@ SELECT
     state,
     reference_id,
     time_estimate,
-    assigned_to,
+    assigned_to_profile_id,
     deadline,
     created_at,
     updated_at
@@ -454,7 +454,7 @@ SET
   state = @state,
   time_estimate = @time_estimate,
   updated_at = @updated_at,
-  assigned_to = @assigned_to,
+  assigned_to_profile_id = @assigned_to_profile_id,
   deadline = @deadline
 WHERE %s
     AND id = @task_id
@@ -462,14 +462,14 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"task_id":       c.ID,
-		"name":          c.Name,
-		"description":   c.Description,
-		"state":         c.State,
-		"time_estimate": c.TimeEstimate,
-		"updated_at":    c.UpdatedAt,
-		"assigned_to":   c.AssignedToID,
-		"deadline":      c.Deadline,
+		"task_id":                c.ID,
+		"name":                   c.Name,
+		"description":            c.Description,
+		"state":                  c.State,
+		"time_estimate":          c.TimeEstimate,
+		"updated_at":             c.UpdatedAt,
+		"assigned_to_profile_id": c.AssignedToID,
+		"deadline":               c.Deadline,
 	}
 
 	maps.Copy(args, scope.SQLArguments())

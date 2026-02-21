@@ -29,7 +29,7 @@ import (
 func TestDatum_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	tests := []struct {
 		name        string
@@ -102,7 +102,7 @@ func TestDatum_Create(t *testing.T) {
 
 			input := map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
-				"ownerId":        peopleID,
+				"ownerId":        profileID,
 			}
 			for k, v := range tt.input {
 				input[k] = v
@@ -139,7 +139,7 @@ func TestDatum_Create(t *testing.T) {
 func TestDatum_Create_Validation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Validation Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	tests := []struct {
 		name              string
@@ -259,7 +259,7 @@ func TestDatum_Create_Validation(t *testing.T) {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
 			if !tt.skipOwner {
-				input["ownerId"] = peopleID
+				input["ownerId"] = profileID
 			}
 			for k, v := range tt.input {
 				input[k] = v
@@ -275,7 +275,7 @@ func TestDatum_Create_Validation(t *testing.T) {
 func TestDatum_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Update Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	tests := []struct {
 		name        string
@@ -287,7 +287,7 @@ func TestDatum_Update(t *testing.T) {
 		{
 			name: "update name",
 			setup: func() string {
-				return factory.NewDatum(owner, peopleID).
+				return factory.NewDatum(owner, profileID).
 					WithName("Datum to Update").
 					Create()
 			},
@@ -303,7 +303,7 @@ func TestDatum_Update(t *testing.T) {
 		{
 			name: "update to PUBLIC classification",
 			setup: func() string {
-				return factory.NewDatum(owner, peopleID).
+				return factory.NewDatum(owner, profileID).
 					WithName("Classification Test").
 					WithDataClassification("INTERNAL").
 					Create()
@@ -317,7 +317,7 @@ func TestDatum_Update(t *testing.T) {
 		{
 			name: "update to SECRET classification",
 			setup: func() string {
-				return factory.NewDatum(owner, peopleID).
+				return factory.NewDatum(owner, profileID).
 					WithName("Classification Test").
 					Create()
 			},
@@ -372,8 +372,8 @@ func TestDatum_Update(t *testing.T) {
 func TestDatum_Update_Validation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Update Validation Owner").Create()
-	baseDatumID := factory.NewDatum(owner, peopleID).WithName("Validation Test Datum").Create()
+	profileID := factory.CreateUser(owner)
+	baseDatumID := factory.NewDatum(owner, profileID).WithName("Validation Test Datum").Create()
 
 	tests := []struct {
 		name              string
@@ -487,10 +487,10 @@ func TestDatum_Update_Validation(t *testing.T) {
 func TestDatum_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Delete Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	t.Run("delete existing datum", func(t *testing.T) {
-		datumID := factory.NewDatum(owner, peopleID).WithName("Datum to Delete").Create()
+		datumID := factory.NewDatum(owner, profileID).WithName("Datum to Delete").Create()
 
 		query := `
 			mutation DeleteDatum($input: DeleteDatumInput!) {
@@ -552,11 +552,11 @@ func TestDatum_Delete_Validation(t *testing.T) {
 func TestDatum_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum List Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	datumNames := []string{"Datum A", "Datum B", "Datum C"}
 	for _, name := range datumNames {
-		factory.NewDatum(owner, peopleID).WithName(name).Create()
+		factory.NewDatum(owner, profileID).WithName(name).Create()
 	}
 
 	query := `
@@ -624,7 +624,7 @@ func TestDatum_Query(t *testing.T) {
 func TestDatum_Timestamps(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Timestamps Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	t.Run("createdAt and updatedAt are set on create", func(t *testing.T) {
 		beforeCreate := time.Now().Add(-time.Second)
@@ -658,7 +658,7 @@ func TestDatum_Timestamps(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"ownerId":            peopleID,
+				"ownerId":            profileID,
 				"name":               "Timestamp Test Datum",
 				"dataClassification": "INTERNAL",
 			},
@@ -670,7 +670,7 @@ func TestDatum_Timestamps(t *testing.T) {
 	})
 
 	t.Run("updatedAt changes on update", func(t *testing.T) {
-		datumID := factory.NewDatum(owner, peopleID).WithName("Timestamp Update Test").Create()
+		datumID := factory.NewDatum(owner, profileID).WithName("Timestamp Update Test").Create()
 
 		getQuery := `
 			query($id: ID!) {
@@ -734,8 +734,8 @@ func TestDatum_Timestamps(t *testing.T) {
 func TestDatum_SubResolvers(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum SubResolver Owner").Create()
-	datumID := factory.NewDatum(owner, peopleID).WithName("SubResolver Test Datum").Create()
+	profileID := factory.CreateUser(owner)
+	datumID := factory.NewDatum(owner, profileID).WithName("SubResolver Test Datum").Create()
 
 	t.Run("owner sub-resolver", func(t *testing.T) {
 		query := `
@@ -764,7 +764,7 @@ func TestDatum_SubResolvers(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{"id": datumID}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, peopleID, result.Node.Owner.ID)
+		assert.Equal(t, profileID, result.Node.Owner.ID)
 	})
 
 	t.Run("organization sub-resolver", func(t *testing.T) {
@@ -805,7 +805,7 @@ func TestDatum_RBAC(t *testing.T) {
 	t.Run("create", func(t *testing.T) {
 		t.Run("owner can create", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Owner").Create()
+			profileID := factory.CreateUser(owner)
 
 			_, err := owner.Do(`
 				mutation CreateDatum($input: CreateDatumInput!) {
@@ -816,7 +816,7 @@ func TestDatum_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId":     owner.GetOrganizationID().String(),
-					"ownerId":            peopleID,
+					"ownerId":            profileID,
 					"name":               "RBAC Test Datum",
 					"dataClassification": "INTERNAL",
 				},
@@ -827,7 +827,7 @@ func TestDatum_RBAC(t *testing.T) {
 		t.Run("admin can create", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Admin Owner").Create()
+			profileID := factory.CreateUser(owner)
 
 			_, err := admin.Do(`
 				mutation CreateDatum($input: CreateDatumInput!) {
@@ -838,7 +838,7 @@ func TestDatum_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId":     admin.GetOrganizationID().String(),
-					"ownerId":            peopleID,
+					"ownerId":            profileID,
 					"name":               "RBAC Test Datum",
 					"dataClassification": "INTERNAL",
 				},
@@ -849,7 +849,7 @@ func TestDatum_RBAC(t *testing.T) {
 		t.Run("viewer cannot create", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Viewer Owner").Create()
+			profileID := factory.CreateUser(owner)
 
 			_, err := viewer.Do(`
 				mutation CreateDatum($input: CreateDatumInput!) {
@@ -860,7 +860,7 @@ func TestDatum_RBAC(t *testing.T) {
 			`, map[string]any{
 				"input": map[string]any{
 					"organizationId":     viewer.GetOrganizationID().String(),
-					"ownerId":            peopleID,
+					"ownerId":            profileID,
 					"name":               "RBAC Test Datum",
 					"dataClassification": "INTERNAL",
 				},
@@ -872,8 +872,8 @@ func TestDatum_RBAC(t *testing.T) {
 	t.Run("update", func(t *testing.T) {
 		t.Run("owner can update", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Update Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Update Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Update Test").Create()
 
 			_, err := owner.Do(`
 				mutation UpdateDatum($input: UpdateDatumInput!) {
@@ -893,8 +893,8 @@ func TestDatum_RBAC(t *testing.T) {
 		t.Run("admin can update", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Admin Update Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Update Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Update Test").Create()
 
 			_, err := admin.Do(`
 				mutation UpdateDatum($input: UpdateDatumInput!) {
@@ -914,8 +914,8 @@ func TestDatum_RBAC(t *testing.T) {
 		t.Run("viewer cannot update", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Viewer Update Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Update Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Update Test").Create()
 
 			_, err := viewer.Do(`
 				mutation UpdateDatum($input: UpdateDatumInput!) {
@@ -936,8 +936,8 @@ func TestDatum_RBAC(t *testing.T) {
 	t.Run("delete", func(t *testing.T) {
 		t.Run("owner can delete", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Delete Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Delete Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Delete Test").Create()
 
 			_, err := owner.Do(`
 				mutation DeleteDatum($input: DeleteDatumInput!) {
@@ -954,8 +954,8 @@ func TestDatum_RBAC(t *testing.T) {
 		t.Run("admin can delete", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Admin Delete Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Delete Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Delete Test").Create()
 
 			_, err := admin.Do(`
 				mutation DeleteDatum($input: DeleteDatumInput!) {
@@ -972,8 +972,8 @@ func TestDatum_RBAC(t *testing.T) {
 		t.Run("viewer cannot delete", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Viewer Delete Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Delete Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Delete Test").Create()
 
 			_, err := viewer.Do(`
 				mutation DeleteDatum($input: DeleteDatumInput!) {
@@ -991,8 +991,8 @@ func TestDatum_RBAC(t *testing.T) {
 	t.Run("read", func(t *testing.T) {
 		t.Run("owner can read", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Read Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Read Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Read Test").Create()
 
 			var result struct {
 				Node *struct {
@@ -1015,8 +1015,8 @@ func TestDatum_RBAC(t *testing.T) {
 		t.Run("admin can read", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Admin Read Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Read Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Read Test").Create()
 
 			var result struct {
 				Node *struct {
@@ -1039,8 +1039,8 @@ func TestDatum_RBAC(t *testing.T) {
 		t.Run("viewer can read", func(t *testing.T) {
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-			peopleID := factory.NewPeople(owner).WithFullName("RBAC Viewer Read Owner").Create()
-			datumID := factory.NewDatum(owner, peopleID).WithName("RBAC Read Test").Create()
+			profileID := factory.CreateUser(owner)
+			datumID := factory.NewDatum(owner, profileID).WithName("RBAC Read Test").Create()
 
 			var result struct {
 				Node *struct {
@@ -1065,7 +1065,7 @@ func TestDatum_RBAC(t *testing.T) {
 func TestDatum_MaxLength_Validation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Max Length Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	longName := strings.Repeat("a", 1001)
 
@@ -1083,7 +1083,7 @@ func TestDatum_MaxLength_Validation(t *testing.T) {
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"ownerId":            peopleID,
+				"ownerId":            profileID,
 				"name":               longName,
 				"dataClassification": "INTERNAL",
 			},
@@ -1093,7 +1093,7 @@ func TestDatum_MaxLength_Validation(t *testing.T) {
 	})
 
 	t.Run("update", func(t *testing.T) {
-		datumID := factory.NewDatum(owner, peopleID).WithName("Max Length Test").Create()
+		datumID := factory.NewDatum(owner, profileID).WithName("Max Length Test").Create()
 
 		query := `
 			mutation UpdateDatum($input: UpdateDatumInput!) {
@@ -1117,10 +1117,10 @@ func TestDatum_MaxLength_Validation(t *testing.T) {
 func TestDatum_Pagination(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Pagination Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	for i := 0; i < 5; i++ {
-		factory.NewDatum(owner, peopleID).
+		factory.NewDatum(owner, profileID).
 			WithName(fmt.Sprintf("Pagination Datum %d", i)).
 			Create()
 	}
@@ -1266,8 +1266,8 @@ func TestDatum_TenantIsolation(t *testing.T) {
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	peopleID := factory.NewPeople(org1Owner).WithFullName("Org1 Datum Owner").Create()
-	datumID := factory.NewDatum(org1Owner, peopleID).WithName("Org1 Datum").Create()
+	profileID := factory.CreateUser(org1Owner)
+	datumID := factory.NewDatum(org1Owner, profileID).WithName("Org1 Datum").Create()
 
 	t.Run("cannot read datum from another organization", func(t *testing.T) {
 		query := `
@@ -1373,10 +1373,10 @@ func TestDatum_TenantIsolation(t *testing.T) {
 func TestDatum_Ordering(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Datum Ordering Owner").Create()
+	profileID := factory.CreateUser(owner)
 
-	factory.NewDatum(owner, peopleID).WithName("AAA Order Test").Create()
-	factory.NewDatum(owner, peopleID).WithName("ZZZ Order Test").Create()
+	factory.NewDatum(owner, profileID).WithName("AAA Order Test").Create()
+	factory.NewDatum(owner, profileID).WithName("ZZZ Order Test").Create()
 
 	t.Run("order by created_at descending", func(t *testing.T) {
 		query := `

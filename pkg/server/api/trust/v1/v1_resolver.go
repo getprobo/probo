@@ -524,11 +524,12 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	access, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
-			TrustCenterID: trustCenter.ID,
-			Email:         identity.EmailAddress,
-			FullName:      identity.FullName,
-			DocumentIDs:   []gid.GID{input.DocumentID},
-			ReportIDs:     []gid.GID{},
+			TrustCenterID:      trustCenter.ID,
+			Email:              identity.EmailAddress,
+			FullName:           identity.FullName,
+			DocumentIDs:        []gid.GID{input.DocumentID},
+			ReportIDs:          []gid.GID{},
+			TrustCenterFileIDs: []gid.GID{},
 		},
 	)
 	if err != nil {
@@ -573,11 +574,12 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	access, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
-			TrustCenterID: trustCenter.ID,
-			Email:         identity.EmailAddress,
-			FullName:      identity.FullName,
-			DocumentIDs:   []gid.GID{},
-			ReportIDs:     []gid.GID{input.ReportID},
+			TrustCenterID:      trustCenter.ID,
+			Email:              identity.EmailAddress,
+			FullName:           identity.FullName,
+			DocumentIDs:        []gid.GID{},
+			ReportIDs:          []gid.GID{input.ReportID},
+			TrustCenterFileIDs: []gid.GID{},
 		},
 	)
 	if err != nil {

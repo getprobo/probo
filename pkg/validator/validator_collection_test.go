@@ -40,8 +40,7 @@ func TestMinItems(t *testing.T) {
 		err := MinItems(2)(&items)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
@@ -85,8 +84,7 @@ func TestMaxItems(t *testing.T) {
 		err := MaxItems(2)(&items)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
@@ -114,8 +112,7 @@ func TestUniqueItems(t *testing.T) {
 		err := UniqueItems()(&items)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-		if err.Code != ErrorCodeInvalidFormat {
+		} else if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
 		}
 	})
@@ -157,12 +154,13 @@ func TestUniqueItems(t *testing.T) {
 		err := UniqueItems()(&items)
 		if err == nil {
 			t.Fatal("expected validation error for non-comparable type")
-		}
-		if err.Code != ErrorCodeInvalidFormat {
-			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
-		}
-		if err.Message != "cannot validate uniqueness for non-comparable types" {
-			t.Errorf("unexpected error message: %s", err.Message)
+		} else {
+			if err.Code != ErrorCodeInvalidFormat {
+				t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
+			}
+			if err.Message != "cannot validate uniqueness for non-comparable types" {
+				t.Errorf("unexpected error message: %s", err.Message)
+			}
 		}
 	})
 
@@ -171,8 +169,7 @@ func TestUniqueItems(t *testing.T) {
 		err := UniqueItems()(&items)
 		if err == nil {
 			t.Fatal("expected validation error for non-comparable type")
-		}
-		if err.Code != ErrorCodeInvalidFormat {
+		} else if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
 		}
 	})
@@ -185,8 +182,7 @@ func TestUniqueItems(t *testing.T) {
 		err := UniqueItems()(&items)
 		if err == nil {
 			t.Fatal("expected validation error for non-comparable type")
-		}
-		if err.Code != ErrorCodeInvalidFormat {
+		} else if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
 		}
 	})
@@ -212,8 +208,7 @@ func TestUniqueItems(t *testing.T) {
 		err := UniqueItems()(&items)
 		if err == nil {
 			t.Fatal("expected validation error for duplicate comparable structs")
-		}
-		if err.Code != ErrorCodeInvalidFormat {
+		} else if err.Code != ErrorCodeInvalidFormat {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
 		}
 	})

@@ -1,9 +1,11 @@
 import { useTranslate } from "@probo/i18n";
 import { Button } from "@probo/ui";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 export default function SignInPage() {
   const { __ } = useTranslate();
+
+  const location = useLocation();
 
   return (
     <div className="space-y-6 w-full max-w-md mx-auto pt-8">
@@ -14,7 +16,10 @@ export default function SignInPage() {
         {__("Choose your login method")}
       </p>
 
-      <Button className="w-xs h-10 mx-auto" to="/auth/password-login">
+      <Button
+        className="w-xs h-10 mx-auto"
+        to={{ pathname: "/auth/password-login", search: location.search }}
+      >
         {__("Login with Email")}
       </Button>
 
@@ -27,14 +32,21 @@ export default function SignInPage() {
         </span>
       </div>
 
-      <Button variant="secondary" className="w-xs h-10 mx-auto" to="/auth/sso-login">
+      <Button
+        variant="secondary"
+        className="w-xs h-10 mx-auto"
+        to={{ pathname: "/auth/sso-login", search: location.search }}
+      >
         {__("Login with SSO")}
       </Button>
 
       <div className="text-center mt-6 text-sm text-txt-secondary">
         {__("Don't have an account ?")}
         {" "}
-        <Link to="/auth/register" className="underline hover:text-txt-primary">
+        <Link
+          to={{ pathname: "/auth/register", search: location.search }}
+          className="underline hover:text-txt-primary"
+        >
           {__("Register")}
         </Link>
       </div>

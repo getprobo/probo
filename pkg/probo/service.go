@@ -79,7 +79,6 @@ type (
 		Evidences                         *EvidenceService
 		Organizations                     *OrganizationService
 		Vendors                           *VendorService
-		Peoples                           *PeopleService
 		Documents                         *DocumentService
 		Controls                          *ControlService
 		Risks                             *RiskService
@@ -93,6 +92,7 @@ type (
 		Data                              *DatumService
 		Audits                            *AuditService
 		Meetings                          *MeetingService
+		WebhookSubscriptions              *WebhookSubscriptionService
 		Reports                           *ReportService
 		TrustCenters                      *TrustCenterService
 		TrustCenterAccesses               *TrustCenterAccessService
@@ -186,7 +186,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 			),
 		),
 	}
-	tenantService.Peoples = &PeopleService{svc: tenantService}
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Documents = &DocumentService{
 		svc:               tenantService,
@@ -215,6 +214,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Data = &DatumService{svc: tenantService}
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Meetings = &MeetingService{svc: tenantService}
+	tenantService.WebhookSubscriptions = &WebhookSubscriptionService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}

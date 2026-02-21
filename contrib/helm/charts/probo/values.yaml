@@ -307,37 +307,48 @@ postgresql:
 
 # S3 storage configuration
 # For production: Use external S3 (AWS S3, GCS, etc.)
-# For testing: Enable the included MinIO chart
+# For testing: Enable the included SeaweedFS chart
 s3:
-  # External S3 configuration (used when minio.enabled=false)
+  # External S3 configuration (used when seaweedfs.enabled=false)
   region: "us-east-1"
   bucket: "probod"
   # For AWS S3, leave endpoint empty
-  # For S3-compatible storage (MinIO, DigitalOcean Spaces, etc.), set the endpoint
+  # For S3-compatible storage (SeaweedFS, DigitalOcean Spaces, etc.), set the endpoint
   endpoint: ""
-  accessKeyId: ""  # REQUIRED when minio.enabled=false: S3 access key
-  secretAccessKey: ""  # REQUIRED when minio.enabled=false: S3 secret key
+  accessKeyId: ""  # REQUIRED when seaweedfs.enabled=false: S3 access key
+  secretAccessKey: ""  # REQUIRED when seaweedfs.enabled=false: S3 secret key
   # Use path-style URLs (required for Azure Blob Storage and some S3-compatible services)
   # When true: https://endpoint/bucket/key
   # When false (default): https://bucket.endpoint/key
   usePathStyle: false
 
-# MinIO configuration
-# Enable included MinIO for testing/development (NOT for production)
-minio:
-  # -- enabled included Minio operator for s3 resource demo purposes
+# SeaweedFS configuration
+# Enable included SeaweedFS for testing/development (NOT for production)
+seaweedfs:
+  # -- Enable included SeaweedFS for S3-compatible object storage
   enabled: true
-  mode: standalone
+
+  image:
+    repository: chrislusf/seaweedfs
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
   persistence:
     enabled: false
-  resources:
-    requests:
-      memory: 128Mi
-  primary:
-    enabled: true
+    size: 10Gi
+    storageClass: ""
+
   auth:
-    rootUser: probod
-    rootPassword: probod
+    accessKey: probod
+    secretKey: probod
 
 # Headless Chrome for PDF generation
 chrome:

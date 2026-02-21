@@ -181,152 +181,24 @@ func (s AccountService) VerifyEmail(ctx context.Context, token string) error {
 	)
 }
 
-func (s *AccountService) AcceptInvitation(
-	ctx context.Context,
-	identityID gid.GID,
-	invitationID gid.GID,
-) (*coredata.Invitation, *coredata.Membership, error) {
-	var (
-		now        = time.Now()
-		membership = &coredata.Membership{}
-		invitation = &coredata.Invitation{}
-	)
-
-	err := s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			identity := coredata.Identity{}
-
-			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewIdentityNotFoundError(identityID)
-				}
-
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-
-			if err := invitation.LoadByID(ctx, tx, coredata.NewNoScope(), invitationID); err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewInvitationNotFoundError(invitationID)
-				}
-
-				return fmt.Errorf("cannot load invitation: %w", err)
-			}
-
-			if invitation.Email != identity.EmailAddress {
-				return NewInvitationNotFoundError(invitationID)
-			}
-
-			if invitation.AcceptedAt != nil {
-				return NewInvitationAlreadyAcceptedError(invitationID)
-			}
-
-			if invitation.ExpiresAt.Before(now) {
-				return NewInvitationExpiredError(invitationID)
-			}
-
-			tenantID := invitation.OrganizationID.TenantID()
-			scope := coredata.NewScope(invitation.OrganizationID.TenantID())
-
-			existingMembership := &coredata.Membership{}
-			if err := existingMembership.LoadByIdentityAndOrg(
-				ctx,
-				tx,
-				scope,
-				identityID,
-				invitation.OrganizationID,
-			); err != nil && err != coredata.ErrResourceNotFound {
-				return fmt.Errorf("cannot load existing membership: %w", err)
-			}
-
-			if existingMembership.ID != gid.Nil && existingMembership.State == coredata.MembershipStateInactive {
-				existingMembership.State = coredata.MembershipStateActive
-				existingMembership.Role = invitation.Role
-				existingMembership.UpdatedAt = now
-
-				if err := existingMembership.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot reactivate membership: %w", err)
-				}
-
-				membership = existingMembership
-			} else {
-				membership = &coredata.Membership{
-					ID:             gid.New(tenantID, coredata.MembershipEntityType),
-					IdentityID:     identityID,
-					OrganizationID: invitation.OrganizationID,
-					Role:           invitation.Role,
-					Source:         coredata.MembershipSourceManual,
-					State:          coredata.MembershipStateActive,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				if err := membership.Insert(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot create membership: %w", err)
-				}
-
-				profile := &coredata.MembershipProfile{
-					ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
-					MembershipID: membership.ID,
-					FullName:     identity.FullName,
-					CreatedAt:    now,
-					UpdatedAt:    now,
-				}
-
-				if err := profile.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert profile: %w", err)
-				}
-			}
-
-			invitation.AcceptedAt = &now
-			if err := invitation.Update(ctx, tx, scope); err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewInvitationNotFoundError(invitationID)
-				}
-
-				return fmt.Errorf("cannot update invitation: %w", err)
-			}
-
-			// Accept other pending invitations for email in organization
-			invitations := &coredata.Invitations{}
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			if err := invitations.ExpireByEmailAndOrganization(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(invitation.OrganizationID),
-				invitation.Email,
-				invitation.OrganizationID,
-				onlyPending,
-			); err != nil {
-				return fmt.Errorf("cannot expire pending invitations by email: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return invitation, membership, nil
-}
-
 func (s *AccountService) ListPendingInvitations(
 	ctx context.Context,
-	identityID gid.GID,
+	userID gid.GID,
 	cursor *page.Cursor[coredata.InvitationOrderField],
 ) (*page.Page[*coredata.Invitation, coredata.InvitationOrderField], error) {
-	var invitations coredata.Invitations
+	var (
+		scope       = coredata.NewScopeFromObjectID(userID)
+		invitations coredata.Invitations
+	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			identity := coredata.Identity{}
-			err := identity.LoadByID(ctx, conn, identityID)
+			profile := coredata.MembershipProfile{}
+			err := profile.LoadByID(ctx, conn, scope, userID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewIdentityNotFoundError(identityID)
+					return NewIdentityNotFoundError(userID)
 				}
 
 				return fmt.Errorf("cannot load identity: %w", err)
@@ -334,7 +206,7 @@ func (s *AccountService) ListPendingInvitations(
 
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 
-			err = invitations.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identity.EmailAddress, cursor, onlyPending)
+			err = invitations.LoadByUserID(ctx, conn, scope, userID, cursor, onlyPending)
 			if err != nil {
 				return fmt.Errorf("cannot load invitations: %w", err)
 			}
@@ -348,91 +220,6 @@ func (s *AccountService) ListPendingInvitations(
 	}
 
 	return page.NewPage(invitations, cursor), nil
-}
-
-func (s *AccountService) CountPendingInvitations(
-	ctx context.Context,
-	identityID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			identity := coredata.Identity{}
-			err := identity.LoadByID(ctx, conn, identityID)
-			if err != nil {
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-
-			invitations := coredata.Invitations{}
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-
-			count, err = invitations.CountByEmail(ctx, conn, identity.EmailAddress, onlyPending)
-			if err != nil {
-				return fmt.Errorf("cannot count pending invitations: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
-func (s *AccountService) ListMemberships(
-	ctx context.Context,
-	identityID gid.GID,
-	cursor *page.Cursor[coredata.MembershipOrderField],
-) (*page.Page[*coredata.Membership, coredata.MembershipOrderField], error) {
-	var memberships coredata.Memberships
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := memberships.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
-			if err != nil {
-				return fmt.Errorf("cannot load memberships: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(memberships, cursor), nil
-}
-
-func (s *AccountService) CountMemberships(
-	ctx context.Context,
-	identityID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) (err error) {
-			memberships := coredata.Memberships{}
-			count, err = memberships.CountByIdentityID(ctx, conn, identityID)
-			if err != nil {
-				return fmt.Errorf("cannot count memberships: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 func (s AccountService) ChangePassword(ctx context.Context, identityID gid.GID, req *ChangePasswordRequest) error {
@@ -803,7 +590,13 @@ func (s AccountService) GetMembershipForOrganization(
 				return fmt.Errorf("cannot load identity %q: %w", identityID, err)
 			}
 
-			if err := membership.LoadByIdentityInOrganization(ctx, tx, identityID, organizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(organizationID),
+				identityID,
+				organizationID,
+			); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
@@ -816,45 +609,6 @@ func (s AccountService) GetMembershipForOrganization(
 	}
 
 	return membership, nil
-}
-
-func (s AccountService) GetProfileForMembership(ctx context.Context, membershipID gid.GID) (*coredata.MembershipProfile, error) {
-	var (
-		scope   = coredata.NewScopeFromObjectID(membershipID)
-		profile = &coredata.MembershipProfile{}
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			membership := &coredata.Membership{}
-			err := membership.LoadByID(ctx, conn, scope, membershipID)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewMembershipNotFoundError(membershipID)
-				}
-
-				return fmt.Errorf("cannot load membership: %w", err)
-			}
-
-			err = profile.LoadByMembershipID(ctx, conn, scope, membershipID)
-			if err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewProfileNotFoundError(membershipID)
-				}
-
-				return fmt.Errorf("cannot load membership profile: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return profile, nil
 }
 
 func (s AccountService) ListSAMLConfigurationsForEmail(
@@ -906,4 +660,57 @@ func (s AccountService) CountSAMLConfigurationsForEmail(
 	}
 
 	return count, nil
+}
+
+func (s *AccountService) ListProfilesForIdentity(
+	ctx context.Context,
+	identityID gid.GID,
+	cursor *page.Cursor[coredata.MembershipProfileOrderField],
+	filter *coredata.MembershipProfileFilter,
+) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
+	var (
+		profiles = coredata.MembershipProfiles{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profiles.LoadByIdentityID(ctx, conn, identityID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load profiles: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(profiles, cursor), nil
+}
+
+func (s AccountService) CountProfiles(
+	ctx context.Context,
+	identityID gid.GID,
+	filter *coredata.MembershipProfileFilter,
+) (int, error) {
+	var (
+		count int
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			profiles := coredata.MembershipProfiles{}
+			count, err = profiles.CountByIdentityID(ctx, conn, identityID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count profiles: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return count, err
 }

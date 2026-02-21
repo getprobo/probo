@@ -24,6 +24,9 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
+
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 type MeetingService struct {
@@ -59,7 +62,7 @@ func (cmr *CreateMeetingRequest) Validate() error {
 	v.Check(cmr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cmr.Date, "date", validator.Required())
 	v.CheckEach(cmr.AttendeeIDs, "attendee_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("attendee_ids[%d]", index), validator.Required(), validator.GID(coredata.PeopleEntityType))
+		v.Check(item, fmt.Sprintf("attendee_ids[%d]", index), validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	})
 	v.Check(cmr.Minutes, "minutes", validator.SafeText(MinutesMaxLength))
 
@@ -72,7 +75,7 @@ func (umr *UpdateMeetingRequest) Validate() error {
 	v.Check(umr.MeetingID, "meeting_id", validator.Required(), validator.GID(coredata.MeetingEntityType))
 	v.Check(umr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.CheckEach(umr.AttendeeIDs, "attendee_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("attendee_ids[%d]", index), validator.Required(), validator.GID(coredata.PeopleEntityType))
+		v.Check(item, fmt.Sprintf("attendee_ids[%d]", index), validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	})
 	v.Check(umr.Minutes, "minutes", validator.SafeText(MinutesMaxLength))
 
@@ -196,15 +199,19 @@ func (s MeetingService) Create(
 			}
 
 			if len(req.AttendeeIDs) > 0 {
-				var attendeePeople coredata.Peoples
-				if err := attendeePeople.LoadByIDs(ctx, conn, s.svc.scope, req.AttendeeIDs); err != nil {
-					return fmt.Errorf("cannot load attendees: %w", err)
+				var attendeeProfiles coredata.MembershipProfiles
+				if err := attendeeProfiles.LoadByIDs(ctx, conn, s.svc.scope, req.AttendeeIDs); err != nil {
+					return fmt.Errorf("cannot load attendee profiles: %w", err)
 				}
 
 				var attendees coredata.MeetingAttendees
 				if err := attendees.Merge(ctx, conn, s.svc.scope, meeting.ID, organization.ID, req.AttendeeIDs); err != nil {
 					return fmt.Errorf("cannot merge meeting attendees: %w", err)
 				}
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeMeetingCreated, webhooktypes.NewMeeting(meeting)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil
@@ -221,13 +228,13 @@ func (s MeetingService) Create(
 func (s MeetingService) GetAttendees(
 	ctx context.Context,
 	meetingID gid.GID,
-) (coredata.Peoples, error) {
-	var people coredata.Peoples
+) (coredata.MembershipProfiles, error) {
+	var attendees coredata.MembershipProfiles
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return people.LoadByMeetingID(ctx, conn, s.svc.scope, meetingID)
+			return attendees.LoadByMeetingID(ctx, conn, s.svc.scope, meetingID)
 		},
 	)
 
@@ -235,7 +242,7 @@ func (s MeetingService) GetAttendees(
 		return nil, err
 	}
 
-	return people, nil
+	return attendees, nil
 }
 
 func (s MeetingService) Update(
@@ -272,15 +279,19 @@ func (s MeetingService) Update(
 			}
 
 			if req.AttendeeIDs != nil {
-				var attendeePeople coredata.Peoples
-				if err := attendeePeople.LoadByIDs(ctx, conn, s.svc.scope, req.AttendeeIDs); err != nil {
-					return fmt.Errorf("cannot load attendees: %w", err)
+				var attendeeProfiles coredata.MembershipProfiles
+				if err := attendeeProfiles.LoadByIDs(ctx, conn, s.svc.scope, req.AttendeeIDs); err != nil {
+					return fmt.Errorf("cannot load attendee profiles: %w", err)
 				}
 
 				var attendees coredata.MeetingAttendees
 				if err := attendees.Merge(ctx, conn, s.svc.scope, meeting.ID, meeting.OrganizationID, req.AttendeeIDs); err != nil {
 					return fmt.Errorf("cannot merge meeting attendees: %w", err)
 				}
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, meeting.OrganizationID, coredata.WebhookEventTypeMeetingUpdated, webhooktypes.NewMeeting(meeting)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil
@@ -305,6 +316,10 @@ func (s MeetingService) Delete(
 		func(conn pg.Conn) error {
 			if err := meeting.LoadByID(ctx, conn, s.svc.scope, meetingID); err != nil {
 				return fmt.Errorf("cannot load meeting: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, meeting.OrganizationID, coredata.WebhookEventTypeMeetingDeleted, webhooktypes.NewMeeting(meeting)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if err := meeting.Delete(ctx, conn, s.svc.scope); err != nil {

@@ -4,6 +4,173 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.130.3] - 2026-02-20
+
+### Fixed
+
+- Add mcp bearer header
+
+## [0.130.2] - 2026-02-20
+
+### Fixed
+
+- Fix MCP authentication error
+
+## [0.130.1] - 2026-02-20
+
+### Fixed
+
+- CreateUser sets profile EmailAddress field
+- Invitation GraphQL type fix: remove organization & user fields
+
+## [0.130.0] - 2026-02-20
+
+### Added
+
+- Add processing activities to mcp
+
+## [0.129.3] - 2026-02-19
+
+### Fixed
+
+- Console org dropdown query
+
+## [0.129.2] - 2026-02-19
+
+### Added
+
+- Add access to SOA for auditor
+
+## [0.129.1] - 2026-02-19
+
+### Fixed
+
+- Do not display inactive profiles on iam home page
+- Fix profile update additional email addresses coalesce missing
+
+## [0.129.0] - 2026-02-19
+
+### Added
+
+- n8n operations for users (profiles)
+- MCP operations for users (profiles)
+- SCIM user title synchronization
+
+### Changed
+
+- Dropped minio in favor of seaweedFS
+- Profile data model linked to org and identity instead of membership
+- Moved state and source on profiles instead of memberships
+- Refactored invitations into account activations
+
+## [0.128.0] - 2026-02-17
+
+### Added
+
+- Add audit n8n nodes
+- Add delete measure to mcp
+
+## [0.127.1] - 2026-02-17
+
+### Changed
+
+- Remove deprecated SOA
+
+## [0.127.0] - 2026-02-17
+
+### Changed
+
+- Change single document owner to multiple approvers
+
+## [0.126.1] - 2026-02-16
+
+### Added
+
+- Add delete tasks to mcp
+
+## [0.126.0] - 2026-02-16
+
+### Fixed
+
+- Fix deployment
+
+## [0.125.0] - 2026-02-16
+
+### Added
+
+- Add delete risks to mcp
+- Add meetings to mcp
+
+## [0.124.3] - 2026-02-16
+
+### Fixed
+
+- Fix missing risk validations
+
+## [0.124.2] - 2026-02-16
+
+### Fixed
+
+- Display control description
+- Change download button text while loading in compliance page
+
+## [0.124.1] - 2026-02-16
+
+### Fixed
+
+- Fix control order in SOA
+- Fix saml subject not populated
+
+## [0.124.0] - 2026-02-13
+
+### Added
+
+- Add webhooks
+
+## [0.123.3] - 2026-02-13
+
+### Fixed
+
+- Fix missing name id format for idp initiated SAML request
+
+## [0.123.2] - 2026-02-13
+
+### Fixed
+
+- Fix SAML subject must not be updated
+- Fix SAML subject not set on first login
+
+## [0.123.1] - 2026-02-13
+
+### Fixed
+
+- Fix missing NameID format information in SAML metadata
+
+## [0.123.0] - 2026-02-12
+
+### Changed
+
+- Upgrade Postgres to 18.1
+- IAM: Migrate people into profiles
+
+## [0.122.0] - 2026-02-12
+
+### Added
+
+- Redirect to previous location on authentication or assumption needed
+
+## [0.121.1] - 2026-02-11
+
+### Fixed
+
+- Fix Google Workspace SCIM bridge does not set active state at creation
+- Fix compliance page access request was not active by default
+- Fix compliance page request access add non request file to the requested one
+
+### Security
+
+- Update javascript dependencies
+
 ## [0.121.0] - 2026-02-10
 
 ### Added

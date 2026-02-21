@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a493a708fe8353db1159647a455582ad>>
+ * @generated SignedSource<<4716483592ffb7c9bb7d96ea56503734>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -190,19 +190,6 @@ return {
                 "storageKey": "permission(action:\"core:control:create\")"
               },
               {
-                "alias": "canGenerateSOA",
-                "args": [
-                  {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:framework:generate-state-of-applicability"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:framework:generate-state-of-applicability\")"
-              },
-              {
                 "alias": null,
                 "args": null,
                 "concreteType": "Organization",
@@ -266,20 +253,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "status",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "exclusionJustification",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "bestPractice",
                             "storageKey": null
                           }
@@ -314,12 +287,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "58485d98106169267addab7729095131",
+    "cacheID": "9cb1289702b4dd6c83330a0ef84297d6",
     "id": null,
     "metadata": {},
     "name": "FrameworkGraphNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  canExport: permission(action: \"core:franework:export\")\n  canUpdate: permission(action: \"core:framework:update\")\n  canDelete: permission(action: \"core:framework:delete\")\n  canCreateControl: permission(action: \"core:control:create\")\n  canGenerateSOA: permission(action: \"core:framework:generate-state-of-applicability\")\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        status\n        exclusionJustification\n        bestPractice\n      }\n    }\n  }\n}\n"
+    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  canExport: permission(action: \"core:franework:export\")\n  canUpdate: permission(action: \"core:framework:update\")\n  canDelete: permission(action: \"core:framework:delete\")\n  canCreateControl: permission(action: \"core:control:create\")\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        bestPractice\n      }\n    }\n  }\n}\n"
   }
 };
 })();

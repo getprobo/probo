@@ -12,20 +12,25 @@ import (
 type ResolverInterface interface {
 	ListOrganizationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListOrganizationsInput) (*mcp.CallToolResult, types.ListOrganizationsOutput, error)
 	ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorsInput) (*mcp.CallToolResult, types.ListVendorsOutput, error)
-	ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListPeopleInput) (*mcp.CallToolResult, types.ListPeopleOutput, error)
+	ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListUsersInput) (*mcp.CallToolResult, types.ListUsersOutput, error)
+	GetUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetUserInput) (*mcp.CallToolResult, types.GetUserOutput, error)
+	CreateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateUserInput) (*mcp.CallToolResult, types.CreateUserOutput, error)
+	InviteUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.InviteUserInput) (*mcp.CallToolResult, types.InviteUserOutput, error)
+	UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateUserInput) (*mcp.CallToolResult, types.UpdateUserOutput, error)
+	UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMembershipInput) (*mcp.CallToolResult, types.UpdateMembershipOutput, error)
+	RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveUserInput) (*mcp.CallToolResult, types.RemoveUserOutput, error)
 	AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorInput) (*mcp.CallToolResult, types.AddVendorOutput, error)
 	UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error)
-	GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error)
-	AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddPeopleInput) (*mcp.CallToolResult, types.AddPeopleOutput, error)
-	UpdatePeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdatePeopleInput) (*mcp.CallToolResult, types.UpdatePeopleOutput, error)
 	ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error)
 	GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error)
 	AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error)
 	UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskInput) (*mcp.CallToolResult, types.UpdateRiskOutput, error)
+	DeleteRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskInput) (*mcp.CallToolResult, types.DeleteRiskOutput, error)
 	ListMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasuresInput) (*mcp.CallToolResult, types.ListMeasuresOutput, error)
 	GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeasureInput) (*mcp.CallToolResult, types.GetMeasureOutput, error)
 	AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error)
 	UpdateMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeasureInput) (*mcp.CallToolResult, types.UpdateMeasureOutput, error)
+	DeleteMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeasureInput) (*mcp.CallToolResult, types.DeleteMeasureOutput, error)
 	ListFrameworksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFrameworksInput) (*mcp.CallToolResult, types.ListFrameworksOutput, error)
 	GetFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetFrameworkInput) (*mcp.CallToolResult, types.GetFrameworkOutput, error)
 	AddFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddFrameworkInput) (*mcp.CallToolResult, types.AddFrameworkOutput, error)
@@ -46,6 +51,21 @@ type ResolverInterface interface {
 	GetObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetObligationInput) (*mcp.CallToolResult, types.GetObligationOutput, error)
 	AddObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddObligationInput) (*mcp.CallToolResult, types.AddObligationOutput, error)
 	UpdateObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateObligationInput) (*mcp.CallToolResult, types.UpdateObligationOutput, error)
+	ListProcessingActivitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListProcessingActivitiesInput) (*mcp.CallToolResult, types.ListProcessingActivitiesOutput, error)
+	GetProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetProcessingActivityInput) (*mcp.CallToolResult, types.GetProcessingActivityOutput, error)
+	AddProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddProcessingActivityInput) (*mcp.CallToolResult, types.AddProcessingActivityOutput, error)
+	UpdateProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProcessingActivityInput) (*mcp.CallToolResult, types.UpdateProcessingActivityOutput, error)
+	DeleteProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteProcessingActivityInput) (*mcp.CallToolResult, types.DeleteProcessingActivityOutput, error)
+	ListDataProtectionImpactAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDataProtectionImpactAssessmentsInput) (*mcp.CallToolResult, types.ListDataProtectionImpactAssessmentsOutput, error)
+	GetDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.GetDataProtectionImpactAssessmentOutput, error)
+	AddDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.AddDataProtectionImpactAssessmentOutput, error)
+	UpdateDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.UpdateDataProtectionImpactAssessmentOutput, error)
+	DeleteDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteDataProtectionImpactAssessmentOutput, error)
+	ListTransferImpactAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTransferImpactAssessmentsInput) (*mcp.CallToolResult, types.ListTransferImpactAssessmentsOutput, error)
+	GetTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTransferImpactAssessmentInput) (*mcp.CallToolResult, types.GetTransferImpactAssessmentOutput, error)
+	AddTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTransferImpactAssessmentInput) (*mcp.CallToolResult, types.AddTransferImpactAssessmentOutput, error)
+	UpdateTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTransferImpactAssessmentInput) (*mcp.CallToolResult, types.UpdateTransferImpactAssessmentOutput, error)
+	DeleteTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTransferImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteTransferImpactAssessmentOutput, error)
 	ListContinualImprovementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListContinualImprovementsInput) (*mcp.CallToolResult, types.ListContinualImprovementsOutput, error)
 	GetContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetContinualImprovementInput) (*mcp.CallToolResult, types.GetContinualImprovementOutput, error)
 	AddContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddContinualImprovementInput) (*mcp.CallToolResult, types.AddContinualImprovementOutput, error)
@@ -72,6 +92,7 @@ type ResolverInterface interface {
 	UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskInput) (*mcp.CallToolResult, types.UpdateTaskOutput, error)
 	AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error)
 	UnassignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnassignTaskInput) (*mcp.CallToolResult, types.UnassignTaskOutput, error)
+	DeleteTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTaskInput) (*mcp.CallToolResult, types.DeleteTaskOutput, error)
 	ListSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSnapshotsInput) (*mcp.CallToolResult, types.ListSnapshotsOutput, error)
 	GetSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetSnapshotInput) (*mcp.CallToolResult, types.GetSnapshotOutput, error)
 	TakeSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.TakeSnapshotInput) (*mcp.CallToolResult, types.TakeSnapshotOutput, error)
@@ -90,6 +111,12 @@ type ResolverInterface interface {
 	GetDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionSignatureInput) (*mcp.CallToolResult, types.GetDocumentVersionSignatureOutput, error)
 	RequestDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestDocumentVersionSignatureInput) (*mcp.CallToolResult, types.RequestDocumentVersionSignatureOutput, error)
 	CancelSignatureRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CancelSignatureRequestInput) (*mcp.CallToolResult, types.CancelSignatureRequestOutput, error)
+	ListMeetingsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingsInput) (*mcp.CallToolResult, types.ListMeetingsOutput, error)
+	GetMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeetingInput) (*mcp.CallToolResult, types.GetMeetingOutput, error)
+	AddMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeetingInput) (*mcp.CallToolResult, types.AddMeetingOutput, error)
+	UpdateMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeetingInput) (*mcp.CallToolResult, types.UpdateMeetingOutput, error)
+	DeleteMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeetingInput) (*mcp.CallToolResult, types.DeleteMeetingOutput, error)
+	ListMeetingAttendeesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingAttendeesInput) (*mcp.CallToolResult, types.ListMeetingAttendeesOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -140,16 +167,80 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:         "listPeople",
-			Description:  "List all people for the organization",
-			InputSchema:  types.ListPeopleToolInputSchema,
-			OutputSchema: types.ListPeopleToolOutputSchema,
+			Name:         "listUsers",
+			Description:  "List all users for the organization",
+			InputSchema:  types.ListUsersToolInputSchema,
+			OutputSchema: types.ListUsersToolOutputSchema,
 			Annotations: &mcp.ToolAnnotations{
 				ReadOnlyHint:   true,
 				IdempotentHint: true,
 			},
 		},
-		resolver.ListPeopleTool,
+		resolver.ListUsersTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getUser",
+			Description:  "Get a user by ID (profile ID)",
+			InputSchema:  types.GetUserToolInputSchema,
+			OutputSchema: types.GetUserToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetUserTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "createUser",
+			Description:  "Create a new user in the organization",
+			InputSchema:  types.CreateUserToolInputSchema,
+			OutputSchema: types.CreateUserToolOutputSchema,
+		},
+		resolver.CreateUserTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "inviteUser",
+			Description:  "Invite a user (profile) to the organization",
+			InputSchema:  types.InviteUserToolInputSchema,
+			OutputSchema: types.InviteUserToolOutputSchema,
+		},
+		resolver.InviteUserTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateUser",
+			Description:  "Update an existing user (profile)",
+			InputSchema:  types.UpdateUserToolInputSchema,
+			OutputSchema: types.UpdateUserToolOutputSchema,
+		},
+		resolver.UpdateUserTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateMembership",
+			Description:  "Update a membership role",
+			InputSchema:  types.UpdateMembershipToolInputSchema,
+			OutputSchema: types.UpdateMembershipToolOutputSchema,
+		},
+		resolver.UpdateMembershipTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "removeUser",
+			Description:  "Remove a user from the organization",
+			InputSchema:  types.RemoveUserToolInputSchema,
+			OutputSchema: types.RemoveUserToolOutputSchema,
+		},
+		resolver.RemoveUserTool,
 	)
 	mcp.AddTool(
 		server,
@@ -170,40 +261,6 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateVendorToolOutputSchema,
 		},
 		resolver.UpdateVendorTool,
-	)
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:         "getPeople",
-			Description:  "Get a people by ID",
-			InputSchema:  types.GetPeopleToolInputSchema,
-			OutputSchema: types.GetPeopleToolOutputSchema,
-			Annotations: &mcp.ToolAnnotations{
-				ReadOnlyHint:   true,
-				IdempotentHint: true,
-			},
-		},
-		resolver.GetPeopleTool,
-	)
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:         "addPeople",
-			Description:  "Add a new people to the organization",
-			InputSchema:  types.AddPeopleToolInputSchema,
-			OutputSchema: types.AddPeopleToolOutputSchema,
-		},
-		resolver.AddPeopleTool,
-	)
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:         "updatePeople",
-			Description:  "Update an existing people",
-			InputSchema:  types.UpdatePeopleToolInputSchema,
-			OutputSchema: types.UpdatePeopleToolOutputSchema,
-		},
-		resolver.UpdatePeopleTool,
 	)
 	mcp.AddTool(
 		server,
@@ -256,6 +313,19 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
+			Name:         "deleteRisk",
+			Description:  "Delete a risk",
+			InputSchema:  types.DeleteRiskToolInputSchema,
+			OutputSchema: types.DeleteRiskToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteRiskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
 			Name:         "listMeasures",
 			Description:  "List all measures for the organization",
 			InputSchema:  types.ListMeasuresToolInputSchema,
@@ -300,6 +370,19 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateMeasureToolOutputSchema,
 		},
 		resolver.UpdateMeasureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteMeasure",
+			Description:  "Delete a measure",
+			InputSchema:  types.DeleteMeasureToolInputSchema,
+			OutputSchema: types.DeleteMeasureToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteMeasureTool,
 	)
 	mcp.AddTool(
 		server,
@@ -540,6 +623,180 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateObligationToolOutputSchema,
 		},
 		resolver.UpdateObligationTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listProcessingActivities",
+			Description:  "List all processing activities for the organization",
+			InputSchema:  types.ListProcessingActivitiesToolInputSchema,
+			OutputSchema: types.ListProcessingActivitiesToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListProcessingActivitiesTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getProcessingActivity",
+			Description:  "Get a processing activity by ID",
+			InputSchema:  types.GetProcessingActivityToolInputSchema,
+			OutputSchema: types.GetProcessingActivityToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetProcessingActivityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addProcessingActivity",
+			Description:  "Add a new processing activity to the organization",
+			InputSchema:  types.AddProcessingActivityToolInputSchema,
+			OutputSchema: types.AddProcessingActivityToolOutputSchema,
+		},
+		resolver.AddProcessingActivityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateProcessingActivity",
+			Description:  "Update an existing processing activity",
+			InputSchema:  types.UpdateProcessingActivityToolInputSchema,
+			OutputSchema: types.UpdateProcessingActivityToolOutputSchema,
+		},
+		resolver.UpdateProcessingActivityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteProcessingActivity",
+			Description:  "Delete a processing activity",
+			InputSchema:  types.DeleteProcessingActivityToolInputSchema,
+			OutputSchema: types.DeleteProcessingActivityToolOutputSchema,
+		},
+		resolver.DeleteProcessingActivityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listDataProtectionImpactAssessments",
+			Description:  "List all data protection impact assessments (DPIAs) for the organization",
+			InputSchema:  types.ListDataProtectionImpactAssessmentsToolInputSchema,
+			OutputSchema: types.ListDataProtectionImpactAssessmentsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListDataProtectionImpactAssessmentsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getDataProtectionImpactAssessment",
+			Description:  "Get a data protection impact assessment (DPIA) by ID",
+			InputSchema:  types.GetDataProtectionImpactAssessmentToolInputSchema,
+			OutputSchema: types.GetDataProtectionImpactAssessmentToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetDataProtectionImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addDataProtectionImpactAssessment",
+			Description:  "Add a new data protection impact assessment (DPIA) for a processing activity",
+			InputSchema:  types.AddDataProtectionImpactAssessmentToolInputSchema,
+			OutputSchema: types.AddDataProtectionImpactAssessmentToolOutputSchema,
+		},
+		resolver.AddDataProtectionImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateDataProtectionImpactAssessment",
+			Description:  "Update an existing data protection impact assessment (DPIA)",
+			InputSchema:  types.UpdateDataProtectionImpactAssessmentToolInputSchema,
+			OutputSchema: types.UpdateDataProtectionImpactAssessmentToolOutputSchema,
+		},
+		resolver.UpdateDataProtectionImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteDataProtectionImpactAssessment",
+			Description:  "Delete a data protection impact assessment (DPIA) by ID",
+			InputSchema:  types.DeleteDataProtectionImpactAssessmentToolInputSchema,
+			OutputSchema: types.DeleteDataProtectionImpactAssessmentToolOutputSchema,
+		},
+		resolver.DeleteDataProtectionImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listTransferImpactAssessments",
+			Description:  "List all transfer impact assessments (TIAs) for the organization",
+			InputSchema:  types.ListTransferImpactAssessmentsToolInputSchema,
+			OutputSchema: types.ListTransferImpactAssessmentsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListTransferImpactAssessmentsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getTransferImpactAssessment",
+			Description:  "Get a transfer impact assessment (TIA) by ID",
+			InputSchema:  types.GetTransferImpactAssessmentToolInputSchema,
+			OutputSchema: types.GetTransferImpactAssessmentToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetTransferImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addTransferImpactAssessment",
+			Description:  "Add a new transfer impact assessment (TIA) for a processing activity",
+			InputSchema:  types.AddTransferImpactAssessmentToolInputSchema,
+			OutputSchema: types.AddTransferImpactAssessmentToolOutputSchema,
+		},
+		resolver.AddTransferImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateTransferImpactAssessment",
+			Description:  "Update an existing transfer impact assessment (TIA)",
+			InputSchema:  types.UpdateTransferImpactAssessmentToolInputSchema,
+			OutputSchema: types.UpdateTransferImpactAssessmentToolOutputSchema,
+		},
+		resolver.UpdateTransferImpactAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteTransferImpactAssessment",
+			Description:  "Delete a transfer impact assessment (TIA)",
+			InputSchema:  types.DeleteTransferImpactAssessmentToolInputSchema,
+			OutputSchema: types.DeleteTransferImpactAssessmentToolOutputSchema,
+		},
+		resolver.DeleteTransferImpactAssessmentTool,
 	)
 	mcp.AddTool(
 		server,
@@ -836,6 +1093,19 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
+			Name:         "deleteTask",
+			Description:  "Delete a task",
+			InputSchema:  types.DeleteTaskToolInputSchema,
+			OutputSchema: types.DeleteTaskToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteTaskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
 			Name:         "listSnapshots",
 			Description:  "List all snapshots for the organization",
 			InputSchema:  types.ListSnapshotsToolInputSchema,
@@ -1050,6 +1320,81 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			},
 		},
 		resolver.CancelSignatureRequestTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listMeetings",
+			Description:  "List all meetings for the organization",
+			InputSchema:  types.ListMeetingsToolInputSchema,
+			OutputSchema: types.ListMeetingsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListMeetingsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getMeeting",
+			Description:  "Get a meeting by ID",
+			InputSchema:  types.GetMeetingToolInputSchema,
+			OutputSchema: types.GetMeetingToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetMeetingTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addMeeting",
+			Description:  "Add a new meeting to the organization",
+			InputSchema:  types.AddMeetingToolInputSchema,
+			OutputSchema: types.AddMeetingToolOutputSchema,
+		},
+		resolver.AddMeetingTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateMeeting",
+			Description:  "Update an existing meeting",
+			InputSchema:  types.UpdateMeetingToolInputSchema,
+			OutputSchema: types.UpdateMeetingToolOutputSchema,
+		},
+		resolver.UpdateMeetingTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteMeeting",
+			Description:  "Delete a meeting",
+			InputSchema:  types.DeleteMeetingToolInputSchema,
+			OutputSchema: types.DeleteMeetingToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteMeetingTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listMeetingAttendees",
+			Description:  "List all attendees for a meeting",
+			InputSchema:  types.ListMeetingAttendeesToolInputSchema,
+			OutputSchema: types.ListMeetingAttendeesToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListMeetingAttendeesTool,
 	)
 }
 

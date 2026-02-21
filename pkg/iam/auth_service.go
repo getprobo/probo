@@ -45,10 +45,8 @@ type (
 		NewPassword     string
 	}
 
-	CreateIdentityFromInvitationRequest struct {
+	ActivateAccountRequest struct {
 		InvitationToken string
-		Password        string
-		FullName        string
 	}
 
 	LoadOrCreateIdentityRequest struct {
@@ -89,12 +87,10 @@ func NewAuthService(svc *Service) *AuthService {
 	return &AuthService{Service: svc}
 }
 
-func (req CreateIdentityFromInvitationRequest) Validate() error {
+func (req ActivateAccountRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.InvitationToken, "invitationToken", validator.NotEmpty())
-	v.Check(req.FullName, "fullName", validator.NotEmpty(), validator.MinLen(1), validator.MaxLen(255))
-	v.Check(req.Password, "password", PasswordValidator())
 
 	return v.Error()
 }
@@ -134,10 +130,10 @@ func (req CreateIdentityWithPasswordRequest) Validate() error {
 	return v.Error()
 }
 
-func (s *AuthService) CreateIdentityFromInvitation(
+func (s *AuthService) ActivateAccount(
 	ctx context.Context,
-	req *CreateIdentityFromInvitationRequest,
-) (*coredata.Identity, *coredata.Session, error) {
+	req *ActivateAccountRequest,
+) (*coredata.MembershipProfile, *string, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -148,17 +144,13 @@ func (s *AuthService) CreateIdentityFromInvitation(
 	}
 
 	var (
-		scope      = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
-		invitation = &coredata.Invitation{}
-		identity   = &coredata.Identity{}
-		session    = &coredata.Session{}
-		now        = time.Now()
+		scope               = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
+		invitation          = &coredata.Invitation{}
+		profile             *coredata.MembershipProfile
+		identity            *coredata.Identity
+		now                 = time.Now()
+		createPasswordToken *string
 	)
-
-	hashedPassword, err := s.hp.HashPassword([]byte(req.Password))
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot hash password: %w", err)
-	}
 
 	err = s.pg.WithTx(
 		ctx,
@@ -180,29 +172,57 @@ func (s *AuthService) CreateIdentityFromInvitation(
 				return NewInvitationExpiredError(payload.Data.InvitationID)
 			}
 
-			identity = &coredata.Identity{
-				ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
-				EmailAddress:         invitation.Email,
-				FullName:             invitation.FullName,
-				HashedPassword:       hashedPassword,
-				EmailAddressVerified: true,
-				CreatedAt:            now,
-				UpdatedAt:            now,
+			profile = &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, tx, scope, invitation.UserID); err != nil {
+				return fmt.Errorf("cannot load user: %w", err)
 			}
 
-			err = identity.Insert(ctx, tx)
+			if profile.Source == coredata.ProfileSourceSCIM {
+				return NewUserManagedBySCIMError(profile.ID)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				profile.State = coredata.ProfileStateActive
+				profile.UpdatedAt = now
+
+				if err := profile.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update user: %w", err)
+				}
+			}
+
+			identity = &coredata.Identity{}
+			if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			identity.EmailAddressVerified = true
+			identity.UpdatedAt = now
+
+			err = identity.Update(ctx, tx)
 			if err != nil {
-				if err == coredata.ErrResourceAlreadyExists {
-					return NewIdentityAlreadyExistsError(invitation.Email)
+				return fmt.Errorf("cannot update identity: %w", err)
+			}
+
+			invitation.AcceptedAt = &now
+			if err := invitation.Update(ctx, tx, scope); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewInvitationNotFoundError(payload.Data.InvitationID)
 				}
 
-				return fmt.Errorf("cannot insert identity: %w", err)
+				return fmt.Errorf("cannot update invitation: %w", err)
 			}
 
-			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
-			err = session.Insert(ctx, tx)
-			if err != nil {
-				return fmt.Errorf("cannot insert session: %w", err)
+			// Expire other pending invitations for user
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(invitation.OrganizationID),
+				invitation.UserID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
 			return nil
@@ -213,7 +233,30 @@ func (s *AuthService) CreateIdentityFromInvitation(
 		return nil, nil, err
 	}
 
-	return identity, session, nil
+	count, err := s.AccountService.CountSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot count SAML configurations: %w", err)
+	}
+
+	if count > 0 {
+		return profile, nil, nil
+	}
+
+	if identity.HashedPassword == nil {
+		token, err := statelesstoken.NewToken(
+			s.tokenSecret,
+			TokenTypePasswordReset,
+			s.passwordResetTokenValidity,
+			PasswordResetData{Email: identity.EmailAddress},
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot generate password create token: %w", err)
+		}
+
+		createPasswordToken = &token
+	}
+
+	return profile, createPasswordToken, nil
 }
 
 func (s AuthService) ResetPassword(
@@ -449,7 +492,7 @@ func (s AuthService) CreateIdentityWithPassword(
 	return identity, session, err
 }
 
-func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID, organizationID gid.GID) (*coredata.Session, error) {
+func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID) (*coredata.Session, error) {
 	session := &coredata.Session{}
 
 	err := s.pg.WithTx(
@@ -472,19 +515,20 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID
 	return session, nil
 }
 
-func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Addr, password string) (*coredata.Identity, *coredata.Session, error) {
+func (s AuthService) CheckCredentials(
+	ctx context.Context,
+	email mail.Addr,
+	password string,
+) (*coredata.Identity, error) {
 	v := validator.New()
 	v.Check(password, "password", PasswordValidator())
 
 	err := v.Error()
 	if err != nil {
-		return nil, nil, NewInvalidPasswordError("invalid password")
+		return nil, NewInvalidPasswordError("invalid password")
 	}
 
-	var (
-		identity = &coredata.Identity{}
-		session  = &coredata.Session{}
-	)
+	identity := &coredata.Identity{}
 
 	err = s.pg.WithTx(
 		ctx,
@@ -513,7 +557,20 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 
-			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
+			return nil
+		},
+	)
+
+	return identity, err
+}
+
+func (s AuthService) OpenSessionWithPassword(ctx context.Context, identityID gid.GID) (*coredata.Session, error) {
+	session := &coredata.Session{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			session = coredata.NewRootSession(identityID, coredata.AuthMethodPassword, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -523,7 +580,11 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 		},
 	)
 
-	return identity, session, err
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
 
 func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkRequest) error {

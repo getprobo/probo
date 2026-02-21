@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7ee3c72e16fa86d6c006c004e4f93c95>>
+ * @generated SignedSource<<791e18651a3911865d78b730f268f489>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,15 +10,12 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type ControlStatus = "EXCLUDED" | "INCLUDED";
 export type UpdateControlInput = {
   bestPractice?: boolean | null | undefined;
   description?: string | null | undefined;
-  exclusionJustification?: string | null | undefined;
   id: string;
   name?: string | null | undefined;
   sectionTitle?: string | null | undefined;
-  status?: ControlStatus | null | undefined;
 };
 export type FrameworkControlDialogUpdateMutation$variables = {
   input: UpdateControlInput;
@@ -142,20 +139,6 @@ return {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "status",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "exclusionJustification",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
                 "name": "bestPractice",
                 "storageKey": null
               }
@@ -168,12 +151,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "374c69b33dd6e94dec75829fe0777f58",
+    "cacheID": "a44a5055f8167fa3754f4f389cee598f",
     "id": null,
     "metadata": {},
     "name": "FrameworkControlDialogUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkControlDialogUpdateMutation(\n  $input: UpdateControlInput!\n) {\n  updateControl(input: $input) {\n    control {\n      ...FrameworkControlDialogFragment\n      id\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n  bestPractice\n}\n"
+    "text": "mutation FrameworkControlDialogUpdateMutation(\n  $input: UpdateControlInput!\n) {\n  updateControl(input: $input) {\n    control {\n      ...FrameworkControlDialogFragment\n      id\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  bestPractice\n}\n"
   }
 };
 })();

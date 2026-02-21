@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b545f1a231e042bd94c84430f3015112>>
+ * @generated SignedSource<<889efcfe178bb170887494345d05c48b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,17 +9,16 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type ProfileState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type MembershipCardFragment$data = {
-  readonly lastSession: {
-    readonly expiresAt: string;
-    readonly id: string;
-  } | null | undefined;
-  readonly organization: {
-    readonly id: string;
-    readonly logoUrl: string | null | undefined;
-    readonly name: string;
+  readonly membership: {
+    readonly lastSession: {
+      readonly expiresAt: string;
+      readonly id: string;
+    } | null | undefined;
   };
+  readonly state: ProfileState;
   readonly " $fragmentType": "MembershipCardFragment";
 };
 export type MembershipCardFragment$key = {
@@ -27,15 +26,7 @@ export type MembershipCardFragment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
 };
 
-const node: ReaderFragment = (function(){
-var v0 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-};
-return {
+const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
@@ -44,20 +35,8 @@ return {
     {
       "alias": null,
       "args": null,
-      "concreteType": "Session",
-      "kind": "LinkedField",
-      "name": "lastSession",
-      "plural": false,
-      "selections": [
-        (v0/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "expiresAt",
-          "storageKey": null
-        }
-      ],
+      "kind": "ScalarField",
+      "name": "state",
       "storageKey": null
     },
     {
@@ -65,24 +44,34 @@ return {
       "field": {
         "alias": null,
         "args": null,
-        "concreteType": "Organization",
+        "concreteType": "Membership",
         "kind": "LinkedField",
-        "name": "organization",
+        "name": "membership",
         "plural": false,
         "selections": [
-          (v0/*: any*/),
           {
             "alias": null,
             "args": null,
-            "kind": "ScalarField",
-            "name": "name",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "logoUrl",
+            "concreteType": "Session",
+            "kind": "LinkedField",
+            "name": "lastSession",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "id",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "expiresAt",
+                "storageKey": null
+              }
+            ],
             "storageKey": null
           }
         ],
@@ -91,11 +80,10 @@ return {
       "action": "THROW"
     }
   ],
-  "type": "Membership",
+  "type": "Profile",
   "abstractKey": null
 };
-})();
 
-(node as any).hash = "5a2532aed755a94df49c2f9ce0929a1f";
+(node as any).hash = "2e4f6ddee75ca32542f959c44de58e25";
 
 export default node;

@@ -32,24 +32,20 @@ type (
 	}
 
 	CreateControlRequest struct {
-		ID                     gid.GID
-		FrameworkID            gid.GID
-		Name                   string
-		Description            *string
-		SectionTitle           string
-		Status                 *coredata.ControlStatus
-		ExclusionJustification *string
-		BestPractice           bool
+		ID           gid.GID
+		FrameworkID  gid.GID
+		Name         string
+		Description  *string
+		SectionTitle string
+		BestPractice bool
 	}
 
 	UpdateControlRequest struct {
-		ID                     gid.GID
-		Name                   *string
-		Description            **string
-		SectionTitle           *string
-		Status                 *coredata.ControlStatus
-		ExclusionJustification *string
-		BestPractice           *bool
+		ID           gid.GID
+		Name         *string
+		Description  **string
+		SectionTitle *string
+		BestPractice *bool
 	}
 )
 
@@ -60,8 +56,6 @@ func (ccr *CreateControlRequest) Validate() error {
 	v.Check(ccr.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ccr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
 	v.Check(ccr.SectionTitle, "section_title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(ccr.Status, "status", validator.Required(), validator.OneOfSlice(coredata.ControlStatuses()))
-	v.Check(ccr.ExclusionJustification, "exclusion_justification", validator.SafeText(TitleMaxLength))
 
 	return v.Error()
 }
@@ -73,8 +67,6 @@ func (ucr *UpdateControlRequest) Validate() error {
 	v.Check(ucr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ucr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ucr.SectionTitle, "section_title", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(ucr.Status, "status", validator.OneOfSlice(coredata.ControlStatuses()))
-	v.Check(ucr.ExclusionJustification, "exclusion_justification", validator.SafeText(TitleMaxLength))
 
 	return v.Error()
 }
@@ -839,16 +831,14 @@ func (s ControlService) Create(
 	framework := &coredata.Framework{}
 
 	control := &coredata.Control{
-		ID:                     gid.New(s.svc.scope.GetTenantID(), coredata.ControlEntityType),
-		FrameworkID:            req.FrameworkID,
-		Name:                   req.Name,
-		Description:            req.Description,
-		SectionTitle:           req.SectionTitle,
-		Status:                 *req.Status,
-		ExclusionJustification: req.ExclusionJustification,
-		BestPractice:           req.BestPractice,
-		CreatedAt:              now,
-		UpdatedAt:              now,
+		ID:           gid.New(s.svc.scope.GetTenantID(), coredata.ControlEntityType),
+		FrameworkID:  req.FrameworkID,
+		Name:         req.Name,
+		Description:  req.Description,
+		SectionTitle: req.SectionTitle,
+		BestPractice: req.BestPractice,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 
 	err := s.svc.pg.WithTx(
@@ -919,14 +909,6 @@ func (s ControlService) Update(
 
 			if req.SectionTitle != nil {
 				control.SectionTitle = *req.SectionTitle
-			}
-
-			if req.Status != nil {
-				control.Status = *req.Status
-			}
-
-			if req.ExclusionJustification != nil {
-				control.ExclusionJustification = req.ExclusionJustification
 			}
 
 			if req.BestPractice != nil {

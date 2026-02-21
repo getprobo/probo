@@ -3,15 +3,15 @@ services:
     image: "ghcr.io/getprobo/probo:latest"
     environment:
       # Required secrets (use secure values in production)
-      PROBOD_ENCRYPTION_KEY: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-      AUTH_COOKIE_SECRET: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
-      AUTH_PASSWORD_PEPPER: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
-      TRUST_AUTH_TOKEN_SECRET: "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes"
+      PROBOD_ENCRYPTION_KEY: ${PROBOD_ENCRYPTION_KEY}
+      AUTH_COOKIE_SECRET: ${AUTH_COOKIE_SECRET}
+      AUTH_PASSWORD_PEPPER: ${AUTH_PASSWORD_PEPPER}
+      TRUST_AUTH_TOKEN_SECRET: ${TRUST_AUTH_TOKEN_SECRET}
 
       # Application settings
-      PROBOD_BASE_URL: "http://localhost:8080"
-      API_ADDR: "localhost:8080"
-      API_CORS_ALLOWED_ORIGINS: "http://localhost:8080"
+      PROBOD_BASE_URL: ${PROBOD_BASE_URL}
+      API_ADDR: ${API_ADDR}
+      API_CORS_ALLOWED_ORIGINS: ${API_CORS_ALLOWED_ORIGINS}
 
       # PostgreSQL database
       PG_ADDR: "postgres:5432"
@@ -20,12 +20,13 @@ services:
       PG_DATABASE: "probod"
       PG_POOL_SIZE: "100"
 
-      # AWS/MinIO S3 storage
+      # S3-compatible storage (SeaweedFS)
       AWS_REGION: "us-east-1"
       AWS_BUCKET: "probod"
       AWS_ACCESS_KEY_ID: "probod"
       AWS_SECRET_ACCESS_KEY: "thisisnotasecret"
-      AWS_ENDPOINT: "http://minio:9000"
+      AWS_ENDPOINT: "http://seaweedfs:8333"
+      AWS_USE_PATH_STYLE: "true"
 
       # Observability - Metrics & Tracing
       METRICS_ADDR: "probo:8081"
@@ -48,7 +49,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
+      seaweedfs:
         condition: service_started
       chrome:
         condition: service_started
@@ -75,19 +76,23 @@ services:
       timeout: 5s
       retries: 5
 
-  minio:
-    image: "quay.io/minio/minio"
-    entrypoint: "sh"
-    command: |
-      -c 'mkdir -p /var/lib/minio/probod && minio server --json --console-address :9001 /var/lib/minio'
+  seaweedfs:
+    image: "chrislusf/seaweedfs:4.13"
+    command: >
+      server
+      -s3
+      -s3.config=/etc/seaweedfs/s3.json
+      -s3.port=8333
+      -volume.max=100
+      -master.volumeSizeLimitMB=1024
+      -dir=/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "8333:8333"
+      - "9333:9333"
+      - "8888:8888"
     volumes:
-      - "minio-data:/var/lib/minio:rw"
-    environment:
-      MINIO_ROOT_USER: "probod"
-      MINIO_ROOT_PASSWORD: "thisisnotasecret"
+      - "./compose/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro"
+      - "seaweedfs-data:/data:rw"
 
   chrome:
     image: "chromedp/headless-shell:140.0.7259.2"
@@ -109,4 +114,4 @@ services:
 volumes:
   probo-data:
   postgres-data:
-  minio-data:
+  seaweedfs-data:

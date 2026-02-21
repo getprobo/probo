@@ -47,9 +47,10 @@ func (f *DocumentVersionFilter) SQLFragment() string {
 	OR EXISTS (
 		SELECT 1
 		FROM document_version_signatures dvs
-		INNER JOIN peoples p ON dvs.signed_by = p.id
+		INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+		INNER JOIN identities i ON p.identity_id = i.id
 		WHERE dvs.document_version_id = document_versions.id
-			AND p.primary_email_address = @user_email::text
+			AND i.email_address = @user_email::CITEXT
 			AND dvs.state IN ('REQUESTED', 'SIGNED')
 		)
 )`

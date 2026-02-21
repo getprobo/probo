@@ -66,6 +66,7 @@ func IAMPolicySet() *PolicySet {
 			IAMSelfManageIdentityPolicy,
 			IAMSelfManageSessionPolicy,
 			IAMSelfManageInvitationPolicy,
+			IAMSelfManageProfilePolicy,
 			IAMSelfManageMembershipPolicy,
 			IAMSelfManagePersonalAPIKeyPolicy,
 		)

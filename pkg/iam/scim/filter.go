@@ -24,8 +24,8 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 )
 
-func ParseUserFilter(expr scimfilter.Expression) (*coredata.MembershipFilter, error) {
-	filter := coredata.NewMembershipFilter()
+func ParseUserFilter(expr scimfilter.Expression) (*coredata.MembershipProfileFilter, error) {
+	filter := coredata.NewMembershipProfileFilter(nil)
 
 	if expr == nil {
 		return filter, nil

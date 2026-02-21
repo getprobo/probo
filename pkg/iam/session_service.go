@@ -315,13 +315,7 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 	return childSession, nil
 }
 
-// OpenSAMLChildSessionForOrganization creates a SAML-authenticated child session for the given
-// organization under the provided root session.
-//
-// This is intended to be used after a successful SAML assertion ("step-up auth") when the user
-// might have an existing PASSWORD root session, but we still want a SAML child session for a
-// SAML-enabled organization.
-func (s SessionService) OpenSAMLChildSessionForOrganization(
+func (s SessionService) OpenPasswordChildSessionForOrganization(
 	ctx context.Context,
 	rootSessionID gid.GID,
 	organizationID gid.GID,
@@ -330,6 +324,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 		now          = time.Now()
 		rootSession  = &coredata.Session{}
 		identity     = &coredata.Identity{}
+		profile      = &coredata.MembershipProfile{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
 		scope        = coredata.NewScopeFromObjectID(organizationID)
@@ -359,7 +354,19 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
+			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(gid.Nil)
+				}
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				return NewUserInactiveError(profile.ID)
+			}
+
+			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
@@ -367,8 +374,106 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			if membership.State == coredata.MembershipStateInactive {
-				return NewMembershipInactiveError(membership.ID)
+			tenantID := scope.GetTenantID()
+			childSession = &coredata.Session{
+				ID:              gid.New(tenantID, coredata.SessionEntityType),
+				IdentityID:      rootSession.IdentityID,
+				TenantID:        &tenantID,
+				MembershipID:    &membership.ID,
+				ParentSessionID: &rootSession.ID,
+				AuthMethod:      coredata.AuthMethodPassword,
+				AuthenticatedAt: now,
+				ExpiredAt:       rootSession.ExpiredAt,
+				CreatedAt:       now,
+				UpdatedAt:       now,
+			}
+
+			err = childSession.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert child session: %w", err)
+			}
+
+			// Change root session auth method to password
+			rootSession.UpdatedAt = now
+			rootSession.AuthMethod = coredata.AuthMethodPassword
+
+			if err := rootSession.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update root session: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return childSession, membership, nil
+}
+
+// OpenSAMLChildSessionForOrganization creates a SAML-authenticated child session for the given
+// organization under the provided root session.
+//
+// This is intended to be used after a successful SAML assertion ("step-up auth") when the user
+// might have an existing PASSWORD root session, but we still want a SAML child session for a
+// SAML-enabled organization.
+func (s SessionService) OpenSAMLChildSessionForOrganization(
+	ctx context.Context,
+	rootSessionID gid.GID,
+	organizationID gid.GID,
+) (*coredata.Session, *coredata.Membership, error) {
+	var (
+		now          = time.Now()
+		rootSession  = &coredata.Session{}
+		identity     = &coredata.Identity{}
+		profile      = &coredata.MembershipProfile{}
+		membership   = &coredata.Membership{}
+		childSession = &coredata.Session{}
+		scope        = coredata.NewScopeFromObjectID(organizationID)
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			err := rootSession.LoadByID(ctx, tx, rootSessionID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSessionNotFoundError(rootSessionID)
+				}
+				return fmt.Errorf("cannot load session: %w", err)
+			}
+
+			if !rootSession.IsRootSession() {
+				return fmt.Errorf("session %q is not a root session", rootSessionID)
+			}
+
+			if rootSession.ExpireReason != nil || now.After(rootSession.ExpiredAt) {
+				return NewSessionExpiredError(rootSessionID)
+			}
+
+			err = identity.LoadByID(ctx, tx, rootSession.IdentityID)
+			if err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(gid.Nil)
+				}
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				return NewUserInactiveError(profile.ID)
+			}
+
+			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewMembershipNotFoundError(organizationID)
+				}
+				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
 			tenantID := scope.GetTenantID()
@@ -404,11 +509,13 @@ func (s SessionService) AssumeOrganizationSession(
 	ctx context.Context,
 	sessionID gid.GID,
 	organizationID gid.GID,
+	continueURL string,
 ) (*coredata.Session, *coredata.Membership, error) {
 	var (
 		now          = time.Now()
 		rootSession  = &coredata.Session{}
 		identity     = &coredata.Identity{}
+		profile      = &coredata.MembershipProfile{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
 		scope        = coredata.NewScopeFromObjectID(organizationID)
@@ -417,8 +524,7 @@ func (s SessionService) AssumeOrganizationSession(
 	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			err := rootSession.LoadByID(ctx, tx, sessionID)
-			if err != nil {
+			if err := rootSession.LoadByID(ctx, tx, sessionID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(sessionID)
 				}
@@ -433,25 +539,30 @@ func (s SessionService) AssumeOrganizationSession(
 				return NewSessionExpiredError(sessionID)
 			}
 
-			err = identity.LoadByID(ctx, tx, rootSession.IdentityID)
-			if err != nil {
+			if err := identity.LoadByID(ctx, tx, rootSession.IdentityID); err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
-			if err != nil {
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(gid.Nil)
+				}
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				return NewUserInactiveError(profile.ID)
+			}
+
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			if membership.State == coredata.MembershipStateInactive {
-				return NewMembershipInactiveError(membership.ID)
-			}
-
 			samlConfig := &coredata.SAMLConfiguration{}
-			err = samlConfig.LoadByOrganizationIDAndEmailDomain(
+			err := samlConfig.LoadByOrganizationIDAndEmailDomain(
 				ctx,
 				tx,
 				scope,
@@ -462,21 +573,23 @@ func (s SessionService) AssumeOrganizationSession(
 				return fmt.Errorf("cannot load SAML configuration: %w", err)
 			}
 
-			if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyRequired {
-				if rootSession.AuthMethod != coredata.AuthMethodSAML {
-					redirectURL, err := s.SAMLService.InitiateLogin(ctx, samlConfig.ID)
-					if err != nil {
-						return fmt.Errorf("cannot initiate SAML login: %w", err)
+			if err == nil {
+				switch samlConfig.EnforcementPolicy {
+				case coredata.SAMLEnforcementPolicyRequired:
+					if rootSession.AuthMethod != coredata.AuthMethodSAML {
+						return NewSAMLAuthenticationRequiredError("policy_requirement")
 					}
-
-					return NewSAMLAuthenticationRequiredError("policy_requirement", redirectURL.String())
+				case coredata.SAMLEnforcementPolicyOptional:
+					// SAML is optional: both PASSWORD and SAML root sessions are allowed.
 				}
-			} else if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyOptional {
-				// SAML is optional: both PASSWORD and SAML root sessions are allowed.
-			} else if rootSession.AuthMethod != coredata.AuthMethodPassword {
-				// No (or non-required) SAML configuration: require a password-authenticated root session
-				// (eg. when switching into a password-based org from a SAML login).
-				return NewPasswordRequiredError("password_authentication_required")
+			} else {
+				switch rootSession.AuthMethod {
+				case coredata.AuthMethodPassword:
+				case coredata.AuthMethodSAML:
+					// No (or non-required) SAML configuration: require a password-authenticated or magic-link root session
+					// (eg. when switching into a password-based org from a SAML login)
+					return NewPasswordAuthenticationRequiredError("password_authentication_required")
+				}
 			}
 
 			tenantID := scope.GetTenantID()

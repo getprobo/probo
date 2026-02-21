@@ -64,18 +64,13 @@ func NewSCIMEvent(scimEvent *coredata.SCIMEvent) *SCIMEvent {
 		ID:           scimEvent.ID,
 		Method:       scimEvent.Method,
 		Path:         scimEvent.Path,
+		UserName:     scimEvent.UserName,
 		StatusCode:   scimEvent.StatusCode,
 		RequestBody:  scimEvent.RequestBody,
 		ResponseBody: scimEvent.ResponseBody,
 		ErrorMessage: scimEvent.ErrorMessage,
 		IPAddress:    scimEvent.IPAddress.String(),
 		CreatedAt:    scimEvent.CreatedAt,
-	}
-
-	if scimEvent.MembershipID != nil {
-		event.Membership = &Membership{
-			ID: *scimEvent.MembershipID,
-		}
 	}
 
 	return event

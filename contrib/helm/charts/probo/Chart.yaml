@@ -18,10 +18,6 @@ maintainers:
 icon: https://github.com/getprobo/probo/blob/main/.github/cover_v3.png
 
 dependencies:
-  - name: minio
-    condition: minio.enabled
-    repository: https://charts.min.io/
-    version: 5.4.0 # Latest stable version
   - name: kubernetes-ingress
     alias: haproxy-ingress
     condition: haproxy-ingress.enabled

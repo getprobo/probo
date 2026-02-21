@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2f9bc9cc4e848c4b8c88326c2279d94f>>
+ * @generated SignedSource<<06d20e72b67288c86573caa22b15adff>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -150,7 +150,7 @@ v11 = {
 v12 = {
   "alias": null,
   "args": null,
-  "concreteType": "People",
+  "concreteType": "Profile",
   "kind": "LinkedField",
   "name": "owner",
   "plural": false,
@@ -184,7 +184,7 @@ v14 = [
     "name": "orderBy",
     "value": {
       "direction": "ASC",
-      "field": "CREATED_AT"
+      "field": "CONTROL_SECTION_TITLE"
     }
   }
 ];
@@ -454,7 +454,7 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "applicabilityStatements(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "applicabilityStatements(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"CONTROL_SECTION_TITLE\"})"
               },
               {
                 "alias": null,
@@ -477,12 +477,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ae9d15bd80281c127b74f1a0a32099ee",
+    "cacheID": "dceee9f818236953e28441fb1bbde7aa",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityDetailPageQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityDetailPageQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      canExport: permission(action: \"core:state-of-applicability:export\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...StateOfApplicabilityControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  organization {\n    id\n  }\n  canCreateApplicabilityStatement: permission(action: \"core:applicability-statement:create\")\n  canUpdateApplicabilityStatement: permission(action: \"core:applicability-statement:update\")\n  canDeleteApplicabilityStatement: permission(action: \"core:applicability-statement:delete\")\n  applicabilityStatements(first: 1000, orderBy: {direction: ASC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        applicability\n        justification\n        control {\n          id\n          sectionTitle\n          name\n          bestPractice\n          regulatory\n          contractual\n          riskAssessment\n          framework {\n            id\n            name\n          }\n          organization {\n            id\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query StateOfApplicabilityDetailPageQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      canExport: permission(action: \"core:state-of-applicability:export\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...StateOfApplicabilityControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  organization {\n    id\n  }\n  canCreateApplicabilityStatement: permission(action: \"core:applicability-statement:create\")\n  canUpdateApplicabilityStatement: permission(action: \"core:applicability-statement:update\")\n  canDeleteApplicabilityStatement: permission(action: \"core:applicability-statement:delete\")\n  applicabilityStatements(first: 1000, orderBy: {direction: ASC, field: CONTROL_SECTION_TITLE}) {\n    edges {\n      node {\n        id\n        applicability\n        justification\n        control {\n          id\n          sectionTitle\n          name\n          bestPractice\n          regulatory\n          contractual\n          riskAssessment\n          framework {\n            id\n            name\n          }\n          organization {\n            id\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();

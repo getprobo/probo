@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
@@ -11,6 +12,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
@@ -20,6 +22,7 @@ type SAMLHandler struct {
 	sessionCookie *authn.Cookie
 	baseURL       *baseurl.BaseURL
 	logger        *log.Logger
+	safeRedirect  *saferedirect.SafeRedirect
 }
 
 func NewSAMLHandler(iam *iam.Service, cookieConfig securecookie.Config, baseURL *baseurl.BaseURL, logger *log.Logger) *SAMLHandler {
@@ -28,10 +31,11 @@ func NewSAMLHandler(iam *iam.Service, cookieConfig securecookie.Config, baseURL 
 		sessionCookie: authn.NewCookie(&cookieConfig),
 		baseURL:       baseURL,
 		logger:        logger,
+		safeRedirect:  &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()},
 	}
 }
 
-func (h *SAMLHandler) renderInternalServerError(w http.ResponseWriter, r *http.Request) {
+func (h *SAMLHandler) renderInternalServerError(w http.ResponseWriter) {
 	httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
 }
 
@@ -58,9 +62,20 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 	samlResponse := r.FormValue("SAMLResponse")
 	relayState := r.FormValue("RelayState")
 
-	configID, err := gid.ParseGID(relayState)
-	if err != nil {
+	if len(relayState) < gid.EncodedGIDSize {
 		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid relay state"))
+		return
+	}
+
+	configIDStr := relayState[:gid.EncodedGIDSize]
+	if configIDStr == "" {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("missing config ID"))
+		return
+	}
+
+	configID, err := gid.ParseGID(configIDStr)
+	if err != nil {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid config ID"))
 		return
 	}
 
@@ -70,28 +85,39 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	continueURL := "/organizations/" + membership.OrganizationID.String()
+	if len(relayState) > gid.EncodedGIDSize {
+		unescapedContinueURL, err := url.QueryUnescape(relayState[gid.EncodedGIDSize:])
+
+		if err != nil {
+			h.logger.WarnCtx(ctx, "cannot unescape continue URL from RelayState", log.Error(err))
+		} else {
+			continueURL = unescapedContinueURL
+		}
+	}
+
 	rootSession := authn.SessionFromContext(ctx)
 
 	switch {
 	case rootSession == nil:
-		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID, membership.OrganizationID)
+		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID)
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
-			h.renderInternalServerError(w, r)
+			h.renderInternalServerError(w)
 			return
 		}
 	case rootSession.IdentityID != user.ID:
 		err = h.iam.SessionService.CloseSession(ctx, rootSession.ID)
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
-			h.renderInternalServerError(w, r)
+			h.renderInternalServerError(w)
 			return
 		}
 
-		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID, membership.OrganizationID)
+		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID)
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
-			h.renderInternalServerError(w, r)
+			h.renderInternalServerError(w)
 			return
 		}
 	}
@@ -99,14 +125,13 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 	_, _, err = h.iam.SessionService.OpenSAMLChildSessionForOrganization(ctx, rootSession.ID, membership.OrganizationID)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot open SAML child session", log.Error(err))
-		h.renderInternalServerError(w, r)
+		h.renderInternalServerError(w)
 		return
 	}
 
 	h.sessionCookie.Set(w, rootSession)
 
-	redirectURL := h.baseURL.WithPath("/organizations/" + membership.OrganizationID.String()).MustString()
-	http.Redirect(w, r, redirectURL, http.StatusFound)
+	h.safeRedirect.Redirect(w, r, continueURL, "/organizations/"+membership.OrganizationID.String(), http.StatusFound)
 }
 
 func (h *SAMLHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -118,13 +143,15 @@ func (h *SAMLHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	continueURLQueryParam := r.URL.Query().Get("continue")
+
 	samlConfigID, err := gid.ParseGID(samlConfigIDParam)
 	if err != nil {
 		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid SAML config ID"))
 		return
 	}
 
-	url, err := h.iam.SAMLService.InitiateLogin(ctx, samlConfigID)
+	url, err := h.iam.SAMLService.InitiateLogin(ctx, samlConfigID, continueURLQueryParam)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate SAML login: %w", err))
 	}

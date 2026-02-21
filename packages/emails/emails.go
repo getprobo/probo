@@ -319,7 +319,6 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 		MustParse(vars.BaseURL).
 		AppendPath(invitationURLPath).
 		WithQuery("token", invitationToken).
-		WithQuery("fullName", vars.RecipientFullName).
 		MustString()
 
 	data := struct {

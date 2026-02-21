@@ -148,12 +148,12 @@ function PeopleList({
     paginatedPeopleFragment,
     data.organization as PeopleGraphPaginatedFragment$key,
   );
-  const people = page.peoples.edges.map(edge => edge.node);
+  const profiles = page.profiles.edges.map(edge => edge.node);
   return (
     <>
       <Table className="border-none rounded-none">
         <Tbody>
-          {people.map(person => (
+          {profiles.map(person => (
             <Tr key={person.id}>
               <Td width={75}>
                 <Checkbox
@@ -167,7 +167,7 @@ function PeopleList({
                   <div>
                     <div className="text-sm">{person.fullName}</div>
                     <div className="text-xs text-txt-tertiary">
-                      {person.primaryEmailAddress}
+                      {person.emailAddress}
                     </div>
                   </div>
                 </div>
@@ -185,7 +185,7 @@ function PeopleList({
           icon={IconChevronDown}
           type="button"
         >
-          {sprintf(__("Show %s more"), people.length)}
+          {sprintf(__("Show %s more"), profiles.length)}
         </Button>
       )}
     </>

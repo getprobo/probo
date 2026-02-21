@@ -6,11 +6,14 @@ package mcp_v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -251,111 +254,6 @@ func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolReques
 	}
 
 	return nil, types.NewUpdateVendorOutput(vendor), nil
-}
-
-func (r *Resolver) ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListPeopleInput) (*mcp.CallToolResult, types.ListPeopleOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionPeopleList)
-
-	prb := r.ProboService(ctx, input.OrganizationID)
-
-	pageOrderBy := page.OrderBy[coredata.PeopleOrderField]{
-		Field:     coredata.PeopleOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.PeopleOrderField]{
-			Field:     input.OrderBy.Field,
-			Direction: input.OrderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-
-	var peopleFilter = coredata.NewPeopleFilter(nil)
-	if input.Filter != nil {
-		peopleFilter = coredata.NewPeopleFilter(input.Filter.ExcludeContractEnded)
-	}
-
-	page, err := prb.Peoples.ListForOrganizationID(ctx, input.OrganizationID, cursor, peopleFilter)
-	if err != nil {
-		panic(fmt.Errorf("cannot list organization people: %w", err))
-	}
-
-	return nil, types.NewListPeopleOutput(page), nil
-}
-
-func (r *Resolver) GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionPeopleGet)
-
-	prb := r.ProboService(ctx, input.ID)
-
-	people, err := prb.Peoples.Get(ctx, input.ID)
-	if err != nil {
-		return nil, types.GetPeopleOutput{}, fmt.Errorf("failed to get people: %w", err)
-	}
-
-	return nil, types.GetPeopleOutput{
-		People: types.NewPeople(people),
-	}, nil
-}
-
-func (r *Resolver) AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddPeopleInput) (*mcp.CallToolResult, types.AddPeopleOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionPeopleCreate)
-
-	svc := r.ProboService(ctx, input.OrganizationID)
-
-	additionalEmails := []mail.Addr{}
-	if input.AdditionalEmailAddresses != nil {
-		additionalEmails = input.AdditionalEmailAddresses
-	}
-
-	people, err := svc.Peoples.Create(
-		ctx,
-		probo.CreatePeopleRequest{
-			OrganizationID:           input.OrganizationID,
-			FullName:                 input.FullName,
-			PrimaryEmailAddress:      input.PrimaryEmailAddress,
-			AdditionalEmailAddresses: additionalEmails,
-			Kind:                     input.Kind,
-			Position:                 input.Position,
-			ContractStartDate:        input.ContractStartDate,
-			ContractEndDate:          input.ContractEndDate,
-		},
-	)
-	if err != nil {
-		return nil, types.AddPeopleOutput{}, fmt.Errorf("failed to create people: %w", err)
-	}
-
-	return nil, types.AddPeopleOutput{
-		People: types.NewPeople(people),
-	}, nil
-}
-
-func (r *Resolver) UpdatePeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdatePeopleInput) (*mcp.CallToolResult, types.UpdatePeopleOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionPeopleUpdate)
-
-	svc := r.ProboService(ctx, input.ID)
-
-	people, err := svc.Peoples.Update(
-		ctx,
-		probo.UpdatePeopleRequest{
-			ID:                       input.ID,
-			FullName:                 input.FullName,
-			PrimaryEmailAddress:      input.PrimaryEmailAddress,
-			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
-			Kind:                     input.Kind,
-			Position:                 UnwrapOmittable(input.Position),
-			ContractStartDate:        UnwrapOmittable(input.ContractStartDate),
-			ContractEndDate:          UnwrapOmittable(input.ContractEndDate),
-		},
-	)
-	if err != nil {
-		panic(fmt.Errorf("cannot update people: %w", err))
-	}
-
-	return nil, types.UpdatePeopleOutput{
-		People: types.NewPeople(people),
-	}, nil
 }
 
 func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error) {
@@ -1043,6 +941,359 @@ func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRe
 	}, nil
 }
 
+func (r *Resolver) ListProcessingActivitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListProcessingActivitiesInput) (*mcp.CallToolResult, types.ListProcessingActivitiesOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionProcessingActivityList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
+		Field:     coredata.ProcessingActivityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ProcessingActivityOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var filter = coredata.NewProcessingActivityFilter(nil)
+	if input.Filter != nil {
+		filter = coredata.NewProcessingActivityFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization processing activities: %w", err))
+	}
+
+	return nil, types.NewListProcessingActivitiesOutput(page), nil
+}
+
+func (r *Resolver) GetProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetProcessingActivityInput) (*mcp.CallToolResult, types.GetProcessingActivityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	processingActivity, err := prb.ProcessingActivities.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetProcessingActivityOutput{}, fmt.Errorf("failed to get processing activity: %w", err)
+	}
+
+	return nil, types.GetProcessingActivityOutput{
+		ProcessingActivity: types.NewProcessingActivity(processingActivity),
+	}, nil
+}
+
+func (r *Resolver) AddProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddProcessingActivityInput) (*mcp.CallToolResult, types.AddProcessingActivityOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionProcessingActivityCreate)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	processingActivity, err := svc.ProcessingActivities.Create(
+		ctx,
+		&probo.CreateProcessingActivityRequest{
+			OrganizationID:                       input.OrganizationID,
+			Name:                                 input.Name,
+			Purpose:                              input.Purpose,
+			DataSubjectCategory:                  input.DataSubjectCategory,
+			PersonalDataCategory:                 input.PersonalDataCategory,
+			SpecialOrCriminalData:                input.SpecialOrCriminalData,
+			ConsentEvidenceLink:                  input.ConsentEvidenceLink,
+			LawfulBasis:                          input.LawfulBasis,
+			Recipients:                           input.Recipients,
+			Location:                             input.Location,
+			InternationalTransfers:               input.InternationalTransfers,
+			TransferSafeguard:                    input.TransferSafeguard,
+			RetentionPeriod:                      input.RetentionPeriod,
+			SecurityMeasures:                     input.SecurityMeasures,
+			DataProtectionImpactAssessmentNeeded: input.DataProtectionImpactAssessmentNeeded,
+			TransferImpactAssessmentNeeded:       input.TransferImpactAssessmentNeeded,
+			LastReviewDate:                       input.LastReviewDate,
+			NextReviewDate:                       input.NextReviewDate,
+			Role:                                 input.Role,
+			DataProtectionOfficerID:              input.DataProtectionOfficerID,
+			VendorIDs:                            input.VendorIds,
+		},
+	)
+	if err != nil {
+		return nil, types.AddProcessingActivityOutput{}, fmt.Errorf("failed to create processing activity: %w", err)
+	}
+
+	return nil, types.AddProcessingActivityOutput{
+		ProcessingActivity: types.NewProcessingActivity(processingActivity),
+	}, nil
+}
+
+func (r *Resolver) UpdateProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateProcessingActivityInput) (*mcp.CallToolResult, types.UpdateProcessingActivityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	var vendorIDs *[]gid.GID
+	if input.VendorIds != nil {
+		vendorIDs = &input.VendorIds
+	}
+
+	processingActivity, err := svc.ProcessingActivities.Update(
+		ctx,
+		&probo.UpdateProcessingActivityRequest{
+			ID:                                   input.ID,
+			Name:                                 input.Name,
+			Purpose:                              UnwrapOmittable(input.Purpose),
+			DataSubjectCategory:                  UnwrapOmittable(input.DataSubjectCategory),
+			PersonalDataCategory:                 UnwrapOmittable(input.PersonalDataCategory),
+			SpecialOrCriminalData:                input.SpecialOrCriminalData,
+			ConsentEvidenceLink:                  UnwrapOmittable(input.ConsentEvidenceLink),
+			LawfulBasis:                          input.LawfulBasis,
+			Recipients:                           UnwrapOmittable(input.Recipients),
+			Location:                             UnwrapOmittable(input.Location),
+			InternationalTransfers:               input.InternationalTransfers,
+			TransferSafeguard:                    UnwrapOmittable(input.TransferSafeguard),
+			RetentionPeriod:                      UnwrapOmittable(input.RetentionPeriod),
+			SecurityMeasures:                     UnwrapOmittable(input.SecurityMeasures),
+			DataProtectionImpactAssessmentNeeded: input.DataProtectionImpactAssessmentNeeded,
+			TransferImpactAssessmentNeeded:       input.TransferImpactAssessmentNeeded,
+			LastReviewDate:                       UnwrapOmittable(input.LastReviewDate),
+			NextReviewDate:                       UnwrapOmittable(input.NextReviewDate),
+			Role:                                 input.Role,
+			DataProtectionOfficerID:              UnwrapOmittable(input.DataProtectionOfficerID),
+			VendorIDs:                            vendorIDs,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateProcessingActivityOutput{}, fmt.Errorf("failed to update processing activity: %w", err)
+	}
+
+	return nil, types.UpdateProcessingActivityOutput{
+		ProcessingActivity: types.NewProcessingActivity(processingActivity),
+	}, nil
+}
+
+func (r *Resolver) DeleteProcessingActivityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteProcessingActivityInput) (*mcp.CallToolResult, types.DeleteProcessingActivityOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.ProcessingActivities.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteProcessingActivityOutput{}, fmt.Errorf("failed to delete processing activity: %w", err)
+	}
+
+	return nil, types.DeleteProcessingActivityOutput{
+		DeletedProcessingActivityID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListDataProtectionImpactAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDataProtectionImpactAssessmentsInput) (*mcp.CallToolResult, types.ListDataProtectionImpactAssessmentsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDataProtectionImpactAssessmentList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
+		Field:     coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var filter = coredata.NewDataProtectionImpactAssessmentFilter(nil)
+	if input.Filter != nil {
+		filter = coredata.NewDataProtectionImpactAssessmentFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization data protection impact assessments: %w", err))
+	}
+
+	return nil, types.NewListDataProtectionImpactAssessmentsOutput(page), nil
+}
+
+func (r *Resolver) GetDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.GetDataProtectionImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetDataProtectionImpactAssessmentOutput{}, fmt.Errorf("failed to get data protection impact assessment: %w", err)
+	}
+
+	return nil, types.GetDataProtectionImpactAssessmentOutput{
+		DataProtectionImpactAssessment: types.NewDataProtectionImpactAssessment(dpia),
+	}, nil
+}
+
+func (r *Resolver) AddDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.AddDataProtectionImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionDataProtectionImpactAssessmentCreate)
+
+	svc := r.ProboService(ctx, input.ProcessingActivityID)
+
+	dpia, err := svc.DataProtectionImpactAssessments.Create(
+		ctx,
+		&probo.CreateDataProtectionImpactAssessmentRequest{
+			ProcessingActivityID:        input.ProcessingActivityID,
+			Description:                 input.Description,
+			NecessityAndProportionality: input.NecessityAndProportionality,
+			PotentialRisk:               input.PotentialRisk,
+			Mitigations:                 input.Mitigations,
+			ResidualRisk:                input.ResidualRisk,
+		},
+	)
+	if err != nil {
+		return nil, types.AddDataProtectionImpactAssessmentOutput{}, fmt.Errorf("failed to create data protection impact assessment: %w", err)
+	}
+
+	return nil, types.AddDataProtectionImpactAssessmentOutput{
+		DataProtectionImpactAssessment: types.NewDataProtectionImpactAssessment(dpia),
+	}, nil
+}
+
+func (r *Resolver) UpdateDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.UpdateDataProtectionImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	dpia, err := svc.DataProtectionImpactAssessments.Update(
+		ctx,
+		&probo.UpdateDataProtectionImpactAssessmentRequest{
+			ID:                          input.ID,
+			Description:                 UnwrapOmittable(input.Description),
+			NecessityAndProportionality: UnwrapOmittable(input.NecessityAndProportionality),
+			PotentialRisk:               UnwrapOmittable(input.PotentialRisk),
+			Mitigations:                 UnwrapOmittable(input.Mitigations),
+			ResidualRisk:                input.ResidualRisk,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateDataProtectionImpactAssessmentOutput{}, fmt.Errorf("failed to update data protection impact assessment: %w", err)
+	}
+
+	return nil, types.UpdateDataProtectionImpactAssessmentOutput{
+		DataProtectionImpactAssessment: types.NewDataProtectionImpactAssessment(dpia),
+	}, nil
+}
+
+func (r *Resolver) ListTransferImpactAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTransferImpactAssessmentsInput) (*mcp.CallToolResult, types.ListTransferImpactAssessmentsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTransferImpactAssessmentList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
+		Field:     coredata.TransferImpactAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var filter = coredata.NewTransferImpactAssessmentFilter(nil)
+	if input.Filter != nil {
+		filter = coredata.NewTransferImpactAssessmentFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization transfer impact assessments: %w", err))
+	}
+
+	return nil, types.NewListTransferImpactAssessmentsOutput(page), nil
+}
+
+func (r *Resolver) GetTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTransferImpactAssessmentInput) (*mcp.CallToolResult, types.GetTransferImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTransferImpactAssessmentGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	tia, err := prb.TransferImpactAssessments.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetTransferImpactAssessmentOutput{}, fmt.Errorf("failed to get transfer impact assessment: %w", err)
+	}
+
+	return nil, types.GetTransferImpactAssessmentOutput{
+		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
+	}, nil
+}
+
+func (r *Resolver) AddTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTransferImpactAssessmentInput) (*mcp.CallToolResult, types.AddTransferImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionTransferImpactAssessmentCreate)
+
+	svc := r.ProboService(ctx, input.ProcessingActivityID)
+
+	tia, err := svc.TransferImpactAssessments.Create(
+		ctx,
+		&probo.CreateTransferImpactAssessmentRequest{
+			ProcessingActivityID:  input.ProcessingActivityID,
+			DataSubjects:          input.DataSubjects,
+			LegalMechanism:        input.LegalMechanism,
+			Transfer:              input.Transfer,
+			LocalLawRisk:          input.LocalLawRisk,
+			SupplementaryMeasures: input.SupplementaryMeasures,
+		},
+	)
+	if err != nil {
+		return nil, types.AddTransferImpactAssessmentOutput{}, fmt.Errorf("failed to create transfer impact assessment: %w", err)
+	}
+
+	return nil, types.AddTransferImpactAssessmentOutput{
+		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
+	}, nil
+}
+
+func (r *Resolver) UpdateTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTransferImpactAssessmentInput) (*mcp.CallToolResult, types.UpdateTransferImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTransferImpactAssessmentUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	tia, err := svc.TransferImpactAssessments.Update(
+		ctx,
+		&probo.UpdateTransferImpactAssessmentRequest{
+			ID:                    input.ID,
+			DataSubjects:          UnwrapOmittable(input.DataSubjects),
+			LegalMechanism:        UnwrapOmittable(input.LegalMechanism),
+			Transfer:              UnwrapOmittable(input.Transfer),
+			LocalLawRisk:          UnwrapOmittable(input.LocalLawRisk),
+			SupplementaryMeasures: UnwrapOmittable(input.SupplementaryMeasures),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateTransferImpactAssessmentOutput{}, fmt.Errorf("failed to update transfer impact assessment: %w", err)
+	}
+
+	return nil, types.UpdateTransferImpactAssessmentOutput{
+		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
+	}, nil
+}
+
+func (r *Resolver) DeleteTransferImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTransferImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteTransferImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTransferImpactAssessmentDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.TransferImpactAssessments.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteTransferImpactAssessmentOutput{}, fmt.Errorf("failed to delete transfer impact assessment: %w", err)
+	}
+
+	return nil, types.DeleteTransferImpactAssessmentOutput{
+		DeletedTransferImpactAssessmentID: input.ID,
+	}, nil
+}
+
 func (r *Resolver) ListContinualImprovementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListContinualImprovementsInput) (*mcp.CallToolResult, types.ListContinualImprovementsOutput, error) {
 	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionContinualImprovementList)
 
@@ -1288,12 +1539,10 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 	control, err := svc.Controls.Create(
 		ctx,
 		probo.CreateControlRequest{
-			FrameworkID:            input.FrameworkID,
-			Name:                   input.Name,
-			Description:            input.Description,
-			SectionTitle:           input.SectionTitle,
-			Status:                 input.Status,
-			ExclusionJustification: input.ExclusionJustification,
+			FrameworkID:  input.FrameworkID,
+			Name:         input.Name,
+			Description:  input.Description,
+			SectionTitle: input.SectionTitle,
 		},
 	)
 	if err != nil {
@@ -1313,12 +1562,10 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 	control, err := svc.Controls.Update(
 		ctx,
 		probo.UpdateControlRequest{
-			ID:                     input.ID,
-			Name:                   input.Name,
-			Description:            UnwrapOmittable(input.Description),
-			SectionTitle:           input.SectionTitle,
-			Status:                 input.Status,
-			ExclusionJustification: input.ExclusionJustification,
+			ID:           input.ID,
+			Name:         input.Name,
+			Description:  UnwrapOmittable(input.Description),
+			SectionTitle: input.SectionTitle,
 		},
 	)
 	if err != nil {
@@ -1554,6 +1801,21 @@ func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolReques
 	}, nil
 }
 
+func (r *Resolver) DeleteTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTaskInput) (*mcp.CallToolResult, types.DeleteTaskOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionTaskDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Tasks.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteTaskOutput{}, fmt.Errorf("failed to delete task: %w", err)
+	}
+
+	return nil, types.DeleteTaskOutput{
+		DeletedTaskID: input.ID,
+	}, nil
+}
+
 func (r *Resolver) ListSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSnapshotsInput) (*mcp.CallToolResult, types.ListSnapshotsOutput, error) {
 	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionSnapshotList)
 
@@ -1644,12 +1906,21 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 		documentFilter = coredata.NewDocumentFilter(query)
 	}
 
-	page, err := prb.Documents.ListByOrganizationID(ctx, input.OrganizationID, cursor, documentFilter)
+	docPage, err := prb.Documents.ListByOrganizationID(ctx, input.OrganizationID, cursor, documentFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization documents: %w", err))
 	}
 
-	return nil, types.NewListDocumentsOutput(page), nil
+	approverIDsMap := make(map[gid.GID][]gid.GID)
+	for _, d := range docPage.Data {
+		approverPage, err := prb.Documents.ListApprovers(ctx, d.ID, allApproversCursor())
+		if err != nil {
+			panic(fmt.Errorf("cannot list document approvers: %w", err))
+		}
+		approverIDsMap[d.ID] = profileIDs(approverPage)
+	}
+
+	return nil, types.NewListDocumentsOutput(docPage, approverIDsMap), nil
 }
 
 func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentInput) (*mcp.CallToolResult, types.GetDocumentOutput, error) {
@@ -1662,8 +1933,13 @@ func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
+	approverPage, err := prb.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
+	if err != nil {
+		panic(fmt.Errorf("cannot list document approvers: %w", err))
+	}
+
 	return nil, types.GetDocumentOutput{
-		Document: types.NewDocument(document),
+		Document: types.NewDocument(document, profileIDs(approverPage)),
 	}, nil
 }
 
@@ -1683,7 +1959,7 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 			OrganizationID:        input.OrganizationID,
 			Title:                 input.Title,
 			Content:               input.Content,
-			OwnerID:               input.OwnerID,
+			ApproverIDs:           input.ApproverIds,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: trustCenterVisibility,
@@ -1693,7 +1969,7 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		panic(fmt.Errorf("cannot create document: %w", err))
 	}
 
-	return nil, types.NewAddDocumentOutput(document, documentVersion), nil
+	return nil, types.NewAddDocumentOutput(document, documentVersion, input.ApproverIds, input.ApproverIds), nil
 }
 
 func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentInput) (*mcp.CallToolResult, types.UpdateDocumentOutput, error) {
@@ -1706,7 +1982,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		probo.UpdateDocumentRequest{
 			DocumentID:            input.ID,
 			Title:                 input.Title,
-			OwnerID:               input.OwnerID,
+			ApproverIDs:           input.ApproverIds,
 			Classification:        input.Classification,
 			DocumentType:          input.DocumentType,
 			TrustCenterVisibility: input.TrustCenterVisibility,
@@ -1716,8 +1992,13 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		panic(fmt.Errorf("cannot update document: %w", err))
 	}
 
+	approverPage, err := svc.Documents.ListApprovers(ctx, input.ID, allApproversCursor())
+	if err != nil {
+		panic(fmt.Errorf("cannot list document approvers: %w", err))
+	}
+
 	return nil, types.UpdateDocumentOutput{
-		Document: types.NewDocument(document),
+		Document: types.NewDocument(document, profileIDs(approverPage)),
 	}, nil
 }
 
@@ -1738,12 +2019,21 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 	svc := r.ProboService(ctx, input.DocumentID)
 
-	page, err := svc.Documents.ListVersions(ctx, input.DocumentID, cursor, coredata.NewDocumentVersionFilter())
+	versionPage, err := svc.Documents.ListVersions(ctx, input.DocumentID, cursor, coredata.NewDocumentVersionFilter())
 	if err != nil {
 		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}
 
-	return nil, types.NewListDocumentVersionsOutput(page), nil
+	approverIDsMap := make(map[gid.GID][]gid.GID)
+	for _, v := range versionPage.Data {
+		approverPage, err := svc.Documents.ListVersionApprovers(ctx, v.ID, allApproversCursor())
+		if err != nil {
+			panic(fmt.Errorf("cannot list document version approvers: %w", err))
+		}
+		approverIDsMap[v.ID] = profileIDs(approverPage)
+	}
+
+	return nil, types.NewListDocumentVersionsOutput(versionPage, approverIDsMap), nil
 }
 
 func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionInput) (*mcp.CallToolResult, types.GetDocumentVersionOutput, error) {
@@ -1756,8 +2046,13 @@ func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallTool
 		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
+	approverPage, err := svc.Documents.ListVersionApprovers(ctx, input.ID, allApproversCursor())
+	if err != nil {
+		panic(fmt.Errorf("cannot list document version approvers: %w", err))
+	}
+
 	return nil, types.GetDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(version),
+		DocumentVersion: types.NewDocumentVersion(version, profileIDs(approverPage)),
 	}, nil
 }
 
@@ -1771,8 +2066,13 @@ func (r *Resolver) CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.
 		panic(fmt.Errorf("cannot create draft document version: %w", err))
 	}
 
+	approverPage, err := svc.Documents.ListVersionApprovers(ctx, draftVersion.ID, allApproversCursor())
+	if err != nil {
+		panic(fmt.Errorf("cannot list document version approvers: %w", err))
+	}
+
 	return nil, types.CreateDraftDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(draftVersion),
+		DocumentVersion: types.NewDocumentVersion(draftVersion, profileIDs(approverPage)),
 	}, nil
 }
 
@@ -1792,8 +2092,13 @@ func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallT
 		panic(fmt.Errorf("cannot update document version: %w", err))
 	}
 
+	versionApproverPage, err := svc.Documents.ListVersionApprovers(ctx, documentVersion.ID, allApproversCursor())
+	if err != nil {
+		panic(fmt.Errorf("cannot list document version approvers: %w", err))
+	}
+
 	return nil, types.UpdateDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
+		DocumentVersion: types.NewDocumentVersion(documentVersion, profileIDs(versionApproverPage)),
 	}, nil
 }
 
@@ -1809,9 +2114,19 @@ func (r *Resolver) PublishDocumentVersionTool(ctx context.Context, req *mcp.Call
 		panic(fmt.Errorf("cannot publish document version: %w", err))
 	}
 
+	docApproverPage, err := svc.Documents.ListApprovers(ctx, document.ID, allApproversCursor())
+	if err != nil {
+		panic(fmt.Errorf("cannot list document approvers: %w", err))
+	}
+
+	versionApproverPage, err := svc.Documents.ListVersionApprovers(ctx, documentVersion.ID, allApproversCursor())
+	if err != nil {
+		panic(fmt.Errorf("cannot list document version approvers: %w", err))
+	}
+
 	return nil, types.PublishDocumentVersionOutput{
-		Document:        types.NewDocument(document),
-		DocumentVersion: types.NewDocumentVersion(documentVersion),
+		Document:        types.NewDocument(document, profileIDs(docApproverPage)),
+		DocumentVersion: types.NewDocumentVersion(documentVersion, profileIDs(versionApproverPage)),
 	}, nil
 }
 
@@ -1931,5 +2246,349 @@ func (r *Resolver) CancelSignatureRequestTool(ctx context.Context, req *mcp.Call
 
 	return nil, types.CancelSignatureRequestOutput{
 		DeletedDocumentVersionSignatureID: input.DocumentVersionSignatureID,
+	}, nil
+}
+
+func (r *Resolver) ListMeetingsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingsInput) (*mcp.CallToolResult, types.ListMeetingsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMeetingList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.MeetingOrderField]{
+		Field:     coredata.MeetingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeetingOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.Meetings.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization meetings: %w", err))
+	}
+
+	return nil, types.NewListMeetingsOutput(page), nil
+}
+
+func (r *Resolver) GetMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeetingInput) (*mcp.CallToolResult, types.GetMeetingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionMeetingGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	meeting, err := prb.Meetings.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetMeetingOutput{}, fmt.Errorf("failed to get meeting: %w", err)
+	}
+
+	return nil, types.GetMeetingOutput{
+		Meeting: types.NewMeeting(meeting),
+	}, nil
+}
+
+func (r *Resolver) AddMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeetingInput) (*mcp.CallToolResult, types.AddMeetingOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMeetingCreate)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	meeting, err := svc.Meetings.Create(
+		ctx,
+		probo.CreateMeetingRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Date:           input.Date,
+			AttendeeIDs:    input.AttendeeIds,
+			Minutes:        input.Minutes,
+		},
+	)
+	if err != nil {
+		return nil, types.AddMeetingOutput{}, fmt.Errorf("failed to create meeting: %w", err)
+	}
+
+	return nil, types.AddMeetingOutput{
+		Meeting: types.NewMeeting(meeting),
+	}, nil
+}
+
+func (r *Resolver) UpdateMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeetingInput) (*mcp.CallToolResult, types.UpdateMeetingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionMeetingUpdate)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	meeting, err := svc.Meetings.Update(
+		ctx,
+		probo.UpdateMeetingRequest{
+			MeetingID:   input.ID,
+			Name:        input.Name,
+			Date:        input.Date,
+			AttendeeIDs: input.AttendeeIds,
+			Minutes:     UnwrapOmittable(input.Minutes),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateMeetingOutput{}, fmt.Errorf("failed to update meeting: %w", err)
+	}
+
+	return nil, types.UpdateMeetingOutput{
+		Meeting: types.NewMeeting(meeting),
+	}, nil
+}
+
+func (r *Resolver) DeleteMeetingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeetingInput) (*mcp.CallToolResult, types.DeleteMeetingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionMeetingDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Meetings.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteMeetingOutput{}, fmt.Errorf("failed to delete meeting: %w", err)
+	}
+
+	return nil, types.DeleteMeetingOutput{
+		DeletedMeetingID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) DeleteRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskInput) (*mcp.CallToolResult, types.DeleteRiskOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Risks.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteRiskOutput{}, fmt.Errorf("failed to delete risk: %w", err)
+	}
+
+	return nil, types.DeleteRiskOutput{
+		DeletedRiskID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListMeetingAttendeesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeetingAttendeesInput) (*mcp.CallToolResult, types.ListMeetingAttendeesOutput, error) {
+	r.MustAuthorize(ctx, input.MeetingID, probo.ActionMeetingGet)
+
+	svc := r.ProboService(ctx, input.MeetingID)
+
+	attendees, err := svc.Meetings.GetAttendees(ctx, input.MeetingID)
+	if err != nil {
+		return nil, types.ListMeetingAttendeesOutput{}, fmt.Errorf("failed to list meeting attendees: %w", err)
+	}
+
+	profiles := make([]*types.Profile, 0, len(attendees))
+	for _, a := range attendees {
+		profiles = append(profiles, types.NewProfile(a))
+	}
+
+	return nil, types.ListMeetingAttendeesOutput{
+		Attendees: profiles,
+	}, nil
+}
+
+func (r *Resolver) DeleteMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeasureInput) (*mcp.CallToolResult, types.DeleteMeasureOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionMeasureDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Measures.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteMeasureOutput{}, fmt.Errorf("failed to delete measure: %w", err)
+	}
+
+	return nil, types.DeleteMeasureOutput{
+		DeletedMeasureID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListUsersInput) (*mcp.CallToolResult, types.ListUsersOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionMembershipProfileList)
+
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	filter := coredata.NewMembershipProfileFilter(nil)
+	if input.Filter != nil {
+		filter = coredata.NewMembershipProfileFilter(input.Filter.ExcludeContractEnded)
+	}
+
+	pageResult, err := r.iamSvc.OrganizationService.ListProfiles(ctx, input.OrganizationID, cursor, filter)
+	if err != nil {
+		return nil, types.ListUsersOutput{}, fmt.Errorf("list users: %w", err)
+	}
+
+	users := make([]*types.Profile, 0, len(pageResult.Data))
+	for _, p := range pageResult.Data {
+		users = append(users, types.NewProfile(p))
+	}
+	var nextCursor *page.CursorKey
+	if len(pageResult.Data) > 0 && pageResult.Cursor != nil {
+		cursorKey := pageResult.Data[len(pageResult.Data)-1].CursorKey(pageResult.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+	return nil, types.ListUsersOutput{
+		Users:      users,
+		NextCursor: nextCursor,
+	}, nil
+}
+
+func (r *Resolver) GetUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetUserInput) (*mcp.CallToolResult, types.GetUserOutput, error) {
+	profile, err := r.iamSvc.OrganizationService.GetProfile(ctx, input.ID)
+	if err != nil {
+		var errNotFound *iam.ErrProfileNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, types.GetUserOutput{}, fmt.Errorf("user not found: %w", err)
+		}
+		return nil, types.GetUserOutput{}, fmt.Errorf("get user: %w", err)
+	}
+	r.MustAuthorize(ctx, profile.OrganizationID, iam.ActionMembershipProfileGet)
+	return nil, types.GetUserOutput{User: types.NewProfile(profile)}, nil
+}
+
+func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateUserInput) (*mcp.CallToolResult, types.CreateUserOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate)
+
+	var contractStart, contractEnd **time.Time
+	if input.ContractStartDate != nil {
+		contractStart = &input.ContractStartDate
+	}
+	if input.ContractEndDate != nil {
+		contractEnd = &input.ContractEndDate
+	}
+	profile, err := r.iamSvc.OrganizationService.CreateUser(ctx, &iam.CreateUserRequest{
+		OrganizationID:           input.OrganizationID,
+		EmailAddress:             input.EmailAddress,
+		Role:                     input.Role,
+		FullName:                 input.FullName,
+		AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+		Kind:                     input.Kind,
+		Position:                 input.Position,
+		ContractStartDate:        contractStart,
+		ContractEndDate:          contractEnd,
+	})
+	if err != nil {
+		var errAlreadyExists *iam.ErrUserAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, types.CreateUserOutput{}, fmt.Errorf("user with email already exists: %w", err)
+		}
+		return nil, types.CreateUserOutput{}, fmt.Errorf("create user: %w", err)
+	}
+	return nil, types.CreateUserOutput{User: types.NewProfile(profile)}, nil
+}
+
+func (r *Resolver) InviteUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.InviteUserInput) (*mcp.CallToolResult, types.InviteUserOutput, error) {
+	r.MustAuthorize(ctx, input.ProfileID, iam.ActionInvitationCreate)
+
+	invitation, err := r.iamSvc.OrganizationService.InviteUser(ctx, &iam.CreateInvitationRequest{
+		OrganizationID: input.OrganizationID,
+		ProfileID:      input.ProfileID,
+	})
+	if err != nil {
+		var errOrgNotFound *iam.ErrOrganizationNotFound
+		var errUserExists *iam.ErrUserAlreadyExists
+		if errors.As(err, &errOrgNotFound) {
+			return nil, types.InviteUserOutput{}, fmt.Errorf("organization not found: %w", err)
+		}
+		if errors.As(err, &errUserExists) {
+			return nil, types.InviteUserOutput{}, fmt.Errorf("user already in organization: %w", err)
+		}
+		return nil, types.InviteUserOutput{}, fmt.Errorf("invite user: %w", err)
+	}
+	return nil, types.InviteUserOutput{InvitationID: invitation.ID}, nil
+}
+
+func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateUserInput) (*mcp.CallToolResult, types.UpdateUserOutput, error) {
+	r.MustAuthorize(ctx, input.ID, iam.ActionMembershipProfileUpdate)
+
+	var additionalEmails []mail.Addr
+	if input.AdditionalEmailAddresses != nil {
+		additionalEmails = *input.AdditionalEmailAddresses
+	}
+	var position *string
+	if p := UnwrapOmittable(input.Position); p != nil {
+		position = *p
+	}
+	var contractStart, contractEnd **time.Time
+	if p := UnwrapOmittable(input.ContractStartDate); p != nil {
+		contractStart = p
+	}
+	if p := UnwrapOmittable(input.ContractEndDate); p != nil {
+		contractEnd = p
+	}
+	profile, err := r.iamSvc.OrganizationService.UpdateUser(ctx, &iam.UpdateUserRequest{
+		ID:                       input.ID,
+		FullName:                 input.FullName,
+		AdditionalEmailAddresses: additionalEmails,
+		Kind:                     input.Kind,
+		Position:                 position,
+		ContractStartDate:        contractStart,
+		ContractEndDate:          contractEnd,
+	})
+	if err != nil {
+		return nil, types.UpdateUserOutput{}, fmt.Errorf("update user: %w", err)
+	}
+	return nil, types.UpdateUserOutput{User: types.NewProfile(profile)}, nil
+}
+
+func (r *Resolver) UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMembershipInput) (*mcp.CallToolResult, types.UpdateMembershipOutput, error) {
+	r.MustAuthorize(ctx, input.MembershipID, iam.ActionMembershipUpdate)
+	if input.Role == coredata.MembershipRoleOwner {
+		r.MustAuthorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner)
+	}
+
+	membership, err := r.iamSvc.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
+	if err != nil {
+		return nil, types.UpdateMembershipOutput{}, fmt.Errorf("update membership: %w", err)
+	}
+	return nil, types.UpdateMembershipOutput{
+		Membership: &types.Membership{
+			ID:        membership.ID,
+			Role:      membership.Role,
+			CreatedAt: membership.CreatedAt,
+		},
+	}, nil
+}
+
+func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveUserInput) (*mcp.CallToolResult, types.RemoveUserOutput, error) {
+	r.MustAuthorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete)
+
+	err := r.iamSvc.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
+	if err != nil {
+		var errManagedBySCIM *iam.ErrUserManagedBySCIM
+		var errLastOwner *iam.ErrLastActiveOwner
+		if errors.As(err, &errManagedBySCIM) {
+			return nil, types.RemoveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be removed: %w", err)
+		}
+		if errors.As(err, &errLastOwner) {
+			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot remove last active owner: %w", err)
+		}
+		return nil, types.RemoveUserOutput{}, fmt.Errorf("remove user: %w", err)
+	}
+	return nil, types.RemoveUserOutput{DeletedUserID: input.ProfileID}, nil
+}
+
+func (r *Resolver) DeleteDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteDataProtectionImpactAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.DataProtectionImpactAssessments.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteDataProtectionImpactAssessmentOutput{}, fmt.Errorf("failed to delete data protection impact assessment: %w", err)
+	}
+
+	return nil, types.DeleteDataProtectionImpactAssessmentOutput{
+		DeletedDataProtectionImpactAssessmentID: input.ID,
 	}, nil
 }

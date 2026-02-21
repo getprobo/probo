@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3b196ff5779051fcd1ed9cca6b7be112>>
+ * @generated SignedSource<<a1d0124ec674f96dc08a172af1d5ed52>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,21 +9,21 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type PeopleFilter = {
+export type ProfileFilter = {
   excludeContractEnded?: boolean | null | undefined;
 };
 export type PeopleGraphQuery$variables = {
-  filter?: PeopleFilter | null | undefined;
+  filter?: ProfileFilter | null | undefined;
   organizationId: string;
 };
 export type PeopleGraphQuery$data = {
   readonly organization: {
-    readonly peoples?: {
+    readonly profiles?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
+          readonly emailAddress: string;
           readonly fullName: string;
           readonly id: string;
-          readonly primaryEmailAddress: string;
         };
       }>;
     };
@@ -84,15 +84,15 @@ v4 = {
           }
         }
       ],
-      "concreteType": "PeopleConnection",
+      "concreteType": "ProfileConnection",
       "kind": "LinkedField",
-      "name": "peoples",
+      "name": "profiles",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "concreteType": "PeopleEdge",
+          "concreteType": "ProfileEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -100,7 +100,7 @@ v4 = {
             {
               "alias": null,
               "args": null,
-              "concreteType": "People",
+              "concreteType": "Profile",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -117,7 +117,7 @@ v4 = {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "primaryEmailAddress",
+                  "name": "emailAddress",
                   "storageKey": null
                 }
               ],
@@ -191,16 +191,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3b6dc3ae9df52a04b5d496b68f8c26f4",
+    "cacheID": "b29f98c795b6aeaa982838ebf8084b88",
     "id": null,
     "metadata": {},
     "name": "PeopleGraphQuery",
     "operationKind": "query",
-    "text": "query PeopleGraphQuery(\n  $organizationId: ID!\n  $filter: PeopleFilter\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      peoples(first: 1000, orderBy: {direction: ASC, field: FULL_NAME}, filter: $filter) {\n        edges {\n          node {\n            id\n            fullName\n            primaryEmailAddress\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query PeopleGraphQuery(\n  $organizationId: ID!\n  $filter: ProfileFilter\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      profiles(first: 1000, orderBy: {direction: ASC, field: FULL_NAME}, filter: $filter) {\n        edges {\n          node {\n            id\n            fullName\n            emailAddress\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f1ce35948ab8dcd05c83e13ad83d93cd";
+(node as any).hash = "412bb20f434c241e6aa675b6afa409f6";
 
 export default node;

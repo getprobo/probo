@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e5a5b11ba24baf03ee3f94fa65cf3591>>
+ * @generated SignedSource<<d6d18b9131581530d367e10380f14077>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ export type TrustCenterAccessState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageAccessListItemFragment$data = {
   readonly activeCount: number;
-  readonly canDelete: boolean;
   readonly canUpdate: boolean;
   readonly createdAt: string;
   readonly email: string;
@@ -103,25 +102,12 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "permission",
       "storageKey": "permission(action:\"core:trust-center-access:update\")"
-    },
-    {
-      "alias": "canDelete",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "core:trust-center-access:delete"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"core:trust-center-access:delete\")"
     }
   ],
   "type": "TrustCenterAccess",
   "abstractKey": null
 };
 
-(node as any).hash = "4e78486a2c8edc2b5f73fb64dbeb4006";
+(node as any).hash = "2492ed4967d57febe8f1153f75280410";
 
 export default node;
