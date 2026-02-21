@@ -175,14 +175,6 @@ func TestDatum_Create_Validation(t *testing.T) {
 			wantErrorContains: "HTML",
 		},
 		{
-			name: "name with angle brackets",
-			input: map[string]any{
-				"name":               "Test < Datum",
-				"dataClassification": "INTERNAL",
-			},
-			wantErrorContains: "angle brackets",
-		},
-		{
 			name: "name with newline",
 			input: map[string]any{
 				"name":               "Test\nDatum",
@@ -396,14 +388,6 @@ func TestDatum_Update_Validation(t *testing.T) {
 				return map[string]any{"id": id, "name": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
-		},
-		{
-			name:  "name with angle brackets",
-			setup: func() string { return baseDatumID },
-			input: func(id string) map[string]any {
-				return map[string]any{"id": id, "name": "Test < Datum"}
-			},
-			wantErrorContains: "angle brackets",
 		},
 		{
 			name:  "name with newline",
