@@ -39,5 +39,3 @@ WHERE approver_profile_id IS NOT NULL;
 
 -- Allow NULL on old columns now that data is in the join tables
 ALTER TABLE document_versions ALTER COLUMN approver_profile_id DROP NOT NULL;
-
--- TODO: Drop the old columns
