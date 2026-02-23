@@ -36,29 +36,6 @@ type (
 	}
 )
 
-// ListVersions lists all versions of a document
-func (s *DocumentService) ListVersions(
-	ctx context.Context,
-	documentID gid.GID,
-	cursor *page.Cursor[coredata.DocumentVersionOrderField],
-) (*page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField], error) {
-	var documentVersions coredata.DocumentVersions
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			filter := coredata.NewDocumentVersionFilter()
-			return documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor, filter)
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(documentVersions, cursor), nil
-}
-
 func (s *DocumentService) ListForOrganizationId(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -70,7 +47,12 @@ func (s *DocumentService) ListForOrganizationId(
 		ctx,
 		func(conn pg.Conn) error {
 			filter := coredata.NewDocumentTrustCenterFilter()
-			return documents.LoadPublishedByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
+
+			if err := documents.LoadPublishedByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load published documents: %w", err)
+			}
+
+			return nil
 		},
 	)
 
