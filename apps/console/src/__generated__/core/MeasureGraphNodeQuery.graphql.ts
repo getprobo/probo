@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bf973ac1452f812480abe7160f4529e8>>
+ * @generated SignedSource<<de5873ce63a31aa710f82a582f05a45a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -354,6 +354,32 @@ return {
               (v13/*: any*/),
               (v14/*: any*/),
               {
+                "alias": "canCreateRiskMeasureMapping",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:risk:create-measure-mapping"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:risk:create-measure-mapping\")"
+              },
+              {
+                "alias": "canDeleteRiskMeasureMapping",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:risk:delete-measure-mapping"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:risk:delete-measure-mapping\")"
+              },
+              {
                 "alias": null,
                 "args": (v16/*: any*/),
                 "concreteType": "RiskConnection",
@@ -378,32 +404,6 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
-                          {
-                            "alias": "canCreateMeasureMapping",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:risk:create-measure-mapping"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:risk:create-measure-mapping\")"
-                          },
-                          {
-                            "alias": "canDeleteMeasureMapping",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:risk:delete-measure-mapping"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:risk:delete-measure-mapping\")"
-                          },
                           (v3/*: any*/),
                           {
                             "alias": null,
@@ -454,6 +454,32 @@ return {
                 "name": "risks"
               },
               {
+                "alias": "canCreateControlMeasureMapping",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:control:create-measure-mapping"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
+              },
+              {
+                "alias": "canDeleteControlMeasureMapping",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:control:delete-measure-mapping"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
+              },
+              {
                 "alias": null,
                 "args": (v21/*: any*/),
                 "concreteType": "ControlConnection",
@@ -478,32 +504,6 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
-                          {
-                            "alias": "canCreateMeasureMapping",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:control:create-measure-mapping"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
-                          },
-                          {
-                            "alias": "canDeleteMeasureMapping",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:control:delete-measure-mapping"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
-                          },
                           (v3/*: any*/),
                           {
                             "alias": null,
@@ -682,12 +682,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d8ac1210636ffd91eacb1bfe3452e26c",
+    "cacheID": "76cc28f60f7911b5b452f8384fe70fcb",
     "id": null,
     "metadata": {},
     "name": "MeasureGraphNodeQuery",
     "operationKind": "query",
-    "text": "query MeasureGraphNodeQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      name\n      description\n      state\n      category\n      canUpdate: permission(action: \"core:measure:update\")\n      canDelete: permission(action: \"core:measure:delete\")\n      canListTasks: permission(action: \"core:task:list\")\n      evidencesInfos: evidences(first: 0) {\n        totalCount\n      }\n      risksInfos: risks(first: 0) {\n        totalCount\n      }\n      controlsInfos: controls(first: 0) {\n        totalCount\n      }\n      ...MeasureRisksTabFragment\n      ...MeasureControlsTabFragment\n      ...MeasureFormDialogMeasureFragment\n      ...MeasureEvidencesTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedRisksCardFragment on Risk {\n  id\n  name\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment MeasureControlsTabFragment on Measure {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n        canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment on Measure {\n  id\n  canUploadEvidence: permission(action: \"core:measure:upload-evidence\")\n  evidences(first: 50) {\n    edges {\n      node {\n        id\n        file {\n          fileName\n          mimeType\n          size\n          id\n        }\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n  canDelete: permission(action: \"core:evidence:delete\")\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasureRisksTabFragment on Measure {\n  id\n  risks(first: 100) {\n    edges {\n      node {\n        id\n        canCreateMeasureMapping: permission(action: \"core:risk:create-measure-mapping\")\n        canDeleteMeasureMapping: permission(action: \"core:risk:delete-measure-mapping\")\n        ...LinkedRisksCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query MeasureGraphNodeQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      name\n      description\n      state\n      category\n      canUpdate: permission(action: \"core:measure:update\")\n      canDelete: permission(action: \"core:measure:delete\")\n      canListTasks: permission(action: \"core:task:list\")\n      evidencesInfos: evidences(first: 0) {\n        totalCount\n      }\n      risksInfos: risks(first: 0) {\n        totalCount\n      }\n      controlsInfos: controls(first: 0) {\n        totalCount\n      }\n      ...MeasureRisksTabFragment\n      ...MeasureControlsTabFragment\n      ...MeasureFormDialogMeasureFragment\n      ...MeasureEvidencesTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedRisksCardFragment on Risk {\n  id\n  name\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment MeasureControlsTabFragment on Measure {\n  id\n  canCreateControlMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n  canDeleteControlMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment on Measure {\n  id\n  canUploadEvidence: permission(action: \"core:measure:upload-evidence\")\n  evidences(first: 50) {\n    edges {\n      node {\n        id\n        file {\n          fileName\n          mimeType\n          size\n          id\n        }\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n  canDelete: permission(action: \"core:evidence:delete\")\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasureRisksTabFragment on Measure {\n  id\n  canCreateRiskMeasureMapping: permission(action: \"core:risk:create-measure-mapping\")\n  canDeleteRiskMeasureMapping: permission(action: \"core:risk:delete-measure-mapping\")\n  risks(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedRisksCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<414658fc55873606e711cc4571e9fd9b>>
+ * @generated SignedSource<<54f7a965dd1b0943e08bbec66c11200d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,12 +11,12 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type MeasureControlsTabFragment$data = {
+  readonly canCreateControlMeasureMapping: boolean;
+  readonly canDeleteControlMeasureMapping: boolean;
   readonly controls: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly canCreateMeasureMapping: boolean;
-        readonly canDeleteMeasureMapping: boolean;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"LinkedControlsCardFragment">;
       };
@@ -112,6 +112,32 @@ return {
   "selections": [
     (v1/*: any*/),
     {
+      "alias": "canCreateControlMeasureMapping",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:control:create-measure-mapping"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
+    },
+    {
+      "alias": "canDeleteControlMeasureMapping",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:control:delete-measure-mapping"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
+    },
+    {
       "alias": "controls",
       "args": [
         {
@@ -147,32 +173,6 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
-                {
-                  "alias": "canCreateMeasureMapping",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "action",
-                      "value": "core:control:create-measure-mapping"
-                    }
-                  ],
-                  "kind": "ScalarField",
-                  "name": "permission",
-                  "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
-                },
-                {
-                  "alias": "canDeleteMeasureMapping",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "action",
-                      "value": "core:control:delete-measure-mapping"
-                    }
-                  ],
-                  "kind": "ScalarField",
-                  "name": "permission",
-                  "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
-                },
                 {
                   "args": null,
                   "kind": "FragmentSpread",
@@ -258,6 +258,6 @@ return {
 };
 })();
 
-(node as any).hash = "6cd1d286921188abc2a9fdc1c1e0ed08";
+(node as any).hash = "f1553367470d92ddfc910b2eea87109f";
 
 export default node;
