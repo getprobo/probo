@@ -26,16 +26,16 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^10.0.1",
     "@probo/eslint-plugin-relay-types": "^1.0.0",
-    "@stylistic/eslint-plugin": "^5.7.0",
+    "@stylistic/eslint-plugin": "^5.9.0",
     "eslint-plugin-import-x": "^4.16.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-relay": "^2.0.0",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.1",
     "globals": "^17.0.0",
-    "typescript-eslint": "^8.53.1",
-    "typescript": "^5.8.3"
+    "typescript-eslint": "^8.56.0",
+    "typescript": "^5.9.3"
   }
 }

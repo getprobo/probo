@@ -9,14 +9,14 @@
     "export": "email export"
   },
   "dependencies": {
-    "@react-email/components": "^0.5.6",
+    "@react-email/components": "^1.0.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.7",
+    "@types/node": "^25.3.0",
     "@types/react": "^19.0.6",
     "tsx": "^4.21.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.9.3"
   }
 }

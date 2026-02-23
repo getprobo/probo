@@ -17,7 +17,7 @@
     "relay": "turbo run relay"
   },
   "devDependencies": {
-    "turbo": "^2.5.3"
+    "turbo": "^2.8.10"
   },
   "graphql": {
     "schema": "./pkg/server/api/console/v1/schema.graphql"
