@@ -354,6 +354,67 @@ ORDER BY title ASC
 	return nil
 }
 
+func (p *Documents) LoadPublishedByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[DocumentOrderField],
+	filter *DocumentFilter,
+) error {
+	q := `
+WITH published_documents AS (
+	SELECT
+		d.*,
+		dv.title AS published_title
+	FROM
+		documents d
+		LEFT JOIN document_versions dv
+			ON dv.document_id = d.id
+			AND dv.version_number = d.current_published_version
+	WHERE
+		d.deleted_at IS NULL
+		AND d.organization_id = @organization_id
+)
+SELECT
+	id,
+	organization_id,
+	COALESCE(published_title, title) AS title,
+	document_type,
+	classification,
+	current_published_version,
+	trust_center_visibility,
+	created_at,
+	updated_at
+FROM
+	published_documents documents
+WHERE
+	%s
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query published documents: %w", err)
+	}
+
+	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Document])
+	if err != nil {
+		return fmt.Errorf("cannot collect published documents: %w", err)
+	}
+
+	*p = documents
+
+	return nil
+}
+
 func (p Document) Insert(
 	ctx context.Context,
 	conn pg.Conn,

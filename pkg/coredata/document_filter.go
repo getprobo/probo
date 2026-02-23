@@ -35,11 +35,13 @@ func NewDocumentFilter(query *string) *DocumentFilter {
 }
 
 func NewDocumentTrustCenterFilter() *DocumentFilter {
+	published := true
 	return &DocumentFilter{
 		trustCenterVisibilities: []TrustCenterVisibility{
 			TrustCenterVisibilityPrivate,
 			TrustCenterVisibilityPublic,
 		},
+		published: &published,
 	}
 }
 

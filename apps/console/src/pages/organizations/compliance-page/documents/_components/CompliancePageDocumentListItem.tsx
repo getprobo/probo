@@ -1,6 +1,6 @@
 import { getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Badge, DocumentTypeBadge, DocumentVersionBadge, Field, Option, Td, Tr } from "@probo/ui";
+import { Badge, DocumentTypeBadge, Field, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -20,13 +20,15 @@ const documentFragment = graphql`
   fragment CompliancePageDocumentListItem_documentFragment on Document {
     id
     documentType
-    title
     trustCenterVisibility
-    lastVersion: versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+    latestPublishedVersion: versions(
+      first: 1
+      orderBy: { field: CREATED_AT, direction: DESC }
+      filter: { status: PUBLISHED }
+    ) {
       edges {
         node {
-          id
-          status
+          title
         }
       }
     }
@@ -86,18 +88,15 @@ export function CompliancePageDocumentListItem(props: {
     [document.id, updateDocumentVisibility],
   );
 
+  const versionTitle = document.latestPublishedVersion.edges[0]?.node.title;
+
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
       <Td>
-        <div className="flex gap-4 items-center">{document.title}</div>
+        <div className="flex gap-4 items-center">{versionTitle}</div>
       </Td>
       <Td>
         <DocumentTypeBadge type={document.documentType} />
-      </Td>
-      <Td>
-        <DocumentVersionBadge
-          state={document.lastVersion.edges[0].node.status}
-        />
       </Td>
       <Td noLink width={130} className="pr-0">
         <Field

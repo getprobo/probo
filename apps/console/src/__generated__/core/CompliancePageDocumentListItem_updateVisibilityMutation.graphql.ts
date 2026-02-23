@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0948c131a30705ee3921f60bbd40c3cb>>
+ * @generated SignedSource<<976e80f8eb6650a229d5af8f1f58b5f5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -131,19 +131,19 @@ return {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "title",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
                 "name": "trustCenterVisibility",
                 "storageKey": null
               },
               {
-                "alias": "lastVersion",
+                "alias": "latestPublishedVersion",
                 "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "filter",
+                    "value": {
+                      "status": "PUBLISHED"
+                    }
+                  },
                   {
                     "kind": "Literal",
                     "name": "first",
@@ -179,14 +179,14 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v2/*: any*/),
                           {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "status",
+                            "name": "title",
                             "storageKey": null
-                          }
+                          },
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -194,7 +194,7 @@ return {
                     "storageKey": null
                   }
                 ],
-                "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "versions(filter:{\"status\":\"PUBLISHED\"},first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
               }
             ],
             "storageKey": null
@@ -205,12 +205,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f72f0dd5039dbfeaa609b7914308c0fe",
+    "cacheID": "8bb0348deb10b7f0fe65b953bccf8cb3",
     "id": null,
     "metadata": {},
     "name": "CompliancePageDocumentListItem_updateVisibilityMutation",
     "operationKind": "mutation",
-    "text": "mutation CompliancePageDocumentListItem_updateVisibilityMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      ...CompliancePageDocumentListItem_documentFragment\n      id\n    }\n  }\n}\n\nfragment CompliancePageDocumentListItem_documentFragment on Document {\n  id\n  documentType\n  title\n  trustCenterVisibility\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "mutation CompliancePageDocumentListItem_updateVisibilityMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      ...CompliancePageDocumentListItem_documentFragment\n      id\n    }\n  }\n}\n\nfragment CompliancePageDocumentListItem_documentFragment on Document {\n  id\n  documentType\n  trustCenterVisibility\n  latestPublishedVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}, filter: {status: PUBLISHED}) {\n    edges {\n      node {\n        title\n        id\n      }\n    }\n  }\n}\n"
   }
 };
 })();

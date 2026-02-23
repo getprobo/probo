@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<112e917e3fb881859a56b794f07ce7e7>>
+ * @generated SignedSource<<85da952604018b5f879924bf3f8d5a27>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,22 +9,19 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageDocumentListItem_documentFragment$data = {
   readonly documentType: DocumentType;
   readonly id: string;
-  readonly lastVersion: {
+  readonly latestPublishedVersion: {
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly id: string;
-        readonly status: DocumentStatus;
+        readonly title: string;
       };
     }>;
   };
-  readonly title: string;
   readonly trustCenterVisibility: TrustCenterVisibility;
   readonly " $fragmentType": "CompliancePageDocumentListItem_documentFragment";
 };
@@ -33,21 +30,19 @@ export type CompliancePageDocumentListItem_documentFragment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDocumentListItem_documentFragment">;
 };
 
-const node: ReaderFragment = (function(){
-var v0 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-};
-return {
+const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
   "name": "CompliancePageDocumentListItem_documentFragment",
   "selections": [
-    (v0/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "id",
+      "storageKey": null
+    },
     {
       "alias": null,
       "args": null,
@@ -59,19 +54,19 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "title",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "trustCenterVisibility",
       "storageKey": null
     },
     {
-      "alias": "lastVersion",
+      "alias": "latestPublishedVersion",
       "args": [
+        {
+          "kind": "Literal",
+          "name": "filter",
+          "value": {
+            "status": "PUBLISHED"
+          }
+        },
         {
           "kind": "Literal",
           "name": "first",
@@ -107,12 +102,11 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
-                (v0/*: any*/),
                 {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "status",
+                  "name": "title",
                   "storageKey": null
                 }
               ],
@@ -122,14 +116,13 @@ return {
           "storageKey": null
         }
       ],
-      "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+      "storageKey": "versions(filter:{\"status\":\"PUBLISHED\"},first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
     }
   ],
   "type": "Document",
   "abstractKey": null
 };
-})();
 
-(node as any).hash = "ab2b10ffbd76c59d1a3facab0f794402";
+(node as any).hash = "4c6d4e935f4a54b6d2ef486f60aab5f6";
 
 export default node;

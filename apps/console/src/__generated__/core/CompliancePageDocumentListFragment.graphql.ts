@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e02fc31002f54ed30be7e53370069aaa>>
+ * @generated SignedSource<<2a0f1332c57638e29eeee8e4113858d3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type CompliancePageDocumentListFragment$data = {
   readonly documents: {
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly currentPublishedVersion: number | null | undefined;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"CompliancePageDocumentListItem_documentFragment">;
       };
@@ -93,6 +94,13 @@ const node: ReaderFragment = {
                   "storageKey": null
                 },
                 {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "currentPublishedVersion",
+                  "storageKey": null
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "CompliancePageDocumentListItem_documentFragment"
@@ -111,6 +119,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "a8d512034c171dc461a42e6ae6e76f12";
+(node as any).hash = "48e4f01fb5d80ae0856433598608d4cf";
 
 export default node;

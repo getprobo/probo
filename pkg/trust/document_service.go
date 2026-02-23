@@ -70,12 +70,7 @@ func (s *DocumentService) ListForOrganizationId(
 		ctx,
 		func(conn pg.Conn) error {
 			filter := coredata.NewDocumentTrustCenterFilter()
-			err := documents.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
-			if err != nil {
-				return fmt.Errorf("cannot load documents: %w", err)
-			}
-
-			return nil
+			return documents.LoadPublishedByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 		},
 	)
 
