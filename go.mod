@@ -33,7 +33,7 @@ require (
 	go.gearno.de/x/ref v0.0.0-20260216110753-a700c951377c
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
-	go.probo.inc/mcpgen v0.0.0-20251124210642-41a5174eb92f
+	go.probo.inc/mcpgen v0.0.0-20260223192226-386b1fbe6184
 	golang.org/x/crypto v0.47.0
 	golang.org/x/image v0.33.0
 	golang.org/x/oauth2 v0.34.0
@@ -112,8 +112,8 @@ require (
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/russellhaering/goxmldsig v1.5.0 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
-	github.com/spf13/cobra v1.10.1 // indirect
-	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/spf13/cobra v1.10.2 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
@@ -130,12 +130,12 @@ require (
 	go.opentelemetry.io/otel/sdk v1.39.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/term v0.39.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
-	golang.org/x/tools v0.40.0 // indirect
+	golang.org/x/tools v0.41.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/grpc v1.78.0 // indirect
