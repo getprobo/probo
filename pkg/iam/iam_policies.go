@@ -318,6 +318,7 @@ var IAMViewerPolicy = policy.NewPolicy(
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionMembershipList,
+		ActionInvitationList,
 	).
 		WithSID("org-viewer-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),

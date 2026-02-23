@@ -213,36 +213,38 @@ export function PeopleListItem(props: {
           <Badge variant="info">{profile.source}</Badge>
         </div>
       </Td>
-      <Td
-        noLink
-        className={clsx(
-          "pr-4",
-          isRemoving && "opacity-60 pointer-events-none",
-          isInactive && "opacity-50",
-        )}
-      >
-        <Select
-          disabled={!profile.membership.canUpdate || isUpdatingRole}
-          value={profile.membership.role}
-          onValueChange={role => void handleUpdateRole(role)}
+      {availableRoles.length > 0 && (
+        <Td
+          noLink
+          className={clsx(
+            "pr-4",
+            isRemoving && "opacity-60 pointer-events-none",
+            isInactive && "opacity-50",
+          )}
         >
-          {availableRoles.includes("OWNER") && (
-            <Option value="OWNER">{__("Owner")}</Option>
-          )}
-          {availableRoles.includes("ADMIN") && (
-            <Option value="ADMIN">{__("Admin")}</Option>
-          )}
-          {availableRoles.includes("VIEWER") && (
-            <Option value="VIEWER">{__("Viewer")}</Option>
-          )}
-          {availableRoles.includes("AUDITOR") && (
-            <Option value="AUDITOR">{__("Auditor")}</Option>
-          )}
-          {availableRoles.includes("EMPLOYEE") && (
-            <Option value="EMPLOYEE">{__("Employee")}</Option>
-          )}
-        </Select>
-      </Td>
+          <Select
+            disabled={!profile.membership.canUpdate || isUpdatingRole}
+            value={profile.membership.role}
+            onValueChange={role => void handleUpdateRole(role)}
+          >
+            {availableRoles.includes("OWNER") && (
+              <Option value="OWNER">{__("Owner")}</Option>
+            )}
+            {availableRoles.includes("ADMIN") && (
+              <Option value="ADMIN">{__("Admin")}</Option>
+            )}
+            {availableRoles.includes("VIEWER") && (
+              <Option value="VIEWER">{__("Viewer")}</Option>
+            )}
+            {availableRoles.includes("AUDITOR") && (
+              <Option value="AUDITOR">{__("Auditor")}</Option>
+            )}
+            {availableRoles.includes("EMPLOYEE") && (
+              <Option value="EMPLOYEE">{__("Employee")}</Option>
+            )}
+          </Select>
+        </Td>
+      )}
       <Td className={clsx(
         isRemoving && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",

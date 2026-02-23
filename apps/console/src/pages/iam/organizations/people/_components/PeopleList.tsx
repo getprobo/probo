@@ -1,12 +1,15 @@
+import { getAssignableRoles } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import type { ComponentProps } from "react";
+import { use } from "react";
 import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
 
 import type { PeopleListFragment$key } from "#/__generated__/iam/PeopleListFragment.graphql";
 import type { PeopleListFragment_RefetchQuery } from "#/__generated__/iam/PeopleListFragment_RefetchQuery.graphql";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { CurrentUser } from "#/providers/CurrentUser";
 
 import { PeopleListItem } from "./PeopleListItem";
 
@@ -50,6 +53,8 @@ export function PeopleList(props: {
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
+  const { role } = use(CurrentUser);
+  const canManageRoles = getAssignableRoles(role).length > 0;
 
   const peoplePagination = usePaginationFragment<
     PeopleListFragment_RefetchQuery,
@@ -85,7 +90,7 @@ export function PeopleList(props: {
           <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{__("Name")}</SortableTh>
           <SortableTh field="STATE">{__("Status")}</SortableTh>
           <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{__("Email")}</SortableTh>
-          <SortableTh field="ROLE" onOrderChange={handleOrderChange}>{__("Role")}</SortableTh>
+          {canManageRoles && <SortableTh field="ROLE" onOrderChange={handleOrderChange}>{__("Role")}</SortableTh>}
           <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{__("Created on")}</SortableTh>
           <Th></Th>
         </Tr>
