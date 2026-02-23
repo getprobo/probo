@@ -2247,6 +2247,7 @@ components:
         - organization_id
         - owner_id
         - status
+        - type
         - created_at
         - updated_at
       properties:
@@ -2311,6 +2312,9 @@ components:
         status:
           $ref: "#/components/schemas/ObligationStatus"
           description: Status
+        type:
+          $ref: "#/components/schemas/ObligationType"
+          description: Type
         created_at:
           type: string
           format: date-time

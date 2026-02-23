@@ -74,6 +74,7 @@ func NewObligation(cr *coredata.Obligation) *Obligation {
 		LastReviewDate:         cr.LastReviewDate,
 		DueDate:                cr.DueDate,
 		Status:                 cr.Status,
+		Type:                   cr.Type,
 		CreatedAt:              cr.CreatedAt,
 		UpdatedAt:              cr.UpdatedAt,
 	}

@@ -33,6 +33,7 @@ func NewObligation(o *coredata.Obligation) *Obligation {
 		LastReviewDate:         o.LastReviewDate,
 		DueDate:                o.DueDate,
 		Status:                 o.Status,
+		Type:                   o.Type,
 		CreatedAt:              o.CreatedAt,
 		UpdatedAt:              o.UpdatedAt,
 	}
