@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Add SOA MCP tools
+- Electronic signature for compliace page NDA
+
+### Fixed
+
+- Fix n8n get many organization 4xx errors
 
 ## [0.130.3] - 2026-02-20
 
