@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+
+### Added
+
+- Add SOA MCP tools
+
 ## [0.130.3] - 2026-02-20
 
 ### Fixed
