@@ -4,15 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.131.0] - 2026-02-23
 
 ### Added
 
 - Add SOA MCP tools
 - Electronic signature for compliace page NDA
+- Add vendor contacts to n8n
+- Add soa risk assement via document
+- Allow more permissive bracket validations
 
 ### Fixed
 
 - Fix n8n get many organization 4xx errors
+- Fix auditor access to people
+- Fix no link button when list is empty
+- Fix obligation type not updated
 
 ## [0.130.3] - 2026-02-20
 
