@@ -16,6 +16,7 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -40,6 +41,11 @@ type (
 
 const (
 	txtRecordValuePrefix = "probo-verification="
+)
+
+var (
+	errDomainTXTRecordNotFound = errors.New("domain TXT record not found")
+	errDomainTXTRecordMismatch = errors.New("domain TXT record mismatch")
 )
 
 func NewSAMLDomainVerifier(
@@ -108,10 +114,17 @@ func (v *SAMLDomainVerifier) checkUnverifiedDomains(ctx context.Context) error {
 		}
 
 		if err := v.tryVerifyDomain(ctx, config.ID); err != nil {
-			v.logger.ErrorCtx(ctx, "cannot verify domain",
-				log.String("config_id", config.ID.String()),
-				log.Error(err),
-			)
+			if errors.Is(err, errDomainTXTRecordNotFound) || errors.Is(err, errDomainTXTRecordMismatch) {
+				v.logger.InfoCtx(ctx, "domain verification pending",
+					log.String("config_id", config.ID.String()),
+					log.Error(err),
+				)
+			} else {
+				v.logger.ErrorCtx(ctx, "cannot verify domain",
+					log.String("config_id", config.ID.String()),
+					log.Error(err),
+				)
+			}
 
 			continue
 		}
@@ -187,7 +200,7 @@ func (v *SAMLDomainVerifier) checkDNSTXTRecord(emailDomain string, expectedValue
 	}
 
 	if len(resp.Answer) == 0 {
-		return fmt.Errorf("cannot find TXT record for %q", emailDomain)
+		return fmt.Errorf("%w for %q", errDomainTXTRecordNotFound, emailDomain)
 	}
 
 	for _, answer := range resp.Answer {
@@ -203,5 +216,5 @@ func (v *SAMLDomainVerifier) checkDNSTXTRecord(emailDomain string, expectedValue
 		}
 	}
 
-	return fmt.Errorf("cannot find matching TXT record for %q", emailDomain)
+	return fmt.Errorf("%w for %q", errDomainTXTRecordMismatch, emailDomain)
 }
