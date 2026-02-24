@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.131.2] - 2026-02-24
+
+### Fixed
+
+- Fix mcp list tools returns badly encoded jsonschema
+- Fix compliance page show unpblished document title
+- Fix compliace page show unpublished document
+
 ## [0.131.1] - 2026-02-23
 
 ### Fixed
