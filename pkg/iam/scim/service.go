@@ -39,6 +39,8 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 type (
@@ -173,45 +175,47 @@ func (s *Service) CreateUser(
 			}
 		}
 
-		// Check if profile exists
-		profile = &coredata.MembershipProfile{}
-		if err := profile.LoadByIdentityIDAndOrganizationID(
-			ctx,
-			tx,
-			coredata.NewScopeFromObjectID(config.OrganizationID),
-			identity.ID,
-			config.OrganizationID,
-		); err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
-				profile = &coredata.MembershipProfile{
-					ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
-					IdentityID:     identity.ID,
-					OrganizationID: config.OrganizationID,
-					Source:         coredata.ProfileSourceSCIM,
-					State:          profileState,
-					FullName:       fullName,
-					Position:       &title,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
+	// Check if profile exists
+	profileCreated := false
+	profile = &coredata.MembershipProfile{}
+	if err := profile.LoadByIdentityIDAndOrganizationID(
+		ctx,
+		tx,
+		coredata.NewScopeFromObjectID(config.OrganizationID),
+		identity.ID,
+		config.OrganizationID,
+	); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			profile = &coredata.MembershipProfile{
+				ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
+				IdentityID:     identity.ID,
+				OrganizationID: config.OrganizationID,
+				Source:         coredata.ProfileSourceSCIM,
+				State:          profileState,
+				FullName:       fullName,
+				Position:       &title,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
 
-				err = profile.Insert(ctx, tx)
-				if err != nil {
-					return fmt.Errorf("cannot insert profile: %w", err)
-				}
-			} else {
-				return fmt.Errorf("cannot load profile: %w", err)
+			err = profile.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert profile: %w", err)
 			}
+			profileCreated = true
 		} else {
-			profile.Source = coredata.ProfileSourceSCIM
-			profile.State = profileState
-			profile.FullName = fullName
-			profile.Position = &title
-			profile.UpdatedAt = now
-			if err := profile.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update profile: %w", err)
-			}
+			return fmt.Errorf("cannot load profile: %w", err)
 		}
+	} else {
+		profile.Source = coredata.ProfileSourceSCIM
+		profile.State = profileState
+		profile.FullName = fullName
+		profile.Position = &title
+		profile.UpdatedAt = now
+		if err := profile.Update(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot update profile: %w", err)
+		}
+	}
 
 		if !active {
 			// Expire pending invitations for user
@@ -248,17 +252,25 @@ func (s *Service) CreateUser(
 					UpdatedAt:      now,
 				}
 
-				err = membership.Insert(ctx, tx, scope)
-				if err != nil {
-					return fmt.Errorf("cannot insert membership: %w", err)
-				}
-			} else {
-				return fmt.Errorf("cannot load membership: %w", err)
+			err = membership.Insert(ctx, tx, scope)
+			if err != nil {
+				return fmt.Errorf("cannot insert membership: %w", err)
 			}
+		} else {
+			return fmt.Errorf("cannot load membership: %w", err)
 		}
+	}
 
-		return nil
-	})
+	eventType := coredata.WebhookEventTypeMembershipProfileUpdated
+	if profileCreated {
+		eventType = coredata.WebhookEventTypeMembershipProfileCreated
+	}
+	if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewMembershipProfile(profile)); err != nil {
+		return fmt.Errorf("cannot insert webhook event: %w", err)
+	}
+
+	return nil
+})
 
 	if err != nil {
 		return scim.Resource{}, err
@@ -502,16 +514,20 @@ func (s *Service) updateUser(
 				}
 			}
 
-			if needsUpdate {
-				membership.UpdatedAt = now
-				if err := membership.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot update membership: %w", err)
-				}
+		if needsUpdate {
+			membership.UpdatedAt = now
+			if err := membership.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update membership: %w", err)
 			}
+		}
 
-			return nil
-		},
-	)
+		if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeMembershipProfileUpdated, webhooktypes.NewMembershipProfile(profile)); err != nil {
+			return fmt.Errorf("cannot insert webhook event: %w", err)
+		}
+
+		return nil
+	},
+)
 
 	if err != nil {
 		return nil, err
@@ -541,6 +557,15 @@ func (s *Service) DeleteUser(
 
 			if membership.OrganizationID != config.OrganizationID {
 				return scimerrors.ScimErrorResourceNotFound(membershipID.String())
+			}
+
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, membership.IdentityID, config.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeMembershipProfileDeleted, webhooktypes.NewMembershipProfile(profile)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			err = membership.Delete(ctx, tx, scope, membershipID)

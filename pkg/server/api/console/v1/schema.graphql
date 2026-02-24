@@ -2282,6 +2282,12 @@ enum WebhookEventType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorUpdated")
     VENDOR_DELETED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorDeleted")
+    MEMBERSHIP_PROFILE_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMembershipProfileCreated")
+    MEMBERSHIP_PROFILE_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMembershipProfileUpdated")
+    MEMBERSHIP_PROFILE_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeMembershipProfileDeleted")
 }
 
 type WebhookSubscription implements Node {

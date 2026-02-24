@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<864603efd6135475b827a1234b128b7c>>
+ * @generated SignedSource<<b877b6877597e2843515beb1cbcfee07>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type WebhookEventType = "MEETING_CREATED" | "MEETING_DELETED" | "MEETING_UPDATED" | "VENDOR_CREATED" | "VENDOR_DELETED" | "VENDOR_UPDATED";
+export type WebhookEventType = "MEETING_CREATED" | "MEETING_DELETED" | "MEETING_UPDATED" | "MEMBERSHIP_PROFILE_CREATED" | "MEMBERSHIP_PROFILE_DELETED" | "MEMBERSHIP_PROFILE_UPDATED" | "VENDOR_CREATED" | "VENDOR_DELETED" | "VENDOR_UPDATED";
 export type UpdateWebhookSubscriptionInput = {
   endpointUrl?: string | null | undefined;
   id: string;

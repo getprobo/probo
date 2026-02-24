@@ -33,6 +33,8 @@ import (
 	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 type (
@@ -318,6 +320,10 @@ func (s *OrganizationService) RemoveUser(
 				if count <= 1 {
 					return NewLastActiveOwnerError(profileID)
 				}
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeMembershipProfileDeleted, webhooktypes.NewMembershipProfile(&profile)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
@@ -920,6 +926,10 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 				return fmt.Errorf("cannot insert membership: %w", err)
 			}
 
+			if err := webhook.InsertData(ctx, conn, scope, req.OrganizationID, coredata.WebhookEventTypeMembershipProfileCreated, webhooktypes.NewMembershipProfile(profile)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -941,7 +951,7 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 		profile = &coredata.MembershipProfile{}
 	)
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := profile.LoadByID(ctx, conn, scope, req.ID); err != nil {
@@ -965,6 +975,10 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 
 			if err := profile.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, scope, profile.OrganizationID, coredata.WebhookEventTypeMembershipProfileUpdated, webhooktypes.NewMembershipProfile(profile)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil
