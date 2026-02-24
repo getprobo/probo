@@ -1,0 +1,50 @@
+// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package accesssource
+
+import (
+	"context"
+	"time"
+
+	"go.probo.inc/probo/pkg/coredata"
+)
+
+// AccountRecord represents a single account from an access source or identity
+// source. All fields are best-effort; sources populate what they can.
+type AccountRecord struct {
+	Email      string
+	FullName   string
+	Role       string // system role/permission (e.g. "Admin", "Viewer")
+	JobTitle   string // HR job title / department (e.g. "Software Engineer")
+	Active     bool
+	IsAdmin    bool
+	MFAStatus  coredata.MFAStatus
+	AuthMethod coredata.AccessEntryAuthMethod
+	LastLogin  *time.Time
+	CreatedAt  *time.Time
+	ExternalID string // system-specific user ID
+}
+
+// Driver defines the interface for fetching accounts from an access or
+// identity source. Each driver implementation corresponds to a specific
+// system (e.g. Google Workspace, AWS IAM, Probo memberships, CSV).
+//
+// The access_reviews.identity_source_id FK determines which source is
+// the identity provider ("who should have access"). All other sources
+// in a campaign's scope return "who actually has access" data.
+type Driver interface {
+	// ListAccounts returns all accounts from the source system.
+	ListAccounts(ctx context.Context) ([]AccountRecord, error)
+}

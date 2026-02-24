@@ -36,6 +36,13 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
+	AccessEntry() AccessEntryResolver
+	AccessEntryConnection() AccessEntryConnectionResolver
+	AccessReview() AccessReviewResolver
+	AccessReviewCampaign() AccessReviewCampaignResolver
+	AccessReviewCampaignConnection() AccessReviewCampaignConnectionResolver
+	AccessSource() AccessSourceResolver
+	AccessSourceConnection() AccessSourceConnectionResolver
 	ApplicabilityStatement() ApplicabilityStatementResolver
 	ApplicabilityStatementConnection() ApplicabilityStatementConnectionResolver
 	Asset() AssetResolver
@@ -123,6 +130,115 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AccessEntry struct {
+		AccessSource     func(childComplexity int) int
+		AccountCreatedAt func(childComplexity int) int
+		AuthMethod       func(childComplexity int) int
+		Campaign         func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		DecidedAt        func(childComplexity int) int
+		DecidedBy        func(childComplexity int) int
+		Decision         func(childComplexity int) int
+		DecisionNote     func(childComplexity int) int
+		Email            func(childComplexity int) int
+		ExternalID       func(childComplexity int) int
+		Flag             func(childComplexity int) int
+		FlagReason       func(childComplexity int) int
+		FullName         func(childComplexity int) int
+		ID               func(childComplexity int) int
+		IncrementalTag   func(childComplexity int) int
+		IsAdmin          func(childComplexity int) int
+		JobTitle         func(childComplexity int) int
+		LastLogin        func(childComplexity int) int
+		MfaStatus        func(childComplexity int) int
+		Permission       func(childComplexity int, action string) int
+		Role             func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+	}
+
+	AccessEntryConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AccessEntryEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AccessReview struct {
+		AccessSources  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) int
+		Campaigns      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) int
+		CreatedAt      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		IdentitySource func(childComplexity int) int
+		Organization   func(childComplexity int) int
+		Permission     func(childComplexity int, action string) int
+		UpdatedAt      func(childComplexity int) int
+	}
+
+	AccessReviewCampaign struct {
+		AccessReview      func(childComplexity int) int
+		CompletedAt       func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		Entries           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessEntryOrder, accessSourceID *gid.GID) int
+		FrameworkControls func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Name              func(childComplexity int) int
+		Permission        func(childComplexity int, action string) int
+		ScopeSources      func(childComplexity int) int
+		StartedAt         func(childComplexity int) int
+		Status            func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+	}
+
+	AccessReviewCampaignConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AccessReviewCampaignEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AccessReviewCampaignScopeSource struct {
+		AttemptCount         func(childComplexity int) int
+		FetchCompletedAt     func(childComplexity int) int
+		FetchStartedAt       func(childComplexity int) int
+		FetchStatus          func(childComplexity int) int
+		FetchedAccountsCount func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		LastError            func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		Source               func(childComplexity int) int
+	}
+
+	AccessSource struct {
+		AccessReview func(childComplexity int) int
+		CSVData      func(childComplexity int) int
+		Connector    func(childComplexity int) int
+		ConnectorID  func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
+		UpdatedAt    func(childComplexity int) int
+	}
+
+	AccessSourceConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AccessSourceEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	ApplicabilityStatement struct {
 		Applicability        func(childComplexity int) int
 		Control              func(childComplexity int) int
@@ -220,6 +336,10 @@ type ComplexityRoot struct {
 		DocumentVersionSignatureEdges func(childComplexity int) int
 	}
 
+	CancelAccessReviewCampaignPayload struct {
+		AccessReviewCampaign func(childComplexity int) int
+	}
+
 	CancelSignatureRequestPayload struct {
 		DeletedDocumentVersionSignatureID func(childComplexity int) int
 	}
@@ -261,6 +381,14 @@ type ComplexityRoot struct {
 	ComplianceFrameworkEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	CloseAccessReviewCampaignPayload struct {
+		AccessReviewCampaign func(childComplexity int) int
+	}
+
+	Connector struct {
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Provider  func(childComplexity int) int
 	}
 
 	ContinualImprovement struct {
@@ -321,6 +449,18 @@ type ComplexityRoot struct {
 	ControlEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	CreateAccessReviewCampaignPayload struct {
+		AccessReviewCampaignEdge func(childComplexity int) int
+	}
+
+	CreateAccessReviewPayload struct {
+		AccessReview func(childComplexity int) int
+	}
+
+	CreateAccessSourcePayload struct {
+		AccessSourceEdge func(childComplexity int) int
 	}
 
 	CreateApplicabilityStatementPayload struct {
@@ -563,6 +703,14 @@ type ComplexityRoot struct {
 	DatumEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	DeleteAccessReviewCampaignPayload struct {
+		DeletedAccessReviewCampaignID func(childComplexity int) int
+	}
+
+	DeleteAccessSourcePayload struct {
+		DeletedAccessSourceID func(childComplexity int) int
 	}
 
 	DeleteApplicabilityStatementPayload struct {
@@ -891,6 +1039,11 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	ExportCampaignEvidencePayload struct {
+		ChecksumSha256 func(childComplexity int) int
+		Payload        func(childComplexity int) int
+	}
+
 	ExportDataProtectionImpactAssessmentsPDFPayload struct {
 		Data func(childComplexity int) int
 	}
@@ -1071,7 +1224,12 @@ type ComplexityRoot struct {
 		BulkExportDocuments                      func(childComplexity int, input types.BulkExportDocumentsInput) int
 		BulkPublishDocumentVersions              func(childComplexity int, input types.BulkPublishDocumentVersionsInput) int
 		BulkRequestSignatures                    func(childComplexity int, input types.BulkRequestSignaturesInput) int
+		CancelAccessReviewCampaign               func(childComplexity int, input types.CancelAccessReviewCampaignInput) int
 		CancelSignatureRequest                   func(childComplexity int, input types.CancelSignatureRequestInput) int
+		CloseAccessReviewCampaign                func(childComplexity int, input types.CloseAccessReviewCampaignInput) int
+		CreateAccessReview                       func(childComplexity int, input types.CreateAccessReviewInput) int
+		CreateAccessReviewCampaign               func(childComplexity int, input types.CreateAccessReviewCampaignInput) int
+		CreateAccessSource                       func(childComplexity int, input types.CreateAccessSourceInput) int
 		CreateApplicabilityStatement             func(childComplexity int, input types.CreateApplicabilityStatementInput) int
 		CreateAsset                              func(childComplexity int, input types.CreateAssetInput) int
 		CreateAudit                              func(childComplexity int, input types.CreateAuditInput) int
@@ -1113,6 +1271,8 @@ type ComplexityRoot struct {
 		CreateVendorRiskAssessment               func(childComplexity int, input types.CreateVendorRiskAssessmentInput) int
 		CreateVendorService                      func(childComplexity int, input types.CreateVendorServiceInput) int
 		CreateWebhookSubscription                func(childComplexity int, input types.CreateWebhookSubscriptionInput) int
+		DeleteAccessReviewCampaign               func(childComplexity int, input types.DeleteAccessReviewCampaignInput) int
+		DeleteAccessSource                       func(childComplexity int, input types.DeleteAccessSourceInput) int
 		DeleteApplicabilityStatement             func(childComplexity int, input types.DeleteApplicabilityStatementInput) int
 		DeleteAsset                              func(childComplexity int, input types.DeleteAssetInput) int
 		DeleteAudit                              func(childComplexity int, input types.DeleteAuditInput) int
@@ -1160,6 +1320,7 @@ type ComplexityRoot struct {
 		DeleteVendorDataPrivacyAgreement         func(childComplexity int, input types.DeleteVendorDataPrivacyAgreementInput) int
 		DeleteVendorService                      func(childComplexity int, input types.DeleteVendorServiceInput) int
 		DeleteWebhookSubscription                func(childComplexity int, input types.DeleteWebhookSubscriptionInput) int
+		ExportCampaignEvidence                   func(childComplexity int, input types.ExportCampaignEvidenceInput) int
 		ExportDataProtectionImpactAssessmentsPDF func(childComplexity int, input types.ExportDataProtectionImpactAssessmentsPDFInput) int
 		ExportDocumentVersionPDF                 func(childComplexity int, input types.ExportDocumentVersionPDFInput) int
 		ExportFramework                          func(childComplexity int, input types.ExportFrameworkInput) int
@@ -1172,10 +1333,16 @@ type ComplexityRoot struct {
 		ImportFramework                          func(childComplexity int, input types.ImportFrameworkInput) int
 		ImportMeasure                            func(childComplexity int, input types.ImportMeasureInput) int
 		PublishDocumentVersion                   func(childComplexity int, input types.PublishDocumentVersionInput) int
+		RecordAccessEntryDecision                func(childComplexity int, input types.RecordAccessEntryDecisionInput) int
 		RequestSignature                         func(childComplexity int, input types.RequestSignatureInput) int
 		SendMailingListUpdate                    func(childComplexity int, input types.SendMailingListUpdateInput) int
+		RetryStartAccessReviewCampaign           func(childComplexity int, input types.RetryStartAccessReviewCampaignInput) int
 		SendSigningNotifications                 func(childComplexity int, input types.SendSigningNotificationsInput) int
 		SignDocument                             func(childComplexity int, input types.SignDocumentInput) int
+		StartAccessReviewCampaign                func(childComplexity int, input types.StartAccessReviewCampaignInput) int
+		UpdateAccessReview                       func(childComplexity int, input types.UpdateAccessReviewInput) int
+		UpdateAccessReviewCampaign               func(childComplexity int, input types.UpdateAccessReviewCampaignInput) int
+		UpdateAccessSource                       func(childComplexity int, input types.UpdateAccessSourceInput) int
 		UpdateApplicabilityStatement             func(childComplexity int, input types.UpdateApplicabilityStatementInput) int
 		UpdateAsset                              func(childComplexity int, input types.UpdateAssetInput) int
 		UpdateAudit                              func(childComplexity int, input types.UpdateAuditInput) int
@@ -1218,6 +1385,7 @@ type ComplexityRoot struct {
 		UploadVendorBusinessAssociateAgreement   func(childComplexity int, input types.UploadVendorBusinessAssociateAgreementInput) int
 		UploadVendorComplianceReport             func(childComplexity int, input types.UploadVendorComplianceReportInput) int
 		UploadVendorDataPrivacyAgreement         func(childComplexity int, input types.UploadVendorDataPrivacyAgreementInput) int
+		ValidateAccessReviewCampaign             func(childComplexity int, input types.ValidateAccessReviewCampaignInput) int
 	}
 
 	Nonconformity struct {
@@ -1282,8 +1450,10 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
+		AccessReview                    func(childComplexity int) int
 		Assets                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) int
 		Audits                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
+		Connectors                      func(childComplexity int, filter *types.ConnectorFilter) int
 		Context                         func(childComplexity int) int
 		ContinualImprovements           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) int
 		Controls                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
@@ -1413,6 +1583,10 @@ type ComplexityRoot struct {
 		Viewer func(childComplexity int) int
 	}
 
+	RecordAccessEntryDecisionPayload struct {
+		AccessEntry func(childComplexity int) int
+	}
+
 	Report struct {
 		Audit       func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
@@ -1428,6 +1602,10 @@ type ComplexityRoot struct {
 
 	RequestSignaturePayload struct {
 		DocumentVersionSignatureEdge func(childComplexity int) int
+	}
+
+	RetryStartAccessReviewCampaignPayload struct {
+		AccessReviewCampaign func(childComplexity int) int
 	}
 
 	RightsRequest struct {
@@ -1564,6 +1742,10 @@ type ComplexityRoot struct {
 	SnapshotEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	StartAccessReviewCampaignPayload struct {
+		AccessReviewCampaign func(childComplexity int) int
 	}
 
 	StateOfApplicability struct {
@@ -1759,6 +1941,18 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	UpdateAccessReviewCampaignPayload struct {
+		AccessReviewCampaign func(childComplexity int) int
+	}
+
+	UpdateAccessReviewPayload struct {
+		AccessReview func(childComplexity int) int
+	}
+
+	UpdateAccessSourcePayload struct {
+		AccessSource func(childComplexity int) int
+	}
+
 	UpdateApplicabilityStatementPayload struct {
 		ApplicabilityStatement func(childComplexity int) int
 	}
@@ -1925,6 +2119,10 @@ type ComplexityRoot struct {
 
 	UploadVendorDataPrivacyAgreementPayload struct {
 		VendorDataPrivacyAgreement func(childComplexity int) int
+	}
+
+	ValidateAccessReviewCampaignPayload struct {
+		AccessReviewCampaign func(childComplexity int) int
 	}
 
 	Vendor struct {
@@ -2134,6 +2332,45 @@ type ComplexityRoot struct {
 	}
 }
 
+type AccessEntryResolver interface {
+	Campaign(ctx context.Context, obj *types.AccessEntry) (*types.AccessReviewCampaign, error)
+	AccessSource(ctx context.Context, obj *types.AccessEntry) (*types.AccessSource, error)
+
+	DecidedBy(ctx context.Context, obj *types.AccessEntry) (*types.People, error)
+
+	Permission(ctx context.Context, obj *types.AccessEntry, action string) (bool, error)
+}
+type AccessEntryConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.AccessEntryConnection) (int, error)
+}
+type AccessReviewResolver interface {
+	Organization(ctx context.Context, obj *types.AccessReview) (*types.Organization, error)
+	IdentitySource(ctx context.Context, obj *types.AccessReview) (*types.AccessSource, error)
+
+	AccessSources(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error)
+	Campaigns(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error)
+	Permission(ctx context.Context, obj *types.AccessReview, action string) (bool, error)
+}
+type AccessReviewCampaignResolver interface {
+	AccessReview(ctx context.Context, obj *types.AccessReviewCampaign) (*types.AccessReview, error)
+
+	ScopeSources(ctx context.Context, obj *types.AccessReviewCampaign) ([]*types.AccessReviewCampaignScopeSource, error)
+	Entries(ctx context.Context, obj *types.AccessReviewCampaign, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessEntryOrder, accessSourceID *gid.GID) (*types.AccessEntryConnection, error)
+	Permission(ctx context.Context, obj *types.AccessReviewCampaign, action string) (bool, error)
+}
+type AccessReviewCampaignConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.AccessReviewCampaignConnection) (int, error)
+}
+type AccessSourceResolver interface {
+	AccessReview(ctx context.Context, obj *types.AccessSource) (*types.AccessReview, error)
+
+	Connector(ctx context.Context, obj *types.AccessSource) (*types.Connector, error)
+
+	Permission(ctx context.Context, obj *types.AccessSource, action string) (bool, error)
+}
+type AccessSourceConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.AccessSourceConnection) (int, error)
+}
 type ApplicabilityStatementResolver interface {
 	StateOfApplicability(ctx context.Context, obj *types.ApplicabilityStatement) (*types.StateOfApplicability, error)
 	Control(ctx context.Context, obj *types.ApplicabilityStatement) (*types.Control, error)
@@ -2469,6 +2706,21 @@ type MutationResolver interface {
 	DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error)
 	CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error)
 	DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error)
+	CreateAccessReview(ctx context.Context, input types.CreateAccessReviewInput) (*types.CreateAccessReviewPayload, error)
+	UpdateAccessReview(ctx context.Context, input types.UpdateAccessReviewInput) (*types.UpdateAccessReviewPayload, error)
+	CreateAccessSource(ctx context.Context, input types.CreateAccessSourceInput) (*types.CreateAccessSourcePayload, error)
+	UpdateAccessSource(ctx context.Context, input types.UpdateAccessSourceInput) (*types.UpdateAccessSourcePayload, error)
+	DeleteAccessSource(ctx context.Context, input types.DeleteAccessSourceInput) (*types.DeleteAccessSourcePayload, error)
+	CreateAccessReviewCampaign(ctx context.Context, input types.CreateAccessReviewCampaignInput) (*types.CreateAccessReviewCampaignPayload, error)
+	UpdateAccessReviewCampaign(ctx context.Context, input types.UpdateAccessReviewCampaignInput) (*types.UpdateAccessReviewCampaignPayload, error)
+	DeleteAccessReviewCampaign(ctx context.Context, input types.DeleteAccessReviewCampaignInput) (*types.DeleteAccessReviewCampaignPayload, error)
+	StartAccessReviewCampaign(ctx context.Context, input types.StartAccessReviewCampaignInput) (*types.StartAccessReviewCampaignPayload, error)
+	CloseAccessReviewCampaign(ctx context.Context, input types.CloseAccessReviewCampaignInput) (*types.CloseAccessReviewCampaignPayload, error)
+	RetryStartAccessReviewCampaign(ctx context.Context, input types.RetryStartAccessReviewCampaignInput) (*types.RetryStartAccessReviewCampaignPayload, error)
+	ValidateAccessReviewCampaign(ctx context.Context, input types.ValidateAccessReviewCampaignInput) (*types.ValidateAccessReviewCampaignPayload, error)
+	CancelAccessReviewCampaign(ctx context.Context, input types.CancelAccessReviewCampaignInput) (*types.CancelAccessReviewCampaignPayload, error)
+	RecordAccessEntryDecision(ctx context.Context, input types.RecordAccessEntryDecisionInput) (*types.RecordAccessEntryDecisionPayload, error)
+	ExportCampaignEvidence(ctx context.Context, input types.ExportCampaignEvidenceInput) (*types.ExportCampaignEvidencePayload, error)
 }
 type NonconformityResolver interface {
 	Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error)
@@ -2499,6 +2751,7 @@ type OrganizationResolver interface {
 	Context(ctx context.Context, obj *types.Organization) (*types.OrganizationContext, error)
 	Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error)
 	SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error)
+	Connectors(ctx context.Context, obj *types.Organization, filter *types.ConnectorFilter) ([]*types.Connector, error)
 	Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error)
 	Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
 	Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error)
@@ -2523,6 +2776,7 @@ type OrganizationResolver interface {
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
 	CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error)
 	WebhookSubscriptions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookSubscriptionOrderBy) (*types.WebhookSubscriptionConnection, error)
+	AccessReview(ctx context.Context, obj *types.Organization) (*types.AccessReview, error)
 
 	Permission(ctx context.Context, obj *types.Organization, action string) (bool, error)
 }
@@ -2753,6 +3007,508 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AccessEntry.accessSource":
+		if e.complexity.AccessEntry.AccessSource == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.AccessSource(childComplexity), true
+	case "AccessEntry.accountCreatedAt":
+		if e.complexity.AccessEntry.AccountCreatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.AccountCreatedAt(childComplexity), true
+	case "AccessEntry.authMethod":
+		if e.complexity.AccessEntry.AuthMethod == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.AuthMethod(childComplexity), true
+	case "AccessEntry.campaign":
+		if e.complexity.AccessEntry.Campaign == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.Campaign(childComplexity), true
+	case "AccessEntry.createdAt":
+		if e.complexity.AccessEntry.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.CreatedAt(childComplexity), true
+	case "AccessEntry.decidedAt":
+		if e.complexity.AccessEntry.DecidedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.DecidedAt(childComplexity), true
+	case "AccessEntry.decidedBy":
+		if e.complexity.AccessEntry.DecidedBy == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.DecidedBy(childComplexity), true
+	case "AccessEntry.decision":
+		if e.complexity.AccessEntry.Decision == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.Decision(childComplexity), true
+	case "AccessEntry.decisionNote":
+		if e.complexity.AccessEntry.DecisionNote == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.DecisionNote(childComplexity), true
+	case "AccessEntry.email":
+		if e.complexity.AccessEntry.Email == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.Email(childComplexity), true
+	case "AccessEntry.externalId":
+		if e.complexity.AccessEntry.ExternalID == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.ExternalID(childComplexity), true
+	case "AccessEntry.flag":
+		if e.complexity.AccessEntry.Flag == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.Flag(childComplexity), true
+	case "AccessEntry.flagReason":
+		if e.complexity.AccessEntry.FlagReason == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.FlagReason(childComplexity), true
+	case "AccessEntry.fullName":
+		if e.complexity.AccessEntry.FullName == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.FullName(childComplexity), true
+	case "AccessEntry.id":
+		if e.complexity.AccessEntry.ID == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.ID(childComplexity), true
+	case "AccessEntry.incrementalTag":
+		if e.complexity.AccessEntry.IncrementalTag == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.IncrementalTag(childComplexity), true
+	case "AccessEntry.isAdmin":
+		if e.complexity.AccessEntry.IsAdmin == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.IsAdmin(childComplexity), true
+	case "AccessEntry.jobTitle":
+		if e.complexity.AccessEntry.JobTitle == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.JobTitle(childComplexity), true
+	case "AccessEntry.lastLogin":
+		if e.complexity.AccessEntry.LastLogin == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.LastLogin(childComplexity), true
+	case "AccessEntry.mfaStatus":
+		if e.complexity.AccessEntry.MfaStatus == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.MfaStatus(childComplexity), true
+	case "AccessEntry.permission":
+		if e.complexity.AccessEntry.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_AccessEntry_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.AccessEntry.Permission(childComplexity, args["action"].(string)), true
+	case "AccessEntry.role":
+		if e.complexity.AccessEntry.Role == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.Role(childComplexity), true
+	case "AccessEntry.updatedAt":
+		if e.complexity.AccessEntry.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessEntry.UpdatedAt(childComplexity), true
+
+	case "AccessEntryConnection.edges":
+		if e.complexity.AccessEntryConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.AccessEntryConnection.Edges(childComplexity), true
+	case "AccessEntryConnection.pageInfo":
+		if e.complexity.AccessEntryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.AccessEntryConnection.PageInfo(childComplexity), true
+	case "AccessEntryConnection.totalCount":
+		if e.complexity.AccessEntryConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.AccessEntryConnection.TotalCount(childComplexity), true
+
+	case "AccessEntryEdge.cursor":
+		if e.complexity.AccessEntryEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.AccessEntryEdge.Cursor(childComplexity), true
+	case "AccessEntryEdge.node":
+		if e.complexity.AccessEntryEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.AccessEntryEdge.Node(childComplexity), true
+
+	case "AccessReview.accessSources":
+		if e.complexity.AccessReview.AccessSources == nil {
+			break
+		}
+
+		args, err := ec.field_AccessReview_accessSources_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.AccessReview.AccessSources(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessSourceOrder)), true
+	case "AccessReview.campaigns":
+		if e.complexity.AccessReview.Campaigns == nil {
+			break
+		}
+
+		args, err := ec.field_AccessReview_campaigns_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.AccessReview.Campaigns(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessReviewCampaignOrder)), true
+	case "AccessReview.createdAt":
+		if e.complexity.AccessReview.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessReview.CreatedAt(childComplexity), true
+	case "AccessReview.id":
+		if e.complexity.AccessReview.ID == nil {
+			break
+		}
+
+		return e.complexity.AccessReview.ID(childComplexity), true
+	case "AccessReview.identitySource":
+		if e.complexity.AccessReview.IdentitySource == nil {
+			break
+		}
+
+		return e.complexity.AccessReview.IdentitySource(childComplexity), true
+	case "AccessReview.organization":
+		if e.complexity.AccessReview.Organization == nil {
+			break
+		}
+
+		return e.complexity.AccessReview.Organization(childComplexity), true
+	case "AccessReview.permission":
+		if e.complexity.AccessReview.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_AccessReview_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.AccessReview.Permission(childComplexity, args["action"].(string)), true
+	case "AccessReview.updatedAt":
+		if e.complexity.AccessReview.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessReview.UpdatedAt(childComplexity), true
+
+	case "AccessReviewCampaign.accessReview":
+		if e.complexity.AccessReviewCampaign.AccessReview == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.AccessReview(childComplexity), true
+	case "AccessReviewCampaign.completedAt":
+		if e.complexity.AccessReviewCampaign.CompletedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.CompletedAt(childComplexity), true
+	case "AccessReviewCampaign.createdAt":
+		if e.complexity.AccessReviewCampaign.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.CreatedAt(childComplexity), true
+	case "AccessReviewCampaign.entries":
+		if e.complexity.AccessReviewCampaign.Entries == nil {
+			break
+		}
+
+		args, err := ec.field_AccessReviewCampaign_entries_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.AccessReviewCampaign.Entries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessEntryOrder), args["accessSourceId"].(*gid.GID)), true
+	case "AccessReviewCampaign.frameworkControls":
+		if e.complexity.AccessReviewCampaign.FrameworkControls == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.FrameworkControls(childComplexity), true
+	case "AccessReviewCampaign.id":
+		if e.complexity.AccessReviewCampaign.ID == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.ID(childComplexity), true
+	case "AccessReviewCampaign.name":
+		if e.complexity.AccessReviewCampaign.Name == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.Name(childComplexity), true
+	case "AccessReviewCampaign.permission":
+		if e.complexity.AccessReviewCampaign.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_AccessReviewCampaign_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.AccessReviewCampaign.Permission(childComplexity, args["action"].(string)), true
+	case "AccessReviewCampaign.scopeSources":
+		if e.complexity.AccessReviewCampaign.ScopeSources == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.ScopeSources(childComplexity), true
+	case "AccessReviewCampaign.startedAt":
+		if e.complexity.AccessReviewCampaign.StartedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.StartedAt(childComplexity), true
+	case "AccessReviewCampaign.status":
+		if e.complexity.AccessReviewCampaign.Status == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.Status(childComplexity), true
+	case "AccessReviewCampaign.updatedAt":
+		if e.complexity.AccessReviewCampaign.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaign.UpdatedAt(childComplexity), true
+
+	case "AccessReviewCampaignConnection.edges":
+		if e.complexity.AccessReviewCampaignConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignConnection.Edges(childComplexity), true
+	case "AccessReviewCampaignConnection.pageInfo":
+		if e.complexity.AccessReviewCampaignConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignConnection.PageInfo(childComplexity), true
+	case "AccessReviewCampaignConnection.totalCount":
+		if e.complexity.AccessReviewCampaignConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignConnection.TotalCount(childComplexity), true
+
+	case "AccessReviewCampaignEdge.cursor":
+		if e.complexity.AccessReviewCampaignEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignEdge.Cursor(childComplexity), true
+	case "AccessReviewCampaignEdge.node":
+		if e.complexity.AccessReviewCampaignEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignEdge.Node(childComplexity), true
+
+	case "AccessReviewCampaignScopeSource.attemptCount":
+		if e.complexity.AccessReviewCampaignScopeSource.AttemptCount == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.AttemptCount(childComplexity), true
+	case "AccessReviewCampaignScopeSource.fetchCompletedAt":
+		if e.complexity.AccessReviewCampaignScopeSource.FetchCompletedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.FetchCompletedAt(childComplexity), true
+	case "AccessReviewCampaignScopeSource.fetchStartedAt":
+		if e.complexity.AccessReviewCampaignScopeSource.FetchStartedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.FetchStartedAt(childComplexity), true
+	case "AccessReviewCampaignScopeSource.fetchStatus":
+		if e.complexity.AccessReviewCampaignScopeSource.FetchStatus == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.FetchStatus(childComplexity), true
+	case "AccessReviewCampaignScopeSource.fetchedAccountsCount":
+		if e.complexity.AccessReviewCampaignScopeSource.FetchedAccountsCount == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.FetchedAccountsCount(childComplexity), true
+	case "AccessReviewCampaignScopeSource.id":
+		if e.complexity.AccessReviewCampaignScopeSource.ID == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.ID(childComplexity), true
+	case "AccessReviewCampaignScopeSource.lastError":
+		if e.complexity.AccessReviewCampaignScopeSource.LastError == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.LastError(childComplexity), true
+	case "AccessReviewCampaignScopeSource.name":
+		if e.complexity.AccessReviewCampaignScopeSource.Name == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.Name(childComplexity), true
+	case "AccessReviewCampaignScopeSource.source":
+		if e.complexity.AccessReviewCampaignScopeSource.Source == nil {
+			break
+		}
+
+		return e.complexity.AccessReviewCampaignScopeSource.Source(childComplexity), true
+
+	case "AccessSource.accessReview":
+		if e.complexity.AccessSource.AccessReview == nil {
+			break
+		}
+
+		return e.complexity.AccessSource.AccessReview(childComplexity), true
+	case "AccessSource.csvData":
+		if e.complexity.AccessSource.CSVData == nil {
+			break
+		}
+
+		return e.complexity.AccessSource.CSVData(childComplexity), true
+	case "AccessSource.connector":
+		if e.complexity.AccessSource.Connector == nil {
+			break
+		}
+
+		return e.complexity.AccessSource.Connector(childComplexity), true
+	case "AccessSource.connectorId":
+		if e.complexity.AccessSource.ConnectorID == nil {
+			break
+		}
+
+		return e.complexity.AccessSource.ConnectorID(childComplexity), true
+	case "AccessSource.createdAt":
+		if e.complexity.AccessSource.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessSource.CreatedAt(childComplexity), true
+	case "AccessSource.id":
+		if e.complexity.AccessSource.ID == nil {
+			break
+		}
+
+		return e.complexity.AccessSource.ID(childComplexity), true
+	case "AccessSource.name":
+		if e.complexity.AccessSource.Name == nil {
+			break
+		}
+
+		return e.complexity.AccessSource.Name(childComplexity), true
+	case "AccessSource.permission":
+		if e.complexity.AccessSource.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_AccessSource_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.AccessSource.Permission(childComplexity, args["action"].(string)), true
+	case "AccessSource.updatedAt":
+		if e.complexity.AccessSource.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.AccessSource.UpdatedAt(childComplexity), true
+
+	case "AccessSourceConnection.edges":
+		if e.complexity.AccessSourceConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.AccessSourceConnection.Edges(childComplexity), true
+	case "AccessSourceConnection.pageInfo":
+		if e.complexity.AccessSourceConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.AccessSourceConnection.PageInfo(childComplexity), true
+	case "AccessSourceConnection.totalCount":
+		if e.complexity.AccessSourceConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.AccessSourceConnection.TotalCount(childComplexity), true
+
+	case "AccessSourceEdge.cursor":
+		if e.complexity.AccessSourceEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.AccessSourceEdge.Cursor(childComplexity), true
+	case "AccessSourceEdge.node":
+		if e.complexity.AccessSourceEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.AccessSourceEdge.Node(childComplexity), true
 
 	case "ApplicabilityStatement.applicability":
 		if e.ComplexityRoot.ApplicabilityStatement.Applicability == nil {
@@ -3123,6 +3879,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.BulkRequestSignaturesPayload.DocumentVersionSignatureEdges(childComplexity), true
 
+	case "CancelAccessReviewCampaignPayload.accessReviewCampaign":
+		if e.complexity.CancelAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+			break
+		}
+
+		return e.complexity.CancelAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
+
 	case "CancelSignatureRequestPayload.deletedDocumentVersionSignatureId":
 		if e.ComplexityRoot.CancelSignatureRequestPayload.DeletedDocumentVersionSignatureID == nil {
 			break
@@ -3266,6 +4029,32 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ComplianceFrameworkEdge.Node(childComplexity), true
+
+	case "CloseAccessReviewCampaignPayload.accessReviewCampaign":
+		if e.complexity.CloseAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+			break
+		}
+
+		return e.complexity.CloseAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
+
+	case "Connector.createdAt":
+		if e.complexity.Connector.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Connector.CreatedAt(childComplexity), true
+	case "Connector.id":
+		if e.complexity.Connector.ID == nil {
+			break
+		}
+
+		return e.complexity.Connector.ID(childComplexity), true
+	case "Connector.provider":
+		if e.complexity.Connector.Provider == nil {
+			break
+		}
+
+		return e.complexity.Connector.Provider(childComplexity), true
 
 	case "ContinualImprovement.createdAt":
 		if e.ComplexityRoot.ContinualImprovement.CreatedAt == nil {
@@ -3559,6 +4348,27 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ControlEdge.Node(childComplexity), true
+
+	case "CreateAccessReviewCampaignPayload.accessReviewCampaignEdge":
+		if e.complexity.CreateAccessReviewCampaignPayload.AccessReviewCampaignEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateAccessReviewCampaignPayload.AccessReviewCampaignEdge(childComplexity), true
+
+	case "CreateAccessReviewPayload.accessReview":
+		if e.complexity.CreateAccessReviewPayload.AccessReview == nil {
+			break
+		}
+
+		return e.complexity.CreateAccessReviewPayload.AccessReview(childComplexity), true
+
+	case "CreateAccessSourcePayload.accessSourceEdge":
+		if e.complexity.CreateAccessSourcePayload.AccessSourceEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateAccessSourcePayload.AccessSourceEdge(childComplexity), true
 
 	case "CreateApplicabilityStatementPayload.applicabilityStatementEdge":
 		if e.ComplexityRoot.CreateApplicabilityStatementPayload.ApplicabilityStatementEdge == nil {
@@ -4198,6 +5008,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DatumEdge.Node(childComplexity), true
+
+	case "DeleteAccessReviewCampaignPayload.deletedAccessReviewCampaignId":
+		if e.complexity.DeleteAccessReviewCampaignPayload.DeletedAccessReviewCampaignID == nil {
+			break
+		}
+
+		return e.complexity.DeleteAccessReviewCampaignPayload.DeletedAccessReviewCampaignID(childComplexity), true
+
+	case "DeleteAccessSourcePayload.deletedAccessSourceId":
+		if e.complexity.DeleteAccessSourcePayload.DeletedAccessSourceID == nil {
+			break
+		}
+
+		return e.complexity.DeleteAccessSourcePayload.DeletedAccessSourceID(childComplexity), true
 
 	case "DeleteApplicabilityStatementPayload.deletedApplicabilityStatementId":
 		if e.ComplexityRoot.DeleteApplicabilityStatementPayload.DeletedApplicabilityStatementID == nil {
@@ -5163,6 +5987,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.EvidenceEdge.Node(childComplexity), true
 
+	case "ExportCampaignEvidencePayload.checksumSha256":
+		if e.complexity.ExportCampaignEvidencePayload.ChecksumSha256 == nil {
+			break
+		}
+
+		return e.complexity.ExportCampaignEvidencePayload.ChecksumSha256(childComplexity), true
+	case "ExportCampaignEvidencePayload.payload":
+		if e.complexity.ExportCampaignEvidencePayload.Payload == nil {
+			break
+		}
+
+		return e.complexity.ExportCampaignEvidencePayload.Payload(childComplexity), true
+
 	case "ExportDataProtectionImpactAssessmentsPDFPayload.data":
 		if e.ComplexityRoot.ExportDataProtectionImpactAssessmentsPDFPayload.Data == nil {
 			break
@@ -5836,6 +6673,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.BulkRequestSignatures(childComplexity, args["input"].(types.BulkRequestSignaturesInput)), true
+		return e.complexity.Mutation.BulkRequestSignatures(childComplexity, args["input"].(types.BulkRequestSignaturesInput)), true
+	case "Mutation.cancelAccessReviewCampaign":
+		if e.complexity.Mutation.CancelAccessReviewCampaign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_cancelAccessReviewCampaign_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CancelAccessReviewCampaign(childComplexity, args["input"].(types.CancelAccessReviewCampaignInput)), true
 	case "Mutation.cancelSignatureRequest":
 		if e.ComplexityRoot.Mutation.CancelSignatureRequest == nil {
 			break
@@ -5847,6 +6696,51 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CancelSignatureRequest(childComplexity, args["input"].(types.CancelSignatureRequestInput)), true
+		return e.complexity.Mutation.CancelSignatureRequest(childComplexity, args["input"].(types.CancelSignatureRequestInput)), true
+	case "Mutation.closeAccessReviewCampaign":
+		if e.complexity.Mutation.CloseAccessReviewCampaign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_closeAccessReviewCampaign_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CloseAccessReviewCampaign(childComplexity, args["input"].(types.CloseAccessReviewCampaignInput)), true
+	case "Mutation.createAccessReview":
+		if e.complexity.Mutation.CreateAccessReview == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAccessReview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateAccessReview(childComplexity, args["input"].(types.CreateAccessReviewInput)), true
+	case "Mutation.createAccessReviewCampaign":
+		if e.complexity.Mutation.CreateAccessReviewCampaign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAccessReviewCampaign_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateAccessReviewCampaign(childComplexity, args["input"].(types.CreateAccessReviewCampaignInput)), true
+	case "Mutation.createAccessSource":
+		if e.complexity.Mutation.CreateAccessSource == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAccessSource_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateAccessSource(childComplexity, args["input"].(types.CreateAccessSourceInput)), true
 	case "Mutation.createApplicabilityStatement":
 		if e.ComplexityRoot.Mutation.CreateApplicabilityStatement == nil {
 			break
@@ -6293,11 +7187,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		args, err := ec.field_Mutation_createWebhookSubscription_args(ctx, rawArgs)
+		return e.complexity.Mutation.CreateVendorService(childComplexity, args["input"].(types.CreateVendorServiceInput)), true
+	case "Mutation.deleteAccessReviewCampaign":
+		if e.complexity.Mutation.DeleteAccessReviewCampaign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteAccessReviewCampaign_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
 		return e.ComplexityRoot.Mutation.CreateWebhookSubscription(childComplexity, args["input"].(types.CreateWebhookSubscriptionInput)), true
+		return e.complexity.Mutation.DeleteAccessReviewCampaign(childComplexity, args["input"].(types.DeleteAccessReviewCampaignInput)), true
+	case "Mutation.deleteAccessSource":
+		if e.complexity.Mutation.DeleteAccessSource == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteAccessSource_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteAccessSource(childComplexity, args["input"].(types.DeleteAccessSourceInput)), true
 	case "Mutation.deleteApplicabilityStatement":
 		if e.ComplexityRoot.Mutation.DeleteApplicabilityStatement == nil {
 			break
@@ -6810,11 +7723,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		args, err := ec.field_Mutation_deleteWebhookSubscription_args(ctx, rawArgs)
+		return e.complexity.Mutation.DeleteVendorService(childComplexity, args["input"].(types.DeleteVendorServiceInput)), true
+	case "Mutation.exportCampaignEvidence":
+		if e.complexity.Mutation.ExportCampaignEvidence == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_exportCampaignEvidence_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteWebhookSubscription(childComplexity, args["input"].(types.DeleteWebhookSubscriptionInput)), true
+		return e.complexity.Mutation.ExportCampaignEvidence(childComplexity, args["input"].(types.ExportCampaignEvidenceInput)), true
 	case "Mutation.exportDataProtectionImpactAssessmentsPDF":
 		if e.ComplexityRoot.Mutation.ExportDataProtectionImpactAssessmentsPDF == nil {
 			break
@@ -6947,6 +7868,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.PublishDocumentVersion(childComplexity, args["input"].(types.PublishDocumentVersionInput)), true
+		return e.complexity.Mutation.PublishDocumentVersion(childComplexity, args["input"].(types.PublishDocumentVersionInput)), true
+	case "Mutation.recordAccessEntryDecision":
+		if e.complexity.Mutation.RecordAccessEntryDecision == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_recordAccessEntryDecision_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RecordAccessEntryDecision(childComplexity, args["input"].(types.RecordAccessEntryDecisionInput)), true
 	case "Mutation.requestSignature":
 		if e.ComplexityRoot.Mutation.RequestSignature == nil {
 			break
@@ -6964,11 +7897,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		args, err := ec.field_Mutation_sendMailingListUpdate_args(ctx, rawArgs)
+		return e.complexity.Mutation.RequestSignature(childComplexity, args["input"].(types.RequestSignatureInput)), true
+	case "Mutation.retryStartAccessReviewCampaign":
+		if e.complexity.Mutation.RetryStartAccessReviewCampaign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_retryStartAccessReviewCampaign_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
 		return e.ComplexityRoot.Mutation.SendMailingListUpdate(childComplexity, args["input"].(types.SendMailingListUpdateInput)), true
+		return e.complexity.Mutation.RetryStartAccessReviewCampaign(childComplexity, args["input"].(types.RetryStartAccessReviewCampaignInput)), true
 	case "Mutation.sendSigningNotifications":
 		if e.ComplexityRoot.Mutation.SendSigningNotifications == nil {
 			break
@@ -6991,6 +7932,51 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SignDocument(childComplexity, args["input"].(types.SignDocumentInput)), true
+		return e.complexity.Mutation.SignDocument(childComplexity, args["input"].(types.SignDocumentInput)), true
+	case "Mutation.startAccessReviewCampaign":
+		if e.complexity.Mutation.StartAccessReviewCampaign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_startAccessReviewCampaign_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.StartAccessReviewCampaign(childComplexity, args["input"].(types.StartAccessReviewCampaignInput)), true
+	case "Mutation.updateAccessReview":
+		if e.complexity.Mutation.UpdateAccessReview == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAccessReview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateAccessReview(childComplexity, args["input"].(types.UpdateAccessReviewInput)), true
+	case "Mutation.updateAccessReviewCampaign":
+		if e.complexity.Mutation.UpdateAccessReviewCampaign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAccessReviewCampaign_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateAccessReviewCampaign(childComplexity, args["input"].(types.UpdateAccessReviewCampaignInput)), true
+	case "Mutation.updateAccessSource":
+		if e.complexity.Mutation.UpdateAccessSource == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAccessSource_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateAccessSource(childComplexity, args["input"].(types.UpdateAccessSourceInput)), true
 	case "Mutation.updateApplicabilityStatement":
 		if e.ComplexityRoot.Mutation.UpdateApplicabilityStatement == nil {
 			break
@@ -7453,6 +8439,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UploadVendorDataPrivacyAgreement(childComplexity, args["input"].(types.UploadVendorDataPrivacyAgreementInput)), true
+		return e.complexity.Mutation.UploadVendorDataPrivacyAgreement(childComplexity, args["input"].(types.UploadVendorDataPrivacyAgreementInput)), true
+	case "Mutation.validateAccessReviewCampaign":
+		if e.complexity.Mutation.ValidateAccessReviewCampaign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_validateAccessReviewCampaign_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ValidateAccessReviewCampaign(childComplexity, args["input"].(types.ValidateAccessReviewCampaignInput)), true
 
 	case "Nonconformity.audit":
 		if e.ComplexityRoot.Nonconformity.Audit == nil {
@@ -7728,6 +8726,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ObligationEdge.Node(childComplexity), true
 
+	case "Organization.accessReview":
+		if e.complexity.Organization.AccessReview == nil {
+			break
+		}
+
+		return e.complexity.Organization.AccessReview(childComplexity), true
 	case "Organization.assets":
 		if e.ComplexityRoot.Organization.Assets == nil {
 			break
@@ -7750,6 +8754,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Organization.Audits(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AuditOrderBy)), true
+		return e.complexity.Organization.Audits(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AuditOrderBy)), true
+	case "Organization.connectors":
+		if e.complexity.Organization.Connectors == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_connectors_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.Connectors(childComplexity, args["filter"].(*types.ConnectorFilter)), true
 	case "Organization.context":
 		if e.ComplexityRoot.Organization.Context == nil {
 			break
@@ -8478,6 +9494,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.Viewer(childComplexity), true
 
+	case "RecordAccessEntryDecisionPayload.accessEntry":
+		if e.complexity.RecordAccessEntryDecisionPayload.AccessEntry == nil {
+			break
+		}
+
+		return e.complexity.RecordAccessEntryDecisionPayload.AccessEntry(childComplexity), true
+
 	case "Report.audit":
 		if e.ComplexityRoot.Report.Audit == nil {
 			break
@@ -8550,6 +9573,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RequestSignaturePayload.DocumentVersionSignatureEdge(childComplexity), true
+
+	case "RetryStartAccessReviewCampaignPayload.accessReviewCampaign":
+		if e.complexity.RetryStartAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+			break
+		}
+
+		return e.complexity.RetryStartAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "RightsRequest.actionTaken":
 		if e.ComplexityRoot.RightsRequest.ActionTaken == nil {
@@ -9105,6 +10135,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SnapshotEdge.Node(childComplexity), true
+
+	case "StartAccessReviewCampaignPayload.accessReviewCampaign":
+		if e.complexity.StartAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+			break
+		}
+
+		return e.complexity.StartAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "StateOfApplicability.applicabilityStatements":
 		if e.ComplexityRoot.StateOfApplicability.ApplicabilityStatements == nil {
@@ -9926,6 +10963,27 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.TrustCenterReferenceEdge.Node(childComplexity), true
 
+	case "UpdateAccessReviewCampaignPayload.accessReviewCampaign":
+		if e.complexity.UpdateAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+			break
+		}
+
+		return e.complexity.UpdateAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
+
+	case "UpdateAccessReviewPayload.accessReview":
+		if e.complexity.UpdateAccessReviewPayload.AccessReview == nil {
+			break
+		}
+
+		return e.complexity.UpdateAccessReviewPayload.AccessReview(childComplexity), true
+
+	case "UpdateAccessSourcePayload.accessSource":
+		if e.complexity.UpdateAccessSourcePayload.AccessSource == nil {
+			break
+		}
+
+		return e.complexity.UpdateAccessSourcePayload.AccessSource(childComplexity), true
+
 	case "UpdateApplicabilityStatementPayload.applicabilityStatement":
 		if e.ComplexityRoot.UpdateApplicabilityStatementPayload.ApplicabilityStatement == nil {
 			break
@@ -10219,6 +11277,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.UploadVendorDataPrivacyAgreementPayload.VendorDataPrivacyAgreement(childComplexity), true
+
+	case "ValidateAccessReviewCampaignPayload.accessReviewCampaign":
+		if e.complexity.ValidateAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+			break
+		}
+
+		return e.complexity.ValidateAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "Vendor.businessAssociateAgreement":
 		if e.ComplexityRoot.Vendor.BusinessAssociateAgreement == nil {
@@ -11131,6 +12196,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAccessEntryOrder,
+		ec.unmarshalInputAccessReviewCampaignOrder,
+		ec.unmarshalInputAccessSourceOrder,
 		ec.unmarshalInputApplicabilityStatementInput,
 		ec.unmarshalInputApplicabilityStatementOrder,
 		ec.unmarshalInputAssessVendorInput,
@@ -11141,13 +12209,19 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkExportDocumentsInput,
 		ec.unmarshalInputBulkPublishDocumentVersionsInput,
 		ec.unmarshalInputBulkRequestSignaturesInput,
+		ec.unmarshalInputCancelAccessReviewCampaignInput,
 		ec.unmarshalInputCancelSignatureRequestInput,
 		ec.unmarshalInputComplianceExternalURLOrder,
 		ec.unmarshalInputComplianceFrameworkOrder,
+		ec.unmarshalInputCloseAccessReviewCampaignInput,
+		ec.unmarshalInputConnectorFilter,
 		ec.unmarshalInputContinualImprovementFilter,
 		ec.unmarshalInputContinualImprovementOrder,
 		ec.unmarshalInputControlFilter,
 		ec.unmarshalInputControlOrder,
+		ec.unmarshalInputCreateAccessReviewCampaignInput,
+		ec.unmarshalInputCreateAccessReviewInput,
+		ec.unmarshalInputCreateAccessSourceInput,
 		ec.unmarshalInputCreateApplicabilityStatementInput,
 		ec.unmarshalInputCreateAssetInput,
 		ec.unmarshalInputCreateAuditInput,
@@ -11193,6 +12267,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDataProtectionImpactAssessmentOrder,
 		ec.unmarshalInputDatumFilter,
 		ec.unmarshalInputDatumOrder,
+		ec.unmarshalInputDeleteAccessReviewCampaignInput,
+		ec.unmarshalInputDeleteAccessSourceInput,
 		ec.unmarshalInputDeleteApplicabilityStatementInput,
 		ec.unmarshalInputDeleteAssetInput,
 		ec.unmarshalInputDeleteAuditInput,
@@ -11247,6 +12323,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDocumentVersionSignatureFilter,
 		ec.unmarshalInputDocumentVersionSignatureOrder,
 		ec.unmarshalInputEvidenceOrder,
+		ec.unmarshalInputExportCampaignEvidenceInput,
 		ec.unmarshalInputExportDataProtectionImpactAssessmentsPDFInput,
 		ec.unmarshalInputExportDocumentVersionPDFInput,
 		ec.unmarshalInputExportFrameworkInput,
@@ -11271,7 +12348,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputProfileFilter,
 		ec.unmarshalInputProfileOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
+		ec.unmarshalInputRecordAccessEntryDecisionInput,
 		ec.unmarshalInputRequestSignatureInput,
+		ec.unmarshalInputRetryStartAccessReviewCampaignInput,
 		ec.unmarshalInputRightsRequestOrder,
 		ec.unmarshalInputRiskFilter,
 		ec.unmarshalInputRiskOrder,
@@ -11279,6 +12358,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSendSigningNotificationsInput,
 		ec.unmarshalInputSignDocumentInput,
 		ec.unmarshalInputSnapshotOrder,
+		ec.unmarshalInputStartAccessReviewCampaignInput,
 		ec.unmarshalInputStateOfApplicabilityFilter,
 		ec.unmarshalInputStateOfApplicabilityOrder,
 		ec.unmarshalInputTaskOrder,
@@ -11289,6 +12369,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputTrustCenterDocumentAccessOrder,
 		ec.unmarshalInputTrustCenterFileOrder,
 		ec.unmarshalInputTrustCenterReferenceOrder,
+		ec.unmarshalInputUpdateAccessReviewCampaignInput,
+		ec.unmarshalInputUpdateAccessReviewInput,
+		ec.unmarshalInputUpdateAccessSourceInput,
 		ec.unmarshalInputUpdateApplicabilityStatementInput,
 		ec.unmarshalInputUpdateAssetInput,
 		ec.unmarshalInputUpdateAuditInput,
@@ -11331,6 +12414,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUploadVendorBusinessAssociateAgreementInput,
 		ec.unmarshalInputUploadVendorComplianceReportInput,
 		ec.unmarshalInputUploadVendorDataPrivacyAgreementInput,
+		ec.unmarshalInputValidateAccessReviewCampaignInput,
 		ec.unmarshalInputVendorComplianceReportOrder,
 		ec.unmarshalInputVendorContactOrder,
 		ec.unmarshalInputVendorFilter,
@@ -13229,6 +14313,7 @@ type Organization implements Node {
         last: Int
         before: CursorKey
     ): SlackConnectionConnection! @goField(forceResolver: true)
+    connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
 
     frameworks(
         first: Int
@@ -13423,11 +14508,32 @@ type Organization implements Node {
         before: CursorKey
         orderBy: WebhookSubscriptionOrder
     ): WebhookSubscriptionConnection! @goField(forceResolver: true)
+    accessReview: AccessReview @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum ConnectorProvider
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ConnectorProvider") {
+    SLACK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSlack")
+    GOOGLE_WORKSPACE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace"
+        )
+    LINEAR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinear")
+}
+
+input ConnectorFilter {
+    providers: [ConnectorProvider!]
+}
+
+type Connector {
+    id: ID!
+    provider: ConnectorProvider!
+    createdAt: Datetime!
 }
 
 type SlackConnection {
@@ -15254,6 +16360,55 @@ type Mutation {
     deleteCustomDomain(
         input: DeleteCustomDomainInput!
     ): DeleteCustomDomainPayload!
+    # Access Review mutations
+    createAccessReview(
+        input: CreateAccessReviewInput!
+    ): CreateAccessReviewPayload!
+    updateAccessReview(
+        input: UpdateAccessReviewInput!
+    ): UpdateAccessReviewPayload!
+    # Access Source mutations
+    createAccessSource(
+        input: CreateAccessSourceInput!
+    ): CreateAccessSourcePayload!
+    updateAccessSource(
+        input: UpdateAccessSourceInput!
+    ): UpdateAccessSourcePayload!
+    deleteAccessSource(
+        input: DeleteAccessSourceInput!
+    ): DeleteAccessSourcePayload!
+    # Access Review Campaign mutations
+    createAccessReviewCampaign(
+        input: CreateAccessReviewCampaignInput!
+    ): CreateAccessReviewCampaignPayload!
+    updateAccessReviewCampaign(
+        input: UpdateAccessReviewCampaignInput!
+    ): UpdateAccessReviewCampaignPayload!
+    deleteAccessReviewCampaign(
+        input: DeleteAccessReviewCampaignInput!
+    ): DeleteAccessReviewCampaignPayload!
+    startAccessReviewCampaign(
+        input: StartAccessReviewCampaignInput!
+    ): StartAccessReviewCampaignPayload!
+    closeAccessReviewCampaign(
+        input: CloseAccessReviewCampaignInput!
+    ): CloseAccessReviewCampaignPayload!
+    retryStartAccessReviewCampaign(
+        input: RetryStartAccessReviewCampaignInput!
+    ): RetryStartAccessReviewCampaignPayload!
+    validateAccessReviewCampaign(
+        input: ValidateAccessReviewCampaignInput!
+    ): ValidateAccessReviewCampaignPayload!
+    cancelAccessReviewCampaign(
+        input: CancelAccessReviewCampaignInput!
+    ): CancelAccessReviewCampaignPayload!
+    # Access Entry mutations
+    recordAccessEntryDecision(
+        input: RecordAccessEntryDecisionInput!
+    ): RecordAccessEntryDecisionPayload!
+    exportCampaignEvidence(
+        input: ExportCampaignEvidenceInput!
+    ): ExportCampaignEvidencePayload!
 }
 
 # Input Types
@@ -17334,6 +18489,519 @@ type ElectronicSignatureEvent {
     actorUserAgent: String!
     occurredAt: Datetime!
     createdAt: Datetime!
+# ===== Access Review Types =====
+
+enum AccessReviewCampaignStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatus"
+    ) {
+    DRAFT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusDraft"
+        )
+    IN_PROGRESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusInProgress"
+        )
+    PENDING_ACTIONS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusPendingActions"
+        )
+    FAILED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusFailed"
+        )
+    COMPLETED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusCompleted"
+        )
+    CANCELLED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignStatusCancelled"
+        )
+}
+
+enum AccessSourceCategory
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessSourceCategory"
+    ) {
+    SAAS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessSourceCategorySaaS"
+        )
+    CLOUD_INFRA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessSourceCategoryCloudInfra"
+        )
+    SOURCE_CODE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessSourceCategorySourceCode"
+        )
+    OTHER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessSourceCategoryOther"
+        )
+}
+
+enum AccessReviewCampaignSourceFetchStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignSourceFetchStatus"
+    ) {
+    QUEUED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignSourceFetchStatusQueued"
+        )
+    FETCHING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignSourceFetchStatusFetching"
+        )
+    SUCCESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignSourceFetchStatusSuccess"
+        )
+    FAILED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignSourceFetchStatusFailed"
+        )
+}
+
+enum AccessEntryFlag
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AccessEntryFlag") {
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryFlagNone"
+        )
+    ORPHANED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryFlagOrphaned"
+        )
+    INACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryFlagInactive"
+        )
+    EXCESSIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryFlagExcessive"
+        )
+    ROLE_MISMATCH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryFlagRoleMismatch"
+        )
+    NEW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryFlagNew"
+        )
+}
+
+enum AccessEntryDecision
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessEntryDecision"
+    ) {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryDecisionPending"
+        )
+    APPROVED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryDecisionApproved"
+        )
+    REVOKE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryDecisionRevoke"
+        )
+    DEFER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryDecisionDefer"
+        )
+    ESCALATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryDecisionEscalate"
+        )
+    MODIFY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryDecisionModify"
+        )
+        @deprecated(reason: "Use ESCALATE")
+}
+
+enum AccessEntryIncrementalTag
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AccessEntryIncrementalTag") {
+    NEW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryIncrementalTagNew"
+        )
+    REMOVED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryIncrementalTagRemoved"
+        )
+    UNCHANGED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryIncrementalTagUnchanged"
+        )
+}
+
+enum MfaStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MFAStatus") {
+    ENABLED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MFAStatusEnabled"
+        )
+    DISABLED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MFAStatusDisabled"
+        )
+    UNKNOWN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MFAStatusUnknown"
+        )
+}
+
+enum AccessEntryAuthMethod
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessEntryAuthMethod"
+    ) {
+    SSO
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryAuthMethodSSO"
+        )
+    PASSWORD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryAuthMethodPassword"
+        )
+    API_KEY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryAuthMethodAPIKey"
+        )
+    SERVICE_ACCOUNT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryAuthMethodServiceAccount"
+        )
+    UNKNOWN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessEntryAuthMethodUnknown"
+        )
+}
+
+type AccessReview implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    identitySource: AccessSource @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    accessSources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessSourceOrder
+    ): AccessSourceConnection! @goField(forceResolver: true)
+
+    campaigns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessReviewCampaignOrder
+    ): AccessReviewCampaignConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessSource implements Node {
+    id: ID!
+    accessReview: AccessReview! @goField(forceResolver: true)
+    connectorId: ID
+    connector: Connector @goField(forceResolver: true)
+    name: String!
+    csvData: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessReviewCampaignScopeSource
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessReviewCampaignScopeSource"
+    ) {
+    id: ID!
+    source: AccessSource!
+    name: String!
+    fetchStatus: AccessReviewCampaignSourceFetchStatus!
+    fetchedAccountsCount: Int!
+    attemptCount: Int!
+    lastError: String
+    fetchStartedAt: Datetime
+    fetchCompletedAt: Datetime
+}
+
+type AccessSourceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessSourceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AccessSourceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AccessSourceEdge {
+    cursor: CursorKey!
+    node: AccessSource!
+}
+
+input AccessSourceOrder {
+    direction: OrderDirection!
+    field: AccessSourceOrderField!
+}
+
+enum AccessSourceOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessSourceOrderField"
+    ) {
+    CREATED_AT
+}
+
+type AccessReviewCampaign implements Node {
+    id: ID!
+    accessReview: AccessReview! @goField(forceResolver: true)
+    name: String!
+    status: AccessReviewCampaignStatus!
+    startedAt: Datetime
+    completedAt: Datetime
+    frameworkControls: [String!]
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    scopeSources: [AccessReviewCampaignScopeSource!]! @goField(forceResolver: true)
+
+    entries(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessEntryOrder
+        accessSourceId: ID
+    ): AccessEntryConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessReviewCampaignConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessReviewCampaignConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AccessReviewCampaignEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AccessReviewCampaignEdge {
+    cursor: CursorKey!
+    node: AccessReviewCampaign!
+}
+
+input AccessReviewCampaignOrder {
+    direction: OrderDirection!
+    field: AccessReviewCampaignOrderField!
+}
+
+enum AccessReviewCampaignOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignOrderField"
+    ) {
+    CREATED_AT
+}
+
+type AccessEntry implements Node {
+    id: ID!
+    campaign: AccessReviewCampaign! @goField(forceResolver: true)
+    accessSource: AccessSource! @goField(forceResolver: true)
+    email: String!
+    fullName: String!
+    role: String!
+    jobTitle: String!
+    isAdmin: Boolean!
+    mfaStatus: MfaStatus!
+    authMethod: AccessEntryAuthMethod!
+    lastLogin: Datetime
+    accountCreatedAt: Datetime
+    externalId: String!
+    incrementalTag: AccessEntryIncrementalTag!
+    flag: AccessEntryFlag!
+    flagReason: String
+    decision: AccessEntryDecision!
+    decisionNote: String
+    decidedBy: People @goField(forceResolver: true)
+    decidedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessEntryConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessEntryConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AccessEntryEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AccessEntryEdge {
+    cursor: CursorKey!
+    node: AccessEntry!
+}
+
+input AccessEntryOrder {
+    direction: OrderDirection!
+    field: AccessEntryOrderField!
+}
+
+enum AccessEntryOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessEntryOrderField"
+    ) {
+    CREATED_AT
+}
+
+# Access Review Inputs & Payloads
+
+input CreateAccessReviewInput {
+    organizationId: ID!
+}
+
+type CreateAccessReviewPayload {
+    accessReview: AccessReview!
+}
+
+input UpdateAccessReviewInput {
+    accessReviewId: ID!
+    identitySourceId: ID @goField(omittable: true)
+}
+
+type UpdateAccessReviewPayload {
+    accessReview: AccessReview!
+}
+
+input CreateAccessSourceInput {
+    accessReviewId: ID!
+    connectorId: ID
+    name: String!
+    csvData: String
+}
+
+type CreateAccessSourcePayload {
+    accessSourceEdge: AccessSourceEdge!
+}
+
+input UpdateAccessSourceInput {
+    accessSourceId: ID!
+    name: String @goField(omittable: true)
+    connectorId: ID @goField(omittable: true)
+    csvData: String @goField(omittable: true)
+}
+
+type UpdateAccessSourcePayload {
+    accessSource: AccessSource!
+}
+
+input DeleteAccessSourceInput {
+    accessSourceId: ID!
+}
+
+type DeleteAccessSourcePayload {
+    deletedAccessSourceId: ID!
+}
+
+input CreateAccessReviewCampaignInput {
+    accessReviewId: ID!
+    name: String!
+    frameworkControls: [String!]
+}
+
+type CreateAccessReviewCampaignPayload {
+    accessReviewCampaignEdge: AccessReviewCampaignEdge!
+}
+
+input UpdateAccessReviewCampaignInput {
+    accessReviewCampaignId: ID!
+    name: String @goField(omittable: true)
+    frameworkControls: [String!] @goField(omittable: true)
+}
+
+type UpdateAccessReviewCampaignPayload {
+    accessReviewCampaign: AccessReviewCampaign!
+}
+
+input DeleteAccessReviewCampaignInput {
+    accessReviewCampaignId: ID!
+}
+
+type DeleteAccessReviewCampaignPayload {
+    deletedAccessReviewCampaignId: ID!
+}
+
+input StartAccessReviewCampaignInput {
+    accessReviewCampaignId: ID!
+    accessSourceIds: [ID!]
+}
+
+type StartAccessReviewCampaignPayload {
+    accessReviewCampaign: AccessReviewCampaign!
+}
+
+input CloseAccessReviewCampaignInput {
+    accessReviewCampaignId: ID!
+}
+
+type CloseAccessReviewCampaignPayload {
+    accessReviewCampaign: AccessReviewCampaign!
+}
+
+input RetryStartAccessReviewCampaignInput {
+    accessReviewCampaignId: ID!
+}
+
+type RetryStartAccessReviewCampaignPayload {
+    accessReviewCampaign: AccessReviewCampaign!
+}
+
+input ValidateAccessReviewCampaignInput {
+    accessReviewCampaignId: ID!
+    note: String
+}
+
+type ValidateAccessReviewCampaignPayload {
+    accessReviewCampaign: AccessReviewCampaign!
+}
+
+input CancelAccessReviewCampaignInput {
+    accessReviewCampaignId: ID!
+}
+
+type CancelAccessReviewCampaignPayload {
+    accessReviewCampaign: AccessReviewCampaign!
+}
+
+input RecordAccessEntryDecisionInput {
+    accessEntryId: ID!
+    decision: AccessEntryDecision!
+    decisionNote: String
+}
+
+type RecordAccessEntryDecisionPayload {
+    accessEntry: AccessEntry!
+}
+
+input ExportCampaignEvidenceInput {
+    accessReviewCampaignId: ID!
+}
+
+type ExportCampaignEvidencePayload {
+    checksumSha256: String!
+    payload: String!
 }
 `, BuiltIn: false},
 }
@@ -17342,6 +19010,148 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_AccessEntry_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_AccessReviewCampaign_entries_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOAccessEntryOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "accessSourceId", ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID)
+	if err != nil {
+		return nil, err
+	}
+	args["accessSourceId"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_AccessReviewCampaign_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_AccessReview_accessSources_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOAccessSourceOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_AccessReview_campaigns_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOAccessReviewCampaignOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_AccessReview_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_AccessSource_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_ApplicabilityStatement_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -18234,10 +20044,65 @@ func (ec *executionContext) field_Mutation_bulkRequestSignatures_args(ctx contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_cancelAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCancelAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelAccessReviewCampaignInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_cancelSignatureRequest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCancelSignatureRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelSignatureRequestInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_closeAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCloseAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCloseAccessReviewCampaignInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewCampaignInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createAccessReview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateAccessReviewInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createAccessSource_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateAccessSourceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessSourceInput)
 	if err != nil {
 		return nil, err
 	}
@@ -18689,6 +20554,21 @@ func (ec *executionContext) field_Mutation_createWebhookSubscription_args(ctx co
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateWebhookSubscriptionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateWebhookSubscriptionInput)
+func (ec *executionContext) field_Mutation_deleteAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessReviewCampaignInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteAccessSource_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteAccessSourceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessSourceInput)
 	if err != nil {
 		return nil, err
 	}
@@ -19206,6 +21086,10 @@ func (ec *executionContext) field_Mutation_deleteWebhookSubscription_args(ctx co
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteWebhookSubscriptionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteWebhookSubscriptionInput)
+func (ec *executionContext) field_Mutation_exportCampaignEvidence_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportCampaignEvidenceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidenceInput)
 	if err != nil {
 		return nil, err
 	}
@@ -19345,6 +21229,17 @@ func (ec *executionContext) field_Mutation_publishDocumentVersion_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_recordAccessEntryDecision_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRecordAccessEntryDecisionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRecordAccessEntryDecisionInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_requestSignature_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -19360,6 +21255,10 @@ func (ec *executionContext) field_Mutation_sendMailingListUpdate_args(ctx contex
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSendMailingListUpdateInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendMailingListUpdateInput)
+func (ec *executionContext) field_Mutation_retryStartAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRetryStartAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignInput)
 	if err != nil {
 		return nil, err
 	}
@@ -19382,6 +21281,50 @@ func (ec *executionContext) field_Mutation_signDocument_args(ctx context.Context
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSignDocumentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignDocumentInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_startAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNStartAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStartAccessReviewCampaignInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewCampaignInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateAccessReview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateAccessReviewInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateAccessSource_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateAccessSourceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessSourceInput)
 	if err != nil {
 		return nil, err
 	}
@@ -19851,6 +21794,17 @@ func (ec *executionContext) field_Mutation_uploadVendorDataPrivacyAgreement_args
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_validateAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNValidateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Nonconformity_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -19937,6 +21891,17 @@ func (ec *executionContext) field_Organization_audits_args(ctx context.Context, 
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Organization_connectors_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOConnectorFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg0
 	return args, nil
 }
 
@@ -21669,6 +23634,2714 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _AccessEntry_id(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_campaign(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_campaign,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessEntry().Campaign(ctx, obj)
+		},
+		nil,
+		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_campaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
+			case "status":
+				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
+			case "frameworkControls":
+				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
+			case "scopeSources":
+				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
+			case "entries":
+				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_accessSource(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_accessSource,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessEntry().AccessSource(ctx, obj)
+		},
+		nil,
+		ec.marshalNAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_accessSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessSource_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessSource_accessReview(ctx, field)
+			case "connectorId":
+				return ec.fieldContext_AccessSource_connectorId(ctx, field)
+			case "connector":
+				return ec.fieldContext_AccessSource_connector(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessSource_name(ctx, field)
+			case "csvData":
+				return ec.fieldContext_AccessSource_csvData(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessSource_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessSource_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessSource_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_email(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_fullName(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_fullName,
+		func(ctx context.Context) (any, error) {
+			return obj.FullName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_fullName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_role(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_role,
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_jobTitle(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_jobTitle,
+		func(ctx context.Context) (any, error) {
+			return obj.JobTitle, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_jobTitle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_isAdmin(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_isAdmin,
+		func(ctx context.Context) (any, error) {
+			return obj.IsAdmin, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_isAdmin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_mfaStatus(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_mfaStatus,
+		func(ctx context.Context) (any, error) {
+			return obj.MfaStatus, nil
+		},
+		nil,
+		ec.marshalNMfaStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMFAStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_mfaStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type MfaStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_authMethod(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_authMethod,
+		func(ctx context.Context) (any, error) {
+			return obj.AuthMethod, nil
+		},
+		nil,
+		ec.marshalNAccessEntryAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryAuthMethod,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_authMethod(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type AccessEntryAuthMethod does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_lastLogin(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_lastLogin,
+		func(ctx context.Context) (any, error) {
+			return obj.LastLogin, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_lastLogin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_accountCreatedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_accountCreatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.AccountCreatedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_accountCreatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_externalId(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_externalId,
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_externalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_incrementalTag(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_incrementalTag,
+		func(ctx context.Context) (any, error) {
+			return obj.IncrementalTag, nil
+		},
+		nil,
+		ec.marshalNAccessEntryIncrementalTag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryIncrementalTag,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_incrementalTag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type AccessEntryIncrementalTag does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_flag(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_flag,
+		func(ctx context.Context) (any, error) {
+			return obj.Flag, nil
+		},
+		nil,
+		ec.marshalNAccessEntryFlag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryFlag,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_flag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type AccessEntryFlag does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_flagReason(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_flagReason,
+		func(ctx context.Context) (any, error) {
+			return obj.FlagReason, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_flagReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_decision(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_decision,
+		func(ctx context.Context) (any, error) {
+			return obj.Decision, nil
+		},
+		nil,
+		ec.marshalNAccessEntryDecision2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryDecision,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_decision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type AccessEntryDecision does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_decisionNote(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_decisionNote,
+		func(ctx context.Context) (any, error) {
+			return obj.DecisionNote, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_decisionNote(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_decidedBy(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_decidedBy,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessEntry().DecidedBy(ctx, obj)
+		},
+		nil,
+		ec.marshalOPeople2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_decidedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_decidedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_decidedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.DecidedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_decidedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntry_permission(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntry_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.AccessEntry().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntry_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_AccessEntry_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntryConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntryConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntryConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessEntryConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntryConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntryConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntryConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntryConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntryConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNAccessEntryEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntryConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_AccessEntryEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_AccessEntryEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessEntryEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntryConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntryConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntryConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntryConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntryEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntryEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntryEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntryEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntryEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessEntryEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.AccessEntryEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessEntryEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNAccessEntry2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntry,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessEntryEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessEntryEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessEntry_id(ctx, field)
+			case "campaign":
+				return ec.fieldContext_AccessEntry_campaign(ctx, field)
+			case "accessSource":
+				return ec.fieldContext_AccessEntry_accessSource(ctx, field)
+			case "email":
+				return ec.fieldContext_AccessEntry_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_AccessEntry_fullName(ctx, field)
+			case "role":
+				return ec.fieldContext_AccessEntry_role(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_AccessEntry_jobTitle(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_AccessEntry_isAdmin(ctx, field)
+			case "mfaStatus":
+				return ec.fieldContext_AccessEntry_mfaStatus(ctx, field)
+			case "authMethod":
+				return ec.fieldContext_AccessEntry_authMethod(ctx, field)
+			case "lastLogin":
+				return ec.fieldContext_AccessEntry_lastLogin(ctx, field)
+			case "accountCreatedAt":
+				return ec.fieldContext_AccessEntry_accountCreatedAt(ctx, field)
+			case "externalId":
+				return ec.fieldContext_AccessEntry_externalId(ctx, field)
+			case "incrementalTag":
+				return ec.fieldContext_AccessEntry_incrementalTag(ctx, field)
+			case "flag":
+				return ec.fieldContext_AccessEntry_flag(ctx, field)
+			case "flagReason":
+				return ec.fieldContext_AccessEntry_flagReason(ctx, field)
+			case "decision":
+				return ec.fieldContext_AccessEntry_decision(ctx, field)
+			case "decisionNote":
+				return ec.fieldContext_AccessEntry_decisionNote(ctx, field)
+			case "decidedBy":
+				return ec.fieldContext_AccessEntry_decidedBy(ctx, field)
+			case "decidedAt":
+				return ec.fieldContext_AccessEntry_decidedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessEntry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessEntry_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessEntry_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessEntry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReview_id(ctx context.Context, field graphql.CollectedField, obj *types.AccessReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReview_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReview_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReview_organization(ctx context.Context, field graphql.CollectedField, obj *types.AccessReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReview_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessReview().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReview_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReview",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "context":
+				return ec.fieldContext_Organization_context(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "meetings":
+				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "statesOfApplicability":
+				return ec.fieldContext_Organization_statesOfApplicability(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReview_identitySource(ctx context.Context, field graphql.CollectedField, obj *types.AccessReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReview_identitySource,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessReview().IdentitySource(ctx, obj)
+		},
+		nil,
+		ec.marshalOAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReview_identitySource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReview",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessSource_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessSource_accessReview(ctx, field)
+			case "connectorId":
+				return ec.fieldContext_AccessSource_connectorId(ctx, field)
+			case "connector":
+				return ec.fieldContext_AccessSource_connector(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessSource_name(ctx, field)
+			case "csvData":
+				return ec.fieldContext_AccessSource_csvData(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessSource_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessSource_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessSource_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReview_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReview_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReview_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReview_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReview_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReview_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReview_accessSources(ctx context.Context, field graphql.CollectedField, obj *types.AccessReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReview_accessSources,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.AccessReview().AccessSources(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessSourceOrder))
+		},
+		nil,
+		ec.marshalNAccessSourceConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReview_accessSources(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReview",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_AccessSourceConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_AccessSourceConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_AccessSourceConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessSourceConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_AccessReview_accessSources_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReview_campaigns(ctx context.Context, field graphql.CollectedField, obj *types.AccessReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReview_campaigns,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.AccessReview().Campaigns(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessReviewCampaignOrder))
+		},
+		nil,
+		ec.marshalNAccessReviewCampaignConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReview_campaigns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReview",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_AccessReviewCampaignConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_AccessReviewCampaignConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_AccessReviewCampaignConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaignConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_AccessReview_campaigns_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReview_permission(ctx context.Context, field graphql.CollectedField, obj *types.AccessReview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReview_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.AccessReview().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReview_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReview",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_AccessReview_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_id(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_accessReview(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_accessReview,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessReviewCampaign().AccessReview(ctx, obj)
+		},
+		nil,
+		ec.marshalNAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_accessReview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReview_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_AccessReview_organization(ctx, field)
+			case "identitySource":
+				return ec.fieldContext_AccessReview_identitySource(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReview_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReview_updatedAt(ctx, field)
+			case "accessSources":
+				return ec.fieldContext_AccessReview_accessSources(ctx, field)
+			case "campaigns":
+				return ec.fieldContext_AccessReview_campaigns(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReview_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReview", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_name(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_status(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaignStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type AccessReviewCampaignStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_startedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_startedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.StartedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_startedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_completedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_completedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CompletedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_completedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_frameworkControls(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_frameworkControls,
+		func(ctx context.Context) (any, error) {
+			return obj.FrameworkControls, nil
+		},
+		nil,
+		ec.marshalOString2ᚕstringᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_frameworkControls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_scopeSources(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_scopeSources,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessReviewCampaign().ScopeSources(ctx, obj)
+		},
+		nil,
+		ec.marshalNAccessReviewCampaignScopeSource2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignScopeSourceᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_scopeSources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_id(ctx, field)
+			case "source":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_source(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_name(ctx, field)
+			case "fetchStatus":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_fetchStatus(ctx, field)
+			case "fetchedAccountsCount":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_fetchedAccountsCount(ctx, field)
+			case "attemptCount":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_attemptCount(ctx, field)
+			case "lastError":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_lastError(ctx, field)
+			case "fetchStartedAt":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_fetchStartedAt(ctx, field)
+			case "fetchCompletedAt":
+				return ec.fieldContext_AccessReviewCampaignScopeSource_fetchCompletedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaignScopeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_entries(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_entries,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.AccessReviewCampaign().Entries(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessEntryOrder), fc.Args["accessSourceId"].(*gid.GID))
+		},
+		nil,
+		ec.marshalNAccessEntryConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_entries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_AccessEntryConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_AccessEntryConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_AccessEntryConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessEntryConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_AccessReviewCampaign_entries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaign_permission(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaign) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaign_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.AccessReviewCampaign().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaign_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaign",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_AccessReviewCampaign_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessReviewCampaignConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaignEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_AccessReviewCampaignEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_AccessReviewCampaignEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaignEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
+			case "status":
+				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
+			case "frameworkControls":
+				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
+			case "scopeSources":
+				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
+			case "entries":
+				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_id(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_source(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_source,
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		ec.marshalNAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessSource_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessSource_accessReview(ctx, field)
+			case "connectorId":
+				return ec.fieldContext_AccessSource_connectorId(ctx, field)
+			case "connector":
+				return ec.fieldContext_AccessSource_connector(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessSource_name(ctx, field)
+			case "csvData":
+				return ec.fieldContext_AccessSource_csvData(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessSource_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessSource_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessSource_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_name(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_fetchStatus(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_fetchStatus,
+		func(ctx context.Context) (any, error) {
+			return obj.FetchStatus, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaignSourceFetchStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignSourceFetchStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_fetchStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type AccessReviewCampaignSourceFetchStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_fetchedAccountsCount(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_fetchedAccountsCount,
+		func(ctx context.Context) (any, error) {
+			return obj.FetchedAccountsCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_fetchedAccountsCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_attemptCount(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_attemptCount,
+		func(ctx context.Context) (any, error) {
+			return obj.AttemptCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_attemptCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_lastError(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_lastError,
+		func(ctx context.Context) (any, error) {
+			return obj.LastError, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_lastError(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_fetchStartedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_fetchStartedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.FetchStartedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_fetchStartedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource_fetchCompletedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessReviewCampaignScopeSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessReviewCampaignScopeSource_fetchCompletedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.FetchCompletedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessReviewCampaignScopeSource_fetchCompletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessReviewCampaignScopeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_id(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_accessReview(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_accessReview,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessSource().AccessReview(ctx, obj)
+		},
+		nil,
+		ec.marshalNAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_accessReview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReview_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_AccessReview_organization(ctx, field)
+			case "identitySource":
+				return ec.fieldContext_AccessReview_identitySource(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReview_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReview_updatedAt(ctx, field)
+			case "accessSources":
+				return ec.fieldContext_AccessReview_accessSources(ctx, field)
+			case "campaigns":
+				return ec.fieldContext_AccessReview_campaigns(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReview_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReview", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_connectorId(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_connectorId,
+		func(ctx context.Context) (any, error) {
+			return obj.ConnectorID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_connectorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_connector(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_connector,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessSource().Connector(ctx, obj)
+		},
+		nil,
+		ec.marshalOConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_connector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Connector_id(ctx, field)
+			case "provider":
+				return ec.fieldContext_Connector_provider(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Connector_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Connector", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_name(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_csvData(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_csvData,
+		func(ctx context.Context) (any, error) {
+			return obj.CSVData, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_csvData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSource_permission(ctx context.Context, field graphql.CollectedField, obj *types.AccessSource) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSource_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.AccessSource().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSource_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSource",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_AccessSource_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSourceConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.AccessSourceConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSourceConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.AccessSourceConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSourceConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSourceConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSourceConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.AccessSourceConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSourceConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNAccessSourceEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSourceConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSourceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_AccessSourceEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_AccessSourceEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessSourceEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSourceConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.AccessSourceConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSourceConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSourceConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSourceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSourceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.AccessSourceEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSourceEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSourceEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSourceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessSourceEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.AccessSourceEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AccessSourceEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AccessSourceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessSourceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessSource_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessSource_accessReview(ctx, field)
+			case "connectorId":
+				return ec.fieldContext_AccessSource_connectorId(ctx, field)
+			case "connector":
+				return ec.fieldContext_AccessSource_connector(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessSource_name(ctx, field)
+			case "csvData":
+				return ec.fieldContext_AccessSource_csvData(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessSource_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessSource_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessSource_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ApplicabilityStatement_id(ctx context.Context, field graphql.CollectedField, obj *types.ApplicabilityStatement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -22571,6 +27244,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -22619,6 +27294,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -23022,6 +27699,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -23070,6 +27749,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -23832,6 +28513,61 @@ func (ec *executionContext) fieldContext_BulkRequestSignaturesPayload_documentVe
 	return fc, nil
 }
 
+func (ec *executionContext) _CancelAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.CancelAccessReviewCampaignPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CancelAccessReviewCampaignPayload_accessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReviewCampaign, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CancelAccessReviewCampaignPayload_accessReviewCampaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CancelAccessReviewCampaignPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
+			case "status":
+				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
+			case "frameworkControls":
+				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
+			case "scopeSources":
+				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
+			case "entries":
+				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CancelSignatureRequestPayload_deletedDocumentVersionSignatureId(ctx context.Context, field graphql.CollectedField, obj *types.CancelSignatureRequestPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -23862,11 +28598,68 @@ func (ec *executionContext) fieldContext_CancelSignatureRequestPayload_deletedDo
 }
 
 func (ec *executionContext) _ComplianceExternalURL_id(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+func (ec *executionContext) _CloseAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.CloseAccessReviewCampaignPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ComplianceExternalURL_id,
+		ec.fieldContext_CloseAccessReviewCampaignPayload_accessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReviewCampaign, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CloseAccessReviewCampaignPayload_accessReviewCampaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CloseAccessReviewCampaignPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
+			case "status":
+				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
+			case "frameworkControls":
+				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
+			case "scopeSources":
+				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
+			case "entries":
+				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Connector_id(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_id,
 		func(ctx context.Context) (any, error) {
 			return obj.ID, nil
 		},
@@ -23880,6 +28673,9 @@ func (ec *executionContext) _ComplianceExternalURL_id(ctx context.Context, field
 func (ec *executionContext) fieldContext_ComplianceExternalURL_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ComplianceExternalURL",
+func (ec *executionContext) fieldContext_Connector_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -23891,6 +28687,7 @@ func (ec *executionContext) fieldContext_ComplianceExternalURL_id(_ context.Cont
 }
 
 func (ec *executionContext) _ComplianceExternalURL_name(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+func (ec *executionContext) _Connector_provider(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -23901,6 +28698,12 @@ func (ec *executionContext) _ComplianceExternalURL_name(ctx context.Context, fie
 		},
 		nil,
 		ec.marshalNString2string,
+		ec.fieldContext_Connector_provider,
+		func(ctx context.Context) (any, error) {
+			return obj.Provider, nil
+		},
+		nil,
+		ec.marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider,
 		true,
 		true,
 	)
@@ -23909,17 +28712,22 @@ func (ec *executionContext) _ComplianceExternalURL_name(ctx context.Context, fie
 func (ec *executionContext) fieldContext_ComplianceExternalURL_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ComplianceExternalURL",
+func (ec *executionContext) fieldContext_Connector_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ConnectorProvider does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
 func (ec *executionContext) _ComplianceExternalURL_url(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+func (ec *executionContext) _Connector_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -23983,6 +28791,7 @@ func (ec *executionContext) _ComplianceExternalURL_createdAt(ctx context.Context
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ComplianceExternalURL_createdAt,
+		ec.fieldContext_Connector_createdAt,
 		func(ctx context.Context) (any, error) {
 			return obj.CreatedAt, nil
 		},
@@ -23996,6 +28805,9 @@ func (ec *executionContext) _ComplianceExternalURL_createdAt(ctx context.Context
 func (ec *executionContext) fieldContext_ComplianceExternalURL_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ComplianceExternalURL",
+func (ec *executionContext) fieldContext_Connector_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -24699,6 +29511,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -24747,6 +29561,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -25354,6 +30170,8 @@ func (ec *executionContext) fieldContext_Control_organization(_ context.Context,
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -25402,6 +30220,8 @@ func (ec *executionContext) fieldContext_Control_organization(_ context.Context,
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -26207,6 +31027,123 @@ func (ec *executionContext) fieldContext_ControlEdge_node(_ context.Context, fie
 				return ec.fieldContext_Control_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Control", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateAccessReviewCampaignPayload_accessReviewCampaignEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateAccessReviewCampaignPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateAccessReviewCampaignPayload_accessReviewCampaignEdge,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReviewCampaignEdge, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaignEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignEdge,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateAccessReviewCampaignPayload_accessReviewCampaignEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateAccessReviewCampaignPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_AccessReviewCampaignEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_AccessReviewCampaignEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaignEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateAccessReviewPayload_accessReview(ctx context.Context, field graphql.CollectedField, obj *types.CreateAccessReviewPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateAccessReviewPayload_accessReview,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReview, nil
+		},
+		nil,
+		ec.marshalNAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateAccessReviewPayload_accessReview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateAccessReviewPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReview_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_AccessReview_organization(ctx, field)
+			case "identitySource":
+				return ec.fieldContext_AccessReview_identitySource(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReview_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReview_updatedAt(ctx, field)
+			case "accessSources":
+				return ec.fieldContext_AccessReview_accessSources(ctx, field)
+			case "campaigns":
+				return ec.fieldContext_AccessReview_campaigns(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReview_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReview", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateAccessSourcePayload_accessSourceEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateAccessSourcePayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateAccessSourcePayload_accessSourceEdge,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessSourceEdge, nil
+		},
+		nil,
+		ec.marshalNAccessSourceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceEdge,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateAccessSourcePayload_accessSourceEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateAccessSourcePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_AccessSourceEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_AccessSourceEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessSourceEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -28095,6 +33032,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -28143,6 +33082,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -28692,6 +33633,8 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_organiza
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -28740,6 +33683,8 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_organiza
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -29448,6 +34393,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -29496,6 +34443,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -29786,6 +34735,64 @@ func (ec *executionContext) fieldContext_DatumEdge_node(_ context.Context, field
 				return ec.fieldContext_Datum_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Datum", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteAccessReviewCampaignPayload_deletedAccessReviewCampaignId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteAccessReviewCampaignPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteAccessReviewCampaignPayload_deletedAccessReviewCampaignId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedAccessReviewCampaignID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteAccessReviewCampaignPayload_deletedAccessReviewCampaignId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteAccessReviewCampaignPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteAccessSourcePayload_deletedAccessSourceId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteAccessSourcePayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteAccessSourcePayload_deletedAccessSourceId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedAccessSourceID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteAccessSourcePayload_deletedAccessSourceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteAccessSourcePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -31746,6 +36753,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -31794,6 +36803,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -34574,6 +39585,64 @@ func (ec *executionContext) fieldContext_EvidenceEdge_node(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _ExportCampaignEvidencePayload_checksumSha256(ctx context.Context, field graphql.CollectedField, obj *types.ExportCampaignEvidencePayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExportCampaignEvidencePayload_checksumSha256,
+		func(ctx context.Context) (any, error) {
+			return obj.ChecksumSha256, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExportCampaignEvidencePayload_checksumSha256(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExportCampaignEvidencePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExportCampaignEvidencePayload_payload(ctx context.Context, field graphql.CollectedField, obj *types.ExportCampaignEvidencePayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExportCampaignEvidencePayload_payload,
+		func(ctx context.Context) (any, error) {
+			return obj.Payload, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExportCampaignEvidencePayload_payload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExportCampaignEvidencePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ExportDataProtectionImpactAssessmentsPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportDataProtectionImpactAssessmentsPDFPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -35113,6 +40182,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -35161,6 +40232,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -37409,6 +42482,8 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -37457,6 +42532,8 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -44628,6 +49705,683 @@ func (ec *executionContext) fieldContext_Mutation_deleteCustomDomain(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createAccessReview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createAccessReview,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateAccessReview(ctx, fc.Args["input"].(types.CreateAccessReviewInput))
+		},
+		nil,
+		ec.marshalNCreateAccessReviewPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createAccessReview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReview":
+				return ec.fieldContext_CreateAccessReviewPayload_accessReview(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateAccessReviewPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createAccessReview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateAccessReview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateAccessReview,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateAccessReview(ctx, fc.Args["input"].(types.UpdateAccessReviewInput))
+		},
+		nil,
+		ec.marshalNUpdateAccessReviewPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateAccessReview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReview":
+				return ec.fieldContext_UpdateAccessReviewPayload_accessReview(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateAccessReviewPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateAccessReview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createAccessSource(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createAccessSource,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateAccessSource(ctx, fc.Args["input"].(types.CreateAccessSourceInput))
+		},
+		nil,
+		ec.marshalNCreateAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessSourcePayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createAccessSource(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessSourceEdge":
+				return ec.fieldContext_CreateAccessSourcePayload_accessSourceEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateAccessSourcePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createAccessSource_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateAccessSource(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateAccessSource,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateAccessSource(ctx, fc.Args["input"].(types.UpdateAccessSourceInput))
+		},
+		nil,
+		ec.marshalNUpdateAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessSourcePayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateAccessSource(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessSource":
+				return ec.fieldContext_UpdateAccessSourcePayload_accessSource(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateAccessSourcePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateAccessSource_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteAccessSource(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteAccessSource,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteAccessSource(ctx, fc.Args["input"].(types.DeleteAccessSourceInput))
+		},
+		nil,
+		ec.marshalNDeleteAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessSourcePayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteAccessSource(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedAccessSourceId":
+				return ec.fieldContext_DeleteAccessSourcePayload_deletedAccessSourceId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteAccessSourcePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteAccessSource_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createAccessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateAccessReviewCampaign(ctx, fc.Args["input"].(types.CreateAccessReviewCampaignInput))
+		},
+		nil,
+		ec.marshalNCreateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewCampaignPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReviewCampaignEdge":
+				return ec.fieldContext_CreateAccessReviewCampaignPayload_accessReviewCampaignEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateAccessReviewCampaignPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateAccessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateAccessReviewCampaign(ctx, fc.Args["input"].(types.UpdateAccessReviewCampaignInput))
+		},
+		nil,
+		ec.marshalNUpdateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewCampaignPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReviewCampaign":
+				return ec.fieldContext_UpdateAccessReviewCampaignPayload_accessReviewCampaign(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateAccessReviewCampaignPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteAccessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteAccessReviewCampaign(ctx, fc.Args["input"].(types.DeleteAccessReviewCampaignInput))
+		},
+		nil,
+		ec.marshalNDeleteAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessReviewCampaignPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedAccessReviewCampaignId":
+				return ec.fieldContext_DeleteAccessReviewCampaignPayload_deletedAccessReviewCampaignId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteAccessReviewCampaignPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_startAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_startAccessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().StartAccessReviewCampaign(ctx, fc.Args["input"].(types.StartAccessReviewCampaignInput))
+		},
+		nil,
+		ec.marshalNStartAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStartAccessReviewCampaignPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_startAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReviewCampaign":
+				return ec.fieldContext_StartAccessReviewCampaignPayload_accessReviewCampaign(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StartAccessReviewCampaignPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_startAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_closeAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_closeAccessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CloseAccessReviewCampaign(ctx, fc.Args["input"].(types.CloseAccessReviewCampaignInput))
+		},
+		nil,
+		ec.marshalNCloseAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCloseAccessReviewCampaignPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_closeAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReviewCampaign":
+				return ec.fieldContext_CloseAccessReviewCampaignPayload_accessReviewCampaign(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CloseAccessReviewCampaignPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_closeAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_retryStartAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_retryStartAccessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RetryStartAccessReviewCampaign(ctx, fc.Args["input"].(types.RetryStartAccessReviewCampaignInput))
+		},
+		nil,
+		ec.marshalNRetryStartAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_retryStartAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReviewCampaign":
+				return ec.fieldContext_RetryStartAccessReviewCampaignPayload_accessReviewCampaign(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RetryStartAccessReviewCampaignPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_retryStartAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_validateAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_validateAccessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ValidateAccessReviewCampaign(ctx, fc.Args["input"].(types.ValidateAccessReviewCampaignInput))
+		},
+		nil,
+		ec.marshalNValidateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_validateAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReviewCampaign":
+				return ec.fieldContext_ValidateAccessReviewCampaignPayload_accessReviewCampaign(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ValidateAccessReviewCampaignPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_validateAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_cancelAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_cancelAccessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CancelAccessReviewCampaign(ctx, fc.Args["input"].(types.CancelAccessReviewCampaignInput))
+		},
+		nil,
+		ec.marshalNCancelAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelAccessReviewCampaignPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_cancelAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessReviewCampaign":
+				return ec.fieldContext_CancelAccessReviewCampaignPayload_accessReviewCampaign(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CancelAccessReviewCampaignPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_cancelAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_recordAccessEntryDecision(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_recordAccessEntryDecision,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RecordAccessEntryDecision(ctx, fc.Args["input"].(types.RecordAccessEntryDecisionInput))
+		},
+		nil,
+		ec.marshalNRecordAccessEntryDecisionPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRecordAccessEntryDecisionPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_recordAccessEntryDecision(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessEntry":
+				return ec.fieldContext_RecordAccessEntryDecisionPayload_accessEntry(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RecordAccessEntryDecisionPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_recordAccessEntryDecision_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_exportCampaignEvidence(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_exportCampaignEvidence,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ExportCampaignEvidence(ctx, fc.Args["input"].(types.ExportCampaignEvidenceInput))
+		},
+		nil,
+		ec.marshalNExportCampaignEvidencePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidencePayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exportCampaignEvidence(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "checksumSha256":
+				return ec.fieldContext_ExportCampaignEvidencePayload_checksumSha256(ctx, field)
+			case "payload":
+				return ec.fieldContext_ExportCampaignEvidencePayload_payload(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExportCampaignEvidencePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exportCampaignEvidence_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Nonconformity_id(ctx context.Context, field graphql.CollectedField, obj *types.Nonconformity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -44732,6 +50486,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -44780,6 +50536,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -45566,6 +51324,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -45614,6 +51374,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -46596,6 +52358,55 @@ func (ec *executionContext) fieldContext_Organization_slackConnections(ctx conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Organization_slackConnections_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_connectors(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_connectors,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Organization().Connectors(ctx, obj, fc.Args["filter"].(*types.ConnectorFilter))
+		},
+		nil,
+		ec.marshalNConnector2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_connectors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Connector_id(ctx, field)
+			case "provider":
+				return ec.fieldContext_Connector_provider(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Connector_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Connector", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_connectors_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -47742,6 +53553,7 @@ func (ec *executionContext) fieldContext_Organization_customDomain(_ context.Con
 }
 
 func (ec *executionContext) _Organization_webhookSubscriptions(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organization_accessReview(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -47759,6 +53571,18 @@ func (ec *executionContext) _Organization_webhookSubscriptions(ctx context.Conte
 }
 
 func (ec *executionContext) fieldContext_Organization_webhookSubscriptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+		ec.fieldContext_Organization_accessReview,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Organization().AccessReview(ctx, obj)
+		},
+		nil,
+		ec.marshalOAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_accessReview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Organization",
 		Field:      field,
@@ -47786,6 +53610,26 @@ func (ec *executionContext) fieldContext_Organization_webhookSubscriptions(ctx c
 	if fc.Args, err = ec.field_Organization_webhookSubscriptions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+			case "id":
+				return ec.fieldContext_AccessReview_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_AccessReview_organization(ctx, field)
+			case "identitySource":
+				return ec.fieldContext_AccessReview_identitySource(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReview_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReview_updatedAt(ctx, field)
+			case "accessSources":
+				return ec.fieldContext_AccessReview_accessSources(ctx, field)
+			case "campaigns":
+				return ec.fieldContext_AccessReview_campaigns(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReview_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReview", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -48196,6 +54040,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -48244,6 +54090,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -50162,6 +56010,83 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _RecordAccessEntryDecisionPayload_accessEntry(ctx context.Context, field graphql.CollectedField, obj *types.RecordAccessEntryDecisionPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RecordAccessEntryDecisionPayload_accessEntry,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessEntry, nil
+		},
+		nil,
+		ec.marshalNAccessEntry2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntry,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RecordAccessEntryDecisionPayload_accessEntry(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RecordAccessEntryDecisionPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessEntry_id(ctx, field)
+			case "campaign":
+				return ec.fieldContext_AccessEntry_campaign(ctx, field)
+			case "accessSource":
+				return ec.fieldContext_AccessEntry_accessSource(ctx, field)
+			case "email":
+				return ec.fieldContext_AccessEntry_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_AccessEntry_fullName(ctx, field)
+			case "role":
+				return ec.fieldContext_AccessEntry_role(ctx, field)
+			case "jobTitle":
+				return ec.fieldContext_AccessEntry_jobTitle(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_AccessEntry_isAdmin(ctx, field)
+			case "mfaStatus":
+				return ec.fieldContext_AccessEntry_mfaStatus(ctx, field)
+			case "authMethod":
+				return ec.fieldContext_AccessEntry_authMethod(ctx, field)
+			case "lastLogin":
+				return ec.fieldContext_AccessEntry_lastLogin(ctx, field)
+			case "accountCreatedAt":
+				return ec.fieldContext_AccessEntry_accountCreatedAt(ctx, field)
+			case "externalId":
+				return ec.fieldContext_AccessEntry_externalId(ctx, field)
+			case "incrementalTag":
+				return ec.fieldContext_AccessEntry_incrementalTag(ctx, field)
+			case "flag":
+				return ec.fieldContext_AccessEntry_flag(ctx, field)
+			case "flagReason":
+				return ec.fieldContext_AccessEntry_flagReason(ctx, field)
+			case "decision":
+				return ec.fieldContext_AccessEntry_decision(ctx, field)
+			case "decisionNote":
+				return ec.fieldContext_AccessEntry_decisionNote(ctx, field)
+			case "decidedBy":
+				return ec.fieldContext_AccessEntry_decidedBy(ctx, field)
+			case "decidedAt":
+				return ec.fieldContext_AccessEntry_decidedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessEntry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessEntry_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessEntry_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessEntry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Report_id(ctx context.Context, field graphql.CollectedField, obj *types.Report) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -50529,6 +56454,61 @@ func (ec *executionContext) fieldContext_RequestSignaturePayload_documentVersion
 	return fc, nil
 }
 
+func (ec *executionContext) _RetryStartAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.RetryStartAccessReviewCampaignPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RetryStartAccessReviewCampaignPayload_accessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReviewCampaign, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RetryStartAccessReviewCampaignPayload_accessReviewCampaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RetryStartAccessReviewCampaignPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
+			case "status":
+				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
+			case "frameworkControls":
+				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
+			case "scopeSources":
+				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
+			case "entries":
+				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _RightsRequest_id(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -50604,6 +56584,8 @@ func (ec *executionContext) fieldContext_RightsRequest_organization(_ context.Co
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -50652,6 +56634,8 @@ func (ec *executionContext) fieldContext_RightsRequest_organization(_ context.Co
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -51632,6 +57616,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -51680,6 +57666,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -53113,6 +59101,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -53161,6 +59151,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -53559,6 +59551,61 @@ func (ec *executionContext) fieldContext_SnapshotEdge_node(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _StartAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.StartAccessReviewCampaignPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StartAccessReviewCampaignPayload_accessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReviewCampaign, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StartAccessReviewCampaignPayload_accessReviewCampaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StartAccessReviewCampaignPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
+			case "status":
+				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
+			case "frameworkControls":
+				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
+			case "scopeSources":
+				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
+			case "entries":
+				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StateOfApplicability_id(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -53721,6 +59768,8 @@ func (ec *executionContext) fieldContext_StateOfApplicability_organization(_ con
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -53769,6 +59818,8 @@ func (ec *executionContext) fieldContext_StateOfApplicability_organization(_ con
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -54443,6 +60494,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -54491,6 +60544,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -55060,6 +61115,8 @@ func (ec *executionContext) fieldContext_TransferImpactAssessment_organization(_
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -55108,6 +61165,8 @@ func (ec *executionContext) fieldContext_TransferImpactAssessment_organization(_
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -55828,6 +61887,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -55876,6 +61937,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -57517,6 +63580,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -57565,6 +63630,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -58249,6 +64316,157 @@ func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_node(_ context
 				return ec.fieldContext_TrustCenterReference_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.UpdateAccessReviewCampaignPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateAccessReviewCampaignPayload_accessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReviewCampaign, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateAccessReviewCampaignPayload_accessReviewCampaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateAccessReviewCampaignPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
+			case "status":
+				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
+			case "frameworkControls":
+				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
+			case "scopeSources":
+				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
+			case "entries":
+				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateAccessReviewPayload_accessReview(ctx context.Context, field graphql.CollectedField, obj *types.UpdateAccessReviewPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateAccessReviewPayload_accessReview,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReview, nil
+		},
+		nil,
+		ec.marshalNAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateAccessReviewPayload_accessReview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateAccessReviewPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReview_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_AccessReview_organization(ctx, field)
+			case "identitySource":
+				return ec.fieldContext_AccessReview_identitySource(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReview_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReview_updatedAt(ctx, field)
+			case "accessSources":
+				return ec.fieldContext_AccessReview_accessSources(ctx, field)
+			case "campaigns":
+				return ec.fieldContext_AccessReview_campaigns(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReview_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReview", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateAccessSourcePayload_accessSource(ctx context.Context, field graphql.CollectedField, obj *types.UpdateAccessSourcePayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateAccessSourcePayload_accessSource,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessSource, nil
+		},
+		nil,
+		ec.marshalNAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateAccessSourcePayload_accessSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateAccessSourcePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessSource_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessSource_accessReview(ctx, field)
+			case "connectorId":
+				return ec.fieldContext_AccessSource_connectorId(ctx, field)
+			case "connector":
+				return ec.fieldContext_AccessSource_connector(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessSource_name(ctx, field)
+			case "csvData":
+				return ec.fieldContext_AccessSource_csvData(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessSource_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessSource_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessSource_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessSource", field.Name)
 		},
 	}
 	return fc, nil
@@ -60538,6 +66756,61 @@ func (ec *executionContext) fieldContext_UploadVendorDataPrivacyAgreementPayload
 	return fc, nil
 }
 
+func (ec *executionContext) _ValidateAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.ValidateAccessReviewCampaignPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ValidateAccessReviewCampaignPayload_accessReviewCampaign,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessReviewCampaign, nil
+		},
+		nil,
+		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ValidateAccessReviewCampaignPayload_accessReviewCampaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ValidateAccessReviewCampaignPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
+			case "name":
+				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
+			case "status":
+				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
+			case "frameworkControls":
+				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
+			case "scopeSources":
+				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
+			case "entries":
+				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
+			case "permission":
+				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Vendor_id(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -60729,6 +67002,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -60777,6 +67052,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -67058,6 +73335,108 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAccessEntryOrder(ctx context.Context, obj any) (types.AccessEntryOrder, error) {
+	var it types.AccessEntryOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNAccessEntryOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAccessReviewCampaignOrder(ctx context.Context, obj any) (types.AccessReviewCampaignOrder, error) {
+	var it types.AccessReviewCampaignOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNAccessReviewCampaignOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAccessSourceOrder(ctx context.Context, obj any) (types.AccessSourceOrder, error) {
+	var it types.AccessSourceOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNAccessSourceOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessSourceOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputApplicabilityStatementInput(ctx context.Context, obj any) (types.ApplicabilityStatementInput, error) {
 	var it types.ApplicabilityStatementInput
 	asMap := map[string]any{}
@@ -67395,6 +73774,33 @@ func (ec *executionContext) unmarshalInputBulkRequestSignaturesInput(ctx context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCancelAccessReviewCampaignInput(ctx context.Context, obj any) (types.CancelAccessReviewCampaignInput, error) {
+	var it types.CancelAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCancelSignatureRequestInput(ctx context.Context, obj any) (types.CancelSignatureRequestInput, error) {
 	var it types.CancelSignatureRequestInput
 	asMap := map[string]any{}
@@ -67484,6 +73890,60 @@ func (ec *executionContext) unmarshalInputComplianceFrameworkOrder(ctx context.C
 			it.Field = data
 		}
 	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCloseAccessReviewCampaignInput(ctx context.Context, obj any) (types.CloseAccessReviewCampaignInput, error) {
+	var it types.CloseAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputConnectorFilter(ctx context.Context, obj any) (types.ConnectorFilter, error) {
+	var it types.ConnectorFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"providers"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "providers":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providers"))
+			data, err := ec.unmarshalOConnectorProvider2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProviderᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Providers = data
+		}
+	}
+
 	return it, nil
 }
 
@@ -67602,6 +74062,122 @@ func (ec *executionContext) unmarshalInputControlOrder(ctx context.Context, obj 
 			it.Field = data
 		}
 	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateAccessReviewCampaignInput(ctx context.Context, obj any) (types.CreateAccessReviewCampaignInput, error) {
+	var it types.CreateAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewId", "name", "frameworkControls"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "frameworkControls":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frameworkControls"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrameworkControls = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateAccessReviewInput(ctx context.Context, obj any) (types.CreateAccessReviewInput, error) {
+	var it types.CreateAccessReviewInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateAccessSourceInput(ctx context.Context, obj any) (types.CreateAccessSourceInput, error) {
+	var it types.CreateAccessSourceInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewId", "connectorId", "name", "csvData"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewID = data
+		case "connectorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("connectorId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConnectorID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "csvData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("csvData"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CSVData = data
+		}
+	}
+
 	return it, nil
 }
 
@@ -70049,6 +76625,60 @@ func (ec *executionContext) unmarshalInputDatumOrder(ctx context.Context, obj an
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteAccessReviewCampaignInput(ctx context.Context, obj any) (types.DeleteAccessReviewCampaignInput, error) {
+	var it types.DeleteAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteAccessSourceInput(ctx context.Context, obj any) (types.DeleteAccessSourceInput, error) {
+	var it types.DeleteAccessSourceInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessSourceId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessSourceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessSourceId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessSourceID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteApplicabilityStatementInput(ctx context.Context, obj any) (types.DeleteApplicabilityStatementInput, error) {
 	var it types.DeleteApplicabilityStatementInput
 	asMap := map[string]any{}
@@ -71544,6 +78174,33 @@ func (ec *executionContext) unmarshalInputEvidenceOrder(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputExportCampaignEvidenceInput(ctx context.Context, obj any) (types.ExportCampaignEvidenceInput, error) {
+	var it types.ExportCampaignEvidenceInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputExportDataProtectionImpactAssessmentsPDFInput(ctx context.Context, obj any) (types.ExportDataProtectionImpactAssessmentsPDFInput, error) {
 	var it types.ExportDataProtectionImpactAssessmentsPDFInput
 	asMap := map[string]any{}
@@ -72287,6 +78944,47 @@ func (ec *executionContext) unmarshalInputPublishDocumentVersionInput(ctx contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRecordAccessEntryDecisionInput(ctx context.Context, obj any) (types.RecordAccessEntryDecisionInput, error) {
+	var it types.RecordAccessEntryDecisionInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessEntryId", "decision", "decisionNote"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessEntryId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessEntryId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessEntryID = data
+		case "decision":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decision"))
+			data, err := ec.unmarshalNAccessEntryDecision2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryDecision(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Decision = data
+		case "decisionNote":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decisionNote"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DecisionNote = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRequestSignatureInput(ctx context.Context, obj any) (types.RequestSignatureInput, error) {
 	var it types.RequestSignatureInput
 	asMap := map[string]any{}
@@ -72317,6 +79015,33 @@ func (ec *executionContext) unmarshalInputRequestSignatureInput(ctx context.Cont
 			it.SignatoryID = data
 		}
 	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRetryStartAccessReviewCampaignInput(ctx context.Context, obj any) (types.RetryStartAccessReviewCampaignInput, error) {
+	var it types.RetryStartAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
+		}
+	}
+
 	return it, nil
 }
 
@@ -72527,6 +79252,40 @@ func (ec *executionContext) unmarshalInputSnapshotOrder(ctx context.Context, obj
 			it.Field = data
 		}
 	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputStartAccessReviewCampaignInput(ctx context.Context, obj any) (types.StartAccessReviewCampaignInput, error) {
+	var it types.StartAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId", "accessSourceIds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
+		case "accessSourceIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessSourceIds"))
+			data, err := ec.unmarshalOID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessSourceIds = data
+		}
+	}
+
 	return it, nil
 }
 
@@ -72843,6 +79602,129 @@ func (ec *executionContext) unmarshalInputTrustCenterReferenceOrder(ctx context.
 			it.Field = data
 		}
 	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateAccessReviewCampaignInput(ctx context.Context, obj any) (types.UpdateAccessReviewCampaignInput, error) {
+	var it types.UpdateAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId", "name", "frameworkControls"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = graphql.OmittableOf(data)
+		case "frameworkControls":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frameworkControls"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrameworkControls = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateAccessReviewInput(ctx context.Context, obj any) (types.UpdateAccessReviewInput, error) {
+	var it types.UpdateAccessReviewInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewId", "identitySourceId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewID = data
+		case "identitySourceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("identitySourceId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IdentitySourceID = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateAccessSourceInput(ctx context.Context, obj any) (types.UpdateAccessSourceInput, error) {
+	var it types.UpdateAccessSourceInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessSourceId", "name", "connectorId", "csvData"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessSourceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessSourceId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessSourceID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = graphql.OmittableOf(data)
+		case "connectorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("connectorId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConnectorID = graphql.OmittableOf(data)
+		case "csvData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("csvData"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CSVData = graphql.OmittableOf(data)
+		}
+	}
+
 	return it, nil
 }
 
@@ -75303,6 +82185,40 @@ func (ec *executionContext) unmarshalInputUploadVendorDataPrivacyAgreementInput(
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputValidateAccessReviewCampaignInput(ctx context.Context, obj any) (types.ValidateAccessReviewCampaignInput, error) {
+	var it types.ValidateAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId", "note"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputVendorComplianceReportOrder(ctx context.Context, obj any) (types.VendorComplianceReportOrderBy, error) {
 	var it types.VendorComplianceReportOrderBy
 	asMap := map[string]any{}
@@ -75890,6 +82806,34 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._ApplicabilityStatement(ctx, sel, obj)
+	case types.AccessSource:
+		return ec._AccessSource(ctx, sel, &obj)
+	case *types.AccessSource:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AccessSource(ctx, sel, obj)
+	case types.AccessReviewCampaign:
+		return ec._AccessReviewCampaign(ctx, sel, &obj)
+	case *types.AccessReviewCampaign:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AccessReviewCampaign(ctx, sel, obj)
+	case types.AccessReview:
+		return ec._AccessReview(ctx, sel, &obj)
+	case *types.AccessReview:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AccessReview(ctx, sel, obj)
+	case types.AccessEntry:
+		return ec._AccessEntry(ctx, sel, &obj)
+	case *types.AccessEntry:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AccessEntry(ctx, sel, obj)
 	default:
 		if typedObj, ok := obj.(graphql.Marshaler); ok {
 			return typedObj
@@ -75902,6 +82846,1301 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var accessEntryImplementors = []string{"AccessEntry", "Node"}
+
+func (ec *executionContext) _AccessEntry(ctx context.Context, sel ast.SelectionSet, obj *types.AccessEntry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessEntryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessEntry")
+		case "id":
+			out.Values[i] = ec._AccessEntry_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "campaign":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessEntry_campaign(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "accessSource":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessEntry_accessSource(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "email":
+			out.Values[i] = ec._AccessEntry_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fullName":
+			out.Values[i] = ec._AccessEntry_fullName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "role":
+			out.Values[i] = ec._AccessEntry_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "jobTitle":
+			out.Values[i] = ec._AccessEntry_jobTitle(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "isAdmin":
+			out.Values[i] = ec._AccessEntry_isAdmin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "mfaStatus":
+			out.Values[i] = ec._AccessEntry_mfaStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "authMethod":
+			out.Values[i] = ec._AccessEntry_authMethod(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastLogin":
+			out.Values[i] = ec._AccessEntry_lastLogin(ctx, field, obj)
+		case "accountCreatedAt":
+			out.Values[i] = ec._AccessEntry_accountCreatedAt(ctx, field, obj)
+		case "externalId":
+			out.Values[i] = ec._AccessEntry_externalId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "incrementalTag":
+			out.Values[i] = ec._AccessEntry_incrementalTag(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "flag":
+			out.Values[i] = ec._AccessEntry_flag(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "flagReason":
+			out.Values[i] = ec._AccessEntry_flagReason(ctx, field, obj)
+		case "decision":
+			out.Values[i] = ec._AccessEntry_decision(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "decisionNote":
+			out.Values[i] = ec._AccessEntry_decisionNote(ctx, field, obj)
+		case "decidedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessEntry_decidedBy(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "decidedAt":
+			out.Values[i] = ec._AccessEntry_decidedAt(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._AccessEntry_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._AccessEntry_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessEntry_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessEntryConnectionImplementors = []string{"AccessEntryConnection"}
+
+func (ec *executionContext) _AccessEntryConnection(ctx context.Context, sel ast.SelectionSet, obj *types.AccessEntryConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessEntryConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessEntryConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessEntryConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._AccessEntryConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._AccessEntryConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessEntryEdgeImplementors = []string{"AccessEntryEdge"}
+
+func (ec *executionContext) _AccessEntryEdge(ctx context.Context, sel ast.SelectionSet, obj *types.AccessEntryEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessEntryEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessEntryEdge")
+		case "cursor":
+			out.Values[i] = ec._AccessEntryEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._AccessEntryEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessReviewImplementors = []string{"AccessReview", "Node"}
+
+func (ec *executionContext) _AccessReview(ctx context.Context, sel ast.SelectionSet, obj *types.AccessReview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessReviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessReview")
+		case "id":
+			out.Values[i] = ec._AccessReview_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReview_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "identitySource":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReview_identitySource(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._AccessReview_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._AccessReview_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "accessSources":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReview_accessSources(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "campaigns":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReview_campaigns(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReview_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessReviewCampaignImplementors = []string{"AccessReviewCampaign", "Node"}
+
+func (ec *executionContext) _AccessReviewCampaign(ctx context.Context, sel ast.SelectionSet, obj *types.AccessReviewCampaign) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessReviewCampaignImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessReviewCampaign")
+		case "id":
+			out.Values[i] = ec._AccessReviewCampaign_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "accessReview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReviewCampaign_accessReview(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "name":
+			out.Values[i] = ec._AccessReviewCampaign_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._AccessReviewCampaign_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "startedAt":
+			out.Values[i] = ec._AccessReviewCampaign_startedAt(ctx, field, obj)
+		case "completedAt":
+			out.Values[i] = ec._AccessReviewCampaign_completedAt(ctx, field, obj)
+		case "frameworkControls":
+			out.Values[i] = ec._AccessReviewCampaign_frameworkControls(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._AccessReviewCampaign_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._AccessReviewCampaign_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "scopeSources":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReviewCampaign_scopeSources(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "entries":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReviewCampaign_entries(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReviewCampaign_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessReviewCampaignConnectionImplementors = []string{"AccessReviewCampaignConnection"}
+
+func (ec *executionContext) _AccessReviewCampaignConnection(ctx context.Context, sel ast.SelectionSet, obj *types.AccessReviewCampaignConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessReviewCampaignConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessReviewCampaignConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessReviewCampaignConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._AccessReviewCampaignConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._AccessReviewCampaignConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessReviewCampaignEdgeImplementors = []string{"AccessReviewCampaignEdge"}
+
+func (ec *executionContext) _AccessReviewCampaignEdge(ctx context.Context, sel ast.SelectionSet, obj *types.AccessReviewCampaignEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessReviewCampaignEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessReviewCampaignEdge")
+		case "cursor":
+			out.Values[i] = ec._AccessReviewCampaignEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._AccessReviewCampaignEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessReviewCampaignScopeSourceImplementors = []string{"AccessReviewCampaignScopeSource"}
+
+func (ec *executionContext) _AccessReviewCampaignScopeSource(ctx context.Context, sel ast.SelectionSet, obj *types.AccessReviewCampaignScopeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessReviewCampaignScopeSourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessReviewCampaignScopeSource")
+		case "id":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fetchStatus":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_fetchStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fetchedAccountsCount":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_fetchedAccountsCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "attemptCount":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_attemptCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastError":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_lastError(ctx, field, obj)
+		case "fetchStartedAt":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_fetchStartedAt(ctx, field, obj)
+		case "fetchCompletedAt":
+			out.Values[i] = ec._AccessReviewCampaignScopeSource_fetchCompletedAt(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessSourceImplementors = []string{"AccessSource", "Node"}
+
+func (ec *executionContext) _AccessSource(ctx context.Context, sel ast.SelectionSet, obj *types.AccessSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessSourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessSource")
+		case "id":
+			out.Values[i] = ec._AccessSource_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "accessReview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessSource_accessReview(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "connectorId":
+			out.Values[i] = ec._AccessSource_connectorId(ctx, field, obj)
+		case "connector":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessSource_connector(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "name":
+			out.Values[i] = ec._AccessSource_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "csvData":
+			out.Values[i] = ec._AccessSource_csvData(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._AccessSource_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._AccessSource_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessSource_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessSourceConnectionImplementors = []string{"AccessSourceConnection"}
+
+func (ec *executionContext) _AccessSourceConnection(ctx context.Context, sel ast.SelectionSet, obj *types.AccessSourceConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessSourceConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessSourceConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessSourceConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._AccessSourceConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._AccessSourceConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var accessSourceEdgeImplementors = []string{"AccessSourceEdge"}
+
+func (ec *executionContext) _AccessSourceEdge(ctx context.Context, sel ast.SelectionSet, obj *types.AccessSourceEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessSourceEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessSourceEdge")
+		case "cursor":
+			out.Values[i] = ec._AccessSourceEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._AccessSourceEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var applicabilityStatementImplementors = []string{"ApplicabilityStatement", "Node"}
 
@@ -77132,6 +85371,45 @@ func (ec *executionContext) _BulkRequestSignaturesPayload(ctx context.Context, s
 	return out
 }
 
+var cancelAccessReviewCampaignPayloadImplementors = []string{"CancelAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _CancelAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CancelAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cancelAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CancelAccessReviewCampaignPayload")
+		case "accessReviewCampaign":
+			out.Values[i] = ec._CancelAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var cancelSignatureRequestPayloadImplementors = []string{"CancelSignatureRequestPayload"}
 
 func (ec *executionContext) _CancelSignatureRequestPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CancelSignatureRequestPayload) graphql.Marshaler {
@@ -77532,6 +85810,94 @@ func (ec *executionContext) _ComplianceFrameworkEdge(ctx context.Context, sel as
 
 	for label, dfs := range deferred {
 		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var closeAccessReviewCampaignPayloadImplementors = []string{"CloseAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _CloseAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CloseAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, closeAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CloseAccessReviewCampaignPayload")
+		case "accessReviewCampaign":
+			out.Values[i] = ec._CloseAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var connectorImplementors = []string{"Connector"}
+
+func (ec *executionContext) _Connector(ctx context.Context, sel ast.SelectionSet, obj *types.Connector) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, connectorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Connector")
+		case "id":
+			out.Values[i] = ec._Connector_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "provider":
+			out.Values[i] = ec._Connector_provider(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Connector_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -78421,6 +86787,123 @@ func (ec *executionContext) _ControlEdge(ctx context.Context, sel ast.SelectionS
 
 	for label, dfs := range deferred {
 		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createAccessReviewCampaignPayloadImplementors = []string{"CreateAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _CreateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateAccessReviewCampaignPayload")
+		case "accessReviewCampaignEdge":
+			out.Values[i] = ec._CreateAccessReviewCampaignPayload_accessReviewCampaignEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createAccessReviewPayloadImplementors = []string{"CreateAccessReviewPayload"}
+
+func (ec *executionContext) _CreateAccessReviewPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateAccessReviewPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createAccessReviewPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateAccessReviewPayload")
+		case "accessReview":
+			out.Values[i] = ec._CreateAccessReviewPayload_accessReview(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createAccessSourcePayloadImplementors = []string{"CreateAccessSourcePayload"}
+
+func (ec *executionContext) _CreateAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateAccessSourcePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createAccessSourcePayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateAccessSourcePayload")
+		case "accessSourceEdge":
+			out.Values[i] = ec._CreateAccessSourcePayload_accessSourceEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -80851,6 +89334,84 @@ func (ec *executionContext) _DatumEdge(ctx context.Context, sel ast.SelectionSet
 
 	for label, dfs := range deferred {
 		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteAccessReviewCampaignPayloadImplementors = []string{"DeleteAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _DeleteAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteAccessReviewCampaignPayload")
+		case "deletedAccessReviewCampaignId":
+			out.Values[i] = ec._DeleteAccessReviewCampaignPayload_deletedAccessReviewCampaignId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteAccessSourcePayloadImplementors = []string{"DeleteAccessSourcePayload"}
+
+func (ec *executionContext) _DeleteAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteAccessSourcePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteAccessSourcePayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteAccessSourcePayload")
+		case "deletedAccessSourceId":
+			out.Values[i] = ec._DeleteAccessSourcePayload_deletedAccessSourceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -84330,6 +92891,50 @@ func (ec *executionContext) _EvidenceEdge(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var exportCampaignEvidencePayloadImplementors = []string{"ExportCampaignEvidencePayload"}
+
+func (ec *executionContext) _ExportCampaignEvidencePayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportCampaignEvidencePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exportCampaignEvidencePayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExportCampaignEvidencePayload")
+		case "checksumSha256":
+			out.Values[i] = ec._ExportCampaignEvidencePayload_checksumSha256(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "payload":
+			out.Values[i] = ec._ExportCampaignEvidencePayload_payload(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var exportDataProtectionImpactAssessmentsPDFPayloadImplementors = []string{"ExportDataProtectionImpactAssessmentsPDFPayload"}
 
 func (ec *executionContext) _ExportDataProtectionImpactAssessmentsPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportDataProtectionImpactAssessmentsPDFPayload) graphql.Marshaler {
@@ -87448,6 +96053,111 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createAccessReview":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createAccessReview(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateAccessReview":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateAccessReview(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createAccessSource":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createAccessSource(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateAccessSource":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateAccessSource(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteAccessSource":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteAccessSource(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createAccessReviewCampaign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createAccessReviewCampaign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateAccessReviewCampaign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateAccessReviewCampaign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteAccessReviewCampaign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteAccessReviewCampaign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startAccessReviewCampaign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_startAccessReviewCampaign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "closeAccessReviewCampaign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_closeAccessReviewCampaign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "retryStartAccessReviewCampaign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_retryStartAccessReviewCampaign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "validateAccessReviewCampaign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_validateAccessReviewCampaign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cancelAccessReviewCampaign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_cancelAccessReviewCampaign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recordAccessEntryDecision":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_recordAccessEntryDecision(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "exportCampaignEvidence":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exportCampaignEvidence(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -88321,6 +97031,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "connectors":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_connectors(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "frameworks":
 			field := field
 
@@ -89147,6 +97893,10 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+		case "accessReview":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -89156,6 +97906,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				res = ec._Organization_accessReview(ctx, field, obj)
 				return res
 			}
 
@@ -90153,6 +98904,45 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var recordAccessEntryDecisionPayloadImplementors = []string{"RecordAccessEntryDecisionPayload"}
+
+func (ec *executionContext) _RecordAccessEntryDecisionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RecordAccessEntryDecisionPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, recordAccessEntryDecisionPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RecordAccessEntryDecisionPayload")
+		case "accessEntry":
+			out.Values[i] = ec._RecordAccessEntryDecisionPayload_accessEntry(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var reportImplementors = []string{"Report", "Node"}
 
 func (ec *executionContext) _Report(ctx context.Context, sel ast.SelectionSet, obj *types.Report) graphql.Marshaler {
@@ -90353,6 +99143,45 @@ func (ec *executionContext) _RequestSignaturePayload(ctx context.Context, sel as
 
 	for label, dfs := range deferred {
 		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var retryStartAccessReviewCampaignPayloadImplementors = []string{"RetryStartAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _RetryStartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RetryStartAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, retryStartAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RetryStartAccessReviewCampaignPayload")
+		case "accessReviewCampaign":
+			out.Values[i] = ec._RetryStartAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -91866,6 +100695,45 @@ func (ec *executionContext) _SnapshotEdge(ctx context.Context, sel ast.Selection
 
 	for label, dfs := range deferred {
 		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var startAccessReviewCampaignPayloadImplementors = []string{"StartAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _StartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.StartAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, startAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StartAccessReviewCampaignPayload")
+		case "accessReviewCampaign":
+			out.Values[i] = ec._StartAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -94530,6 +103398,123 @@ func (ec *executionContext) _TrustCenterReferenceEdge(ctx context.Context, sel a
 	return out
 }
 
+var updateAccessReviewCampaignPayloadImplementors = []string{"UpdateAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _UpdateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateAccessReviewCampaignPayload")
+		case "accessReviewCampaign":
+			out.Values[i] = ec._UpdateAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateAccessReviewPayloadImplementors = []string{"UpdateAccessReviewPayload"}
+
+func (ec *executionContext) _UpdateAccessReviewPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateAccessReviewPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateAccessReviewPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateAccessReviewPayload")
+		case "accessReview":
+			out.Values[i] = ec._UpdateAccessReviewPayload_accessReview(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateAccessSourcePayloadImplementors = []string{"UpdateAccessSourcePayload"}
+
+func (ec *executionContext) _UpdateAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateAccessSourcePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateAccessSourcePayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateAccessSourcePayload")
+		case "accessSource":
+			out.Values[i] = ec._UpdateAccessSourcePayload_accessSource(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updateApplicabilityStatementPayloadImplementors = []string{"UpdateApplicabilityStatementPayload"}
 
 func (ec *executionContext) _UpdateApplicabilityStatementPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateApplicabilityStatementPayload) graphql.Marshaler {
@@ -96158,6 +105143,45 @@ func (ec *executionContext) _UploadVendorDataPrivacyAgreementPayload(ctx context
 
 	for label, dfs := range deferred {
 		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var validateAccessReviewCampaignPayloadImplementors = []string{"ValidateAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _ValidateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ValidateAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, validateAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ValidateAccessReviewCampaignPayload")
+		case "accessReviewCampaign":
+			out.Values[i] = ec._ValidateAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -98944,6 +107968,571 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAccessEntry2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntry(ctx context.Context, sel ast.SelectionSet, v *types.AccessEntry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessEntry(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccessEntryAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryAuthMethod(ctx context.Context, v any) (coredata.AccessEntryAuthMethod, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNAccessEntryAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryAuthMethod[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessEntryAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryAuthMethod(ctx context.Context, sel ast.SelectionSet, v coredata.AccessEntryAuthMethod) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNAccessEntryAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryAuthMethod[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNAccessEntryAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryAuthMethod = map[string]coredata.AccessEntryAuthMethod{
+		"SSO":             coredata.AccessEntryAuthMethodSSO,
+		"PASSWORD":        coredata.AccessEntryAuthMethodPassword,
+		"API_KEY":         coredata.AccessEntryAuthMethodAPIKey,
+		"SERVICE_ACCOUNT": coredata.AccessEntryAuthMethodServiceAccount,
+		"UNKNOWN":         coredata.AccessEntryAuthMethodUnknown,
+	}
+	marshalNAccessEntryAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryAuthMethod = map[coredata.AccessEntryAuthMethod]string{
+		coredata.AccessEntryAuthMethodSSO:            "SSO",
+		coredata.AccessEntryAuthMethodPassword:       "PASSWORD",
+		coredata.AccessEntryAuthMethodAPIKey:         "API_KEY",
+		coredata.AccessEntryAuthMethodServiceAccount: "SERVICE_ACCOUNT",
+		coredata.AccessEntryAuthMethodUnknown:        "UNKNOWN",
+	}
+)
+
+func (ec *executionContext) marshalNAccessEntryConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryConnection(ctx context.Context, sel ast.SelectionSet, v types.AccessEntryConnection) graphql.Marshaler {
+	return ec._AccessEntryConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccessEntryConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryConnection(ctx context.Context, sel ast.SelectionSet, v *types.AccessEntryConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessEntryConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccessEntryDecision2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryDecision(ctx context.Context, v any) (coredata.AccessEntryDecision, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNAccessEntryDecision2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryDecision[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessEntryDecision2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryDecision(ctx context.Context, sel ast.SelectionSet, v coredata.AccessEntryDecision) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNAccessEntryDecision2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryDecision[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNAccessEntryDecision2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryDecision = map[string]coredata.AccessEntryDecision{
+		"PENDING":  coredata.AccessEntryDecisionPending,
+		"APPROVED": coredata.AccessEntryDecisionApproved,
+		"REVOKE":   coredata.AccessEntryDecisionRevoke,
+		"DEFER":    coredata.AccessEntryDecisionDefer,
+		"ESCALATE": coredata.AccessEntryDecisionEscalate,
+		"MODIFY":   coredata.AccessEntryDecisionModify,
+	}
+	marshalNAccessEntryDecision2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryDecision = map[coredata.AccessEntryDecision]string{
+		coredata.AccessEntryDecisionPending:  "PENDING",
+		coredata.AccessEntryDecisionApproved: "APPROVED",
+		coredata.AccessEntryDecisionRevoke:   "REVOKE",
+		coredata.AccessEntryDecisionDefer:    "DEFER",
+		coredata.AccessEntryDecisionEscalate: "ESCALATE",
+		coredata.AccessEntryDecisionModify:   "MODIFY",
+	}
+)
+
+func (ec *executionContext) marshalNAccessEntryEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AccessEntryEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAccessEntryEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAccessEntryEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryEdge(ctx context.Context, sel ast.SelectionSet, v *types.AccessEntryEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessEntryEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccessEntryFlag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryFlag(ctx context.Context, v any) (coredata.AccessEntryFlag, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNAccessEntryFlag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryFlag[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessEntryFlag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryFlag(ctx context.Context, sel ast.SelectionSet, v coredata.AccessEntryFlag) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNAccessEntryFlag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryFlag[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNAccessEntryFlag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryFlag = map[string]coredata.AccessEntryFlag{
+		"NONE":          coredata.AccessEntryFlagNone,
+		"ORPHANED":      coredata.AccessEntryFlagOrphaned,
+		"INACTIVE":      coredata.AccessEntryFlagInactive,
+		"EXCESSIVE":     coredata.AccessEntryFlagExcessive,
+		"ROLE_MISMATCH": coredata.AccessEntryFlagRoleMismatch,
+		"NEW":           coredata.AccessEntryFlagNew,
+	}
+	marshalNAccessEntryFlag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryFlag = map[coredata.AccessEntryFlag]string{
+		coredata.AccessEntryFlagNone:         "NONE",
+		coredata.AccessEntryFlagOrphaned:     "ORPHANED",
+		coredata.AccessEntryFlagInactive:     "INACTIVE",
+		coredata.AccessEntryFlagExcessive:    "EXCESSIVE",
+		coredata.AccessEntryFlagRoleMismatch: "ROLE_MISMATCH",
+		coredata.AccessEntryFlagNew:          "NEW",
+	}
+)
+
+func (ec *executionContext) unmarshalNAccessEntryIncrementalTag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryIncrementalTag(ctx context.Context, v any) (coredata.AccessEntryIncrementalTag, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNAccessEntryIncrementalTag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryIncrementalTag[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessEntryIncrementalTag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryIncrementalTag(ctx context.Context, sel ast.SelectionSet, v coredata.AccessEntryIncrementalTag) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNAccessEntryIncrementalTag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryIncrementalTag[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNAccessEntryIncrementalTag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryIncrementalTag = map[string]coredata.AccessEntryIncrementalTag{
+		"NEW":       coredata.AccessEntryIncrementalTagNew,
+		"REMOVED":   coredata.AccessEntryIncrementalTagRemoved,
+		"UNCHANGED": coredata.AccessEntryIncrementalTagUnchanged,
+	}
+	marshalNAccessEntryIncrementalTag2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryIncrementalTag = map[coredata.AccessEntryIncrementalTag]string{
+		coredata.AccessEntryIncrementalTagNew:       "NEW",
+		coredata.AccessEntryIncrementalTagRemoved:   "REMOVED",
+		coredata.AccessEntryIncrementalTagUnchanged: "UNCHANGED",
+	}
+)
+
+func (ec *executionContext) unmarshalNAccessEntryOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryOrderField(ctx context.Context, v any) (coredata.AccessEntryOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := coredata.AccessEntryOrderField(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessEntryOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessEntryOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.AccessEntryOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNAccessReview2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview(ctx context.Context, sel ast.SelectionSet, v types.AccessReview) graphql.Marshaler {
+	return ec._AccessReview(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview(ctx context.Context, sel ast.SelectionSet, v *types.AccessReview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessReview(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaign2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign(ctx context.Context, sel ast.SelectionSet, v types.AccessReviewCampaign) graphql.Marshaler {
+	return ec._AccessReviewCampaign(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign(ctx context.Context, sel ast.SelectionSet, v *types.AccessReviewCampaign) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessReviewCampaign(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignConnection(ctx context.Context, sel ast.SelectionSet, v types.AccessReviewCampaignConnection) graphql.Marshaler {
+	return ec._AccessReviewCampaignConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignConnection(ctx context.Context, sel ast.SelectionSet, v *types.AccessReviewCampaignConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessReviewCampaignConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AccessReviewCampaignEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAccessReviewCampaignEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignEdge(ctx context.Context, sel ast.SelectionSet, v *types.AccessReviewCampaignEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessReviewCampaignEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccessReviewCampaignOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignOrderField(ctx context.Context, v any) (coredata.AccessReviewCampaignOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := coredata.AccessReviewCampaignOrderField(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.AccessReviewCampaignOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignScopeSource2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignScopeSourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AccessReviewCampaignScopeSource) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAccessReviewCampaignScopeSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignScopeSource(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignScopeSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignScopeSource(ctx context.Context, sel ast.SelectionSet, v *types.AccessReviewCampaignScopeSource) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessReviewCampaignScopeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccessReviewCampaignSourceFetchStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignSourceFetchStatus(ctx context.Context, v any) (coredata.AccessReviewCampaignSourceFetchStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNAccessReviewCampaignSourceFetchStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignSourceFetchStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignSourceFetchStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignSourceFetchStatus(ctx context.Context, sel ast.SelectionSet, v coredata.AccessReviewCampaignSourceFetchStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNAccessReviewCampaignSourceFetchStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignSourceFetchStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNAccessReviewCampaignSourceFetchStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignSourceFetchStatus = map[string]coredata.AccessReviewCampaignSourceFetchStatus{
+		"QUEUED":   coredata.AccessReviewCampaignSourceFetchStatusQueued,
+		"FETCHING": coredata.AccessReviewCampaignSourceFetchStatusFetching,
+		"SUCCESS":  coredata.AccessReviewCampaignSourceFetchStatusSuccess,
+		"FAILED":   coredata.AccessReviewCampaignSourceFetchStatusFailed,
+	}
+	marshalNAccessReviewCampaignSourceFetchStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignSourceFetchStatus = map[coredata.AccessReviewCampaignSourceFetchStatus]string{
+		coredata.AccessReviewCampaignSourceFetchStatusQueued:   "QUEUED",
+		coredata.AccessReviewCampaignSourceFetchStatusFetching: "FETCHING",
+		coredata.AccessReviewCampaignSourceFetchStatusSuccess:  "SUCCESS",
+		coredata.AccessReviewCampaignSourceFetchStatusFailed:   "FAILED",
+	}
+)
+
+func (ec *executionContext) unmarshalNAccessReviewCampaignStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignStatus(ctx context.Context, v any) (coredata.AccessReviewCampaignStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNAccessReviewCampaignStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessReviewCampaignStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignStatus(ctx context.Context, sel ast.SelectionSet, v coredata.AccessReviewCampaignStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNAccessReviewCampaignStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNAccessReviewCampaignStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignStatus = map[string]coredata.AccessReviewCampaignStatus{
+		"DRAFT":           coredata.AccessReviewCampaignStatusDraft,
+		"IN_PROGRESS":     coredata.AccessReviewCampaignStatusInProgress,
+		"PENDING_ACTIONS": coredata.AccessReviewCampaignStatusPendingActions,
+		"FAILED":          coredata.AccessReviewCampaignStatusFailed,
+		"COMPLETED":       coredata.AccessReviewCampaignStatusCompleted,
+		"CANCELLED":       coredata.AccessReviewCampaignStatusCancelled,
+	}
+	marshalNAccessReviewCampaignStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessReviewCampaignStatus = map[coredata.AccessReviewCampaignStatus]string{
+		coredata.AccessReviewCampaignStatusDraft:          "DRAFT",
+		coredata.AccessReviewCampaignStatusInProgress:     "IN_PROGRESS",
+		coredata.AccessReviewCampaignStatusPendingActions: "PENDING_ACTIONS",
+		coredata.AccessReviewCampaignStatusFailed:         "FAILED",
+		coredata.AccessReviewCampaignStatusCompleted:      "COMPLETED",
+		coredata.AccessReviewCampaignStatusCancelled:      "CANCELLED",
+	}
+)
+
+func (ec *executionContext) marshalNAccessSource2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource(ctx context.Context, sel ast.SelectionSet, v types.AccessSource) graphql.Marshaler {
+	return ec._AccessSource(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource(ctx context.Context, sel ast.SelectionSet, v *types.AccessSource) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessSource(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccessSourceConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceConnection(ctx context.Context, sel ast.SelectionSet, v types.AccessSourceConnection) graphql.Marshaler {
+	return ec._AccessSourceConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccessSourceConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceConnection(ctx context.Context, sel ast.SelectionSet, v *types.AccessSourceConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessSourceConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccessSourceEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AccessSourceEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAccessSourceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAccessSourceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceEdge(ctx context.Context, sel ast.SelectionSet, v *types.AccessSourceEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccessSourceEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccessSourceOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessSourceOrderField(ctx context.Context, v any) (coredata.AccessSourceOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := coredata.AccessSourceOrderField(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccessSourceOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAccessSourceOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.AccessSourceOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNApplicabilityStatement2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐApplicabilityStatement(ctx context.Context, sel ast.SelectionSet, v *types.ApplicabilityStatement) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -99403,6 +108992,25 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNCancelAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelAccessReviewCampaignInput(ctx context.Context, v any) (types.CancelAccessReviewCampaignInput, error) {
+	res, err := ec.unmarshalInputCancelAccessReviewCampaignInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCancelAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.CancelAccessReviewCampaignPayload) graphql.Marshaler {
+	return ec._CancelAccessReviewCampaignPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCancelAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.CancelAccessReviewCampaignPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CancelAccessReviewCampaignPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCancelSignatureRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelSignatureRequestInput(ctx context.Context, v any) (types.CancelSignatureRequestInput, error) {
 	res, err := ec.unmarshalInputCancelSignatureRequestInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -99423,6 +109031,16 @@ func (ec *executionContext) marshalNCancelSignatureRequestPayload2ᚖgoᚗprobo�
 }
 
 func (ec *executionContext) marshalNComplianceExternalURL2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURL(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceExternalURL) graphql.Marshaler {
+func (ec *executionContext) unmarshalNCloseAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCloseAccessReviewCampaignInput(ctx context.Context, v any) (types.CloseAccessReviewCampaignInput, error) {
+	res, err := ec.unmarshalInputCloseAccessReviewCampaignInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCloseAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCloseAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.CloseAccessReviewCampaignPayload) graphql.Marshaler {
+	return ec._CloseAccessReviewCampaignPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCloseAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCloseAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.CloseAccessReviewCampaignPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -99452,6 +109070,43 @@ func (ec *executionContext) marshalNComplianceExternalURLEdge2ᚕᚖgoᚗprobo�
 		fc.Result = &v[i]
 		return ec.marshalNComplianceExternalURLEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdge(ctx, sel, v[i])
 	})
+	return ec._CloseAccessReviewCampaignPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNConnector2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Connector) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -99463,6 +109118,7 @@ func (ec *executionContext) marshalNComplianceExternalURLEdge2ᚕᚖgoᚗprobo�
 }
 
 func (ec *executionContext) marshalNComplianceExternalURLEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdge(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceExternalURLEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx context.Context, sel ast.SelectionSet, v *types.Connector) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -99481,6 +109137,18 @@ func (ec *executionContext) unmarshalNComplianceExternalURLOrderField2goᚗprobo
 func (ec *executionContext) marshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ComplianceExternalURLOrderField) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(marshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField[v])
+	return ec._Connector(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx context.Context, v any) (coredata.ConnectorProvider, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx context.Context, sel ast.SelectionSet, v coredata.ConnectorProvider) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -99603,6 +109271,15 @@ var (
 	marshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility = map[coredata.ComplianceFrameworkVisibility]string{
 		coredata.ComplianceFrameworkVisibilityNone:   "NONE",
 		coredata.ComplianceFrameworkVisibilityPublic: "PUBLIC",
+	unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider = map[string]coredata.ConnectorProvider{
+		"SLACK":            coredata.ConnectorProviderSlack,
+		"GOOGLE_WORKSPACE": coredata.ConnectorProviderGoogleWorkspace,
+		"LINEAR":           coredata.ConnectorProviderLinear,
+	}
+	marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider = map[coredata.ConnectorProvider]string{
+		coredata.ConnectorProviderSlack:           "SLACK",
+		coredata.ConnectorProviderGoogleWorkspace: "GOOGLE_WORKSPACE",
+		coredata.ConnectorProviderLinear:          "LINEAR",
 	}
 )
 
@@ -100383,6 +110060,63 @@ func (ec *executionContext) marshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpk
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNCreateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewCampaignInput(ctx context.Context, v any) (types.CreateAccessReviewCampaignInput, error) {
+	res, err := ec.unmarshalInputCreateAccessReviewCampaignInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateAccessReviewCampaignPayload) graphql.Marshaler {
+	return ec._CreateAccessReviewCampaignPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateAccessReviewCampaignPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateAccessReviewCampaignPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreateAccessReviewInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewInput(ctx context.Context, v any) (types.CreateAccessReviewInput, error) {
+	res, err := ec.unmarshalInputCreateAccessReviewInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateAccessReviewPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateAccessReviewPayload) graphql.Marshaler {
+	return ec._CreateAccessReviewPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateAccessReviewPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateAccessReviewPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateAccessReviewPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreateAccessSourceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessSourceInput(ctx context.Context, v any) (types.CreateAccessSourceInput, error) {
+	res, err := ec.unmarshalInputCreateAccessSourceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateAccessSourcePayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, v types.CreateAccessSourcePayload) graphql.Marshaler {
+	return ec._CreateAccessSourcePayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateAccessSourcePayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateAccessSourcePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateApplicabilityStatementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateApplicabilityStatementInput(ctx context.Context, v any) (types.CreateApplicabilityStatementInput, error) {
@@ -101453,6 +111187,44 @@ var (
 		coredata.DatumOrderFieldDataClassification: "DATA_CLASSIFICATION",
 	}
 )
+
+func (ec *executionContext) unmarshalNDeleteAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessReviewCampaignInput(ctx context.Context, v any) (types.DeleteAccessReviewCampaignInput, error) {
+	res, err := ec.unmarshalInputDeleteAccessReviewCampaignInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteAccessReviewCampaignPayload) graphql.Marshaler {
+	return ec._DeleteAccessReviewCampaignPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteAccessReviewCampaignPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteAccessReviewCampaignPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteAccessSourceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessSourceInput(ctx context.Context, v any) (types.DeleteAccessSourceInput, error) {
+	res, err := ec.unmarshalInputDeleteAccessSourceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteAccessSourcePayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteAccessSourcePayload) graphql.Marshaler {
+	return ec._DeleteAccessSourcePayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteAccessSourcePayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteAccessSourcePayload(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalNDeleteApplicabilityStatementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteApplicabilityStatementInput(ctx context.Context, v any) (types.DeleteApplicabilityStatementInput, error) {
 	res, err := ec.unmarshalInputDeleteApplicabilityStatementInput(ctx, v)
@@ -103048,6 +112820,25 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNExportCampaignEvidenceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidenceInput(ctx context.Context, v any) (types.ExportCampaignEvidenceInput, error) {
+	res, err := ec.unmarshalInputExportCampaignEvidenceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNExportCampaignEvidencePayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidencePayload(ctx context.Context, sel ast.SelectionSet, v types.ExportCampaignEvidencePayload) graphql.Marshaler {
+	return ec._ExportCampaignEvidencePayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExportCampaignEvidencePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidencePayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportCampaignEvidencePayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExportCampaignEvidencePayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNExportDataProtectionImpactAssessmentsPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportDataProtectionImpactAssessmentsPDFInput(ctx context.Context, v any) (types.ExportDataProtectionImpactAssessmentsPDFInput, error) {
 	res, err := ec.unmarshalInputExportDataProtectionImpactAssessmentsPDFInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -103763,6 +113554,36 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNMfaStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMFAStatus(ctx context.Context, v any) (coredata.MFAStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNMfaStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMFAStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMfaStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMFAStatus(ctx context.Context, sel ast.SelectionSet, v coredata.MFAStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNMfaStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMFAStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNMfaStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMFAStatus = map[string]coredata.MFAStatus{
+		"ENABLED":  coredata.MFAStatusEnabled,
+		"DISABLED": coredata.MFAStatusDisabled,
+		"UNKNOWN":  coredata.MFAStatusUnknown,
+	}
+	marshalNMfaStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMFAStatus = map[coredata.MFAStatus]string{
+		coredata.MFAStatusEnabled:  "ENABLED",
+		coredata.MFAStatusDisabled: "DISABLED",
+		coredata.MFAStatusUnknown:  "UNKNOWN",
+	}
+)
+
 func (ec *executionContext) marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -104472,6 +114293,25 @@ func (ec *executionContext) marshalNPublishDocumentVersionPayload2ᚖgoᚗprobo�
 	return ec._PublishDocumentVersionPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNRecordAccessEntryDecisionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRecordAccessEntryDecisionInput(ctx context.Context, v any) (types.RecordAccessEntryDecisionInput, error) {
+	res, err := ec.unmarshalInputRecordAccessEntryDecisionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRecordAccessEntryDecisionPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRecordAccessEntryDecisionPayload(ctx context.Context, sel ast.SelectionSet, v types.RecordAccessEntryDecisionPayload) graphql.Marshaler {
+	return ec._RecordAccessEntryDecisionPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRecordAccessEntryDecisionPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRecordAccessEntryDecisionPayload(ctx context.Context, sel ast.SelectionSet, v *types.RecordAccessEntryDecisionPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RecordAccessEntryDecisionPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRequestSignatureInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRequestSignatureInput(ctx context.Context, v any) (types.RequestSignatureInput, error) {
 	res, err := ec.unmarshalInputRequestSignatureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -104489,6 +114329,25 @@ func (ec *executionContext) marshalNRequestSignaturePayload2ᚖgoᚗproboᚗinc�
 		return graphql.Null
 	}
 	return ec._RequestSignaturePayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRetryStartAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignInput(ctx context.Context, v any) (types.RetryStartAccessReviewCampaignInput, error) {
+	res, err := ec.unmarshalInputRetryStartAccessReviewCampaignInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRetryStartAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.RetryStartAccessReviewCampaignPayload) graphql.Marshaler {
+	return ec._RetryStartAccessReviewCampaignPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRetryStartAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.RetryStartAccessReviewCampaignPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RetryStartAccessReviewCampaignPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRightsRequest2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequest(ctx context.Context, sel ast.SelectionSet, v *types.RightsRequest) graphql.Marshaler {
@@ -105069,6 +114928,25 @@ var (
 		coredata.SnapshotsTypeStatesOfApplicability: "STATES_OF_APPLICABILITY",
 	}
 )
+
+func (ec *executionContext) unmarshalNStartAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStartAccessReviewCampaignInput(ctx context.Context, v any) (types.StartAccessReviewCampaignInput, error) {
+	res, err := ec.unmarshalInputStartAccessReviewCampaignInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStartAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.StartAccessReviewCampaignPayload) graphql.Marshaler {
+	return ec._StartAccessReviewCampaignPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStartAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.StartAccessReviewCampaignPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StartAccessReviewCampaignPayload(ctx, sel, v)
+}
 
 func (ec *executionContext) marshalNStateOfApplicability2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicability(ctx context.Context, sel ast.SelectionSet, v types.StateOfApplicability) graphql.Marshaler {
 	return ec._StateOfApplicability(ctx, sel, &v)
@@ -105785,6 +115663,63 @@ var (
 		coredata.TrustCenterVisibilityPublic:  "PUBLIC",
 	}
 )
+
+func (ec *executionContext) unmarshalNUpdateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewCampaignInput(ctx context.Context, v any) (types.UpdateAccessReviewCampaignInput, error) {
+	res, err := ec.unmarshalInputUpdateAccessReviewCampaignInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateAccessReviewCampaignPayload) graphql.Marshaler {
+	return ec._UpdateAccessReviewCampaignPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateAccessReviewCampaignPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateAccessReviewCampaignPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateAccessReviewInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewInput(ctx context.Context, v any) (types.UpdateAccessReviewInput, error) {
+	res, err := ec.unmarshalInputUpdateAccessReviewInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateAccessReviewPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateAccessReviewPayload) graphql.Marshaler {
+	return ec._UpdateAccessReviewPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateAccessReviewPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateAccessReviewPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateAccessReviewPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateAccessSourceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessSourceInput(ctx context.Context, v any) (types.UpdateAccessSourceInput, error) {
+	res, err := ec.unmarshalInputUpdateAccessSourceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateAccessSourcePayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateAccessSourcePayload) graphql.Marshaler {
+	return ec._UpdateAccessSourcePayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessSourcePayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateAccessSourcePayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateAccessSourcePayload(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalNUpdateApplicabilityStatementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateApplicabilityStatementInput(ctx context.Context, v any) (types.UpdateApplicabilityStatementInput, error) {
 	res, err := ec.unmarshalInputUpdateApplicabilityStatementInput(ctx, v)
@@ -106598,6 +116533,25 @@ func (ec *executionContext) marshalNUploadVendorDataPrivacyAgreementPayload2ᚖg
 		return graphql.Null
 	}
 	return ec._UploadVendorDataPrivacyAgreementPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNValidateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignInput(ctx context.Context, v any) (types.ValidateAccessReviewCampaignInput, error) {
+	res, err := ec.unmarshalInputValidateAccessReviewCampaignInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNValidateAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.ValidateAccessReviewCampaignPayload) graphql.Marshaler {
+	return ec._ValidateAccessReviewCampaignPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNValidateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.ValidateAccessReviewCampaignPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ValidateAccessReviewCampaignPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNVendor2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendor(ctx context.Context, sel ast.SelectionSet, v types.Vendor) graphql.Marshaler {
@@ -107502,6 +117456,44 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) unmarshalOAccessEntryOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryOrder(ctx context.Context, v any) (*types.AccessEntryOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAccessEntryOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview(ctx context.Context, sel ast.SelectionSet, v *types.AccessReview) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AccessReview(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAccessReviewCampaignOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignOrder(ctx context.Context, v any) (*types.AccessReviewCampaignOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAccessReviewCampaignOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource(ctx context.Context, sel ast.SelectionSet, v *types.AccessSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AccessSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAccessSourceOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceOrder(ctx context.Context, v any) (*types.AccessSourceOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAccessSourceOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOApplicabilityStatementOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐApplicabilityStatementOrderBy(ctx context.Context, v any) (*types.ApplicabilityStatementOrderBy, error) {
 	if v == nil {
 		return nil, nil
@@ -107651,6 +117643,84 @@ func (ec *executionContext) unmarshalOComplianceFrameworkOrder2ᚖgoᚗproboᚗi
 	}
 	res, err := ec.unmarshalInputComplianceFrameworkOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) marshalOConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx context.Context, sel ast.SelectionSet, v *types.Connector) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Connector(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOConnectorFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorFilter(ctx context.Context, v any) (*types.ConnectorFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputConnectorFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOConnectorProvider2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProviderᚄ(ctx context.Context, v any) ([]coredata.ConnectorProvider, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]coredata.ConnectorProvider, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOConnectorProvider2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []coredata.ConnectorProvider) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOContinualImprovementFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovementFilter(ctx context.Context, v any) (*types.ContinualImprovementFilter, error) {

@@ -67,6 +67,7 @@ type (
 		slack                   *slack.Service
 		esign                   *esign.Service
 		invitationTokenValidity time.Duration
+		campaignServiceFactory  func(*pg.Client, coredata.Scoper) AccessReviewCampaignService
 	}
 
 	TenantService struct {
@@ -119,6 +120,11 @@ type (
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
 		SlackMessages                     *slack.SlackMessageService
+		AccessReviews                     *AccessReviewService
+		AccessSources                     *AccessSourceService
+		AccessReviewCampaigns             AccessReviewCampaignService
+		AccessEntries                     *AccessEntryService
+		ReviewEngine                      *ReviewEngine
 	}
 )
 
@@ -142,6 +148,7 @@ func NewService(
 	iamService *iam.Service,
 	esignService *esign.Service,
 	invitationTokenValidity time.Duration,
+	campaignServiceFactory func(*pg.Client, coredata.Scoper) AccessReviewCampaignService,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -167,6 +174,7 @@ func NewService(
 		slack:                   slackService,
 		esign:                   esignService,
 		invitationTokenValidity: invitationTokenValidity,
+		campaignServiceFactory:  campaignServiceFactory,
 	}
 
 	return svc, nil
@@ -286,6 +294,11 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		logger:        s.logger.Named("custom_domains"),
 	}
 	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
+	tenantService.AccessReviews = &AccessReviewService{svc: tenantService}
+	tenantService.AccessSources = &AccessSourceService{svc: tenantService}
+	tenantService.AccessReviewCampaigns = newAccessReviewCampaignAdapter(accessreview.NewCampaignService(s.pg, tenantService.scope))
+	tenantService.AccessEntries = &AccessEntryService{svc: tenantService}
+	tenantService.ReviewEngine = NewReviewEngine(s.pg, tenantService.scope, s.encryptionKey)
 
 	return tenantService
 }

@@ -1,0 +1,1 @@
+ALTER TABLE access_sources ADD COLUMN csv_data TEXT;

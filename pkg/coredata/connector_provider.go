@@ -24,12 +24,14 @@ type ConnectorProvider string
 const (
 	ConnectorProviderSlack           ConnectorProvider = "SLACK"
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
+	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
 )
 
 func ConnectorProviders() []ConnectorProvider {
 	return []ConnectorProvider{
 		ConnectorProviderSlack,
 		ConnectorProviderGoogleWorkspace,
+		ConnectorProviderLinear,
 	}
 }
 
@@ -53,6 +55,8 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderSlack
 	case "GOOGLE_WORKSPACE":
 		*cp = ConnectorProviderGoogleWorkspace
+	case "LINEAR":
+		*cp = ConnectorProviderLinear
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}

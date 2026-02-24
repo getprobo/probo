@@ -17,6 +17,112 @@ type Node interface {
 	GetID() gid.GID
 }
 
+type AccessEntry struct {
+	ID               gid.GID                            `json:"id"`
+	Campaign         *AccessReviewCampaign              `json:"campaign"`
+	AccessSource     *AccessSource                      `json:"accessSource"`
+	Email            string                             `json:"email"`
+	FullName         string                             `json:"fullName"`
+	Role             string                             `json:"role"`
+	JobTitle         string                             `json:"jobTitle"`
+	IsAdmin          bool                               `json:"isAdmin"`
+	MfaStatus        coredata.MFAStatus                 `json:"mfaStatus"`
+	AuthMethod       coredata.AccessEntryAuthMethod     `json:"authMethod"`
+	LastLogin        *time.Time                         `json:"lastLogin,omitempty"`
+	AccountCreatedAt *time.Time                         `json:"accountCreatedAt,omitempty"`
+	ExternalID       string                             `json:"externalId"`
+	IncrementalTag   coredata.AccessEntryIncrementalTag `json:"incrementalTag"`
+	Flag             coredata.AccessEntryFlag           `json:"flag"`
+	FlagReason       *string                            `json:"flagReason,omitempty"`
+	Decision         coredata.AccessEntryDecision       `json:"decision"`
+	DecisionNote     *string                            `json:"decisionNote,omitempty"`
+	DecidedBy        *People                            `json:"decidedBy,omitempty"`
+	DecidedAt        *time.Time                         `json:"decidedAt,omitempty"`
+	CreatedAt        time.Time                          `json:"createdAt"`
+	UpdatedAt        time.Time                          `json:"updatedAt"`
+	Permission       bool                               `json:"permission"`
+}
+
+func (AccessEntry) IsNode()             {}
+func (this AccessEntry) GetID() gid.GID { return this.ID }
+
+type AccessEntryEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *AccessEntry   `json:"node"`
+}
+
+type AccessEntryOrder struct {
+	Direction page.OrderDirection            `json:"direction"`
+	Field     coredata.AccessEntryOrderField `json:"field"`
+}
+
+type AccessReview struct {
+	ID             gid.GID                         `json:"id"`
+	Organization   *Organization                   `json:"organization"`
+	IdentitySource *AccessSource                   `json:"identitySource,omitempty"`
+	CreatedAt      time.Time                       `json:"createdAt"`
+	UpdatedAt      time.Time                       `json:"updatedAt"`
+	AccessSources  *AccessSourceConnection         `json:"accessSources"`
+	Campaigns      *AccessReviewCampaignConnection `json:"campaigns"`
+	Permission     bool                            `json:"permission"`
+}
+
+func (AccessReview) IsNode()             {}
+func (this AccessReview) GetID() gid.GID { return this.ID }
+
+type AccessReviewCampaign struct {
+	ID                gid.GID                             `json:"id"`
+	AccessReview      *AccessReview                       `json:"accessReview"`
+	Name              string                              `json:"name"`
+	Status            coredata.AccessReviewCampaignStatus `json:"status"`
+	StartedAt         *time.Time                          `json:"startedAt,omitempty"`
+	CompletedAt       *time.Time                          `json:"completedAt,omitempty"`
+	FrameworkControls []string                            `json:"frameworkControls,omitempty"`
+	CreatedAt         time.Time                           `json:"createdAt"`
+	UpdatedAt         time.Time                           `json:"updatedAt"`
+	ScopeSources      []*AccessReviewCampaignScopeSource  `json:"scopeSources"`
+	Entries           *AccessEntryConnection              `json:"entries"`
+	Permission        bool                                `json:"permission"`
+}
+
+func (AccessReviewCampaign) IsNode()             {}
+func (this AccessReviewCampaign) GetID() gid.GID { return this.ID }
+
+type AccessReviewCampaignEdge struct {
+	Cursor page.CursorKey        `json:"cursor"`
+	Node   *AccessReviewCampaign `json:"node"`
+}
+
+type AccessReviewCampaignOrder struct {
+	Direction page.OrderDirection                     `json:"direction"`
+	Field     coredata.AccessReviewCampaignOrderField `json:"field"`
+}
+
+type AccessSource struct {
+	ID           gid.GID       `json:"id"`
+	AccessReview *AccessReview `json:"accessReview"`
+	ConnectorID  *gid.GID      `json:"connectorId,omitempty"`
+	Connector    *Connector    `json:"connector,omitempty"`
+	Name         string        `json:"name"`
+	CSVData      *string       `json:"csvData,omitempty"`
+	CreatedAt    time.Time     `json:"createdAt"`
+	UpdatedAt    time.Time     `json:"updatedAt"`
+	Permission   bool          `json:"permission"`
+}
+
+func (AccessSource) IsNode()             {}
+func (this AccessSource) GetID() gid.GID { return this.ID }
+
+type AccessSourceEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *AccessSource  `json:"node"`
+}
+
+type AccessSourceOrder struct {
+	Direction page.OrderDirection             `json:"direction"`
+	Field     coredata.AccessSourceOrderField `json:"field"`
+}
+
 type ApplicabilityStatement struct {
 	ID                   gid.GID               `json:"id"`
 	StateOfApplicability *StateOfApplicability `json:"stateOfApplicability"`
@@ -141,6 +247,14 @@ type BulkRequestSignaturesPayload struct {
 	DocumentVersionSignatureEdges []*DocumentVersionSignatureEdge `json:"documentVersionSignatureEdges"`
 }
 
+type CancelAccessReviewCampaignInput struct {
+	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
+}
+
+type CancelAccessReviewCampaignPayload struct {
+	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
+}
+
 type CancelSignatureRequestInput struct {
 	DocumentVersionSignatureID gid.GID `json:"documentVersionSignatureId"`
 }
@@ -165,6 +279,14 @@ func (this ComplianceExternalURL) GetID() gid.GID { return this.ID }
 type ComplianceExternalURLEdge struct {
 	Cursor page.CursorKey         `json:"cursor"`
 	Node   *ComplianceExternalURL `json:"node"`
+}
+
+type CloseAccessReviewCampaignInput struct {
+	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
+}
+
+type CloseAccessReviewCampaignPayload struct {
+	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
 }
 
 type ComplianceFrameworkEdge struct {
@@ -232,6 +354,35 @@ type ControlEdge struct {
 
 type ControlFilter struct {
 	Query *string `json:"query,omitempty"`
+}
+
+type CreateAccessReviewCampaignInput struct {
+	AccessReviewID    gid.GID  `json:"accessReviewId"`
+	Name              string   `json:"name"`
+	FrameworkControls []string `json:"frameworkControls,omitempty"`
+}
+
+type CreateAccessReviewCampaignPayload struct {
+	AccessReviewCampaignEdge *AccessReviewCampaignEdge `json:"accessReviewCampaignEdge"`
+}
+
+type CreateAccessReviewInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+}
+
+type CreateAccessReviewPayload struct {
+	AccessReview *AccessReview `json:"accessReview"`
+}
+
+type CreateAccessSourceInput struct {
+	AccessReviewID gid.GID  `json:"accessReviewId"`
+	ConnectorID    *gid.GID `json:"connectorId,omitempty"`
+	Name           string   `json:"name"`
+	CSVData        *string  `json:"csvData,omitempty"`
+}
+
+type CreateAccessSourcePayload struct {
+	AccessSourceEdge *AccessSourceEdge `json:"accessSourceEdge"`
 }
 
 type CreateApplicabilityStatementInput struct {
@@ -809,6 +960,22 @@ type DatumFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
+type DeleteAccessReviewCampaignInput struct {
+	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
+}
+
+type DeleteAccessReviewCampaignPayload struct {
+	DeletedAccessReviewCampaignID gid.GID `json:"deletedAccessReviewCampaignId"`
+}
+
+type DeleteAccessSourceInput struct {
+	AccessSourceID gid.GID `json:"accessSourceId"`
+}
+
+type DeleteAccessSourcePayload struct {
+	DeletedAccessSourceID gid.GID `json:"deletedAccessSourceId"`
+}
+
 type DeleteApplicabilityStatementInput struct {
 	ApplicabilityStatementID gid.GID `json:"applicabilityStatementId"`
 }
@@ -1340,6 +1507,15 @@ type EvidenceEdge struct {
 	Node   *Evidence      `json:"node"`
 }
 
+type ExportCampaignEvidenceInput struct {
+	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
+}
+
+type ExportCampaignEvidencePayload struct {
+	ChecksumSha256 string `json:"checksumSha256"`
+	Payload        string `json:"payload"`
+}
+
 type ExportDataProtectionImpactAssessmentsPDFInput struct {
 	OrganizationID gid.GID                               `json:"organizationId"`
 	Filter         *DataProtectionImpactAssessmentFilter `json:"filter,omitempty"`
@@ -1637,6 +1813,7 @@ type Organization struct {
 	Context                         *OrganizationContext                      `json:"context,omitempty"`
 	Profiles                        *ProfileConnection                        `json:"profiles"`
 	SlackConnections                *SlackConnectionConnection                `json:"slackConnections"`
+	Connectors                      []*Connector                              `json:"connectors"`
 	Frameworks                      *FrameworkConnection                      `json:"frameworks"`
 	Controls                        *ControlConnection                        `json:"controls"`
 	Vendors                         *VendorConnection                         `json:"vendors"`
@@ -1661,6 +1838,7 @@ type Organization struct {
 	TrustCenter                     *TrustCenter                              `json:"trustCenter,omitempty"`
 	CustomDomain                    *CustomDomain                             `json:"customDomain,omitempty"`
 	WebhookSubscriptions            *WebhookSubscriptionConnection            `json:"webhookSubscriptions"`
+	AccessReview                    *AccessReview                             `json:"accessReview,omitempty"`
 	CreatedAt                       time.Time                                 `json:"createdAt"`
 	UpdatedAt                       time.Time                                 `json:"updatedAt"`
 	Permission                      bool                                      `json:"permission"`
@@ -1765,6 +1943,16 @@ type PublishDocumentVersionPayload struct {
 type Query struct {
 }
 
+type RecordAccessEntryDecisionInput struct {
+	AccessEntryID gid.GID                      `json:"accessEntryId"`
+	Decision      coredata.AccessEntryDecision `json:"decision"`
+	DecisionNote  *string                      `json:"decisionNote,omitempty"`
+}
+
+type RecordAccessEntryDecisionPayload struct {
+	AccessEntry *AccessEntry `json:"accessEntry"`
+}
+
 type Report struct {
 	ID          gid.GID   `json:"id"`
 	ObjectKey   string    `json:"objectKey"`
@@ -1788,6 +1976,14 @@ type RequestSignatureInput struct {
 
 type RequestSignaturePayload struct {
 	DocumentVersionSignatureEdge *DocumentVersionSignatureEdge `json:"documentVersionSignatureEdge"`
+}
+
+type RetryStartAccessReviewCampaignInput struct {
+	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
+}
+
+type RetryStartAccessReviewCampaignPayload struct {
+	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
 }
 
 type RightsRequest struct {
@@ -1910,6 +2106,15 @@ func (this Snapshot) GetID() gid.GID { return this.ID }
 type SnapshotEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Snapshot      `json:"node"`
+}
+
+type StartAccessReviewCampaignInput struct {
+	AccessReviewCampaignID gid.GID   `json:"accessReviewCampaignId"`
+	AccessSourceIds        []gid.GID `json:"accessSourceIds,omitempty"`
+}
+
+type StartAccessReviewCampaignPayload struct {
+	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
 }
 
 type StateOfApplicability struct {
@@ -2072,6 +2277,36 @@ func (this TrustCenterReference) GetID() gid.GID { return this.ID }
 type TrustCenterReferenceEdge struct {
 	Cursor page.CursorKey        `json:"cursor"`
 	Node   *TrustCenterReference `json:"node"`
+}
+
+type UpdateAccessReviewCampaignInput struct {
+	AccessReviewCampaignID gid.GID                     `json:"accessReviewCampaignId"`
+	Name                   graphql.Omittable[*string]  `json:"name,omitempty"`
+	FrameworkControls      graphql.Omittable[[]string] `json:"frameworkControls,omitempty"`
+}
+
+type UpdateAccessReviewCampaignPayload struct {
+	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
+}
+
+type UpdateAccessReviewInput struct {
+	AccessReviewID   gid.GID                     `json:"accessReviewId"`
+	IdentitySourceID graphql.Omittable[*gid.GID] `json:"identitySourceId,omitempty"`
+}
+
+type UpdateAccessReviewPayload struct {
+	AccessReview *AccessReview `json:"accessReview"`
+}
+
+type UpdateAccessSourceInput struct {
+	AccessSourceID gid.GID                     `json:"accessSourceId"`
+	Name           graphql.Omittable[*string]  `json:"name,omitempty"`
+	ConnectorID    graphql.Omittable[*gid.GID] `json:"connectorId,omitempty"`
+	CSVData        graphql.Omittable[*string]  `json:"csvData,omitempty"`
+}
+
+type UpdateAccessSourcePayload struct {
+	AccessSource *AccessSource `json:"accessSource"`
 }
 
 type UpdateApplicabilityStatementInput struct {
@@ -2603,6 +2838,15 @@ type UploadVendorDataPrivacyAgreementInput struct {
 
 type UploadVendorDataPrivacyAgreementPayload struct {
 	VendorDataPrivacyAgreement *VendorDataPrivacyAgreement `json:"vendorDataPrivacyAgreement"`
+}
+
+type ValidateAccessReviewCampaignInput struct {
+	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
+	Note                   *string `json:"note,omitempty"`
+}
+
+type ValidateAccessReviewCampaignPayload struct {
+	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
 }
 
 type Vendor struct {

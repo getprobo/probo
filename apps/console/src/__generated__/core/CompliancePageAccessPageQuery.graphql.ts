@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<35d27a50dd067775566c69dd0e555b25>>
+ * @generated SignedSource<<780d27bc715545a78041c8202835912d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -357,12 +357,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b4d6f7aa127d6ee60ec6344fb291ab4e",
+    "cacheID": "e8e8a8bf8523698493434cd320860613",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAccessPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageAccessPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        ...CompliancePageAccessListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment on TrustCenter {\n  accesses(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  createdAt\n  profile {\n    fullName\n    emailAddress\n    state\n    id\n  }\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
+    "text": "query CompliancePageAccessPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        canCreateAccess: permission(action: \"core:trust-center-access:create\")\n        ...CompliancePageAccessListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment on TrustCenter {\n  accesses(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
   }
 };
 })();

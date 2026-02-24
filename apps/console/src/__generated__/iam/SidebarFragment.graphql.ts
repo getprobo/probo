@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<de9ca0854fde114ecd6fc68643f999d3>>
+ * @generated SignedSource<<a31f8b230072c047b1a1e626ea249ec0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type SidebarFragment$data = {
+  readonly canGetAccessReview: boolean;
   readonly canGetTrustCenter: boolean;
   readonly canListAssets: boolean;
   readonly canListAudits: boolean;
@@ -303,12 +304,25 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "permission",
       "storageKey": "permission(action:\"core:state-of-applicability:list\")"
+    },
+    {
+      "alias": "canGetAccessReview",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:access-review:get"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:access-review:get\")"
     }
   ],
   "type": "Organization",
   "abstractKey": null
 };
 
-(node as any).hash = "73a632deb40d322a670cd72fd855723f";
+(node as any).hash = "a99bd7f79d6a38a5e746411a6f3e3b36";
 
 export default node;
