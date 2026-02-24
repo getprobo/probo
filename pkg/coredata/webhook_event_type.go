@@ -29,6 +29,9 @@ const (
 	WebhookEventTypeVendorCreated  WebhookEventType = "vendor:created"
 	WebhookEventTypeVendorUpdated  WebhookEventType = "vendor:updated"
 	WebhookEventTypeVendorDeleted  WebhookEventType = "vendor:deleted"
+	WebhookEventTypeUserCreated    WebhookEventType = "user:created"
+	WebhookEventTypeUserUpdated    WebhookEventType = "user:updated"
+	WebhookEventTypeUserDeleted    WebhookEventType = "user:deleted"
 )
 
 func (w WebhookEventType) String() string {
@@ -38,7 +41,8 @@ func (w WebhookEventType) String() string {
 func (w WebhookEventType) IsValid() bool {
 	switch w {
 	case WebhookEventTypeMeetingCreated, WebhookEventTypeMeetingUpdated, WebhookEventTypeMeetingDeleted,
-		WebhookEventTypeVendorCreated, WebhookEventTypeVendorUpdated, WebhookEventTypeVendorDeleted:
+		WebhookEventTypeVendorCreated, WebhookEventTypeVendorUpdated, WebhookEventTypeVendorDeleted,
+		WebhookEventTypeUserCreated, WebhookEventTypeUserUpdated, WebhookEventTypeUserDeleted:
 		return true
 	}
 	return false

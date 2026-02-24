@@ -39,6 +39,8 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 type (
@@ -174,6 +176,7 @@ func (s *Service) CreateUser(
 		}
 
 		// Check if profile exists
+		eventType := coredata.WebhookEventTypeUserUpdated
 		profile = &coredata.MembershipProfile{}
 		if err := profile.LoadByIdentityIDAndOrganizationID(
 			ctx,
@@ -187,6 +190,7 @@ func (s *Service) CreateUser(
 					ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
 					IdentityID:     identity.ID,
 					OrganizationID: config.OrganizationID,
+					EmailAddress:   emailAddr,
 					Source:         coredata.ProfileSourceSCIM,
 					State:          profileState,
 					FullName:       fullName,
@@ -199,6 +203,7 @@ func (s *Service) CreateUser(
 				if err != nil {
 					return fmt.Errorf("cannot insert profile: %w", err)
 				}
+				eventType = coredata.WebhookEventTypeUserCreated
 			} else {
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
@@ -255,6 +260,10 @@ func (s *Service) CreateUser(
 			} else {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
+		}
+
+		if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile)); err != nil {
+			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
 
 		return nil
@@ -507,6 +516,10 @@ func (s *Service) updateUser(
 				if err := membership.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update membership: %w", err)
 				}
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil

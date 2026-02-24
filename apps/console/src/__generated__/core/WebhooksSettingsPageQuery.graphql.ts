@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<164efe490915ac140a48e42cbd17e915>>
+ * @generated SignedSource<<72029a8e627a0b60cb1e2c226af0d535>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type WebhookEventType = "MEETING_CREATED" | "MEETING_DELETED" | "MEETING_UPDATED" | "VENDOR_CREATED" | "VENDOR_DELETED" | "VENDOR_UPDATED";
+export type WebhookEventType = "MEETING_CREATED" | "MEETING_DELETED" | "MEETING_UPDATED" | "USER_CREATED" | "USER_DELETED" | "USER_UPDATED" | "VENDOR_CREATED" | "VENDOR_DELETED" | "VENDOR_UPDATED";
 export type WebhooksSettingsPageQuery$variables = {
   organizationId: string;
 };
