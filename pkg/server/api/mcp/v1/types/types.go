@@ -139,6 +139,10 @@ var (
 	LinkControlMeasureToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	LinkControlSnapshotToolInputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"snapshot_id":{"type":"string","format":"string"}},"required":["control_id","snapshot_id"]}`)
 	LinkControlSnapshotToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	LinkMeasureToolInputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measure_id":{"type":"string","format":"string"},"resource_id":{"type":"string","format":"string"}},"required":["measure_id","resource_id"]}`)
+	LinkMeasureToolOutputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	LinkRiskToolInputSchema                              = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"resource_id":{"type":"string","format":"string"},"risk_id":{"type":"string","format":"string"}},"required":["risk_id","resource_id"]}`)
+	LinkRiskToolOutputSchema                             = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	ListApplicabilityStatementsToolInputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","CONTROL_SECTION_TITLE"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"},"state_of_applicability_id":{"type":"string","format":"string"}},"required":["state_of_applicability_id"]}`)
 	ListApplicabilityStatementsToolOutputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"applicability_statements":{"type":"array","items":{"type":"object","properties":{"applicability":{"type":"boolean","description":"Whether the control is applicable"},"control_id":{"type":"string","format":"string"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"id":{"type":"string","format":"string"},"justification":{"description":"Justification for the applicability decision","anyOf":[{"type":"string"},{"type":"null"}]},"organization_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"state_of_applicability_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","state_of_applicability_id","control_id","organization_id","applicability","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["applicability_statements"]}`)
 	ListAssetsToolInputSchema                            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","AMOUNT"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
@@ -161,6 +165,14 @@ var (
 	ListDocumentsToolOutputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"documents":{"type":"array","items":{"type":"object","properties":{"approver_ids":{"type":"array","items":{"type":"string","format":"string"},"description":"Approver IDs"},"classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"current_published_version":{"type":["integer","null"],"description":"Current published version number"},"document_type":{"type":"string","enum":["OTHER","ISMS","POLICY","PROCEDURE"]},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"title":{"type":"string","description":"Document title"},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","approver_ids","title","document_type","classification","trust_center_visibility","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["documents"]}`)
 	ListFrameworksToolInputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListFrameworksToolOutputSchema                       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"frameworks":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Framework description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Framework name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["frameworks"]}`)
+	ListMeasureControlsToolInputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","SECTION_TITLE"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"}},"required":["measure_id"]}`)
+	ListMeasureControlsToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"controls":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Control description"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Control name"},"organization_id":{"type":"string","format":"string"},"section_title":{"type":"string","description":"Section title"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","framework_id","section_title","name","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["controls"]}`)
+	ListMeasureEvidencesToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["measure_id"]}`)
+	ListMeasureEvidencesToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"evidences":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":"string","description":"Description"},"id":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"state":{"type":"string","enum":["REQUESTED","FULFILLED"]},"task_id":{"type":"string","format":"string"},"type":{"type":"string","enum":["FILE","LINK"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"url":{"type":"string","description":"URL"}},"required":["id","organization_id","measure_id","state","reference_id","type","url","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["evidences"]}`)
+	ListMeasureRisksToolInputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","UPDATED_AT","NAME","CATEGORY","TREATMENT","INHERENT_RISK_SCORE","RESIDUAL_RISK_SCORE","OWNER_FULL_NAME"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"}},"required":["measure_id"]}`)
+	ListMeasureRisksToolOutputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"risks":{"type":"array","items":{"type":"object","properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No owner"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"]}}},"required":["risks"]}`)
+	ListMeasureTasksToolInputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"}},"required":["measure_id"]}`)
+	ListMeasureTasksToolOutputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"tasks":{"type":"array","items":{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"deadline":{"description":"Deadline","anyOf":[{"type":"string","description":"Deadline","format":"date-time"},{"type":"null","description":"No deadline"}]},"description":{"description":"Task description","anyOf":[{"type":"string","description":"Task description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["TODO","DONE"]},"time_estimate":{"description":"Time estimate","anyOf":[{"type":"string","description":"A duration"},{"type":"null","description":"No time estimate"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","state","created_at","updated_at"]}}},"required":["tasks"]}`)
 	ListMeasuresToolInputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"query":{"type":"string","description":"Search query"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","NAME"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListMeasuresToolOutputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measures":{"type":"array","items":{"type":"object","properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","category","name","state","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["measures"]}`)
 	ListMeetingAttendeesToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"meeting_id":{"type":"string","format":"string"}},"required":["meeting_id"]}`)
@@ -175,6 +187,8 @@ var (
 	ListOrganizationsToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"organizations":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Organization description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Organization name"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","name","description","created_at","updated_at"]}}}}`)
 	ListProcessingActivitiesToolInputSchema              = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","NAME"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListProcessingActivitiesToolOutputSchema             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"processing_activities":{"type":"array","items":{"type":"object","properties":{"consent_evidence_link":{"type":["string","null"],"description":"Consent evidence link"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_protection_impact_assessment_needed":{"type":"string","enum":["NEEDED","NOT_NEEDED"]},"data_protection_officer_id":{"description":"Data protection officer profile ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"data_subject_category":{"type":["string","null"],"description":"Data subject category"},"id":{"type":"string","format":"string"},"international_transfers":{"type":"boolean","description":"International transfers"},"last_review_date":{"type":["string","null"],"description":"Last review date","format":"date-time"},"lawful_basis":{"type":"string","enum":["LEGITIMATE_INTEREST","CONSENT","CONTRACTUAL_NECESSITY","LEGAL_OBLIGATION","VITAL_INTERESTS","PUBLIC_TASK"]},"location":{"type":["string","null"],"description":"Location"},"name":{"type":"string","description":"Name"},"next_review_date":{"type":["string","null"],"description":"Next review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"personal_data_category":{"type":["string","null"],"description":"Personal data category"},"purpose":{"type":["string","null"],"description":"Purpose"},"recipients":{"type":["string","null"],"description":"Recipients"},"retention_period":{"type":["string","null"],"description":"Retention period"},"role":{"type":"string","enum":["CONTROLLER","PROCESSOR"]},"security_measures":{"type":["string","null"],"description":"Security measures"},"special_or_criminal_data":{"type":"string","enum":["YES","NO","POSSIBLE"]},"transfer_impact_assessment_needed":{"type":"string","enum":["NEEDED","NOT_NEEDED"]},"transfer_safeguard":{"description":"Transfer safeguard","anyOf":[{"type":"string","enum":["STANDARD_CONTRACTUAL_CLAUSES","BINDING_CORPORATE_RULES","ADEQUACY_DECISION","DEROGATIONS","CODES_OF_CONDUCT","CERTIFICATION_MECHANISMS"]},{"type":"null"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","special_or_criminal_data","lawful_basis","international_transfers","data_protection_impact_assessment_needed","transfer_impact_assessment_needed","role","created_at","updated_at"]}}},"required":["processing_activities"]}`)
+	ListRiskObligationsToolInputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","LAST_REVIEW_DATE","DUE_DATE","STATUS"]}},"required":["field","direction"]},"risk_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["risk_id"]}`)
+	ListRiskObligationsToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"obligations":{"type":"array","items":{"type":"object","properties":{"actions_to_be_implemented":{"type":["string","null"],"description":"Actions to be implemented"},"area":{"type":["string","null"],"description":"Area"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"due_date":{"type":["string","null"],"description":"Due date","format":"date-time"},"id":{"type":"string","format":"string"},"last_review_date":{"type":["string","null"],"description":"Last review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"regulator":{"type":["string","null"],"description":"Regulator"},"requirement":{"type":["string","null"],"description":"Requirement"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"type":["string","null"],"description":"Source"},"source_id":{"type":["string","null"],"description":"Source ID"},"status":{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},"type":{"type":"string","enum":["LEGAL","CONTRACTUAL"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","owner_id","status","type","created_at","updated_at"]}}},"required":["obligations"]}`)
 	ListRisksToolInputSchema                             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"query":{"type":"string","description":"Search query"},"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","UPDATED_AT","NAME","CATEGORY","TREATMENT","INHERENT_RISK_SCORE","RESIDUAL_RISK_SCORE","OWNER_FULL_NAME"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListRisksToolOutputSchema                            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"risks":{"type":"array","items":{"type":"object","properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No owner"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"]}}},"required":["risks"]}`)
 	ListSnapshotsToolInputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","NAME","TYPE"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
@@ -207,6 +221,10 @@ var (
 	UnlinkControlMeasureToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	UnlinkControlSnapshotToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"snapshot_id":{"type":"string","format":"string"}},"required":["control_id","snapshot_id"]}`)
 	UnlinkControlSnapshotToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	UnlinkMeasureToolInputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measure_id":{"type":"string","format":"string"},"resource_id":{"type":"string","format":"string"}},"required":["measure_id","resource_id"]}`)
+	UnlinkMeasureToolOutputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	UnlinkRiskToolInputSchema                            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"resource_id":{"type":"string","format":"string"},"risk_id":{"type":"string","format":"string"}},"required":["risk_id","resource_id"]}`)
+	UnlinkRiskToolOutputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	UpdateApplicabilityStatementToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"applicability":{"type":"boolean","description":"Whether the control is applicable"},"id":{"type":"string","format":"string"},"justification":{"description":"Justification for the applicability decision","anyOf":[{"type":"string"},{"type":"null"}]}},"required":["id","applicability"]}`)
 	UpdateApplicabilityStatementToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"applicability_statement":{"type":"object","properties":{"applicability":{"type":"boolean","description":"Whether the control is applicable"},"control_id":{"type":"string","format":"string"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"id":{"type":"string","format":"string"},"justification":{"description":"Justification for the applicability decision","anyOf":[{"type":"string"},{"type":"null"}]},"organization_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"state_of_applicability_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","state_of_applicability_id","control_id","organization_id","applicability","created_at","updated_at"]}},"required":["applicability_statement"]}`)
 	UpdateAssetToolInputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"vendor_ids":{"type":"array","items":{"type":"string","format":"string"},"description":"Vendor IDs"}},"required":["id"]}`)
@@ -349,6 +367,86 @@ func (e *AddVendorInputCategory) UnmarshalJSON(data []byte) error {
 func (e AddVendorInputCategory) MarshalJSON() ([]byte, error) {
 	if !e.IsValid() {
 		return nil, fmt.Errorf("invalid AddVendorInputCategory value: %q", string(e))
+	}
+	return json.Marshal(string(e))
+}
+
+// EvidenceState represents an enumeration
+type EvidenceState string
+
+const (
+	EvidenceStateREQUESTED EvidenceState = "REQUESTED"
+	EvidenceStateFULFILLED EvidenceState = "FULFILLED"
+)
+
+// IsValid returns true if the EvidenceState value is valid
+func (e EvidenceState) IsValid() bool {
+	switch e {
+	case EvidenceStateREQUESTED:
+		return true
+	case EvidenceStateFULFILLED:
+		return true
+	}
+	return false
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (e *EvidenceState) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*e = EvidenceState(s)
+	if !e.IsValid() {
+		return fmt.Errorf("invalid EvidenceState value: %q", s)
+	}
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler
+func (e EvidenceState) MarshalJSON() ([]byte, error) {
+	if !e.IsValid() {
+		return nil, fmt.Errorf("invalid EvidenceState value: %q", string(e))
+	}
+	return json.Marshal(string(e))
+}
+
+// EvidenceType represents an enumeration
+type EvidenceType string
+
+const (
+	EvidenceFILE EvidenceType = "FILE"
+	EvidenceLINK EvidenceType = "LINK"
+)
+
+// IsValid returns true if the EvidenceType value is valid
+func (e EvidenceType) IsValid() bool {
+	switch e {
+	case EvidenceFILE:
+		return true
+	case EvidenceLINK:
+		return true
+	}
+	return false
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (e *EvidenceType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*e = EvidenceType(s)
+	if !e.IsValid() {
+		return fmt.Errorf("invalid EvidenceType value: %q", s)
+	}
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler
+func (e EvidenceType) MarshalJSON() ([]byte, error) {
+	if !e.IsValid() {
+		return nil, fmt.Errorf("invalid EvidenceType value: %q", string(e))
 	}
 	return json.Marshal(string(e))
 }
@@ -1512,6 +1610,27 @@ type DocumentVersionSignatureOrderBy struct {
 	Field coredata.DocumentVersionSignatureOrderField `json:"field"`
 }
 
+// Evidence represents the schema
+type Evidence struct {
+	// Creation timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Description
+	Description    *string `json:"description,omitempty"`
+	ID             gid.GID `json:"id"`
+	MeasureID      gid.GID `json:"measure_id"`
+	OrganizationID gid.GID `json:"organization_id"`
+	// Reference ID
+	ReferenceID string        `json:"reference_id"`
+	State       EvidenceState `json:"state"`
+	// Task ID
+	TaskID *gid.GID     `json:"task_id,omitempty"`
+	Type   EvidenceType `json:"type"`
+	// Update timestamp
+	UpdatedAt time.Time `json:"updated_at"`
+	// URL
+	URL string `json:"url"`
+}
+
 // ExportStateOfApplicabilityPDFInput represents the schema
 type ExportStateOfApplicabilityPDFInput struct {
 	// State of applicability ID
@@ -1863,6 +1982,30 @@ type LinkControlSnapshotInput struct {
 type LinkControlSnapshotOutput struct {
 }
 
+// LinkMeasureInput represents the schema
+type LinkMeasureInput struct {
+	// Measure ID
+	MeasureID gid.GID `json:"measure_id"`
+	// ID of the resource to link (control or risk)
+	ResourceID gid.GID `json:"resource_id"`
+}
+
+// LinkMeasureOutput represents the schema
+type LinkMeasureOutput struct {
+}
+
+// LinkRiskInput represents the schema
+type LinkRiskInput struct {
+	// ID of the resource to link (document, measure, or obligation)
+	ResourceID gid.GID `json:"resource_id"`
+	// Risk ID
+	RiskID gid.GID `json:"risk_id"`
+}
+
+// LinkRiskOutput represents the schema
+type LinkRiskOutput struct {
+}
+
 // ListApplicabilityStatementsInput represents the schema
 type ListApplicabilityStatementsInput struct {
 	// Page cursor
@@ -2076,6 +2219,80 @@ type ListFrameworksOutput struct {
 	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
 }
 
+// ListMeasureControlsInput represents the schema
+type ListMeasureControlsInput struct {
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Measure ID
+	MeasureID gid.GID `json:"measure_id"`
+	// Control order by
+	OrderBy *ControlOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListMeasureControlsOutput represents the schema
+type ListMeasureControlsOutput struct {
+	Controls []*Control `json:"controls"`
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
+// ListMeasureEvidencesInput represents the schema
+type ListMeasureEvidencesInput struct {
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Measure ID
+	MeasureID gid.GID `json:"measure_id"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListMeasureEvidencesOutput represents the schema
+type ListMeasureEvidencesOutput struct {
+	Evidences []*Evidence `json:"evidences"`
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
+// ListMeasureRisksInput represents the schema
+type ListMeasureRisksInput struct {
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Measure ID
+	MeasureID gid.GID `json:"measure_id"`
+	// Risk order by
+	OrderBy *RiskOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListMeasureRisksOutput represents the schema
+type ListMeasureRisksOutput struct {
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+	Risks      []*Risk         `json:"risks"`
+}
+
+// ListMeasureTasksInput represents the schema
+type ListMeasureTasksInput struct {
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Measure ID
+	MeasureID gid.GID `json:"measure_id"`
+	// Task order by
+	OrderBy *TaskOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListMeasureTasksOutput represents the schema
+type ListMeasureTasksOutput struct {
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+	Tasks      []*Task         `json:"tasks"`
+}
+
 // ListMeasuresInput represents the schema
 type ListMeasuresInput struct {
 	// Page cursor
@@ -2197,6 +2414,25 @@ type ListProcessingActivitiesOutput struct {
 	// Next cursor
 	NextCursor           *page.CursorKey       `json:"next_cursor,omitempty"`
 	ProcessingActivities []*ProcessingActivity `json:"processing_activities"`
+}
+
+// ListRiskObligationsInput represents the schema
+type ListRiskObligationsInput struct {
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Obligation order by
+	OrderBy *ObligationOrderBy `json:"order_by,omitempty"`
+	// Risk ID
+	RiskID gid.GID `json:"risk_id"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListRiskObligationsOutput represents the schema
+type ListRiskObligationsOutput struct {
+	// Next cursor
+	NextCursor  *page.CursorKey `json:"next_cursor,omitempty"`
+	Obligations []*Obligation   `json:"obligations"`
 }
 
 // ListRisksInput represents the schema
@@ -2851,6 +3087,30 @@ type UnlinkControlSnapshotInput struct {
 
 // UnlinkControlSnapshotOutput represents the schema
 type UnlinkControlSnapshotOutput struct {
+}
+
+// UnlinkMeasureInput represents the schema
+type UnlinkMeasureInput struct {
+	// Measure ID
+	MeasureID gid.GID `json:"measure_id"`
+	// ID of the resource to unlink (control or risk)
+	ResourceID gid.GID `json:"resource_id"`
+}
+
+// UnlinkMeasureOutput represents the schema
+type UnlinkMeasureOutput struct {
+}
+
+// UnlinkRiskInput represents the schema
+type UnlinkRiskInput struct {
+	// ID of the resource to unlink (document, measure, or obligation)
+	ResourceID gid.GID `json:"resource_id"`
+	// Risk ID
+	RiskID gid.GID `json:"risk_id"`
+}
+
+// UnlinkRiskOutput represents the schema
+type UnlinkRiskOutput struct {
 }
 
 // UpdateApplicabilityStatementInput represents the schema

@@ -31,6 +31,12 @@ type ResolverInterface interface {
 	AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error)
 	UpdateMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeasureInput) (*mcp.CallToolResult, types.UpdateMeasureOutput, error)
 	DeleteMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeasureInput) (*mcp.CallToolResult, types.DeleteMeasureOutput, error)
+	ListMeasureRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureRisksInput) (*mcp.CallToolResult, types.ListMeasureRisksOutput, error)
+	ListMeasureControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureControlsInput) (*mcp.CallToolResult, types.ListMeasureControlsOutput, error)
+	ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureTasksInput) (*mcp.CallToolResult, types.ListMeasureTasksOutput, error)
+	ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureEvidencesInput) (*mcp.CallToolResult, types.ListMeasureEvidencesOutput, error)
+	LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkMeasureInput) (*mcp.CallToolResult, types.LinkMeasureOutput, error)
+	UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkMeasureInput) (*mcp.CallToolResult, types.UnlinkMeasureOutput, error)
 	ListFrameworksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFrameworksInput) (*mcp.CallToolResult, types.ListFrameworksOutput, error)
 	GetFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetFrameworkInput) (*mcp.CallToolResult, types.GetFrameworkOutput, error)
 	AddFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddFrameworkInput) (*mcp.CallToolResult, types.AddFrameworkOutput, error)
@@ -86,6 +92,9 @@ type ResolverInterface interface {
 	UnlinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlAuditInput) (*mcp.CallToolResult, types.UnlinkControlAuditOutput, error)
 	LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlSnapshotInput) (*mcp.CallToolResult, types.LinkControlSnapshotOutput, error)
 	UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlSnapshotInput) (*mcp.CallToolResult, types.UnlinkControlSnapshotOutput, error)
+	ListRiskObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskObligationsInput) (*mcp.CallToolResult, types.ListRiskObligationsOutput, error)
+	LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskInput) (*mcp.CallToolResult, types.LinkRiskOutput, error)
+	UnlinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskInput) (*mcp.CallToolResult, types.UnlinkRiskOutput, error)
 	ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTasksInput) (*mcp.CallToolResult, types.ListTasksOutput, error)
 	GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskInput) (*mcp.CallToolResult, types.GetTaskOutput, error)
 	AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskInput) (*mcp.CallToolResult, types.AddTaskOutput, error)
@@ -394,6 +403,82 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			},
 		},
 		resolver.DeleteMeasureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listMeasureRisks",
+			Description:  "List risks linked to a measure",
+			InputSchema:  types.ListMeasureRisksToolInputSchema,
+			OutputSchema: types.ListMeasureRisksToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListMeasureRisksTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listMeasureControls",
+			Description:  "List controls linked to a measure",
+			InputSchema:  types.ListMeasureControlsToolInputSchema,
+			OutputSchema: types.ListMeasureControlsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListMeasureControlsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listMeasureTasks",
+			Description:  "List tasks linked to a measure",
+			InputSchema:  types.ListMeasureTasksToolInputSchema,
+			OutputSchema: types.ListMeasureTasksToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListMeasureTasksTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listMeasureEvidences",
+			Description:  "List evidences linked to a measure",
+			InputSchema:  types.ListMeasureEvidencesToolInputSchema,
+			OutputSchema: types.ListMeasureEvidencesToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListMeasureEvidencesTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "linkMeasure",
+			Description:  "Link a measure to a resource (control or risk). The resource type is determined from the resource_id GID.",
+			InputSchema:  types.LinkMeasureToolInputSchema,
+			OutputSchema: types.LinkMeasureToolOutputSchema,
+		},
+		resolver.LinkMeasureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "unlinkMeasure",
+			Description:  "Unlink a measure from a resource (control or risk). The resource type is determined from the resource_id GID.",
+			InputSchema:  types.UnlinkMeasureToolInputSchema,
+			OutputSchema: types.UnlinkMeasureToolOutputSchema,
+		},
+		resolver.UnlinkMeasureTool,
 	)
 	mcp.AddTool(
 		server,
@@ -1032,6 +1117,40 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UnlinkControlSnapshotToolOutputSchema,
 		},
 		resolver.UnlinkControlSnapshotTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listRiskObligations",
+			Description:  "List obligations linked to a risk",
+			InputSchema:  types.ListRiskObligationsToolInputSchema,
+			OutputSchema: types.ListRiskObligationsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListRiskObligationsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "linkRisk",
+			Description:  "Link a risk to a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.",
+			InputSchema:  types.LinkRiskToolInputSchema,
+			OutputSchema: types.LinkRiskToolOutputSchema,
+		},
+		resolver.LinkRiskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "unlinkRisk",
+			Description:  "Unlink a risk from a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.",
+			InputSchema:  types.UnlinkRiskToolInputSchema,
+			OutputSchema: types.UnlinkRiskToolOutputSchema,
+		},
+		resolver.UnlinkRiskTool,
 	)
 	mcp.AddTool(
 		server,

@@ -41,6 +41,24 @@ func NewRisk(r *coredata.Risk) *Risk {
 	}
 }
 
+func NewListMeasureRisksOutput(riskPage *page.Page[*coredata.Risk, coredata.RiskOrderField]) ListMeasureRisksOutput {
+	risks := make([]*Risk, 0, len(riskPage.Data))
+	for _, v := range riskPage.Data {
+		risks = append(risks, NewRisk(v))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(riskPage.Data) > 0 {
+		cursorKey := riskPage.Data[len(riskPage.Data)-1].CursorKey(riskPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListMeasureRisksOutput{
+		NextCursor: nextCursor,
+		Risks:      risks,
+	}
+}
+
 func NewListRisksOutput(riskPage *page.Page[*coredata.Risk, coredata.RiskOrderField]) ListRisksOutput {
 	risks := make([]*Risk, 0, len(riskPage.Data))
 	for _, v := range riskPage.Data {

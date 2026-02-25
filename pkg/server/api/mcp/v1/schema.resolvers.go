@@ -1682,6 +1682,84 @@ func (r *Resolver) UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallT
 	return nil, types.UnlinkControlSnapshotOutput{}, nil
 }
 
+func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskObligationsInput) (*mcp.CallToolResult, types.ListRiskObligationsOutput, error) {
+	r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskGet)
+
+	prb := r.ProboService(ctx, input.RiskID)
+
+	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
+		Field:     coredata.ObligationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	obligationPage, err := prb.Obligations.ListForRiskID(ctx, input.RiskID, cursor, coredata.NewObligationFilter(nil))
+	if err != nil {
+		return nil, types.ListRiskObligationsOutput{}, fmt.Errorf("failed to list risk obligations: %w", err)
+	}
+
+	return nil, types.NewListRiskObligationsOutput(obligationPage), nil
+}
+
+func (r *Resolver) LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskInput) (*mcp.CallToolResult, types.LinkRiskOutput, error) {
+	svc := r.ProboService(ctx, input.RiskID)
+
+	switch input.ResourceID.EntityType() {
+	case coredata.DocumentEntityType:
+		r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate)
+		if _, _, err := svc.Risks.CreateDocumentMapping(ctx, input.RiskID, input.ResourceID); err != nil {
+			return nil, types.LinkRiskOutput{}, fmt.Errorf("failed to link risk to document: %w", err)
+		}
+	case coredata.MeasureEntityType:
+		r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate)
+		if _, _, err := svc.Risks.CreateMeasureMapping(ctx, input.RiskID, input.ResourceID); err != nil {
+			return nil, types.LinkRiskOutput{}, fmt.Errorf("failed to link risk to measure: %w", err)
+		}
+	case coredata.ObligationEntityType:
+		r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate)
+		if _, _, err := svc.Risks.CreateObligationMapping(ctx, input.RiskID, input.ResourceID); err != nil {
+			return nil, types.LinkRiskOutput{}, fmt.Errorf("failed to link risk to obligation: %w", err)
+		}
+	default:
+		return nil, types.LinkRiskOutput{}, fmt.Errorf("unsupported resource type for risk linking: entity type %d", input.ResourceID.EntityType())
+	}
+
+	return nil, types.LinkRiskOutput{}, nil
+}
+
+func (r *Resolver) UnlinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskInput) (*mcp.CallToolResult, types.UnlinkRiskOutput, error) {
+	svc := r.ProboService(ctx, input.RiskID)
+
+	switch input.ResourceID.EntityType() {
+	case coredata.DocumentEntityType:
+		r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete)
+		if _, _, err := svc.Risks.DeleteDocumentMapping(ctx, input.RiskID, input.ResourceID); err != nil {
+			return nil, types.UnlinkRiskOutput{}, fmt.Errorf("failed to unlink risk from document: %w", err)
+		}
+	case coredata.MeasureEntityType:
+		r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete)
+		if _, _, err := svc.Risks.DeleteMeasureMapping(ctx, input.RiskID, input.ResourceID); err != nil {
+			return nil, types.UnlinkRiskOutput{}, fmt.Errorf("failed to unlink risk from measure: %w", err)
+		}
+	case coredata.ObligationEntityType:
+		r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete)
+		if _, _, err := svc.Risks.DeleteObligationMapping(ctx, input.RiskID, input.ResourceID); err != nil {
+			return nil, types.UnlinkRiskOutput{}, fmt.Errorf("failed to unlink risk from obligation: %w", err)
+		}
+	default:
+		return nil, types.UnlinkRiskOutput{}, fmt.Errorf("unsupported resource type for risk unlinking: entity type %d", input.ResourceID.EntityType())
+	}
+
+	return nil, types.UnlinkRiskOutput{}, nil
+}
+
 func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTasksInput) (*mcp.CallToolResult, types.ListTasksOutput, error) {
 	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTaskList)
 
@@ -2402,6 +2480,146 @@ func (r *Resolver) DeleteMeasureTool(ctx context.Context, req *mcp.CallToolReque
 	return nil, types.DeleteMeasureOutput{
 		DeletedMeasureID: input.ID,
 	}, nil
+}
+
+func (r *Resolver) ListMeasureRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureRisksInput) (*mcp.CallToolResult, types.ListMeasureRisksOutput, error) {
+	r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+
+	prb := r.ProboService(ctx, input.MeasureID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
+		Field:     coredata.RiskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	riskPage, err := prb.Risks.ListForMeasureID(ctx, input.MeasureID, cursor, coredata.NewRiskFilter(nil, nil))
+	if err != nil {
+		return nil, types.ListMeasureRisksOutput{}, fmt.Errorf("failed to list measure risks: %w", err)
+	}
+
+	return nil, types.NewListMeasureRisksOutput(riskPage), nil
+}
+
+func (r *Resolver) ListMeasureControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureControlsInput) (*mcp.CallToolResult, types.ListMeasureControlsOutput, error) {
+	r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+
+	prb := r.ProboService(ctx, input.MeasureID)
+
+	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
+		Field:     coredata.ControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	controlPage, err := prb.Controls.ListForMeasureID(ctx, input.MeasureID, cursor, coredata.NewControlFilter(nil))
+	if err != nil {
+		return nil, types.ListMeasureControlsOutput{}, fmt.Errorf("failed to list measure controls: %w", err)
+	}
+
+	return nil, types.NewListMeasureControlsOutput(controlPage), nil
+}
+
+func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureTasksInput) (*mcp.CallToolResult, types.ListMeasureTasksOutput, error) {
+	r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+
+	prb := r.ProboService(ctx, input.MeasureID)
+
+	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
+		Field:     coredata.TaskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	taskPage, err := prb.Tasks.ListForMeasureID(ctx, input.MeasureID, cursor)
+	if err != nil {
+		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("failed to list measure tasks: %w", err)
+	}
+
+	return nil, types.NewListMeasureTasksOutput(taskPage), nil
+}
+
+func (r *Resolver) ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureEvidencesInput) (*mcp.CallToolResult, types.ListMeasureEvidencesOutput, error) {
+	r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+
+	prb := r.ProboService(ctx, input.MeasureID)
+
+	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
+		Field:     coredata.EvidenceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	evidencePage, err := prb.Evidences.ListForMeasureID(ctx, input.MeasureID, cursor)
+	if err != nil {
+		return nil, types.ListMeasureEvidencesOutput{}, fmt.Errorf("failed to list measure evidences: %w", err)
+	}
+
+	return nil, types.NewListMeasureEvidencesOutput(evidencePage), nil
+}
+
+func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkMeasureInput) (*mcp.CallToolResult, types.LinkMeasureOutput, error) {
+	svc := r.ProboService(ctx, input.MeasureID)
+
+	switch input.ResourceID.EntityType() {
+	case coredata.ControlEntityType:
+		r.MustAuthorize(ctx, input.MeasureID, probo.ActionControlMeasureMappingCreate)
+		if _, _, err := svc.Controls.CreateMeasureMapping(ctx, input.ResourceID, input.MeasureID); err != nil {
+			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to control: %w", err)
+		}
+	case coredata.RiskEntityType:
+		r.MustAuthorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingCreate)
+		if _, _, err := svc.Risks.CreateMeasureMapping(ctx, input.ResourceID, input.MeasureID); err != nil {
+			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to risk: %w", err)
+		}
+	default:
+		return nil, types.LinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure linking: entity type %d", input.ResourceID.EntityType())
+	}
+
+	return nil, types.LinkMeasureOutput{}, nil
+}
+
+func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkMeasureInput) (*mcp.CallToolResult, types.UnlinkMeasureOutput, error) {
+	svc := r.ProboService(ctx, input.MeasureID)
+
+	switch input.ResourceID.EntityType() {
+	case coredata.ControlEntityType:
+		r.MustAuthorize(ctx, input.MeasureID, probo.ActionControlMeasureMappingDelete)
+		if _, _, err := svc.Controls.DeleteMeasureMapping(ctx, input.ResourceID, input.MeasureID); err != nil {
+			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from control: %w", err)
+		}
+	case coredata.RiskEntityType:
+		r.MustAuthorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingDelete)
+		if _, _, err := svc.Risks.DeleteMeasureMapping(ctx, input.ResourceID, input.MeasureID); err != nil {
+			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from risk: %w", err)
+		}
+	default:
+		return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure unlinking: entity type %d", input.ResourceID.EntityType())
+	}
+
+	return nil, types.UnlinkMeasureOutput{}, nil
 }
 
 func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListUsersInput) (*mcp.CallToolResult, types.ListUsersOutput, error) {

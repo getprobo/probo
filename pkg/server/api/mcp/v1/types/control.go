@@ -31,6 +31,24 @@ func NewControl(c *coredata.Control) *Control {
 	}
 }
 
+func NewListMeasureControlsOutput(controlPage *page.Page[*coredata.Control, coredata.ControlOrderField]) ListMeasureControlsOutput {
+	controls := make([]*Control, 0, len(controlPage.Data))
+	for _, c := range controlPage.Data {
+		controls = append(controls, NewControl(c))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(controlPage.Data) > 0 {
+		cursorKey := controlPage.Data[len(controlPage.Data)-1].CursorKey(controlPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListMeasureControlsOutput{
+		NextCursor: nextCursor,
+		Controls:   controls,
+	}
+}
+
 func NewListControlsOutput(controlPage *page.Page[*coredata.Control, coredata.ControlOrderField]) ListControlsOutput {
 	controls := make([]*Control, 0, len(controlPage.Data))
 	for _, c := range controlPage.Data {

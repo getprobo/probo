@@ -1271,6 +1271,213 @@ components:
           items:
             $ref: "#/components/schemas/Measure"
 
+    ListMeasureRisksInput:
+      type: object
+      required:
+        - measure_id
+      properties:
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/RiskOrderBy"
+          description: Risk order by
+
+    ListMeasureRisksOutput:
+      type: object
+      required:
+        - risks
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Risk"
+
+    ListMeasureControlsInput:
+      type: object
+      required:
+        - measure_id
+      properties:
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/ControlOrderBy"
+          description: Control order by
+
+    ListMeasureControlsOutput:
+      type: object
+      required:
+        - controls
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        controls:
+          type: array
+          items:
+            $ref: "#/components/schemas/Control"
+
+    ListMeasureTasksInput:
+      type: object
+      required:
+        - measure_id
+      properties:
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/TaskOrderBy"
+          description: Task order by
+
+    ListMeasureTasksOutput:
+      type: object
+      required:
+        - tasks
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+
+    ListMeasureEvidencesInput:
+      type: object
+      required:
+        - measure_id
+      properties:
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+
+    ListMeasureEvidencesOutput:
+      type: object
+      required:
+        - evidences
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        evidences:
+          type: array
+          items:
+            $ref: "#/components/schemas/Evidence"
+
+    Evidence:
+      type: object
+      required:
+        - id
+        - organization_id
+        - measure_id
+        - state
+        - reference_id
+        - type
+        - url
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        measure_id:
+          $ref: "#/components/schemas/GID"
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+          nullable: true
+        state:
+          type: string
+          enum:
+            - REQUESTED
+            - FULFILLED
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.EvidenceState
+        reference_id:
+          type: string
+          description: Reference ID
+        type:
+          type: string
+          enum:
+            - FILE
+            - LINK
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.EvidenceType
+        url:
+          type: string
+          description: URL
+        description:
+          type: string
+          description: Description
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    LinkMeasureInput:
+      type: object
+      required:
+        - measure_id
+        - resource_id
+      properties:
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the resource to link (control or risk)
+
+    LinkMeasureOutput:
+      type: object
+
+    UnlinkMeasureInput:
+      type: object
+      required:
+        - measure_id
+        - resource_id
+      properties:
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the resource to unlink (control or risk)
+
+    UnlinkMeasureOutput:
+      type: object
+
     GetMeasureInput:
       type: object
       required:
@@ -4085,6 +4292,69 @@ components:
     UnlinkControlSnapshotOutput:
       type: object
 
+    ListRiskObligationsInput:
+      type: object
+      required:
+        - risk_id
+      properties:
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/ObligationOrderBy"
+          description: Obligation order by
+
+    ListRiskObligationsOutput:
+      type: object
+      required:
+        - obligations
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        obligations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Obligation"
+
+    LinkRiskInput:
+      type: object
+      required:
+        - risk_id
+        - resource_id
+      properties:
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the resource to link (document, measure, or obligation)
+
+    LinkRiskOutput:
+      type: object
+
+    UnlinkRiskInput:
+      type: object
+      required:
+        - risk_id
+        - resource_id
+      properties:
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the resource to unlink (document, measure, or obligation)
+
+    UnlinkRiskOutput:
+      type: object
+
     TaskState:
       type: string
       enum:
@@ -5949,6 +6219,58 @@ tools:
       $ref: "#/components/schemas/DeleteMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteMeasureOutput"
+  - name: listMeasureRisks
+    description: List risks linked to a measure
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeasureRisksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeasureRisksOutput"
+  - name: listMeasureControls
+    description: List controls linked to a measure
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeasureControlsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeasureControlsOutput"
+  - name: listMeasureTasks
+    description: List tasks linked to a measure
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeasureTasksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeasureTasksOutput"
+  - name: listMeasureEvidences
+    description: List evidences linked to a measure
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListMeasureEvidencesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListMeasureEvidencesOutput"
+  - name: linkMeasure
+    description: Link a measure to a resource (control or risk). The resource type is determined from the resource_id GID.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkMeasureInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkMeasureOutput"
+  - name: unlinkMeasure
+    description: Unlink a measure from a resource (control or risk). The resource type is determined from the resource_id GID.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkMeasureInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkMeasureOutput"
   - name: listFrameworks
     description: List all frameworks for the organization
     hints:
@@ -6411,6 +6733,31 @@ tools:
       $ref: "#/components/schemas/UnlinkControlSnapshotInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkControlSnapshotOutput"
+  - name: listRiskObligations
+    description: List obligations linked to a risk
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskObligationsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskObligationsOutput"
+  - name: linkRisk
+    description: Link a risk to a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkRiskOutput"
+  - name: unlinkRisk
+    description: Unlink a risk from a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkRiskOutput"
   - name: listTasks
     description: List all tasks for the organization or measure
     hints:
