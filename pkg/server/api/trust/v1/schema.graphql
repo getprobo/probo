@@ -504,6 +504,7 @@ type TrustCenter implements Node {
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
   isViewerMember: Boolean! @goField(forceResolver: true)
+  isViewerSubscribedToNewsletter: Boolean! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
   documents(
@@ -786,4 +787,17 @@ type Mutation {
   recordSigningEvent(
     input: RecordSigningEventInput!
   ): RecordSigningEventPayload @session(required: PRESENT)
+
+  subscribeToNewsletter: SubscribeToNewsletterPayload! @session(required: PRESENT)
+  unsubscribeFromNewsletter: UnsubscribeFromNewsletterPayload! @session(required: PRESENT)
+}
+
+type SubscribeToNewsletterPayload {
+  success: Boolean!
+  trustCenter: TrustCenter!
+}
+
+type UnsubscribeFromNewsletterPayload {
+  success: Boolean!
+  trustCenter: TrustCenter!
 }

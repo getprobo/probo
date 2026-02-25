@@ -154,6 +154,8 @@ type ComplexityRoot struct {
 		RequestReportAccess          func(childComplexity int, input types.RequestReportAccessInput) int
 		RequestTrustCenterFileAccess func(childComplexity int, input types.RequestTrustCenterFileAccessInput) int
 		SendMagicLink                func(childComplexity int, input types.SendMagicLinkInput) int
+		SubscribeToNewsletter        func(childComplexity int) int
+		UnsubscribeFromNewsletter    func(childComplexity int) int
 		VerifyMagicLink              func(childComplexity int, input types.VerifyMagicLinkInput) int
 	}
 
@@ -205,20 +207,26 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
+	SubscribeToNewsletterPayload struct {
+		Success     func(childComplexity int) int
+		TrustCenter func(childComplexity int) int
+	}
+
 	TrustCenter struct {
-		Active                 func(childComplexity int) int
-		Audits                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		DarkLogoFileURL        func(childComplexity int) int
-		Documents              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		ID                     func(childComplexity int) int
-		IsViewerMember         func(childComplexity int) int
-		LogoFileURL            func(childComplexity int) int
-		NonDisclosureAgreement func(childComplexity int) int
-		Organization           func(childComplexity int) int
-		References             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		Slug                   func(childComplexity int) int
-		TrustCenterFiles       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		Vendors                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Active                         func(childComplexity int) int
+		Audits                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		DarkLogoFileURL                func(childComplexity int) int
+		Documents                      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		ID                             func(childComplexity int) int
+		IsViewerMember                 func(childComplexity int) int
+		IsViewerSubscribedToNewsletter func(childComplexity int) int
+		LogoFileURL                    func(childComplexity int) int
+		NonDisclosureAgreement         func(childComplexity int) int
+		Organization                   func(childComplexity int) int
+		References                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Slug                           func(childComplexity int) int
+		TrustCenterFiles               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Vendors                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 	}
 
 	TrustCenterAccess struct {
@@ -263,6 +271,11 @@ type ComplexityRoot struct {
 	TrustCenterReferenceEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	UnsubscribeFromNewsletterPayload struct {
+		Success     func(childComplexity int) int
+		TrustCenter func(childComplexity int) int
 	}
 
 	Vendor struct {
@@ -315,6 +328,8 @@ type MutationResolver interface {
 	RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error)
 	AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error)
 	RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error)
+	SubscribeToNewsletter(ctx context.Context) (*types.SubscribeToNewsletterPayload, error)
+	UnsubscribeFromNewsletter(ctx context.Context) (*types.UnsubscribeFromNewsletterPayload, error)
 }
 type NonDisclosureAgreementResolver interface {
 	FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error)
@@ -337,6 +352,7 @@ type TrustCenterResolver interface {
 	DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	NonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (*types.NonDisclosureAgreement, error)
 	IsViewerMember(ctx context.Context, obj *types.TrustCenter) (bool, error)
+	IsViewerSubscribedToNewsletter(ctx context.Context, obj *types.TrustCenter) (bool, error)
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error)
 	Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error)
@@ -720,6 +736,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.SendMagicLink(childComplexity, args["input"].(types.SendMagicLinkInput)), true
+	case "Mutation.subscribeToNewsletter":
+		if e.complexity.Mutation.SubscribeToNewsletter == nil {
+			break
+		}
+
+		return e.complexity.Mutation.SubscribeToNewsletter(childComplexity), true
+	case "Mutation.unsubscribeFromNewsletter":
+		if e.complexity.Mutation.UnsubscribeFromNewsletter == nil {
+			break
+		}
+
+		return e.complexity.Mutation.UnsubscribeFromNewsletter(childComplexity), true
 	case "Mutation.verifyMagicLink":
 		if e.complexity.Mutation.VerifyMagicLink == nil {
 			break
@@ -889,6 +917,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SendMagicLinkPayload.Success(childComplexity), true
 
+	case "SubscribeToNewsletterPayload.success":
+		if e.complexity.SubscribeToNewsletterPayload.Success == nil {
+			break
+		}
+
+		return e.complexity.SubscribeToNewsletterPayload.Success(childComplexity), true
+	case "SubscribeToNewsletterPayload.trustCenter":
+		if e.complexity.SubscribeToNewsletterPayload.TrustCenter == nil {
+			break
+		}
+
+		return e.complexity.SubscribeToNewsletterPayload.TrustCenter(childComplexity), true
+
 	case "TrustCenter.active":
 		if e.complexity.TrustCenter.Active == nil {
 			break
@@ -935,6 +976,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.IsViewerMember(childComplexity), true
+	case "TrustCenter.isViewerSubscribedToNewsletter":
+		if e.complexity.TrustCenter.IsViewerSubscribedToNewsletter == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.IsViewerSubscribedToNewsletter(childComplexity), true
 	case "TrustCenter.logoFileUrl":
 		if e.complexity.TrustCenter.LogoFileURL == nil {
 			break
@@ -1137,6 +1184,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterReferenceEdge.Node(childComplexity), true
+
+	case "UnsubscribeFromNewsletterPayload.success":
+		if e.complexity.UnsubscribeFromNewsletterPayload.Success == nil {
+			break
+		}
+
+		return e.complexity.UnsubscribeFromNewsletterPayload.Success(childComplexity), true
+	case "UnsubscribeFromNewsletterPayload.trustCenter":
+		if e.complexity.UnsubscribeFromNewsletterPayload.TrustCenter == nil {
+			break
+		}
+
+		return e.complexity.UnsubscribeFromNewsletterPayload.TrustCenter(childComplexity), true
 
 	case "Vendor.category":
 		if e.complexity.Vendor.Category == nil {
@@ -1841,6 +1901,7 @@ type TrustCenter implements Node {
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
   isViewerMember: Boolean! @goField(forceResolver: true)
+  isViewerSubscribedToNewsletter: Boolean! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
   documents(
@@ -2123,6 +2184,19 @@ type Mutation {
   recordSigningEvent(
     input: RecordSigningEventInput!
   ): RecordSigningEventPayload @session(required: PRESENT)
+
+  subscribeToNewsletter: SubscribeToNewsletterPayload! @session(required: PRESENT)
+  unsubscribeFromNewsletter: UnsubscribeFromNewsletterPayload! @session(required: PRESENT)
+}
+
+type SubscribeToNewsletterPayload {
+  success: Boolean!
+  trustCenter: TrustCenter!
+}
+
+type UnsubscribeFromNewsletterPayload {
+  success: Boolean!
+  trustCenter: TrustCenter!
 }
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
@@ -4369,6 +4443,112 @@ func (ec *executionContext) fieldContext_Mutation_recordSigningEvent(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_subscribeToNewsletter(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_subscribeToNewsletter,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Mutation().SubscribeToNewsletter(ctx)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.SubscribeToNewsletterPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.SubscribeToNewsletterPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNSubscribeToNewsletterPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSubscribeToNewsletterPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_subscribeToNewsletter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_SubscribeToNewsletterPayload_success(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_SubscribeToNewsletterPayload_trustCenter(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SubscribeToNewsletterPayload", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unsubscribeFromNewsletter(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_unsubscribeFromNewsletter,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Mutation().UnsubscribeFromNewsletter(ctx)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.UnsubscribeFromNewsletterPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.UnsubscribeFromNewsletterPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNUnsubscribeFromNewsletterPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUnsubscribeFromNewsletterPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unsubscribeFromNewsletter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_UnsubscribeFromNewsletterPayload_success(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_UnsubscribeFromNewsletterPayload_trustCenter(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UnsubscribeFromNewsletterPayload", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _NonDisclosureAgreement_fileName(ctx context.Context, field graphql.CollectedField, obj *types.NonDisclosureAgreement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4915,6 +5095,8 @@ func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_nonDisclosureAgreement(ctx, field)
 			case "isViewerMember":
 				return ec.fieldContext_TrustCenter_isViewerMember(ctx, field)
+			case "isViewerSubscribedToNewsletter":
+				return ec.fieldContext_TrustCenter_isViewerSubscribedToNewsletter(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenter_organization(ctx, field)
 			case "documents":
@@ -5257,6 +5439,94 @@ func (ec *executionContext) fieldContext_SendMagicLinkPayload_success(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _SubscribeToNewsletterPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.SubscribeToNewsletterPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SubscribeToNewsletterPayload_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SubscribeToNewsletterPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscribeToNewsletterPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscribeToNewsletterPayload_trustCenter(ctx context.Context, field graphql.CollectedField, obj *types.SubscribeToNewsletterPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SubscribeToNewsletterPayload_trustCenter,
+		func(ctx context.Context) (any, error) {
+			return obj.TrustCenter, nil
+		},
+		nil,
+		ec.marshalNTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SubscribeToNewsletterPayload_trustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscribeToNewsletterPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenter_id(ctx, field)
+			case "active":
+				return ec.fieldContext_TrustCenter_active(ctx, field)
+			case "slug":
+				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "logoFileUrl":
+				return ec.fieldContext_TrustCenter_logoFileUrl(ctx, field)
+			case "darkLogoFileUrl":
+				return ec.fieldContext_TrustCenter_darkLogoFileUrl(ctx, field)
+			case "nonDisclosureAgreement":
+				return ec.fieldContext_TrustCenter_nonDisclosureAgreement(ctx, field)
+			case "isViewerMember":
+				return ec.fieldContext_TrustCenter_isViewerMember(ctx, field)
+			case "isViewerSubscribedToNewsletter":
+				return ec.fieldContext_TrustCenter_isViewerSubscribedToNewsletter(ctx, field)
+			case "organization":
+				return ec.fieldContext_TrustCenter_organization(ctx, field)
+			case "documents":
+				return ec.fieldContext_TrustCenter_documents(ctx, field)
+			case "audits":
+				return ec.fieldContext_TrustCenter_audits(ctx, field)
+			case "vendors":
+				return ec.fieldContext_TrustCenter_vendors(ctx, field)
+			case "references":
+				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_TrustCenter_trustCenterFiles(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenter_id(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5456,6 +5726,35 @@ func (ec *executionContext) _TrustCenter_isViewerMember(ctx context.Context, fie
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_isViewerMember(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_isViewerSubscribedToNewsletter(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_isViewerSubscribedToNewsletter,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.TrustCenter().IsViewerSubscribedToNewsletter(ctx, obj)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_isViewerSubscribedToNewsletter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenter",
 		Field:      field,
@@ -6468,6 +6767,94 @@ func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_node(_ context
 				return ec.fieldContext_TrustCenterReference_logoUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UnsubscribeFromNewsletterPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.UnsubscribeFromNewsletterPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UnsubscribeFromNewsletterPayload_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UnsubscribeFromNewsletterPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UnsubscribeFromNewsletterPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UnsubscribeFromNewsletterPayload_trustCenter(ctx context.Context, field graphql.CollectedField, obj *types.UnsubscribeFromNewsletterPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UnsubscribeFromNewsletterPayload_trustCenter,
+		func(ctx context.Context) (any, error) {
+			return obj.TrustCenter, nil
+		},
+		nil,
+		ec.marshalNTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UnsubscribeFromNewsletterPayload_trustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UnsubscribeFromNewsletterPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenter_id(ctx, field)
+			case "active":
+				return ec.fieldContext_TrustCenter_active(ctx, field)
+			case "slug":
+				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "logoFileUrl":
+				return ec.fieldContext_TrustCenter_logoFileUrl(ctx, field)
+			case "darkLogoFileUrl":
+				return ec.fieldContext_TrustCenter_darkLogoFileUrl(ctx, field)
+			case "nonDisclosureAgreement":
+				return ec.fieldContext_TrustCenter_nonDisclosureAgreement(ctx, field)
+			case "isViewerMember":
+				return ec.fieldContext_TrustCenter_isViewerMember(ctx, field)
+			case "isViewerSubscribedToNewsletter":
+				return ec.fieldContext_TrustCenter_isViewerSubscribedToNewsletter(ctx, field)
+			case "organization":
+				return ec.fieldContext_TrustCenter_organization(ctx, field)
+			case "documents":
+				return ec.fieldContext_TrustCenter_documents(ctx, field)
+			case "audits":
+				return ec.fieldContext_TrustCenter_audits(ctx, field)
+			case "vendors":
+				return ec.fieldContext_TrustCenter_vendors(ctx, field)
+			case "references":
+				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_TrustCenter_trustCenterFiles(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
 		},
 	}
 	return fc, nil
@@ -9604,6 +9991,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_recordSigningEvent(ctx, field)
 			})
+		case "subscribeToNewsletter":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_subscribeToNewsletter(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unsubscribeFromNewsletter":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unsubscribeFromNewsletter(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10211,6 +10612,50 @@ func (ec *executionContext) _SendMagicLinkPayload(ctx context.Context, sel ast.S
 	return out
 }
 
+var subscribeToNewsletterPayloadImplementors = []string{"SubscribeToNewsletterPayload"}
+
+func (ec *executionContext) _SubscribeToNewsletterPayload(ctx context.Context, sel ast.SelectionSet, obj *types.SubscribeToNewsletterPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscribeToNewsletterPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SubscribeToNewsletterPayload")
+		case "success":
+			out.Values[i] = ec._SubscribeToNewsletterPayload_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "trustCenter":
+			out.Values[i] = ec._SubscribeToNewsletterPayload_trustCenter(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var trustCenterImplementors = []string{"TrustCenter", "Node"}
 
 func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionSet, obj *types.TrustCenter) graphql.Marshaler {
@@ -10346,6 +10791,42 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 					}
 				}()
 				res = ec._TrustCenter_isViewerMember(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "isViewerSubscribedToNewsletter":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_isViewerSubscribedToNewsletter(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11028,6 +11509,50 @@ func (ec *executionContext) _TrustCenterReferenceEdge(ctx context.Context, sel a
 			}
 		case "node":
 			out.Values[i] = ec._TrustCenterReferenceEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var unsubscribeFromNewsletterPayloadImplementors = []string{"UnsubscribeFromNewsletterPayload"}
+
+func (ec *executionContext) _UnsubscribeFromNewsletterPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UnsubscribeFromNewsletterPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, unsubscribeFromNewsletterPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UnsubscribeFromNewsletterPayload")
+		case "success":
+			out.Values[i] = ec._UnsubscribeFromNewsletterPayload_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "trustCenter":
+			out.Values[i] = ec._UnsubscribeFromNewsletterPayload_trustCenter(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -12802,6 +13327,30 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNSubscribeToNewsletterPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSubscribeToNewsletterPayload(ctx context.Context, sel ast.SelectionSet, v types.SubscribeToNewsletterPayload) graphql.Marshaler {
+	return ec._SubscribeToNewsletterPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSubscribeToNewsletterPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSubscribeToNewsletterPayload(ctx context.Context, sel ast.SelectionSet, v *types.SubscribeToNewsletterPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SubscribeToNewsletterPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenter) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TrustCenter(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNTrustCenterAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterAccess(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterAccess) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -12966,6 +13515,20 @@ func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚖgoᚗproboᚗinc
 		return graphql.Null
 	}
 	return ec._TrustCenterReferenceEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUnsubscribeFromNewsletterPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUnsubscribeFromNewsletterPayload(ctx context.Context, sel ast.SelectionSet, v types.UnsubscribeFromNewsletterPayload) graphql.Marshaler {
+	return ec._UnsubscribeFromNewsletterPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUnsubscribeFromNewsletterPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUnsubscribeFromNewsletterPayload(ctx context.Context, sel ast.SelectionSet, v *types.UnsubscribeFromNewsletterPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UnsubscribeFromNewsletterPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNVendor2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendor(ctx context.Context, sel ast.SelectionSet, v *types.Vendor) graphql.Marshaler {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c89278f85dedf2e3c5d8dbd77cd19222>>
+ * @generated SignedSource<<ac33b3054a60c6c2ae8bfd113b69b452>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,7 @@ export type TrustGraphCurrentQuery$data = {
     readonly darkLogoFileUrl: string | null | undefined;
     readonly id: string;
     readonly isViewerMember: boolean;
+    readonly isViewerSubscribedToNewsletter: boolean;
     readonly logoFileUrl: string | null | undefined;
     readonly nonDisclosureAgreement: {
       readonly fileName: string;
@@ -96,66 +97,73 @@ v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "logoFileUrl",
+  "name": "isViewerSubscribedToNewsletter",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "darkLogoFileUrl",
+  "name": "logoFileUrl",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "fileName",
+  "name": "darkLogoFileUrl",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "fileUrl",
+  "name": "fileName",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "status",
+  "name": "fileUrl",
   "storageKey": null
 },
 v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "status",
   "storageKey": null
 },
 v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "description",
+  "name": "name",
   "storageKey": null
 },
 v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "websiteUrl",
+  "name": "description",
   "storageKey": null
 },
 v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "headquarterAddress",
+  "name": "websiteUrl",
   "storageKey": null
 },
 v14 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "headquarterAddress",
+  "storageKey": null
+},
+v15 = {
   "alias": "vendorInfo",
   "args": [
     {
@@ -179,28 +187,28 @@ v14 = {
   ],
   "storageKey": "vendors(first:0)"
 },
-v15 = [
+v16 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 50
   }
 ],
-v16 = [
+v17 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 5
   }
 ],
-v17 = {
+v18 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "isUserAuthorized",
   "storageKey": null
 },
-v18 = {
+v19 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -240,6 +248,7 @@ return {
           (v4/*: any*/),
           (v5/*: any*/),
           (v6/*: any*/),
+          (v7/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -248,8 +257,8 @@ return {
             "name": "nonDisclosureAgreement",
             "plural": false,
             "selections": [
-              (v7/*: any*/),
               (v8/*: any*/),
+              (v9/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -258,7 +267,7 @@ return {
                 "name": "viewerSignature",
                 "plural": false,
                 "selections": [
-                  (v9/*: any*/)
+                  (v10/*: any*/)
                 ],
                 "storageKey": null
               }
@@ -273,11 +282,11 @@ return {
             "name": "organization",
             "plural": false,
             "selections": [
-              (v10/*: any*/),
               (v11/*: any*/),
               (v12/*: any*/),
+              (v13/*: any*/),
               (v0/*: any*/),
-              (v13/*: any*/)
+              (v14/*: any*/)
             ],
             "storageKey": null
           },
@@ -286,10 +295,10 @@ return {
             "kind": "FragmentSpread",
             "name": "OverviewPageFragment"
           },
-          (v14/*: any*/),
+          (v15/*: any*/),
           {
             "alias": null,
-            "args": (v15/*: any*/),
+            "args": (v16/*: any*/),
             "concreteType": "AuditConnection",
             "kind": "LinkedField",
             "name": "audits",
@@ -366,6 +375,7 @@ return {
           (v4/*: any*/),
           (v5/*: any*/),
           (v6/*: any*/),
+          (v7/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -374,8 +384,8 @@ return {
             "name": "nonDisclosureAgreement",
             "plural": false,
             "selections": [
-              (v7/*: any*/),
               (v8/*: any*/),
+              (v9/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -384,7 +394,7 @@ return {
                 "name": "viewerSignature",
                 "plural": false,
                 "selections": [
-                  (v9/*: any*/),
+                  (v10/*: any*/),
                   (v2/*: any*/)
                 ],
                 "storageKey": null
@@ -400,11 +410,11 @@ return {
             "name": "organization",
             "plural": false,
             "selections": [
-              (v10/*: any*/),
               (v11/*: any*/),
               (v12/*: any*/),
-              (v0/*: any*/),
               (v13/*: any*/),
+              (v0/*: any*/),
+              (v14/*: any*/),
               (v2/*: any*/)
             ],
             "storageKey": null
@@ -440,7 +450,7 @@ return {
                     "plural": false,
                     "selections": [
                       (v2/*: any*/),
-                      (v10/*: any*/),
+                      (v11/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -448,7 +458,7 @@ return {
                         "name": "logoUrl",
                         "storageKey": null
                       },
-                      (v12/*: any*/)
+                      (v13/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -496,9 +506,9 @@ return {
                         "name": "countries",
                         "storageKey": null
                       },
-                      (v10/*: any*/),
                       (v11/*: any*/),
-                      (v12/*: any*/)
+                      (v12/*: any*/),
+                      (v13/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -510,7 +520,7 @@ return {
           },
           {
             "alias": null,
-            "args": (v16/*: any*/),
+            "args": (v17/*: any*/),
             "concreteType": "DocumentConnection",
             "kind": "LinkedField",
             "name": "documents",
@@ -540,8 +550,8 @@ return {
                         "name": "title",
                         "storageKey": null
                       },
-                      (v17/*: any*/),
                       (v18/*: any*/),
+                      (v19/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -560,7 +570,7 @@ return {
           },
           {
             "alias": null,
-            "args": (v16/*: any*/),
+            "args": (v17/*: any*/),
             "concreteType": "TrustCenterFileConnection",
             "kind": "LinkedField",
             "name": "trustCenterFiles",
@@ -590,9 +600,9 @@ return {
                         "name": "category",
                         "storageKey": null
                       },
-                      (v10/*: any*/),
-                      (v17/*: any*/),
-                      (v18/*: any*/)
+                      (v11/*: any*/),
+                      (v18/*: any*/),
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -602,10 +612,10 @@ return {
             ],
             "storageKey": "trustCenterFiles(first:5)"
           },
-          (v14/*: any*/),
+          (v15/*: any*/),
           {
             "alias": null,
-            "args": (v15/*: any*/),
+            "args": (v16/*: any*/),
             "concreteType": "AuditConnection",
             "kind": "LinkedField",
             "name": "audits",
@@ -644,8 +654,8 @@ return {
                             "name": "filename",
                             "storageKey": null
                           },
-                          (v17/*: any*/),
-                          (v18/*: any*/)
+                          (v18/*: any*/),
+                          (v19/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -658,7 +668,7 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
-                          (v10/*: any*/),
+                          (v11/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -691,16 +701,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "011070e93164ecde082cc2e74651ef2e",
+    "cacheID": "601193421ba9dab3d3d00e86a1321f78",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentQuery {\n  viewer {\n    email\n    fullName\n    id\n  }\n  currentTrustCenter {\n    id\n    slug\n    isViewerMember\n    logoFileUrl\n    darkLogoFileUrl\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    organization {\n      name\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    vendorInfo: vendors(first: 0) {\n      totalCount\n    }\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
+    "text": "query TrustGraphCurrentQuery {\n  viewer {\n    email\n    fullName\n    id\n  }\n  currentTrustCenter {\n    id\n    slug\n    isViewerMember\n    isViewerSubscribedToNewsletter\n    logoFileUrl\n    darkLogoFileUrl\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    organization {\n      name\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    vendorInfo: vendors(first: 0) {\n      totalCount\n    }\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6cbe676214b698d12e2cae08060a7285";
+(node as any).hash = "6de514b2cc62230e84d3015367de6886";
 
 export default node;

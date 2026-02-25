@@ -1614,7 +1614,32 @@ type TrustCenter implements Node {
         orderBy: TrustCenterReferenceOrder
     ): TrustCenterReferenceConnection! @goField(forceResolver: true)
 
+    newsletterSubscribers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): ComplianceNewsletterSubscriberConnection! @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ComplianceNewsletterSubscriber implements Node {
+    id: ID!
+    email: EmailAddr!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ComplianceNewsletterSubscriberConnection {
+    edges: [ComplianceNewsletterSubscriberEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type ComplianceNewsletterSubscriberEdge {
+    cursor: CursorKey!
+    node: ComplianceNewsletterSubscriber!
 }
 
 type Organization implements Node {
@@ -3225,6 +3250,10 @@ type Mutation {
     deleteTrustCenterAccess(
         input: DeleteTrustCenterAccessInput!
     ): DeleteTrustCenterAccessPayload!
+    # Newsletter Subscriber mutations
+    deleteNewsletterSubscriber(
+        input: DeleteNewsletterSubscriberInput!
+    ): DeleteNewsletterSubscriberPayload!
     # Trust Center Reference mutations
     createTrustCenterReference(
         input: CreateTrustCenterReferenceInput!
@@ -3611,6 +3640,10 @@ input UpdateTrustCenterAccessInput {
 }
 
 input DeleteTrustCenterAccessInput {
+    id: ID!
+}
+
+input DeleteNewsletterSubscriberInput {
     id: ID!
 }
 
@@ -4436,6 +4469,10 @@ type UpdateTrustCenterAccessPayload {
 
 type DeleteTrustCenterAccessPayload {
     deletedTrustCenterAccessId: ID!
+}
+
+type DeleteNewsletterSubscriberPayload {
+    deletedNewsletterSubscriberId: ID!
 }
 
 type CreateTrustCenterReferencePayload {
