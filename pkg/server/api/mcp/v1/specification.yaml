@@ -30,6 +30,45 @@ components:
         - NAME
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorOrderField
 
+    VendorRiskAssessmentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - EXPIRES_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorRiskAssessmentOrderField
+
+    VendorRiskAssessmentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/VendorRiskAssessmentOrderField"
+          description: Vendor risk assessment order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Vendor risk assessment order direction
+
+    DataSensitivity:
+      type: string
+      enum:
+        - NONE
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DataSensitivity
+
+    BusinessImpact:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BusinessImpact
+
     VendorOrderBy:
       type: object
       required:
@@ -406,6 +445,120 @@ components:
           type: string
           format: date-time
           description: Update timestamp
+
+    VendorRiskAssessment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - vendor_id
+        - expires_at
+        - data_sensitivity
+        - business_impact
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor risk assessment ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+        data_sensitivity:
+          $ref: "#/components/schemas/DataSensitivity"
+          description: Data sensitivity level
+        business_impact:
+          $ref: "#/components/schemas/BusinessImpact"
+          description: Business impact level
+        notes:
+          type:
+            - string
+            - "null"
+          description: Notes
+        snapshot_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Snapshot ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListVendorRiskAssessmentsInput:
+      type: object
+      required:
+        - vendor_id
+      properties:
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        order_by:
+          $ref: "#/components/schemas/VendorRiskAssessmentOrderBy"
+          description: Vendor risk assessment order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListVendorRiskAssessmentsOutput:
+      type: object
+      required:
+        - vendor_risk_assessments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        vendor_risk_assessments:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorRiskAssessment"
+
+    AddVendorRiskAssessmentInput:
+      type: object
+      required:
+        - vendor_id
+        - expires_at
+        - data_sensitivity
+        - business_impact
+      properties:
+        vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+        data_sensitivity:
+          $ref: "#/components/schemas/DataSensitivity"
+          description: Data sensitivity level
+        business_impact:
+          $ref: "#/components/schemas/BusinessImpact"
+          description: Business impact level
+        notes:
+          type: string
+          description: Notes
+
+    AddVendorRiskAssessmentOutput:
+      type: object
+      required:
+        - vendor_risk_assessment
+      properties:
+        vendor_risk_assessment:
+          $ref: "#/components/schemas/VendorRiskAssessment"
 
     AddVendorInput:
       type: object
@@ -6133,6 +6286,23 @@ tools:
       $ref: "#/components/schemas/UpdateVendorInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateVendorOutput"
+  - name: listVendorRiskAssessments
+    description: List all risk assessments for a vendor
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListVendorRiskAssessmentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListVendorRiskAssessmentsOutput"
+  - name: addVendorRiskAssessment
+    description: Add a new risk assessment for a vendor
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddVendorRiskAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddVendorRiskAssessmentOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:

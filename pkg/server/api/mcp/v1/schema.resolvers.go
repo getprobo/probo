@@ -3023,3 +3023,55 @@ func (r *Resolver) DeleteApplicabilityStatementTool(ctx context.Context, req *mc
 		DeletedApplicabilityStatementID: input.ID,
 	}, nil
 }
+
+// ListVendorRiskAssessmentsTool handles the listVendorRiskAssessments tool
+// List all risk assessments for a vendor
+func (r *Resolver) ListVendorRiskAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorRiskAssessmentsInput) (*mcp.CallToolResult, types.ListVendorRiskAssessmentsOutput, error) {
+	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorRiskAssessmentList)
+
+	prb := r.ProboService(ctx, input.VendorID)
+
+	pageOrderBy := page.OrderBy[coredata.VendorRiskAssessmentOrderField]{
+		Field:     coredata.VendorRiskAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorRiskAssessmentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := prb.Vendors.ListRiskAssessments(ctx, input.VendorID, cursor)
+	if err != nil {
+		return nil, types.ListVendorRiskAssessmentsOutput{}, fmt.Errorf("cannot list vendor risk assessments: %w", err)
+	}
+
+	return nil, types.NewListVendorRiskAssessmentsOutput(p), nil
+}
+
+// AddVendorRiskAssessmentTool handles the addVendorRiskAssessment tool
+// Add a new risk assessment for a vendor
+func (r *Resolver) AddVendorRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorRiskAssessmentInput) (*mcp.CallToolResult, types.AddVendorRiskAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorRiskAssessmentCreate)
+
+	prb := r.ProboService(ctx, input.VendorID)
+
+	assessment, err := prb.Vendors.CreateRiskAssessment(
+		ctx,
+		probo.CreateVendorRiskAssessmentRequest{
+			VendorID:        input.VendorID,
+			ExpiresAt:       input.ExpiresAt,
+			DataSensitivity: input.DataSensitivity,
+			BusinessImpact:  input.BusinessImpact,
+			Notes:           input.Notes,
+		},
+	)
+	if err != nil {
+		return nil, types.AddVendorRiskAssessmentOutput{}, fmt.Errorf("failed to create vendor risk assessment: %w", err)
+	}
+
+	return nil, types.NewAddVendorRiskAssessmentOutput(assessment), nil
+}

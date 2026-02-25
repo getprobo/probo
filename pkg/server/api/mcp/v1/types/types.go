@@ -51,6 +51,8 @@ var (
 	AddTaskToolOutputSchema                              = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"task":{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"deadline":{"description":"Deadline","anyOf":[{"type":"string","description":"Deadline","format":"date-time"},{"type":"null","description":"No deadline"}]},"description":{"description":"Task description","anyOf":[{"type":"string","description":"Task description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["TODO","DONE"]},"time_estimate":{"description":"Time estimate","anyOf":[{"type":"string","description":"A duration"},{"type":"null","description":"No time estimate"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","state","created_at","updated_at"]}},"required":["task"]}`)
 	AddTransferImpactAssessmentToolInputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"data_subjects":{"type":"string"},"legal_mechanism":{"type":"string"},"local_law_risk":{"type":"string"},"processing_activity_id":{"type":"string","format":"string"},"supplementary_measures":{"type":"string"},"transfer":{"type":"string"}},"required":["processing_activity_id"]}`)
 	AddTransferImpactAssessmentToolOutputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"transfer_impact_assessment":{"type":"object","properties":{"created_at":{"type":"string","format":"date-time"},"data_subjects":{"type":["string","null"]},"id":{"type":"string","format":"string"},"legal_mechanism":{"type":["string","null"]},"local_law_risk":{"type":["string","null"]},"organization_id":{"type":"string","format":"string"},"processing_activity_id":{"type":"string","format":"string"},"supplementary_measures":{"type":["string","null"]},"transfer":{"type":["string","null"]},"updated_at":{"type":"string","format":"date-time"}},"required":["id","organization_id","processing_activity_id","created_at","updated_at"]}},"required":["transfer_impact_assessment"]}`)
+	AddVendorRiskAssessmentToolInputSchema               = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"business_impact":{"type":"string","enum":["LOW","MEDIUM","HIGH","CRITICAL"]},"data_sensitivity":{"type":"string","enum":["NONE","LOW","MEDIUM","HIGH","CRITICAL"]},"expires_at":{"type":"string","description":"Expiration timestamp","format":"date-time"},"notes":{"type":"string","description":"Notes"},"vendor_id":{"type":"string","format":"string"}},"required":["vendor_id","expires_at","data_sensitivity","business_impact"]}`)
+	AddVendorRiskAssessmentToolOutputSchema              = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"vendor_risk_assessment":{"type":"object","properties":{"business_impact":{"type":"string","enum":["LOW","MEDIUM","HIGH","CRITICAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_sensitivity":{"type":"string","enum":["NONE","LOW","MEDIUM","HIGH","CRITICAL"]},"expires_at":{"type":"string","description":"Expiration timestamp","format":"date-time"},"id":{"type":"string","format":"string"},"notes":{"type":["string","null"],"description":"Notes"},"organization_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"vendor_id":{"type":"string","format":"string"}},"required":["id","organization_id","vendor_id","expires_at","data_sensitivity","business_impact","created_at","updated_at"]}},"required":["vendor_risk_assessment"]}`)
 	AddVendorToolInputSchema                             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"business_associate_agreement_url":{"type":"string","description":"Business associate agreement URL"},"business_owner_id":{"type":"string","format":"string"},"category":{"type":"string","description":"Vendor category","enum":["ANALYTICS","CLOUD_MONITORING","CLOUD_PROVIDER","COLLABORATION","CUSTOMER_SUPPORT","DATA_STORAGE_AND_PROCESSING","DOCUMENT_MANAGEMENT","EMPLOYEE_MANAGEMENT","ENGINEERING","FINANCE","IDENTITY_PROVIDER","IT","MARKETING","OFFICE_OPERATIONS","OTHER","PASSWORD_MANAGEMENT","PRODUCT_AND_DESIGN","PROFESSIONAL_SERVICES","RECRUITING","SALES","SECURITY","VERSION_CONTROL"]},"certifications":{"type":"array","items":{"type":"string"},"description":"Certifications"},"countries":{"type":"array","items":{"type":"string"},"description":"Countries (ISO 3166-1 alpha-2 country codes)"},"data_processing_agreement_url":{"type":"string","description":"Data processing agreement URL"},"description":{"type":"string","description":"Vendor description"},"headquarter_address":{"type":"string","description":"Headquarter address"},"legal_name":{"type":"string","description":"Legal name"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"privacy_policy_url":{"type":"string","description":"Privacy policy URL"},"security_owner_id":{"type":"string","format":"string"},"security_page_url":{"type":"string","description":"Security page URL"},"service_level_agreement_url":{"type":"string","description":"Service level agreement URL"},"status_page_url":{"type":"string","description":"Status page URL"},"subprocessors_list_url":{"type":"string","description":"Subprocessors list URL"},"terms_of_service_url":{"type":"string","description":"Terms of service URL"},"trust_page_url":{"type":"string","description":"Trust page URL"},"website_url":{"type":"string","description":"Website URL"}},"required":["organization_id","name"]}`)
 	AddVendorToolOutputSchema                            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"vendor":{"type":"object","properties":{"business_associate_agreement_url":{"type":["string","null"],"description":"Business associate agreement URL"},"business_owner_id":{"description":"Business owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"category":{"type":"string","description":"Vendor category","enum":["ANALYTICS","CLOUD_MONITORING","CLOUD_PROVIDER","COLLABORATION","CUSTOMER_SUPPORT","DATA_STORAGE_AND_PROCESSING","DOCUMENT_MANAGEMENT","EMPLOYEE_MANAGEMENT","ENGINEERING","FINANCE","IDENTITY_PROVIDER","IT","MARKETING","OFFICE_OPERATIONS","OTHER","PASSWORD_MANAGEMENT","PRODUCT_AND_DESIGN","PROFESSIONAL_SERVICES","RECRUITING","SALES","SECURITY","VERSION_CONTROL"]},"certifications":{"type":"array","items":{"type":"string"},"description":"Certifications"},"countries":{"type":"array","items":{"type":"string"},"description":"Countries (ISO 3166-1 alpha-2 country codes)"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_processing_agreement_url":{"type":["string","null"],"description":"Data processing agreement URL"},"description":{"type":["string","null"],"description":"Vendor description"},"headquarter_address":{"type":["string","null"],"description":"Headquarter address"},"id":{"type":"string","format":"string"},"legal_name":{"type":["string","null"],"description":"Legal name"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"privacy_policy_url":{"type":["string","null"],"description":"Privacy policy URL"},"security_owner_id":{"description":"Security owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"security_page_url":{"type":["string","null"],"description":"Security page URL"},"service_level_agreement_url":{"type":["string","null"],"description":"Service level agreement URL"},"status_page_url":{"type":["string","null"],"description":"Status page URL"},"subprocessors_list_url":{"type":["string","null"],"description":"Subprocessors list URL"},"terms_of_service_url":{"type":["string","null"],"description":"Terms of service URL"},"trust_page_url":{"type":["string","null"],"description":"Trust page URL"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"website_url":{"type":["string","null"],"description":"Website URL"}},"required":["id","name","organization_id","category","created_at","updated_at"]}},"required":["vendor"]}`)
 	AssignTaskToolInputSchema                            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"assigned_to_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"}},"required":["id","assigned_to_id"]}`)
@@ -201,6 +203,8 @@ var (
 	ListTransferImpactAssessmentsToolOutputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"transfer_impact_assessments":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","format":"date-time"},"data_subjects":{"type":["string","null"]},"id":{"type":"string","format":"string"},"legal_mechanism":{"type":["string","null"]},"local_law_risk":{"type":["string","null"]},"organization_id":{"type":"string","format":"string"},"processing_activity_id":{"type":"string","format":"string"},"supplementary_measures":{"type":["string","null"]},"transfer":{"type":["string","null"]},"updated_at":{"type":"string","format":"date-time"}},"required":["id","organization_id","processing_activity_id","created_at","updated_at"]}}},"required":["transfer_impact_assessments"]}`)
 	ListUsersToolInputSchema                             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"exclude_contract_ended":{"type":"boolean","description":"Exclude users with ended contracts"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","FULL_NAME","KIND"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListUsersToolOutputSchema                            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"users":{"type":"array","items":{"type":"object","properties":{"additional_email_addresses":{"type":"array","items":{"type":"string","format":"string"},"description":"Additional email addresses"},"contract_end_date":{"type":["string","null"],"description":"Contract end date","format":"date-time"},"contract_start_date":{"type":["string","null"],"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"email_address":{"type":"string","format":"string"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"type":["string","null"],"description":"Position"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","full_name","email_address","additional_email_addresses","kind","created_at","updated_at"]}}},"required":["users"]}`)
+	ListVendorRiskAssessmentsToolInputSchema             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","EXPIRES_AT"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"},"vendor_id":{"type":"string","format":"string"}},"required":["vendor_id"]}`)
+	ListVendorRiskAssessmentsToolOutputSchema            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"vendor_risk_assessments":{"type":"array","items":{"type":"object","properties":{"business_impact":{"type":"string","enum":["LOW","MEDIUM","HIGH","CRITICAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_sensitivity":{"type":"string","enum":["NONE","LOW","MEDIUM","HIGH","CRITICAL"]},"expires_at":{"type":"string","description":"Expiration timestamp","format":"date-time"},"id":{"type":"string","format":"string"},"notes":{"type":["string","null"],"description":"Notes"},"organization_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"vendor_id":{"type":"string","format":"string"}},"required":["id","organization_id","vendor_id","expires_at","data_sensitivity","business_impact","created_at","updated_at"]}}},"required":["vendor_risk_assessments"]}`)
 	ListVendorsToolInputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","UPDATED_AT","NAME"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListVendorsToolOutputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"vendors":{"type":"array","items":{"type":"object","properties":{"business_associate_agreement_url":{"type":["string","null"],"description":"Business associate agreement URL"},"business_owner_id":{"description":"Business owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"category":{"type":"string","description":"Vendor category","enum":["ANALYTICS","CLOUD_MONITORING","CLOUD_PROVIDER","COLLABORATION","CUSTOMER_SUPPORT","DATA_STORAGE_AND_PROCESSING","DOCUMENT_MANAGEMENT","EMPLOYEE_MANAGEMENT","ENGINEERING","FINANCE","IDENTITY_PROVIDER","IT","MARKETING","OFFICE_OPERATIONS","OTHER","PASSWORD_MANAGEMENT","PRODUCT_AND_DESIGN","PROFESSIONAL_SERVICES","RECRUITING","SALES","SECURITY","VERSION_CONTROL"]},"certifications":{"type":"array","items":{"type":"string"},"description":"Certifications"},"countries":{"type":"array","items":{"type":"string"},"description":"Countries (ISO 3166-1 alpha-2 country codes)"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_processing_agreement_url":{"type":["string","null"],"description":"Data processing agreement URL"},"description":{"type":["string","null"],"description":"Vendor description"},"headquarter_address":{"type":["string","null"],"description":"Headquarter address"},"id":{"type":"string","format":"string"},"legal_name":{"type":["string","null"],"description":"Legal name"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"privacy_policy_url":{"type":["string","null"],"description":"Privacy policy URL"},"security_owner_id":{"description":"Security owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"security_page_url":{"type":["string","null"],"description":"Security page URL"},"service_level_agreement_url":{"type":["string","null"],"description":"Service level agreement URL"},"status_page_url":{"type":["string","null"],"description":"Status page URL"},"subprocessors_list_url":{"type":["string","null"],"description":"Subprocessors list URL"},"terms_of_service_url":{"type":["string","null"],"description":"Terms of service URL"},"trust_page_url":{"type":["string","null"],"description":"Trust page URL"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"website_url":{"type":["string","null"],"description":"Website URL"}},"required":["id","name","organization_id","category","created_at","updated_at"]}}},"required":["vendors"]}`)
 	PublishDocumentVersionToolInputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"changelog":{"type":"string","description":"Changelog"},"document_id":{"type":"string","format":"string"}},"required":["document_id"]}`)
@@ -1109,6 +1113,25 @@ type AddVendorInput struct {
 // AddVendorOutput represents the schema
 type AddVendorOutput struct {
 	Vendor *Vendor `json:"vendor"`
+}
+
+// AddVendorRiskAssessmentInput represents the schema
+type AddVendorRiskAssessmentInput struct {
+	// Business impact level
+	BusinessImpact coredata.BusinessImpact `json:"business_impact"`
+	// Data sensitivity level
+	DataSensitivity coredata.DataSensitivity `json:"data_sensitivity"`
+	// Expiration timestamp
+	ExpiresAt time.Time `json:"expires_at"`
+	// Notes
+	Notes *string `json:"notes,omitempty"`
+	// Vendor ID
+	VendorID gid.GID `json:"vendor_id"`
+}
+
+// AddVendorRiskAssessmentOutput represents the schema
+type AddVendorRiskAssessmentOutput struct {
+	VendorRiskAssessment *VendorRiskAssessment `json:"vendor_risk_assessment"`
 }
 
 // ApplicabilityStatement represents the schema
@@ -2551,6 +2574,25 @@ type ListUsersOutput struct {
 	Users      []*Profile      `json:"users"`
 }
 
+// ListVendorRiskAssessmentsInput represents the schema
+type ListVendorRiskAssessmentsInput struct {
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Vendor risk assessment order by
+	OrderBy *VendorRiskAssessmentOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+	// Vendor ID
+	VendorID gid.GID `json:"vendor_id"`
+}
+
+// ListVendorRiskAssessmentsOutput represents the schema
+type ListVendorRiskAssessmentsOutput struct {
+	// Next cursor
+	NextCursor            *page.CursorKey         `json:"next_cursor,omitempty"`
+	VendorRiskAssessments []*VendorRiskAssessment `json:"vendor_risk_assessments"`
+}
+
 // ListVendorsInput represents the schema
 type ListVendorsInput struct {
 	// Page cursor
@@ -3680,6 +3722,38 @@ type VendorOrderBy struct {
 	Direction page.OrderDirection `json:"direction"`
 	// Vendor order field
 	Field coredata.VendorOrderField `json:"field"`
+}
+
+// VendorRiskAssessment represents the schema
+type VendorRiskAssessment struct {
+	// Business impact level
+	BusinessImpact coredata.BusinessImpact `json:"business_impact"`
+	// Creation timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Data sensitivity level
+	DataSensitivity coredata.DataSensitivity `json:"data_sensitivity"`
+	// Expiration timestamp
+	ExpiresAt time.Time `json:"expires_at"`
+	// Vendor risk assessment ID
+	ID gid.GID `json:"id"`
+	// Notes
+	Notes *string `json:"notes,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Snapshot ID
+	SnapshotID *gid.GID `json:"snapshot_id,omitempty"`
+	// Update timestamp
+	UpdatedAt time.Time `json:"updated_at"`
+	// Vendor ID
+	VendorID gid.GID `json:"vendor_id"`
+}
+
+// VendorRiskAssessmentOrderBy represents the schema
+type VendorRiskAssessmentOrderBy struct {
+	// Vendor risk assessment order direction
+	Direction page.OrderDirection `json:"direction"`
+	// Vendor risk assessment order field
+	Field coredata.VendorRiskAssessmentOrderField `json:"field"`
 }
 
 // ListAssetsInputFilter represents the schema
