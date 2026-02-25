@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.132.0] - 2026-02-25
+
+### Added
+
+- Add vendor risk assessment to mcp
+- Add risk and measure mcp tools
+
+### Fixed
+
+- Fix long pdf exports
+
 ## [0.131.2] - 2026-02-24
 
 ### Fixed
