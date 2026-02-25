@@ -408,6 +408,16 @@ type CreateFrameworkPayload struct {
 	FrameworkEdge *FrameworkEdge `json:"frameworkEdge"`
 }
 
+type CreateMailingListSubscriberInput struct {
+	MailingListID gid.GID   `json:"mailingListId"`
+	FullName      string    `json:"fullName"`
+	Email         mail.Addr `json:"email"`
+}
+
+type CreateMailingListSubscriberPayload struct {
+	MailingListSubscriberEdge *MailingListSubscriberEdge `json:"mailingListSubscriberEdge"`
+}
+
 type CreateMeasureInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Name           string  `json:"name"`
@@ -923,6 +933,14 @@ type DeleteFrameworkPayload struct {
 	DeletedFrameworkID gid.GID `json:"deletedFrameworkId"`
 }
 
+type DeleteMailingListSubscriberInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteMailingListSubscriberPayload struct {
+	DeletedMailingListSubscriberID gid.GID `json:"deletedMailingListSubscriberId"`
+}
+
 type DeleteMeasureInput struct {
 	MeasureID gid.GID `json:"measureId"`
 }
@@ -1395,6 +1413,32 @@ type ImportMeasurePayload struct {
 	MeasureEdges []*MeasureEdge `json:"measureEdges"`
 }
 
+type MailingList struct {
+	ID          gid.GID                          `json:"id"`
+	ReplyTo     *mail.Addr                       `json:"replyTo,omitempty"`
+	Subscribers *MailingListSubscriberConnection `json:"subscribers"`
+}
+
+func (MailingList) IsNode()             {}
+func (this MailingList) GetID() gid.GID { return this.ID }
+
+type MailingListSubscriber struct {
+	ID        gid.GID                              `json:"id"`
+	FullName  string                               `json:"fullName"`
+	Email     mail.Addr                            `json:"email"`
+	Status    coredata.MailingListSubscriberStatus `json:"status"`
+	CreatedAt time.Time                            `json:"createdAt"`
+	UpdatedAt time.Time                            `json:"updatedAt"`
+}
+
+func (MailingListSubscriber) IsNode()             {}
+func (this MailingListSubscriber) GetID() gid.GID { return this.ID }
+
+type MailingListSubscriberEdge struct {
+	Cursor page.CursorKey         `json:"cursor"`
+	Node   *MailingListSubscriber `json:"node"`
+}
+
 type Measure struct {
 	ID          gid.GID               `json:"id"`
 	Category    string                `json:"category"`
@@ -1863,25 +1907,6 @@ type TransferImpactAssessmentFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
-type TrustCenter struct {
-	ID                   gid.GID                         `json:"id"`
-	Active               bool                            `json:"active"`
-	LogoFileURL          *string                         `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL      *string                         `json:"darkLogoFileUrl,omitempty"`
-	NdaFileName          *string                         `json:"ndaFileName,omitempty"`
-	NdaFileURL           *string                         `json:"ndaFileUrl,omitempty"`
-	CreatedAt            time.Time                       `json:"createdAt"`
-	UpdatedAt            time.Time                       `json:"updatedAt"`
-	Organization         *Organization                   `json:"organization"`
-	Accesses             *TrustCenterAccessConnection    `json:"accesses"`
-	References           *TrustCenterReferenceConnection `json:"references"`
-	ComplianceFrameworks *ComplianceFrameworkConnection  `json:"complianceFrameworks"`
-	Permission           bool                            `json:"permission"`
-}
-
-func (TrustCenter) IsNode()             {}
-func (this TrustCenter) GetID() gid.GID { return this.ID }
-
 type TrustCenterAccess struct {
 	ID                        gid.GID                              `json:"id"`
 	NdaSignature              *ElectronicSignature                 `json:"ndaSignature,omitempty"`
@@ -2098,6 +2123,15 @@ type UpdateFrameworkInput struct {
 
 type UpdateFrameworkPayload struct {
 	Framework *Framework `json:"framework"`
+}
+
+type UpdateMailingListInput struct {
+	ID      gid.GID    `json:"id"`
+	ReplyTo *mail.Addr `json:"replyTo,omitempty"`
+}
+
+type UpdateMailingListPayload struct {
+	MailingList *MailingList `json:"mailingList"`
 }
 
 type UpdateMeasureInput struct {

@@ -480,12 +480,20 @@ func (s *OrganizationService) CreateOrganization(
 			UpdatedAt:      now,
 		}
 
+		mailingList = &coredata.MailingList{
+			ID:             gid.New(tenantID, coredata.MailingListEntityType),
+			OrganizationID: organization.ID,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+
 		trustCenter = &coredata.TrustCenter{
 			ID:             gid.New(tenantID, coredata.TrustCenterEntityType),
 			OrganizationID: organization.ID,
 			TenantID:       organization.TenantID,
 			Active:         false,
 			Slug:           slug.Make(organization.Name),
+			MailingListID:  &mailingList.ID,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
@@ -614,6 +622,10 @@ func (s *OrganizationService) CreateOrganization(
 
 			if err := organizationContext.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert organization context: %w", err)
+			}
+
+			if err := mailingList.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert mailing list: %w", err)
 			}
 
 			if err := trustCenter.Insert(ctx, tx, scope); err != nil {

@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
@@ -47,6 +48,7 @@ type (
 		Trust             *trust.Service
 		ESign             *esign.Service
 		Slack             *slack.Service
+		Mailman           *mailman.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -120,7 +122,9 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.Trust,
 			cfg.ESign,
+			cfg.Mailman,
 			cfg.Cookie,
+			cfg.TokenSecret,
 			cfg.BaseURL,
 		),
 		consoleHandler: console_v1.NewMux(
@@ -128,6 +132,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			cfg.IAM,
 			cfg.ESign,
+			cfg.Mailman,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.ConnectorRegistry,

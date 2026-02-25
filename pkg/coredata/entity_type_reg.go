@@ -86,6 +86,8 @@ const (
 	ElectronicSignatureEventEntityType         uint16 = 60
 	EmailAttachmentEntityType                  uint16 = 61
 	ComplianceFrameworkEntityType              uint16 = 62
+	MailingListEntityType                      uint16 = 63
+	MailingListSubscriberEntityType            uint16 = 64
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -212,6 +214,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &EmailAttachment{ID: id}, true
 	case ComplianceFrameworkEntityType:
 		return &ComplianceFramework{ID: id}, true
+	case MailingListEntityType:
+		return &MailingList{ID: id}, true
+	case MailingListSubscriberEntityType:
+		return &MailingListSubscriber{ID: id}, true
 	default:
 		return nil, false
 	}

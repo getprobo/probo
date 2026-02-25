@@ -333,3 +333,36 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 
 	return emailPresenterCfg, nil
 }
+
+func (s *TrustCenterService) GetMailingList(
+	ctx context.Context,
+	trustCenterID gid.GID,
+) (*coredata.MailingList, error) {
+	var mailingList *coredata.MailingList
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			trustCenter := &coredata.TrustCenter{}
+			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			if trustCenter.MailingListID == nil {
+				return nil
+			}
+
+			mailingList = &coredata.MailingList{}
+			if err := mailingList.LoadByID(ctx, conn, s.svc.scope, *trustCenter.MailingListID); err != nil {
+				return fmt.Errorf("cannot load mailing list: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return mailingList, nil
+}

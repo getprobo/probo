@@ -26,6 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
@@ -39,7 +40,6 @@ type (
 		CookieDuration    time.Duration
 		TokenDuration     time.Duration
 		ReportURLDuration time.Duration
-		TokenSecret       string
 		Scope             string
 		TokenType         string
 		CookieSecure      bool
@@ -48,6 +48,7 @@ type (
 	Resolver struct {
 		trust         *trust.Service
 		esign         *esign.Service
+		mailman       *mailman.Service
 		logger        *log.Logger
 		iam           *iam.Service
 		sessionCookie *authn.Cookie
@@ -78,7 +79,9 @@ func NewMux(
 	iamSvc *iam.Service,
 	trustSvc *trust.Service,
 	esignSvc *esign.Service,
+	mailmanSvc *mailman.Service,
 	cookieConfig securecookie.Config,
+	tokenSecret string,
 	baseURL *baseurl.BaseURL,
 ) *chi.Mux {
 	r := chi.NewMux()
@@ -86,17 +89,17 @@ func NewMux(
 	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
 	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, logger, baseURL, cookieConfig)
+	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
 
 	r.Handle("/graphql", graphqlHandler)
 
 	return r
 }
 
-func (r *Resolver) RootTrustService(ctx context.Context) *trust.TenantService {
-	return r.trust.WithTenant(gid.NewTenantID())
-}
-
 func (r *Resolver) TrustService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
 	return r.trust.WithTenant(tenantID)
+}
+
+func (r *Resolver) MailmanService(ctx context.Context, tenantID gid.TenantID) *mailman.TenantService {
+	return r.mailman.WithTenant(tenantID)
 }
