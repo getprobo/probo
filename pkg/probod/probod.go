@@ -444,8 +444,18 @@ func (impl *Implm) Run(
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
 			Logger:            l.Named("http.server"),
-			Cookie: securecookie.Config{
-				Name:     impl.cfg.Auth.Cookie.Name,
+			ConsoleCookie: securecookie.Config{
+				Name:     "console_session",
+				Domain:   impl.cfg.Auth.Cookie.Domain,
+				Path:     "/",
+				MaxAge:   int(time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour),
+				Secret:   impl.cfg.Auth.Cookie.Secret,
+				Secure:   impl.cfg.Auth.Cookie.Secure,
+				HTTPOnly: true,
+				SameSite: http.SameSiteStrictMode,
+			},
+			TrustCookie: securecookie.Config{
+				Name:     "trust_session",
 				Domain:   impl.cfg.Auth.Cookie.Domain,
 				Path:     "/",
 				MaxAge:   int(time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour),

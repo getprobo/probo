@@ -22,7 +22,7 @@ import {
 import { PageError } from "./components/PageError";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton";
 import { TabSkeleton } from "./components/Skeletons/TabSkeleton";
-import { consoleEnvironment } from "./providers/RelayProviders";
+import { trustEnvironment } from "./providers/RelayProviders";
 
 /**
  * Top level error boundary
@@ -65,7 +65,7 @@ const routes = [
   {
     path: "/overview",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+      loadQuery(trustEnvironment, currentTrustGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -81,7 +81,7 @@ const routes = [
   {
     path: "/documents",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+      loadQuery(trustEnvironment, currentTrustGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -90,7 +90,7 @@ const routes = [
       {
         path: "",
         loader: loaderFromQueryLoader(() =>
-          loadQuery(consoleEnvironment, currentTrustDocumentsQuery, {}),
+          loadQuery(trustEnvironment, currentTrustDocumentsQuery, {}),
         ),
         Fallback: TabSkeleton,
         Component: withQueryRef(DocumentsPage),
@@ -100,7 +100,7 @@ const routes = [
   {
     path: "/subprocessors",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+      loadQuery(trustEnvironment, currentTrustGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -109,7 +109,7 @@ const routes = [
       {
         path: "",
         loader: loaderFromQueryLoader(() =>
-          loadQuery(consoleEnvironment, currentTrustVendorsQuery, {}),
+          loadQuery(trustEnvironment, currentTrustVendorsQuery, {}),
         ),
         Fallback: TabSkeleton,
         Component: withQueryRef(SubprocessorsPage),

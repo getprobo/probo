@@ -22,7 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
-	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/trust/auth"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
@@ -37,7 +37,7 @@ func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, esignSvc *e
 			esign:         esignSvc,
 			logger:        logger,
 			baseURL:       baseURL,
-			sessionCookie: authn.NewCookie(&cookieConfig),
+			sessionCookie: auth.NewTrustCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
 			Session: session.Directive,

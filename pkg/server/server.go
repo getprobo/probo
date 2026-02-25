@@ -46,7 +46,8 @@ type Config struct {
 	Trust             *trust.Service
 	ESign             *esign.Service
 	Slack             *slack.Service
-	Cookie            securecookie.Config
+	ConsoleCookie     securecookie.Config
+	TrustCookie       securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
@@ -74,7 +75,8 @@ func NewServer(cfg Config) (*Server, error) {
 		Trust:             cfg.Trust,
 		ESign:             cfg.ESign,
 		Slack:             cfg.Slack,
-		Cookie:            cfg.Cookie,
+		ConsoleCookie:     cfg.ConsoleCookie,
+		TrustCookie:       cfg.TrustCookie,
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		CustomDomainCname: cfg.CustomDomainCname,

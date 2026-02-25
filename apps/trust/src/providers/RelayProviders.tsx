@@ -10,31 +10,36 @@ import {
 
 import { getPathPrefix } from "#/utils/pathPrefix";
 
-export class UnAuthenticatedError extends Error {
+export class TrustUnAuthenticatedError extends Error {
   constructor() {
     super("UNAUTHENTICATED");
-    this.name = "UnAuthenticatedError";
+    this.name = "TrustUnAuthenticatedError";
   }
 }
 
-export class InvalidError extends Error {
+export class TrustInvalidError extends Error {
   field?: string;
   cause?: string;
 
   constructor(message?: string, field?: string, cause?: string) {
     super(message || "INVALID");
-    this.name = "InvalidError";
+    this.name = "TrustInvalidError";
     this.field = field;
     this.cause = cause;
   }
 }
 
-export class InternalServerError extends Error {
+export class TrustInternalServerError extends Error {
   constructor() {
     super("INTERNAL_SERVER_ERROR");
-    this.name = "InternalServerError";
+    this.name = "TrustInternalServerError";
   }
 }
+
+// Legacy exports for backward compatibility
+export class UnAuthenticatedError extends TrustUnAuthenticatedError {}
+export class InvalidError extends TrustInvalidError {}
+export class InternalServerError extends TrustInternalServerError {}
 
 export function buildEndpoint(): string {
   let host = import.meta.env.VITE_API_URL;
@@ -69,19 +74,24 @@ const store = new Store(source, {
   gcReleaseBufferSize: 20,
 });
 
-export const consoleEnvironment = new Environment({
+export const trustEnvironment = new Environment({
   configName: "trust",
   network: Network.create(makeFetchQuery(buildEndpoint())),
   store,
 });
 
 /**
- * Provider for relay with the probo environment
+ * Provider for relay with the trust environment
  */
-export function RelayProvider({ children }: PropsWithChildren) {
+export function TrustRelayProvider({ children }: PropsWithChildren) {
   return (
-    <RelayEnvironmentProvider environment={consoleEnvironment}>
+    <RelayEnvironmentProvider environment={trustEnvironment}>
       {children}
     </RelayEnvironmentProvider>
   );
+}
+
+// Legacy export for backward compatibility
+export function RelayProvider({ children }: PropsWithChildren) {
+  return <TrustRelayProvider>{children}</TrustRelayProvider>;
 }

@@ -27,8 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
-	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/api/trust/auth"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -50,7 +49,7 @@ type (
 		esign         *esign.Service
 		logger        *log.Logger
 		iam           *iam.Service
-		sessionCookie *authn.Cookie
+		sessionCookie *auth.Cookie
 		baseURL       *baseurl.BaseURL
 	}
 )
@@ -83,9 +82,9 @@ func NewMux(
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
-	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(compliancepage.NewMembershipMiddleware(trustSvc, logger))
+	r.Use(auth.NewTrustCompliancePagePresenceMiddleware())
+	r.Use(auth.NewTrustSessionMiddleware(iamSvc, cookieConfig))
+	r.Use(auth.NewTrustMembershipMiddleware(trustSvc, logger))
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, logger, baseURL, cookieConfig)
 

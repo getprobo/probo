@@ -2,7 +2,7 @@ import { Card, Logo } from "@probo/ui";
 import type { PropsWithChildren } from "react";
 import { Outlet } from "react-router";
 
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
+import { ConsoleRelayProvider } from "#/providers/IAMRelayProvider";
 
 export default function AuthLayout(props: PropsWithChildren) {
   const { children } = props;
@@ -14,9 +14,9 @@ export default function AuthLayout(props: PropsWithChildren) {
           <Logo withPicto className="w-[110px]" />
           <div className="w-full border-t border-t-border-mid" />
         </div>
-        <IAMRelayProvider>
+        <ConsoleRelayProvider>
           {children ?? <Outlet />}
-        </IAMRelayProvider>
+        </ConsoleRelayProvider>
       </Card>
     </div>
   );

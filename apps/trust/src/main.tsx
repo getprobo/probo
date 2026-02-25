@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 
 import { App } from "./App";
-import { RelayProvider } from "./providers/RelayProviders";
+import { TrustRelayProvider } from "./providers/RelayProviders";
 import { TranslatorProvider } from "./providers/TranslatorProvider";
 
 const queryClient = new QueryClient({
@@ -19,11 +19,11 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RelayProvider>
+      <TrustRelayProvider>
         <TranslatorProvider>
           <App />
         </TranslatorProvider>
-      </RelayProvider>
+      </TrustRelayProvider>
     </QueryClientProvider>
   </StrictMode>,
 );
