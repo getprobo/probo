@@ -628,6 +628,48 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 	return &types.RecordSigningEventPayload{Success: true}, nil
 }
 
+// SubscribeToNewsletter is the resolver for the subscribeToNewsletter field.
+func (r *mutationResolver) SubscribeToNewsletter(ctx context.Context) (*types.SubscribeToNewsletterPayload, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
+	}
+
+	if _, err := trustService.ComplianceNewsletterSubscribers.Subscribe(ctx, trustCenter.ID, identity.EmailAddress); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot subscribe to newsletter", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.SubscribeToNewsletterPayload{
+		Success:     true,
+		TrustCenter: types.NewTrustCenter(trustCenter),
+	}, nil
+}
+
+// UnsubscribeFromNewsletter is the resolver for the unsubscribeFromNewsletter field.
+func (r *mutationResolver) UnsubscribeFromNewsletter(ctx context.Context) (*types.UnsubscribeFromNewsletterPayload, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
+	}
+
+	if err := trustService.ComplianceNewsletterSubscribers.Unsubscribe(ctx, trustCenter.ID, identity.EmailAddress); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot unsubscribe from newsletter", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UnsubscribeFromNewsletterPayload{
+		Success:     true,
+		TrustCenter: types.NewTrustCenter(trustCenter),
+	}, nil
+}
+
 // FileURL is the resolver for the fileUrl field.
 func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -914,6 +956,24 @@ func (r *trustCenterResolver) IsViewerMember(ctx context.Context, obj *types.Tru
 	membership := compliancepage.ComplianceMembershipFromContext(ctx)
 
 	return membership != nil, nil
+}
+
+// IsViewerSubscribedToNewsletter is the resolver for the isViewerSubscribedToNewsletter field.
+func (r *trustCenterResolver) IsViewerSubscribedToNewsletter(ctx context.Context, obj *types.TrustCenter) (bool, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return false, nil
+	}
+
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	isSubscribed, err := trustService.ComplianceNewsletterSubscribers.IsSubscribed(ctx, obj.ID, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot check newsletter subscription", log.Error(err))
+		return false, gqlutils.Internal(ctx)
+	}
+
+	return isSubscribed, nil
 }
 
 // Organization is the resolver for the organization field.

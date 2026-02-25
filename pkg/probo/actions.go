@@ -40,6 +40,10 @@ const (
 	ActionTrustCenterAccessUpdate = "core:trust-center-access:update"
 	ActionTrustCenterAccessDelete = "core:trust-center-access:delete"
 
+	// ComplianceNewsletterSubscriber actions
+	ActionComplianceNewsletterSubscriberList   = "core:compliance-newsletter-subscriber:list"
+	ActionComplianceNewsletterSubscriberDelete = "core:compliance-newsletter-subscriber:delete"
+
 	// TrustCenterReference actions
 	ActionTrustCenterReferenceList       = "core:trust-center-reference:list"
 	ActionTrustCenterReferenceGetLogoUrl = "core:trust-center-reference:get-logo-url"

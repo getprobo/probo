@@ -4,6 +4,7 @@ import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
+  IconBell2,
   IconBlock,
   IconLock,
   IconMedal,
@@ -17,6 +18,8 @@ import { Viewer } from "#/providers/Viewer";
 import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
+import type { OrganizationSidebar_subscribeToNewsletterMutation } from "./__generated__/OrganizationSidebar_subscribeToNewsletterMutation.graphql";
+import type { OrganizationSidebar_unsubscribeFromNewsletterMutation } from "./__generated__/OrganizationSidebar_unsubscribeFromNewsletterMutation.graphql";
 import { AuditRowAvatar } from "./AuditRow";
 
 const requestAllAccessesMutation = graphql`
@@ -24,6 +27,28 @@ const requestAllAccessesMutation = graphql`
     requestAllAccesses {
       trustCenterAccess {
         id
+      }
+    }
+  }
+`;
+
+const subscribeToNewsletterMutation = graphql`
+  mutation OrganizationSidebar_subscribeToNewsletterMutation {
+    subscribeToNewsletter {
+      trustCenter {
+        id
+        isViewerSubscribedToNewsletter
+      }
+    }
+  }
+`;
+
+const unsubscribeFromNewsletterMutation = graphql`
+  mutation OrganizationSidebar_unsubscribeFromNewsletterMutation {
+    unsubscribeFromNewsletter {
+      trustCenter {
+        id
+        isViewerSubscribedToNewsletter
       }
     }
   }
@@ -44,6 +69,16 @@ export function OrganizationSidebar({
   const [requestAllAccesses, isRequestingAccess]
     = useMutation<OrganizationSidebar_requestAllAccessesMutation>(
       requestAllAccessesMutation,
+    );
+
+  const [subscribeToNewsletter, isSubscribing]
+    = useMutation<OrganizationSidebar_subscribeToNewsletterMutation>(
+      subscribeToNewsletterMutation,
+    );
+
+  const [unsubscribeFromNewsletter, isUnsubscribing]
+    = useMutation<OrganizationSidebar_unsubscribeFromNewsletterMutation>(
+      unsubscribeFromNewsletterMutation,
     );
 
   const handleRequestAllAccesses = () => {
@@ -68,6 +103,62 @@ export function OrganizationSidebar({
         toast({
           title: __("Error"),
           description: error.message ?? __("Cannot request access"),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleSubscribe = () => {
+    subscribeToNewsletter({
+      variables: {},
+      onCompleted: (_, errors) => {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Cannot subscribe"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Subscribed"),
+          description: __("You will be notified of security updates."),
+          variant: "success",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: __("Error"),
+          description: error.message ?? __("Cannot subscribe"),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleUnsubscribe = () => {
+    unsubscribeFromNewsletter({
+      variables: {},
+      onCompleted: (_, errors) => {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Cannot unsubscribe"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Unsubscribed"),
+          description: __("You will no longer receive security updates."),
+          variant: "success",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: __("Error"),
+          description: error.message ?? __("Cannot unsubscribe"),
           variant: "error",
         });
       },
@@ -162,15 +253,40 @@ export function OrganizationSidebar({
         {/* Actions */}
         {isAuthenticated
           ? (
-              <Button
-                disabled={isRequestingAccess}
-                variant="primary"
-                icon={IconLock}
-                className="w-full h-10"
-                onClick={handleRequestAllAccesses}
-              >
-                {__("Request access")}
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  disabled={isRequestingAccess}
+                  variant="primary"
+                  icon={IconLock}
+                  className="w-full h-10"
+                  onClick={handleRequestAllAccesses}
+                >
+                  {__("Request access")}
+                </Button>
+                {trustCenter?.isViewerSubscribedToNewsletter
+                  ? (
+                      <Button
+                        disabled={isUnsubscribing}
+                        variant="secondary"
+                        icon={IconBell2}
+                        className="w-full h-10"
+                        onClick={handleUnsubscribe}
+                      >
+                        {__("Unsubscribe from updates")}
+                      </Button>
+                    )
+                  : (
+                      <Button
+                        disabled={isSubscribing}
+                        variant="secondary"
+                        icon={IconBell2}
+                        className="w-full h-10"
+                        onClick={handleSubscribe}
+                      >
+                        {__("Subscribe to updates")}
+                      </Button>
+                    )}
+              </div>
             )
           : (
               <Button

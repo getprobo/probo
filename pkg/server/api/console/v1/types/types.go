@@ -149,6 +149,27 @@ type CancelSignatureRequestPayload struct {
 	DeletedDocumentVersionSignatureID gid.GID `json:"deletedDocumentVersionSignatureId"`
 }
 
+type ComplianceNewsletterSubscriber struct {
+	ID        gid.GID   `json:"id"`
+	Email     mail.Addr `json:"email"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (ComplianceNewsletterSubscriber) IsNode()             {}
+func (this ComplianceNewsletterSubscriber) GetID() gid.GID { return this.ID }
+
+type ComplianceNewsletterSubscriberConnection struct {
+	Edges      []*ComplianceNewsletterSubscriberEdge `json:"edges"`
+	PageInfo   *PageInfo                             `json:"pageInfo"`
+	TotalCount int                                   `json:"totalCount"`
+}
+
+type ComplianceNewsletterSubscriberEdge struct {
+	Cursor page.CursorKey                  `json:"cursor"`
+	Node   *ComplianceNewsletterSubscriber `json:"node"`
+}
+
 type ContinualImprovement struct {
 	ID           gid.GID                               `json:"id"`
 	SnapshotID   *gid.GID                              `json:"snapshotId,omitempty"`
@@ -925,6 +946,14 @@ type DeleteMeetingInput struct {
 
 type DeleteMeetingPayload struct {
 	DeletedMeetingID gid.GID `json:"deletedMeetingId"`
+}
+
+type DeleteNewsletterSubscriberInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteNewsletterSubscriberPayload struct {
+	DeletedNewsletterSubscriberID gid.GID `json:"deletedNewsletterSubscriberId"`
 }
 
 type DeleteNonconformityInput struct {
@@ -1851,18 +1880,19 @@ type TransferImpactAssessmentFilter struct {
 }
 
 type TrustCenter struct {
-	ID              gid.GID                         `json:"id"`
-	Active          bool                            `json:"active"`
-	LogoFileURL     *string                         `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL *string                         `json:"darkLogoFileUrl,omitempty"`
-	NdaFileName     *string                         `json:"ndaFileName,omitempty"`
-	NdaFileURL      *string                         `json:"ndaFileUrl,omitempty"`
-	CreatedAt       time.Time                       `json:"createdAt"`
-	UpdatedAt       time.Time                       `json:"updatedAt"`
-	Organization    *Organization                   `json:"organization"`
-	Accesses        *TrustCenterAccessConnection    `json:"accesses"`
-	References      *TrustCenterReferenceConnection `json:"references"`
-	Permission      bool                            `json:"permission"`
+	ID                    gid.GID                                   `json:"id"`
+	Active                bool                                      `json:"active"`
+	LogoFileURL           *string                                   `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL       *string                                   `json:"darkLogoFileUrl,omitempty"`
+	NdaFileName           *string                                   `json:"ndaFileName,omitempty"`
+	NdaFileURL            *string                                   `json:"ndaFileUrl,omitempty"`
+	CreatedAt             time.Time                                 `json:"createdAt"`
+	UpdatedAt             time.Time                                 `json:"updatedAt"`
+	Organization          *Organization                             `json:"organization"`
+	Accesses              *TrustCenterAccessConnection              `json:"accesses"`
+	References            *TrustCenterReferenceConnection           `json:"references"`
+	NewsletterSubscribers *ComplianceNewsletterSubscriberConnection `json:"newsletterSubscribers"`
+	Permission            bool                                      `json:"permission"`
 }
 
 func (TrustCenter) IsNode()             {}

@@ -53,29 +53,30 @@ type (
 	}
 
 	TenantService struct {
-		pg                    *pg.Client
-		s3                    *s3.Client
-		bucket                string
-		scope                 coredata.Scoper
-		proboSvc              *probo.Service
-		encryptionKey         cipher.EncryptionKey
-		baseURL               string
-		iam                   *iam.Service
-		esign                 *esign.Service
-		html2pdfConverter     *html2pdf.Converter
-		fileManager           *filemanager.Service
-		logger                *log.Logger
-		TrustCenters          *TrustCenterService
-		Documents             *DocumentService
-		Audits                *AuditService
-		Vendors               *VendorService
-		Frameworks            *FrameworkService
-		TrustCenterAccesses   *TrustCenterAccessService
-		TrustCenterReferences *TrustCenterReferenceService
-		TrustCenterFiles      *TrustCenterFileService
-		Reports               *ReportService
-		Organizations         *OrganizationService
-		SlackMessages         *slack.SlackMessageService
+		pg                              *pg.Client
+		s3                              *s3.Client
+		bucket                          string
+		scope                           coredata.Scoper
+		proboSvc                        *probo.Service
+		encryptionKey                   cipher.EncryptionKey
+		baseURL                         string
+		iam                             *iam.Service
+		esign                           *esign.Service
+		html2pdfConverter               *html2pdf.Converter
+		fileManager                     *filemanager.Service
+		logger                          *log.Logger
+		TrustCenters                    *TrustCenterService
+		Documents                       *DocumentService
+		Audits                          *AuditService
+		Vendors                         *VendorService
+		Frameworks                      *FrameworkService
+		TrustCenterAccesses             *TrustCenterAccessService
+		TrustCenterReferences           *TrustCenterReferenceService
+		TrustCenterFiles                *TrustCenterFileService
+		ComplianceNewsletterSubscribers *ComplianceNewsletterSubscriberService
+		Reports                         *ReportService
+		Organizations                   *OrganizationService
+		SlackMessages                   *slack.SlackMessageService
 	}
 )
 
@@ -133,6 +134,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, iamSvc: s.iam, logger: s.logger}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}
+	tenantService.ComplianceNewsletterSubscribers = &ComplianceNewsletterSubscriberService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.Organizations = &OrganizationService{svc: tenantService}
 	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
