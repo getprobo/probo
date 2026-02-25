@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -45,6 +46,7 @@ type (
 		probo             *probo.Service
 		iam               *iam.Service
 		esign             *esign.Service
+		mailman           *mailman.Service
 		logger            *log.Logger
 		customDomainCname string
 	}
@@ -55,6 +57,7 @@ func NewMux(
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
+	mailmanSvc *mailman.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	connectorRegistry *connector.ConnectorRegistry,
@@ -65,7 +68,7 @@ func NewMux(
 
 	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, esignSvc, customDomainCname, logger)
+	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, esignSvc, mailmanSvc, customDomainCname, logger)
 
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
@@ -197,6 +200,10 @@ func NewMux(
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
 	return r.probo.WithTenant(tenantID)
+}
+
+func (r *Resolver) MailmanService(ctx context.Context, tenantID gid.TenantID) *mailman.TenantService {
+	return r.mailman.WithTenant(tenantID)
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {

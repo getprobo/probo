@@ -241,6 +241,10 @@ type SendMagicLinkPayload struct {
 	Success bool `json:"success"`
 }
 
+type SubscribeToMailingListPayload struct {
+	Subscription *MailingListSubscriber `json:"subscription"`
+}
+
 type TrustCenter struct {
 	ID                     gid.GID                          `json:"id"`
 	Active                 bool                             `json:"active"`
@@ -248,6 +252,7 @@ type TrustCenter struct {
 	LogoFileURL            *string                          `json:"logoFileUrl,omitempty"`
 	DarkLogoFileURL        *string                          `json:"darkLogoFileUrl,omitempty"`
 	NonDisclosureAgreement *NonDisclosureAgreement          `json:"nonDisclosureAgreement,omitempty"`
+	ViewerSubscription     *MailingListSubscriber           `json:"viewerSubscription,omitempty"`
 	Organization           *Organization                    `json:"organization"`
 	Documents              *DocumentConnection              `json:"documents"`
 	Audits                 *AuditConnection                 `json:"audits"`
@@ -312,6 +317,10 @@ type TrustCenterReferenceConnection struct {
 type TrustCenterReferenceEdge struct {
 	Cursor page.CursorKey        `json:"cursor"`
 	Node   *TrustCenterReference `json:"node"`
+}
+
+type UnsubscribeFromMailingListPayload struct {
+	DeletedMailingListSubscriberID *gid.GID `json:"deletedMailingListSubscriberId,omitempty"`
 }
 
 type UpdateFullNameInput struct {

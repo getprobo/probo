@@ -530,6 +530,7 @@ type TrustCenter implements Node {
 
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
+  viewerSubscription: MailingListSubscriber @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
   documents(
@@ -892,4 +893,41 @@ type Mutation {
   recordSigningEvent(
     input: RecordSigningEventInput!
   ): RecordSigningEventPayload @session(required: PRESENT)
+
+  subscribeToMailingList: SubscribeToMailingListPayload! @session(required: PRESENT)
+
+  unsubscribeFromMailingList: UnsubscribeFromMailingListPayload! @session(required: PRESENT)
+}
+
+type SubscribeToMailingListPayload {
+  subscription: MailingListSubscriber!
+}
+
+type UnsubscribeFromMailingListPayload {
+  deletedMailingListSubscriberId: ID
+}
+
+enum MailingListSubscriberStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatus"
+  ) {
+  PENDING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusPending"
+    )
+  CONFIRMED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusConfirmed"
+    )
+}
+
+type MailingListSubscriber implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListSubscriber"
+  ) {
+  id: ID!
+  email: EmailAddr!
+  status: MailingListSubscriberStatus!
+  createdAt: Datetime!
+  updatedAt: Datetime!
 }

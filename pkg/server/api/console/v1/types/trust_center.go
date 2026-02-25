@@ -15,8 +15,32 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
+
+type TrustCenter struct {
+	ID                   gid.GID                         `json:"id"`
+	Active               bool                            `json:"active"`
+	LogoFileURL          *string                         `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL      *string                         `json:"darkLogoFileUrl,omitempty"`
+	NdaFileName          *string                         `json:"ndaFileName,omitempty"`
+	NdaFileURL           *string                         `json:"ndaFileUrl,omitempty"`
+	CreatedAt            time.Time                       `json:"createdAt"`
+	UpdatedAt            time.Time                       `json:"updatedAt"`
+	Organization         *Organization                   `json:"organization"`
+	Accesses             *TrustCenterAccessConnection    `json:"accesses"`
+	References           *TrustCenterReferenceConnection `json:"references"`
+	ComplianceFrameworks *ComplianceFrameworkConnection   `json:"complianceFrameworks"`
+	ExternalUrls         *ComplianceExternalURLConnection `json:"externalUrls"`
+	MailingList          *MailingList                     `json:"mailingList,omitempty"`
+	Permission           bool                             `json:"permission"`
+}
+
+func (TrustCenter) IsNode()          {}
+func (t TrustCenter) GetID() gid.GID { return t.ID }
 
 func NewTrustCenter(tc *coredata.TrustCenter, file *coredata.File) *TrustCenter {
 	var ndaFileName *string

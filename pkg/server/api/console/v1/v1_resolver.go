@@ -1524,6 +1524,47 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// Subscribers is the resolver for the subscribers field on MailingList.
+func (r *mailingListResolver) Subscribers(ctx context.Context, obj *types.MailingList, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListSubscriberConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMailingListSubscriberList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MailingListSubscriberOrderField]{
+		Field:     coredata.MailingListSubscriberOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := r.MailmanService(ctx, obj.ID.TenantID()).ListSubscribers(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list mailing list subscribers", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMailingListSubscriberConnection(result, r, obj.ID), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context, obj *types.MailingListSubscriberConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionMailingListSubscriberList); err != nil {
+		return 0, err
+	}
+
+	switch obj.Resolver.(type) {
+	case *mailingListResolver:
+		count, err := r.MailmanService(ctx, obj.ParentID.TenantID()).CountSubscribers(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count mailing list subscribers", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("not implemented: TotalCount for parent type %T", obj.Resolver))
+}
+
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList); err != nil {
@@ -1984,6 +2025,56 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 
 	return &types.DeleteTrustCenterAccessPayload{
 		DeletedTrustCenterAccessID: input.ID,
+	}, nil
+}
+
+// UpdateMailingList is the resolver for the updateMailingList field.
+func (r *mutationResolver) UpdateMailingList(ctx context.Context, input types.UpdateMailingListInput) (*types.UpdateMailingListPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionMailingListUpdate); err != nil {
+		return nil, err
+	}
+
+	ml, err := r.MailmanService(ctx, input.ID.TenantID()).UpdateMailingList(ctx, input.ID, input.ReplyTo)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update mailing list", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateMailingListPayload{
+		MailingList: types.NewMailingList(ml),
+	}, nil
+}
+
+// CreateMailingListSubscriber is the resolver for the createMailingListSubscriber field.
+func (r *mutationResolver) CreateMailingListSubscriber(ctx context.Context, input types.CreateMailingListSubscriberInput) (*types.CreateMailingListSubscriberPayload, error) {
+	if err := r.authorize(ctx, input.MailingListID, probo.ActionMailingListSubscriberCreate); err != nil {
+		return nil, err
+	}
+
+	subscriber, err := r.MailmanService(ctx, input.MailingListID.TenantID()).CreateSubscriber(ctx, input.MailingListID, input.Email, input.FullName)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create mailing list subscriber", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateMailingListSubscriberPayload{
+		MailingListSubscriberEdge: types.NewMailingListSubscriberEdge(subscriber, coredata.MailingListSubscriberOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteMailingListSubscriber is the resolver for the deleteMailingListSubscriber field.
+func (r *mutationResolver) DeleteMailingListSubscriber(ctx context.Context, input types.DeleteMailingListSubscriberInput) (*types.DeleteMailingListSubscriberPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionMailingListSubscriberDelete); err != nil {
+		return nil, err
+	}
+
+	if err := r.MailmanService(ctx, input.ID.TenantID()).DeleteSubscriber(ctx, input.ID); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete mailing list subscriber", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteMailingListSubscriberPayload{
+		DeletedMailingListSubscriberID: input.ID,
 	}, nil
 }
 
@@ -7990,6 +8081,31 @@ func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.Trust
 	return types.NewComplianceExternalURLConnection(result), nil
 }
 
+// MailingList is the resolver for the mailingList field.
+func (r *trustCenterResolver) MailingList(ctx context.Context, obj *types.TrustCenter) (*types.MailingList, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMailingListSubscriberList); err != nil {
+		return nil, err
+	}
+
+	if obj.MailingList != nil {
+		return obj.MailingList, nil
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	ml, err := prb.TrustCenters.GetMailingList(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get mailing list for trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if ml == nil {
+		return nil, nil
+	}
+
+	return types.NewMailingList(ml), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -9072,6 +9188,14 @@ func (r *Resolver) FrameworkConnection() schema.FrameworkConnectionResolver {
 	return &frameworkConnectionResolver{r}
 }
 
+// MailingList returns schema.MailingListResolver implementation.
+func (r *Resolver) MailingList() schema.MailingListResolver { return &mailingListResolver{r} }
+
+// MailingListSubscriberConnection returns schema.MailingListSubscriberConnectionResolver implementation.
+func (r *Resolver) MailingListSubscriberConnection() schema.MailingListSubscriberConnectionResolver {
+	return &mailingListSubscriberConnectionResolver{r}
+}
+
 // Measure returns schema.MeasureResolver implementation.
 func (r *Resolver) Measure() schema.MeasureResolver { return &measureResolver{r} }
 
@@ -9306,6 +9430,8 @@ type evidenceConnectionResolver struct{ *Resolver }
 type fileResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type frameworkConnectionResolver struct{ *Resolver }
+type mailingListResolver struct{ *Resolver }
+type mailingListSubscriberConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
 type meetingResolver struct{ *Resolver }

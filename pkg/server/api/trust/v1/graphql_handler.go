@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
@@ -29,12 +30,13 @@ import (
 	"go.probo.inc/probo/pkg/trust"
 )
 
-func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, esignSvc *esign.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
+func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, esignSvc *esign.Service, mailmanSvc *mailman.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config, tokenSecret string) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
 			iam:           iamSvc,
 			trust:         trustSvc,
 			esign:         esignSvc,
+			mailman:       mailmanSvc,
 			logger:        logger,
 			baseURL:       baseURL,
 			sessionCookie: authn.NewCookie(&cookieConfig),

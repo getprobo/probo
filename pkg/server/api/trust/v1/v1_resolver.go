@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -694,6 +695,62 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 	return &types.RecordSigningEventPayload{Success: true}, nil
 }
 
+// SubscribeToMailingList is the resolver for the subscribeToMailingList field.
+func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.SubscribeToMailingListPayload, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.MailingListID == nil {
+		return nil, gqlutils.NotFoundf(ctx, "mailing list not found")
+	}
+
+	mlSvc := r.MailmanService(ctx, trustCenter.ID.TenantID())
+	identity := authn.IdentityFromContext(ctx)
+
+	subscriber, err := mlSvc.CreateSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress, identity.FullName)
+	if err != nil {
+		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
+			subscriber, err = mlSvc.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
+			if err != nil {
+				r.logger.ErrorCtx(ctx, "cannot get existing mailing list subscription", log.Error(err))
+				return nil, gqlutils.Internal(ctx)
+			}
+		} else {
+			r.logger.ErrorCtx(ctx, "cannot subscribe to mailing list", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return &types.SubscribeToMailingListPayload{
+		Subscription: types.NewMailingListSubscriber(subscriber),
+	}, nil
+}
+
+// UnsubscribeFromMailingList is the resolver for the unsubscribeFromMailingList field.
+func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*types.UnsubscribeFromMailingListPayload, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.MailingListID == nil {
+		return nil, gqlutils.NotFoundf(ctx, "mailing list not found")
+	}
+
+	mlSvc := r.MailmanService(ctx, trustCenter.ID.TenantID())
+	identity := authn.IdentityFromContext(ctx)
+
+	subscriber, err := mlSvc.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+	if subscriber == nil {
+		return nil, gqlutils.NotFoundf(ctx, "mailing list subscription not found")
+	}
+
+	if err := mlSvc.DeleteSubscriber(ctx, subscriber.ID); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot unsubscribe from mailing list", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UnsubscribeFromMailingListPayload{DeletedMailingListSubscriberID: &subscriber.ID}, nil
+}
+
 // FileURL is the resolver for the fileUrl field.
 func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -981,6 +1038,31 @@ func (r *trustCenterResolver) NonDisclosureAgreement(ctx context.Context, obj *t
 	}
 
 	return types.NewNonDisclosureAgreement(file), nil
+}
+
+// ViewerSubscription is the resolver for the viewerSubscription field.
+func (r *trustCenterResolver) ViewerSubscription(ctx context.Context, obj *types.TrustCenter) (*types.MailingListSubscriber, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.MailingListID == nil {
+		return nil, nil
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, nil
+	}
+
+	subscriber, err := r.MailmanService(ctx, trustCenter.ID.TenantID()).GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if subscriber == nil {
+		return nil, nil
+	}
+
+	return types.NewMailingListSubscriber(subscriber), nil
 }
 
 // Organization is the resolver for the organization field.

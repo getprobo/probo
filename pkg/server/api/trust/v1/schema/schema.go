@@ -172,6 +172,14 @@ type ComplexityRoot struct {
 		UpdatedAt     func(childComplexity int) int
 	}
 
+	MailingListSubscriber struct {
+		CreatedAt func(childComplexity int) int
+		Email     func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Status    func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AcceptElectronicSignature    func(childComplexity int, input types.AcceptElectronicSignatureInput) int
 		ExportDocumentPDF            func(childComplexity int, input types.ExportDocumentPDFInput) int
@@ -183,6 +191,8 @@ type ComplexityRoot struct {
 		RequestReportAccess          func(childComplexity int, input types.RequestReportAccessInput) int
 		RequestTrustCenterFileAccess func(childComplexity int, input types.RequestTrustCenterFileAccessInput) int
 		SendMagicLink                func(childComplexity int, input types.SendMagicLinkInput) int
+		SubscribeToMailingList       func(childComplexity int) int
+		UnsubscribeFromMailingList   func(childComplexity int) int
 		UpdateFullName               func(childComplexity int, input types.UpdateFullNameInput) int
 		VerifyMagicLink              func(childComplexity int, input types.VerifyMagicLinkInput) int
 	}
@@ -247,6 +257,10 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
+	SubscribeToMailingListPayload struct {
+		Subscription func(childComplexity int) int
+	}
+
 	TrustCenter struct {
 		Active                 func(childComplexity int) int
 		Audits                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
@@ -262,6 +276,7 @@ type ComplexityRoot struct {
 		Slug                   func(childComplexity int) int
 		TrustCenterFiles       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Vendors                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		ViewerSubscription     func(childComplexity int) int
 	}
 
 	TrustCenterAccess struct {
@@ -306,6 +321,10 @@ type ComplexityRoot struct {
 	TrustCenterReferenceEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	UnsubscribeFromMailingListPayload struct {
+		DeletedMailingListSubscriberID func(childComplexity int) int
 	}
 
 	UpdateFullNamePayload struct {
@@ -366,6 +385,8 @@ type MutationResolver interface {
 	RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestFileAccessPayload, error)
 	AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error)
 	RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error)
+	SubscribeToMailingList(ctx context.Context) (*types.SubscribeToMailingListPayload, error)
+	UnsubscribeFromMailingList(ctx context.Context) (*types.UnsubscribeFromMailingListPayload, error)
 }
 type NonDisclosureAgreementResolver interface {
 	FileURL(ctx context.Context, obj *types.NonDisclosureAgreement) (string, error)
@@ -387,6 +408,7 @@ type TrustCenterResolver interface {
 	LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	NonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (*types.NonDisclosureAgreement, error)
+	ViewerSubscription(ctx context.Context, obj *types.TrustCenter) (*types.MailingListSubscriber, error)
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error)
 	Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error)
@@ -771,6 +793,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Identity.UpdatedAt(childComplexity), true
 
+	case "MailingListSubscriber.createdAt":
+		if e.ComplexityRoot.MailingListSubscriber.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MailingListSubscriber.CreatedAt(childComplexity), true
+	case "MailingListSubscriber.email":
+		if e.ComplexityRoot.MailingListSubscriber.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MailingListSubscriber.Email(childComplexity), true
+	case "MailingListSubscriber.id":
+		if e.ComplexityRoot.MailingListSubscriber.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MailingListSubscriber.ID(childComplexity), true
+	case "MailingListSubscriber.status":
+		if e.ComplexityRoot.MailingListSubscriber.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MailingListSubscriber.Status(childComplexity), true
+	case "MailingListSubscriber.updatedAt":
+		if e.ComplexityRoot.MailingListSubscriber.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MailingListSubscriber.UpdatedAt(childComplexity), true
+
 	case "Mutation.acceptElectronicSignature":
 		if e.ComplexityRoot.Mutation.AcceptElectronicSignature == nil {
 			break
@@ -876,6 +929,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendMagicLink(childComplexity, args["input"].(types.SendMagicLinkInput)), true
+	case "Mutation.subscribeToMailingList":
+		if e.ComplexityRoot.Mutation.SubscribeToMailingList == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.SubscribeToMailingList(childComplexity), true
+	case "Mutation.unsubscribeFromMailingList":
+		if e.ComplexityRoot.Mutation.UnsubscribeFromMailingList == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.UnsubscribeFromMailingList(childComplexity), true
 	case "Mutation.updateFullName":
 		if e.ComplexityRoot.Mutation.UpdateFullName == nil {
 			break
@@ -1078,6 +1143,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.SendMagicLinkPayload.Success(childComplexity), true
 
+	case "SubscribeToMailingListPayload.subscription":
+		if e.ComplexityRoot.SubscribeToMailingListPayload.Subscription == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SubscribeToMailingListPayload.Subscription(childComplexity), true
+
 	case "TrustCenter.active":
 		if e.ComplexityRoot.TrustCenter.Active == nil {
 			break
@@ -1197,6 +1269,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TrustCenter.Vendors(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+	case "TrustCenter.viewerSubscription":
+		if e.ComplexityRoot.TrustCenter.ViewerSubscription == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TrustCenter.ViewerSubscription(childComplexity), true
 
 	case "TrustCenterAccess.createdAt":
 		if e.ComplexityRoot.TrustCenterAccess.CreatedAt == nil {
@@ -1342,6 +1420,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TrustCenterReferenceEdge.Node(childComplexity), true
+
+	case "UnsubscribeFromMailingListPayload.deletedMailingListSubscriberId":
+		if e.ComplexityRoot.UnsubscribeFromMailingListPayload.DeletedMailingListSubscriberID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UnsubscribeFromMailingListPayload.DeletedMailingListSubscriberID(childComplexity), true
 
 	case "UpdateFullNamePayload.success":
 		if e.ComplexityRoot.UpdateFullNamePayload.Success == nil {
@@ -2058,6 +2143,7 @@ type TrustCenter implements Node {
 
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
+  viewerSubscription: MailingListSubscriber @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
   documents(
@@ -2420,6 +2506,43 @@ type Mutation {
   recordSigningEvent(
     input: RecordSigningEventInput!
   ): RecordSigningEventPayload @session(required: PRESENT)
+
+  subscribeToMailingList: SubscribeToMailingListPayload! @session(required: PRESENT)
+
+  unsubscribeFromMailingList: UnsubscribeFromMailingListPayload! @session(required: PRESENT)
+}
+
+type SubscribeToMailingListPayload {
+  subscription: MailingListSubscriber!
+}
+
+type UnsubscribeFromMailingListPayload {
+  deletedMailingListSubscriberId: ID
+}
+
+enum MailingListSubscriberStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatus"
+  ) {
+  PENDING
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusPending"
+    )
+  CONFIRMED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusConfirmed"
+    )
+}
+
+type MailingListSubscriber implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListSubscriber"
+  ) {
+  id: ID!
+  email: EmailAddr!
+  status: MailingListSubscriberStatus!
+  createdAt: Datetime!
+  updatedAt: Datetime!
 }
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
@@ -4698,6 +4821,151 @@ func (ec *executionContext) fieldContext_Identity_updatedAt(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _MailingListSubscriber_id(ctx context.Context, field graphql.CollectedField, obj *types.MailingListSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MailingListSubscriber_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MailingListSubscriber_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MailingListSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MailingListSubscriber_email(ctx context.Context, field graphql.CollectedField, obj *types.MailingListSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MailingListSubscriber_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MailingListSubscriber_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MailingListSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type EmailAddr does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MailingListSubscriber_status(ctx context.Context, field graphql.CollectedField, obj *types.MailingListSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MailingListSubscriber_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNMailingListSubscriberStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMailingListSubscriberStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MailingListSubscriber_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MailingListSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type MailingListSubscriberStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MailingListSubscriber_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.MailingListSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MailingListSubscriber_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MailingListSubscriber_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MailingListSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MailingListSubscriber_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.MailingListSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MailingListSubscriber_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MailingListSubscriber_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MailingListSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_sendMagicLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5491,6 +5759,108 @@ func (ec *executionContext) fieldContext_Mutation_recordSigningEvent(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_subscribeToMailingList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_subscribeToMailingList,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().SubscribeToMailingList(ctx)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.SubscribeToMailingListPayload
+					return zeroVal, err
+				}
+				if ec.Directives.Session == nil {
+					var zeroVal *types.SubscribeToMailingListPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.Directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNSubscribeToMailingListPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSubscribeToMailingListPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_subscribeToMailingList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "subscription":
+				return ec.fieldContext_SubscribeToMailingListPayload_subscription(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SubscribeToMailingListPayload", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unsubscribeFromMailingList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_unsubscribeFromMailingList,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().UnsubscribeFromMailingList(ctx)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.UnsubscribeFromMailingListPayload
+					return zeroVal, err
+				}
+				if ec.Directives.Session == nil {
+					var zeroVal *types.UnsubscribeFromMailingListPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.Directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNUnsubscribeFromMailingListPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUnsubscribeFromMailingListPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unsubscribeFromMailingList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedMailingListSubscriberId":
+				return ec.fieldContext_UnsubscribeFromMailingListPayload_deletedMailingListSubscriberId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UnsubscribeFromMailingListPayload", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _NonDisclosureAgreement_fileName(ctx context.Context, field graphql.CollectedField, obj *types.NonDisclosureAgreement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6035,6 +6405,8 @@ func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_darkLogoFileUrl(ctx, field)
 			case "nonDisclosureAgreement":
 				return ec.fieldContext_TrustCenter_nonDisclosureAgreement(ctx, field)
+			case "viewerSubscription":
+				return ec.fieldContext_TrustCenter_viewerSubscription(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenter_organization(ctx, field)
 			case "documents":
@@ -6547,6 +6919,47 @@ func (ec *executionContext) fieldContext_SendMagicLinkPayload_success(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _SubscribeToMailingListPayload_subscription(ctx context.Context, field graphql.CollectedField, obj *types.SubscribeToMailingListPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SubscribeToMailingListPayload_subscription,
+		func(ctx context.Context) (any, error) {
+			return obj.Subscription, nil
+		},
+		nil,
+		ec.marshalNMailingListSubscriber2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐMailingListSubscriber,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SubscribeToMailingListPayload_subscription(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscribeToMailingListPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MailingListSubscriber_id(ctx, field)
+			case "email":
+				return ec.fieldContext_MailingListSubscriber_email(ctx, field)
+			case "status":
+				return ec.fieldContext_MailingListSubscriber_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MailingListSubscriber_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_MailingListSubscriber_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MailingListSubscriber", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenter_id(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6724,6 +7137,47 @@ func (ec *executionContext) fieldContext_TrustCenter_nonDisclosureAgreement(_ co
 				return ec.fieldContext_NonDisclosureAgreement_viewerSignature(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NonDisclosureAgreement", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_viewerSubscription(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_viewerSubscription,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.TrustCenter().ViewerSubscription(ctx, obj)
+		},
+		nil,
+		ec.marshalOMailingListSubscriber2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐMailingListSubscriber,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_viewerSubscription(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MailingListSubscriber_id(ctx, field)
+			case "email":
+				return ec.fieldContext_MailingListSubscriber_email(ctx, field)
+			case "status":
+				return ec.fieldContext_MailingListSubscriber_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MailingListSubscriber_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_MailingListSubscriber_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MailingListSubscriber", field.Name)
 		},
 	}
 	return fc, nil
@@ -7946,6 +8400,35 @@ func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_node(_ context
 				return ec.fieldContext_TrustCenterReference_logoUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UnsubscribeFromMailingListPayload_deletedMailingListSubscriberId(ctx context.Context, field graphql.CollectedField, obj *types.UnsubscribeFromMailingListPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UnsubscribeFromMailingListPayload_deletedMailingListSubscriberId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedMailingListSubscriberID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UnsubscribeFromMailingListPayload_deletedMailingListSubscriberId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UnsubscribeFromMailingListPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10218,6 +10701,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Organization(ctx, sel, obj)
+	case types.MailingListSubscriber:
+		return ec._MailingListSubscriber(ctx, sel, &obj)
+	case *types.MailingListSubscriber:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._MailingListSubscriber(ctx, sel, obj)
 	case types.Identity:
 		return ec._Identity(ctx, sel, &obj)
 	case *types.Identity:
@@ -11438,6 +11928,65 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var mailingListSubscriberImplementors = []string{"MailingListSubscriber", "Node"}
+
+func (ec *executionContext) _MailingListSubscriber(ctx context.Context, sel ast.SelectionSet, obj *types.MailingListSubscriber) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mailingListSubscriberImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MailingListSubscriber")
+		case "id":
+			out.Values[i] = ec._MailingListSubscriber_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._MailingListSubscriber_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._MailingListSubscriber_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._MailingListSubscriber_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._MailingListSubscriber_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -11526,6 +12075,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_recordSigningEvent(ctx, field)
 			})
+		case "subscribeToMailingList":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_subscribeToMailingList(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unsubscribeFromMailingList":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unsubscribeFromMailingList(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12238,6 +12801,45 @@ func (ec *executionContext) _SendMagicLinkPayload(ctx context.Context, sel ast.S
 	return out
 }
 
+var subscribeToMailingListPayloadImplementors = []string{"SubscribeToMailingListPayload"}
+
+func (ec *executionContext) _SubscribeToMailingListPayload(ctx context.Context, sel ast.SelectionSet, obj *types.SubscribeToMailingListPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscribeToMailingListPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SubscribeToMailingListPayload")
+		case "subscription":
+			out.Values[i] = ec._SubscribeToMailingListPayload_subscription(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var trustCenterImplementors = []string{"TrustCenter", "Node"}
 
 func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionSet, obj *types.TrustCenter) graphql.Marshaler {
@@ -12340,6 +12942,39 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 					}
 				}()
 				res = ec._TrustCenter_nonDisclosureAgreement(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "viewerSubscription":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_viewerSubscription(ctx, field, obj)
 				return res
 			}
 
@@ -13091,6 +13726,42 @@ func (ec *executionContext) _TrustCenterReferenceEdge(ctx context.Context, sel a
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var unsubscribeFromMailingListPayloadImplementors = []string{"UnsubscribeFromMailingListPayload"}
+
+func (ec *executionContext) _UnsubscribeFromMailingListPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UnsubscribeFromMailingListPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, unsubscribeFromMailingListPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UnsubscribeFromMailingListPayload")
+		case "deletedMailingListSubscriberId":
+			out.Values[i] = ec._UnsubscribeFromMailingListPayload_deletedMailingListSubscriberId(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14823,6 +15494,44 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNMailingListSubscriber2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐMailingListSubscriber(ctx context.Context, sel ast.SelectionSet, v *types.MailingListSubscriber) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MailingListSubscriber(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNMailingListSubscriberStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMailingListSubscriberStatus(ctx context.Context, v any) (coredata.MailingListSubscriberStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNMailingListSubscriberStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMailingListSubscriberStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMailingListSubscriberStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMailingListSubscriberStatus(ctx context.Context, sel ast.SelectionSet, v coredata.MailingListSubscriberStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNMailingListSubscriberStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMailingListSubscriberStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNMailingListSubscriberStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMailingListSubscriberStatus = map[string]coredata.MailingListSubscriberStatus{
+		"PENDING":   coredata.MailingListSubscriberStatusPending,
+		"CONFIRMED": coredata.MailingListSubscriberStatusConfirmed,
+	}
+	marshalNMailingListSubscriberStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMailingListSubscriberStatus = map[coredata.MailingListSubscriberStatus]string{
+		coredata.MailingListSubscriberStatusPending:   "PENDING",
+		coredata.MailingListSubscriberStatusConfirmed: "CONFIRMED",
+	}
+)
+
 func (ec *executionContext) marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -14988,6 +15697,20 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNSubscribeToMailingListPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSubscribeToMailingListPayload(ctx context.Context, sel ast.SelectionSet, v types.SubscribeToMailingListPayload) graphql.Marshaler {
+	return ec._SubscribeToMailingListPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSubscribeToMailingListPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSubscribeToMailingListPayload(ctx context.Context, sel ast.SelectionSet, v *types.SubscribeToMailingListPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SubscribeToMailingListPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNTrustCenterAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterAccess(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterAccess) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -15096,6 +15819,20 @@ func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚖgoᚗproboᚗinc
 		return graphql.Null
 	}
 	return ec._TrustCenterReferenceEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUnsubscribeFromMailingListPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUnsubscribeFromMailingListPayload(ctx context.Context, sel ast.SelectionSet, v types.UnsubscribeFromMailingListPayload) graphql.Marshaler {
+	return ec._UnsubscribeFromMailingListPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUnsubscribeFromMailingListPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUnsubscribeFromMailingListPayload(ctx context.Context, sel ast.SelectionSet, v *types.UnsubscribeFromMailingListPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UnsubscribeFromMailingListPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateFullNameInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUpdateFullNameInput(ctx context.Context, v any) (types.UpdateFullNameInput, error) {
@@ -15468,6 +16205,24 @@ func (ec *executionContext) marshalOElectronicSignature2ᚖgoᚗproboᚗincᚋpr
 	return ec._ElectronicSignature(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, v any) (*gid.GID, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := gid1.UnmarshalGIDScalar(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, sel ast.SelectionSet, v *gid.GID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := gid1.MarshalGIDScalar(*v)
+	return res
+}
+
 func (ec *executionContext) marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐIdentity(ctx context.Context, sel ast.SelectionSet, v *types.Identity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -15491,6 +16246,13 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOMailingListSubscriber2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐMailingListSubscriber(ctx context.Context, sel ast.SelectionSet, v *types.MailingListSubscriber) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._MailingListSubscriber(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalONonDisclosureAgreement2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNonDisclosureAgreement(ctx context.Context, sel ast.SelectionSet, v *types.NonDisclosureAgreement) graphql.Marshaler {

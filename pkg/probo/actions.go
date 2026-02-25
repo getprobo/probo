@@ -40,6 +40,14 @@ const (
 	ActionTrustCenterAccessUpdate = "core:trust-center-access:update"
 	ActionTrustCenterAccessDelete = "core:trust-center-access:delete"
 
+	// MailingList actions
+	ActionMailingListUpdate = "core:mailing-list:update"
+
+	// MailingListSubscriber actions
+	ActionMailingListSubscriberList   = "core:mailing-list-subscriber:list"
+	ActionMailingListSubscriberCreate = "core:mailing-list-subscriber:create"
+	ActionMailingListSubscriberDelete = "core:mailing-list-subscriber:delete"
+
 	// TrustCenterReference actions
 	ActionTrustCenterReferenceList       = "core:trust-center-reference:list"
 	ActionTrustCenterReferenceGetLogoUrl = "core:trust-center-reference:get-logo-url"

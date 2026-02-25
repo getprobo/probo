@@ -87,6 +87,8 @@ const (
 	EmailAttachmentEntityType                  uint16 = 61
 	ComplianceFrameworkEntityType              uint16 = 62
 	ComplianceExternalURLEntityType            uint16 = 63
+	MailingListEntityType                      uint16 = 64
+	MailingListSubscriberEntityType            uint16 = 65
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -215,6 +217,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &ComplianceFramework{ID: id}, true
 	case ComplianceExternalURLEntityType:
 		return &ComplianceExternalURL{ID: id}, true
+	case MailingListEntityType:
+		return &MailingList{ID: id}, true
+	case MailingListSubscriberEntityType:
+		return &MailingListSubscriber{ID: id}, true
 	default:
 		return nil, false
 	}
