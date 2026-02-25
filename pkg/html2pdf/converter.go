@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"strings"
@@ -134,11 +133,6 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 	ctx, cancel = chromedp.NewContext(allocCtx)
 	defer cancel()
 
-	dataURL := fmt.Sprintf(
-		"data:text/html;base64,%s",
-		base64.StdEncoding.EncodeToString(htmlDocument),
-	)
-
 	width, height := getPageDimensions(cfg.PageFormat, cfg.Orientation)
 
 	marginTop := cfg.MarginTop.ToInches()
@@ -166,23 +160,33 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		log.Bool("printBackground", cfg.PrintBackground),
 	)
 
-	err := chromedp.Run(ctx,
-		chromedp.Navigate(dataURL),
+	htmlContent := string(htmlDocument)
+
+	err := chromedp.Run(
+		ctx,
+		chromedp.Navigate("about:blank"),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			frameTree, err := page.GetFrameTree().Do(ctx)
+			if err != nil {
+				return fmt.Errorf("cannot get frame tree: %w", err)
+			}
+			return page.SetDocumentContent(frameTree.Frame.ID, htmlContent).Do(ctx)
+		}),
 		chromedp.WaitReady("body"),
 		chromedp.ActionFunc(waitUntilDocumentReady),
 		chromedp.ActionFunc(
 			func(ctx context.Context) (err error) {
 				pdfBytes, _, err = page.PrintToPDF().
-				WithPrintBackground(cfg.PrintBackground).
-				WithPaperWidth(width).
-				WithPaperHeight(height).
-				WithMarginTop(marginTop).
-				WithMarginBottom(marginBottom).
-				WithMarginLeft(marginLeft).
-				WithMarginRight(marginRight).
-				WithScale(scale).
-				WithPreferCSSPageSize(false).
-				Do(ctx)
+					WithPrintBackground(cfg.PrintBackground).
+					WithPaperWidth(width).
+					WithPaperHeight(height).
+					WithMarginTop(marginTop).
+					WithMarginBottom(marginBottom).
+					WithMarginLeft(marginLeft).
+					WithMarginRight(marginRight).
+					WithScale(scale).
+					WithPreferCSSPageSize(false).
+					Do(ctx)
 
 				return err
 			},
