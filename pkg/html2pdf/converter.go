@@ -165,13 +165,17 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 	err := chromedp.Run(
 		ctx,
 		chromedp.Navigate("about:blank"),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			frameTree, err := page.GetFrameTree().Do(ctx)
-			if err != nil {
-				return fmt.Errorf("cannot get frame tree: %w", err)
-			}
-			return page.SetDocumentContent(frameTree.Frame.ID, htmlContent).Do(ctx)
-		}),
+		chromedp.ActionFunc(
+			func(ctx context.Context) error {
+				frameTree, err := page.GetFrameTree().Do(ctx)
+				if err != nil {
+					return fmt.Errorf("cannot get frame tree: %w", err)
+				}
+				if err := page.SetDocumentContent(frameTree.Frame.ID, htmlContent).Do(ctx); err != nil {
+					return fmt.Errorf("cannot set document content: %w", err)
+				}
+				return nil
+			}),
 		chromedp.WaitReady("body"),
 		chromedp.ActionFunc(waitUntilDocumentReady),
 		chromedp.ActionFunc(
