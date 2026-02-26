@@ -4317,133 +4317,192 @@ components:
         control:
           $ref: "#/components/schemas/Control"
 
-    LinkControlMeasureInput:
+    LinkControlInput:
       type: object
       required:
         - control_id
-        - measure_id
+        - resource_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        measure_id:
+        resource_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: ID of the resource to link (measure, document, audit, snapshot, or obligation)
 
-    LinkControlMeasureOutput:
+    LinkControlOutput:
       type: object
 
-    UnlinkControlMeasureInput:
+    UnlinkControlInput:
       type: object
       required:
         - control_id
-        - measure_id
+        - resource_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        measure_id:
+        resource_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: ID of the resource to unlink (measure, document, audit, snapshot, or obligation)
 
-    UnlinkControlMeasureOutput:
+    UnlinkControlOutput:
       type: object
 
-    LinkControlDocumentInput:
+    ListControlObligationsInput:
       type: object
       required:
         - control_id
-        - document_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        document_id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/ObligationOrderBy"
+          description: Obligation order by
 
-    LinkControlDocumentOutput:
+    ListControlObligationsOutput:
       type: object
+      required:
+        - obligations
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        obligations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Obligation"
 
-    UnlinkControlDocumentInput:
+    ListControlMeasuresInput:
       type: object
       required:
         - control_id
-        - document_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        document_id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/MeasureOrderBy"
+          description: Measure order by
 
-    UnlinkControlDocumentOutput:
+    ListControlMeasuresOutput:
       type: object
+      required:
+        - measures
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        measures:
+          type: array
+          items:
+            $ref: "#/components/schemas/Measure"
 
-    LinkControlAuditInput:
+    ListControlDocumentsInput:
       type: object
       required:
         - control_id
-        - audit_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        audit_id:
-          $ref: "#/components/schemas/GID"
-          description: Audit ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/DocumentOrderBy"
+          description: Document order by
 
-    LinkControlAuditOutput:
+    ListControlDocumentsOutput:
       type: object
+      required:
+        - documents
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
 
-    UnlinkControlAuditInput:
+    ListControlAuditsInput:
       type: object
       required:
         - control_id
-        - audit_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        audit_id:
-          $ref: "#/components/schemas/GID"
-          description: Audit ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/AuditOrderBy"
+          description: Audit order by
 
-    UnlinkControlAuditOutput:
+    ListControlAuditsOutput:
       type: object
+      required:
+        - audits
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        audits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Audit"
 
-    LinkControlSnapshotInput:
+    ListControlSnapshotsInput:
       type: object
       required:
         - control_id
-        - snapshot_id
       properties:
         control_id:
           $ref: "#/components/schemas/GID"
           description: Control ID
-        snapshot_id:
-          $ref: "#/components/schemas/GID"
-          description: Snapshot ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/SnapshotOrderBy"
+          description: Snapshot order by
 
-    LinkControlSnapshotOutput:
-      type: object
-
-    UnlinkControlSnapshotInput:
+    ListControlSnapshotsOutput:
       type: object
       required:
-        - control_id
-        - snapshot_id
+        - snapshots
       properties:
-        control_id:
-          $ref: "#/components/schemas/GID"
-          description: Control ID
-        snapshot_id:
-          $ref: "#/components/schemas/GID"
-          description: Snapshot ID
-
-    UnlinkControlSnapshotOutput:
-      type: object
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        snapshots:
+          type: array
+          items:
+            $ref: "#/components/schemas/Snapshot"
 
     ListRiskObligationsInput:
       type: object
@@ -6839,70 +6898,67 @@ tools:
       $ref: "#/components/schemas/UpdateControlInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateControlOutput"
-  - name: linkControlMeasure
-    description: Link a measure to a control
+  - name: linkControl
+    description: Link a resource to a control (measure, document, audit, snapshot, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/LinkControlMeasureInput"
+      $ref: "#/components/schemas/LinkControlInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkControlMeasureOutput"
-  - name: unlinkControlMeasure
-    description: Unlink a measure from a control
+      $ref: "#/components/schemas/LinkControlOutput"
+  - name: unlinkControl
+    description: Unlink a resource from a control (measure, document, audit, snapshot, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UnlinkControlMeasureInput"
+      $ref: "#/components/schemas/UnlinkControlInput"
     outputSchema:
-      $ref: "#/components/schemas/UnlinkControlMeasureOutput"
-  - name: linkControlDocument
-    description: Link a document to a control
+      $ref: "#/components/schemas/UnlinkControlOutput"
+  - name: listControlObligations
+    description: List obligations linked to a control
     hints:
-      readonly: false
+      readonly: true
+      idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/LinkControlDocumentInput"
+      $ref: "#/components/schemas/ListControlObligationsInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkControlDocumentOutput"
-  - name: unlinkControlDocument
-    description: Unlink a document from a control
+      $ref: "#/components/schemas/ListControlObligationsOutput"
+  - name: listControlMeasures
+    description: List measures linked to a control
     hints:
-      readonly: false
+      readonly: true
+      idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/UnlinkControlDocumentInput"
+      $ref: "#/components/schemas/ListControlMeasuresInput"
     outputSchema:
-      $ref: "#/components/schemas/UnlinkControlDocumentOutput"
-  - name: linkControlAudit
-    description: Link an audit to a control
+      $ref: "#/components/schemas/ListControlMeasuresOutput"
+  - name: listControlDocuments
+    description: List documents linked to a control
     hints:
-      readonly: false
+      readonly: true
+      idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/LinkControlAuditInput"
+      $ref: "#/components/schemas/ListControlDocumentsInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkControlAuditOutput"
-  - name: unlinkControlAudit
-    description: Unlink an audit from a control
+      $ref: "#/components/schemas/ListControlDocumentsOutput"
+  - name: listControlAudits
+    description: List audits linked to a control
     hints:
-      readonly: false
+      readonly: true
+      idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/UnlinkControlAuditInput"
+      $ref: "#/components/schemas/ListControlAuditsInput"
     outputSchema:
-      $ref: "#/components/schemas/UnlinkControlAuditOutput"
-  - name: linkControlSnapshot
-    description: Link a snapshot to a control
+      $ref: "#/components/schemas/ListControlAuditsOutput"
+  - name: listControlSnapshots
+    description: List snapshots linked to a control
     hints:
-      readonly: false
+      readonly: true
+      idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/LinkControlSnapshotInput"
+      $ref: "#/components/schemas/ListControlSnapshotsInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkControlSnapshotOutput"
-  - name: unlinkControlSnapshot
-    description: Unlink a snapshot from a control
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/UnlinkControlSnapshotInput"
-    outputSchema:
-      $ref: "#/components/schemas/UnlinkControlSnapshotOutput"
+      $ref: "#/components/schemas/ListControlSnapshotsOutput"
   - name: listRiskObligations
     description: List obligations linked to a risk
     hints:

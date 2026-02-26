@@ -1578,108 +1578,215 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 	}, nil
 }
 
-func (r *Resolver) LinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlMeasureInput) (*mcp.CallToolResult, types.LinkControlMeasureOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate)
-
+func (r *Resolver) LinkControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlInput) (*mcp.CallToolResult, types.LinkControlOutput, error) {
 	svc := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.CreateMeasureMapping(ctx, input.ControlID, input.MeasureID)
-	if err != nil {
-		return nil, types.LinkControlMeasureOutput{}, fmt.Errorf("failed to link control measure: %w", err)
+	switch input.ResourceID.EntityType() {
+	case coredata.MeasureEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate)
+		if _, _, err := svc.Controls.CreateMeasureMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to measure: %w", err)
+		}
+	case coredata.DocumentEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate)
+		if _, _, err := svc.Controls.CreateDocumentMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to document: %w", err)
+		}
+	case coredata.AuditEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate)
+		if _, _, err := svc.Controls.CreateAuditMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to audit: %w", err)
+		}
+	case coredata.SnapshotEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingCreate)
+		if _, _, err := svc.Controls.CreateSnapshotMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to snapshot: %w", err)
+		}
+	case coredata.ObligationEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlObligationMappingCreate)
+		if _, _, err := svc.Controls.CreateObligationMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to obligation: %w", err)
+		}
+	default:
+		return nil, types.LinkControlOutput{}, fmt.Errorf("unsupported resource type for control linking: entity type %d", input.ResourceID.EntityType())
 	}
 
-	return nil, types.LinkControlMeasureOutput{}, nil
+	return nil, types.LinkControlOutput{}, nil
 }
 
-func (r *Resolver) UnlinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlMeasureInput) (*mcp.CallToolResult, types.UnlinkControlMeasureOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete)
-
+func (r *Resolver) UnlinkControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlInput) (*mcp.CallToolResult, types.UnlinkControlOutput, error) {
 	svc := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.DeleteMeasureMapping(ctx, input.ControlID, input.MeasureID)
-	if err != nil {
-		return nil, types.UnlinkControlMeasureOutput{}, fmt.Errorf("failed to unlink control measure: %w", err)
+	switch input.ResourceID.EntityType() {
+	case coredata.MeasureEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete)
+		if _, _, err := svc.Controls.DeleteMeasureMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from measure: %w", err)
+		}
+	case coredata.DocumentEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete)
+		if _, _, err := svc.Controls.DeleteDocumentMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from document: %w", err)
+		}
+	case coredata.AuditEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete)
+		if _, _, err := svc.Controls.DeleteAuditMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from audit: %w", err)
+		}
+	case coredata.SnapshotEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingDelete)
+		if _, _, err := svc.Controls.DeleteSnapshotMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from snapshot: %w", err)
+		}
+	case coredata.ObligationEntityType:
+		r.MustAuthorize(ctx, input.ControlID, probo.ActionControlObligationMappingDelete)
+		if _, _, err := svc.Controls.DeleteObligationMapping(ctx, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from obligation: %w", err)
+		}
+	default:
+		return nil, types.UnlinkControlOutput{}, fmt.Errorf("unsupported resource type for control unlinking: entity type %d", input.ResourceID.EntityType())
 	}
 
-	return nil, types.UnlinkControlMeasureOutput{}, nil
+	return nil, types.UnlinkControlOutput{}, nil
 }
 
-func (r *Resolver) LinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlDocumentInput) (*mcp.CallToolResult, types.LinkControlDocumentOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate)
+func (r *Resolver) ListControlObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlObligationsInput) (*mcp.CallToolResult, types.ListControlObligationsOutput, error) {
+	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlGet)
 
-	svc := r.ProboService(ctx, input.ControlID)
+	prb := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.CreateDocumentMapping(ctx, input.ControlID, input.DocumentID)
-	if err != nil {
-		return nil, types.LinkControlDocumentOutput{}, fmt.Errorf("failed to link control document: %w", err)
+	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
+		Field:     coredata.ObligationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
 	}
 
-	return nil, types.LinkControlDocumentOutput{}, nil
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	obligationPage, err := prb.Obligations.ListForControlID(ctx, input.ControlID, cursor, coredata.NewObligationFilter(nil))
+	if err != nil {
+		return nil, types.ListControlObligationsOutput{}, fmt.Errorf("failed to list control obligations: %w", err)
+	}
+
+	return nil, types.NewListControlObligationsOutput(obligationPage), nil
 }
 
-func (r *Resolver) UnlinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlDocumentInput) (*mcp.CallToolResult, types.UnlinkControlDocumentOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete)
+func (r *Resolver) ListControlMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlMeasuresInput) (*mcp.CallToolResult, types.ListControlMeasuresOutput, error) {
+	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlGet)
 
-	svc := r.ProboService(ctx, input.ControlID)
+	prb := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.DeleteDocumentMapping(ctx, input.ControlID, input.DocumentID)
-	if err != nil {
-		return nil, types.UnlinkControlDocumentOutput{}, fmt.Errorf("failed to unlink control document: %w", err)
+	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
+		Field:     coredata.MeasureOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
 	}
 
-	return nil, types.UnlinkControlDocumentOutput{}, nil
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	measurePage, err := prb.Measures.ListForControlID(ctx, input.ControlID, cursor, coredata.NewMeasureFilter(nil, nil))
+	if err != nil {
+		return nil, types.ListControlMeasuresOutput{}, fmt.Errorf("failed to list control measures: %w", err)
+	}
+
+	return nil, types.NewListControlMeasuresOutput(measurePage), nil
 }
 
-func (r *Resolver) LinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlAuditInput) (*mcp.CallToolResult, types.LinkControlAuditOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate)
+func (r *Resolver) ListControlDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlDocumentsInput) (*mcp.CallToolResult, types.ListControlDocumentsOutput, error) {
+	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlGet)
 
-	svc := r.ProboService(ctx, input.ControlID)
+	prb := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.CreateAuditMapping(ctx, input.ControlID, input.AuditID)
-	if err != nil {
-		return nil, types.LinkControlAuditOutput{}, fmt.Errorf("failed to link control audit: %w", err)
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
 	}
 
-	return nil, types.LinkControlAuditOutput{}, nil
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	docPage, err := prb.Documents.ListForControlID(ctx, input.ControlID, cursor, coredata.NewDocumentFilter(nil))
+	if err != nil {
+		return nil, types.ListControlDocumentsOutput{}, fmt.Errorf("failed to list control documents: %w", err)
+	}
+
+	approverIDsMap := make(map[gid.GID][]gid.GID)
+	for _, d := range docPage.Data {
+		approverPage, err := prb.Documents.ListApprovers(ctx, d.ID, allApproversCursor())
+		if err != nil {
+			return nil, types.ListControlDocumentsOutput{}, fmt.Errorf("failed to list document approvers: %w", err)
+		}
+		approverIDsMap[d.ID] = profileIDs(approverPage)
+	}
+
+	return nil, types.NewListControlDocumentsOutput(docPage, approverIDsMap), nil
 }
 
-func (r *Resolver) UnlinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlAuditInput) (*mcp.CallToolResult, types.UnlinkControlAuditOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete)
+func (r *Resolver) ListControlAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlAuditsInput) (*mcp.CallToolResult, types.ListControlAuditsOutput, error) {
+	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlGet)
 
-	svc := r.ProboService(ctx, input.ControlID)
+	prb := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.DeleteAuditMapping(ctx, input.ControlID, input.AuditID)
-	if err != nil {
-		return nil, types.UnlinkControlAuditOutput{}, fmt.Errorf("failed to unlink control audit: %w", err)
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
 	}
 
-	return nil, types.UnlinkControlAuditOutput{}, nil
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	auditPage, err := prb.Audits.ListForControlID(ctx, input.ControlID, cursor)
+	if err != nil {
+		return nil, types.ListControlAuditsOutput{}, fmt.Errorf("failed to list control audits: %w", err)
+	}
+
+	return nil, types.NewListControlAuditsOutput(auditPage), nil
 }
 
-func (r *Resolver) LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlSnapshotInput) (*mcp.CallToolResult, types.LinkControlSnapshotOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingCreate)
+func (r *Resolver) ListControlSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlSnapshotsInput) (*mcp.CallToolResult, types.ListControlSnapshotsOutput, error) {
+	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlGet)
 
-	svc := r.ProboService(ctx, input.ControlID)
+	prb := r.ProboService(ctx, input.ControlID)
 
-	_, _, err := svc.Controls.CreateSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
-	if err != nil {
-		return nil, types.LinkControlSnapshotOutput{}, fmt.Errorf("failed to link control snapshot: %w", err)
+	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
+		Field:     coredata.SnapshotOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
 	}
 
-	return nil, types.LinkControlSnapshotOutput{}, nil
-}
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-func (r *Resolver) UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlSnapshotInput) (*mcp.CallToolResult, types.UnlinkControlSnapshotOutput, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingDelete)
-
-	svc := r.ProboService(ctx, input.ControlID)
-
-	_, _, err := svc.Controls.DeleteSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
+	snapshotPage, err := prb.Snapshots.ListForControlID(ctx, input.ControlID, cursor)
 	if err != nil {
-		return nil, types.UnlinkControlSnapshotOutput{}, fmt.Errorf("failed to unlink control snapshot: %w", err)
+		return nil, types.ListControlSnapshotsOutput{}, fmt.Errorf("failed to list control snapshots: %w", err)
 	}
 
-	return nil, types.UnlinkControlSnapshotOutput{}, nil
+	return nil, types.NewListControlSnapshotsOutput(snapshotPage), nil
 }
 
 func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskObligationsInput) (*mcp.CallToolResult, types.ListRiskObligationsOutput, error) {

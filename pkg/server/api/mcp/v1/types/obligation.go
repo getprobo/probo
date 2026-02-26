@@ -57,6 +57,24 @@ func NewListObligationsOutput(obligationPage *page.Page[*coredata.Obligation, co
 	}
 }
 
+func NewListControlObligationsOutput(obligationPage *page.Page[*coredata.Obligation, coredata.ObligationOrderField]) ListControlObligationsOutput {
+	obligations := make([]*Obligation, 0, len(obligationPage.Data))
+	for _, v := range obligationPage.Data {
+		obligations = append(obligations, NewObligation(v))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(obligationPage.Data) > 0 {
+		cursorKey := obligationPage.Data[len(obligationPage.Data)-1].CursorKey(obligationPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListControlObligationsOutput{
+		NextCursor:  nextCursor,
+		Obligations: obligations,
+	}
+}
+
 func NewListRiskObligationsOutput(obligationPage *page.Page[*coredata.Obligation, coredata.ObligationOrderField]) ListRiskObligationsOutput {
 	obligations := make([]*Obligation, 0, len(obligationPage.Data))
 	for _, v := range obligationPage.Data {

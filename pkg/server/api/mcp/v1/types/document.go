@@ -35,6 +35,24 @@ func NewDocument(d *coredata.Document, approverIDs []gid.GID) *Document {
 	}
 }
 
+func NewListControlDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField], approverIDsMap map[gid.GID][]gid.GID) ListControlDocumentsOutput {
+	documents := make([]*Document, 0, len(documentPage.Data))
+	for _, d := range documentPage.Data {
+		documents = append(documents, NewDocument(d, approverIDsMap[d.ID]))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(documentPage.Data) > 0 {
+		cursorKey := documentPage.Data[len(documentPage.Data)-1].CursorKey(documentPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListControlDocumentsOutput{
+		NextCursor: nextCursor,
+		Documents:  documents,
+	}
+}
+
 func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField], approverIDsMap map[gid.GID][]gid.GID) ListDocumentsOutput {
 	documents := make([]*Document, 0, len(documentPage.Data))
 	for _, d := range documentPage.Data {

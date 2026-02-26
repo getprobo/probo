@@ -133,14 +133,8 @@ var (
 	GetUserToolOutputSchema                              = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"user":{"type":"object","properties":{"additional_email_addresses":{"type":"array","items":{"type":"string","format":"string"},"description":"Additional email addresses"},"contract_end_date":{"type":["string","null"],"description":"Contract end date","format":"date-time"},"contract_start_date":{"type":["string","null"],"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"email_address":{"type":"string","format":"string"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"type":["string","null"],"description":"Position"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","full_name","email_address","additional_email_addresses","kind","created_at","updated_at"]}},"required":["user"]}`)
 	InviteUserToolInputSchema                            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"organization_id":{"type":"string","format":"string"},"profile_id":{"type":"string","format":"string"}},"required":["organization_id","profile_id"]}`)
 	InviteUserToolOutputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"invitation_id":{"type":"string","format":"string"}},"required":["invitation_id"]}`)
-	LinkControlAuditToolInputSchema                      = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"audit_id":{"type":"string","format":"string"},"control_id":{"type":"string","format":"string"}},"required":["control_id","audit_id"]}`)
-	LinkControlAuditToolOutputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object"}`)
-	LinkControlDocumentToolInputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"document_id":{"type":"string","format":"string"}},"required":["control_id","document_id"]}`)
-	LinkControlDocumentToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object"}`)
-	LinkControlMeasureToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"}},"required":["control_id","measure_id"]}`)
-	LinkControlMeasureToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object"}`)
-	LinkControlSnapshotToolInputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"snapshot_id":{"type":"string","format":"string"}},"required":["control_id","snapshot_id"]}`)
-	LinkControlSnapshotToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	LinkControlToolInputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"resource_id":{"type":"string","format":"string"}},"required":["control_id","resource_id"]}`)
+	LinkControlToolOutputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	LinkMeasureToolInputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measure_id":{"type":"string","format":"string"},"resource_id":{"type":"string","format":"string"}},"required":["measure_id","resource_id"]}`)
 	LinkMeasureToolOutputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	LinkRiskToolInputSchema                              = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"resource_id":{"type":"string","format":"string"},"risk_id":{"type":"string","format":"string"}},"required":["risk_id","resource_id"]}`)
@@ -153,6 +147,16 @@ var (
 	ListAuditsToolOutputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"audits":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"type":["string","null"],"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"type":["string","null"],"description":"Valid from date","format":"date-time"},"valid_until":{"type":["string","null"],"description":"Valid until date","format":"date-time"}},"required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["audits"]}`)
 	ListContinualImprovementsToolInputSchema             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","REFERENCE_ID","TARGET_DATE","STATUS","PRIORITY"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListContinualImprovementsToolOutputSchema            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"continual_improvements":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"type":["string","null"],"description":"Source"},"source_id":{"type":["string","null"],"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"type":["string","null"],"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["continual_improvements"]}`)
+	ListControlAuditsToolInputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","VALID_FROM","VALID_UNTIL","STATE"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"}},"required":["control_id"]}`)
+	ListControlAuditsToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"audits":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"type":["string","null"],"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"type":["string","null"],"description":"Valid from date","format":"date-time"},"valid_until":{"type":["string","null"],"description":"Valid until date","format":"date-time"}},"required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["audits"]}`)
+	ListControlDocumentsToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","TITLE","DOCUMENT_TYPE"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"}},"required":["control_id"]}`)
+	ListControlDocumentsToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"documents":{"type":"array","items":{"type":"object","properties":{"approver_ids":{"type":"array","items":{"type":"string","format":"string"},"description":"Approver IDs"},"classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"current_published_version":{"type":["integer","null"],"description":"Current published version number"},"document_type":{"type":"string","enum":["OTHER","ISMS","POLICY","PROCEDURE"]},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"title":{"type":"string","description":"Document title"},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","approver_ids","title","document_type","classification","trust_center_visibility","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["documents"]}`)
+	ListControlMeasuresToolInputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","NAME"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"}},"required":["control_id"]}`)
+	ListControlMeasuresToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measures":{"type":"array","items":{"type":"object","properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","category","name","state","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["measures"]}`)
+	ListControlObligationsToolInputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","LAST_REVIEW_DATE","DUE_DATE","STATUS"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"}},"required":["control_id"]}`)
+	ListControlObligationsToolOutputSchema               = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"obligations":{"type":"array","items":{"type":"object","properties":{"actions_to_be_implemented":{"type":["string","null"],"description":"Actions to be implemented"},"area":{"type":["string","null"],"description":"Area"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"due_date":{"type":["string","null"],"description":"Due date","format":"date-time"},"id":{"type":"string","format":"string"},"last_review_date":{"type":["string","null"],"description":"Last review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"regulator":{"type":["string","null"],"description":"Regulator"},"requirement":{"type":["string","null"],"description":"Requirement"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"type":["string","null"],"description":"Source"},"source_id":{"type":["string","null"],"description":"Source ID"},"status":{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},"type":{"type":"string","enum":["LEGAL","CONTRACTUAL"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","owner_id","status","type","created_at","updated_at"]}}},"required":["obligations"]}`)
+	ListControlSnapshotsToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","NAME","TYPE"]}},"required":["field","direction"]},"size":{"type":"integer","description":"Page size"}},"required":["control_id"]}`)
+	ListControlSnapshotsToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"next_cursor":{"type":"string","format":"string"},"snapshots":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Snapshot description","anyOf":[{"type":"string","description":"Snapshot description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Snapshot name"},"organization_id":{"type":"string","format":"string"},"type":{"type":"string","enum":["RISKS","VENDORS","ASSETS","DATA","NONCONFORMITIES","OBLIGATIONS","CONTINUAL_IMPROVEMENTS","PROCESSING_ACTIVITIES","STATES_OF_APPLICABILITY"]}},"required":["id","organization_id","name","type","created_at"]}}},"required":["snapshots"]}`)
 	ListControlsToolInputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"query":{"type":"string","description":"Search query"}}},"framework_id":{"type":"string","format":"string"},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","SECTION_TITLE"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}},"required":["organization_id"]}`)
 	ListControlsToolOutputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"controls":{"type":"array","items":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":["string","null"],"description":"Control description"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Control name"},"organization_id":{"type":"string","format":"string"},"section_title":{"type":"string","description":"Section title"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","framework_id","section_title","name","created_at","updated_at"]}},"next_cursor":{"type":"string","format":"string"}},"required":["controls"]}`)
 	ListDataProtectionImpactAssessmentsToolInputSchema   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT"]}},"required":["field","direction"]},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer"}},"required":["organization_id"]}`)
@@ -217,14 +221,8 @@ var (
 	TakeSnapshotToolOutputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"snapshot":{"type":"object","properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Snapshot description","anyOf":[{"type":"string","description":"Snapshot description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Snapshot name"},"organization_id":{"type":"string","format":"string"},"type":{"type":"string","enum":["RISKS","VENDORS","ASSETS","DATA","NONCONFORMITIES","OBLIGATIONS","CONTINUAL_IMPROVEMENTS","PROCESSING_ACTIVITIES","STATES_OF_APPLICABILITY"]}},"required":["id","organization_id","name","type","created_at"]}},"required":["snapshot"]}`)
 	UnassignTaskToolInputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	UnassignTaskToolOutputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"task":{"type":"object","properties":{"assigned_to_id":{"description":"Assigned to person ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"Not assigned"}]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"deadline":{"description":"Deadline","anyOf":[{"type":"string","description":"Deadline","format":"date-time"},{"type":"null","description":"No deadline"}]},"description":{"description":"Task description","anyOf":[{"type":"string","description":"Task description"},{"type":"null","description":"No description"}]},"id":{"type":"string","format":"string"},"measure_id":{"description":"Measure ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No measure"}]},"name":{"type":"string","description":"Task name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["TODO","DONE"]},"time_estimate":{"description":"Time estimate","anyOf":[{"type":"string","description":"A duration"},{"type":"null","description":"No time estimate"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}},"required":["id","organization_id","name","state","created_at","updated_at"]}},"required":["task"]}`)
-	UnlinkControlAuditToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"audit_id":{"type":"string","format":"string"},"control_id":{"type":"string","format":"string"}},"required":["control_id","audit_id"]}`)
-	UnlinkControlAuditToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object"}`)
-	UnlinkControlDocumentToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"document_id":{"type":"string","format":"string"}},"required":["control_id","document_id"]}`)
-	UnlinkControlDocumentToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object"}`)
-	UnlinkControlMeasureToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"}},"required":["control_id","measure_id"]}`)
-	UnlinkControlMeasureToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object"}`)
-	UnlinkControlSnapshotToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"snapshot_id":{"type":"string","format":"string"}},"required":["control_id","snapshot_id"]}`)
-	UnlinkControlSnapshotToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	UnlinkControlToolInputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"control_id":{"type":"string","format":"string"},"resource_id":{"type":"string","format":"string"}},"required":["control_id","resource_id"]}`)
+	UnlinkControlToolOutputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	UnlinkMeasureToolInputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"measure_id":{"type":"string","format":"string"},"resource_id":{"type":"string","format":"string"}},"required":["measure_id","resource_id"]}`)
 	UnlinkMeasureToolOutputSchema                        = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	UnlinkRiskToolInputSchema                            = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"resource_id":{"type":"string","format":"string"},"risk_id":{"type":"string","format":"string"}},"required":["risk_id","resource_id"]}`)
@@ -1957,52 +1955,16 @@ type InviteUserOutput struct {
 	InvitationID gid.GID `json:"invitation_id"`
 }
 
-// LinkControlAuditInput represents the schema
-type LinkControlAuditInput struct {
-	// Audit ID
-	AuditID gid.GID `json:"audit_id"`
+// LinkControlInput represents the schema
+type LinkControlInput struct {
 	// Control ID
 	ControlID gid.GID `json:"control_id"`
+	// ID of the resource to link (measure, document, audit, snapshot, or obligation)
+	ResourceID gid.GID `json:"resource_id"`
 }
 
-// LinkControlAuditOutput represents the schema
-type LinkControlAuditOutput struct {
-}
-
-// LinkControlDocumentInput represents the schema
-type LinkControlDocumentInput struct {
-	// Control ID
-	ControlID gid.GID `json:"control_id"`
-	// Document ID
-	DocumentID gid.GID `json:"document_id"`
-}
-
-// LinkControlDocumentOutput represents the schema
-type LinkControlDocumentOutput struct {
-}
-
-// LinkControlMeasureInput represents the schema
-type LinkControlMeasureInput struct {
-	// Control ID
-	ControlID gid.GID `json:"control_id"`
-	// Measure ID
-	MeasureID gid.GID `json:"measure_id"`
-}
-
-// LinkControlMeasureOutput represents the schema
-type LinkControlMeasureOutput struct {
-}
-
-// LinkControlSnapshotInput represents the schema
-type LinkControlSnapshotInput struct {
-	// Control ID
-	ControlID gid.GID `json:"control_id"`
-	// Snapshot ID
-	SnapshotID gid.GID `json:"snapshot_id"`
-}
-
-// LinkControlSnapshotOutput represents the schema
-type LinkControlSnapshotOutput struct {
+// LinkControlOutput represents the schema
+type LinkControlOutput struct {
 }
 
 // LinkMeasureInput represents the schema
@@ -2105,6 +2067,101 @@ type ListContinualImprovementsOutput struct {
 	ContinualImprovements []*ContinualImprovement `json:"continual_improvements"`
 	// Next cursor
 	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
+// ListControlAuditsInput represents the schema
+type ListControlAuditsInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Audit order by
+	OrderBy *AuditOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListControlAuditsOutput represents the schema
+type ListControlAuditsOutput struct {
+	Audits []*Audit `json:"audits"`
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
+// ListControlDocumentsInput represents the schema
+type ListControlDocumentsInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Document order by
+	OrderBy *DocumentOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListControlDocumentsOutput represents the schema
+type ListControlDocumentsOutput struct {
+	Documents []*Document `json:"documents"`
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
+// ListControlMeasuresInput represents the schema
+type ListControlMeasuresInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Measure order by
+	OrderBy *MeasureOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListControlMeasuresOutput represents the schema
+type ListControlMeasuresOutput struct {
+	Measures []*Measure `json:"measures"`
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
+// ListControlObligationsInput represents the schema
+type ListControlObligationsInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Obligation order by
+	OrderBy *ObligationOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListControlObligationsOutput represents the schema
+type ListControlObligationsOutput struct {
+	// Next cursor
+	NextCursor  *page.CursorKey `json:"next_cursor,omitempty"`
+	Obligations []*Obligation   `json:"obligations"`
+}
+
+// ListControlSnapshotsInput represents the schema
+type ListControlSnapshotsInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Snapshot order by
+	OrderBy *SnapshotOrderBy `json:"order_by,omitempty"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListControlSnapshotsOutput represents the schema
+type ListControlSnapshotsOutput struct {
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+	Snapshots  []*Snapshot     `json:"snapshots"`
 }
 
 // ListControlsInput represents the schema
@@ -3083,52 +3140,16 @@ type UnassignTaskOutput struct {
 	Task *Task `json:"task"`
 }
 
-// UnlinkControlAuditInput represents the schema
-type UnlinkControlAuditInput struct {
-	// Audit ID
-	AuditID gid.GID `json:"audit_id"`
+// UnlinkControlInput represents the schema
+type UnlinkControlInput struct {
 	// Control ID
 	ControlID gid.GID `json:"control_id"`
+	// ID of the resource to unlink (measure, document, audit, snapshot, or obligation)
+	ResourceID gid.GID `json:"resource_id"`
 }
 
-// UnlinkControlAuditOutput represents the schema
-type UnlinkControlAuditOutput struct {
-}
-
-// UnlinkControlDocumentInput represents the schema
-type UnlinkControlDocumentInput struct {
-	// Control ID
-	ControlID gid.GID `json:"control_id"`
-	// Document ID
-	DocumentID gid.GID `json:"document_id"`
-}
-
-// UnlinkControlDocumentOutput represents the schema
-type UnlinkControlDocumentOutput struct {
-}
-
-// UnlinkControlMeasureInput represents the schema
-type UnlinkControlMeasureInput struct {
-	// Control ID
-	ControlID gid.GID `json:"control_id"`
-	// Measure ID
-	MeasureID gid.GID `json:"measure_id"`
-}
-
-// UnlinkControlMeasureOutput represents the schema
-type UnlinkControlMeasureOutput struct {
-}
-
-// UnlinkControlSnapshotInput represents the schema
-type UnlinkControlSnapshotInput struct {
-	// Control ID
-	ControlID gid.GID `json:"control_id"`
-	// Snapshot ID
-	SnapshotID gid.GID `json:"snapshot_id"`
-}
-
-// UnlinkControlSnapshotOutput represents the schema
-type UnlinkControlSnapshotOutput struct {
+// UnlinkControlOutput represents the schema
+type UnlinkControlOutput struct {
 }
 
 // UnlinkMeasureInput represents the schema
