@@ -200,20 +200,26 @@ type SendMagicLinkPayload struct {
 	Success bool `json:"success"`
 }
 
+type SubscribeToNewsletterPayload struct {
+	Success     bool         `json:"success"`
+	TrustCenter *TrustCenter `json:"trustCenter"`
+}
+
 type TrustCenter struct {
-	ID                     gid.GID                         `json:"id"`
-	Active                 bool                            `json:"active"`
-	Slug                   string                          `json:"slug"`
-	LogoFileURL            *string                         `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL        *string                         `json:"darkLogoFileUrl,omitempty"`
-	NonDisclosureAgreement *NonDisclosureAgreement         `json:"nonDisclosureAgreement,omitempty"`
-	IsViewerMember         bool                            `json:"isViewerMember"`
-	Organization           *Organization                   `json:"organization"`
-	Documents              *DocumentConnection             `json:"documents"`
-	Audits                 *AuditConnection                `json:"audits"`
-	Vendors                *VendorConnection               `json:"vendors"`
-	References             *TrustCenterReferenceConnection `json:"references"`
-	TrustCenterFiles       *TrustCenterFileConnection      `json:"trustCenterFiles"`
+	ID                             gid.GID                         `json:"id"`
+	Active                         bool                            `json:"active"`
+	Slug                           string                          `json:"slug"`
+	LogoFileURL                    *string                         `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL                *string                         `json:"darkLogoFileUrl,omitempty"`
+	NonDisclosureAgreement         *NonDisclosureAgreement         `json:"nonDisclosureAgreement,omitempty"`
+	IsViewerMember                 bool                            `json:"isViewerMember"`
+	IsViewerSubscribedToNewsletter bool                            `json:"isViewerSubscribedToNewsletter"`
+	Organization                   *Organization                   `json:"organization"`
+	Documents                      *DocumentConnection             `json:"documents"`
+	Audits                         *AuditConnection                `json:"audits"`
+	Vendors                        *VendorConnection               `json:"vendors"`
+	References                     *TrustCenterReferenceConnection `json:"references"`
+	TrustCenterFiles               *TrustCenterFileConnection      `json:"trustCenterFiles"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -270,6 +276,11 @@ type TrustCenterReferenceConnection struct {
 type TrustCenterReferenceEdge struct {
 	Cursor page.CursorKey        `json:"cursor"`
 	Node   *TrustCenterReference `json:"node"`
+}
+
+type UnsubscribeFromNewsletterPayload struct {
+	Success     bool         `json:"success"`
+	TrustCenter *TrustCenter `json:"trustCenter"`
 }
 
 type Vendor struct {

@@ -53,6 +53,7 @@ type ResolverRoot interface {
 	AssetConnection() AssetConnectionResolver
 	Audit() AuditResolver
 	AuditConnection() AuditConnectionResolver
+	ComplianceNewsletterSubscriberConnection() ComplianceNewsletterSubscriberConnectionResolver
 	ContinualImprovement() ContinualImprovementResolver
 	ContinualImprovementConnection() ContinualImprovementConnectionResolver
 	Control() ControlResolver
@@ -228,6 +229,24 @@ type ComplexityRoot struct {
 
 	CancelSignatureRequestPayload struct {
 		DeletedDocumentVersionSignatureID func(childComplexity int) int
+	}
+
+	ComplianceNewsletterSubscriber struct {
+		CreatedAt func(childComplexity int) int
+		Email     func(childComplexity int) int
+		ID        func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
+	ComplianceNewsletterSubscriberConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	ComplianceNewsletterSubscriberEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	ContinualImprovement struct {
@@ -603,6 +622,10 @@ type ComplexityRoot struct {
 
 	DeleteMeetingPayload struct {
 		DeletedMeetingID func(childComplexity int) int
+	}
+
+	DeleteNewsletterSubscriberPayload struct {
+		DeletedNewsletterSubscriberID func(childComplexity int) int
 	}
 
 	DeleteNonconformityPayload struct {
@@ -1022,6 +1045,7 @@ type ComplexityRoot struct {
 		DeleteFramework                          func(childComplexity int, input types.DeleteFrameworkInput) int
 		DeleteMeasure                            func(childComplexity int, input types.DeleteMeasureInput) int
 		DeleteMeeting                            func(childComplexity int, input types.DeleteMeetingInput) int
+		DeleteNewsletterSubscriber               func(childComplexity int, input types.DeleteNewsletterSubscriberInput) int
 		DeleteNonconformity                      func(childComplexity int, input types.DeleteNonconformityInput) int
 		DeleteObligation                         func(childComplexity int, input types.DeleteObligationInput) int
 		DeleteProcessingActivity                 func(childComplexity int, input types.DeleteProcessingActivityInput) int
@@ -1518,18 +1542,19 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenter struct {
-		Accesses        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) int
-		Active          func(childComplexity int) int
-		CreatedAt       func(childComplexity int) int
-		DarkLogoFileURL func(childComplexity int) int
-		ID              func(childComplexity int) int
-		LogoFileURL     func(childComplexity int) int
-		NdaFileName     func(childComplexity int) int
-		NdaFileURL      func(childComplexity int) int
-		Organization    func(childComplexity int) int
-		Permission      func(childComplexity int, action string) int
-		References      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) int
-		UpdatedAt       func(childComplexity int) int
+		Accesses              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) int
+		Active                func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		DarkLogoFileURL       func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		LogoFileURL           func(childComplexity int) int
+		NdaFileName           func(childComplexity int) int
+		NdaFileURL            func(childComplexity int) int
+		NewsletterSubscribers func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Organization          func(childComplexity int) int
+		Permission            func(childComplexity int, action string) int
+		References            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) int
+		UpdatedAt             func(childComplexity int) int
 	}
 
 	TrustCenterAccess struct {
@@ -2026,6 +2051,9 @@ type AuditResolver interface {
 type AuditConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error)
 }
+type ComplianceNewsletterSubscriberConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.ComplianceNewsletterSubscriberConnection) (int, error)
+}
 type ContinualImprovementResolver interface {
 	Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error)
 
@@ -2167,6 +2195,7 @@ type MutationResolver interface {
 	CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error)
 	UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error)
 	DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error)
+	DeleteNewsletterSubscriber(ctx context.Context, input types.DeleteNewsletterSubscriberInput) (*types.DeleteNewsletterSubscriberPayload, error)
 	CreateTrustCenterReference(ctx context.Context, input types.CreateTrustCenterReferenceInput) (*types.CreateTrustCenterReferencePayload, error)
 	UpdateTrustCenterReference(ctx context.Context, input types.UpdateTrustCenterReferenceInput) (*types.UpdateTrustCenterReferencePayload, error)
 	DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error)
@@ -2459,6 +2488,7 @@ type TrustCenterResolver interface {
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error)
 	References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error)
+	NewsletterSubscribers(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceNewsletterSubscriberConnection, error)
 	Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error)
 }
 type TrustCenterAccessResolver interface {
@@ -2959,6 +2989,63 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CancelSignatureRequestPayload.DeletedDocumentVersionSignatureID(childComplexity), true
+
+	case "ComplianceNewsletterSubscriber.createdAt":
+		if e.complexity.ComplianceNewsletterSubscriber.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriber.CreatedAt(childComplexity), true
+	case "ComplianceNewsletterSubscriber.email":
+		if e.complexity.ComplianceNewsletterSubscriber.Email == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriber.Email(childComplexity), true
+	case "ComplianceNewsletterSubscriber.id":
+		if e.complexity.ComplianceNewsletterSubscriber.ID == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriber.ID(childComplexity), true
+	case "ComplianceNewsletterSubscriber.updatedAt":
+		if e.complexity.ComplianceNewsletterSubscriber.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriber.UpdatedAt(childComplexity), true
+
+	case "ComplianceNewsletterSubscriberConnection.edges":
+		if e.complexity.ComplianceNewsletterSubscriberConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriberConnection.Edges(childComplexity), true
+	case "ComplianceNewsletterSubscriberConnection.pageInfo":
+		if e.complexity.ComplianceNewsletterSubscriberConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriberConnection.PageInfo(childComplexity), true
+	case "ComplianceNewsletterSubscriberConnection.totalCount":
+		if e.complexity.ComplianceNewsletterSubscriberConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriberConnection.TotalCount(childComplexity), true
+
+	case "ComplianceNewsletterSubscriberEdge.cursor":
+		if e.complexity.ComplianceNewsletterSubscriberEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriberEdge.Cursor(childComplexity), true
+	case "ComplianceNewsletterSubscriberEdge.node":
+		if e.complexity.ComplianceNewsletterSubscriberEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ComplianceNewsletterSubscriberEdge.Node(childComplexity), true
 
 	case "ContinualImprovement.createdAt":
 		if e.complexity.ContinualImprovement.CreatedAt == nil {
@@ -4040,6 +4127,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteMeetingPayload.DeletedMeetingID(childComplexity), true
+
+	case "DeleteNewsletterSubscriberPayload.deletedNewsletterSubscriberId":
+		if e.complexity.DeleteNewsletterSubscriberPayload.DeletedNewsletterSubscriberID == nil {
+			break
+		}
+
+		return e.complexity.DeleteNewsletterSubscriberPayload.DeletedNewsletterSubscriberID(childComplexity), true
 
 	case "DeleteNonconformityPayload.deletedNonconformityId":
 		if e.complexity.DeleteNonconformityPayload.DeletedNonconformityID == nil {
@@ -5956,6 +6050,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteMeeting(childComplexity, args["input"].(types.DeleteMeetingInput)), true
+	case "Mutation.deleteNewsletterSubscriber":
+		if e.complexity.Mutation.DeleteNewsletterSubscriber == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteNewsletterSubscriber_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteNewsletterSubscriber(childComplexity, args["input"].(types.DeleteNewsletterSubscriberInput)), true
 	case "Mutation.deleteNonconformity":
 		if e.complexity.Mutation.DeleteNonconformity == nil {
 			break
@@ -8813,6 +8918,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.NdaFileURL(childComplexity), true
+	case "TrustCenter.newsletterSubscribers":
+		if e.complexity.TrustCenter.NewsletterSubscribers == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenter_newsletterSubscribers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.TrustCenter.NewsletterSubscribers(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 	case "TrustCenter.organization":
 		if e.complexity.TrustCenter.Organization == nil {
 			break
@@ -10490,6 +10606,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteFrameworkInput,
 		ec.unmarshalInputDeleteMeasureInput,
 		ec.unmarshalInputDeleteMeetingInput,
+		ec.unmarshalInputDeleteNewsletterSubscriberInput,
 		ec.unmarshalInputDeleteNonconformityInput,
 		ec.unmarshalInputDeleteObligationInput,
 		ec.unmarshalInputDeleteProcessingActivityInput,
@@ -12320,7 +12437,32 @@ type TrustCenter implements Node {
         orderBy: TrustCenterReferenceOrder
     ): TrustCenterReferenceConnection! @goField(forceResolver: true)
 
+    newsletterSubscribers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): ComplianceNewsletterSubscriberConnection! @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ComplianceNewsletterSubscriber implements Node {
+    id: ID!
+    email: EmailAddr!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ComplianceNewsletterSubscriberConnection {
+    edges: [ComplianceNewsletterSubscriberEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type ComplianceNewsletterSubscriberEdge {
+    cursor: CursorKey!
+    node: ComplianceNewsletterSubscriber!
 }
 
 type Organization implements Node {
@@ -13931,6 +14073,10 @@ type Mutation {
     deleteTrustCenterAccess(
         input: DeleteTrustCenterAccessInput!
     ): DeleteTrustCenterAccessPayload!
+    # Newsletter Subscriber mutations
+    deleteNewsletterSubscriber(
+        input: DeleteNewsletterSubscriberInput!
+    ): DeleteNewsletterSubscriberPayload!
     # Trust Center Reference mutations
     createTrustCenterReference(
         input: CreateTrustCenterReferenceInput!
@@ -14317,6 +14463,10 @@ input UpdateTrustCenterAccessInput {
 }
 
 input DeleteTrustCenterAccessInput {
+    id: ID!
+}
+
+input DeleteNewsletterSubscriberInput {
     id: ID!
 }
 
@@ -15142,6 +15292,10 @@ type UpdateTrustCenterAccessPayload {
 
 type DeleteTrustCenterAccessPayload {
     deletedTrustCenterAccessId: ID!
+}
+
+type DeleteNewsletterSubscriberPayload {
+    deletedNewsletterSubscriberId: ID!
 }
 
 type CreateTrustCenterReferencePayload {
@@ -17725,6 +17879,17 @@ func (ec *executionContext) field_Mutation_deleteMeeting_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteNewsletterSubscriber_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteNewsletterSubscriberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNewsletterSubscriberInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteNonconformity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -19930,6 +20095,32 @@ func (ec *executionContext) field_TrustCenter_accesses_args(ctx context.Context,
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_TrustCenter_newsletterSubscribers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -22502,6 +22693,293 @@ func (ec *executionContext) fieldContext_CancelSignatureRequestPayload_deletedDo
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriber_id(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriber_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriber_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriber_email(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriber_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriber_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type EmailAddr does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriber_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriber_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriber_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriber_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriber_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriber_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriberConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriberConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriberConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNComplianceNewsletterSubscriberEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriberEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriberConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriberConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ComplianceNewsletterSubscriberEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ComplianceNewsletterSubscriberEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceNewsletterSubscriberEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriberConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriberConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriberConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriberConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriberConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriberConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriberConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriberConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ComplianceNewsletterSubscriberConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriberConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriberConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriberEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriberEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriberEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriberEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriberEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriberEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsletterSubscriberEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsletterSubscriberEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNComplianceNewsletterSubscriber2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriber,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsletterSubscriberEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsletterSubscriberEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ComplianceNewsletterSubscriber_id(ctx, field)
+			case "email":
+				return ec.fieldContext_ComplianceNewsletterSubscriber_email(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ComplianceNewsletterSubscriber_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ComplianceNewsletterSubscriber_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceNewsletterSubscriber", field.Name)
 		},
 	}
 	return fc, nil
@@ -28370,6 +28848,35 @@ func (ec *executionContext) fieldContext_DeleteMeetingPayload_deletedMeetingId(_
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteNewsletterSubscriberPayload_deletedNewsletterSubscriberId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteNewsletterSubscriberPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteNewsletterSubscriberPayload_deletedNewsletterSubscriberId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedNewsletterSubscriberID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteNewsletterSubscriberPayload_deletedNewsletterSubscriberId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteNewsletterSubscriberPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteNonconformityPayload_deletedNonconformityId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteNonconformityPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -28909,6 +29416,8 @@ func (ec *executionContext) fieldContext_DeleteTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "newsletterSubscribers":
+				return ec.fieldContext_TrustCenter_newsletterSubscribers(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -34948,6 +35457,51 @@ func (ec *executionContext) fieldContext_Mutation_deleteTrustCenterAccess(ctx co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteTrustCenterAccess_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteNewsletterSubscriber(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteNewsletterSubscriber,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteNewsletterSubscriber(ctx, fc.Args["input"].(types.DeleteNewsletterSubscriberInput))
+		},
+		nil,
+		ec.marshalNDeleteNewsletterSubscriberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNewsletterSubscriberPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteNewsletterSubscriber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedNewsletterSubscriberId":
+				return ec.fieldContext_DeleteNewsletterSubscriberPayload_deletedNewsletterSubscriberId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteNewsletterSubscriberPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteNewsletterSubscriber_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -43977,6 +44531,8 @@ func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "newsletterSubscribers":
+				return ec.fieldContext_TrustCenter_newsletterSubscribers(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -52197,6 +52753,55 @@ func (ec *executionContext) fieldContext_TrustCenter_references(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenter_newsletterSubscribers(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_newsletterSubscribers,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.TrustCenter().NewsletterSubscribers(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+		},
+		nil,
+		ec.marshalNComplianceNewsletterSubscriberConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriberConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_newsletterSubscribers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_ComplianceNewsletterSubscriberConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ComplianceNewsletterSubscriberConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_ComplianceNewsletterSubscriberConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceNewsletterSubscriberConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TrustCenter_newsletterSubscribers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenter_permission(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -53368,6 +53973,8 @@ func (ec *executionContext) fieldContext_TrustCenterEdge_node(_ context.Context,
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "newsletterSubscribers":
+				return ec.fieldContext_TrustCenter_newsletterSubscribers(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -55675,6 +56282,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterBrandPayload_trustCent
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "newsletterSubscribers":
+				return ec.fieldContext_TrustCenter_newsletterSubscribers(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -55779,6 +56388,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterPayload_trustCenter(_ 
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "newsletterSubscribers":
+				return ec.fieldContext_TrustCenter_newsletterSubscribers(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -56317,6 +56928,8 @@ func (ec *executionContext) fieldContext_UploadTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "newsletterSubscribers":
+				return ec.fieldContext_TrustCenter_newsletterSubscribers(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -66423,6 +67036,33 @@ func (ec *executionContext) unmarshalInputDeleteMeetingInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteNewsletterSubscriberInput(ctx context.Context, obj any) (types.DeleteNewsletterSubscriberInput, error) {
+	var it types.DeleteNewsletterSubscriberInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteNonconformityInput(ctx context.Context, obj any) (types.DeleteNonconformityInput, error) {
 	var it types.DeleteNonconformityInput
 	asMap := map[string]any{}
@@ -71487,6 +72127,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._ContinualImprovement(ctx, sel, obj)
+	case types.ComplianceNewsletterSubscriber:
+		return ec._ComplianceNewsletterSubscriber(ctx, sel, &obj)
+	case *types.ComplianceNewsletterSubscriber:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ComplianceNewsletterSubscriber(ctx, sel, obj)
 	case types.Audit:
 		return ec._Audit(ctx, sel, &obj)
 	case *types.Audit:
@@ -72763,6 +73410,184 @@ func (ec *executionContext) _CancelSignatureRequestPayload(ctx context.Context, 
 			out.Values[i] = graphql.MarshalString("CancelSignatureRequestPayload")
 		case "deletedDocumentVersionSignatureId":
 			out.Values[i] = ec._CancelSignatureRequestPayload_deletedDocumentVersionSignatureId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceNewsletterSubscriberImplementors = []string{"ComplianceNewsletterSubscriber", "Node"}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriber(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceNewsletterSubscriber) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceNewsletterSubscriberImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceNewsletterSubscriber")
+		case "id":
+			out.Values[i] = ec._ComplianceNewsletterSubscriber_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._ComplianceNewsletterSubscriber_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._ComplianceNewsletterSubscriber_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ComplianceNewsletterSubscriber_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceNewsletterSubscriberConnectionImplementors = []string{"ComplianceNewsletterSubscriberConnection"}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriberConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceNewsletterSubscriberConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceNewsletterSubscriberConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceNewsletterSubscriberConnection")
+		case "edges":
+			out.Values[i] = ec._ComplianceNewsletterSubscriberConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ComplianceNewsletterSubscriberConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ComplianceNewsletterSubscriberConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceNewsletterSubscriberEdgeImplementors = []string{"ComplianceNewsletterSubscriberEdge"}
+
+func (ec *executionContext) _ComplianceNewsletterSubscriberEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceNewsletterSubscriberEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceNewsletterSubscriberEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceNewsletterSubscriberEdge")
+		case "cursor":
+			out.Values[i] = ec._ComplianceNewsletterSubscriberEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._ComplianceNewsletterSubscriberEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -76770,6 +77595,45 @@ func (ec *executionContext) _DeleteMeetingPayload(ctx context.Context, sel ast.S
 			out.Values[i] = graphql.MarshalString("DeleteMeetingPayload")
 		case "deletedMeetingId":
 			out.Values[i] = ec._DeleteMeetingPayload_deletedMeetingId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteNewsletterSubscriberPayloadImplementors = []string{"DeleteNewsletterSubscriberPayload"}
+
+func (ec *executionContext) _DeleteNewsletterSubscriberPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteNewsletterSubscriberPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteNewsletterSubscriberPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteNewsletterSubscriberPayload")
+		case "deletedNewsletterSubscriberId":
+			out.Values[i] = ec._DeleteNewsletterSubscriberPayload_deletedNewsletterSubscriberId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -80921,6 +81785,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteTrustCenterAccess":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteTrustCenterAccess(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteNewsletterSubscriber":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteNewsletterSubscriber(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -87453,6 +88324,42 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "newsletterSubscribers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_newsletterSubscribers(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "permission":
 			field := field
 
@@ -93581,6 +94488,84 @@ func (ec *executionContext) marshalNCancelSignatureRequestPayload2ᚖgoᚗprobo�
 	return ec._CancelSignatureRequestPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNComplianceNewsletterSubscriber2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriber(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceNewsletterSubscriber) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceNewsletterSubscriber(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceNewsletterSubscriberConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriberConnection(ctx context.Context, sel ast.SelectionSet, v types.ComplianceNewsletterSubscriberConnection) graphql.Marshaler {
+	return ec._ComplianceNewsletterSubscriberConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNComplianceNewsletterSubscriberConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriberConnection(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceNewsletterSubscriberConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceNewsletterSubscriberConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceNewsletterSubscriberEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriberEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ComplianceNewsletterSubscriberEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNComplianceNewsletterSubscriberEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriberEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNComplianceNewsletterSubscriberEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceNewsletterSubscriberEdge(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceNewsletterSubscriberEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceNewsletterSubscriberEdge(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNContinualImprovement2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovement(ctx context.Context, sel ast.SelectionSet, v *types.ContinualImprovement) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -95918,6 +96903,25 @@ func (ec *executionContext) marshalNDeleteMeetingPayload2ᚖgoᚗproboᚗincᚋp
 		return graphql.Null
 	}
 	return ec._DeleteMeetingPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteNewsletterSubscriberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNewsletterSubscriberInput(ctx context.Context, v any) (types.DeleteNewsletterSubscriberInput, error) {
+	res, err := ec.unmarshalInputDeleteNewsletterSubscriberInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteNewsletterSubscriberPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNewsletterSubscriberPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteNewsletterSubscriberPayload) graphql.Marshaler {
+	return ec._DeleteNewsletterSubscriberPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteNewsletterSubscriberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNewsletterSubscriberPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteNewsletterSubscriberPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteNewsletterSubscriberPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteNonconformityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNonconformityInput(ctx context.Context, v any) (types.DeleteNonconformityInput, error) {

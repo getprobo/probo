@@ -11,6 +11,7 @@ export const currentTrustGraphQuery = graphql`
       id
       slug
       isViewerMember
+      isViewerSubscribedToNewsletter
       logoFileUrl
       darkLogoFileUrl
       nonDisclosureAgreement {

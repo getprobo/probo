@@ -324,6 +324,11 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 	return count, nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *complianceNewsletterSubscriberConnectionResolver) TotalCount(ctx context.Context, obj *types.ComplianceNewsletterSubscriberConnection) (int, error) {
+	return len(obj.Edges), nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *continualImprovementResolver) Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -2009,6 +2014,25 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 		DeletedTrustCenterAccessID: input.ID,
 	}, nil
 }
+
+// DeleteNewsletterSubscriber is the resolver for the deleteNewsletterSubscriber field.
+func (r *mutationResolver) DeleteNewsletterSubscriber(ctx context.Context, input types.DeleteNewsletterSubscriberInput) (*types.DeleteNewsletterSubscriberPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionComplianceNewsletterSubscriberDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	if err := prb.ComplianceNewsletterSubscribers.Delete(ctx, input.ID); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete newsletter subscriber", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteNewsletterSubscriberPayload{
+		DeletedNewsletterSubscriberID: input.ID,
+	}, nil
+}
+
 
 // CreateTrustCenterReference is the resolver for the createTrustCenterReference field.
 func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input types.CreateTrustCenterReferenceInput) (*types.CreateTrustCenterReferencePayload, error) {
@@ -7814,6 +7838,30 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
 }
 
+// NewsletterSubscribers is the resolver for the newsletterSubscribers field.
+func (r *trustCenterResolver) NewsletterSubscribers(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceNewsletterSubscriberConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionComplianceNewsletterSubscriberList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceNewsletterSubscriberOrderField]{
+		Field:     coredata.ComplianceNewsletterSubscriberOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.ComplianceNewsletterSubscribers.List(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list newsletter subscribers", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceNewsletterSubscriberConnection(result), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -8776,6 +8824,11 @@ func (r *Resolver) AuditConnection() schema.AuditConnectionResolver {
 	return &auditConnectionResolver{r}
 }
 
+// ComplianceNewsletterSubscriberConnection returns schema.ComplianceNewsletterSubscriberConnectionResolver implementation.
+func (r *Resolver) ComplianceNewsletterSubscriberConnection() schema.ComplianceNewsletterSubscriberConnectionResolver {
+	return &complianceNewsletterSubscriberConnectionResolver{r}
+}
+
 // ContinualImprovement returns schema.ContinualImprovementResolver implementation.
 func (r *Resolver) ContinualImprovement() schema.ContinualImprovementResolver {
 	return &continualImprovementResolver{r}
@@ -9078,6 +9131,7 @@ type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
 type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
+type complianceNewsletterSubscriberConnectionResolver struct{ *Resolver }
 type continualImprovementResolver struct{ *Resolver }
 type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
