@@ -68,6 +68,7 @@ const paginatedAuditsFragment = graphql`
             filename
           }
           state
+          frameworkType
           framework {
             id
             name
@@ -165,7 +166,9 @@ function AuditRow({
   return (
     <Tr to={`/organizations/${organizationId}/audits/${entry.id}`}>
       <Td>{entry.name || __("Untitled")}</Td>
-      <Td>{entry.framework?.name ?? __("Unknown Framework")}</Td>
+      <Td>
+        {[entry.framework?.name, entry.frameworkType].filter(Boolean).join(" ") || __("Unknown Framework")}
+      </Td>
       <Td>
         <Badge variant={getAuditStateVariant(entry.state)}>
           {getAuditStateLabel(__, entry.state)}

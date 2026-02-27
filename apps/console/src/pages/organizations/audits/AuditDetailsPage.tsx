@@ -50,6 +50,7 @@ import {
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
+  frameworkType: z.string().nullable().optional(),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
   state: z.enum([
@@ -85,6 +86,7 @@ export default function AuditDetailsPage(props: Props) {
     = useFormWithSchema(updateAuditSchema, {
       defaultValues: {
         name: auditEntry.name || null,
+        frameworkType: auditEntry.frameworkType || null,
         validFrom: auditEntry.validFrom?.split("T")[0] || "",
         validUntil: auditEntry.validUntil?.split("T")[0] || "",
         state: auditEntry.state || "NOT_STARTED",
@@ -104,6 +106,7 @@ export default function AuditDetailsPage(props: Props) {
       await updateAudit({
         id: auditEntry.id,
         name: formData.name || null,
+        frameworkType: formData.frameworkType || null,
         validFrom: formatDatetime(formData.validFrom) ?? null,
         validUntil: formatDatetime(formData.validUntil) ?? null,
         state: formData.state,
@@ -203,6 +206,13 @@ export default function AuditDetailsPage(props: Props) {
         <form onSubmit={e => void onSubmit(e)} className="space-y-6">
           <Field label={__("Name")}>
             <Input {...register("name")} placeholder={__("Audit name")} />
+          </Field>
+
+          <Field label={__("Framework Type")}>
+            <Input
+              {...register("frameworkType")}
+              placeholder={__("e.g. Type I, Type II")}
+            />
           </Field>
 
           <ControlledField

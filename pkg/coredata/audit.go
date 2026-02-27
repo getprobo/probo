@@ -33,6 +33,7 @@ type (
 		Name                  *string               `db:"name"`
 		OrganizationID        gid.GID               `db:"organization_id"`
 		FrameworkID           gid.GID               `db:"framework_id"`
+		FrameworkType         *string               `db:"framework_type"`
 		ReportID              *gid.GID              `db:"report_id"`
 		ValidFrom             *time.Time            `db:"valid_from"`
 		ValidUntil            *time.Time            `db:"valid_until"`
@@ -87,6 +88,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
+	framework_type,
 	report_id,
 	valid_from,
 	valid_until,
@@ -172,6 +174,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
+	framework_type,
 	report_id,
 	valid_from,
 	valid_until,
@@ -223,6 +226,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
+	framework_type,
 	report_id,
 	valid_from,
 	valid_until,
@@ -272,6 +276,7 @@ INSERT INTO audits (
 	tenant_id,
 	organization_id,
 	framework_id,
+	framework_type,
 	report_id,
 	valid_from,
 	valid_until,
@@ -285,6 +290,7 @@ INSERT INTO audits (
 	@tenant_id,
 	@organization_id,
 	@framework_id,
+	@framework_type,
 	@report_id,
 	@valid_from,
 	@valid_until,
@@ -301,6 +307,7 @@ INSERT INTO audits (
 		"tenant_id":               scope.GetTenantID(),
 		"organization_id":         a.OrganizationID,
 		"framework_id":            a.FrameworkID,
+		"framework_type":          a.FrameworkType,
 		"report_id":               a.ReportID,
 		"valid_from":              a.ValidFrom,
 		"valid_until":             a.ValidUntil,
@@ -327,6 +334,7 @@ func (a *Audit) Update(
 UPDATE audits
 SET
 	name = @name,
+	framework_type = @framework_type,
 	report_id = @report_id,
 	valid_from = @valid_from,
 	valid_until = @valid_until,
@@ -343,6 +351,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                      a.ID,
 		"name":                    a.Name,
+		"framework_type":          a.FrameworkType,
 		"report_id":               a.ReportID,
 		"valid_from":              a.ValidFrom,
 		"valid_until":             a.ValidUntil,
@@ -439,6 +448,7 @@ WITH audits_by_control AS (
 		a.name,
 		a.organization_id,
 		a.framework_id,
+		a.framework_type,
 		a.report_id,
 		a.valid_from,
 		a.valid_until,
@@ -458,6 +468,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
+	framework_type,
 	report_id,
 	valid_from,
 	valid_until,
@@ -503,6 +514,7 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
+	framework_type,
 	report_id,
 	valid_from,
 	valid_until,

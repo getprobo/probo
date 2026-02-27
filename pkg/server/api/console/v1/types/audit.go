@@ -72,6 +72,7 @@ func NewAudit(a *coredata.Audit) *Audit {
 		ValidUntil:            a.ValidUntil,
 		State:                 a.State,
 		Name:                  a.Name,
+		FrameworkType:         a.FrameworkType,
 		TrustCenterVisibility: a.TrustCenterVisibility,
 		CreatedAt:             a.CreatedAt,
 		UpdatedAt:             a.UpdatedAt,

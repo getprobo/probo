@@ -26,9 +26,10 @@ type AcceptElectronicSignaturePayload struct {
 }
 
 type Audit struct {
-	ID        gid.GID    `json:"id"`
-	Framework *Framework `json:"framework"`
-	Report    *Report    `json:"report,omitempty"`
+	ID            gid.GID    `json:"id"`
+	FrameworkType *string    `json:"frameworkType,omitempty"`
+	Framework     *Framework `json:"framework"`
+	Report        *Report    `json:"report,omitempty"`
 }
 
 func (Audit) IsNode()             {}

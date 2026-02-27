@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7de15e098b76ab6e91a10160c60c6c69>>
+ * @generated SignedSource<<6201aa75d6361fd302caba39179ebe6e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type CompliancePageAuditListItem_auditFragment$data = {
   readonly framework: {
     readonly name: string;
   };
+  readonly frameworkType: string | null | undefined;
   readonly id: string;
   readonly name: string | null | undefined;
   readonly state: AuditState;
@@ -50,6 +51,13 @@ return {
       "storageKey": null
     },
     (v0/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "frameworkType",
+      "storageKey": null
+    },
     {
       "alias": null,
       "args": null,
@@ -89,6 +97,6 @@ return {
 };
 })();
 
-(node as any).hash = "495e75c50400e856ba08ed9f5840da67";
+(node as any).hash = "8c20a1fd2221e4813c60d4f8c81dc016";
 
 export default node;

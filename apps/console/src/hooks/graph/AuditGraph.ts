@@ -23,6 +23,7 @@ export const auditNodeQuery = graphql`
       ... on Audit {
         id
         name
+        frameworkType
         validFrom
         validUntil
         report {
@@ -64,6 +65,7 @@ export const createAuditMutation = graphql`
         node {
           id
           name
+          frameworkType
           validFrom
           validUntil
           report {
@@ -90,6 +92,7 @@ export const updateAuditMutation = graphql`
       audit {
         id
         name
+        frameworkType
         validFrom
         validUntil
         report {
@@ -163,6 +166,7 @@ export const useCreateAudit = (connectionId: string) => {
     organizationId: string;
     frameworkId: string;
     name?: string | null;
+    frameworkType?: string | null;
     validFrom?: string;
     validUntil?: string;
     reportKey?: string;
@@ -181,6 +185,7 @@ export const useCreateAudit = (connectionId: string) => {
           organizationId: input.organizationId,
           frameworkId: input.frameworkId,
           name: input.name,
+          frameworkType: input.frameworkType,
           validFrom: input.validFrom,
           validUntil: input.validUntil,
           reportKey: input.reportKey,
@@ -199,6 +204,7 @@ export const useUpdateAudit = () => {
   return (input: {
     id: string;
     name?: string | null;
+    frameworkType?: string | null;
     validFrom?: string | null;
     validUntil?: string | null;
     state?: string;

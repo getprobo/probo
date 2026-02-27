@@ -45,6 +45,7 @@ const downloadMutation = graphql`
 
 const auditRowFragment = graphql`
   fragment AuditRowFragment on Audit {
+    frameworkType
     report {
       id
       filename
@@ -129,6 +130,9 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
       <div className="flex items-center gap-2">
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.framework.name}
+        {audit.frameworkType && (
+          <em className="not-italic italic text-txt-secondary">{audit.frameworkType}</em>
+        )}
       </div>
       {audit.report && audit.report.isUserAuthorized
         ? (
@@ -185,8 +189,14 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
               darkLogoURL={audit.framework.darkLogoURL}
               name={audit.framework.name}
             />
-            <div className="txt-primary text-sm max-w-19 overflow-hidden min-w-0 whitespace-nowrap text-ellipsis">
+            <div className="txt-primary text-sm max-w-19 overflow-hidden min-w-0 whitespace-nowrap text-ellipsis text-center">
               {audit.framework.name}
+              {audit.frameworkType && (
+                <>
+                  {" "}
+                  <em className="italic text-txt-secondary">{audit.frameworkType}</em>
+                </>
+              )}
             </div>
           </div>
         </button>
@@ -224,7 +234,15 @@ function AuditDialog(
           darkLogoURL={audit.framework.darkLogoURL}
           name={audit.framework.name}
         />
-        <h2 className="text-xl font-semibold mb-1">{audit.framework.name}</h2>
+        <h2 className="text-xl font-semibold mb-1">
+          {audit.framework.name}
+          {audit.frameworkType && (
+            <>
+              {" "}
+              <em className="italic font-normal text-txt-secondary">{audit.frameworkType}</em>
+            </>
+          )}
+        </h2>
         <Table>
           <AuditRow audit={props.audit} />
         </Table>

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1b9fd2fad98545d0e1ca4440a6a8936a>>
+ * @generated SignedSource<<78e0001b78b4c12614cf1bb03b2d7e80>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateAuditInput = {
+  frameworkType?: string | null | undefined;
   id: string;
   name?: string | null | undefined;
   state?: AuditState | null | undefined;
@@ -29,6 +30,7 @@ export type AuditGraphUpdateMutation$data = {
         readonly id: string;
         readonly name: string;
       };
+      readonly frameworkType: string | null | undefined;
       readonly id: string;
       readonly name: string | null | undefined;
       readonly report: {
@@ -94,6 +96,13 @@ v3 = [
         "selections": [
           (v1/*: any*/),
           (v2/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "frameworkType",
+            "storageKey": null
+          },
           {
             "alias": null,
             "args": null,
@@ -179,16 +188,16 @@ return {
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "7257cd170b7441f3ce85966556e00ac3",
+    "cacheID": "90d3d14a9c4eca844eeb32b2711cc4d2",
     "id": null,
     "metadata": {},
     "name": "AuditGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation AuditGraphUpdateMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      id\n      name\n      validFrom\n      validUntil\n      report {\n        id\n        filename\n      }\n      state\n      framework {\n        id\n        name\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation AuditGraphUpdateMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      id\n      name\n      frameworkType\n      validFrom\n      validUntil\n      report {\n        id\n        filename\n      }\n      state\n      framework {\n        id\n        name\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7fb5d28c8c5fdffddb1c8926e66965ec";
+(node as any).hash = "3389bd0155f2ef74996dca505277e3ea";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4286fb5d45f1d4d8dba035c29219ab34>>
+ * @generated SignedSource<<6b973ad40bd4ce5cc9e31e4e6fdb20c0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,6 +13,7 @@ import { FragmentRefs } from "relay-runtime";
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateAuditInput = {
+  frameworkType?: string | null | undefined;
   id: string;
   name?: string | null | undefined;
   state?: AuditState | null | undefined;
@@ -129,6 +130,13 @@ return {
               {
                 "alias": null,
                 "args": null,
+                "kind": "ScalarField",
+                "name": "frameworkType",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
                 "concreteType": "Framework",
                 "kind": "LinkedField",
                 "name": "framework",
@@ -169,12 +177,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4363d4bbf56cf55359dc0a1ff19e1dbf",
+    "cacheID": "a8e7107515ca00dd33cb60783b25853f",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAuditListItem_updateAuditVisibilityMutation",
     "operationKind": "mutation",
-    "text": "mutation CompliancePageAuditListItem_updateAuditVisibilityMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      ...CompliancePageAuditListItem_auditFragment\n      id\n    }\n  }\n}\n\nfragment CompliancePageAuditListItem_auditFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validUntil\n  state\n  trustCenterVisibility\n}\n"
+    "text": "mutation CompliancePageAuditListItem_updateAuditVisibilityMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      ...CompliancePageAuditListItem_auditFragment\n      id\n    }\n  }\n}\n\nfragment CompliancePageAuditListItem_auditFragment on Audit {\n  id\n  name\n  frameworkType\n  framework {\n    name\n    id\n  }\n  validUntil\n  state\n  trustCenterVisibility\n}\n"
   }
 };
 })();

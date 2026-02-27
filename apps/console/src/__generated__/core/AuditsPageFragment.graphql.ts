@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eb5012ba560d977fd2d9c44a5e567c7c>>
+ * @generated SignedSource<<154ebe7d39ff639b7e275e8d2a0064dd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,6 +23,7 @@ export type AuditsPageFragment$data = {
           readonly id: string;
           readonly name: string;
         };
+        readonly frameworkType: string | null | undefined;
         readonly id: string;
         readonly name: string | null | undefined;
         readonly report: {
@@ -200,6 +201,13 @@ return {
                 {
                   "alias": null,
                   "args": null,
+                  "kind": "ScalarField",
+                  "name": "frameworkType",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
                   "concreteType": "Framework",
                   "kind": "LinkedField",
                   "name": "framework",
@@ -324,6 +332,6 @@ return {
 };
 })();
 
-(node as any).hash = "4013ec4e657ef7fb9d13afbd572ea9e5";
+(node as any).hash = "cc001b29e19c6d20a50095490da54c1a";
 
 export default node;

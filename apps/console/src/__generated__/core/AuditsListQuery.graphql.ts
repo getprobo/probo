@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4cd493e5c45c274b8d7aabdac8c62f95>>
+ * @generated SignedSource<<a1ccde2e9d81f01e2cac208a82a993ee>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -249,6 +249,13 @@ return {
                           {
                             "alias": null,
                             "args": null,
+                            "kind": "ScalarField",
+                            "name": "frameworkType",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
                             "concreteType": "Framework",
                             "kind": "LinkedField",
                             "name": "framework",
@@ -381,16 +388,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7804de168f5c2484d6beb2f4d19287b0",
+    "cacheID": "3eea5e685f4d6c517053c9ce0d5b7c8c",
     "id": null,
     "metadata": {},
     "name": "AuditsListQuery",
     "operationKind": "query",
-    "text": "query AuditsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AuditsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AuditsPageFragment_sdb03 on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AuditsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AuditsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AuditsPageFragment_sdb03 on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        frameworkType\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4013ec4e657ef7fb9d13afbd572ea9e5";
+(node as any).hash = "cc001b29e19c6d20a50095490da54c1a";
 
 export default node;

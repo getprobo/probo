@@ -71,9 +71,10 @@ type ComplexityRoot struct {
 	}
 
 	Audit struct {
-		Framework func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Report    func(childComplexity int) int
+		Framework     func(childComplexity int) int
+		FrameworkType func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Report        func(childComplexity int) int
 	}
 
 	AuditConnection struct {
@@ -387,6 +388,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Audit.Framework(childComplexity), true
+	case "Audit.frameworkType":
+		if e.complexity.Audit.FrameworkType == nil {
+			break
+		}
+
+		return e.complexity.Audit.FrameworkType(childComplexity), true
 	case "Audit.id":
 		if e.complexity.Audit.ID == nil {
 			break
@@ -1427,6 +1434,7 @@ type Report implements Node {
 
 type Audit implements Node {
   id: ID!
+  frameworkType: String
   framework: Framework! @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
 }
@@ -2572,6 +2580,35 @@ func (ec *executionContext) fieldContext_Audit_id(_ context.Context, field graph
 	return fc, nil
 }
 
+func (ec *executionContext) _Audit_frameworkType(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Audit_frameworkType,
+		func(ctx context.Context) (any, error) {
+			return obj.FrameworkType, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Audit_frameworkType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Audit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Audit_framework(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2779,6 +2816,8 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Audit_id(ctx, field)
+			case "frameworkType":
+				return ec.fieldContext_Audit_frameworkType(ctx, field)
 			case "framework":
 				return ec.fieldContext_Audit_framework(ctx, field)
 			case "report":
@@ -8772,6 +8811,8 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "frameworkType":
+			out.Values[i] = ec._Audit_frameworkType(ctx, field, obj)
 		case "framework":
 			field := field
 

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a866ac360421f2cca952ab1305c3de0b>>
+ * @generated SignedSource<<1880a0f57fad8f7fc1628a5a9657cfe6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -204,6 +204,13 @@ return {
                           {
                             "alias": null,
                             "args": null,
+                            "kind": "ScalarField",
+                            "name": "frameworkType",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
                             "concreteType": "Framework",
                             "kind": "LinkedField",
                             "name": "framework",
@@ -336,12 +343,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "441524ada7aa614fb611f3d64812314f",
+    "cacheID": "4ac0a27ee7916940d4d3efeca9936ebc",
     "id": null,
     "metadata": {},
     "name": "AuditGraphListQuery",
     "operationKind": "query",
-    "text": "query AuditGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateAudit: permission(action: \"core:audit:create\")\n      ...AuditsPageFragment\n    }\n    id\n  }\n}\n\nfragment AuditsPageFragment on Organization {\n  audits(first: 10) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AuditGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateAudit: permission(action: \"core:audit:create\")\n      ...AuditsPageFragment\n    }\n    id\n  }\n}\n\nfragment AuditsPageFragment on Organization {\n  audits(first: 10) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        frameworkType\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

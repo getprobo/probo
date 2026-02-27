@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8ce0dfdad4c98f5fa9fbbd2162a28778>>
+ * @generated SignedSource<<763afe06ed5166f208646c8ccc70c1ac>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,6 +24,7 @@ export type AuditGraphNodeQuery$data = {
       readonly lightLogoURL: string | null | undefined;
       readonly name: string;
     };
+    readonly frameworkType?: string | null | undefined;
     readonly id?: string;
     readonly name?: string | null | undefined;
     readonly organization?: {
@@ -83,24 +84,31 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "validFrom",
+  "name": "frameworkType",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "validUntil",
+  "name": "validFrom",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "createdAt",
+  "name": "validUntil",
   "storageKey": null
 },
 v7 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "createdAt",
+  "storageKey": null
+},
+v8 = {
   "alias": null,
   "args": null,
   "concreteType": "Report",
@@ -137,25 +145,25 @@ v7 = {
       "name": "downloadUrl",
       "storageKey": null
     },
-    (v6/*: any*/)
+    (v7/*: any*/)
   ],
-  "storageKey": null
-},
-v8 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "reportUrl",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "state",
+  "name": "reportUrl",
   "storageKey": null
 },
 v10 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "state",
+  "storageKey": null
+},
+v11 = {
   "alias": null,
   "args": null,
   "concreteType": "Framework",
@@ -182,7 +190,7 @@ v10 = {
   ],
   "storageKey": null
 },
-v11 = {
+v12 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -195,14 +203,14 @@ v11 = {
   ],
   "storageKey": null
 },
-v12 = {
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
 },
-v13 = {
+v14 = {
   "alias": "canUpdate",
   "args": [
     {
@@ -215,7 +223,7 @@ v13 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:audit:update\")"
 },
-v14 = {
+v15 = {
   "alias": "canDelete",
   "args": [
     {
@@ -250,15 +258,16 @@ return {
               (v3/*: any*/),
               (v4/*: any*/),
               (v5/*: any*/),
-              (v7/*: any*/),
+              (v6/*: any*/),
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
-              (v6/*: any*/),
               (v12/*: any*/),
+              (v7/*: any*/),
               (v13/*: any*/),
-              (v14/*: any*/)
+              (v14/*: any*/),
+              (v15/*: any*/)
             ],
             "type": "Audit",
             "abstractKey": null
@@ -298,15 +307,16 @@ return {
               (v3/*: any*/),
               (v4/*: any*/),
               (v5/*: any*/),
-              (v7/*: any*/),
+              (v6/*: any*/),
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
-              (v6/*: any*/),
               (v12/*: any*/),
+              (v7/*: any*/),
               (v13/*: any*/),
-              (v14/*: any*/)
+              (v14/*: any*/),
+              (v15/*: any*/)
             ],
             "type": "Audit",
             "abstractKey": null
@@ -317,16 +327,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c9d41c45b625f17ccf291ae2c027a027",
+    "cacheID": "7db49ce707dc3447233e2d0d33363626",
     "id": null,
     "metadata": {},
     "name": "AuditGraphNodeQuery",
     "operationKind": "query",
-    "text": "query AuditGraphNodeQuery(\n  $auditId: ID!\n) {\n  node(id: $auditId) {\n    __typename\n    ... on Audit {\n      id\n      name\n      validFrom\n      validUntil\n      report {\n        id\n        filename\n        mimeType\n        size\n        downloadUrl\n        createdAt\n      }\n      reportUrl\n      state\n      framework {\n        id\n        name\n        lightLogoURL\n        darkLogoURL\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:audit:update\")\n      canDelete: permission(action: \"core:audit:delete\")\n    }\n    id\n  }\n}\n"
+    "text": "query AuditGraphNodeQuery(\n  $auditId: ID!\n) {\n  node(id: $auditId) {\n    __typename\n    ... on Audit {\n      id\n      name\n      frameworkType\n      validFrom\n      validUntil\n      report {\n        id\n        filename\n        mimeType\n        size\n        downloadUrl\n        createdAt\n      }\n      reportUrl\n      state\n      framework {\n        id\n        name\n        lightLogoURL\n        darkLogoURL\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:audit:update\")\n      canDelete: permission(action: \"core:audit:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3195b5564b2cf8a21536ebf89f0f5c82";
+(node as any).hash = "9a82086c685f3f7d7014a9442c1cf8e6";
 
 export default node;

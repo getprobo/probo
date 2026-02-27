@@ -185,6 +185,7 @@ type ComplexityRoot struct {
 		Controls              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt             func(childComplexity int) int
 		Framework             func(childComplexity int) int
+		FrameworkType         func(childComplexity int) int
 		ID                    func(childComplexity int) int
 		Name                  func(childComplexity int) int
 		Organization          func(childComplexity int) int
@@ -2815,6 +2816,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Audit.Framework(childComplexity), true
+	case "Audit.frameworkType":
+		if e.complexity.Audit.FrameworkType == nil {
+			break
+		}
+
+		return e.complexity.Audit.FrameworkType(childComplexity), true
 	case "Audit.id":
 		if e.complexity.Audit.ID == nil {
 			break
@@ -12988,6 +12995,12 @@ enum WebhookEventType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorUpdated")
     VENDOR_DELETED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorDeleted")
+    USER_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserCreated")
+    USER_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserUpdated")
+    USER_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserDeleted")
 }
 
 type WebhookSubscription implements Node {
@@ -13184,6 +13197,7 @@ type Risk implements Node {
 type Audit implements Node {
     id: ID!
     name: String
+    frameworkType: String
     organization: Organization! @goField(forceResolver: true)
     framework: Framework! @goField(forceResolver: true)
     validFrom: Datetime
@@ -14852,6 +14866,7 @@ input CreateAuditInput {
     organizationId: ID!
     frameworkId: ID!
     name: String
+    frameworkType: String
     validFrom: Datetime
     validUntil: Datetime
     state: AuditState
@@ -14861,6 +14876,7 @@ input CreateAuditInput {
 input UpdateAuditInput {
     id: ID!
     name: String @goField(omittable: true)
+    frameworkType: String @goField(omittable: true)
     validFrom: Datetime
     validUntil: Datetime
     state: AuditState
@@ -21622,6 +21638,35 @@ func (ec *executionContext) fieldContext_Audit_name(_ context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _Audit_frameworkType(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Audit_frameworkType,
+		func(ctx context.Context) (any, error) {
+			return obj.FrameworkType, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Audit_frameworkType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Audit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Audit_organization(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -22284,6 +22329,8 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 				return ec.fieldContext_Audit_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Audit_name(ctx, field)
+			case "frameworkType":
+				return ec.fieldContext_Audit_frameworkType(ctx, field)
 			case "organization":
 				return ec.fieldContext_Audit_organization(ctx, field)
 			case "framework":
@@ -27730,6 +27777,8 @@ func (ec *executionContext) fieldContext_DeleteAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Audit_name(ctx, field)
+			case "frameworkType":
+				return ec.fieldContext_Audit_frameworkType(ctx, field)
 			case "organization":
 				return ec.fieldContext_Audit_organization(ctx, field)
 			case "framework":
@@ -41183,6 +41232,8 @@ func (ec *executionContext) fieldContext_Nonconformity_audit(_ context.Context, 
 				return ec.fieldContext_Audit_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Audit_name(ctx, field)
+			case "frameworkType":
+				return ec.fieldContext_Audit_frameworkType(ctx, field)
 			case "organization":
 				return ec.fieldContext_Audit_organization(ctx, field)
 			case "framework":
@@ -46683,6 +46734,8 @@ func (ec *executionContext) fieldContext_Report_audit(_ context.Context, field g
 				return ec.fieldContext_Audit_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Audit_name(ctx, field)
+			case "frameworkType":
+				return ec.fieldContext_Audit_frameworkType(ctx, field)
 			case "organization":
 				return ec.fieldContext_Audit_organization(ctx, field)
 			case "framework":
@@ -54493,6 +54546,8 @@ func (ec *executionContext) fieldContext_UpdateAuditPayload_audit(_ context.Cont
 				return ec.fieldContext_Audit_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Audit_name(ctx, field)
+			case "frameworkType":
+				return ec.fieldContext_Audit_frameworkType(ctx, field)
 			case "organization":
 				return ec.fieldContext_Audit_organization(ctx, field)
 			case "framework":
@@ -56205,6 +56260,8 @@ func (ec *executionContext) fieldContext_UploadAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Audit_name(ctx, field)
+			case "frameworkType":
+				return ec.fieldContext_Audit_frameworkType(ctx, field)
 			case "organization":
 				return ec.fieldContext_Audit_organization(ctx, field)
 			case "framework":
@@ -63599,7 +63656,7 @@ func (ec *executionContext) unmarshalInputCreateAuditInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "frameworkId", "name", "validFrom", "validUntil", "state", "trustCenterVisibility"}
+	fieldsInOrder := [...]string{"organizationId", "frameworkId", "name", "frameworkType", "validFrom", "validUntil", "state", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63627,6 +63684,13 @@ func (ec *executionContext) unmarshalInputCreateAuditInput(ctx context.Context, 
 				return it, err
 			}
 			it.Name = data
+		case "frameworkType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frameworkType"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrameworkType = data
 		case "validFrom":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validFrom"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
@@ -68723,7 +68787,7 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "validFrom", "validUntil", "state", "trustCenterVisibility"}
+	fieldsInOrder := [...]string{"id", "name", "frameworkType", "validFrom", "validUntil", "state", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -68744,6 +68808,13 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 				return it, err
 			}
 			it.Name = graphql.OmittableOf(data)
+		case "frameworkType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frameworkType"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrameworkType = graphql.OmittableOf(data)
 		case "validFrom":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validFrom"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
@@ -72208,6 +72279,8 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "name":
 			out.Values[i] = ec._Audit_name(ctx, field, obj)
+		case "frameworkType":
+			out.Values[i] = ec._Audit_frameworkType(ctx, field, obj)
 		case "organization":
 			field := field
 
@@ -101902,6 +101975,9 @@ var (
 		"VENDOR_CREATED":  coredata.WebhookEventTypeVendorCreated,
 		"VENDOR_UPDATED":  coredata.WebhookEventTypeVendorUpdated,
 		"VENDOR_DELETED":  coredata.WebhookEventTypeVendorDeleted,
+		"USER_CREATED":    coredata.WebhookEventTypeUserCreated,
+		"USER_UPDATED":    coredata.WebhookEventTypeUserUpdated,
+		"USER_DELETED":    coredata.WebhookEventTypeUserDeleted,
 	}
 	marshalNWebhookEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐWebhookEventType = map[coredata.WebhookEventType]string{
 		coredata.WebhookEventTypeMeetingCreated: "MEETING_CREATED",
@@ -101910,6 +101986,9 @@ var (
 		coredata.WebhookEventTypeVendorCreated:  "VENDOR_CREATED",
 		coredata.WebhookEventTypeVendorUpdated:  "VENDOR_UPDATED",
 		coredata.WebhookEventTypeVendorDeleted:  "VENDOR_DELETED",
+		coredata.WebhookEventTypeUserCreated:    "USER_CREATED",
+		coredata.WebhookEventTypeUserUpdated:    "USER_UPDATED",
+		coredata.WebhookEventTypeUserDeleted:    "USER_DELETED",
 	}
 )
 

@@ -39,6 +39,7 @@ type (
 		OrganizationID        gid.GID
 		FrameworkID           gid.GID
 		Name                  *string
+		FrameworkType         *string
 		ValidFrom             *time.Time
 		ValidUntil            *time.Time
 		State                 *coredata.AuditState
@@ -48,6 +49,7 @@ type (
 	UpdateAuditRequest struct {
 		ID                    gid.GID
 		Name                  **string
+		FrameworkType         **string
 		ValidFrom             *time.Time
 		ValidUntil            *time.Time
 		State                 *coredata.AuditState
@@ -66,6 +68,7 @@ func (car *CreateAuditRequest) Validate() error {
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(car.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(car.FrameworkType, "framework_type", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
 	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
 	v.Check(car.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -78,6 +81,7 @@ func (uar *UpdateAuditRequest) Validate() error {
 
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AuditEntityType))
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(uar.FrameworkType, "framework_type", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
 	v.Check(uar.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -158,6 +162,7 @@ func (s *AuditService) Create(
 		Name:                  req.Name,
 		OrganizationID:        req.OrganizationID,
 		FrameworkID:           req.FrameworkID,
+		FrameworkType:         req.FrameworkType,
 		ValidFrom:             req.ValidFrom,
 		ValidUntil:            req.ValidUntil,
 		State:                 coredata.AuditStateNotStarted,
@@ -220,6 +225,9 @@ func (s *AuditService) Update(
 
 			if req.Name != nil {
 				audit.Name = *req.Name
+			}
+			if req.FrameworkType != nil {
+				audit.FrameworkType = *req.FrameworkType
 			}
 			if req.ValidFrom != nil {
 				audit.ValidFrom = req.ValidFrom

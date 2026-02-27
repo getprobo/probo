@@ -2484,6 +2484,7 @@ type Risk implements Node {
 type Audit implements Node {
     id: ID!
     name: String
+    frameworkType: String
     organization: Organization! @goField(forceResolver: true)
     framework: Framework! @goField(forceResolver: true)
     validFrom: Datetime
@@ -4152,6 +4153,7 @@ input CreateAuditInput {
     organizationId: ID!
     frameworkId: ID!
     name: String
+    frameworkType: String
     validFrom: Datetime
     validUntil: Datetime
     state: AuditState
@@ -4161,6 +4163,7 @@ input CreateAuditInput {
 input UpdateAuditInput {
     id: ID!
     name: String @goField(omittable: true)
+    frameworkType: String @goField(omittable: true)
     validFrom: Datetime
     validUntil: Datetime
     state: AuditState

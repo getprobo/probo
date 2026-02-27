@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3265a0991323eee4011c668b68d1b365>>
+ * @generated SignedSource<<c63d7bc0fa167d1b49395e577dab8460>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type AuditRowFragment$data = {
     readonly lightLogoURL: string | null | undefined;
     readonly name: string;
   };
+  readonly frameworkType: string | null | undefined;
   readonly report: {
     readonly filename: string;
     readonly hasUserRequestedAccess: boolean;
@@ -44,6 +45,13 @@ return {
   "metadata": null,
   "name": "AuditRowFragment",
   "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "frameworkType",
+      "storageKey": null
+    },
     {
       "alias": null,
       "args": null,
@@ -116,6 +124,6 @@ return {
 };
 })();
 
-(node as any).hash = "417e65b500df4b4cff874dab2bea90ee";
+(node as any).hash = "8a1dfb613b9e7ef70dad429f05038730";
 
 export default node;
