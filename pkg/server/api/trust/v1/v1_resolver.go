@@ -236,41 +236,6 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.Reque
 	}, nil
 }
 
-func (r *mutationResolver) checkNDASignature(
-	ctx context.Context,
-	trustCenter *coredata.TrustCenter,
-	identity *coredata.Identity,
-) error {
-	if trustCenter.NonDisclosureAgreementFileID == nil {
-		return nil
-	}
-
-	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
-
-	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.EmailAddress)
-	if err != nil {
-		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
-	}
-
-	if access.ElectronicSignatureID == nil {
-		return nil
-	}
-
-	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
-	if err != nil {
-		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
-	}
-
-	switch sig.Status {
-	case coredata.ElectronicSignatureStatusAccepted,
-		coredata.ElectronicSignatureStatusProcessing,
-		coredata.ElectronicSignatureStatusCompleted:
-		return nil
-	default:
-		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
-	}
-}
-
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
 func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error) {
 	trustService := r.TrustService(ctx, input.DocumentID.TenantID())

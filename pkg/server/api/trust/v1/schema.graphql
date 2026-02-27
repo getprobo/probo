@@ -90,6 +90,7 @@ type Report implements Node {
 
 type Audit implements Node {
   id: ID!
+  name: String
   framework: Framework! @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
 }

@@ -27,6 +27,7 @@ type AcceptElectronicSignaturePayload struct {
 
 type Audit struct {
 	ID        gid.GID    `json:"id"`
+	Name      *string    `json:"name,omitempty"`
 	Framework *Framework `json:"framework"`
 	Report    *Report    `json:"report,omitempty"`
 }

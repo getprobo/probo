@@ -73,6 +73,7 @@ type ComplexityRoot struct {
 	Audit struct {
 		Framework func(childComplexity int) int
 		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
 		Report    func(childComplexity int) int
 	}
 
@@ -393,6 +394,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Audit.ID(childComplexity), true
+	case "Audit.name":
+		if e.complexity.Audit.Name == nil {
+			break
+		}
+
+		return e.complexity.Audit.Name(childComplexity), true
 	case "Audit.report":
 		if e.complexity.Audit.Report == nil {
 			break
@@ -1427,6 +1434,7 @@ type Report implements Node {
 
 type Audit implements Node {
   id: ID!
+  name: String
   framework: Framework! @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
 }
@@ -2572,6 +2580,35 @@ func (ec *executionContext) fieldContext_Audit_id(_ context.Context, field graph
 	return fc, nil
 }
 
+func (ec *executionContext) _Audit_name(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Audit_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Audit_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Audit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Audit_framework(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2779,6 +2816,8 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Audit_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Audit_name(ctx, field)
 			case "framework":
 				return ec.fieldContext_Audit_framework(ctx, field)
 			case "report":
@@ -8772,6 +8811,8 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "name":
+			out.Values[i] = ec._Audit_name(ctx, field, obj)
 		case "framework":
 			field := field
 
