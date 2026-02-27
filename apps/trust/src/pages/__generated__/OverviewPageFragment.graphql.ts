@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cde79d7c929ba1be8e0d033c90e7eeb7>>
+ * @generated SignedSource<<5c6683f2588467cd4b829f1ba7ec43d3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,6 +13,14 @@ export type CountryCode = "AD" | "AE" | "AF" | "AG" | "AI" | "AL" | "AM" | "AO" 
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
 export type OverviewPageFragment$data = {
+  readonly audits: {
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly id: string;
+        readonly " $fragmentSpreads": FragmentRefs<"AuditRowFragment">;
+      };
+    }>;
+  };
   readonly documents: {
     readonly edges: ReadonlyArray<{
       readonly node: {
@@ -21,6 +29,9 @@ export type OverviewPageFragment$data = {
         readonly " $fragmentSpreads": FragmentRefs<"DocumentRowFragment">;
       };
     }>;
+  };
+  readonly organization: {
+    readonly name: string;
   };
   readonly references: {
     readonly edges: ReadonlyArray<{
@@ -62,10 +73,17 @@ var v0 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v1 = [
+v2 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -78,6 +96,18 @@ return {
   "metadata": null,
   "name": "OverviewPageFragment",
   "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "Organization",
+      "kind": "LinkedField",
+      "name": "organization",
+      "plural": false,
+      "selections": [
+        (v0/*: any*/)
+      ],
+      "storageKey": null
+    },
     {
       "alias": null,
       "args": [
@@ -108,14 +138,8 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
+                (v1/*: any*/),
                 (v0/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "name",
-                  "storageKey": null
-                },
                 {
                   "alias": null,
                   "args": null,
@@ -138,6 +162,51 @@ return {
         }
       ],
       "storageKey": "references(first:14)"
+    },
+    {
+      "alias": null,
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "first",
+          "value": 50
+        }
+      ],
+      "concreteType": "AuditConnection",
+      "kind": "LinkedField",
+      "name": "audits",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "AuditEdge",
+          "kind": "LinkedField",
+          "name": "edges",
+          "plural": true,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "Audit",
+              "kind": "LinkedField",
+              "name": "node",
+              "plural": false,
+              "selections": [
+                (v1/*: any*/),
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "AuditRowFragment"
+                }
+              ],
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        }
+      ],
+      "storageKey": "audits(first:50)"
     },
     {
       "alias": null,
@@ -169,7 +238,7 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
-                (v0/*: any*/),
+                (v1/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -193,7 +262,7 @@ return {
     },
     {
       "alias": null,
-      "args": (v1/*: any*/),
+      "args": (v2/*: any*/),
       "concreteType": "DocumentConnection",
       "kind": "LinkedField",
       "name": "documents",
@@ -215,7 +284,7 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
-                (v0/*: any*/),
+                (v1/*: any*/),
                 {
                   "args": null,
                   "kind": "FragmentSpread",
@@ -239,7 +308,7 @@ return {
     },
     {
       "alias": null,
-      "args": (v1/*: any*/),
+      "args": (v2/*: any*/),
       "concreteType": "TrustCenterFileConnection",
       "kind": "LinkedField",
       "name": "trustCenterFiles",
@@ -261,7 +330,7 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
-                (v0/*: any*/),
+                (v1/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -289,6 +358,6 @@ return {
 };
 })();
 
-(node as any).hash = "0f4e9ac02d068ba971bb1f5be5fdaccf";
+(node as any).hash = "6989471522a856680ff6196a1b2cce8f";
 
 export default node;

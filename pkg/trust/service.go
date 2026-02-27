@@ -73,6 +73,7 @@ type (
 		TrustCenterAccesses   *TrustCenterAccessService
 		TrustCenterReferences *TrustCenterReferenceService
 		TrustCenterFiles      *TrustCenterFileService
+		ComplianceBadges      *ComplianceBadgeService
 		Reports               *ReportService
 		Organizations         *OrganizationService
 		SlackMessages         *slack.SlackMessageService
@@ -133,6 +134,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, iamSvc: s.iam, logger: s.logger}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}
+	tenantService.ComplianceBadges = &ComplianceBadgeService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.Organizations = &OrganizationService{svc: tenantService}
 	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages

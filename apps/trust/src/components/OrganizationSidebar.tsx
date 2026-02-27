@@ -10,14 +10,45 @@ import {
   useToast,
 } from "@probo/ui";
 import { type PropsWithChildren, use } from "react";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import { Viewer } from "#/providers/Viewer";
-import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
+import type { OrganizationSidebarFragment$key } from "./__generated__/OrganizationSidebarFragment.graphql";
 import { AuditRowAvatar } from "./AuditRow";
+
+const sidebarFragment = graphql`
+  fragment OrganizationSidebarFragment on TrustCenter {
+    logoFileUrl
+    darkLogoFileUrl
+    organization {
+      name
+      description
+      websiteUrl
+      email
+      headquarterAddress
+    }
+    complianceBadges(first: 50) {
+      edges {
+        node {
+          id
+          name
+          iconUrl
+        }
+      }
+    }
+    audits(first: 50) {
+      edges {
+        node {
+          id
+          ...AuditRowFragment
+        }
+      }
+    }
+  }
+`;
 
 const requestAllAccessesMutation = graphql`
   mutation OrganizationSidebar_requestAllAccessesMutation {
@@ -32,14 +63,15 @@ const requestAllAccessesMutation = graphql`
 export function OrganizationSidebar({
   trustCenter,
 }: {
-  trustCenter: TrustGraphCurrentQuery$data["currentTrustCenter"];
+  trustCenter: OrganizationSidebarFragment$key | null | undefined;
 }) {
+  const data = useFragment(sidebarFragment, trustCenter ?? null);
   const { __ } = useTranslate();
   const isAuthenticated = !!use(Viewer);
   const { toast } = useToast();
   const theme = useSystemTheme();
 
-  const logoFileUrl = theme === "dark" ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl) : trustCenter?.logoFileUrl;
+  const logoFileUrl = theme === "dark" ? (data?.darkLogoFileUrl ?? data?.logoFileUrl) : data?.logoFileUrl;
 
   const [requestAllAccesses, isRequestingAccess]
     = useMutation<OrganizationSidebar_requestAllAccessesMutation>(
@@ -74,7 +106,7 @@ export function OrganizationSidebar({
     });
   };
 
-  if (!trustCenter) {
+  if (!data) {
     return null;
   }
 
@@ -92,9 +124,9 @@ export function OrganizationSidebar({
         : (
             <div className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1" />
           )}
-      <h1 className="text-2xl mt-6">{trustCenter.organization.name}</h1>
+      <h1 className="text-2xl mt-6">{data.organization.name}</h1>
       <p className="text-sm text-txt-secondary mt-1">
-        {trustCenter.organization.description}
+        {data.organization.description}
       </p>
 
       <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
@@ -105,59 +137,86 @@ export function OrganizationSidebar({
           <IconBlock size={16} />
           {__("Business information")}
         </h2>
-        {trustCenter.organization.websiteUrl && (
+        {data.organization.websiteUrl && (
           <BusinessInfo label={__("Website")}>
             <a
-              href={trustCenter.organization.websiteUrl}
+              href={data.organization.websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
               <span className="text-txt-info hover:underline ">
-                {new URL(trustCenter.organization.websiteUrl).host}
+                {new URL(data.organization.websiteUrl).host}
               </span>
             </a>
           </BusinessInfo>
         )}
-        {trustCenter.organization.email && (
+        {data.organization.email && (
           <BusinessInfo label={__("Contact")}>
-            <a href={`mailto:${trustCenter.organization.email}`}>
+            <a href={`mailto:${data.organization.email}`}>
               <span className="text-txt-info hover:underline ">
-                {trustCenter.organization.email}
+                {data.organization.email}
               </span>
             </a>
           </BusinessInfo>
         )}
-        {trustCenter.organization.headquarterAddress && (
+        {data.organization.headquarterAddress && (
           <BusinessInfo label={__("HQ address")}>
-            {trustCenter.organization.headquarterAddress}
+            {data.organization.headquarterAddress}
           </BusinessInfo>
         )}
 
         <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
 
-        {/* Certifications */}
-        {trustCenter.audits.edges.length > 0 && (
-          <>
-            <div className="space-y-4">
-              <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
-                <IconMedal size={16} />
-                {__("Frameworks")}
-              </h2>
-              <div
-                className="grid grid-cols-4 gap-4"
-                style={{
-                  gridTemplateColumns: "repeat(auto-fit, 75px",
-                }}
-              >
-                {trustCenter.audits.edges.map(audit => (
-                  <AuditRowAvatar key={audit.node.id} audit={audit.node} />
-                ))}
-              </div>
-            </div>
-
-            <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
-          </>
-        )}
+        {/* Badges or Frameworks */}
+        {data.complianceBadges.edges.length > 0
+          ? (
+              <>
+                <div className="space-y-4">
+                  <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
+                    <IconMedal size={16} />
+                    {__("Frameworks")}
+                  </h2>
+                  <div className="flex flex-wrap gap-3">
+                    {data.complianceBadges.edges.map(({ node: badge }) => (
+                      <div key={badge.id} className="flex flex-col items-center gap-1.5" title={badge.name}>
+                        <img
+                          src={badge.iconUrl}
+                          alt={badge.name}
+                          className="size-10 object-contain"
+                        />
+                        <span className="text-xs text-txt-secondary text-center leading-tight max-w-[72px] truncate">
+                          {badge.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
+              </>
+            )
+          : data.audits.edges.length > 0
+            ? (
+                <>
+                  <div className="space-y-4">
+                    <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
+                      <IconMedal size={16} />
+                      {__("Frameworks")}
+                    </h2>
+                    <div
+                      className="grid grid-cols-4 gap-4"
+                      style={{
+                        gridTemplateColumns: "repeat(auto-fit, 75px)",
+                      }}
+                    >
+                      {data.audits.edges.map(audit => (
+                        <AuditRowAvatar key={audit.node.id} audit={audit.node} />
+                      ))}
+                    </div>
+                  </div>
+                  <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
+                </>
+              )
+            : null}
 
         {/* Actions */}
         {isAuthenticated

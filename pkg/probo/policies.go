@@ -88,6 +88,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionTrustCenterDocumentAccessList,
 		ActionTrustCenterFileGet, ActionTrustCenterFileList, ActionTrustCenterFileGetFileUrl,
 		ActionTrustCenterReferenceList, ActionTrustCenterReferenceGetLogoUrl,
+		ActionComplianceBadgeList, ActionComplianceBadgeGetIconUrl,
 	).WithSID("trust-center-read-access").When(organizationCondition),
 
 	policy.Allow(ActionCustomDomainGet).WithSID("custom-domain-read").When(organizationCondition),

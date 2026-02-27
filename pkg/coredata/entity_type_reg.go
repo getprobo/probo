@@ -85,6 +85,7 @@ const (
 	ElectronicSignatureEntityType              uint16 = 59
 	ElectronicSignatureEventEntityType         uint16 = 60
 	EmailAttachmentEntityType                  uint16 = 61
+	ComplianceBadgeEntityType                  uint16 = 62
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -209,6 +210,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &ElectronicSignatureEvent{ID: id}, true
 	case EmailAttachmentEntityType:
 		return &EmailAttachment{ID: id}, true
+	case ComplianceBadgeEntityType:
+		return &ComplianceBadge{ID: id}, true
 	default:
 		return nil, false
 	}

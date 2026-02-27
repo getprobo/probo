@@ -3,10 +3,13 @@ import { Button, IconPlusLarge } from "@probo/ui";
 import { useRef } from "react";
 import { ConnectionHandler, graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
+import type { CompliancePageBadgeListItemFragment$data } from "#/__generated__/core/CompliancePageBadgeListItemFragment.graphql";
 import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
 import type { CompliancePageReferencesPageQuery } from "#/__generated__/core/CompliancePageReferencesPageQuery.graphql";
+import { ComplianceBadgeDialog, type ComplianceBadgeDialogRef } from "#/components/trustCenter/ComplianceBadgeDialog";
 import { TrustCenterReferenceDialog, type TrustCenterReferenceDialogRef } from "#/components/trustCenter/TrustCenterReferenceDialog";
 
+import { CompliancePageBadgeList } from "./_components/CompliancePageBadgeList";
 import { CompliancePageReferenceList } from "./_components/CompliancePageReferenceList";
 
 export const compliancePageReferencesPageQuery = graphql`
@@ -17,7 +20,9 @@ export const compliancePageReferencesPageQuery = graphql`
         compliancePage: trustCenter @required(action: THROW) {
           id
           canCreateReference: permission(action: "core:trust-center-reference:create")
+          canCreateComplianceBadge
           ...CompliancePageReferenceListFragment
+          ...CompliancePageBadgeListFragment
         }
       }
     }
@@ -28,7 +33,8 @@ export function CompliancePageReferencesPage(props: { queryRef: PreloadedQuery<C
   const { queryRef } = props;
 
   const { __ } = useTranslate();
-  const dialogRef = useRef<TrustCenterReferenceDialogRef>(null);
+  const referenceDialogRef = useRef<TrustCenterReferenceDialogRef>(null);
+  const badgeDialogRef = useRef<ComplianceBadgeDialogRef>(null);
 
   const { organization } = usePreloadedQuery<CompliancePageReferencesPageQuery>(
     compliancePageReferencesPageQuery,
@@ -44,39 +50,74 @@ export function CompliancePageReferencesPage(props: { queryRef: PreloadedQuery<C
     { orderBy: { field: "RANK", direction: "ASC" } },
   );
 
-  const handleCreate = () => {
+  const badgesConnectionId = ConnectionHandler.getConnectionID(
+    organization.compliancePage.id,
+    "CompliancePageBadgeList_complianceBadges",
+    { orderBy: { field: "RANK", direction: "ASC" } },
+  );
+
+  const handleCreateReference = () => {
     if (referencesConnectionId) {
-      dialogRef.current?.openCreate(organization.compliancePage.id, referencesConnectionId);
+      referenceDialogRef.current?.openCreate(organization.compliancePage.id, referencesConnectionId);
     }
   };
 
-  const handleEdit = (reference: CompliancePageReferenceListItemFragment$data) => {
-    dialogRef.current?.openEdit(reference);
+  const handleEditReference = (reference: CompliancePageReferenceListItemFragment$data) => {
+    referenceDialogRef.current?.openEdit(reference);
+  };
+
+  const handleCreateBadge = () => {
+    if (badgesConnectionId) {
+      badgeDialogRef.current?.openCreate(organization.compliancePage.id, badgesConnectionId);
+    }
+  };
+
+  const handleEditBadge = (badge: CompliancePageBadgeListItemFragment$data) => {
+    badgeDialogRef.current?.openEdit(badge);
   };
 
   return (
-    <div className="space-y-4">
-      {organization.compliancePage?.id && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-medium">{__("References")}</h2>
-              <p className="text-sm text-txt-tertiary">
-                {__("Showcase your customers and partners on your compliance page")}
-              </p>
-            </div>
-            {organization.compliancePage?.canCreateReference && (
-              <Button icon={IconPlusLarge} onClick={handleCreate}>
-                {__("Add Reference")}
-              </Button>
-            )}
+    <div className="space-y-8">
+      {/* Badges Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold">{__("Badges")}</h2>
+            <p className="text-sm text-txt-tertiary">
+              {__("Display compliance and certification badges on your public page. Badges replace the frameworks section when present.")}
+            </p>
           </div>
-
-          <CompliancePageReferenceList fragmentRef={organization.compliancePage} onEdit={handleEdit} />
-
-          <TrustCenterReferenceDialog ref={dialogRef} />
+          {organization.compliancePage?.canCreateComplianceBadge && (
+            <Button icon={IconPlusLarge} onClick={handleCreateBadge}>
+              {__("Add Badge")}
+            </Button>
+          )}
         </div>
-      )}
+
+        <CompliancePageBadgeList fragmentRef={organization.compliancePage} onEdit={handleEditBadge} />
+      </div>
+
+      {/* References Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold">{__("References")}</h2>
+            <p className="text-sm text-txt-tertiary">
+              {__("Showcase your customers and partners on your compliance page")}
+            </p>
+          </div>
+          {organization.compliancePage?.canCreateReference && (
+            <Button icon={IconPlusLarge} onClick={handleCreateReference}>
+              {__("Add Reference")}
+            </Button>
+          )}
+        </div>
+
+        <CompliancePageReferenceList fragmentRef={organization.compliancePage} onEdit={handleEditReference} />
+      </div>
+
+      <TrustCenterReferenceDialog ref={referenceDialogRef} />
+      <ComplianceBadgeDialog ref={badgeDialogRef} />
     </div>
   );
-};
+}

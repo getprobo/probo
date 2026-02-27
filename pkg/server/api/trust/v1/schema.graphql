@@ -470,6 +470,23 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
+type ComplianceBadge implements Node {
+  id: ID!
+  name: String!
+  iconUrl: String! @goField(forceResolver: true)
+  rank: Int!
+}
+
+type ComplianceBadgeConnection {
+  edges: [ComplianceBadgeEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ComplianceBadgeEdge {
+  cursor: CursorKey!
+  node: ComplianceBadge!
+}
+
 type TrustCenterFile implements Node {
   id: ID!
   name: String!
@@ -533,6 +550,13 @@ type TrustCenter implements Node {
     last: Int
     before: CursorKey
   ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+  complianceBadges(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): ComplianceBadgeConnection! @goField(forceResolver: true)
 
   trustCenterFiles(
     first: Int

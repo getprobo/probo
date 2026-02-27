@@ -22,22 +22,11 @@ export const currentTrustGraphQuery = graphql`
       }
       organization {
         name
-        description
-        websiteUrl
-        email
-        headquarterAddress
       }
+      ...OrganizationSidebarFragment
       ...OverviewPageFragment
       vendorInfo: vendors(first: 0) {
         totalCount
-      }
-      audits(first: 50) {
-        edges {
-          node {
-            id
-            ...AuditRowFragment
-          }
-        }
       }
     }
   }

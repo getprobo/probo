@@ -1227,6 +1227,28 @@ enum TrustCenterReferenceOrderField
         )
 }
 
+enum ComplianceBadgeOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceBadgeOrderField"
+    ) {
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceBadgeOrderFieldRank"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceBadgeOrderFieldName"
+        )
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceBadgeOrderFieldCreatedAt"
+        )
+    UPDATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceBadgeOrderFieldUpdatedAt"
+        )
+}
+
 enum TrustCenterFileOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField"
@@ -1455,6 +1477,14 @@ input TrustCenterReferenceOrder
     field: TrustCenterReferenceOrderField!
 }
 
+input ComplianceBadgeOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceBadgeOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ComplianceBadgeOrderField!
+}
+
 input TrustCenterFileOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterFileOrderBy"
@@ -1613,6 +1643,16 @@ type TrustCenter implements Node {
         before: CursorKey
         orderBy: TrustCenterReferenceOrder
     ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+    complianceBadges(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ComplianceBadgeOrder
+    ): ComplianceBadgeConnection! @goField(forceResolver: true)
+
+    canCreateComplianceBadge: Boolean! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -2800,6 +2840,31 @@ type TrustCenterReferenceEdge {
     node: TrustCenterReference!
 }
 
+type ComplianceBadge implements Node {
+    id: ID!
+    name: String!
+    iconUrl: String! @goField(forceResolver: true)
+    rank: Int!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ComplianceBadgeConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceBadgeConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [ComplianceBadgeEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ComplianceBadgeEdge {
+    cursor: CursorKey!
+    node: ComplianceBadge!
+}
+
 type TrustCenterFile implements Node {
     id: ID!
     name: String!
@@ -3241,6 +3306,16 @@ type Mutation {
     deleteTrustCenterReference(
         input: DeleteTrustCenterReferenceInput!
     ): DeleteTrustCenterReferencePayload!
+    # Compliance Badge mutations
+    createComplianceBadge(
+        input: CreateComplianceBadgeInput!
+    ): CreateComplianceBadgePayload!
+    updateComplianceBadge(
+        input: UpdateComplianceBadgeInput!
+    ): UpdateComplianceBadgePayload!
+    deleteComplianceBadge(
+        input: DeleteComplianceBadgeInput!
+    ): DeleteComplianceBadgePayload!
     # Trust Center File mutations
     createTrustCenterFile(
         input: CreateTrustCenterFileInput!
@@ -3638,6 +3713,23 @@ input UpdateTrustCenterReferenceInput {
 }
 
 input DeleteTrustCenterReferenceInput {
+    id: ID!
+}
+
+input CreateComplianceBadgeInput {
+    trustCenterId: ID!
+    name: String!
+    iconFile: Upload!
+}
+
+input UpdateComplianceBadgeInput {
+    id: ID!
+    name: String
+    iconFile: Upload
+    rank: Int
+}
+
+input DeleteComplianceBadgeInput {
     id: ID!
 }
 
@@ -4454,6 +4546,18 @@ type UpdateTrustCenterReferencePayload {
 
 type DeleteTrustCenterReferencePayload {
     deletedTrustCenterReferenceId: ID!
+}
+
+type CreateComplianceBadgePayload {
+    complianceBadgeEdge: ComplianceBadgeEdge!
+}
+
+type UpdateComplianceBadgePayload {
+    complianceBadge: ComplianceBadge!
+}
+
+type DeleteComplianceBadgePayload {
+    deletedComplianceBadgeId: ID!
 }
 
 type CreateTrustCenterFilePayload {

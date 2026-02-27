@@ -149,6 +149,24 @@ type CancelSignatureRequestPayload struct {
 	DeletedDocumentVersionSignatureID gid.GID `json:"deletedDocumentVersionSignatureId"`
 }
 
+type ComplianceBadge struct {
+	ID         gid.GID   `json:"id"`
+	Name       string    `json:"name"`
+	IconURL    string    `json:"iconUrl"`
+	Rank       int       `json:"rank"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	Permission bool      `json:"permission"`
+}
+
+func (ComplianceBadge) IsNode()             {}
+func (this ComplianceBadge) GetID() gid.GID { return this.ID }
+
+type ComplianceBadgeEdge struct {
+	Cursor page.CursorKey   `json:"cursor"`
+	Node   *ComplianceBadge `json:"node"`
+}
+
 type ContinualImprovement struct {
 	ID           gid.GID                               `json:"id"`
 	SnapshotID   *gid.GID                              `json:"snapshotId,omitempty"`
@@ -248,6 +266,16 @@ type CreateAuditInput struct {
 
 type CreateAuditPayload struct {
 	AuditEdge *AuditEdge `json:"auditEdge"`
+}
+
+type CreateComplianceBadgeInput struct {
+	TrustCenterID gid.GID        `json:"trustCenterId"`
+	Name          string         `json:"name"`
+	IconFile      graphql.Upload `json:"iconFile"`
+}
+
+type CreateComplianceBadgePayload struct {
+	ComplianceBadgeEdge *ComplianceBadgeEdge `json:"complianceBadgeEdge"`
 }
 
 type CreateContinualImprovementInput struct {
@@ -787,6 +815,14 @@ type DeleteAuditReportInput struct {
 
 type DeleteAuditReportPayload struct {
 	Audit *Audit `json:"audit"`
+}
+
+type DeleteComplianceBadgeInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteComplianceBadgePayload struct {
+	DeletedComplianceBadgeID gid.GID `json:"deletedComplianceBadgeId"`
 }
 
 type DeleteContinualImprovementInput struct {
@@ -1851,18 +1887,20 @@ type TransferImpactAssessmentFilter struct {
 }
 
 type TrustCenter struct {
-	ID              gid.GID                         `json:"id"`
-	Active          bool                            `json:"active"`
-	LogoFileURL     *string                         `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL *string                         `json:"darkLogoFileUrl,omitempty"`
-	NdaFileName     *string                         `json:"ndaFileName,omitempty"`
-	NdaFileURL      *string                         `json:"ndaFileUrl,omitempty"`
-	CreatedAt       time.Time                       `json:"createdAt"`
-	UpdatedAt       time.Time                       `json:"updatedAt"`
-	Organization    *Organization                   `json:"organization"`
-	Accesses        *TrustCenterAccessConnection    `json:"accesses"`
-	References      *TrustCenterReferenceConnection `json:"references"`
-	Permission      bool                            `json:"permission"`
+	ID                       gid.GID                         `json:"id"`
+	Active                   bool                            `json:"active"`
+	LogoFileURL              *string                         `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL          *string                         `json:"darkLogoFileUrl,omitempty"`
+	NdaFileName              *string                         `json:"ndaFileName,omitempty"`
+	NdaFileURL               *string                         `json:"ndaFileUrl,omitempty"`
+	CreatedAt                time.Time                       `json:"createdAt"`
+	UpdatedAt                time.Time                       `json:"updatedAt"`
+	Organization             *Organization                   `json:"organization"`
+	Accesses                 *TrustCenterAccessConnection    `json:"accesses"`
+	References               *TrustCenterReferenceConnection `json:"references"`
+	ComplianceBadges         *ComplianceBadgeConnection      `json:"complianceBadges"`
+	CanCreateComplianceBadge bool                            `json:"canCreateComplianceBadge"`
+	Permission               bool                            `json:"permission"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -1992,6 +2030,17 @@ type UpdateAuditInput struct {
 
 type UpdateAuditPayload struct {
 	Audit *Audit `json:"audit"`
+}
+
+type UpdateComplianceBadgeInput struct {
+	ID       gid.GID         `json:"id"`
+	Name     *string         `json:"name,omitempty"`
+	IconFile *graphql.Upload `json:"iconFile,omitempty"`
+	Rank     *int            `json:"rank,omitempty"`
+}
+
+type UpdateComplianceBadgePayload struct {
+	ComplianceBadge *ComplianceBadge `json:"complianceBadge"`
 }
 
 type UpdateContinualImprovementInput struct {

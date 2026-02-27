@@ -69,6 +69,18 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 	return types.NewReport(report), nil
 }
 
+// IconURL is the resolver for the iconUrl field on ComplianceBadge.
+func (r *complianceBadgeResolver) IconURL(ctx context.Context, obj *types.ComplianceBadge) (string, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	iconURL, err := trustService.ComplianceBadges.GenerateIconURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate icon URL: %w", err))
+	}
+
+	return iconURL, nil
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
@@ -234,41 +246,6 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.Reque
 			UpdatedAt: access.UpdatedAt,
 		},
 	}, nil
-}
-
-func (r *mutationResolver) checkNDASignature(
-	ctx context.Context,
-	trustCenter *coredata.TrustCenter,
-	identity *coredata.Identity,
-) error {
-	if trustCenter.NonDisclosureAgreementFileID == nil {
-		return nil
-	}
-
-	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
-
-	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.EmailAddress)
-	if err != nil {
-		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
-	}
-
-	if access.ElectronicSignatureID == nil {
-		return nil
-	}
-
-	sig, err := r.esign.GetSignatureByID(ctx, *access.ElectronicSignatureID)
-	if err != nil {
-		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
-	}
-
-	switch sig.Status {
-	case coredata.ElectronicSignatureStatusAccepted,
-		coredata.ElectronicSignatureStatusProcessing,
-		coredata.ElectronicSignatureStatusCompleted:
-		return nil
-	default:
-		return gqlutils.Forbiddenf(ctx, "user has not signed the NDA")
-	}
 }
 
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
@@ -1032,6 +1009,26 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	return types.NewTrustCenterReferenceConnection(referencePage), nil
 }
 
+// ComplianceBadges is the resolver for the complianceBadges field on TrustCenter.
+func (r *trustCenterResolver) ComplianceBadges(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceBadgeConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceBadgeOrderField]{
+		Field:     coredata.ComplianceBadgeOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := trustService.ComplianceBadges.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance badges", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceBadgeConnection(result), nil
+}
+
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
 func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterFileConnection, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
@@ -1158,6 +1155,11 @@ func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.Ve
 // Audit returns schema.AuditResolver implementation.
 func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
 
+// ComplianceBadge returns schema.ComplianceBadgeResolver implementation.
+func (r *Resolver) ComplianceBadge() schema.ComplianceBadgeResolver {
+	return &complianceBadgeResolver{r}
+}
+
 // Document returns schema.DocumentResolver implementation.
 func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
 
@@ -1200,6 +1202,7 @@ func (r *Resolver) VendorConnection() schema.VendorConnectionResolver {
 }
 
 type auditResolver struct{ *Resolver }
+type complianceBadgeResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }

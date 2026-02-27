@@ -44,6 +44,26 @@ type AuditEdge struct {
 	Node   *Audit         `json:"node"`
 }
 
+type ComplianceBadge struct {
+	ID      gid.GID `json:"id"`
+	Name    string  `json:"name"`
+	IconURL string  `json:"iconUrl"`
+	Rank    int     `json:"rank"`
+}
+
+func (ComplianceBadge) IsNode()             {}
+func (this ComplianceBadge) GetID() gid.GID { return this.ID }
+
+type ComplianceBadgeConnection struct {
+	Edges    []*ComplianceBadgeEdge `json:"edges"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+}
+
+type ComplianceBadgeEdge struct {
+	Cursor page.CursorKey   `json:"cursor"`
+	Node   *ComplianceBadge `json:"node"`
+}
+
 type Document struct {
 	ID                     gid.GID               `json:"id"`
 	Title                  string                `json:"title"`
@@ -213,6 +233,7 @@ type TrustCenter struct {
 	Audits                 *AuditConnection                `json:"audits"`
 	Vendors                *VendorConnection               `json:"vendors"`
 	References             *TrustCenterReferenceConnection `json:"references"`
+	ComplianceBadges       *ComplianceBadgeConnection      `json:"complianceBadges"`
 	TrustCenterFiles       *TrustCenterFileConnection      `json:"trustCenterFiles"`
 }
 

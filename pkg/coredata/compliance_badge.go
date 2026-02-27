@@ -29,55 +29,53 @@ import (
 )
 
 type (
-	TrustCenterReference struct {
+	ComplianceBadge struct {
 		ID             gid.GID   `db:"id"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		TrustCenterID  gid.GID   `db:"trust_center_id"`
 		Name           string    `db:"name"`
-		Description    *string   `db:"description"`
-		WebsiteURL     string    `db:"website_url"`
-		LogoFileID     gid.GID   `db:"logo_file_id"`
+		IconFileID     gid.GID   `db:"icon_file_id"`
 		Rank           int       `db:"rank"`
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
-	TrustCenterReferences []*TrustCenterReference
+	ComplianceBadges []*ComplianceBadge
 )
 
-func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) page.CursorKey {
+func (t ComplianceBadge) CursorKey(orderBy ComplianceBadgeOrderField) page.CursorKey {
 	switch orderBy {
-	case TrustCenterReferenceOrderFieldRank:
+	case ComplianceBadgeOrderFieldRank:
 		return page.NewCursorKey(t.ID, t.Rank)
-	case TrustCenterReferenceOrderFieldName:
+	case ComplianceBadgeOrderFieldName:
 		return page.NewCursorKey(t.ID, t.Name)
-	case TrustCenterReferenceOrderFieldCreatedAt:
+	case ComplianceBadgeOrderFieldCreatedAt:
 		return page.NewCursorKey(t.ID, t.CreatedAt)
-	case TrustCenterReferenceOrderFieldUpdatedAt:
+	case ComplianceBadgeOrderFieldUpdatedAt:
 		return page.NewCursorKey(t.ID, t.UpdatedAt)
 	}
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (t *TrustCenterReference) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id FROM trust_center_references WHERE id = $1 LIMIT 1;`
+func (t *ComplianceBadge) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM compliance_badges WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
 	if err := conn.QueryRow(ctx, q, t.ID).Scan(&organizationID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
-		return nil, fmt.Errorf("cannot query trust center reference authorization attributes: %w", err)
+		return nil, fmt.Errorf("cannot query compliance badge authorization attributes: %w", err)
 	}
 
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (t *TrustCenterReference) LoadByID(
+func (t *ComplianceBadge) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	trustCenterReferenceID gid.GID,
+	complianceBadgeID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -85,55 +83,51 @@ SELECT
     organization_id,
     trust_center_id,
     name,
-    description,
-    website_url,
-    logo_file_id,
+    icon_file_id,
     rank,
     created_at,
     updated_at
 FROM
-    trust_center_references
+    compliance_badges
 WHERE
     %s
-    AND id = @trust_center_reference_id
+    AND id = @compliance_badge_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_reference_id": trustCenterReferenceID}
+	args := pgx.StrictNamedArgs{"compliance_badge_id": complianceBadgeID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_references: %w", err)
+		return fmt.Errorf("cannot query compliance_badges: %w", err)
 	}
 
-	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterReference])
+	badge, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ComplianceBadge])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center reference: %w", err)
+		return fmt.Errorf("cannot collect compliance badge: %w", err)
 	}
 
-	*t = reference
+	*t = badge
 
 	return nil
 }
 
-func (t *TrustCenterReference) Insert(
+func (t *ComplianceBadge) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
-    trust_center_references (
+    compliance_badges (
         tenant_id,
         id,
         organization_id,
         trust_center_id,
         name,
-        description,
-        website_url,
-        logo_file_id,
+        icon_file_id,
         rank,
         created_at,
         updated_at
@@ -144,10 +138,8 @@ VALUES (
     @organization_id,
     @trust_center_id,
     @name,
-    @description,
-    @website_url,
-    @logo_file_id,
-    (SELECT COALESCE(MAX(rank), 0) + 1 FROM trust_center_references WHERE trust_center_id = @trust_center_id),
+    @icon_file_id,
+    (SELECT COALESCE(MAX(rank), 0) + 1 FROM compliance_badges WHERE trust_center_id = @trust_center_id),
     @created_at,
     @updated_at
 )
@@ -160,9 +152,7 @@ RETURNING rank;
 		"organization_id": t.OrganizationID,
 		"trust_center_id": t.TrustCenterID,
 		"name":            t.Name,
-		"description":     t.Description,
-		"website_url":     t.WebsiteURL,
-		"logo_file_id":    t.LogoFileID,
+		"icon_file_id":    t.IconFileID,
 		"created_at":      t.CreatedAt,
 		"updated_at":      t.UpdatedAt,
 	}
@@ -171,28 +161,26 @@ RETURNING rank;
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_references_trust_center_id_rank_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "compliance_badges_trust_center_id_rank_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
-		return fmt.Errorf("cannot insert trust center reference: %w", err)
+		return fmt.Errorf("cannot insert compliance badge: %w", err)
 	}
 
 	return nil
 }
 
-func (t *TrustCenterReference) Update(
+func (t *ComplianceBadge) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_center_references
+UPDATE compliance_badges
 SET
     name = @name,
-    description = @description,
-    website_url = @website_url,
-    logo_file_id = @logo_file_id,
+    icon_file_id = @icon_file_id,
     updated_at = @updated_at
 WHERE
     %s
@@ -204,16 +192,14 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":           t.ID,
 		"name":         t.Name,
-		"description":  t.Description,
-		"website_url":  t.WebsiteURL,
-		"logo_file_id": t.LogoFileID,
+		"icon_file_id": t.IconFileID,
 		"updated_at":   t.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update trust center reference: %w", err)
+		return fmt.Errorf("cannot update compliance badge: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -223,7 +209,7 @@ WHERE
 	return nil
 }
 
-func (t *TrustCenterReference) UpdateRank(
+func (t *ComplianceBadge) UpdateRank(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -232,11 +218,11 @@ func (t *TrustCenterReference) UpdateRank(
 WITH old AS (
   SELECT
 	rank AS old_rank
-  FROM trust_center_references
+  FROM compliance_badges
   WHERE %s AND id = @id AND trust_center_id = @trust_center_id
 )
 
-UPDATE trust_center_references
+UPDATE compliance_badges
 SET
     rank = CASE
         WHEN id = @id THEN @new_rank
@@ -268,20 +254,20 @@ WHERE %s
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update trust center reference rank: %w", err)
+		return fmt.Errorf("cannot update compliance badge rank: %w", err)
 	}
 
 	return nil
 }
 
-func (t *TrustCenterReference) Delete(
+func (t *ComplianceBadge) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
 DELETE FROM
-    trust_center_references
+    compliance_badges
 WHERE
     %s
     AND id = @id
@@ -294,18 +280,18 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete trust center reference: %w", err)
+		return fmt.Errorf("cannot delete compliance badge: %w", err)
 	}
 
 	return nil
 }
 
-func (t *TrustCenterReferences) LoadByTrustCenterID(
+func (t *ComplianceBadges) LoadByTrustCenterID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	trustCenterID gid.GID,
-	cursor *page.Cursor[TrustCenterReferenceOrderField],
+	cursor *page.Cursor[ComplianceBadgeOrderField],
 ) error {
 	q := `
 SELECT
@@ -313,14 +299,12 @@ SELECT
     organization_id,
     trust_center_id,
     name,
-    description,
-    website_url,
-    logo_file_id,
+    icon_file_id,
     rank,
     created_at,
     updated_at
 FROM
-    trust_center_references
+    compliance_badges
 WHERE
     %s
     AND trust_center_id = @trust_center_id
@@ -335,20 +319,20 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_references: %w", err)
+		return fmt.Errorf("cannot query compliance_badges: %w", err)
 	}
 
-	references, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterReference])
+	badges, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ComplianceBadge])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center references: %w", err)
+		return fmt.Errorf("cannot collect compliance badges: %w", err)
 	}
 
-	*t = references
+	*t = badges
 
 	return nil
 }
 
-func (t *TrustCenterReferences) CountByTrustCenterID(
+func (t *ComplianceBadges) CountByTrustCenterID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -358,7 +342,7 @@ func (t *TrustCenterReferences) CountByTrustCenterID(
 SELECT
     COUNT(*)
 FROM
-    trust_center_references
+    compliance_badges
 WHERE
     %s
     AND trust_center_id = @trust_center_id
@@ -372,7 +356,7 @@ WHERE
 	var count int
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count trust center references: %w", err)
+		return 0, fmt.Errorf("cannot count compliance badges: %w", err)
 	}
 
 	return count, nil

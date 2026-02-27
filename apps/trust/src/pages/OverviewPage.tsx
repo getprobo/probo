@@ -18,7 +18,6 @@ import { Rows } from "#/components/Rows";
 import { TrustCenterFileRow } from "#/components/TrustCenterFileRow";
 import { VendorRow } from "#/components/VendorRow";
 import { documentTypeLabel } from "#/helpers/documents";
-import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 import type {
   OverviewPageFragment$data,
@@ -27,6 +26,9 @@ import type {
 
 const overviewFragment = graphql`
   fragment OverviewPageFragment on TrustCenter {
+    organization {
+      name
+    }
     references(first: 14) {
       edges {
         node {
@@ -34,6 +36,14 @@ const overviewFragment = graphql`
           name
           logoUrl
           websiteUrl
+        }
+      }
+    }
+    audits(first: 50) {
+      edges {
+        node {
+          id
+          ...AuditRowFragment
         }
       }
     }
@@ -69,8 +79,7 @@ const overviewFragment = graphql`
 
 export function OverviewPage() {
   const { trustCenter } = useOutletContext<{
-    trustCenter: OverviewPageFragment$key
-      & TrustGraphCurrentQuery$data["currentTrustCenter"];
+    trustCenter: OverviewPageFragment$key;
   }>();
   const fragment = useFragment(overviewFragment, trustCenter);
   return (
@@ -79,13 +88,13 @@ export function OverviewPage() {
         references={fragment.references.edges.map(edge => edge.node)}
       />
       <Documents
-        audits={trustCenter.audits.edges}
+        audits={fragment.audits.edges}
         documents={fragment.documents.edges}
         files={fragment.trustCenterFiles.edges}
         url={getTrustCenterUrl("documents")}
       />
       <Subprocessors
-        organizationName={trustCenter.organization.name}
+        organizationName={fragment.organization.name}
         vendors={fragment.vendors.edges}
         url={getTrustCenterUrl("subprocessors")}
       />
@@ -101,9 +110,7 @@ function Documents({
 }: {
   documents: OverviewPageFragment$data["documents"]["edges"];
   files: OverviewPageFragment$data["trustCenterFiles"]["edges"];
-  audits: NonNullable<
-    TrustGraphCurrentQuery$data["currentTrustCenter"]
-  >["audits"]["edges"];
+  audits: OverviewPageFragment$data["audits"]["edges"];
   url: string;
 }) {
   const { __ } = useTranslate();

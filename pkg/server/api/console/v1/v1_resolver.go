@@ -324,6 +324,43 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 	return count, nil
 }
 
+// IconURL is the resolver for the iconUrl field on ComplianceBadge.
+func (r *complianceBadgeResolver) IconURL(ctx context.Context, obj *types.ComplianceBadge) (string, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionComplianceBadgeGetIconUrl); err != nil {
+		return "", err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.ComplianceBadges.GenerateIconURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate icon URL: %w", err))
+	}
+
+	return fileURL, nil
+}
+
+// Permission is the resolver for the permission field on ComplianceBadge.
+func (r *complianceBadgeResolver) Permission(ctx context.Context, obj *types.ComplianceBadge, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field on ComplianceBadgeConnection.
+func (r *complianceBadgeConnectionResolver) TotalCount(ctx context.Context, obj *types.ComplianceBadgeConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionComplianceBadgeList); err != nil {
+		return 0, err
+	}
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.ComplianceBadges.CountForTrustCenterID(ctx, obj.ParentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count compliance badges: %w", err))
+	}
+
+	return count, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *continualImprovementResolver) Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -2095,6 +2132,84 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 	return &types.DeleteTrustCenterReferencePayload{
 		DeletedTrustCenterReferenceID: input.ID,
+	}, nil
+}
+
+// CreateComplianceBadge is the resolver for the createComplianceBadge mutation.
+func (r *mutationResolver) CreateComplianceBadge(ctx context.Context, input types.CreateComplianceBadgeInput) (*types.CreateComplianceBadgePayload, error) {
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionComplianceBadgeCreate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	badge, err := prb.ComplianceBadges.Create(ctx, &probo.CreateComplianceBadgeRequest{
+		TrustCenterID: input.TrustCenterID,
+		Name:          input.Name,
+		IconFile: probo.File{
+			Content:     input.IconFile.File,
+			Filename:    input.IconFile.Filename,
+			Size:        input.IconFile.Size,
+			ContentType: input.IconFile.ContentType,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.CreateComplianceBadgePayload{
+		ComplianceBadgeEdge: types.NewComplianceBadgeEdge(badge, coredata.ComplianceBadgeOrderFieldRank),
+	}, nil
+}
+
+// UpdateComplianceBadge is the resolver for the updateComplianceBadge mutation.
+func (r *mutationResolver) UpdateComplianceBadge(ctx context.Context, input types.UpdateComplianceBadgeInput) (*types.UpdateComplianceBadgePayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionComplianceBadgeUpdate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	req := &probo.UpdateComplianceBadgeRequest{
+		ID:   input.ID,
+		Name: input.Name,
+		Rank: input.Rank,
+	}
+
+	if input.IconFile != nil {
+		iconFile := probo.File{
+			Content:     input.IconFile.File,
+			Filename:    input.IconFile.Filename,
+			Size:        input.IconFile.Size,
+			ContentType: input.IconFile.ContentType,
+		}
+		req.IconFile = &iconFile
+	}
+
+	badge, err := prb.ComplianceBadges.Update(ctx, req)
+	if err != nil {
+		panic(fmt.Errorf("cannot update compliance badge: %w", err))
+	}
+
+	return &types.UpdateComplianceBadgePayload{
+		ComplianceBadge: types.NewComplianceBadge(badge),
+	}, nil
+}
+
+// DeleteComplianceBadge is the resolver for the deleteComplianceBadge mutation.
+func (r *mutationResolver) DeleteComplianceBadge(ctx context.Context, input types.DeleteComplianceBadgeInput) (*types.DeleteComplianceBadgePayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionComplianceBadgeDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	if err := prb.ComplianceBadges.Delete(ctx, input.ID); err != nil {
+		panic(fmt.Errorf("cannot delete compliance badge: %w", err))
+	}
+
+	return &types.DeleteComplianceBadgePayload{
+		DeletedComplianceBadgeID: input.ID,
 	}, nil
 }
 
@@ -7814,6 +7929,40 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
 }
 
+// ComplianceBadges is the resolver for the complianceBadges field on TrustCenter.
+func (r *trustCenterResolver) ComplianceBadges(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceBadgeOrderField]) (*types.ComplianceBadgeConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionComplianceBadgeList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceBadgeOrderField]{
+		Field:     coredata.ComplianceBadgeOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ComplianceBadgeOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.ComplianceBadges.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list compliance badges: %w", err))
+	}
+
+	return types.NewComplianceBadgeConnection(result, obj.ID), nil
+}
+
+// CanCreateComplianceBadge is the resolver for the canCreateComplianceBadge field on TrustCenter.
+func (r *trustCenterResolver) CanCreateComplianceBadge(ctx context.Context, obj *types.TrustCenter) (bool, error) {
+	return r.authorize(ctx, obj.ID, probo.ActionComplianceBadgeCreate) == nil, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -8776,6 +8925,16 @@ func (r *Resolver) AuditConnection() schema.AuditConnectionResolver {
 	return &auditConnectionResolver{r}
 }
 
+// ComplianceBadge returns schema.ComplianceBadgeResolver implementation.
+func (r *Resolver) ComplianceBadge() schema.ComplianceBadgeResolver {
+	return &complianceBadgeResolver{r}
+}
+
+// ComplianceBadgeConnection returns schema.ComplianceBadgeConnectionResolver implementation.
+func (r *Resolver) ComplianceBadgeConnection() schema.ComplianceBadgeConnectionResolver {
+	return &complianceBadgeConnectionResolver{r}
+}
+
 // ContinualImprovement returns schema.ContinualImprovementResolver implementation.
 func (r *Resolver) ContinualImprovement() schema.ContinualImprovementResolver {
 	return &continualImprovementResolver{r}
@@ -9078,6 +9237,8 @@ type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
 type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
+type complianceBadgeResolver struct{ *Resolver }
+type complianceBadgeConnectionResolver struct{ *Resolver }
 type continualImprovementResolver struct{ *Resolver }
 type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }

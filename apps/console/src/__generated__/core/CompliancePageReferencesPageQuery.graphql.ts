@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0a0f91bc4b1622f7dea5c39185904169>>
+ * @generated SignedSource<<73338f546d62947cb3d12159cb651e0a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,9 +17,10 @@ export type CompliancePageReferencesPageQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
     readonly compliancePage: {
+      readonly canCreateComplianceBadge: boolean;
       readonly canCreateReference: boolean;
       readonly id: string;
-      readonly " $fragmentSpreads": FragmentRefs<"CompliancePageReferenceListFragment">;
+      readonly " $fragmentSpreads": FragmentRefs<"CompliancePageBadgeListFragment" | "CompliancePageReferenceListFragment">;
     };
   } | {
     // This will never be '%other', but we need some
@@ -74,7 +75,14 @@ v4 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:trust-center-reference:create\")"
 },
-v5 = [
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "canCreateComplianceBadge",
+  "storageKey": null
+},
+v6 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -88,6 +96,67 @@ v5 = [
       "field": "RANK"
     }
   }
+],
+v7 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "rank",
+  "storageKey": null
+},
+v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v9 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v10 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "PageInfo",
+  "kind": "LinkedField",
+  "name": "pageInfo",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "endCursor",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasNextPage",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v11 = {
+  "kind": "ClientExtension",
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "__id",
+      "storageKey": null
+    }
+  ]
+},
+v12 = [
+  "orderBy"
 ];
 return {
   "fragment": {
@@ -120,10 +189,16 @@ return {
                   "selections": [
                     (v3/*: any*/),
                     (v4/*: any*/),
+                    (v5/*: any*/),
                     {
                       "args": null,
                       "kind": "FragmentSpread",
                       "name": "CompliancePageReferenceListFragment"
+                    },
+                    {
+                      "args": null,
+                      "kind": "FragmentSpread",
+                      "name": "CompliancePageBadgeListFragment"
                     }
                   ],
                   "storageKey": null
@@ -169,9 +244,10 @@ return {
                 "selections": [
                   (v3/*: any*/),
                   (v4/*: any*/),
+                  (v5/*: any*/),
                   {
                     "alias": null,
-                    "args": (v5/*: any*/),
+                    "args": (v6/*: any*/),
                     "concreteType": "TrustCenterReferenceConnection",
                     "kind": "LinkedField",
                     "name": "references",
@@ -194,13 +270,7 @@ return {
                             "plural": false,
                             "selections": [
                               (v3/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "rank",
-                                "storageKey": null
-                              },
+                              (v7/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -208,13 +278,7 @@ return {
                                 "name": "logoUrl",
                                 "storageKey": null
                               },
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "name",
-                                "storageKey": null
-                              },
+                              (v8/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -259,66 +323,105 @@ return {
                             ],
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "cursor",
-                            "storageKey": null
-                          }
+                          (v9/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "PageInfo",
-                        "kind": "LinkedField",
-                        "name": "pageInfo",
-                        "plural": false,
-                        "selections": [
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "endCursor",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "hasNextPage",
-                            "storageKey": null
-                          }
-                        ],
-                        "storageKey": null
-                      },
-                      {
-                        "kind": "ClientExtension",
-                        "selections": [
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "__id",
-                            "storageKey": null
-                          }
-                        ]
-                      }
+                      (v10/*: any*/),
+                      (v11/*: any*/)
                     ],
                     "storageKey": "references(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"RANK\"})"
                   },
                   {
                     "alias": null,
-                    "args": (v5/*: any*/),
-                    "filters": [
-                      "orderBy"
-                    ],
+                    "args": (v6/*: any*/),
+                    "filters": (v12/*: any*/),
                     "handle": "connection",
                     "key": "CompliancePageReferenceList_references",
                     "kind": "LinkedHandle",
                     "name": "references"
+                  },
+                  {
+                    "alias": null,
+                    "args": (v6/*: any*/),
+                    "concreteType": "ComplianceBadgeConnection",
+                    "kind": "LinkedField",
+                    "name": "complianceBadges",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "ComplianceBadgeEdge",
+                        "kind": "LinkedField",
+                        "name": "edges",
+                        "plural": true,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "ComplianceBadge",
+                            "kind": "LinkedField",
+                            "name": "node",
+                            "plural": false,
+                            "selections": [
+                              (v3/*: any*/),
+                              (v7/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "iconUrl",
+                                "storageKey": null
+                              },
+                              (v8/*: any*/),
+                              {
+                                "alias": "canUpdate",
+                                "args": [
+                                  {
+                                    "kind": "Literal",
+                                    "name": "action",
+                                    "value": "core:compliance-badge:update"
+                                  }
+                                ],
+                                "kind": "ScalarField",
+                                "name": "permission",
+                                "storageKey": "permission(action:\"core:compliance-badge:update\")"
+                              },
+                              {
+                                "alias": "canDelete",
+                                "args": [
+                                  {
+                                    "kind": "Literal",
+                                    "name": "action",
+                                    "value": "core:compliance-badge:delete"
+                                  }
+                                ],
+                                "kind": "ScalarField",
+                                "name": "permission",
+                                "storageKey": "permission(action:\"core:compliance-badge:delete\")"
+                              },
+                              (v2/*: any*/)
+                            ],
+                            "storageKey": null
+                          },
+                          (v9/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v10/*: any*/),
+                      (v11/*: any*/)
+                    ],
+                    "storageKey": "complianceBadges(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"RANK\"})"
+                  },
+                  {
+                    "alias": null,
+                    "args": (v6/*: any*/),
+                    "filters": (v12/*: any*/),
+                    "handle": "connection",
+                    "key": "CompliancePageBadgeList_complianceBadges",
+                    "kind": "LinkedHandle",
+                    "name": "complianceBadges"
                   }
                 ],
                 "storageKey": null
@@ -334,16 +437,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d352c6f8d833eb8c105e72184c070a85",
+    "cacheID": "525264edede7cea2f9c951342a28c9d0",
     "id": null,
     "metadata": {},
     "name": "CompliancePageReferencesPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageReferencesPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        canCreateReference: permission(action: \"core:trust-center-reference:create\")\n        ...CompliancePageReferenceListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageReferenceListFragment on TrustCenter {\n  references(first: 100, orderBy: {field: RANK, direction: ASC}) {\n    edges {\n      node {\n        id\n        rank\n        ...CompliancePageReferenceListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  id\n}\n\nfragment CompliancePageReferenceListItemFragment on TrustCenterReference {\n  id\n  logoUrl\n  name\n  description\n  rank\n  websiteUrl\n  canUpdate: permission(action: \"core:trust-center-reference:update\")\n  canDelete: permission(action: \"core:trust-center-reference:delete\")\n}\n"
+    "text": "query CompliancePageReferencesPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        canCreateReference: permission(action: \"core:trust-center-reference:create\")\n        canCreateComplianceBadge\n        ...CompliancePageReferenceListFragment\n        ...CompliancePageBadgeListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageBadgeListFragment on TrustCenter {\n  complianceBadges(first: 100, orderBy: {field: RANK, direction: ASC}) {\n    edges {\n      node {\n        id\n        rank\n        ...CompliancePageBadgeListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  id\n}\n\nfragment CompliancePageBadgeListItemFragment on ComplianceBadge {\n  id\n  iconUrl\n  name\n  rank\n  canUpdate: permission(action: \"core:compliance-badge:update\")\n  canDelete: permission(action: \"core:compliance-badge:delete\")\n}\n\nfragment CompliancePageReferenceListFragment on TrustCenter {\n  references(first: 100, orderBy: {field: RANK, direction: ASC}) {\n    edges {\n      node {\n        id\n        rank\n        ...CompliancePageReferenceListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  id\n}\n\nfragment CompliancePageReferenceListItemFragment on TrustCenterReference {\n  id\n  logoUrl\n  name\n  description\n  rank\n  websiteUrl\n  canUpdate: permission(action: \"core:trust-center-reference:update\")\n  canDelete: permission(action: \"core:trust-center-reference:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9c5e008e8f12d028e3b280a833ec3fc5";
+(node as any).hash = "1e87595675566c24388d86008fe92668";
 
 export default node;

@@ -47,6 +47,13 @@ const (
 	ActionTrustCenterReferenceUpdate     = "core:trust-center-reference:update"
 	ActionTrustCenterReferenceDelete     = "core:trust-center-reference:delete"
 
+	// ComplianceBadge actions
+	ActionComplianceBadgeList       = "core:compliance-badge:list"
+	ActionComplianceBadgeGetIconUrl = "core:compliance-badge:get-icon-url"
+	ActionComplianceBadgeCreate     = "core:compliance-badge:create"
+	ActionComplianceBadgeUpdate     = "core:compliance-badge:update"
+	ActionComplianceBadgeDelete     = "core:compliance-badge:delete"
+
 	// TrustCenterFile actions
 	ActionTrustCenterFileGet        = "core:trust-center-file:get"
 	ActionTrustCenterFileList       = "core:trust-center-file:list"

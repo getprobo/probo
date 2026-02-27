@@ -4,46 +4,44 @@ import { Fragment, startTransition } from "react";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePageReferenceListFragment$key } from "#/__generated__/core/CompliancePageReferenceListFragment.graphql";
-import type { CompliancePageReferenceListItemFragment$data } from "#/__generated__/core/CompliancePageReferenceListItemFragment.graphql";
-import type { CompliancePageReferenceListQuery } from "#/__generated__/core/CompliancePageReferenceListQuery.graphql";
-import { useUpdateTrustCenterReferenceRankMutation } from "#/hooks/graph/TrustCenterReferenceGraph";
+import type { CompliancePageBadgeListFragment$key } from "#/__generated__/core/CompliancePageBadgeListFragment.graphql";
+import type { CompliancePageBadgeListItemFragment$data } from "#/__generated__/core/CompliancePageBadgeListItemFragment.graphql";
+import type { CompliancePageBadgeListQuery } from "#/__generated__/core/CompliancePageBadgeListQuery.graphql";
+import { useUpdateComplianceBadgeRankMutation } from "#/hooks/graph/ComplianceBadgeGraph";
 import { useDragReorder } from "#/hooks/useDragReorder";
 
-import { CompliancePageReferenceListItem } from "./CompliancePageReferenceListItem";
+import { CompliancePageBadgeListItem } from "./CompliancePageBadgeListItem";
 
 const fragment = graphql`
-  fragment CompliancePageReferenceListFragment on TrustCenter
-  @refetchable(queryName: "CompliancePageReferenceListQuery")
-  @argumentDefinitions (
-    first: { type: Int defaultValue: 100 }
-    after: { type: CursorKey defaultValue: null }
-    order: { type: TrustCenterReferenceOrder, defaultValue: { field: RANK, direction: ASC } }
+  fragment CompliancePageBadgeListFragment on TrustCenter
+  @refetchable(queryName: "CompliancePageBadgeListQuery")
+  @argumentDefinitions(
+    first: { type: Int, defaultValue: 100 }
+    after: { type: CursorKey, defaultValue: null }
+    order: { type: ComplianceBadgeOrder, defaultValue: { field: RANK, direction: ASC } }
   ) {
-    references(first: $first, after: $after, orderBy: $order)
-    @connection(key: "CompliancePageReferenceList_references", filters: ["orderBy"]) {
+    complianceBadges(first: $first, after: $after, orderBy: $order)
+    @connection(key: "CompliancePageBadgeList_complianceBadges", filters: ["orderBy"]) {
       __id
       edges {
         node {
           id
           rank
-          ...CompliancePageReferenceListItemFragment
+          ...CompliancePageBadgeListItemFragment
         }
       }
     }
   }
 `;
 
-function GhostReferenceRow({
+function GhostBadgeRow({
   name,
-  description,
-  logoUrl,
+  iconUrl,
   onDragOver,
   onDrop,
 }: {
   name: string;
-  description: string | null | undefined;
-  logoUrl: string | null;
+  iconUrl: string;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
 }) {
@@ -62,32 +60,29 @@ function GhostReferenceRow({
       <Td>
         <div className="flex items-center gap-4">
           <div className="size-8 flex-shrink-0 rounded bg-white flex items-center justify-center border border-border-low overflow-hidden">
-            <img src={logoUrl ?? undefined} alt={name} className="size-7 object-contain" />
+            <img src={iconUrl} alt={name} className="size-7 object-contain" />
           </div>
           <span className="font-medium">{name}</span>
         </div>
-      </Td>
-      <Td>
-        <span className="text-txt-secondary line-clamp-2">{description}</span>
       </Td>
       <Td></Td>
     </Tr>
   );
 }
 
-export function CompliancePageReferenceList(props: {
-  fragmentRef: CompliancePageReferenceListFragment$key;
-  onEdit: (r: CompliancePageReferenceListItemFragment$data) => void;
+export function CompliancePageBadgeList(props: {
+  fragmentRef: CompliancePageBadgeListFragment$key;
+  onEdit: (b: CompliancePageBadgeListItemFragment$data) => void;
 }) {
   const { fragmentRef, onEdit } = props;
 
   const { __ } = useTranslate();
 
-  const [{ references }, refetch] = useRefetchableFragment<
-    CompliancePageReferenceListQuery,
-    CompliancePageReferenceListFragment$key
+  const [{ complianceBadges }, refetch] = useRefetchableFragment<
+    CompliancePageBadgeListQuery,
+    CompliancePageBadgeListFragment$key
   >(fragment, fragmentRef);
-  const [updateRank] = useUpdateTrustCenterReferenceRankMutation();
+  const [updateRank] = useUpdateComplianceBadgeRankMutation();
 
   const {
     draggedIndex,
@@ -100,10 +95,10 @@ export function CompliancePageReferenceList(props: {
     handleDragOver,
     handleDragEnd,
     handleDrop,
-  } = useDragReorder<{ name: string; description: string | null | undefined; logoUrl: string | null }>({
+  } = useDragReorder<{ name: string; iconUrl: string }>({
     onDrop: (fromIndex, targetIndex) => {
-      const draggedId = references.edges[fromIndex].node.id;
-      const targetRank = references.edges[targetIndex].node.rank;
+      const draggedId = complianceBadges.edges[fromIndex].node.id;
+      const targetRank = complianceBadges.edges[targetIndex].node.rank;
       void (async () => {
         try {
           await updateRank({ variables: { input: { id: draggedId, rank: targetRank } } });
@@ -124,35 +119,33 @@ export function CompliancePageReferenceList(props: {
         <Thead>
           <Tr>
             <Th width={32}></Th>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Description")}</Th>
+            <Th>{__("Badge")}</Th>
             <Th></Th>
           </Tr>
         </Thead>
         <Tbody>
-          {references.edges.length === 0 && (
+          {complianceBadges.edges.length === 0 && (
             <Tr>
-              <Td colSpan={4} className="text-center text-txt-secondary">
-                {__("No references available")}
+              <Td colSpan={3} className="text-center text-txt-secondary">
+                {__("No badges yet")}
               </Td>
             </Tr>
           )}
-          {references.edges.map(({ node: reference }, index: number) => (
-            <Fragment key={reference.id}>
+          {complianceBadges.edges.map(({ node: badge }, index: number) => (
+            <Fragment key={badge.id}>
               {isDragging && dropIndex === index && draggedData && (
-                <GhostReferenceRow
+                <GhostBadgeRow
                   name={draggedData.name}
-                  description={draggedData.description}
-                  logoUrl={draggedData.logoUrl}
+                  iconUrl={draggedData.iconUrl}
                   onDragOver={handleDragOver}
                   onDrop={e => void handleDrop(e, index)}
                 />
               )}
-              <CompliancePageReferenceListItem
-                fragmentRef={reference}
+              <CompliancePageBadgeListItem
+                fragmentRef={badge}
                 isDragging={draggedIndex === index}
-                onEdit={(r: CompliancePageReferenceListItemFragment$data) => onEdit(r)}
-                connectionId={references.__id}
+                onEdit={(b: CompliancePageBadgeListItemFragment$data) => onEdit(b)}
+                connectionId={complianceBadges.__id}
                 onDragStart={data => handleDragStart(index, data)}
                 onDragEnter={e => handleDragEnter(e, index)}
                 onDragOver={handleDragOver}
@@ -161,21 +154,20 @@ export function CompliancePageReferenceList(props: {
               />
             </Fragment>
           ))}
-          {isDragging && dropIndex === references.edges.length && draggedData && (
-            <GhostReferenceRow
+          {isDragging && dropIndex === complianceBadges.edges.length && draggedData && (
+            <GhostBadgeRow
               name={draggedData.name}
-              description={draggedData.description}
-              logoUrl={draggedData.logoUrl}
+              iconUrl={draggedData.iconUrl}
               onDragOver={handleDragOver}
-              onDrop={e => void handleDrop(e, references.edges.length - 1)}
+              onDrop={e => void handleDrop(e, complianceBadges.edges.length - 1)}
             />
           )}
-          {isDragging && dropIndex !== references.edges.length && (
+          {isDragging && dropIndex !== complianceBadges.edges.length && (
             <tr
               className="h-2"
               onDragEnter={(e) => {
                 e.preventDefault();
-                setDropIndex(references.edges.length);
+                setDropIndex(complianceBadges.edges.length);
               }}
               onDragOver={handleDragOver}
             />
@@ -185,7 +177,7 @@ export function CompliancePageReferenceList(props: {
 
       <p className="text-xs text-txt-secondary flex items-center gap-1.5">
         <span aria-hidden="true">⠿</span>
-        {__("Drag rows to reorder references")}
+        {__("Drag rows to reorder badges")}
       </p>
     </>
   );

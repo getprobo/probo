@@ -311,7 +311,7 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 	})
 
 	if err != nil {
-		return "", nil
+		return "", fmt.Errorf("cannot load trust center reference logo: %w", err)
 	}
 
 	presignClient := s3.NewPresignClient(s.svc.s3)
