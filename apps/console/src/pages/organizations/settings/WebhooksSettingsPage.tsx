@@ -150,6 +150,9 @@ const EVENT_TYPES = [
   { value: "USER_CREATED", label: "user:created" },
   { value: "USER_UPDATED", label: "user:updated" },
   { value: "USER_DELETED", label: "user:deleted" },
+  { value: "OBLIGATION_CREATED", label: "obligation:created" },
+  { value: "OBLIGATION_UPDATED", label: "obligation:updated" },
+  { value: "OBLIGATION_DELETED", label: "obligation:deleted" },
 ] as const;
 
 type WebhookEventType = (typeof EVENT_TYPES)[number]["value"];

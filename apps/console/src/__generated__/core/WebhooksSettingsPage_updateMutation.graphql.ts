@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type WebhookEventType = "MEETING_CREATED" | "MEETING_DELETED" | "MEETING_UPDATED" | "USER_CREATED" | "USER_DELETED" | "USER_UPDATED" | "VENDOR_CREATED" | "VENDOR_DELETED" | "VENDOR_UPDATED";
+export type WebhookEventType = "MEETING_CREATED" | "MEETING_DELETED" | "MEETING_UPDATED" | "OBLIGATION_CREATED" | "OBLIGATION_DELETED" | "OBLIGATION_UPDATED" | "USER_CREATED" | "USER_DELETED" | "USER_UPDATED" | "VENDOR_CREATED" | "VENDOR_DELETED" | "VENDOR_UPDATED";
 export type UpdateWebhookSubscriptionInput = {
   endpointUrl?: string | null | undefined;
   id: string;

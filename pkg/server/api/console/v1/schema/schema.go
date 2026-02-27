@@ -12988,6 +12988,18 @@ enum WebhookEventType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorUpdated")
     VENDOR_DELETED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeVendorDeleted")
+    USER_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserCreated")
+    USER_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserUpdated")
+    USER_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeUserDeleted")
+    OBLIGATION_CREATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationCreated")
+    OBLIGATION_UPDATED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationUpdated")
+    OBLIGATION_DELETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.WebhookEventTypeObligationDeleted")
 }
 
 type WebhookSubscription implements Node {
@@ -101896,20 +101908,32 @@ func (ec *executionContext) marshalNWebhookEventType2goᚗproboᚗincᚋproboᚋ
 
 var (
 	unmarshalNWebhookEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐWebhookEventType = map[string]coredata.WebhookEventType{
-		"MEETING_CREATED": coredata.WebhookEventTypeMeetingCreated,
-		"MEETING_UPDATED": coredata.WebhookEventTypeMeetingUpdated,
-		"MEETING_DELETED": coredata.WebhookEventTypeMeetingDeleted,
-		"VENDOR_CREATED":  coredata.WebhookEventTypeVendorCreated,
-		"VENDOR_UPDATED":  coredata.WebhookEventTypeVendorUpdated,
-		"VENDOR_DELETED":  coredata.WebhookEventTypeVendorDeleted,
+		"MEETING_CREATED":    coredata.WebhookEventTypeMeetingCreated,
+		"MEETING_UPDATED":    coredata.WebhookEventTypeMeetingUpdated,
+		"MEETING_DELETED":    coredata.WebhookEventTypeMeetingDeleted,
+		"VENDOR_CREATED":     coredata.WebhookEventTypeVendorCreated,
+		"VENDOR_UPDATED":     coredata.WebhookEventTypeVendorUpdated,
+		"VENDOR_DELETED":     coredata.WebhookEventTypeVendorDeleted,
+		"USER_CREATED":       coredata.WebhookEventTypeUserCreated,
+		"USER_UPDATED":       coredata.WebhookEventTypeUserUpdated,
+		"USER_DELETED":       coredata.WebhookEventTypeUserDeleted,
+		"OBLIGATION_CREATED": coredata.WebhookEventTypeObligationCreated,
+		"OBLIGATION_UPDATED": coredata.WebhookEventTypeObligationUpdated,
+		"OBLIGATION_DELETED": coredata.WebhookEventTypeObligationDeleted,
 	}
 	marshalNWebhookEventType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐWebhookEventType = map[coredata.WebhookEventType]string{
-		coredata.WebhookEventTypeMeetingCreated: "MEETING_CREATED",
-		coredata.WebhookEventTypeMeetingUpdated: "MEETING_UPDATED",
-		coredata.WebhookEventTypeMeetingDeleted: "MEETING_DELETED",
-		coredata.WebhookEventTypeVendorCreated:  "VENDOR_CREATED",
-		coredata.WebhookEventTypeVendorUpdated:  "VENDOR_UPDATED",
-		coredata.WebhookEventTypeVendorDeleted:  "VENDOR_DELETED",
+		coredata.WebhookEventTypeMeetingCreated:    "MEETING_CREATED",
+		coredata.WebhookEventTypeMeetingUpdated:    "MEETING_UPDATED",
+		coredata.WebhookEventTypeMeetingDeleted:    "MEETING_DELETED",
+		coredata.WebhookEventTypeVendorCreated:     "VENDOR_CREATED",
+		coredata.WebhookEventTypeVendorUpdated:     "VENDOR_UPDATED",
+		coredata.WebhookEventTypeVendorDeleted:     "VENDOR_DELETED",
+		coredata.WebhookEventTypeUserCreated:       "USER_CREATED",
+		coredata.WebhookEventTypeUserUpdated:       "USER_UPDATED",
+		coredata.WebhookEventTypeUserDeleted:       "USER_DELETED",
+		coredata.WebhookEventTypeObligationCreated: "OBLIGATION_CREATED",
+		coredata.WebhookEventTypeObligationUpdated: "OBLIGATION_UPDATED",
+		coredata.WebhookEventTypeObligationDeleted: "OBLIGATION_DELETED",
 	}
 )
 

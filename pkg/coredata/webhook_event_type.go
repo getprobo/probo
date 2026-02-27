@@ -23,15 +23,18 @@ import (
 type WebhookEventType string
 
 const (
-	WebhookEventTypeMeetingCreated WebhookEventType = "meeting:created"
-	WebhookEventTypeMeetingUpdated WebhookEventType = "meeting:updated"
-	WebhookEventTypeMeetingDeleted WebhookEventType = "meeting:deleted"
-	WebhookEventTypeVendorCreated  WebhookEventType = "vendor:created"
-	WebhookEventTypeVendorUpdated  WebhookEventType = "vendor:updated"
-	WebhookEventTypeVendorDeleted  WebhookEventType = "vendor:deleted"
-	WebhookEventTypeUserCreated    WebhookEventType = "user:created"
-	WebhookEventTypeUserUpdated    WebhookEventType = "user:updated"
-	WebhookEventTypeUserDeleted    WebhookEventType = "user:deleted"
+	WebhookEventTypeMeetingCreated    WebhookEventType = "meeting:created"
+	WebhookEventTypeMeetingUpdated    WebhookEventType = "meeting:updated"
+	WebhookEventTypeMeetingDeleted    WebhookEventType = "meeting:deleted"
+	WebhookEventTypeVendorCreated     WebhookEventType = "vendor:created"
+	WebhookEventTypeVendorUpdated     WebhookEventType = "vendor:updated"
+	WebhookEventTypeVendorDeleted     WebhookEventType = "vendor:deleted"
+	WebhookEventTypeUserCreated       WebhookEventType = "user:created"
+	WebhookEventTypeUserUpdated       WebhookEventType = "user:updated"
+	WebhookEventTypeUserDeleted       WebhookEventType = "user:deleted"
+	WebhookEventTypeObligationCreated WebhookEventType = "obligation:created"
+	WebhookEventTypeObligationUpdated WebhookEventType = "obligation:updated"
+	WebhookEventTypeObligationDeleted WebhookEventType = "obligation:deleted"
 )
 
 func (w WebhookEventType) String() string {
@@ -42,7 +45,8 @@ func (w WebhookEventType) IsValid() bool {
 	switch w {
 	case WebhookEventTypeMeetingCreated, WebhookEventTypeMeetingUpdated, WebhookEventTypeMeetingDeleted,
 		WebhookEventTypeVendorCreated, WebhookEventTypeVendorUpdated, WebhookEventTypeVendorDeleted,
-		WebhookEventTypeUserCreated, WebhookEventTypeUserUpdated, WebhookEventTypeUserDeleted:
+		WebhookEventTypeUserCreated, WebhookEventTypeUserUpdated, WebhookEventTypeUserDeleted,
+		WebhookEventTypeObligationCreated, WebhookEventTypeObligationUpdated, WebhookEventTypeObligationDeleted:
 		return true
 	}
 	return false
