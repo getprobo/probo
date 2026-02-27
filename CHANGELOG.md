@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.134.0] - 2026-02-27
+
+### Added
+
+- Display audit name in compliance page
+- Add obligation webhooks
+- Add user webhooks
+
 ## [0.133.0] - 2026-02-26
 
 ### Added
