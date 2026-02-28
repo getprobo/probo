@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig/library.json",
+  "extends": "@probo/tsconfig/library.json",
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
 } 

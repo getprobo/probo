@@ -1,5 +1,3 @@
 {
-  "compilerOptions": {
-    "lib": ["ES2021", "dom"]
-  }
+  "extends": "@probo/tsconfig/react.json"
 }
