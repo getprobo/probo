@@ -37,7 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
-	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/console/auth"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/statelesstoken"
@@ -72,9 +72,9 @@ func NewMux(
 	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, esignSvc, customDomainCname, logger)
 
 	r.Group(func(r chi.Router) {
-		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-		r.Use(authn.NewIdentityPresenceMiddleware())
+		r.Use(auth.NewConsoleSessionMiddleware(iamSvc, cookieConfig))
+		r.Use(auth.NewConsoleAPIKeyMiddleware(iamSvc, tokenSecret))
+		r.Use(auth.NewConsoleIdentityPresenceMiddleware())
 
 		r.Handle("/graphql", graphqlHandler)
 
@@ -90,18 +90,18 @@ func NewMux(
 				panic(fmt.Errorf("cannot parse organization id: %w", err))
 			}
 
-			apiKey := authn.APIKeyFromContext(r.Context())
+			apiKey := auth.ConsoleAPIKeyFromContext(r.Context())
 			if apiKey != nil {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
 				return
 			}
 
-			identity := authn.IdentityFromContext(r.Context())
+			identity := auth.ConsoleIdentityFromContext(r.Context())
 			if identity == nil {
 				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 				return
 			}
-			session := authn.SessionFromContext(r.Context())
+			session := auth.ConsoleSessionFromContext(r.Context())
 			if session == nil {
 				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 				return

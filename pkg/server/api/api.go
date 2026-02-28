@@ -47,7 +47,8 @@ type (
 		Trust             *trust.Service
 		ESign             *esign.Service
 		Slack             *slack.Service
-		Cookie            securecookie.Config
+		ConsoleCookie     securecookie.Config
+		TrustCookie       securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
 		CustomDomainCname string
@@ -120,7 +121,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.Trust,
 			cfg.ESign,
-			cfg.Cookie,
+			cfg.TrustCookie,
 			cfg.BaseURL,
 		),
 		consoleHandler: console_v1.NewMux(
@@ -128,7 +129,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			cfg.IAM,
 			cfg.ESign,
-			cfg.Cookie,
+			cfg.ConsoleCookie,
 			cfg.TokenSecret,
 			cfg.ConnectorRegistry,
 			cfg.BaseURL,
@@ -148,7 +149,7 @@ func NewServer(cfg Config) (*Server, error) {
 		connectHandler: connect_v1.NewMux(
 			cfg.Logger.Named("connect.v1"),
 			cfg.IAM,
-			cfg.Cookie,
+			cfg.ConsoleCookie,
 			cfg.TokenSecret,
 			cfg.BaseURL,
 		),
