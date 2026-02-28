@@ -26,8 +26,8 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -76,7 +76,7 @@ func (s FileService) Get(
 
 func (s FileService) UploadAndSaveFile(
 	ctx context.Context,
-	fileValidator *filevalidation.FileValidator,
+	fileValidator *validator.FileValidator,
 	s3Metadata map[string]string,
 	req *FileUpload) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
