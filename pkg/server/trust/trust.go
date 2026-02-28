@@ -16,7 +16,11 @@
 package trust
 
 import (
+	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
 
 	truststatics "go.probo.inc/probo/apps/trust"
 	"go.probo.inc/probo/pkg/server/statichandler"
@@ -24,9 +28,18 @@ import (
 
 type Server struct {
 	*statichandler.Server
+	devProxy *httputil.ReverseProxy
 }
 
 func NewServer() (*Server, error) {
+	return NewServerWithDevAddr("")
+}
+
+// NewServerWithDevAddr creates a new Server with optional dev server support.
+// If devAddr is provided, requests will be proxied to the Vite dev server.
+// If devAddr is empty, the embedded static files will be served.
+// The devAddr should be in the format "http://localhost:5174" or be read from environment.
+func NewServerWithDevAddr(devAddr string) (*Server, error) {
 	gzipOptions := statichandler.GzipOptions{
 		EnableFileTypeCheck: true,
 		FileTypes:           []string{".js", ".css", ".html"},
@@ -37,15 +50,73 @@ func NewServer() (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{
+	server := &Server{
 		Server: spaServer,
-	}, nil
+	}
+
+	// Support VITE_DEV_SERVER environment variable for automatic dev mode
+	if devAddr == "" {
+		devAddr = os.Getenv("VITE_DEV_SERVER_TRUST")
+	}
+
+	if devAddr != "" {
+		// Validate and set up reverse proxy to dev server
+		if err := server.setupDevProxy(devAddr); err != nil {
+			return nil, err
+		}
+	}
+
+	return server, nil
+}
+
+func (s *Server) setupDevProxy(devAddr string) error {
+	devURL, err := url.Parse(devAddr)
+	if err != nil {
+		return err
+	}
+
+	s.devProxy = httputil.NewSingleHostReverseProxy(devURL)
+
+	// Customize the reverse proxy to handle WebSocket and other dev server features
+	s.devProxy.Director = func(req *http.Request) {
+		req.URL.Scheme = devURL.Scheme
+		req.URL.Host = devURL.Host
+		// Preserve the original host for request headers if needed
+		req.Host = devURL.Host
+	}
+
+	// Handle upgrade requests for WebSocket (HMR)
+	originalTransport := s.devProxy.Transport
+	if originalTransport == nil {
+		originalTransport = http.DefaultTransport
+	}
+
+	s.devProxy.Transport = &http.Transport{
+		Dial:                (&net.Dialer{}).Dial,
+		TLSHandshakeTimeout: originalTransport.(*http.Transport).TLSHandshakeTimeout,
+	}
+
+	return nil
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// If dev proxy is configured, use it
+	if s.devProxy != nil {
+		s.devProxy.ServeHTTP(w, r)
+		return
+	}
+
+	// Otherwise, use the static file handler
 	s.Server.ServeHTTP(w, r)
 }
 
 func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
+	// If dev proxy is configured, use it
+	if s.devProxy != nil {
+		s.devProxy.ServeHTTP(w, r)
+		return
+	}
+
+	// Otherwise, use the static SPA handler
 	s.Server.ServeSPA(w, r)
 }
