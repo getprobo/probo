@@ -67,7 +67,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
+        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
         with:
           distribution: goreleaser
           version: "~> v2"
@@ -76,7 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
         with:
           image-ref: "ghcr.io/getprobo/probo:${{ github.ref_name }}"
           format: "sarif"
@@ -93,14 +93,14 @@ jobs:
           sarif_file: "trivy-results.sarif"
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 #v0.22.1
+        uses: anchore/sbom-action@17ae1740179002c89186b61233e0f892c3118b11 #v0.23.0
         with:
           path: ./
           format: cyclonedx-json
           output-file: sbom.json
 
       - name: Run vulnerability scan
-        uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 #v7.3.1
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c #v7.3.2
         with:
           sbom: "sbom.json"
           fail-build: true
@@ -119,13 +119,13 @@ jobs:
           echo "hashes=$(cat checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v4
         with:
           subject-path: "dist/*.tar.gz, dist/*.zip"
           sbom-path: "sbom.json"
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "dist/*.tar.gz, dist/*.zip"
 
@@ -138,14 +138,14 @@ jobs:
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Attest Docker image SBOM
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v4
         with:
           subject-name: "ghcr.io/getprobo/probo"
           subject-digest: ${{ steps.image.outputs.digest }}
           sbom-path: "sbom.json"
 
       - name: Upload SBOM as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: |
@@ -180,13 +180,13 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           npm --workspace @probo/n8n-nodes-probo version "$VERSION" --no-git-tag-version
 
-      - uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 #v0.22.1
+      - uses: anchore/sbom-action@17ae1740179002c89186b61233e0f892c3118b11 #v0.23.0
         with:
           path: ./packages/n8n-node
           format: cyclonedx-json
           output-file: packages/n8n-node/sbom.json
 
-      - uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 #v7.3.1
+      - uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c #v7.3.2
         with:
           path: ./packages/n8n-node
           fail-build: true
@@ -204,16 +204,16 @@ jobs:
       - run: npm --workspace @probo/n8n-nodes-probo publish --access public --dry-run
       - run: npm --workspace @probo/n8n-nodes-probo publish --access public
 
-      - uses: actions/attest-sbom@v3
+      - uses: actions/attest-sbom@v4
         with:
           subject-path: "packages/n8n-node/dist/**"
           sbom-path: "packages/n8n-node/sbom.json"
 
-      - uses: actions/attest-build-provenance@v3
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: "packages/n8n-node/dist/**"
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: npm-sbom
           path: |
