@@ -19,6 +19,8 @@ Probo is designed to be accessible, transparent, and community-driven.
 - Node.js 22+
 - Docker
 - mkcert
+- parallel (GNU Parallel for process management)
+- gow (Go file watcher for auto-reload)
 
 ### Quick Start
 
@@ -41,15 +43,31 @@ Probo is designed to be accessible, transparent, and community-driven.
 
 3. Start the development environment:
 
+   **Option A: Fast Development (Recommended - No TS builds needed)**
    ```bash
    # Start infrastructure services
    make stack-up
 
-   # Build the project
-   make build
+   # Start all services with hot reload (backend + frontend dev servers)
+   make dev
+   ```
+   Access at: http://localhost:8080
 
-   # Start the application using development settings
+   **Option B: Manual Setup with Separate Terminals**
+   ```bash
+   # Start infrastructure services
+   make stack-up
+
+   # Terminal 1: Start backend
+   VITE_DEV_SERVER_CONSOLE=http://localhost:5173 \
+   VITE_DEV_SERVER_TRUST=http://localhost:5174 \
    bin/probod -cfg-file cfg/dev.yaml
+
+   # Terminal 2: Start console frontend
+   npm -w @probo/console run dev
+
+   # Terminal 3: Start trust frontend
+   npm -w @probo/trust run dev
    ```
 
 The application will be available at:
