@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<40817b8ba263ba9d0140a57e41e6ca44>>
+ * @generated SignedSource<<a96a88e4c176f254788930b251e7108e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,11 +14,11 @@ export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "S
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type CreateDocumentInput = {
+  approverIds: ReadonlyArray<string>;
   classification: DocumentClassification;
   content: string;
   documentType: DocumentType;
   organizationId: string;
-  ownerId: string;
   title: string;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };
@@ -210,22 +210,50 @@ return {
                   },
                   {
                     "alias": null,
-                    "args": null,
-                    "concreteType": "People",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "first",
+                        "value": 100
+                      }
+                    ],
+                    "concreteType": "ProfileConnection",
                     "kind": "LinkedField",
-                    "name": "owner",
+                    "name": "approvers",
                     "plural": false,
                     "selections": [
-                      (v3/*: any*/),
                       {
                         "alias": null,
                         "args": null,
-                        "kind": "ScalarField",
-                        "name": "fullName",
+                        "concreteType": "ProfileEdge",
+                        "kind": "LinkedField",
+                        "name": "edges",
+                        "plural": true,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Profile",
+                            "kind": "LinkedField",
+                            "name": "node",
+                            "plural": false,
+                            "selections": [
+                              (v3/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fullName",
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          }
+                        ],
                         "storageKey": null
                       }
                     ],
-                    "storageKey": null
+                    "storageKey": "approvers(first:100)"
                   },
                   {
                     "alias": "lastVersion",
@@ -358,12 +386,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "089c02e59ef9b51883dd556df68891b9",
+    "cacheID": "927e922143fa7eac4270e7ac0ae7da39",
     "id": null,
     "metadata": {},
     "name": "CreateDocumentDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentListItemFragment\n      }\n    }\n  }\n}\n\nfragment DocumentListItemFragment on Document {\n  id\n  title\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  approvers(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n      }\n    }\n  }\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 0, filter: {activeContract: true}) {\n          totalCount\n        }\n        signedSignatures: signatures(first: 0, filter: {states: [SIGNED], activeContract: true}) {\n          totalCount\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

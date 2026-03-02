@@ -90,13 +90,13 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 	}
 
 	if v.BusinessOwnerID != nil {
-		object.BusinessOwner = &People{
+		object.BusinessOwner = &Profile{
 			ID: *v.BusinessOwnerID,
 		}
 	}
 
 	if v.SecurityOwnerID != nil {
-		object.SecurityOwner = &People{
+		object.SecurityOwner = &Profile{
 			ID: *v.SecurityOwnerID,
 		}
 	}

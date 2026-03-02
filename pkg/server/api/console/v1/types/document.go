@@ -80,9 +80,6 @@ func NewDocument(document *coredata.Document) *Document {
 		Organization: &Organization{
 			ID: document.OrganizationID,
 		},
-		Owner: &People{
-			ID: document.OwnerID,
-		},
 		DocumentType:            document.DocumentType,
 		Classification:          document.Classification,
 		CurrentPublishedVersion: document.CurrentPublishedVersion,

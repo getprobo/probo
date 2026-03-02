@@ -8,7 +8,7 @@ import { usePeople } from "#/hooks/graph/PeopleGraph";
 type Person = {
   id: string;
   fullName: string;
-  primaryEmailAddress?: string | null;
+  emailAddress?: string | null;
 };
 
 type Props<T extends FieldValues = FieldValues> = {
@@ -18,12 +18,14 @@ type Props<T extends FieldValues = FieldValues> = {
   label?: string;
   error?: string;
   selectedPeople?: Person[];
+  placeholder?: string;
 } & ComponentProps<typeof Field>;
 
 export function PeopleMultiSelectField<T extends FieldValues = FieldValues>({
   organizationId,
   control,
   selectedPeople = [],
+  placeholder,
   ...props
 }: Props<T>) {
   return (
@@ -37,6 +39,7 @@ export function PeopleMultiSelectField<T extends FieldValues = FieldValues>({
           name={props.name}
           disabled={props.disabled}
           selectedPeople={selectedPeople}
+          placeholder={placeholder}
         />
       </Suspense>
     </Field>
@@ -44,10 +47,10 @@ export function PeopleMultiSelectField<T extends FieldValues = FieldValues>({
 }
 
 function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
-  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled" | "selectedPeople">,
+  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled" | "selectedPeople" | "placeholder">,
 ) {
   const { __ } = useTranslate();
-  const { name, organizationId, control, selectedPeople = [] } = props;
+  const { name, organizationId, control, selectedPeople = [], placeholder } = props;
   const people = usePeople(organizationId, { excludeContractEnded: true });
   const [isOpen, setIsOpen] = useState(false);
 
@@ -57,7 +60,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
       allPeople.push({
         id: selectedPerson.id,
         fullName: selectedPerson.fullName,
-        primaryEmailAddress: selectedPerson.primaryEmailAddress ?? "",
+        emailAddress: selectedPerson.emailAddress ?? "",
       });
     }
   });
@@ -91,7 +94,7 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                   disabled={props.disabled}
                   id={name}
                   variant="editor"
-                  placeholder={__("Add attendees...")}
+                  placeholder={placeholder ?? __("Add people...")}
                   onValueChange={handleAddPerson}
                   key={`${selectedPeopleIds.length}-${people.length}`}
                   className="w-full"
@@ -107,9 +110,9 @@ function PeopleMultiSelectWithQuery<T extends FieldValues = FieldValues>(
                       />
                       <div className="flex flex-col">
                         <span>{person.fullName}</span>
-                        {person.primaryEmailAddress && (
+                        {person.emailAddress && (
                           <span className="text-xs text-txt-secondary">
-                            {person.primaryEmailAddress}
+                            {person.emailAddress}
                           </span>
                         )}
                       </div>

@@ -7,7 +7,7 @@ This Helm chart deploys Probo - an open-source SOC-2 compliance platform - on Ku
 - Kubernetes 1.23+
 - Helm 3.8+
 - External PostgreSQL database (AWS RDS, GCP Cloud SQL, Azure Database, etc.)
-- S3 or S3-compatible object storage (AWS S3, GCS, DigitalOcean Spaces, MinIO, etc.)
+- S3 or S3-compatible object storage (AWS S3, GCS, DigitalOcean Spaces, SeaweedFS, etc.)
 - OpenSSL installed (for generating secrets)
 
 ## Installing the Chart

@@ -100,7 +100,7 @@ func createAuditForNC(t *testing.T, owner *testutil.Client, name string) string 
 func TestNonconformity_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("NC Owner").Create()
+	profileID := factory.CreateUser(owner)
 	auditID := createAuditForNC(t, owner, "NC Test Audit")
 
 	query := `
@@ -143,7 +143,7 @@ func TestNonconformity_Create(t *testing.T) {
 			"auditId":          auditID,
 			"rootCause":        "Insufficient access controls",
 			"correctiveAction": "Implement MFA",
-			"ownerId":          peopleID,
+			"ownerId":          profileID,
 			"status":           "OPEN",
 		},
 	}, &result)
@@ -159,7 +159,7 @@ func TestNonconformity_Create(t *testing.T) {
 func TestNonconformity_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("NC Owner").Create()
+	profileID := factory.CreateUser(owner)
 	auditID := createAuditForNC(t, owner, "NC Update Test Audit")
 
 	// Create a nonconformity to update
@@ -191,7 +191,7 @@ func TestNonconformity_Update(t *testing.T) {
 			"referenceId":    fmt.Sprintf("NC-UPDATE-%d", time.Now().UnixNano()),
 			"auditId":        auditID,
 			"rootCause":      "Original root cause",
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "OPEN",
 		},
 	}, &createResult)
@@ -242,7 +242,7 @@ func TestNonconformity_Update(t *testing.T) {
 func TestNonconformity_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("NC Owner").Create()
+	profileID := factory.CreateUser(owner)
 	auditID := createAuditForNC(t, owner, "NC Delete Test Audit")
 
 	// Create a nonconformity to delete
@@ -274,7 +274,7 @@ func TestNonconformity_Delete(t *testing.T) {
 			"referenceId":    fmt.Sprintf("NC-DELETE-%d", time.Now().UnixNano()),
 			"auditId":        auditID,
 			"rootCause":      "Test root cause",
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "OPEN",
 		},
 	}, &createResult)
@@ -307,7 +307,7 @@ func TestNonconformity_Delete(t *testing.T) {
 func TestNonconformity_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("NC Owner").Create()
+	profileID := factory.CreateUser(owner)
 	auditID := createAuditForNC(t, owner, "NC List Test Audit")
 
 	// Create multiple nonconformities
@@ -340,7 +340,7 @@ func TestNonconformity_List(t *testing.T) {
 				"referenceId":    fmt.Sprintf("NC-LIST-%d-%d", i, time.Now().UnixNano()),
 				"auditId":        auditID,
 				"rootCause":      fmt.Sprintf("Root cause %d", i),
-				"ownerId":        peopleID,
+				"ownerId":        profileID,
 				"status":         "OPEN",
 			},
 		}, &createResult)
@@ -391,7 +391,7 @@ func TestNonconformity_List(t *testing.T) {
 func TestNonconformity_StatusValues(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("NC Owner").Create()
+	profileID := factory.CreateUser(owner)
 	auditID := createAuditForNC(t, owner, "NC Status Test Audit")
 
 	statuses := []string{"OPEN", "IN_PROGRESS", "CLOSED"}
@@ -428,7 +428,7 @@ func TestNonconformity_StatusValues(t *testing.T) {
 					"referenceId":    fmt.Sprintf("NC-STATUS-%s-%d", status, time.Now().UnixNano()),
 					"auditId":        auditID,
 					"rootCause":      "Test root cause",
-					"ownerId":        peopleID,
+					"ownerId":        profileID,
 					"status":         status,
 				},
 			}, &result)

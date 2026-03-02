@@ -93,6 +93,13 @@ func UserSchema() schema.Schema {
 					},
 				},
 			),
+			schema.SimpleCoreAttribute(
+				schema.SimpleStringParams(
+					schema.StringParams{
+						Name: "title",
+					},
+				),
+			),
 		},
 	}
 }

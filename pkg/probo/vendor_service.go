@@ -24,6 +24,8 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 type (
@@ -111,8 +113,8 @@ func (cvr *CreateVendorRequest) Validate() error {
 	v.Check(cvr.TrustPageURL, "trust_page_url", validator.SafeText(2048))
 	v.Check(cvr.TermsOfServiceURL, "terms_of_service_url", validator.SafeText(2048))
 	v.Check(cvr.StatusPageURL, "status_page_url", validator.SafeText(2048))
-	v.Check(cvr.BusinessOwnerID, "business_owner_id", validator.GID(coredata.PeopleEntityType))
-	v.Check(cvr.SecurityOwnerID, "security_owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(cvr.BusinessOwnerID, "business_owner_id", validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(cvr.SecurityOwnerID, "security_owner_id", validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -136,8 +138,8 @@ func (uvr *UpdateVendorRequest) Validate() error {
 	v.Check(uvr.TrustPageURL, "trust_page_url", validator.SafeText(2048))
 	v.Check(uvr.TermsOfServiceURL, "terms_of_service_url", validator.SafeText(2048))
 	v.Check(uvr.StatusPageURL, "status_page_url", validator.SafeText(2048))
-	v.Check(uvr.BusinessOwnerID, "business_owner_id", validator.GID(coredata.PeopleEntityType))
-	v.Check(uvr.SecurityOwnerID, "security_owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(uvr.BusinessOwnerID, "business_owner_id", validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(uvr.SecurityOwnerID, "security_owner_id", validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -364,9 +366,9 @@ func (s VendorService) Update(
 
 			if req.BusinessOwnerID != nil {
 				if *req.BusinessOwnerID != nil {
-					businessOwner := &coredata.People{}
+					businessOwner := &coredata.MembershipProfile{}
 					if err := businessOwner.LoadByID(ctx, conn, s.svc.scope, **req.BusinessOwnerID); err != nil {
-						return fmt.Errorf("cannot load business owner: %w", err)
+						return fmt.Errorf("cannot load business owner profile: %w", err)
 					}
 					vendor.BusinessOwnerID = &businessOwner.ID
 				} else {
@@ -376,9 +378,9 @@ func (s VendorService) Update(
 
 			if req.SecurityOwnerID != nil {
 				if *req.SecurityOwnerID != nil {
-					securityOwner := &coredata.People{}
+					securityOwner := &coredata.MembershipProfile{}
 					if err := securityOwner.LoadByID(ctx, conn, s.svc.scope, **req.SecurityOwnerID); err != nil {
-						return fmt.Errorf("cannot load security owner: %w", err)
+						return fmt.Errorf("cannot load security owner profile: %w", err)
 					}
 					vendor.SecurityOwnerID = &securityOwner.ID
 				} else {
@@ -390,6 +392,10 @@ func (s VendorService) Update(
 
 			if err := vendor.Update(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update vendor: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorUpdated, webhooktypes.NewVendor(vendor)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil
@@ -427,10 +433,19 @@ func (s VendorService) Delete(
 	ctx context.Context,
 	vendorID gid.GID,
 ) error {
-	vendor := coredata.Vendor{ID: vendorID}
-	return s.svc.pg.WithConn(
+	vendor := &coredata.Vendor{}
+
+	return s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID); err != nil {
+				return fmt.Errorf("cannot load vendor: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorDeleted, webhooktypes.NewVendor(vendor)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
 			return vendor.Delete(ctx, conn, s.svc.scope)
 		},
 	)
@@ -479,17 +494,17 @@ func (s VendorService) Create(
 			vendor.OrganizationID = organization.ID
 
 			if req.BusinessOwnerID != nil {
-				businessOwner := &coredata.People{}
+				businessOwner := &coredata.MembershipProfile{}
 				if err := businessOwner.LoadByID(ctx, conn, s.svc.scope, *req.BusinessOwnerID); err != nil {
-					return fmt.Errorf("cannot load business owner: %w", err)
+					return fmt.Errorf("cannot load business owner profile: %w", err)
 				}
 				vendor.BusinessOwnerID = &businessOwner.ID
 			}
 
 			if req.SecurityOwnerID != nil {
-				securityOwner := &coredata.People{}
+				securityOwner := &coredata.MembershipProfile{}
 				if err := securityOwner.LoadByID(ctx, conn, s.svc.scope, *req.SecurityOwnerID); err != nil {
-					return fmt.Errorf("cannot load security owner: %w", err)
+					return fmt.Errorf("cannot load security owner profile: %w", err)
 				}
 				vendor.SecurityOwnerID = &securityOwner.ID
 			}
@@ -502,6 +517,10 @@ func (s VendorService) Create(
 
 			if err := vendor.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert vendor: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, organization.ID, coredata.WebhookEventTypeVendorCreated, webhooktypes.NewVendor(vendor)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil

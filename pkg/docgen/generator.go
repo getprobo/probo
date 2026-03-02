@@ -204,7 +204,7 @@ type (
 		Content                     string
 		Version                     int
 		Classification              Classification
-		Approver                    string
+		Approvers                   []string
 		Description                 string
 		PublishedAt                 *time.Time
 		Signatures                  []SignatureData

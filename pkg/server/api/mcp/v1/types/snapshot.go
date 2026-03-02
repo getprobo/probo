@@ -29,6 +29,24 @@ func NewSnapshot(s *coredata.Snapshot) *Snapshot {
 	}
 }
 
+func NewListControlSnapshotsOutput(snapshotPage *page.Page[*coredata.Snapshot, coredata.SnapshotOrderField]) ListControlSnapshotsOutput {
+	snapshots := make([]*Snapshot, 0, len(snapshotPage.Data))
+	for _, s := range snapshotPage.Data {
+		snapshots = append(snapshots, NewSnapshot(s))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(snapshotPage.Data) > 0 {
+		cursorKey := snapshotPage.Data[len(snapshotPage.Data)-1].CursorKey(snapshotPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListControlSnapshotsOutput{
+		NextCursor: nextCursor,
+		Snapshots:  snapshots,
+	}
+}
+
 func NewListSnapshotsOutput(snapshotPage *page.Page[*coredata.Snapshot, coredata.SnapshotOrderField]) ListSnapshotsOutput {
 	snapshots := make([]*Snapshot, 0, len(snapshotPage.Data))
 	for _, s := range snapshotPage.Data {

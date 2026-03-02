@@ -69,7 +69,7 @@ func NewContinualImprovement(ci *coredata.ContinualImprovement) *ContinualImprov
 		Organization: &Organization{
 			ID: ci.OrganizationID,
 		},
-		Owner: &People{
+		Owner: &Profile{
 			ID: ci.OwnerID,
 		},
 		SourceID:    ci.SourceID,

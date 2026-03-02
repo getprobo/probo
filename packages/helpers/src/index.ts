@@ -78,7 +78,7 @@ export {
 } from "./date";
 export { getTrustCenterUrl } from "./trustCenter";
 export { formatError, type GraphQLError } from "./error";
-export { Role, getAssignableRoles } from "./roles";
+export { Role, roles, getAssignableRoles } from "./roles";
 export {
   getTrustCenterDocumentAccessInfo,
   getTrustCenterDocumentAccessStatusBadgeVariant,

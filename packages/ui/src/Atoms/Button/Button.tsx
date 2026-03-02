@@ -4,7 +4,7 @@ import type {
   FC,
   PropsWithChildren,
 } from "react";
-import { Link } from "react-router";
+import { Link, type To } from "react-router";
 import { tv, type VariantProps } from "tailwind-variants";
 
 import { Slot } from "../Slot";
@@ -49,7 +49,7 @@ type Props = PropsWithChildren<
       | "tertiary"
       | "quaternary"
       | "danger";
-    to?: string;
+    to?: To;
     asChild?: boolean;
   } & VariantProps<typeof button>
 >

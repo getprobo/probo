@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e5a5b11ba24baf03ee3f94fa65cf3591>>
+ * @generated SignedSource<<97bc9b075b82bb1543c80843430ced5d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,17 +9,19 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type ElectronicSignatureStatus = "ACCEPTED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING";
 export type TrustCenterAccessState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageAccessListItemFragment$data = {
   readonly activeCount: number;
-  readonly canDelete: boolean;
   readonly canUpdate: boolean;
   readonly createdAt: string;
   readonly email: string;
-  readonly hasAcceptedNonDisclosureAgreement: boolean;
   readonly id: string;
   readonly name: string;
+  readonly ndaSignature: {
+    readonly status: ElectronicSignatureStatus;
+  } | null | undefined;
   readonly pendingRequestCount: number;
   readonly state: TrustCenterAccessState;
   readonly " $fragmentType": "CompliancePageAccessListItemFragment";
@@ -87,8 +89,19 @@ const node: ReaderFragment = {
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
-      "name": "hasAcceptedNonDisclosureAgreement",
+      "concreteType": "ElectronicSignature",
+      "kind": "LinkedField",
+      "name": "ndaSignature",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "status",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     },
     {
@@ -103,25 +116,12 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "permission",
       "storageKey": "permission(action:\"core:trust-center-access:update\")"
-    },
-    {
-      "alias": "canDelete",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "core:trust-center-access:delete"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"core:trust-center-access:delete\")"
     }
   ],
   "type": "TrustCenterAccess",
   "abstractKey": null
 };
 
-(node as any).hash = "4e78486a2c8edc2b5f73fb64dbeb4006";
+(node as any).hash = "9047d3d3f232d43c6f951c74b0395b58";
 
 export default node;

@@ -461,8 +461,12 @@ function AddApplicabilityStatementDialogContent({
   );
 }
 
-export const AddApplicabilityStatementDialog = forwardRef<AddApplicabilityStatementDialogRef>(
-  (_props, ref) => {
+type AddApplicabilityStatementDialogProps = {
+  onClose?: () => void;
+};
+
+export const AddApplicabilityStatementDialog = forwardRef<AddApplicabilityStatementDialogRef, AddApplicabilityStatementDialogProps>(
+  ({ onClose }, ref) => {
     const { __ } = useTranslate();
     const dialogRef = useDialogRef();
     const [stateOfApplicabilityId, setStateOfApplicabilityId] = useState<string | null>(null);
@@ -486,6 +490,7 @@ export const AddApplicabilityStatementDialog = forwardRef<AddApplicabilityStatem
       setStateOfApplicabilityId(null);
       setOrganizationId(null);
       setConnectionId(null);
+      onClose?.();
     };
 
     return (

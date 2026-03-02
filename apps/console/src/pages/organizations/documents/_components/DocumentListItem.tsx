@@ -1,6 +1,6 @@
 import { formatDate, getDocumentClassificationLabel, getDocumentTypeLabel, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, Avatar, Badge, Checkbox, DropdownItem, IconTrashCan, Td, Tr, useConfirm } from "@probo/ui";
+import { ActionDropdown, Badge, Checkbox, DropdownItem, IconTrashCan, Td, Tr, useConfirm } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
 
@@ -17,9 +17,13 @@ const fragment = graphql`
     classification
     updatedAt
     canDelete: permission(action: "core:document:delete")
-    owner {
-      id
-      fullName
+    approvers(first: 100) {
+      edges {
+        node {
+          id
+          fullName
+        }
+      }
     }
     lastVersion: versions(first: 1 orderBy: { field: CREATED_AT direction: DESC }) {
       edges {
@@ -128,10 +132,7 @@ export function DocumentListItem(props: {
         {getDocumentClassificationLabel(__, document.classification)}
       </Td>
       <Td className="w-60">
-        <div className="flex gap-2 items-center">
-          <Avatar name={document.owner?.fullName ?? ""} />
-          {document.owner?.fullName}
-        </div>
+        {document.approvers.edges.map(({ node }) => node.fullName).join(", ")}
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>
       <Td className="w-20">

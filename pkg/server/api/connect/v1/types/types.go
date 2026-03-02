@@ -25,17 +25,23 @@ type Node interface {
 	GetID() gid.GID
 }
 
-type AcceptInvitationInput struct {
-	InvitationID gid.GID `json:"invitationId"`
+type ActivateAccountInput struct {
+	Token string `json:"token"`
 }
 
-type AcceptInvitationPayload struct {
-	MembershipEdge *MembershipEdge `json:"membershipEdge"`
-	Invitation     *Invitation     `json:"invitation"`
+type ActivateAccountPayload struct {
+	CreatePasswordToken *string  `json:"createPasswordToken,omitempty"`
+	Profile             *Profile `json:"profile,omitempty"`
+}
+
+type ActivateUserInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	ProfileID      gid.GID `json:"profileId"`
 }
 
 type AssumeOrganizationSessionInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
+	Continue       string  `json:"continue"`
 }
 
 type AssumeOrganizationSessionPayload struct {
@@ -78,8 +84,8 @@ type CreateOrganizationInput struct {
 }
 
 type CreateOrganizationPayload struct {
-	Organization   *Organization   `json:"organization,omitempty"`
-	MembershipEdge *MembershipEdge `json:"membershipEdge"`
+	Organization *Organization `json:"organization,omitempty"`
+	Profile      *Profile      `json:"profile"`
 }
 
 type CreatePersonalAPIKeyInput struct {
@@ -117,13 +123,29 @@ type CreateSCIMConfigurationPayload struct {
 	Token             string             `json:"token"`
 }
 
-type DeleteInvitationInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-	InvitationID   gid.GID `json:"invitationId"`
+type CreateUserInput struct {
+	OrganizationID           gid.GID                        `json:"organizationId"`
+	FullName                 string                         `json:"fullName"`
+	EmailAddress             mail.Addr                      `json:"emailAddress"`
+	Role                     coredata.MembershipRole        `json:"role"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses,omitempty"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 *string                        `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
 }
 
-type DeleteInvitationPayload struct {
-	DeletedInvitationID gid.GID `json:"deletedInvitationId"`
+type CreateUserPayload struct {
+	ProfileEdge *ProfileEdge `json:"profileEdge"`
+}
+
+type DeactivateUserInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	ProfileID      gid.GID `json:"profileId"`
+}
+
+type DeactivateUserPayload struct {
+	Success bool `json:"success"`
 }
 
 type DeleteOrganizationHorizontalLogoInput struct {
@@ -169,33 +191,29 @@ type ForgotPasswordPayload struct {
 }
 
 type Identity struct {
-	ID                 gid.GID                   `json:"id"`
-	Email              mail.Addr                 `json:"email"`
-	FullName           string                    `json:"fullName"`
-	EmailVerified      bool                      `json:"emailVerified"`
-	CreatedAt          time.Time                 `json:"createdAt"`
-	UpdatedAt          time.Time                 `json:"updatedAt"`
-	Memberships        *MembershipConnection     `json:"memberships,omitempty"`
-	PendingInvitations *InvitationConnection     `json:"pendingInvitations,omitempty"`
-	Sessions           *SessionConnection        `json:"sessions,omitempty"`
-	PersonalAPIKeys    *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
-	Permission         bool                      `json:"permission"`
+	ID              gid.GID                   `json:"id"`
+	Email           mail.Addr                 `json:"email"`
+	FullName        string                    `json:"fullName"`
+	EmailVerified   bool                      `json:"emailVerified"`
+	CreatedAt       time.Time                 `json:"createdAt"`
+	UpdatedAt       time.Time                 `json:"updatedAt"`
+	Profiles        *ProfileConnection        `json:"profiles,omitempty"`
+	Sessions        *SessionConnection        `json:"sessions,omitempty"`
+	PersonalAPIKeys *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
+	SsoLoginURL     *string                   `json:"ssoLoginURL,omitempty"`
+	Permission      bool                      `json:"permission"`
 }
 
 func (Identity) IsNode()             {}
 func (this Identity) GetID() gid.GID { return this.ID }
 
 type Invitation struct {
-	ID           gid.GID                   `json:"id"`
-	Email        mail.Addr                 `json:"email"`
-	FullName     string                    `json:"fullName"`
-	Role         coredata.MembershipRole   `json:"role"`
-	ExpiresAt    time.Time                 `json:"expiresAt"`
-	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
-	CreatedAt    time.Time                 `json:"createdAt"`
-	Status       coredata.InvitationStatus `json:"status"`
-	Organization *Organization             `json:"organization,omitempty"`
-	Permission   bool                      `json:"permission"`
+	ID         gid.GID                   `json:"id"`
+	ExpiresAt  time.Time                 `json:"expiresAt"`
+	AcceptedAt *time.Time                `json:"acceptedAt,omitempty"`
+	CreatedAt  time.Time                 `json:"createdAt"`
+	Status     coredata.InvitationStatus `json:"status"`
+	Permission bool                      `json:"permission"`
 }
 
 func (Invitation) IsNode()             {}
@@ -206,48 +224,25 @@ type InvitationEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 }
 
-type InviteMemberInput struct {
-	OrganizationID gid.GID                 `json:"organizationId"`
-	Email          mail.Addr               `json:"email"`
-	FullName       string                  `json:"fullName"`
-	Role           coredata.MembershipRole `json:"role"`
+type InviteUserInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	ProfileID      gid.GID `json:"profileId"`
 }
 
-type InviteMemberPayload struct {
+type InviteUserPayload struct {
 	InvitationEdge *InvitationEdge `json:"invitationEdge"`
 }
 
 type Membership struct {
-	ID           gid.GID                   `json:"id"`
-	CreatedAt    time.Time                 `json:"createdAt"`
-	Identity     *Identity                 `json:"identity,omitempty"`
-	Profile      *MembershipProfile        `json:"profile,omitempty"`
-	Organization *Organization             `json:"organization,omitempty"`
-	Role         coredata.MembershipRole   `json:"role"`
-	Source       coredata.MembershipSource `json:"source"`
-	State        coredata.MembershipState  `json:"state"`
-	LastSession  *Session                  `json:"lastSession,omitempty"`
-	Permission   bool                      `json:"permission"`
+	ID          gid.GID                 `json:"id"`
+	CreatedAt   time.Time               `json:"createdAt"`
+	Role        coredata.MembershipRole `json:"role"`
+	LastSession *Session                `json:"lastSession,omitempty"`
+	Permission  bool                    `json:"permission"`
 }
 
 func (Membership) IsNode()             {}
 func (this Membership) GetID() gid.GID { return this.ID }
-
-type MembershipEdge struct {
-	Node   *Membership    `json:"node"`
-	Cursor page.CursorKey `json:"cursor"`
-}
-
-type MembershipProfile struct {
-	ID         gid.GID   `json:"id"`
-	FullName   string    `json:"fullName"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-	Permission bool      `json:"permission"`
-}
-
-func (MembershipProfile) IsNode()             {}
-func (this MembershipProfile) GetID() gid.GID { return this.ID }
 
 type Mutation struct {
 }
@@ -263,11 +258,10 @@ type Organization struct {
 	HeadquarterAddress *string                      `json:"headquarterAddress,omitempty"`
 	CreatedAt          time.Time                    `json:"createdAt"`
 	UpdatedAt          time.Time                    `json:"updatedAt"`
-	Members            *MembershipConnection        `json:"members,omitempty"`
-	Invitations        *InvitationConnection        `json:"invitations,omitempty"`
+	Profiles           *ProfileConnection           `json:"profiles,omitempty"`
 	SamlConfigurations *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
 	ScimConfiguration  *SCIMConfiguration           `json:"scimConfiguration,omitempty"`
-	ViewerMembership   *Membership                  `json:"viewerMembership,omitempty"`
+	Viewer             *Profile                     `json:"viewer,omitempty"`
 	Permission         bool                         `json:"permission"`
 }
 
@@ -312,6 +306,39 @@ type PersonalAPIKeyEdge struct {
 	Cursor page.CursorKey  `json:"cursor"`
 }
 
+type Profile struct {
+	ID                       gid.GID                        `json:"id"`
+	FullName                 string                         `json:"fullName"`
+	EmailAddress             mail.Addr                      `json:"emailAddress"`
+	Source                   string                         `json:"source"`
+	State                    coredata.ProfileState          `json:"state"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 *string                        `json:"position,omitempty"`
+	ContractStartDate        *time.Time                     `json:"contractStartDate,omitempty"`
+	ContractEndDate          *time.Time                     `json:"contractEndDate,omitempty"`
+	CreatedAt                time.Time                      `json:"createdAt"`
+	UpdatedAt                time.Time                      `json:"updatedAt"`
+	Identity                 *Identity                      `json:"identity,omitempty"`
+	Organization             *Organization                  `json:"organization,omitempty"`
+	Membership               *Membership                    `json:"membership,omitempty"`
+	PendingInvitations       *InvitationConnection          `json:"pendingInvitations,omitempty"`
+	Permission               bool                           `json:"permission"`
+}
+
+func (Profile) IsNode()             {}
+func (this Profile) GetID() gid.GID { return this.ID }
+
+type ProfileEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Profile       `json:"node"`
+}
+
+type ProfileFilter struct {
+	ExcludeContractEnded *bool                  `json:"excludeContractEnded,omitempty"`
+	State                *coredata.ProfileState `json:"state,omitempty"`
+}
+
 type Query struct {
 }
 
@@ -325,13 +352,13 @@ type RegenerateSCIMTokenPayload struct {
 	Token             string             `json:"token"`
 }
 
-type RemoveMemberInput struct {
+type RemoveUserInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
-	MembershipID   gid.GID `json:"membershipId"`
+	ProfileID      gid.GID `json:"profileId"`
 }
 
-type RemoveMemberPayload struct {
-	DeletedMembershipID gid.GID `json:"deletedMembershipId"`
+type RemoveUserPayload struct {
+	DeletedProfileID gid.GID `json:"deletedProfileId"`
 }
 
 type ResetPasswordInput struct {
@@ -378,8 +405,7 @@ type SAMLAttributeMappingsInput struct {
 }
 
 type SAMLAuthenticationRequired struct {
-	Reason      ReauthenticationReason `json:"reason"`
-	RedirectURL string                 `json:"redirectUrl"`
+	Reason ReauthenticationReason `json:"reason"`
 }
 
 func (SAMLAuthenticationRequired) IsAssumeOrganizationSessionResult() {}
@@ -415,7 +441,7 @@ type SCIMBridge struct {
 	ScimConfiguration *SCIMConfiguration       `json:"scimConfiguration,omitempty"`
 	Connector         *Connector               `json:"connector,omitempty"`
 	Type              coredata.SCIMBridgeType  `json:"type"`
-	ExcludedUserNames     []string                 `json:"excludedUserNames"`
+	ExcludedUserNames []string                 `json:"excludedUserNames"`
 	CreatedAt         time.Time                `json:"createdAt"`
 	UpdatedAt         time.Time                `json:"updatedAt"`
 	Permission        bool                     `json:"permission"`
@@ -439,17 +465,17 @@ func (SCIMConfiguration) IsNode()             {}
 func (this SCIMConfiguration) GetID() gid.GID { return this.ID }
 
 type SCIMEvent struct {
-	ID           gid.GID     `json:"id"`
-	Method       string      `json:"method"`
-	Path         string      `json:"path"`
-	StatusCode   int         `json:"statusCode"`
-	RequestBody  *string     `json:"requestBody,omitempty"`
-	ResponseBody *string     `json:"responseBody,omitempty"`
-	ErrorMessage *string     `json:"errorMessage,omitempty"`
-	Membership   *Membership `json:"membership,omitempty"`
-	IPAddress    string      `json:"ipAddress"`
-	CreatedAt    time.Time   `json:"createdAt"`
-	Permission   bool        `json:"permission"`
+	ID           gid.GID   `json:"id"`
+	Method       string    `json:"method"`
+	Path         string    `json:"path"`
+	StatusCode   int       `json:"statusCode"`
+	RequestBody  *string   `json:"requestBody,omitempty"`
+	ResponseBody *string   `json:"responseBody,omitempty"`
+	ErrorMessage *string   `json:"errorMessage,omitempty"`
+	UserName     string    `json:"userName"`
+	IPAddress    string    `json:"ipAddress"`
+	CreatedAt    time.Time `json:"createdAt"`
+	Permission   bool      `json:"permission"`
 }
 
 func (SCIMEvent) IsNode()             {}
@@ -485,8 +511,9 @@ type SessionOrder struct {
 }
 
 type SignInInput struct {
-	Email    mail.Addr `json:"email"`
-	Password string    `json:"password"`
+	OrganizationID *gid.GID  `json:"organizationId,omitempty"`
+	Email          mail.Addr `json:"email"`
+	Password       string    `json:"password"`
 }
 
 type SignInPayload struct {
@@ -496,16 +523,6 @@ type SignInPayload struct {
 
 type SignOutPayload struct {
 	Success bool `json:"success"`
-}
-
-type SignUpFromInvitationInput struct {
-	Token    string `json:"token"`
-	Password string `json:"password"`
-	FullName string `json:"fullName"`
-}
-
-type SignUpFromInvitationPayload struct {
-	Identity *Identity `json:"identity,omitempty"`
 }
 
 type SignUpInput struct {
@@ -559,13 +576,27 @@ type UpdateSAMLConfigurationPayload struct {
 }
 
 type UpdateSCIMBridgeInput struct {
-	OrganizationID gid.GID  `json:"organizationId"`
-	ScimBridgeID   gid.GID  `json:"scimBridgeId"`
-	ExcludedUserNames  []string `json:"excludedUserNames"`
+	OrganizationID    gid.GID  `json:"organizationId"`
+	ScimBridgeID      gid.GID  `json:"scimBridgeId"`
+	ExcludedUserNames []string `json:"excludedUserNames"`
 }
 
 type UpdateSCIMBridgePayload struct {
 	ScimBridge *SCIMBridge `json:"scimBridge"`
+}
+
+type UpdateUserInput struct {
+	ID                       gid.GID                        `json:"id"`
+	FullName                 string                         `json:"fullName"`
+	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses,omitempty"`
+	Kind                     coredata.MembershipProfileKind `json:"kind"`
+	Position                 *string                        `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
+}
+
+type UpdateUserPayload struct {
+	Profile *Profile `json:"profile"`
 }
 
 type VerifyEmailInput struct {

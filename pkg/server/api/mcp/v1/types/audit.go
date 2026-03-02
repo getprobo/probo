@@ -34,6 +34,24 @@ func NewAudit(a *coredata.Audit) *Audit {
 	}
 }
 
+func NewListControlAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrderField]) ListControlAuditsOutput {
+	audits := make([]*Audit, 0, len(auditPage.Data))
+	for _, v := range auditPage.Data {
+		audits = append(audits, NewAudit(v))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(auditPage.Data) > 0 {
+		cursorKey := auditPage.Data[len(auditPage.Data)-1].CursorKey(auditPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListControlAuditsOutput{
+		NextCursor: nextCursor,
+		Audits:     audits,
+	}
+}
+
 func NewListAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrderField]) ListAuditsOutput {
 	audits := make([]*Audit, 0, len(auditPage.Data))
 	for _, v := range auditPage.Data {

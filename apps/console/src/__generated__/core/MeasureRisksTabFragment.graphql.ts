@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4f367882dc2cd7bb8a8605d9192cd7f5>>
+ * @generated SignedSource<<c712faa6c54f0f1da5895adb10d3f7c0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,13 +11,13 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type MeasureRisksTabFragment$data = {
+  readonly canCreateRiskMeasureMapping: boolean;
+  readonly canDeleteRiskMeasureMapping: boolean;
   readonly id: string;
   readonly risks: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly canCreateMeasureMapping: boolean;
-        readonly canDeleteMeasureMapping: boolean;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"LinkedRisksCardFragment">;
       };
@@ -57,6 +57,32 @@ return {
   "selections": [
     (v0/*: any*/),
     {
+      "alias": "canCreateRiskMeasureMapping",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:risk:create-measure-mapping"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:risk:create-measure-mapping\")"
+    },
+    {
+      "alias": "canDeleteRiskMeasureMapping",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:risk:delete-measure-mapping"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:risk:delete-measure-mapping\")"
+    },
+    {
       "alias": "risks",
       "args": null,
       "concreteType": "RiskConnection",
@@ -81,32 +107,6 @@ return {
               "plural": false,
               "selections": [
                 (v0/*: any*/),
-                {
-                  "alias": "canCreateMeasureMapping",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "action",
-                      "value": "core:risk:create-measure-mapping"
-                    }
-                  ],
-                  "kind": "ScalarField",
-                  "name": "permission",
-                  "storageKey": "permission(action:\"core:risk:create-measure-mapping\")"
-                },
-                {
-                  "alias": "canDeleteMeasureMapping",
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "action",
-                      "value": "core:risk:delete-measure-mapping"
-                    }
-                  ],
-                  "kind": "ScalarField",
-                  "name": "permission",
-                  "storageKey": "permission(action:\"core:risk:delete-measure-mapping\")"
-                },
                 {
                   "args": null,
                   "kind": "FragmentSpread",
@@ -178,6 +178,6 @@ return {
 };
 })();
 
-(node as any).hash = "a837a187026f5c75c67efcb4831d0b76";
+(node as any).hash = "abab542141a748635126f652c0d79761";
 
 export default node;

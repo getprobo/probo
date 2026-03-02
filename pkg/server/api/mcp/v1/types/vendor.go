@@ -19,6 +19,45 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func NewVendorRiskAssessment(v *coredata.VendorRiskAssessment) *VendorRiskAssessment {
+	return &VendorRiskAssessment{
+		ID:              v.ID,
+		OrganizationID:  v.OrganizationID,
+		VendorID:        v.VendorID,
+		ExpiresAt:       v.ExpiresAt,
+		DataSensitivity: v.DataSensitivity,
+		BusinessImpact:  v.BusinessImpact,
+		Notes:           v.Notes,
+		SnapshotID:      v.SnapshotID,
+		CreatedAt:       v.CreatedAt,
+		UpdatedAt:       v.UpdatedAt,
+	}
+}
+
+func NewListVendorRiskAssessmentsOutput(p *page.Page[*coredata.VendorRiskAssessment, coredata.VendorRiskAssessmentOrderField]) ListVendorRiskAssessmentsOutput {
+	assessments := make([]*VendorRiskAssessment, 0, len(p.Data))
+	for _, v := range p.Data {
+		assessments = append(assessments, NewVendorRiskAssessment(v))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListVendorRiskAssessmentsOutput{
+		NextCursor:            nextCursor,
+		VendorRiskAssessments: assessments,
+	}
+}
+
+func NewAddVendorRiskAssessmentOutput(v *coredata.VendorRiskAssessment) AddVendorRiskAssessmentOutput {
+	return AddVendorRiskAssessmentOutput{
+		VendorRiskAssessment: NewVendorRiskAssessment(v),
+	}
+}
+
 func NewVendor(v *coredata.Vendor) *Vendor {
 	countries := make([]string, len(v.Countries))
 	for i, c := range v.Countries {

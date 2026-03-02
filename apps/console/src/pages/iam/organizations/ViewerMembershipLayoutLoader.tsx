@@ -13,16 +13,14 @@ import {
 
 function ViewerMembershipLayoutQueryLoader() {
   const organizationId = useOrganizationId();
+
   const [queryRef, loadQuery] = useQueryLoader<ViewerMembershipLayoutQuery>(
     viewerMembershipLayoutQuery,
   );
 
   useEffect(() => {
-    loadQuery({
-      organizationId,
-      hideSidebar: false,
-    });
-  }, [loadQuery, organizationId]);
+    loadQuery({ organizationId, hideSidebar: false });
+  }, [organizationId, loadQuery]);
 
   if (!queryRef) {
     return <Skeleton className="w-full h-screen" />;

@@ -10,7 +10,7 @@ on:
 jobs:
   release-snapshot:
     name: "release-snapshot"
-    runs-on: "ubuntu-24.04"
+    runs-on: "ubuntu-24.04-64cores"
     permissions:
       contents: "read"
       packages: "write"
@@ -122,7 +122,7 @@ jobs:
         run: echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
       - uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 #v7.3.1
         with:
-          path: ./
+          sbom: "sbom.json"
           fail-build: true
           severity-cutoff: critical
           output-format: table

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<91fb3430f209ed2c0c83b111ca7b3d86>>
+ * @generated SignedSource<<7ad30234c2f4974391fdf96dc5647c1a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -128,25 +128,25 @@ return {
                   {
                     "kind": "Literal",
                     "name": "action",
-                    "value": "core:people:create"
+                    "value": "iam:membership-profile:create"
                   }
                 ],
                 "kind": "ScalarField",
                 "name": "permission",
-                "storageKey": "permission(action:\"core:people:create\")"
+                "storageKey": "permission(action:\"iam:membership-profile:create\")"
               },
               {
                 "alias": null,
                 "args": (v4/*: any*/),
-                "concreteType": "PeopleConnection",
+                "concreteType": "ProfileConnection",
                 "kind": "LinkedField",
-                "name": "peoples",
+                "name": "profiles",
                 "plural": false,
                 "selections": [
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "PeopleEdge",
+                    "concreteType": "ProfileEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -154,7 +154,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "People",
+                        "concreteType": "Profile",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -171,7 +171,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "primaryEmailAddress",
+                            "name": "emailAddress",
                             "storageKey": null
                           },
                           {
@@ -215,12 +215,12 @@ return {
                               {
                                 "kind": "Literal",
                                 "name": "action",
-                                "value": "core:people:delete"
+                                "value": "iam:membership-profile:delete"
                               }
                             ],
                             "kind": "ScalarField",
                             "name": "permission",
-                            "storageKey": "permission(action:\"core:people:delete\")"
+                            "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                           },
                           {
                             "alias": "canUpdate",
@@ -228,12 +228,12 @@ return {
                               {
                                 "kind": "Literal",
                                 "name": "action",
-                                "value": "core:people:update"
+                                "value": "iam:membership-profile:update"
                               }
                             ],
                             "kind": "ScalarField",
                             "name": "permission",
-                            "storageKey": "permission(action:\"core:people:update\")"
+                            "storageKey": "permission(action:\"iam:membership-profile:update\")"
                           },
                           (v3/*: any*/)
                         ],
@@ -301,7 +301,7 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "peoples(first:50,orderBy:{\"direction\":\"ASC\",\"field\":\"FULL_NAME\"})"
+                "storageKey": "profiles(first:50,orderBy:{\"direction\":\"ASC\",\"field\":\"FULL_NAME\"})"
               },
               {
                 "alias": null,
@@ -311,9 +311,9 @@ return {
                   "filter"
                 ],
                 "handle": "connection",
-                "key": "PeopleGraphPaginatedQuery_peoples",
+                "key": "PeopleGraphPaginatedQuery_profiles",
                 "kind": "LinkedHandle",
-                "name": "peoples"
+                "name": "profiles"
               }
             ],
             "type": "Organization",
@@ -325,12 +325,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "caa828b21b4d035ff5543e6d08355aad",
+    "cacheID": "aa4bd0870eec87b1f2abc4d5e4569c81",
     "id": null,
     "metadata": {},
     "name": "PeopleGraphPaginatedQuery",
     "operationKind": "query",
-    "text": "query PeopleGraphPaginatedQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...PeopleGraphPaginatedFragment\n    }\n  }\n}\n\nfragment PeopleGraphPaginatedFragment on Organization {\n  canCreatePeople: permission(action: \"core:people:create\")\n  peoples(first: 50, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        kind\n        position\n        additionalEmailAddresses\n        contractStartDate\n        contractEndDate\n        canDelete: permission(action: \"core:people:delete\")\n        canUpdate: permission(action: \"core:people:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query PeopleGraphPaginatedQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...PeopleGraphPaginatedFragment\n    }\n  }\n}\n\nfragment PeopleGraphPaginatedFragment on Organization {\n  canCreatePeople: permission(action: \"iam:membership-profile:create\")\n  profiles(first: 50, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        kind\n        position\n        additionalEmailAddresses\n        contractStartDate\n        contractEndDate\n        canDelete: permission(action: \"iam:membership-profile:delete\")\n        canUpdate: permission(action: \"iam:membership-profile:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

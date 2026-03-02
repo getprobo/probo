@@ -46,7 +46,6 @@ var ViewerPolicy = policy.NewPolicy(
 	).WithSID("org-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionPeopleGet, ActionPeopleList,
 		ActionVendorGet, ActionVendorList,
 		ActionVendorContactGet, ActionVendorContactList,
 		ActionVendorServiceGet, ActionVendorServiceList,
@@ -80,6 +79,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionRightsRequestGet, ActionRightsRequestList,
 		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
+		ActionWebhookSubscriptionGet, ActionWebhookSubscriptionList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
@@ -114,7 +114,6 @@ var AuditorPolicy = policy.NewPolicy(
 	).WithSID("org-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionPeopleGet, ActionPeopleList,
 		ActionVendorGet, ActionVendorList,
 		ActionVendorContactGet, ActionVendorContactList,
 		ActionVendorServiceGet, ActionVendorServiceList,
@@ -143,11 +142,17 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionSnapshotGet, ActionSnapshotList,
 		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
+		ActionStateOfApplicabilityGet, ActionStateOfApplicabilityList,
+		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
 		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
+
+	policy.Allow(
+		ActionStateOfApplicabilityExport,
+	).WithSID("soa-export").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
 
 // EmployeePolicy defines permissions for employee role.

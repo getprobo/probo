@@ -754,11 +754,8 @@ func TestVendor_OmittableBusinessOwner(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create a people for owner assignment
-	peopleID := factory.NewPeople(owner).
-		WithFullName("Business Owner Person").
-		Create()
-
+	// Create a profile for owner assignment
+	profileID := factory.CreateUser(owner)
 	vendorID := factory.NewVendor(owner).
 		WithName("BusinessOwner Test Vendor").
 		Create()
@@ -793,11 +790,11 @@ func TestVendor_OmittableBusinessOwner(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":              vendorID,
-				"businessOwnerId": peopleID,
+				"businessOwnerId": profileID,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, peopleID, result.UpdateVendor.Vendor.BusinessOwner.ID)
+		assert.Equal(t, profileID, result.UpdateVendor.Vendor.BusinessOwner.ID)
 	})
 
 	t.Run("clear business owner with null", func(t *testing.T) {
@@ -840,14 +837,9 @@ func TestVendor_OmittableSecurityOwner(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create a people for owner assignment
-	peopleID := factory.NewPeople(owner).
-		WithFullName("Security Owner Person").
-		Create()
-
-	vendorID := factory.NewVendor(owner).
-		WithName("SecurityOwner Test Vendor").
-		Create()
+	// Create a profile for owner assignment
+	profileID := factory.CreateUser(owner)
+	vendorID := factory.NewVendor(owner).WithName("SecurityOwner Test Vendor").Create()
 
 	t.Run("set security owner", func(t *testing.T) {
 		query := `
@@ -879,11 +871,11 @@ func TestVendor_OmittableSecurityOwner(t *testing.T) {
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":              vendorID,
-				"securityOwnerId": peopleID,
+				"securityOwnerId": profileID,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, peopleID, result.UpdateVendor.Vendor.SecurityOwner.ID)
+		assert.Equal(t, profileID, result.UpdateVendor.Vendor.SecurityOwner.ID)
 	})
 
 	t.Run("clear security owner with null", func(t *testing.T) {

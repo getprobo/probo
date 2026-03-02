@@ -55,13 +55,6 @@ const (
 	ActionTrustCenterFileDelete     = "core:trust-center-file:delete"
 	ActionTrustCenterFileCreate     = "core:trust-center-file:create"
 
-	// People actions
-	ActionPeopleGet    = "core:people:get"
-	ActionPeopleList   = "core:people:list"
-	ActionPeopleCreate = "core:people:create"
-	ActionPeopleUpdate = "core:people:update"
-	ActionPeopleDelete = "core:people:delete"
-
 	// Vendor actions
 	ActionVendorList   = "core:vendor:list"
 	ActionVendorGet    = "core:vendor:get"
@@ -112,8 +105,7 @@ const (
 	ActionFrameworkCreate                       = "core:framework:create"
 	ActionFrameworkUpdate                       = "core:framework:update"
 	ActionFrameworkDelete                       = "core:framework:delete"
-	ActionFrameworkStateOfApplicabilityGenerate = "core:framework:generate-state-of-applicability"
-	ActionFrameworkExport                       = "core:framework:export"
+	ActionFrameworkExport = "core:framework:export"
 	ActionFrameworkImport                       = "core:framework:import"
 
 	// Control actions
@@ -323,4 +315,11 @@ const (
 	ActionApplicabilityStatementCreate = "core:applicability-statement:create"
 	ActionApplicabilityStatementUpdate = "core:applicability-statement:update"
 	ActionApplicabilityStatementDelete = "core:applicability-statement:delete"
+
+	// WebhookSubscription actions
+	ActionWebhookSubscriptionList   = "core:webhook-subscription:list"
+	ActionWebhookSubscriptionGet    = "core:webhook-subscription:get"
+	ActionWebhookSubscriptionCreate = "core:webhook-subscription:create"
+	ActionWebhookSubscriptionUpdate = "core:webhook-subscription:update"
+	ActionWebhookSubscriptionDelete = "core:webhook-subscription:delete"
 )

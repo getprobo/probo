@@ -26,7 +26,7 @@ import (
 // createTestDocument creates a document and returns its ID and the document version ID
 func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, docVersionID string) {
 	t.Helper()
-	peopleID := factory.NewPeople(owner).WithFullName("Doc Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	query := `
 		mutation CreateDocument($input: CreateDocumentInput!) {
@@ -69,7 +69,7 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Test Document",
 			"content":        "Initial content",
-			"ownerId":        peopleID,
+			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -264,7 +264,7 @@ func TestDocumentVersion_RequestSignature(t *testing.T) {
 	publishedVersionID := publishResult.PublishDocumentVersion.DocumentVersion.ID
 
 	// Create a person to sign
-	signerID := factory.NewPeople(owner).WithFullName("Document Signer").Create()
+	signerProfileID := factory.CreateUser(owner)
 
 	query := `
 		mutation RequestSignature($input: RequestSignatureInput!) {
@@ -301,14 +301,14 @@ func TestDocumentVersion_RequestSignature(t *testing.T) {
 	err = owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"documentVersionId": publishedVersionID,
-			"signatoryId":       signerID,
+			"signatoryId":       signerProfileID,
 		},
 	}, &result)
 	require.NoError(t, err)
 
 	assert.NotEmpty(t, result.RequestSignature.DocumentVersionSignatureEdge.Node.ID)
 	assert.Equal(t, "REQUESTED", result.RequestSignature.DocumentVersionSignatureEdge.Node.State)
-	assert.Equal(t, signerID, result.RequestSignature.DocumentVersionSignatureEdge.Node.SignedBy.ID)
+	assert.Equal(t, signerProfileID, result.RequestSignature.DocumentVersionSignatureEdge.Node.SignedBy.ID)
 }
 
 func TestDocumentVersion_BulkPublish(t *testing.T) {
@@ -383,8 +383,8 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create multiple signers
-	signer1ID := factory.NewPeople(owner).WithFullName("Bulk Signer 1").Create()
-	signer2ID := factory.NewPeople(owner).WithFullName("Bulk Signer 2").Create()
+	signer1ProfileID := factory.CreateUser(owner)
+	signer2ProfileID := factory.CreateUser(owner)
 
 	query := `
 		mutation BulkRequestSignatures($input: BulkRequestSignaturesInput!) {
@@ -413,7 +413,7 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	err = owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"documentIds":  []string{docID},
-			"signatoryIds": []string{signer1ID, signer2ID},
+			"signatoryIds": []string{signer1ProfileID, signer2ProfileID},
 		},
 	}, &result)
 	require.NoError(t, err)

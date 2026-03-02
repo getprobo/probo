@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3db987ede3a3aa1dfa570e76a00ef224>>
+ * @generated SignedSource<<b78ad7244ad348d2622288743eff7a9b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,24 +9,20 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type ControlStatus = "EXCLUDED" | "INCLUDED";
 import { FragmentRefs } from "relay-runtime";
 export type FrameworkDetailPageFragment$data = {
   readonly canCreateControl: boolean;
   readonly canDelete: boolean;
   readonly canExport: boolean;
-  readonly canGenerateSOA: boolean;
   readonly canUpdate: boolean;
   readonly controls: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly bestPractice: boolean;
-        readonly exclusionJustification: string | null | undefined;
         readonly id: string;
         readonly name: string;
         readonly sectionTitle: string;
-        readonly status: ControlStatus;
       };
     }>;
   };
@@ -142,19 +138,6 @@ return {
       "storageKey": "permission(action:\"core:control:create\")"
     },
     {
-      "alias": "canGenerateSOA",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "core:framework:generate-state-of-applicability"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"core:framework:generate-state-of-applicability\")"
-    },
-    {
       "alias": null,
       "args": null,
       "concreteType": "Organization",
@@ -217,20 +200,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "status",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "exclusionJustification",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "bestPractice",
                   "storageKey": null
                 }
@@ -261,6 +230,6 @@ return {
 };
 })();
 
-(node as any).hash = "a3eb8b9d80c69d7faa83eae88e3b986b";
+(node as any).hash = "f6eba8f00d1e491f79bc201851b8c69d";
 
 export default node;

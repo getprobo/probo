@@ -215,9 +215,9 @@ postgresql:
   #   ...
   #   -----END CERTIFICATE-----
 
-# MinIO configuration
-# Disable included MinIO for production - use external S3 instead
-minio:
+# SeaweedFS configuration
+# Disable included SeaweedFS for production - use external S3 instead
+seaweedfs:
   enabled: false
 
 # S3 storage configuration (REQUIRED)

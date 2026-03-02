@@ -24,6 +24,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"go.gearno.de/kit/log"
 )
 
 var (
@@ -32,9 +34,10 @@ var (
 )
 
 type TestEnv struct {
-	BaseURL string
-	cmd     *exec.Cmd
-	done    chan error
+	MailpitBaseURL string
+	BaseURL        string
+	cmd            *exec.Cmd
+	done           chan error
 }
 
 func Setup() {
@@ -65,7 +68,7 @@ func Setup() {
 			done: make(chan error, 1),
 		}
 
-		cmd := exec.Command(binaryPath, "-cfg-file", configPath)
+		cmd := exec.Command(binaryPath, "-cfg-file", configPath, "-format", log.FormatPretty)
 		if coverDir != "" {
 			cmd.Env = append(os.Environ(), "GOCOVERDIR="+coverDir)
 		} else {
@@ -92,18 +95,24 @@ func Setup() {
 		}()
 
 		testEnv.BaseURL = "http://localhost:18080"
+		testEnv.MailpitBaseURL = "http://localhost:8025"
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		if err := waitForServer(ctx, testEnv.BaseURL, 30*time.Second); err != nil {
-			fmt.Fprintf(os.Stderr, "e2etest: server failed to start: %v\n", err)
+		if err := waitForServer(ctx, testEnv.BaseURL+"/api/console/v1/graphql", 30*time.Second); err != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: API server failed to start: %v\n", err)
+			_ = testEnv.cmd.Process.Kill()
+			os.Exit(1)
+		}
+		if err := waitForServer(ctx, testEnv.MailpitBaseURL+"/api/v1/messages", 30*time.Second); err != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: MailPit server failed to start: %v\n", err)
 			_ = testEnv.cmd.Process.Kill()
 			os.Exit(1)
 		}
 	})
 }
 
-func waitForServer(ctx context.Context, baseURL string, timeout time.Duration) error {
+func waitForServer(ctx context.Context, url string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	client := &http.Client{Timeout: 2 * time.Second}
 
@@ -114,7 +123,7 @@ func waitForServer(ctx context.Context, baseURL string, timeout time.Duration) e
 		default:
 		}
 
-		req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/api/console/v1/graphql", nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 		if err != nil {
 			return err
 		}
@@ -154,4 +163,11 @@ func GetBaseURL() string {
 		return "http://localhost:8080"
 	}
 	return testEnv.BaseURL
+}
+
+func GetMailpitBaseURL() string {
+	if testEnv == nil {
+		return "http://localhost:8025"
+	}
+	return testEnv.MailpitBaseURL
 }

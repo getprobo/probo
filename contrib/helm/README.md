@@ -14,7 +14,7 @@ Before deploying Probo, ensure you have:
 1. **Kubernetes Cluster** - Version 1.23+
 2. **Helm** - Version 3.8+
 3. **PostgreSQL Database** - Managed service (AWS RDS, GCP Cloud SQL, Azure Database, etc.)
-4. **S3 Storage** - AWS S3 or S3-compatible storage (GCS, DigitalOcean Spaces, MinIO, etc.)
+4. **S3 Storage** - AWS S3 or S3-compatible storage (GCS, DigitalOcean Spaces, SeaweedFS, etc.)
 
 ## Install
 
@@ -48,7 +48,7 @@ helm install my-probo ./charts/probo \
   --set postgresql.auth.postgresUser="probod" \
   --set postgresql.auth.postgresPassword="your-db-password" \
   --set postgresql.auth.database="probod" \
-  --set minio.enabled=true \
+  --set seaweedfs.enabled=true \
   --set s3.bucket="your-bucket-name" \
   --set s3.accessKeyId="your-access-key" \
   --set s3.secretAccessKey="your-secret-key"
@@ -431,15 +431,15 @@ spec:
 | s3.region                                               | string  | `"us-east-1"`                                      | S3 region                                                                                           |
 | s3.bucket                                               | string  | `"probod"`                                         | S3 bucket name                                                                                      |
 | s3.endpoint                                             | string  | `""`                                               | S3 endpoint (leave empty for AWS S3, set for S3-compatible storage)                                 |
-| s3.accessKeyId                                          | string  | `""`                                               | **REQUIRED** (when minio.enabled=false) S3 access key                                               |
-| s3.secretAccessKey                                      | string  | `""`                                               | **REQUIRED** (when minio.enabled=false) S3 secret key                                               |
-| minio.enabled                                           | bool    | `true`                                             | Enable included MinIO for demo purposes (NOT for production)                                        |
-| minio.mode                                              | string  | `"standalone"`                                     | MinIO mode                                                                                          |
-| minio.persistence.enabled                               | bool    | `false`                                            | Enable MinIO persistence                                                                            |
-| minio.resources.requests.memory                         | string  | `"128Mi"`                                          | MinIO memory request                                                                                |
-| minio.primary.enabled                                   | bool    | `true`                                             | Enable MinIO primary node                                                                           |
-| minio.auth.rootUser                                     | string  | `"probod"`                                         | MinIO root username                                                                                 |
-| minio.auth.rootPassword                                 | string  | `"probod"`                                         | MinIO root password                                                                                 |
+| s3.accessKeyId                                          | string  | `""`                                               | **REQUIRED** (when seaweedfs.enabled=false) S3 access key                                           |
+| s3.secretAccessKey                                      | string  | `""`                                               | **REQUIRED** (when seaweedfs.enabled=false) S3 secret key                                           |
+| seaweedfs.enabled                                       | bool    | `true`                                             | Enable included SeaweedFS for demo purposes (NOT for production)                                    |
+| seaweedfs.image.repository                              | string  | `"chrislusf/seaweedfs"`                            | SeaweedFS container image repository                                                                |
+| seaweedfs.image.tag                                     | string  | `"latest"`                                         | SeaweedFS image tag                                                                                 |
+| seaweedfs.persistence.enabled                           | bool    | `false`                                            | Enable SeaweedFS persistence                                                                        |
+| seaweedfs.persistence.size                              | string  | `"10Gi"`                                           | SeaweedFS persistent volume size                                                                    |
+| seaweedfs.auth.accessKey                                | string  | `"probod"`                                         | SeaweedFS S3 access key                                                                             |
+| seaweedfs.auth.secretKey                                | string  | `"probod"`                                         | SeaweedFS S3 secret key                                                                             |
 | chrome.enabled                                          | bool    | `true`                                             | Deploy Chrome headless in the cluster for PDF generation                                            |
 | chrome.replicaCount                                     | int     | `1`                                                | Number of Chrome replicas                                                                           |
 | chrome.image.repository                                 | string  | `"chromedp/headless-shell"`                        | Chrome container image repository                                                                   |

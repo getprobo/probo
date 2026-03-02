@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<69f50c950d76ce3e882f94f29333caad>>
+ * @generated SignedSource<<f347bcc313be984e835dd6518091a71c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,17 +13,11 @@ import { FragmentRefs } from "relay-runtime";
 export type SCIMEventListItemFragment$data = {
   readonly createdAt: string;
   readonly errorMessage: string | null | undefined;
-  readonly id: string;
   readonly ipAddress: string;
-  readonly membership: {
-    readonly id: string;
-    readonly profile: {
-      readonly fullName: string;
-    } | null | undefined;
-  } | null | undefined;
   readonly method: string;
   readonly path: string;
   readonly statusCode: number;
+  readonly userName: string;
   readonly " $fragmentType": "SCIMEventListItemFragment";
 };
 export type SCIMEventListItemFragment$key = {
@@ -31,21 +25,12 @@ export type SCIMEventListItemFragment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"SCIMEventListItemFragment">;
 };
 
-const node: ReaderFragment = (function(){
-var v0 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-};
-return {
+const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
   "name": "SCIMEventListItemFragment",
   "selections": [
-    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -91,39 +76,15 @@ return {
     {
       "alias": null,
       "args": null,
-      "concreteType": "Membership",
-      "kind": "LinkedField",
-      "name": "membership",
-      "plural": false,
-      "selections": [
-        (v0/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "concreteType": "MembershipProfile",
-          "kind": "LinkedField",
-          "name": "profile",
-          "plural": false,
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "fullName",
-              "storageKey": null
-            }
-          ],
-          "storageKey": null
-        }
-      ],
+      "kind": "ScalarField",
+      "name": "userName",
       "storageKey": null
     }
   ],
   "type": "SCIMEvent",
   "abstractKey": null
 };
-})();
 
-(node as any).hash = "0c9c2bc445531d874b8bceae95f227b8";
+(node as any).hash = "9df2e986643ab90589ebc6e4631cde24";
 
 export default node;

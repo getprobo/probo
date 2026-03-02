@@ -52,7 +52,13 @@ const (
 	ActionMembershipRoleSetOwner = "iam:membership-role:set-owner"
 
 	// Membership Profile actions
-	ActionMembershipProfileGet = "iam:membership-profile:get"
+	ActionMembershipProfileGet        = "iam:membership-profile:get"
+	ActionMembershipProfileList       = "iam:membership-profile:list"
+	ActionMembershipProfileCreate     = "iam:membership-profile:create"
+	ActionMembershipProfileUpdate     = "iam:membership-profile:update"
+	ActionMembershipProfileDelete     = "iam:membership-profile:delete"
+	ActionMembershipProfileActivate   = "iam:membership-profile:activate"
+	ActionMembershipProfileDeactivate = "iam:membership-profile:deactivate"
 
 	// Personal API Key actions
 	ActionPersonalAPIKeyCreate = "iam:personal-api-key:create"

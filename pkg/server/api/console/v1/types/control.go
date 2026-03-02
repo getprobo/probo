@@ -57,13 +57,11 @@ func NewControl(control *coredata.Control) *Control {
 		Framework: &Framework{
 			ID: control.FrameworkID,
 		},
-		SectionTitle:           control.SectionTitle,
-		Name:                   control.Name,
-		Description:            control.Description,
-		Status:                 control.Status,
-		ExclusionJustification: control.ExclusionJustification,
-		BestPractice:           control.BestPractice,
-		CreatedAt:              control.CreatedAt,
-		UpdatedAt:              control.UpdatedAt,
+		SectionTitle: control.SectionTitle,
+		Name:         control.Name,
+		Description:  control.Description,
+		BestPractice: control.BestPractice,
+		CreatedAt:    control.CreatedAt,
+		UpdatedAt:    control.UpdatedAt,
 	}
 }

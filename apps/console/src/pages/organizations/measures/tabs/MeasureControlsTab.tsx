@@ -17,6 +17,12 @@ export const controlsFragment = graphql`
   )
   @refetchable(queryName: "MeasureControlsTabControlsQuery") {
     id
+    canCreateControlMeasureMapping: permission(
+      action: "core:control:create-measure-mapping"
+    )
+    canDeleteControlMeasureMapping: permission(
+      action: "core:control:delete-measure-mapping"
+    )
     controls(
       first: $first
       after: $after
@@ -29,12 +35,6 @@ export const controlsFragment = graphql`
       edges {
         node {
           id
-          canCreateMeasureMapping: permission(
-            action: "core:control:create-measure-mapping"
-          )
-          canDeleteMeasureMapping: permission(
-            action: "core:control:delete-measure-mapping"
-          )
           ...LinkedControlsCardFragment
         }
       }
@@ -77,12 +77,8 @@ export default function MeasureControlsTab() {
   const connectionId = data.controls.__id;
   const controls = data.controls?.edges?.map(edge => edge.node) ?? [];
 
-  const canLinkControl = controls.some(
-    ({ canCreateMeasureMapping }) => canCreateMeasureMapping,
-  );
-  const canUnlinkControl = controls.some(
-    ({ canDeleteMeasureMapping }) => canDeleteMeasureMapping,
-  );
+  const canLinkControl = data.canCreateControlMeasureMapping;
+  const canUnlinkControl = data.canDeleteControlMeasureMapping;
   const readOnly = !canLinkControl && !canUnlinkControl;
 
   const incrementOptions = {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3a62e5f931a990d83caca02ab629b0c0>>
+ * @generated SignedSource<<43181b3f35ce7df5f54b19bf82eeaad0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,16 +9,13 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type ControlStatus = "EXCLUDED" | "INCLUDED";
 import { FragmentRefs } from "relay-runtime";
 export type FrameworkControlDialogFragment$data = {
   readonly bestPractice: boolean;
   readonly description: string | null | undefined;
-  readonly exclusionJustification: string | null | undefined;
   readonly id: string;
   readonly name: string;
   readonly sectionTitle: string;
-  readonly status: ControlStatus;
   readonly " $fragmentType": "FrameworkControlDialogFragment";
 };
 export type FrameworkControlDialogFragment$key = {
@@ -64,20 +61,6 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "status",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "exclusionJustification",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "bestPractice",
       "storageKey": null
     }
@@ -86,6 +69,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "481f75ce8c525c1fa12517ef173ad868";
+(node as any).hash = "3ca9ebd60cc24f1080a594bf4ca0b928";
 
 export default node;

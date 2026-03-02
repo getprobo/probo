@@ -32,25 +32,34 @@ func (r *connectorResolver) Permission(ctx context.Context, obj *types.Connector
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// Memberships is the resolver for the memberships field.
-func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipList); err != nil {
+// Profiles is the resolver for the profiles field.
+func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
+	filters := coredata.NewMembershipProfileFilter(nil)
+	if filter != nil {
+		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded)
+		if filter.State != nil {
+			filters.WithState(*filter.State)
+		}
+	}
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.MembershipConnection{
+		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
+			Filters:  filters,
 		}, nil
 	}
 
-	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
-		Field:     coredata.MembershipOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldFullName,
+		Direction: page.OrderDirectionAsc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MembershipOrderField]{
+		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -58,42 +67,13 @@ func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity,
 
 	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.iam.AccountService.ListMemberships(ctx, obj.ID, cursor)
+	page, err := r.iam.AccountService.ListProfilesForIdentity(ctx, obj.ID, cursor, filters)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list memberships", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewMembershipConnection(page, r, obj.ID), nil
-}
-
-// PendingInvitations is the resolver for the pendingInvitations field.
-func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionInvitationList); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.InvitationConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-		}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
-		Field:     coredata.InvitationOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := r.iam.AccountService.ListPendingInvitations(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list pending invitations", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewInvitationConnection(page, r, obj.ID, nil), nil
+	return types.NewProfileConnection(page, r, obj.ID, filters), nil
 }
 
 // Sessions is the resolver for the sessions field.
@@ -160,134 +140,58 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
 }
 
+// SsoLoginURL is the resolver for the ssoLoginURL field.
+func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity) (*string, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionIdentityGet); err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if count != 1 {
+		if count == 0 {
+			return nil, graphql.ErrorOnPath(
+				ctx,
+				fmt.Errorf("no SAML configuration for email"),
+			)
+		}
+
+		return nil, graphql.ErrorOnPath(
+			ctx,
+			fmt.Errorf("multiple SSO configurations found for this domain. Please use your organization-specific SSO login URL"),
+		)
+	}
+
+	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if len(samlConfigs) == 0 {
+		r.logger.ErrorCtx(ctx, "cannot find SAML config")
+		return nil, gqlutils.NotFoundf(ctx, "cannot find SAML config")
+	}
+	samlConfig := samlConfigs[0]
+
+	loginURL := r.SSOLoginURL(samlConfig.ID)
+	return &loginURL, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// Organization is the resolver for the organization field.
-func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyIDSelected(ctx) {
-		return &types.Organization{
-			ID: obj.Organization.ID,
-		}, nil
-	}
-
-	organization, err := r.iam.OrganizationService.GetOrganizationForInvitation(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get organization for invitation", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
 // Permission is the resolver for the permission field.
 func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitation, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (*int, error) {
-	switch obj.Resolver.(type) {
-	case *organizationResolver:
-		if err := r.authorize(ctx, obj.ParentID, iam.ActionInvitationList); err != nil {
-			return nil, err
-		}
-
-		count, err := r.iam.OrganizationService.CountInvitations(ctx, obj.ParentID, obj.Filters)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count invitations", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-		return &count, nil
-	case *identityResolver:
-		if err := r.authorize(ctx, obj.ParentID, iam.ActionInvitationList); err != nil {
-			return nil, err
-		}
-
-		count, err := r.iam.AccountService.CountPendingInvitations(ctx, obj.ParentID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count invitations", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		return &count, nil
-	}
-
-	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
-	return nil, gqlutils.Internal(ctx)
-}
-
-// Identity is the resolver for the identity field.
-func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership) (*types.Identity, error) {
-	if err := r.authorize(
-		ctx,
-		obj.Identity.ID,
-		iam.ActionIdentityGet,
-		authz.WithAttr("organization_id", obj.Organization.ID.String()),
-	); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyIDSelected(ctx) {
-		return &types.Identity{
-			ID: obj.Identity.ID,
-		}, nil
-	}
-
-	identity, err := r.iam.AccountService.GetIdentityForMembership(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get identity for membership", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewIdentity(identity), nil
-}
-
-// Profile is the resolver for the profile field.
-func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	profile, err := r.iam.AccountService.GetProfileForMembership(ctx, obj.ID)
-	if err != nil {
-		var errProfileNotFound *iam.ErrProfileNotFound
-		if errors.As(err, &errProfileNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get profile for membership", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewMembershipProfile(profile), nil
-}
-
-// Organization is the resolver for the organization field.
-func (r *membershipResolver) Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyIDSelected(ctx) {
-		return &types.Organization{
-			ID: obj.Organization.ID,
-		}, nil
-	}
-
-	organization, err := r.iam.OrganizationService.GetOrganizationForMembership(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get organization for membership", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewOrganization(organization), nil
 }
 
 // LastSession is the resolver for the lastSession field.
@@ -320,45 +224,9 @@ func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membersh
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// TotalCount is the resolver for the totalCount field.
-func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (*int, error) {
-	if err := r.authorize(ctx, obj.ParentID, iam.ActionMembershipList); err != nil {
-		return nil, err
-	}
-
-	switch obj.Resolver.(type) {
-	case *identityResolver:
-		count, err := r.iam.AccountService.CountMemberships(ctx, obj.ParentID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count memberships", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		return &count, nil
-	case *organizationResolver:
-		count, err := r.iam.OrganizationService.CountMemberships(ctx, obj.ParentID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count memberships", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		return &count, nil
-	}
-
-	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
-	return nil, gqlutils.Internal(ctx)
-}
-
-// Permission is the resolver for the permission field.
-func (r *membershipProfileResolver) Permission(ctx context.Context, obj *types.MembershipProfile, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
 // SignIn is the resolver for the signIn field.
 func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) (*types.SignInPayload, error) {
-	// TODO: handle existing session to only open child session and chnage root session auth method to PASSWORD
-
-	identity, session, err := r.iam.AuthService.OpenSessionWithPassword(ctx, input.Email, input.Password)
+	identity, err := r.iam.AuthService.CheckCredentials(ctx, input.Email, input.Password)
 	if err != nil {
 		var errInvalidPassword *iam.ErrInvalidPassword
 		if errors.As(err, &errInvalidPassword) {
@@ -375,12 +243,58 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			}
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot sign in", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot check credentials", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	session := authn.SessionFromContext(ctx)
+
+	switch {
+	case session == nil:
+		var err error
+		session, err = r.iam.AuthService.OpenSessionWithPassword(
+			ctx,
+			identity.ID,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	case session.IdentityID != identity.ID:
+		if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
+			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		session, err = r.iam.AuthService.OpenSessionWithPassword(
+			ctx,
+			identity.ID,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
 	}
 
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)
 	r.sessionCookie.Set(w, session)
+
+	if input.OrganizationID != nil {
+		var err error
+		_, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
+		if err != nil {
+			// Here session middleware already took care of expired/nil root session so we only handle membership related errors
+			var errMembershipNotFound *iam.ErrMembershipNotFound
+			var errUserInactive *iam.ErrUserInactive
+
+			if errors.As(err, &errMembershipNotFound) || errors.As(err, &errUserInactive) {
+				return nil, gqlutils.Forbiddenf(ctx, "forbidden")
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot assume organization", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
 
 	return &types.SignInPayload{
 		Identity: types.NewIdentity(identity),
@@ -437,14 +351,30 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 	return &types.SignOutPayload{Success: true}, nil
 }
 
-// SignUpFromInvitation is the resolver for the signUpFromInvitation field.
-func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types.SignUpFromInvitationInput) (*types.SignUpFromInvitationPayload, error) {
-	identity, session, err := r.iam.AuthService.CreateIdentityFromInvitation(
+// ActivateAccount is the resolver for the signUpFromInvitation field.
+func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.ActivateAccountInput) (*types.ActivateAccountPayload, error) {
+	session := authn.SessionFromContext(ctx)
+
+	if session != nil {
+		// Sign out any other account before activating a new one
+		err := r.iam.SessionService.CloseSession(ctx, session.ID)
+		if err != nil {
+			var ErrSessionNotFound *iam.ErrSessionNotFound
+			if !errors.As(err, &ErrSessionNotFound) {
+				r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+				return nil, gqlutils.Internal(ctx)
+			}
+
+		}
+
+		w := gqlutils.HTTPResponseWriterFromContext(ctx)
+		r.sessionCookie.Clear(w)
+	}
+
+	user, createPasswordToken, err := r.iam.AuthService.ActivateAccount(
 		ctx,
-		&iam.CreateIdentityFromInvitationRequest{
+		&iam.ActivateAccountRequest{
 			InvitationToken: input.Token,
-			Password:        input.Password,
-			FullName:        input.FullName,
 		},
 	)
 	if err != nil {
@@ -453,7 +383,6 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 			errInvitationNotFound        *iam.ErrInvitationNotFound
 			errInvitationAlreadyAccepted *iam.ErrInvitationAlreadyAccepted
 			errInvitationExpired         *iam.ErrInvitationExpired
-			errIdentityAlreadyExists     *iam.ErrIdentityAlreadyExists
 
 			isInvalidErr = errors.As(err, &errInvalidToken) ||
 				errors.As(err, &errInvitationNotFound) ||
@@ -465,25 +394,13 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		if errors.As(err, &errIdentityAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot create identity from invitation", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot activate account from invitation", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	r.sessionCookie.Set(w, session)
-
-	return &types.SignUpFromInvitationPayload{
-		Identity: &types.Identity{
-			ID:            identity.ID,
-			Email:         identity.EmailAddress,
-			EmailVerified: identity.EmailAddressVerified,
-			CreatedAt:     identity.CreatedAt,
-			UpdatedAt:     identity.UpdatedAt,
-		},
+	return &types.ActivateAccountPayload{
+		CreatePasswordToken: createPasswordToken,
+		Profile:             types.NewProfile(user),
 	}, nil
 }
 
@@ -636,30 +553,29 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input types.AssumeOrganizationSessionInput) (*types.AssumeOrganizationSessionPayload, error) {
 	rootSession := authn.SessionFromContext(ctx)
 
-	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID)
+	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID, input.Continue)
 	if err != nil {
 		var (
-			errMembershipNotFound         *iam.ErrMembershipNotFound
-			errPasswordRequired           *iam.ErrPasswordRequired
-			errSAMLAuthenticationRequired *iam.ErrSAMLAuthenticationRequired
+			errMembershipNotFound             *iam.ErrMembershipNotFound
+			errPasswordAuthenticationRequired *iam.ErrPasswordAuthenticationRequired
+			errSAMLAuthenticationRequired     *iam.ErrSAMLAuthenticationRequired
 		)
 
 		switch {
 		case errors.As(err, &errMembershipNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
 
-		case errors.As(err, &errPasswordRequired):
+		case errors.As(err, &errPasswordAuthenticationRequired):
 			return &types.AssumeOrganizationSessionPayload{
 				Result: types.PasswordRequired{
-					Reason: types.ReauthenticationReason(errPasswordRequired.Reason),
+					Reason: types.ReauthenticationReason(errPasswordAuthenticationRequired.Reason),
 				},
 			}, nil
 
 		case errors.As(err, &errSAMLAuthenticationRequired):
 			return &types.AssumeOrganizationSessionPayload{
 				Result: types.SAMLAuthenticationRequired{
-					Reason:      types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
-					RedirectURL: errSAMLAuthenticationRequired.RedirectURL,
+					Reason: types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
 				},
 			}, nil
 
@@ -789,7 +705,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 			Size:        input.HorizontalLogoFile.Size,
 		}
 	}
-	organization, err := r.iam.OrganizationService.CreateOrganization(
+	organization, profile, err := r.iam.OrganizationService.CreateOrganization(
 		ctx,
 		identity.ID,
 		&iam.CreateOrganizationRequest{
@@ -805,6 +721,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 	return &types.CreateOrganizationPayload{
 		Organization: types.NewOrganization(organization),
+		Profile:      types.NewProfile(profile),
 	}, nil
 }
 
@@ -884,66 +801,123 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 	panic(fmt.Errorf("not implemented: DeleteOrganizationHorizontalLogo - deleteOrganizationHorizontalLogo"))
 }
 
-// InviteMember is the resolver for the inviteMember field.
-func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteMemberInput) (*types.InviteMemberPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionInvitationCreate); err != nil {
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUserInput) (*types.CreateUserPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate); err != nil {
 		return nil, err
 	}
 
-	invitation, err := r.iam.OrganizationService.InviteMember(
+	profile, err := r.iam.OrganizationService.CreateUser(
 		ctx,
-		input.OrganizationID,
+		&iam.CreateUserRequest{
+			OrganizationID:           input.OrganizationID,
+			EmailAddress:             input.EmailAddress,
+			Role:                     input.Role,
+			FullName:                 input.FullName,
+			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+			Kind:                     input.Kind,
+			Position:                 input.Position,
+			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
+			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
+		},
+	)
+	if err != nil {
+		var errAlreadyExists *iam.ErrUserAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateUserPayload{
+		ProfileEdge: types.NewProfileEdge(profile, coredata.MembershipProfileOrderFieldCreatedAt),
+	}, nil
+}
+
+// InviteUser is the resolver for the inviteUser field.
+func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
+	if err := r.authorize(ctx, input.ProfileID, iam.ActionInvitationCreate); err != nil {
+		return nil, err
+	}
+
+	invitation, err := r.iam.OrganizationService.InviteUser(
+		ctx,
 		&iam.CreateInvitationRequest{
-			Email:    input.Email,
-			FullName: input.FullName,
-			Role:     input.Role,
+			OrganizationID: input.OrganizationID,
+			ProfileID:      input.ProfileID,
 		},
 	)
 	if err != nil {
 		var errOrganizationNotFound *iam.ErrOrganizationNotFound
-		var errMembershipAlreadyExists *iam.ErrMembershipAlreadyExists
+		var errUserAlreadyExists *iam.ErrUserAlreadyExists
 
 		if errors.As(err, &errOrganizationNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.As(err, &errMembershipAlreadyExists) {
+		if errors.As(err, &errUserAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot add member to organization", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot invite user", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.InviteMemberPayload{
+	return &types.InviteUserPayload{
 		InvitationEdge: types.NewInvitationEdge(invitation, coredata.InvitationOrderFieldCreatedAt),
 	}, nil
 }
 
-// DeleteInvitation is the resolver for the deleteInvitation field.
-func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionInvitationDelete); err != nil {
+// DeactivateUser is the resolver for the deactivateUser field.
+func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.DeactivateUserInput) (*types.DeactivateUserPayload, error) {
+	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate); err != nil {
 		return nil, err
 	}
 
-	err := r.iam.OrganizationService.DeleteInvitation(ctx, input.OrganizationID, input.InvitationID)
+	_, err := r.iam.OrganizationService.UpdateUserState(
+		ctx,
+		input.ProfileID,
+		coredata.ProfileStateInactive,
+	)
+
 	if err != nil {
-		var errInvitationNotFound *iam.ErrInvitationNotFound
-		var errInvitationNotDeleted *iam.ErrInvitationNotDeleted
-
-		if errors.As(err, &errInvitationNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		if errors.As(err, &errInvitationNotDeleted) {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot delete invitation", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot deactivate profile", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.DeleteInvitationPayload{DeletedInvitationID: input.InvitationID}, nil
+	return &types.DeactivateUserPayload{
+		Success: true,
+	}, nil
+}
+
+// UpdateUser is the resolver for the updateUser field.
+func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUserInput) (*types.UpdateUserPayload, error) {
+	if err := r.authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate); err != nil {
+		return nil, err
+	}
+
+	profile, err := r.iam.OrganizationService.UpdateUser(
+		ctx,
+		&iam.UpdateUserRequest{
+			ID:                       input.ID,
+			FullName:                 input.FullName,
+			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+			Kind:                     input.Kind,
+			Position:                 input.Position,
+			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
+			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update profile", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateUserPayload{
+		Profile: types.NewProfile(profile),
+	}, nil
 }
 
 // UpdateMembership is the resolver for the updateMembership field.
@@ -969,15 +943,15 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 	}, nil
 }
 
-// RemoveMember is the resolver for the removeMember field.
-func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error) {
-	if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipDelete); err != nil {
+// RemoveUser is the resolver for the removeUser field.
+func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
+	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
 		return nil, err
 	}
 
-	err := r.iam.OrganizationService.RemoveMember(ctx, input.OrganizationID, input.MembershipID)
+	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
-		var errManagedBySCIM *iam.ErrMembershipManagedBySCIM
+		var errManagedBySCIM *iam.ErrUserManagedBySCIM
 		var errLastActiveOwner *iam.ErrLastActiveOwner
 
 		if errors.As(err, &errManagedBySCIM) {
@@ -988,31 +962,11 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot remove member from organization", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.RemoveMemberPayload{DeletedMembershipID: input.MembershipID}, nil
-}
-
-// AcceptInvitation is the resolver for the acceptInvitation field.
-func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error) {
-	if err := r.authorize(ctx, input.InvitationID, iam.ActionInvitationAccept); err != nil {
-		return nil, err
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-
-	invitation, membership, err := r.iam.AccountService.AcceptInvitation(ctx, identity.ID, input.InvitationID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot accept invitation", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.AcceptInvitationPayload{
-		MembershipEdge: types.NewMembershipEdge(membership, coredata.MembershipOrderFieldCreatedAt),
-		Invitation:     types.NewInvitation(invitation),
-	}, nil
+	return &types.RemoveUserPayload{DeletedProfileID: input.ProfileID}, nil
 }
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
@@ -1224,64 +1178,28 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 	return presignedURL, nil
 }
 
-// Members is the resolver for the members field.
-func (r *organizationResolver) Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipList); err != nil {
+// Profiles is the resolver for the profiles field.
+func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
 		return nil, err
 	}
 
+	filter := coredata.NewMembershipProfileFilter(nil)
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.MembershipConnection{
+		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
+			Filters:  filter,
 		}, nil
 	}
 
-	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
-		Field:     coredata.MembershipOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
+	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
+		Field:     coredata.MembershipProfileOrderFieldFullName,
+		Direction: page.OrderDirectionAsc,
 	}
 	if orderBy != nil {
-		pageOrderBy.Field = coredata.MembershipOrderField(orderBy.Field)
-		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
-	}
-
-	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := r.iam.OrganizationService.ListMembers(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list memberships", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewMembershipConnection(page, r, obj.ID), nil
-}
-
-// Invitations is the resolver for the invitations field.
-func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionInvitationList); err != nil {
-		return nil, err
-	}
-
-	filters := coredata.NewInvitationFilter(nil)
-	if status != nil {
-		filters = coredata.NewInvitationFilter([]coredata.InvitationStatus{*status})
-	}
-
-	if gqlutils.OnlyTotalCountSelected(ctx) {
-		return &types.InvitationConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-			Filters:  filters,
-		}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
-		Field:     coredata.InvitationOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.InvitationOrderField]{
+		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1289,13 +1207,13 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 
 	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.iam.OrganizationService.ListInvitations(ctx, obj.ID, cursor, filters)
+	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list invitations", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewInvitationConnection(page, r, obj.ID, filters), nil
+	return types.NewProfileConnection(page, r, obj.ID, filter), nil
 }
 
 // SamlConfigurations is the resolver for the samlConfigurations field.
@@ -1347,21 +1265,26 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 	return types.NewSCIMConfiguration(config), nil
 }
 
-// ViewerMembership is the resolver for the viewerMembership field.
-func (r *organizationResolver) ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
+// Viewer is the resolver for the viewer field.
+func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organization) (*types.Profile, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
 	identity := authn.IdentityFromContext(ctx)
 
-	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, identity.ID, obj.ID)
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get membership for organization", log.Error(err))
+		var errNotFound *iam.ErrProfileNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewMembership(membership), nil
+	return types.NewProfile(profile), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -1412,6 +1335,121 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 	return nil, gqlutils.Internal(ctx)
 }
 
+// Identity is the resolver for the identity field.
+func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*types.Identity, error) {
+	if err := r.authorize(
+		ctx,
+		obj.ID,
+		iam.ActionMembershipProfileGet,
+		authz.WithSkipAssumptionCheck(),
+	); err != nil {
+		return nil, err
+	}
+
+	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
+	if err != nil {
+		var errNotFound *iam.ErrIdentityNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get identity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewIdentity(identity), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) (*types.Organization, error) {
+	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
+	if err != nil {
+		var errNotFound *iam.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Membership is the resolver for the membership field.
+func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*types.Membership, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, obj.Identity.ID, obj.Organization.ID)
+	if err != nil {
+		var errNotFound *iam.ErrMembershipNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get membership", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMembership(membership), nil
+}
+
+// PendingInvitations is the resolver for the pendingInvitations field.
+func (r *profileResolver) PendingInvitations(ctx context.Context, obj *types.Profile, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionInvitationList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
+		Field:     coredata.InvitationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.iam.AccountService.ListPendingInvitations(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list pending invitations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewInvitationConnection(page, r, obj.ID, nil), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.ProfileConnection) (*int, error) {
+	switch obj.Resolver.(type) {
+	case *identityResolver:
+		count, err := r.iam.AccountService.CountProfiles(ctx, obj.ParentID, obj.Filters)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+		return &count, nil
+	case *organizationResolver:
+		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+		return &count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return nil, gqlutils.Internal(ctx)
+}
+
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
 	var (
@@ -1448,6 +1486,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewSession(session), nil
+		}
+	case coredata.MembershipProfileEntityType:
+		action = iam.ActionMembershipGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			profile, err := r.iam.OrganizationService.GetProfile(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewProfile(profile), nil
 		}
 	case coredata.MembershipEntityType:
 		action = iam.ActionMembershipGet
@@ -1520,12 +1568,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			errOrganizationNotFound *iam.ErrOrganizationNotFound
 			errIdentityNotFound     *iam.ErrIdentityNotFound
 			errSessionNotFound      *iam.ErrSessionNotFound
+			errProfileNotFound      *iam.ErrProfileNotFound
 			errMembershipNotFound   *iam.ErrMembershipNotFound
 			errInvitationNotFound   *iam.ErrInvitationNotFound
 
 			isNotFoundErr = errors.As(err, &errOrganizationNotFound) ||
 				errors.As(err, &errIdentityNotFound) ||
 				errors.As(err, &errSessionNotFound) ||
+				errors.As(err, &errProfileNotFound) ||
 				errors.As(err, &errMembershipNotFound) ||
 				errors.As(err, &errInvitationNotFound)
 		)
@@ -1584,7 +1634,8 @@ func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*stri
 	}
 
 	samlConfig := samlConfigs[0]
-	loginURL := r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + samlConfig.ID.String()).MustString()
+	loginURL := r.SSOLoginURL(samlConfig.ID)
+
 	return &loginURL, nil
 }
 
@@ -1757,36 +1808,6 @@ func (r *sCIMConfigurationResolver) Permission(ctx context.Context, obj *types.S
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// Membership is the resolver for the membership field.
-func (r *sCIMEventResolver) Membership(ctx context.Context, obj *types.SCIMEvent) (*types.Membership, error) {
-	if obj.Membership == nil {
-		return nil, nil
-	}
-
-	if err := r.authorize(ctx, obj.Membership.ID, iam.ActionMembershipGet); err != nil {
-		return nil, err
-	}
-
-	if gqlutils.OnlyIDSelected(ctx) {
-		return &types.Membership{
-			ID: obj.Membership.ID,
-		}, nil
-	}
-
-	membership, err := r.iam.GetMembership(ctx, obj.Membership.ID)
-	if err != nil {
-		var errMembershipNotFound *iam.ErrMembershipNotFound
-		if errors.As(err, &errMembershipNotFound) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get membership for scim event", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewMembership(membership), nil
-}
-
 // Permission is the resolver for the permission field.
 func (r *sCIMEventResolver) Permission(ctx context.Context, obj *types.SCIMEvent, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -1860,23 +1881,8 @@ func (r *Resolver) Identity() schema.IdentityResolver { return &identityResolver
 // Invitation returns schema.InvitationResolver implementation.
 func (r *Resolver) Invitation() schema.InvitationResolver { return &invitationResolver{r} }
 
-// InvitationConnection returns schema.InvitationConnectionResolver implementation.
-func (r *Resolver) InvitationConnection() schema.InvitationConnectionResolver {
-	return &invitationConnectionResolver{r}
-}
-
 // Membership returns schema.MembershipResolver implementation.
 func (r *Resolver) Membership() schema.MembershipResolver { return &membershipResolver{r} }
-
-// MembershipConnection returns schema.MembershipConnectionResolver implementation.
-func (r *Resolver) MembershipConnection() schema.MembershipConnectionResolver {
-	return &membershipConnectionResolver{r}
-}
-
-// MembershipProfile returns schema.MembershipProfileResolver implementation.
-func (r *Resolver) MembershipProfile() schema.MembershipProfileResolver {
-	return &membershipProfileResolver{r}
-}
 
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
@@ -1890,6 +1896,14 @@ func (r *Resolver) PersonalAPIKey() schema.PersonalAPIKeyResolver { return &pers
 // PersonalAPIKeyConnection returns schema.PersonalAPIKeyConnectionResolver implementation.
 func (r *Resolver) PersonalAPIKeyConnection() schema.PersonalAPIKeyConnectionResolver {
 	return &personalAPIKeyConnectionResolver{r}
+}
+
+// Profile returns schema.ProfileResolver implementation.
+func (r *Resolver) Profile() schema.ProfileResolver { return &profileResolver{r} }
+
+// ProfileConnection returns schema.ProfileConnectionResolver implementation.
+func (r *Resolver) ProfileConnection() schema.ProfileConnectionResolver {
+	return &profileConnectionResolver{r}
 }
 
 // Query returns schema.QueryResolver implementation.
@@ -1932,14 +1946,13 @@ func (r *Resolver) SessionConnection() schema.SessionConnectionResolver {
 type connectorResolver struct{ *Resolver }
 type identityResolver struct{ *Resolver }
 type invitationResolver struct{ *Resolver }
-type invitationConnectionResolver struct{ *Resolver }
 type membershipResolver struct{ *Resolver }
-type membershipConnectionResolver struct{ *Resolver }
-type membershipProfileResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type personalAPIKeyResolver struct{ *Resolver }
 type personalAPIKeyConnectionResolver struct{ *Resolver }
+type profileResolver struct{ *Resolver }
+type profileConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type sAMLConfigurationResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }

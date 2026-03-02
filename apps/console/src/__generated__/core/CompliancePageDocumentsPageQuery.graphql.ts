@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ccda9818c715d1b77b33d0114c235cb4>>
+ * @generated SignedSource<<56c0070ef19b8dff73eeb111e11fff52>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -156,14 +156,14 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "documentType",
+                            "name": "currentPublishedVersion",
                             "storageKey": null
                           },
                           {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "title",
+                            "name": "documentType",
                             "storageKey": null
                           },
                           {
@@ -174,8 +174,15 @@ return {
                             "storageKey": null
                           },
                           {
-                            "alias": "lastVersion",
+                            "alias": "latestPublishedVersion",
                             "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "filter",
+                                "value": {
+                                  "status": "PUBLISHED"
+                                }
+                              },
                               {
                                 "kind": "Literal",
                                 "name": "first",
@@ -211,14 +218,14 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v2/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
                                         "kind": "ScalarField",
-                                        "name": "status",
+                                        "name": "title",
                                         "storageKey": null
-                                      }
+                                      },
+                                      (v2/*: any*/)
                                     ],
                                     "storageKey": null
                                   }
@@ -226,7 +233,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "versions(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                            "storageKey": "versions(filter:{\"status\":\"PUBLISHED\"},first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           }
                         ],
                         "storageKey": null
@@ -248,12 +255,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a094d511faa776c9e8d68f53933b3937",
+    "cacheID": "44c832e5fec9c0e84a0cbd844063d0fe",
     "id": null,
     "metadata": {},
     "name": "CompliancePageDocumentsPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageDocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...CompliancePageDocumentListFragment\n    id\n  }\n}\n\nfragment CompliancePageDocumentListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageDocumentListItem_compliancePageFragment\n    id\n  }\n  documents(first: 100) {\n    edges {\n      node {\n        id\n        ...CompliancePageDocumentListItem_documentFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageDocumentListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n\nfragment CompliancePageDocumentListItem_documentFragment on Document {\n  id\n  documentType\n  title\n  trustCenterVisibility\n  lastVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "query CompliancePageDocumentsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...CompliancePageDocumentListFragment\n    id\n  }\n}\n\nfragment CompliancePageDocumentListFragment on Organization {\n  compliancePage: trustCenter {\n    ...CompliancePageDocumentListItem_compliancePageFragment\n    id\n  }\n  documents(first: 100) {\n    edges {\n      node {\n        id\n        currentPublishedVersion\n        ...CompliancePageDocumentListItem_documentFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageDocumentListItem_compliancePageFragment on TrustCenter {\n  canUpdate: permission(action: \"core:trust-center:update\")\n}\n\nfragment CompliancePageDocumentListItem_documentFragment on Document {\n  id\n  documentType\n  trustCenterVisibility\n  latestPublishedVersion: versions(first: 1, orderBy: {field: CREATED_AT, direction: DESC}, filter: {status: PUBLISHED}) {\n    edges {\n      node {\n        title\n        id\n      }\n    }\n  }\n}\n"
   }
 };
 })();

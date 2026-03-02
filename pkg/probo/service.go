@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -61,6 +62,7 @@ type (
 		fileManager       *filemanager.Service
 		logger            *log.Logger
 		slack             *slack.Service
+		esign             *esign.Service
 	}
 
 	TenantService struct {
@@ -73,13 +75,13 @@ type (
 		tokenSecret                       string
 		agent                             *agents.Agent
 		fileManager                       *filemanager.Service
+		esign                             *esign.Service
 		Frameworks                        *FrameworkService
 		Measures                          *MeasureService
 		Tasks                             *TaskService
 		Evidences                         *EvidenceService
 		Organizations                     *OrganizationService
 		Vendors                           *VendorService
-		Peoples                           *PeopleService
 		Documents                         *DocumentService
 		Controls                          *ControlService
 		Risks                             *RiskService
@@ -93,6 +95,7 @@ type (
 		Data                              *DatumService
 		Audits                            *AuditService
 		Meetings                          *MeetingService
+		WebhookSubscriptions              *WebhookSubscriptionService
 		Reports                           *ReportService
 		TrustCenters                      *TrustCenterService
 		TrustCenterAccesses               *TrustCenterAccessService
@@ -128,6 +131,7 @@ func NewService(
 	logger *log.Logger,
 	slackService *slack.Service,
 	iamService *iam.Service,
+	esignService *esign.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -148,6 +152,7 @@ func NewService(
 		fileManager:       fileManagerService,
 		logger:            logger,
 		slack:             slackService,
+		esign:             esignService,
 	}
 
 	return svc, nil
@@ -164,6 +169,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		tokenSecret:   s.tokenSecret,
 		agent:         agents.NewAgent(nil, s.agentConfig),
 		fileManager:   s.fileManager,
+		esign:         s.esign,
 	}
 
 	tenantService.Frameworks = &FrameworkService{
@@ -186,7 +192,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 			),
 		),
 	}
-	tenantService.Peoples = &PeopleService{svc: tenantService}
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Documents = &DocumentService{
 		svc:               tenantService,
@@ -215,6 +220,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Data = &DatumService{svc: tenantService}
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Meetings = &MeetingService{svc: tenantService}
+	tenantService.WebhookSubscriptions = &WebhookSubscriptionService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}

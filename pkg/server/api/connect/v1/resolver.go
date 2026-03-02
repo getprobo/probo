@@ -23,6 +23,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -65,4 +66,8 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
 	return r.authorize(ctx, obj.GetID(), action) == nil, nil
+}
+
+func (r *Resolver) SSOLoginURL(samlConfigID gid.GID) string {
+	return r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + samlConfigID.String()).MustString()
 }

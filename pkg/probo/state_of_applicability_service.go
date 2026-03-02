@@ -53,7 +53,7 @@ func (csr *CreateStateOfApplicabilityRequest) Validate() error {
 
 	v.Check(csr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(csr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(csr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(csr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -63,7 +63,7 @@ func (usr *UpdateStateOfApplicabilityRequest) Validate() error {
 
 	v.Check(usr.StateOfApplicabilityID, "state_of_applicability_id", validator.Required(), validator.GID(coredata.StateOfApplicabilityEntityType))
 	v.Check(usr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(usr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(usr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 
 	return v.Error()
 }
@@ -272,6 +272,25 @@ func (s StateOfApplicabilityService) Delete(
 	return nil
 }
 
+func (s StateOfApplicabilityService) GetApplicabilityStatement(
+	ctx context.Context,
+	applicabilityStatementID gid.GID,
+) (*coredata.ApplicabilityStatement, error) {
+	applicabilityStatement := &coredata.ApplicabilityStatement{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return applicabilityStatement.LoadByID(ctx, conn, s.svc.scope, applicabilityStatementID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return applicabilityStatement, nil
+}
+
 func (s StateOfApplicabilityService) ListApplicabilityStatements(
 	ctx context.Context,
 	stateOfApplicabilityID gid.GID,
@@ -445,9 +464,9 @@ func (s StateOfApplicabilityService) ExportPDF(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			owner := &coredata.People{}
+			owner := &coredata.MembershipProfile{}
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, stateOfApplicability.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner: %w", err)
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
 			// Load applicability statements
@@ -457,7 +476,7 @@ func (s StateOfApplicabilityService) ExportPDF(
 				nil,
 				page.Head,
 				page.OrderBy[coredata.ApplicabilityStatementOrderField]{
-					Field:     coredata.ApplicabilityStatementOrderFieldCreatedAt,
+					Field:     coredata.ApplicabilityStatementOrderFieldControlSectionTitle,
 					Direction: page.OrderDirectionAsc,
 				},
 			)

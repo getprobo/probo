@@ -15,7 +15,6 @@
 package saml
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
 
@@ -24,7 +23,6 @@ import (
 )
 
 func (s *Service) serviceProvider(
-	ctx context.Context,
 	config *coredata.SAMLConfiguration,
 ) (*saml.ServiceProvider, error) {
 	cert, err := config.GetIdPCertificate()
@@ -52,6 +50,9 @@ func (s *Service) serviceProvider(
 								},
 							},
 						},
+					},
+					NameIDFormats: []saml.NameIDFormat{
+						saml.EmailAddressNameIDFormat,
 					},
 				},
 				SingleSignOnServices: []saml.Endpoint{

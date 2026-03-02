@@ -118,8 +118,8 @@ PostgreSQL password (from subchart or external config)
 S3 endpoint
 */}}
 {{- define "probo.s3.endpoint" -}}
-{{- if .Values.minio.enabled }}
-{{- printf "http://%s-minio:9000" .Release.Name }}
+{{- if .Values.seaweedfs.enabled }}
+{{- printf "http://%s-seaweedfs:8333" (include "probo.fullname" .) }}
 {{- else }}
 {{- .Values.s3.endpoint }}
 {{- end }}
@@ -129,10 +129,10 @@ S3 endpoint
 S3 access key
 */}}
 {{- define "probo.s3.accessKeyId" -}}
-{{- if .Values.minio.enabled }}
-{{- .Values.minio.auth.rootUser | required "minio.auth.rootUser is required when minio.enabled=true" }}
+{{- if .Values.seaweedfs.enabled }}
+{{- .Values.seaweedfs.auth.accessKey | required "seaweedfs.auth.accessKey is required when seaweedfs.enabled=true" }}
 {{- else }}
-{{- .Values.s3.accessKeyId | required "s3.accessKeyId is required when minio.enabled=false" }}
+{{- .Values.s3.accessKeyId | required "s3.accessKeyId is required when seaweedfs.enabled=false" }}
 {{- end }}
 {{- end }}
 
@@ -140,10 +140,10 @@ S3 access key
 S3 secret key
 */}}
 {{- define "probo.s3.secretAccessKey" -}}
-{{- if .Values.minio.enabled }}
-{{- .Values.minio.auth.rootPassword | required "minio.auth.rootPassword is required when minio.enabled=true" }}
+{{- if .Values.seaweedfs.enabled }}
+{{- .Values.seaweedfs.auth.secretKey | required "seaweedfs.auth.secretKey is required when seaweedfs.enabled=true" }}
 {{- else }}
-{{- .Values.s3.secretAccessKey | required "s3.secretAccessKey is required when minio.enabled=false" }}
+{{- .Values.s3.secretAccessKey | required "s3.secretAccessKey is required when seaweedfs.enabled=false" }}
 {{- end }}
 {{- end }}
 

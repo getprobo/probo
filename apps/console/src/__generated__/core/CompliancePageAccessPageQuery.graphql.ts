@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2ba5d01d3d1dbb4956627eae14df34ab>>
+ * @generated SignedSource<<d2b21f03826cd218a7115b28f58ca0ae>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -285,8 +285,20 @@ return {
                               {
                                 "alias": null,
                                 "args": null,
-                                "kind": "ScalarField",
-                                "name": "hasAcceptedNonDisclosureAgreement",
+                                "concreteType": "ElectronicSignature",
+                                "kind": "LinkedField",
+                                "name": "ndaSignature",
+                                "plural": false,
+                                "selections": [
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "kind": "ScalarField",
+                                    "name": "status",
+                                    "storageKey": null
+                                  },
+                                  (v3/*: any*/)
+                                ],
                                 "storageKey": null
                               },
                               {
@@ -301,19 +313,6 @@ return {
                                 "kind": "ScalarField",
                                 "name": "permission",
                                 "storageKey": "permission(action:\"core:trust-center-access:update\")"
-                              },
-                              {
-                                "alias": "canDelete",
-                                "args": [
-                                  {
-                                    "kind": "Literal",
-                                    "name": "action",
-                                    "value": "core:trust-center-access:delete"
-                                  }
-                                ],
-                                "kind": "ScalarField",
-                                "name": "permission",
-                                "storageKey": "permission(action:\"core:trust-center-access:delete\")"
                               },
                               (v2/*: any*/)
                             ],
@@ -362,12 +361,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6e4d46f7b3fdff2e4650ea27d96b8c5b",
+    "cacheID": "ad9508484592b38254e9cc66941b926e",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAccessPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageAccessPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        canCreateAccess: permission(action: \"core:trust-center-access:create\")\n        ...CompliancePageAccessListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment on TrustCenter {\n  accesses(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  hasAcceptedNonDisclosureAgreement\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n  canDelete: permission(action: \"core:trust-center-access:delete\")\n}\n"
+    "text": "query CompliancePageAccessPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        canCreateAccess: permission(action: \"core:trust-center-access:create\")\n        ...CompliancePageAccessListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment on TrustCenter {\n  accesses(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
   }
 };
 })();

@@ -11,7 +11,8 @@ RUN useradd -m probo && \
     apt-get install -y ca-certificates libcap2-bin && \
     rm -rf /var/lib/apt/lists/*
 
-COPY probod /usr/local/bin/probod
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/probod /usr/local/bin/probod
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/probod && \

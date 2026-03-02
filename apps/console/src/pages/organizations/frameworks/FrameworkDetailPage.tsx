@@ -21,7 +21,6 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { FrameworkDetailPageExportFrameworkMutation } from "#/__generated__/core/FrameworkDetailPageExportFrameworkMutation.graphql";
 import type { FrameworkDetailPageFragment$key } from "#/__generated__/core/FrameworkDetailPageFragment.graphql";
-import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "#/__generated__/core/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
 import type { FrameworkGraphNodeQuery } from "#/__generated__/core/FrameworkGraphNodeQuery.graphql";
 import {
   connectionListKey,
@@ -45,7 +44,6 @@ const frameworkDetailFragment = graphql`
         canUpdate: permission(action: "core:framework:update")
         canDelete: permission(action: "core:framework:delete")
         canCreateControl: permission(action: "core:control:create")
-        canGenerateSOA: permission(action: "core:framework:generate-state-of-applicability")
         organization {
             name
         }
@@ -59,23 +57,9 @@ const frameworkDetailFragment = graphql`
                     id
                     sectionTitle
                     name
-                    status
-                    exclusionJustification
                     bestPractice
                 }
             }
-        }
-    }
-`;
-
-const generateFrameworkStateOfApplicabilityMutation = graphql`
-    mutation FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation(
-        $frameworkId: ID!
-    ) {
-        generateFrameworkStateOfApplicability(
-            input: { frameworkId: $frameworkId }
-        ) {
-            data
         }
     }
 `;
@@ -116,17 +100,6 @@ export default function FrameworkDetailPage(props: Props) {
     framework,
     ConnectionHandler.getConnectionID(organizationId, connectionListKey),
   );
-  const [generateFrameworkStateOfApplicability]
-    = useMutationWithToasts<FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation>(
-      generateFrameworkStateOfApplicabilityMutation,
-      {
-        errorMessage:
-                    "Failed to generate framework state of applicability",
-        successMessage:
-                    "Framework state of applicability generated successfully",
-      },
-    );
-
   const [exportFramework]
     = useMutationWithToasts<FrameworkDetailPageExportFrameworkMutation>(
       exportFrameworkMutation,
@@ -154,7 +127,7 @@ export default function FrameworkDetailPage(props: Props) {
     );
   }
 
-  const hasAnyAction = framework.canExport || framework.canDelete || framework.canGenerateSOA;
+  const hasAnyAction = framework.canExport || framework.canDelete;
 
   return (
     <div className="space-y-6">
@@ -178,35 +151,6 @@ export default function FrameworkDetailPage(props: Props) {
         )}
         {hasAnyAction && (
           <ActionDropdown variant="secondary">
-            {framework.canGenerateSOA
-              && (
-                <DropdownItem
-                  variant="primary"
-                  onClick={() => {
-                    void generateFrameworkStateOfApplicability({
-                      variables: { frameworkId: framework.id },
-                      onCompleted: (data) => {
-                        if (
-                          data
-                            .generateFrameworkStateOfApplicability
-                            ?.data
-                        ) {
-                          const link
-                            = window.document.createElement("a");
-                          link.href
-                            = data.generateFrameworkStateOfApplicability.data;
-                          link.download = `${framework.organization.name}-${framework.name}-SOA.xlsx`;
-                          window.document.body.appendChild(link);
-                          link.click();
-                          window.document.body.removeChild(link);
-                        }
-                      },
-                    });
-                  }}
-                >
-                  {__("Download SOA")}
-                </DropdownItem>
-              )}
             {framework.canExport
               && (
                 <DropdownItem
@@ -245,7 +189,6 @@ export default function FrameworkDetailPage(props: Props) {
               key={control.id}
               id={control.sectionTitle}
               description={control.name}
-              excluded={control.status === "EXCLUDED"}
               to={`/organizations/${organizationId}/frameworks/${framework.id}/controls/${control.id}`}
               active={selectedControl?.id === control.id}
             />

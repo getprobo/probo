@@ -44,7 +44,7 @@ export async function execute(
 	const query = `
 		query GetOrganizations($first: Int, $after: CursorKey) {
 			viewer {
-				memberships(first: $first, after: $after) {
+				profiles(first: $first, after: $after) {
 					edges {
 						node {
 							organization {

@@ -36,29 +36,6 @@ type (
 	}
 )
 
-// ListVersions lists all versions of a document
-func (s *DocumentService) ListVersions(
-	ctx context.Context,
-	documentID gid.GID,
-	cursor *page.Cursor[coredata.DocumentVersionOrderField],
-) (*page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField], error) {
-	var documentVersions coredata.DocumentVersions
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			filter := coredata.NewDocumentVersionFilter()
-			return documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor, filter)
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(documentVersions, cursor), nil
-}
-
 func (s *DocumentService) ListForOrganizationId(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -70,9 +47,9 @@ func (s *DocumentService) ListForOrganizationId(
 		ctx,
 		func(conn pg.Conn) error {
 			filter := coredata.NewDocumentTrustCenterFilter()
-			err := documents.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
-			if err != nil {
-				return fmt.Errorf("cannot load documents: %w", err)
+
+			if err := documents.LoadPublishedByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load published documents: %w", err)
 			}
 
 			return nil
@@ -142,8 +119,8 @@ func (s *DocumentService) exportPDFData(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	owner := &coredata.People{}
 	organization := &coredata.Organization{}
+	var approverNames []string
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -160,8 +137,19 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load latest published document version: %w", err)
 			}
 
-			if err := owner.LoadByID(ctx, conn, s.svc.scope, document.OwnerID); err != nil {
-				return fmt.Errorf("cannot load document owner: %w", err)
+			// Load approvers
+			docApprovers := &coredata.DocumentApprovers{}
+			if err := docApprovers.LoadByDocumentID(ctx, conn, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document approvers: %w", err)
+			}
+
+			profiles := coredata.MembershipProfiles{}
+			if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, docApprovers.ApproverProfileIDs()); err != nil {
+				return fmt.Errorf("cannot load document approver profiles: %w", err)
+			}
+
+			for _, p := range profiles {
+				approverNames = append(approverNames, p.FullName)
 			}
 
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {
@@ -203,7 +191,7 @@ func (s *DocumentService) exportPDFData(
 		Content:                     version.Content,
 		Version:                     version.VersionNumber,
 		Classification:              classification,
-		Approver:                    owner.FullName,
+		Approvers:                   approverNames,
 		PublishedAt:                 version.PublishedAt,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 	}

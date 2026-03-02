@@ -1,0 +1,1 @@
+ALTER TABLE controls ALTER COLUMN status DROP NOT NULL;

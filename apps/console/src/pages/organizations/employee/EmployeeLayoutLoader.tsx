@@ -18,11 +18,8 @@ function EmployeeLayoutQueryLoader() {
   );
 
   useEffect(() => {
-    loadQuery({
-      organizationId,
-      hideSidebar: true,
-    });
-  }, [loadQuery, organizationId]);
+    loadQuery({ organizationId, hideSidebar: true });
+  }, [organizationId, loadQuery]);
 
   if (!queryRef) {
     return <Skeleton className="w-full h-screen" />;

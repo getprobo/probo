@@ -149,13 +149,6 @@ export const EditControlDialog = forwardRef<EditControlDialogRef>((_props, ref) 
                 )}
               </DialogContent>
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => dialogRef.current?.close()}
-                >
-                  {__("Cancel")}
-                </Button>
                 <Button type="submit" disabled={isUpdating}>
                   {__("Save")}
                 </Button>

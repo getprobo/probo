@@ -1,16 +1,16 @@
 services:
   postgres:
-    image: "postgres:17.4"
+    image: "postgres:18.1"
     shm_size: "1g"
     command: >
-      postgres -c "shared_buffers=4GB"
+      postgres -c "shared_buffers=1GB"
                -c "max_connections=200"
                -c "log_statement=all"
     ports:
       - "5432:5432"
     volumes:
       - "./compose/postgres:/docker-entrypoint-initdb.d:ro"
-      - "postgres-data:/var/lib/postgresql/data:rw"
+      - "postgres-data:/var/lib/postgresql:rw"
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
@@ -20,19 +20,23 @@ services:
       timeout: 5s
       retries: 5
 
-  minio:
-    image: "quay.io/minio/minio"
-    entrypoint: "sh"
-    command: |
-      -c 'mkdir -p /var/lib/minio/probod && mkdir -p /var/lib/minio/probod-test && minio server --json --console-address :9001 /var/lib/minio'
+  seaweedfs:
+    image: "chrislusf/seaweedfs:latest"
+    command: >
+      server
+      -s3
+      -s3.config=/etc/seaweedfs/s3.json
+      -s3.port=8333
+      -volume.max=100
+      -master.volumeSizeLimitMB=1024
+      -dir=/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "8333:8333"
+      - "9333:9333"
+      - "8888:8888"
     volumes:
-      - "minio-data:/var/lib/minio:rw"
-    environment:
-      MINIO_ROOT_USER: "probod"
-      MINIO_ROOT_PASSWORD: "thisisnotasecret"
+      - "./compose/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro"
+      - "seaweedfs-data:/data:rw"
 
   grafana:
     image: "grafana/grafana:latest"
@@ -154,7 +158,7 @@ services:
 
 volumes:
   postgres-data:
-  minio-data:
+  seaweedfs-data:
   grafana-data:
   prometheus-data:
   tempo-data:

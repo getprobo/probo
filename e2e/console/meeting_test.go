@@ -136,14 +136,6 @@ func TestMeeting_Create_Validation(t *testing.T) {
 			wantErrorContains: "HTML",
 		},
 		{
-			name: "name with angle brackets",
-			input: map[string]any{
-				"name": "Test < Meeting",
-				"date": time.Now().Format(time.RFC3339Nano),
-			},
-			wantErrorContains: "angle brackets",
-		},
-		{
 			name: "name with newline",
 			input: map[string]any{
 				"name": "Test\nMeeting",
@@ -342,14 +334,6 @@ func TestMeeting_Update_Validation(t *testing.T) {
 				return map[string]any{"meetingId": id, "name": "<script>alert('xss')</script>"}
 			},
 			wantErrorContains: "HTML",
-		},
-		{
-			name:  "name with angle brackets",
-			setup: func() string { return baseMeetingID },
-			input: func(id string) map[string]any {
-				return map[string]any{"meetingId": id, "name": "Test < Meeting"}
-			},
-			wantErrorContains: "angle brackets",
 		},
 		{
 			name:  "name with newline",
@@ -690,8 +674,8 @@ func TestMeeting_SubResolvers_WithData(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	attendee1 := factory.NewPeople(owner).WithFullName("Attendee One").Create()
-	attendee2 := factory.NewPeople(owner).WithFullName("Attendee Two").Create()
+	attendee1ProfileID := factory.CreateUser(owner)
+	attendee2ProfileID := factory.CreateUser(owner)
 
 	var result struct {
 		CreateMeeting struct {
@@ -730,7 +714,7 @@ func TestMeeting_SubResolvers_WithData(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"name":           "Meeting With Attendees",
 			"date":           time.Now().Format(time.RFC3339Nano),
-			"attendeeIds":    []string{attendee1, attendee2},
+			"attendeeIds":    []string{attendee1ProfileID, attendee2ProfileID},
 		},
 	}, &result)
 	require.NoError(t, err)

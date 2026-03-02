@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a784f382bb38ee97a08852676bdf78c5>>
+ * @generated SignedSource<<dbfa9933e6f239c56df94f5207d47d08>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,22 +11,22 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type OrderDirection = "ASC" | "DESC";
-export type PeopleOrderField = "CREATED_AT" | "FULL_NAME" | "KIND";
-export type PeopleFilter = {
+export type ProfileOrderField = "CREATED_AT" | "FULL_NAME" | "KIND";
+export type ProfileFilter = {
   excludeContractEnded?: boolean | null | undefined;
 };
-export type PeopleOrder = {
+export type ProfileOrder = {
   direction: OrderDirection;
-  field: PeopleOrderField;
+  field: ProfileOrderField;
 };
 export type PeopleListQuery$variables = {
   after?: string | null | undefined;
   before?: string | null | undefined;
-  filter?: PeopleFilter | null | undefined;
+  filter?: ProfileFilter | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;
-  order?: PeopleOrder | null | undefined;
+  order?: ProfileOrder | null | undefined;
 };
 export type PeopleListQuery$data = {
   readonly node: {
@@ -214,25 +214,25 @@ return {
                   {
                     "kind": "Literal",
                     "name": "action",
-                    "value": "core:people:create"
+                    "value": "iam:membership-profile:create"
                   }
                 ],
                 "kind": "ScalarField",
                 "name": "permission",
-                "storageKey": "permission(action:\"core:people:create\")"
+                "storageKey": "permission(action:\"iam:membership-profile:create\")"
               },
               {
                 "alias": null,
                 "args": (v15/*: any*/),
-                "concreteType": "PeopleConnection",
+                "concreteType": "ProfileConnection",
                 "kind": "LinkedField",
-                "name": "peoples",
+                "name": "profiles",
                 "plural": false,
                 "selections": [
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "PeopleEdge",
+                    "concreteType": "ProfileEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -240,7 +240,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "People",
+                        "concreteType": "Profile",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -257,7 +257,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "primaryEmailAddress",
+                            "name": "emailAddress",
                             "storageKey": null
                           },
                           {
@@ -301,12 +301,12 @@ return {
                               {
                                 "kind": "Literal",
                                 "name": "action",
-                                "value": "core:people:delete"
+                                "value": "iam:membership-profile:delete"
                               }
                             ],
                             "kind": "ScalarField",
                             "name": "permission",
-                            "storageKey": "permission(action:\"core:people:delete\")"
+                            "storageKey": "permission(action:\"iam:membership-profile:delete\")"
                           },
                           {
                             "alias": "canUpdate",
@@ -314,12 +314,12 @@ return {
                               {
                                 "kind": "Literal",
                                 "name": "action",
-                                "value": "core:people:update"
+                                "value": "iam:membership-profile:update"
                               }
                             ],
                             "kind": "ScalarField",
                             "name": "permission",
-                            "storageKey": "permission(action:\"core:people:update\")"
+                            "storageKey": "permission(action:\"iam:membership-profile:update\")"
                           },
                           (v13/*: any*/)
                         ],
@@ -397,9 +397,9 @@ return {
                   "filter"
                 ],
                 "handle": "connection",
-                "key": "PeopleGraphPaginatedQuery_peoples",
+                "key": "PeopleGraphPaginatedQuery_profiles",
                 "kind": "LinkedHandle",
-                "name": "peoples"
+                "name": "profiles"
               }
             ],
             "type": "Organization",
@@ -411,16 +411,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0ebad3a1b3f8943f1fdc170021089dc8",
+    "cacheID": "df38c9b5774c0ef76d632a4bc810b676",
     "id": null,
     "metadata": {},
     "name": "PeopleListQuery",
     "operationKind": "query",
-    "text": "query PeopleListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: PeopleFilter = null\n  $first: Int = 50\n  $last: Int = null\n  $order: PeopleOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleGraphPaginatedFragment_4cFWzS\n    id\n  }\n}\n\nfragment PeopleGraphPaginatedFragment_4cFWzS on Organization {\n  canCreatePeople: permission(action: \"core:people:create\")\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        kind\n        position\n        additionalEmailAddresses\n        contractStartDate\n        contractEndDate\n        canDelete: permission(action: \"core:people:delete\")\n        canUpdate: permission(action: \"core:people:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query PeopleListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: ProfileFilter = null\n  $first: Int = 50\n  $last: Int = null\n  $order: ProfileOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleGraphPaginatedFragment_4cFWzS\n    id\n  }\n}\n\nfragment PeopleGraphPaginatedFragment_4cFWzS on Organization {\n  canCreatePeople: permission(action: \"iam:membership-profile:create\")\n  profiles(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        kind\n        position\n        additionalEmailAddresses\n        contractStartDate\n        contractEndDate\n        canDelete: permission(action: \"iam:membership-profile:delete\")\n        canUpdate: permission(action: \"iam:membership-profile:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "199e1751362979bcc7e86e1a90a449d4";
+(node as any).hash = "00fc3c290ab8526c36804176a79760ca";
 
 export default node;

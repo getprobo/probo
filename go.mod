@@ -13,12 +13,13 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d
 	github.com/chromedp/chromedp v0.14.2
 	github.com/crewjam/saml v0.5.1
+	github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea
 	github.com/elimity-com/scim v0.0.0-20240320110924-172bf2aee9c8
 	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-chi/cors v1.2.2
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/jhillyerd/enmime v1.3.0
-	github.com/modelcontextprotocol/go-sdk v1.2.0
+	github.com/modelcontextprotocol/go-sdk v1.3.1
 	github.com/openai/openai-go v1.12.0
 	github.com/pdfcpu/pdfcpu v0.11.1
 	github.com/pires/go-proxyproto v0.9.2
@@ -26,14 +27,13 @@ require (
 	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/stretchr/testify v1.11.1
 	github.com/vektah/gqlparser/v2 v2.5.31
-	github.com/xuri/excelize/v2 v2.10.0
 	github.com/yuin/goldmark v1.7.16
 	go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712
 	go.gearno.de/kit v0.1.1
-	go.gearno.de/x/ref v0.0.0-20240502200927-d74926fcb14c
+	go.gearno.de/x/ref v0.0.0-20260216110753-a700c951377c
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
-	go.probo.inc/mcpgen v0.0.0-20251124210642-41a5174eb92f
+	go.probo.inc/mcpgen v0.0.0-20260223192226-386b1fbe6184
 	golang.org/x/crypto v0.47.0
 	golang.org/x/image v0.33.0
 	golang.org/x/oauth2 v0.34.0
@@ -67,6 +67,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/di-wu/parser v0.3.0 // indirect
 	github.com/di-wu/xsd-datetime v1.0.0 // indirect
+	github.com/digitorus/pkcs7 v0.0.0-20230713084857-e76b763bdc49 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -109,21 +110,18 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
-	github.com/richardlehane/mscfb v1.0.6 // indirect
-	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/russellhaering/goxmldsig v1.5.0 // indirect
+	github.com/segmentio/asm v1.1.3 // indirect
+	github.com/segmentio/encoding v0.5.3 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
-	github.com/spf13/cobra v1.10.1 // indirect
-	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/spf13/cobra v1.10.2 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	github.com/tiendc/go-deepcopy v1.7.2 // indirect
 	github.com/urfave/cli/v3 v3.6.1 // indirect
-	github.com/xuri/efp v0.0.1 // indirect
-	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.gearno.de/x/panicf v0.1.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
@@ -134,12 +132,12 @@ require (
 	go.opentelemetry.io/otel/sdk v1.39.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/term v0.39.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
-	golang.org/x/tools v0.40.0 // indirect
+	golang.org/x/tools v0.41.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/grpc v1.78.0 // indirect

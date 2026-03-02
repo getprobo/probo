@@ -35,7 +35,7 @@ const fragment = graphql`
         canListMeasures: permission(action: "core:measure:list")
         canListRisks: permission(action: "core:risk:list")
         canListFrameworks: permission(action: "core:framework:list")
-        canListPeople: permission(action: "core:people:list")
+        canListMembers: permission(action: "iam:membership:list")
         canListVendors: permission(action: "core:vendor:list")
         canListDocuments: permission(action: "core:document:list")
         canListAssets: permission(action: "core:asset:list")
@@ -106,7 +106,7 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/frameworks`}
         />
       )}
-      {organization.canListPeople && (
+      {organization.canListMembers && (
         <SidebarItem
           label={__("People")}
           icon={IconGroup1}

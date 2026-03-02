@@ -76,6 +76,31 @@ func (s *Service) GetFileBase64(
 	return base64Data, mimeType, nil
 }
 
+// GetFileBytes downloads a file from S3 and returns the raw bytes.
+func (s *Service) GetFileBytes(
+	ctx context.Context,
+	file File,
+) ([]byte, error) {
+	result, err := s.s3Client.GetObject(
+		ctx,
+		&s3.GetObjectInput{
+			Bucket: aws.String(file.GetBucketName()),
+			Key:    aws.String(file.GetObjectKey()),
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get file from S3: %w", err)
+	}
+	defer func() { _ = result.Body.Close() }()
+
+	data, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read file data: %w", err)
+	}
+
+	return data, nil
+}
+
 func (s *Service) GetFileSize(content io.Reader) (int64, error) {
 	seeker, ok := content.(io.Seeker)
 	if !ok {

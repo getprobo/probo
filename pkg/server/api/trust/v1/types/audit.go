@@ -35,7 +35,8 @@ func NewAuditConnection(
 
 func NewAudit(a *coredata.Audit) *Audit {
 	return &Audit{
-		ID: a.ID,
+		ID:   a.ID,
+		Name: a.Name,
 	}
 }
 

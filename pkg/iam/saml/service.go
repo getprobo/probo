@@ -107,6 +107,7 @@ func (s *Service) GenerateSpMetadata() ([]byte, error) {
 func (s *Service) InitiateLogin(
 	ctx context.Context,
 	configID gid.GID,
+	continuePath string,
 ) (*url.URL, error) {
 	var (
 		now           = time.Now()
@@ -131,7 +132,7 @@ func (s *Service) InitiateLogin(
 				return NewSAMLDisabledError()
 			}
 
-			sp, err := s.serviceProvider(ctx, config)
+			sp, err := s.serviceProvider(config)
 			if err != nil {
 				return fmt.Errorf("cannot build service provider: %w", err)
 			}
@@ -152,7 +153,9 @@ func (s *Service) InitiateLogin(
 				return fmt.Errorf("cannot insert SAML request: %w", err)
 			}
 
-			redirect, err = req.Redirect(config.ID.String(), sp)
+			relayState := config.ID.String() + url.QueryEscape(continuePath)
+
+			redirect, err = req.Redirect(relayState, sp)
 			if err != nil {
 				return fmt.Errorf("cannot generate redirect URL: %w", err)
 			}
@@ -175,6 +178,7 @@ func (s *Service) HandleAssertion(
 	var (
 		now        = time.Now()
 		identity   = &coredata.Identity{}
+		profile    = &coredata.MembershipProfile{}
 		membership = &coredata.Membership{}
 	)
 
@@ -196,7 +200,7 @@ func (s *Service) HandleAssertion(
 				return NewSAMLDisabledError()
 			}
 
-			sp, err := s.serviceProvider(ctx, config)
+			sp, err := s.serviceProvider(config)
 			if err != nil {
 				return fmt.Errorf("cannot create service provider: %w", err)
 			}
@@ -258,6 +262,7 @@ func (s *Service) HandleAssertion(
 				*identity = coredata.Identity{
 					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 					EmailAddress:         email,
+					SAMLSubject:          &assertion.Subject.NameID.Value,
 					FullName:             fullname,
 					HashedPassword:       nil,
 					EmailAddressVerified: true,
@@ -272,9 +277,14 @@ func (s *Service) HandleAssertion(
 			} else if err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			} else {
-				identity.SAMLSubject = &assertion.Subject.NameID.Value
 				identity.EmailAddress = email
 				identity.FullName = fullname
+
+				// Identity can exist (e.g. provisioned via SCIM) but not have a SAML subject
+				if identity.SAMLSubject == nil {
+					identity.SAMLSubject = &assertion.Subject.NameID.Value
+				}
+
 				identity.EmailAddressVerified = true
 				identity.UpdatedAt = now
 
@@ -286,24 +296,54 @@ func (s *Service) HandleAssertion(
 
 			scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-			err = membership.LoadByIdentityAndOrg(ctx, tx, scope, identity.ID, config.OrganizationID)
-			if err != nil && err != coredata.ErrResourceNotFound {
-				return fmt.Errorf("cannot load membership: %w", err)
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				scope,
+				identity.ID,
+				config.OrganizationID,
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load profile: %w", err)
+				}
+
+				profile = &coredata.MembershipProfile{
+					ID:             gid.New(configID.TenantID(), coredata.MembershipProfileEntityType),
+					IdentityID:     identity.ID,
+					OrganizationID: config.OrganizationID,
+					Source:         coredata.ProfileSourceSAML,
+					State:          coredata.ProfileStateActive,
+					FullName:       fullname,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				err = profile.Insert(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("cannot insert membership profile: %w", err)
+				}
+			} else {
+				if profile.State == coredata.ProfileStateInactive {
+					return NewUserInactiveError(profile.ID)
+				}
 			}
 
-			if membership.ID != gid.Nil && membership.State == coredata.MembershipStateInactive {
-				return NewMembershipInactiveError(membership.ID)
-			}
+			if err := membership.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				scope,
+				identity.ID,
+				config.OrganizationID,
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
 
-			isMember := membership.ID != gid.Nil
-			if !isMember {
 				membership = &coredata.Membership{
 					ID:             gid.New(config.ID.TenantID(), coredata.MembershipEntityType),
 					IdentityID:     identity.ID,
 					OrganizationID: config.OrganizationID,
 					Role:           coredata.MembershipRoleEmployee,
-					Source:         coredata.MembershipSourceSAML,
-					State:          coredata.MembershipStateActive,
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
@@ -312,69 +352,41 @@ func (s *Service) HandleAssertion(
 				if err != nil {
 					return fmt.Errorf("cannot insert membership: %w", err)
 				}
-
-				membershipProfile := &coredata.MembershipProfile{
-					ID:           gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
-					MembershipID: membership.ID,
-					FullName:     fullname,
-					CreatedAt:    now,
-					UpdatedAt:    now,
-				}
-
-				err = membershipProfile.Insert(ctx, tx)
-				if err != nil {
-					return fmt.Errorf("cannot insert membership profile: %w", err)
-				}
-
-				// Expire all pending invitations for email in organization
-				invitations := &coredata.Invitations{}
-				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-				if err := invitations.ExpireByEmailAndOrganization(
-					ctx,
-					tx,
-					coredata.NewScopeFromObjectID(config.OrganizationID),
-					email,
-					config.OrganizationID,
-					onlyPending,
-				); err != nil {
-					return fmt.Errorf("cannot expire pending invitations by email: %w", err)
-				}
 			}
 
-			if membership.Source != coredata.MembershipSourceSCIM {
-				needsUpdate := false
+			if profile.Source != coredata.ProfileSourceSCIM {
+				profile.FullName = fullname
+				profile.UpdatedAt = now
+				if profile.Source == coredata.ProfileSourceManual {
+					profile.Source = coredata.ProfileSourceSAML
+				}
+				err = profile.Update(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot update profile: %w", err)
+				}
 
 				if role != nil {
 					membership.Role = *role
 					membership.UpdatedAt = now
-					needsUpdate = true
-				}
 
-				if membership.Source == coredata.MembershipSourceManual {
-					membership.Source = coredata.MembershipSourceSAML
-					membership.UpdatedAt = now
-					needsUpdate = true
-				}
-
-				if needsUpdate {
 					err = membership.Update(ctx, tx, scope)
 					if err != nil {
 						return fmt.Errorf("cannot update membership: %w", err)
 					}
 				}
+			}
 
-				memberProfile := &coredata.MembershipProfile{}
-				err = memberProfile.LoadByMembershipID(ctx, tx, scope, membership.ID)
-				if err != nil {
-					return fmt.Errorf("cannot load membership profile: %w", err)
-				}
-
-				memberProfile.FullName = fullname
-				memberProfile.UpdatedAt = now
-				err = memberProfile.Update(ctx, tx, scope)
-				if err != nil {
-					return fmt.Errorf("cannot update membership profile: %w", err)
-				}
+			// Expire pending invitations for user (in case source switched to SAML)
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(profile.OrganizationID),
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
 			return nil
@@ -458,6 +470,7 @@ func (s *Service) baseServiceProvider() *saml.ServiceProvider {
 		MetadataURL:       metadataURL,
 		AcsURL:            acsURL,
 		SloURL:            acsURL,
+		AuthnNameIDFormat: saml.EmailAddressNameIDFormat,
 		AllowIDPInitiated: true,
 	}
 }

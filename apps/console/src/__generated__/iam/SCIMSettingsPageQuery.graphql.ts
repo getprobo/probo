@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e59dc83c1f91e928764947766661f044>>
+ * @generated SignedSource<<164d2e51d3c593d5effe16958d2d8f0e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -277,32 +277,8 @@ return {
                               {
                                 "alias": null,
                                 "args": null,
-                                "concreteType": "Membership",
-                                "kind": "LinkedField",
-                                "name": "membership",
-                                "plural": false,
-                                "selections": [
-                                  (v3/*: any*/),
-                                  {
-                                    "alias": null,
-                                    "args": null,
-                                    "concreteType": "MembershipProfile",
-                                    "kind": "LinkedField",
-                                    "name": "profile",
-                                    "plural": false,
-                                    "selections": [
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "kind": "ScalarField",
-                                        "name": "fullName",
-                                        "storageKey": null
-                                      },
-                                      (v3/*: any*/)
-                                    ],
-                                    "storageKey": null
-                                  }
-                                ],
+                                "kind": "ScalarField",
+                                "name": "userName",
                                 "storageKey": null
                               },
                               (v2/*: any*/)
@@ -416,12 +392,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "1074234a9a3734270b5da7420dea2ec6",
+    "cacheID": "b98c546a2c8fc038c121c21f3b495a7d",
     "id": null,
     "metadata": {},
     "name": "SCIMSettingsPageQuery",
     "operationKind": "query",
-    "text": "query SCIMSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      scimConfiguration {\n        id\n        bridge {\n          id\n        }\n        ...SCIMEventListFragment\n      }\n      ...SCIMConfigurationFragment\n      ...ConnectorListFragment\n    }\n    id\n  }\n}\n\nfragment ConnectorListFragment on Organization {\n  scimConfiguration {\n    ...GoogleWorkspaceConnectorFragment\n    id\n  }\n}\n\nfragment GoogleWorkspaceConnectorFragment on SCIMConfiguration {\n  id\n  bridge {\n    id\n    excludedUserNames\n    connector {\n      id\n      createdAt\n    }\n  }\n}\n\nfragment SCIMConfigurationFragment on Organization {\n  canCreateSCIMConfiguration: permission(action: \"iam:scim-configuration:create\")\n  canDeleteSCIMConfiguration: permission(action: \"iam:scim-configuration:delete\")\n  scimConfiguration {\n    id\n    endpointUrl\n    bridge {\n      id\n    }\n  }\n}\n\nfragment SCIMEventListFragment on SCIMConfiguration {\n  events(first: 20) {\n    edges {\n      node {\n        id\n        ...SCIMEventListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SCIMEventListItemFragment on SCIMEvent {\n  id\n  method\n  path\n  statusCode\n  errorMessage\n  ipAddress\n  createdAt\n  membership {\n    id\n    profile {\n      fullName\n      id\n    }\n  }\n}\n"
+    "text": "query SCIMSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      scimConfiguration {\n        id\n        bridge {\n          id\n        }\n        ...SCIMEventListFragment\n      }\n      ...SCIMConfigurationFragment\n      ...ConnectorListFragment\n    }\n    id\n  }\n}\n\nfragment ConnectorListFragment on Organization {\n  scimConfiguration {\n    ...GoogleWorkspaceConnectorFragment\n    id\n  }\n}\n\nfragment GoogleWorkspaceConnectorFragment on SCIMConfiguration {\n  id\n  bridge {\n    id\n    excludedUserNames\n    connector {\n      id\n      createdAt\n    }\n  }\n}\n\nfragment SCIMConfigurationFragment on Organization {\n  canCreateSCIMConfiguration: permission(action: \"iam:scim-configuration:create\")\n  canDeleteSCIMConfiguration: permission(action: \"iam:scim-configuration:delete\")\n  scimConfiguration {\n    id\n    endpointUrl\n    bridge {\n      id\n    }\n  }\n}\n\nfragment SCIMEventListFragment on SCIMConfiguration {\n  events(first: 20) {\n    edges {\n      node {\n        id\n        ...SCIMEventListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SCIMEventListItemFragment on SCIMEvent {\n  method\n  path\n  statusCode\n  errorMessage\n  ipAddress\n  createdAt\n  userName\n}\n"
   }
 };
 })();

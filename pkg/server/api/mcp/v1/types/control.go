@@ -20,16 +20,32 @@ import (
 
 func NewControl(c *coredata.Control) *Control {
 	return &Control{
-		ID:                     c.ID,
-		OrganizationID:         c.OrganizationID,
-		SectionTitle:           c.SectionTitle,
-		FrameworkID:            c.FrameworkID,
-		Name:                   c.Name,
-		Description:            c.Description,
-		Status:                 c.Status,
-		ExclusionJustification: c.ExclusionJustification,
-		CreatedAt:              c.CreatedAt,
-		UpdatedAt:              c.UpdatedAt,
+		ID:             c.ID,
+		OrganizationID: c.OrganizationID,
+		SectionTitle:   c.SectionTitle,
+		FrameworkID:    c.FrameworkID,
+		Name:           c.Name,
+		Description:    c.Description,
+		CreatedAt:      c.CreatedAt,
+		UpdatedAt:      c.UpdatedAt,
+	}
+}
+
+func NewListMeasureControlsOutput(controlPage *page.Page[*coredata.Control, coredata.ControlOrderField]) ListMeasureControlsOutput {
+	controls := make([]*Control, 0, len(controlPage.Data))
+	for _, c := range controlPage.Data {
+		controls = append(controls, NewControl(c))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(controlPage.Data) > 0 {
+		cursorKey := controlPage.Data[len(controlPage.Data)-1].CursorKey(controlPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListMeasureControlsOutput{
+		NextCursor: nextCursor,
+		Controls:   controls,
 	}
 }
 

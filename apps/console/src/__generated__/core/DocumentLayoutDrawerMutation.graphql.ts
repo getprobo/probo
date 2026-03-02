@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c7800005b8fa0b1fed16590751fb1b27>>
+ * @generated SignedSource<<54fdf6ba6490381a269cd77379fe1810>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,11 +13,11 @@ export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "S
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateDocumentInput = {
+  approverIds?: ReadonlyArray<string> | null | undefined;
   classification?: DocumentClassification | null | undefined;
   content?: string | null | undefined;
   documentType?: DocumentType | null | undefined;
   id: string;
-  ownerId?: string | null | undefined;
   title?: string | null | undefined;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };
@@ -27,13 +27,17 @@ export type DocumentLayoutDrawerMutation$variables = {
 export type DocumentLayoutDrawerMutation$data = {
   readonly updateDocument: {
     readonly document: {
+      readonly approvers: {
+        readonly edges: ReadonlyArray<{
+          readonly node: {
+            readonly fullName: string;
+            readonly id: string;
+          };
+        }>;
+      };
       readonly classification: DocumentClassification;
       readonly documentType: DocumentType;
       readonly id: string;
-      readonly owner: {
-        readonly fullName: string;
-        readonly id: string;
-      };
     };
   };
 };
@@ -97,22 +101,50 @@ v2 = [
           },
           {
             "alias": null,
-            "args": null,
-            "concreteType": "People",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "first",
+                "value": 100
+              }
+            ],
+            "concreteType": "ProfileConnection",
             "kind": "LinkedField",
-            "name": "owner",
+            "name": "approvers",
             "plural": false,
             "selections": [
-              (v1/*: any*/),
               {
                 "alias": null,
                 "args": null,
-                "kind": "ScalarField",
-                "name": "fullName",
+                "concreteType": "ProfileEdge",
+                "kind": "LinkedField",
+                "name": "edges",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "Profile",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v1/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "fullName",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
                 "storageKey": null
               }
             ],
-            "storageKey": null
+            "storageKey": "approvers(first:100)"
           }
         ],
         "storageKey": null
@@ -139,16 +171,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "968dc4701234cb6c5761eeea9faff752",
+    "cacheID": "e92e7774c449389137a3e5fb1b037e8a",
     "id": null,
     "metadata": {},
     "name": "DocumentLayoutDrawerMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentLayoutDrawerMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      documentType\n      classification\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
+    "text": "mutation DocumentLayoutDrawerMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      documentType\n      classification\n      approvers(first: 100) {\n        edges {\n          node {\n            id\n            fullName\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "80901db65cb0c486e23b823bd2c16bc0";
+(node as any).hash = "6e9b5aa2c9ba01c18bf26c514c3fbcd3";
 
 export default node;

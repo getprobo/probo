@@ -21,13 +21,16 @@ import (
 type ApplicabilityStatementOrderField string
 
 const (
-	ApplicabilityStatementOrderFieldCreatedAt ApplicabilityStatementOrderField = "CREATED_AT"
+	ApplicabilityStatementOrderFieldCreatedAt            ApplicabilityStatementOrderField = "CREATED_AT"
+	ApplicabilityStatementOrderFieldControlSectionTitle  ApplicabilityStatementOrderField = "CONTROL_SECTION_TITLE"
 )
 
 func (p ApplicabilityStatementOrderField) Column() string {
 	switch p {
 	case ApplicabilityStatementOrderFieldCreatedAt:
 		return "created_at"
+	case ApplicabilityStatementOrderFieldControlSectionTitle:
+		return "section_title_sort_key(section_title)"
 	}
 
 	panic("unknown ApplicabilityStatementOrderField")
@@ -44,7 +47,8 @@ func (p ApplicabilityStatementOrderField) MarshalText() ([]byte, error) {
 func (p *ApplicabilityStatementOrderField) UnmarshalText(text []byte) error {
 	val := string(text)
 	switch val {
-	case string(ApplicabilityStatementOrderFieldCreatedAt):
+	case string(ApplicabilityStatementOrderFieldCreatedAt),
+		string(ApplicabilityStatementOrderFieldControlSectionTitle):
 		*p = ApplicabilityStatementOrderField(val)
 		return nil
 	}

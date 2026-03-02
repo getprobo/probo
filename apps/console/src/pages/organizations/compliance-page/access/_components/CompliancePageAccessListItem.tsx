@@ -1,15 +1,16 @@
 import { formatDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, DropdownItem, IconArchive, IconCheckmark1, IconPencil, IconRotateCw, Td, Tr } from "@probo/ui";
+import { ActionDropdown, DropdownItem, IconArchive, IconPencil, IconRotateCw, Td, Tr } from "@probo/ui";
 import { useCallback, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageAccessListItemFragment$key } from "#/__generated__/core/CompliancePageAccessListItemFragment.graphql";
-import type { TrustCenterAccessGraphUpdateMutation } from "#/__generated__/core/TrustCenterAccessGraphUpdateMutation.graphql";
-import { updateTrustCenterAccessMutation } from "#/hooks/graph/TrustCenterAccessGraph";
+import type { CompliancePageAccessListItemUpdateMutation } from "#/__generated__/core/CompliancePageAccessListItemUpdateMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-import { TrustCenterAccessEditDialog } from "#/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessEditDialog";
+
+import { CompliancePageAccessEditDialog } from "./CompliancePageAccessEditDialog";
+import { NdaSignatureBadge } from "./NdaSignatureBadge";
 
 const fragment = graphql`
   fragment CompliancePageAccessListItemFragment on TrustCenterAccess {
@@ -20,8 +21,30 @@ const fragment = graphql`
     state
     activeCount
     pendingRequestCount
-    hasAcceptedNonDisclosureAgreement
+    ndaSignature {
+      status
+    }
     canUpdate: permission(action: "core:trust-center-access:update")
+  }
+`;
+
+const toggleAccessStateMutation = graphql`
+  mutation CompliancePageAccessListItemUpdateMutation(
+    $input: UpdateTrustCenterAccessInput!
+  ) {
+    updateTrustCenterAccess(input: $input) {
+      trustCenterAccess {
+        id
+        email
+        name
+        state
+        hasAcceptedNonDisclosureAgreement
+        createdAt
+        updatedAt
+        pendingRequestCount
+        activeCount
+      }
+    }
   }
 `;
 
@@ -38,8 +61,8 @@ export function CompliancePageAccessListItem(props: {
 
   const isActive = access.state === "ACTIVE";
 
-  const [updateAccess, isUpdating] = useMutationWithToasts<TrustCenterAccessGraphUpdateMutation>(
-    updateTrustCenterAccessMutation,
+  const [toggleAccessState, isToggling] = useMutationWithToasts<CompliancePageAccessListItemUpdateMutation>(
+    toggleAccessStateMutation,
     {
       successMessage: isActive
         ? __("Access deactivated successfully")
@@ -51,7 +74,7 @@ export function CompliancePageAccessListItem(props: {
   );
 
   const handleToggleState = useCallback(() => {
-    void updateAccess({
+    void toggleAccessState({
       variables: {
         input: {
           id: access.id,
@@ -60,7 +83,7 @@ export function CompliancePageAccessListItem(props: {
         },
       },
     });
-  }, [updateAccess, access.id, access.name, isActive]);
+  }, [toggleAccessState, access.id, access.name, isActive]);
 
   return (
     <>
@@ -78,9 +101,13 @@ export function CompliancePageAccessListItem(props: {
         </Td>
         <Td>
           <div className="flex justify-center">
-            {access.hasAcceptedNonDisclosureAgreement && (
-              <IconCheckmark1 size={16} className="text-txt-success" />
-            )}
+            {access.ndaSignature
+              ? (
+                  <NdaSignatureBadge status={access.ndaSignature.status} />
+                )
+              : (
+                  <span className="text-txt-tertiary">-</span>
+                )}
           </div>
         </Td>
         <Td noLink width={160} className="text-end">
@@ -101,7 +128,7 @@ export function CompliancePageAccessListItem(props: {
                 <DropdownItem
                   icon={isActive ? IconArchive : IconRotateCw}
                   onClick={handleToggleState}
-                  disabled={isUpdating}
+                  disabled={isToggling}
                   variant={isActive ? "danger" : "primary"}
                 >
                   {isActive ? __("Deactivate") : __("Activate")}
@@ -113,7 +140,7 @@ export function CompliancePageAccessListItem(props: {
       </Tr>
 
       {access.canUpdate && isActive && dialogOpen && (
-        <TrustCenterAccessEditDialog
+        <CompliancePageAccessEditDialog
           access={access}
           onClose={() => setDialogOpen(false)}
         />

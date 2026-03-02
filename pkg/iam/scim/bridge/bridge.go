@@ -112,6 +112,9 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 			if existingSCIM.DisplayName != pu.DisplayName {
 				needsUpdate = true
 			}
+			if existingSCIM.Title != pu.Title {
+				needsUpdate = true
+			}
 
 			if needsUpdate {
 				if !s.dryRun {

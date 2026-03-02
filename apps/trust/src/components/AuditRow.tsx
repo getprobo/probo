@@ -45,6 +45,7 @@ const downloadMutation = graphql`
 
 const auditRowFragment = graphql`
   fragment AuditRowFragment on Audit {
+    name
     report {
       id
       filename
@@ -129,6 +130,12 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
       <div className="flex items-center gap-2">
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.framework.name}
+        {audit.name && (
+          <>
+            {" "}
+            <em>{audit.name}</em>
+          </>
+        )}
       </div>
       {audit.report && audit.report.isUserAuthorized
         ? (
@@ -139,7 +146,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
               icon={downloading ? Spinner : IconArrowInbox}
               onClick={() => void handleDownload()}
             >
-              {__("Download")}
+              {downloading ? __("Downloading") : __("Download")}
             </Button>
           )
         : viewer

@@ -32,8 +32,6 @@ export async function execute(
 					sectionTitle
 					name
 					description
-					status
-					exclusionJustification
 					createdAt
 					updatedAt
 				}

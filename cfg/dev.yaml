@@ -72,7 +72,7 @@ probod:
     bucket: "probod"
     access-key-id: "probod"
     secret-access-key: "thisisnotasecret"
-    endpoint: "http://127.0.0.1:9000"
+    endpoint: "http://127.0.0.1:8333"
 
   notifications:
     mailer:

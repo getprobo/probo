@@ -50,7 +50,7 @@ type (
 		OrganizationID        gid.GID
 		Title                 string
 		Content               string
-		OwnerID               gid.GID
+		ApproverIDs           []gid.GID
 		Classification        coredata.DocumentClassification
 		DocumentType          coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
@@ -59,7 +59,7 @@ type (
 	UpdateDocumentRequest struct {
 		DocumentID            gid.GID
 		Title                 *string
-		OwnerID               *gid.GID
+		ApproverIDs           []gid.GID
 		Classification        *coredata.DocumentClassification
 		DocumentType          *coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
@@ -102,7 +102,10 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cdr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
-	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cdr.ApproverIDs, "approver_ids", validator.Required(), validator.NotEmpty())
+	for _, id := range cdr.ApproverIDs {
+		v.Check(id, "approver_ids", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
+	}
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -115,7 +118,9 @@ func (udr *UpdateDocumentRequest) Validate() error {
 
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
 	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	for _, id := range udr.ApproverIDs {
+		v.Check(id, "approver_ids", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
+	}
 	v.Check(udr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -175,6 +180,108 @@ func (s *DocumentService) Get(
 	}
 
 	return document, nil
+}
+
+func (s *DocumentService) ListApprovers(
+	ctx context.Context,
+	documentID gid.GID,
+	cursor *page.Cursor[coredata.MembershipProfileOrderField],
+) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
+	var profiles coredata.MembershipProfiles
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profiles.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor); err != nil {
+				return fmt.Errorf("cannot load document approvers: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(profiles, cursor), nil
+}
+
+func (s *DocumentService) CountApprovers(
+	ctx context.Context,
+	documentID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			profiles := coredata.MembershipProfiles{}
+			count, err = profiles.CountByDocumentID(ctx, conn, s.svc.scope, documentID)
+			if err != nil {
+				return fmt.Errorf("cannot count document approvers: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *DocumentService) ListVersionApprovers(
+	ctx context.Context,
+	documentVersionID gid.GID,
+	cursor *page.Cursor[coredata.MembershipProfileOrderField],
+) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
+	var profiles coredata.MembershipProfiles
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := profiles.LoadByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID, cursor); err != nil {
+				return fmt.Errorf("cannot load document version approvers: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(profiles, cursor), nil
+}
+
+func (s *DocumentService) CountVersionApprovers(
+	ctx context.Context,
+	documentVersionID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			profiles := coredata.MembershipProfiles{}
+			count, err = profiles.CountByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID)
+			if err != nil {
+				return fmt.Errorf("cannot count document version approvers: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (s *DocumentService) GetWithFilter(
@@ -354,8 +461,7 @@ func (s *DocumentService) publishVersionInTx(
 			return nil, nil, fmt.Errorf("cannot load published version: %w", err)
 		}
 		if publishedVersion.Content == documentVersion.Content &&
-			publishedVersion.Title == documentVersion.Title &&
-			publishedVersion.OwnerID == documentVersion.OwnerID {
+			publishedVersion.Title == documentVersion.Title {
 			return nil, nil, &ErrDocumentVersionNoChanges{}
 		}
 	}
@@ -395,7 +501,6 @@ func (s *DocumentService) Create(
 	documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 
 	organization := &coredata.Organization{}
-	people := &coredata.People{}
 
 	document := &coredata.Document{
 		ID:                    documentID,
@@ -415,7 +520,6 @@ func (s *DocumentService) Create(
 		ID:             documentVersionID,
 		DocumentID:     documentID,
 		Title:          req.Title,
-		OwnerID:        req.OwnerID,
 		VersionNumber:  1,
 		Content:        req.Content,
 		Status:         coredata.DocumentStatusDraft,
@@ -431,21 +535,52 @@ func (s *DocumentService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := people.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load people: %w", err)
+			// Validate all approver profiles exist
+			approverProfiles := coredata.MembershipProfiles{}
+			if err := approverProfiles.LoadByIDs(ctx, conn, s.svc.scope, req.ApproverIDs); err != nil {
+				return fmt.Errorf("cannot load approver profiles: %w", err)
+			}
+
+			if len(approverProfiles) != len(req.ApproverIDs) {
+				return fmt.Errorf("one or more approver profiles not found")
 			}
 
 			document.OrganizationID = organization.ID
-			document.OwnerID = people.ID
 
 			if err := document.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert document: %w", err)
+			}
+
+			// Insert document approvers
+			for _, approverID := range req.ApproverIDs {
+				da := coredata.DocumentApprover{
+					DocumentID:        documentID,
+					ApproverProfileID: approverID,
+					OrganizationID:    organization.ID,
+					CreatedAt:         now,
+				}
+				if err := da.Insert(ctx, conn, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document approver: %w", err)
+				}
 			}
 
 			documentVersion.OrganizationID = organization.ID
 
 			if err := documentVersion.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot create document version: %w", err)
+			}
+
+			// Insert document version approvers
+			for _, approverID := range req.ApproverIDs {
+				dva := coredata.DocumentVersionApprover{
+					DocumentVersionID: documentVersionID,
+					ApproverProfileID: approverID,
+					OrganizationID:    organization.ID,
+					CreatedAt:         now,
+				}
+				if err := dva.Insert(ctx, conn, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document version approver: %w", err)
+				}
 			}
 
 			return nil
@@ -462,7 +597,7 @@ func (s *DocumentService) Create(
 func (s *DocumentService) ListSigningRequests(
 	ctx context.Context,
 	organizationID gid.GID,
-	peopleID gid.GID,
+	profileID gid.GID,
 ) ([]map[string]any, error) {
 	q := `
 SELECT
@@ -476,7 +611,7 @@ FROM
 	INNER JOIN organizations o ON o.id = p.organization_id
 WHERE
     p.tenant_id = $1
-	AND pvs.signed_by = $2
+	AND pvs.signed_by_profile_id = $2
 	AND pvs.signed_at IS NULL
 	AND pv.status = 'PUBLISHED'
 	AND pv.version_number = (
@@ -491,7 +626,7 @@ WHERE
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			rows, err := conn.Query(ctx, q, s.svc.scope.GetTenantID(), peopleID)
+			rows, err := conn.Query(ctx, q, s.svc.scope.GetTenantID(), profileID)
 			if err != nil {
 				return fmt.Errorf("cannot query documents: %w", err)
 			}
@@ -519,9 +654,9 @@ func (s *DocumentService) SendSigningNotifications(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			var peoples coredata.Peoples
-			if err := peoples.LoadAwaitingSigning(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot load people: %w", err)
+			var signatories coredata.MembershipProfiles
+			if err := signatories.LoadAwaitingSigning(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot load signatories: %w", err)
 			}
 
 			organization := &coredata.Organization{}
@@ -529,21 +664,21 @@ func (s *DocumentService) SendSigningNotifications(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			for _, people := range peoples {
+			for _, signatory := range signatories {
 				token, err := statelesstoken.NewToken(
 					s.svc.tokenSecret,
 					TokenTypeSigningRequest,
 					time.Hour*24*30,
 					SigningRequestData{
 						OrganizationID: organizationID,
-						PeopleID:       people.ID,
+						PeopleID:       signatory.ID,
 					},
 				)
 				if err != nil {
 					return fmt.Errorf("cannot create signing request token: %w", err)
 				}
 
-				emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, people.FullName)
+				emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, signatory.FullName)
 
 				subject, textBody, htmlBody, err := emailPresenter.RenderDocumentSigning(
 					ctx,
@@ -556,8 +691,8 @@ func (s *DocumentService) SendSigningNotifications(
 				}
 
 				email := coredata.NewEmail(
-					people.FullName,
-					people.PrimaryEmailAddress,
+					signatory.FullName,
+					signatory.EmailAddress,
 					subject,
 					textBody,
 					htmlBody,
@@ -604,10 +739,10 @@ func (s *DocumentService) SignDocumentVersion(
 	return nil
 }
 
-func (s *DocumentService) SignDocumentVersionByEmail(
+func (s *DocumentService) SignDocumentVersionByIdentity(
 	ctx context.Context,
 	documentVersionID gid.GID,
-	userEmail mail.Addr,
+	identityID gid.GID,
 ) (*coredata.DocumentVersionSignature, error) {
 	var documentVersionSignature *coredata.DocumentVersionSignature
 
@@ -619,13 +754,14 @@ func (s *DocumentService) SignDocumentVersionByEmail(
 				return fmt.Errorf("cannot get document version: %w", err)
 			}
 
-			people := &coredata.People{}
-			if err := people.LoadByEmailAndOrganizationID(ctx, conn, s.svc.scope, userEmail, documentVersion.OrganizationID); err != nil {
-				return fmt.Errorf("cannot find people record for user email in organization %q: %w", documentVersion.OrganizationID, err)
+			profile := &coredata.MembershipProfile{}
+			// FIXME: will be done differently
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, s.svc.scope, identityID, documentVersion.OrganizationID); err != nil {
+				return fmt.Errorf("cannot find profile record for user email in organization %q: %w", documentVersion.OrganizationID, err)
 			}
 
 			var signErr error
-			documentVersionSignature, signErr = s.signDocumentVersionInTx(ctx, conn, documentVersionID, people.ID)
+			documentVersionSignature, signErr = s.signDocumentVersionInTx(ctx, conn, documentVersionID, profile.ID)
 			return signErr
 		},
 	)
@@ -705,13 +841,34 @@ func (s *DocumentService) UpdateVersion(
 			}
 
 			documentVersion.Title = document.Title
-			documentVersion.OwnerID = document.OwnerID
 			documentVersion.Classification = document.Classification
 			documentVersion.Content = req.Content
 			documentVersion.UpdatedAt = time.Now()
 
 			if err := documentVersion.Update(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update document version: %w", err)
+			}
+
+			docApprovers := &coredata.DocumentApprovers{}
+			if err := docApprovers.LoadByDocumentID(ctx, conn, s.svc.scope, document.ID); err != nil {
+				return fmt.Errorf("cannot load document approvers: %w", err)
+			}
+
+			versionApprovers := &coredata.DocumentVersionApprovers{}
+			if err := versionApprovers.DeleteByDocumentVersionID(ctx, conn, s.svc.scope, documentVersion.ID); err != nil {
+				return fmt.Errorf("cannot delete document version approvers: %w", err)
+			}
+
+			for _, da := range *docApprovers {
+				dva := coredata.DocumentVersionApprover{
+					DocumentVersionID: documentVersion.ID,
+					ApproverProfileID: da.ApproverProfileID,
+					OrganizationID:    da.OrganizationID,
+					CreatedAt:         time.Now(),
+				}
+				if err := dva.Insert(ctx, conn, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document version approver: %w", err)
+				}
 			}
 
 			return nil
@@ -790,7 +947,7 @@ func (s *DocumentService) createSignatureRequestInTx(
 	signatoryID gid.GID,
 	ignoreExisting bool,
 ) (*coredata.DocumentVersionSignature, error) {
-	signatory := &coredata.People{}
+	signatory := &coredata.MembershipProfile{}
 	documentVersion := &coredata.DocumentVersion{}
 
 	if err := documentVersion.LoadByID(ctx, tx, s.svc.scope, documentVersionID); err != nil {
@@ -943,7 +1100,6 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.OrganizationID = document.OrganizationID
 			draftVersion.DocumentID = documentID
 			draftVersion.Title = document.Title
-			draftVersion.OwnerID = document.OwnerID
 			draftVersion.VersionNumber = latestVersion.VersionNumber + 1
 			draftVersion.Classification = document.Classification
 			draftVersion.Content = latestVersion.Content
@@ -953,6 +1109,23 @@ func (s *DocumentService) CreateDraft(
 
 			if err := draftVersion.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot create draft: %w", err)
+			}
+
+			docApprovers := &coredata.DocumentApprovers{}
+			if err := docApprovers.LoadByDocumentID(ctx, conn, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document approvers: %w", err)
+			}
+
+			for _, da := range *docApprovers {
+				dva := coredata.DocumentVersionApprover{
+					DocumentVersionID: draftVersionID,
+					ApproverProfileID: da.ApproverProfileID,
+					OrganizationID:    da.OrganizationID,
+					CreatedAt:         now,
+				}
+				if err := dva.Insert(ctx, conn, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert document version approver: %w", err)
+				}
 			}
 
 			return nil
@@ -1383,7 +1556,6 @@ func (s *DocumentService) Update(
 	}
 
 	document := &coredata.Document{}
-	people := &coredata.People{}
 	now := time.Now()
 
 	err := s.svc.pg.WithTx(
@@ -1413,11 +1585,31 @@ func (s *DocumentService) Update(
 				document.TrustCenterVisibility = *req.TrustCenterVisibility
 			}
 
-			if req.OwnerID != nil {
-				if err := people.LoadByID(ctx, tx, s.svc.scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner %q: %w", *req.OwnerID, err)
+			if len(req.ApproverIDs) > 0 {
+				approverProfiles := coredata.MembershipProfiles{}
+				if err := approverProfiles.LoadByIDs(ctx, tx, s.svc.scope, req.ApproverIDs); err != nil {
+					return fmt.Errorf("cannot load approver profiles: %w", err)
 				}
-				document.OwnerID = people.ID
+				if len(approverProfiles) != len(req.ApproverIDs) {
+					return fmt.Errorf("one or more approver profiles not found")
+				}
+
+				docApprovers := &coredata.DocumentApprovers{}
+				if err := docApprovers.DeleteByDocumentID(ctx, tx, s.svc.scope, req.DocumentID); err != nil {
+					return fmt.Errorf("cannot delete document approvers: %w", err)
+				}
+
+				for _, approverID := range req.ApproverIDs {
+					da := coredata.DocumentApprover{
+						DocumentID:        req.DocumentID,
+						ApproverProfileID: approverID,
+						OrganizationID:    document.OrganizationID,
+						CreatedAt:         now,
+					}
+					if err := da.Insert(ctx, tx, s.svc.scope); err != nil {
+						return fmt.Errorf("cannot insert document approver: %w", err)
+					}
+				}
 			}
 
 			document.UpdatedAt = now
@@ -1426,17 +1618,34 @@ func (s *DocumentService) Update(
 				return fmt.Errorf("cannot update document: %w", err)
 			}
 
-			// Update the draft version if it exists to keep it in sync with the document
 			draftVersion := &coredata.DocumentVersion{}
 			err := draftVersion.LoadLatestVersion(ctx, tx, s.svc.scope, req.DocumentID)
 			if err == nil && draftVersion.Status == coredata.DocumentStatusDraft {
 				draftVersion.Title = document.Title
-				draftVersion.OwnerID = document.OwnerID
 				draftVersion.Classification = document.Classification
 				draftVersion.UpdatedAt = now
 
 				if err := draftVersion.Update(ctx, tx, s.svc.scope); err != nil {
 					return fmt.Errorf("cannot update draft version: %w", err)
+				}
+
+				if len(req.ApproverIDs) > 0 {
+					versionApprovers := &coredata.DocumentVersionApprovers{}
+					if err := versionApprovers.DeleteByDocumentVersionID(ctx, tx, s.svc.scope, draftVersion.ID); err != nil {
+						return fmt.Errorf("cannot delete draft version approvers: %w", err)
+					}
+
+					for _, approverID := range req.ApproverIDs {
+						dva := coredata.DocumentVersionApprover{
+							DocumentVersionID: draftVersion.ID,
+							ApproverProfileID: approverID,
+							OrganizationID:    document.OrganizationID,
+							CreatedAt:         now,
+						}
+						if err := dva.Insert(ctx, tx, s.svc.scope); err != nil {
+							return fmt.Errorf("cannot insert draft version approver: %w", err)
+						}
+					}
 				}
 			}
 
@@ -1637,7 +1846,6 @@ func exportDocumentPDF(
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
-	owner := &coredata.People{}
 	organization := &coredata.Organization{}
 
 	if err := version.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
@@ -1648,8 +1856,26 @@ func exportDocumentPDF(
 		return nil, fmt.Errorf("cannot load document: %w", err)
 	}
 
-	if err := owner.LoadByID(ctx, conn, scope, document.OwnerID); err != nil {
-		return nil, fmt.Errorf("cannot load document owner: %w", err)
+	versionApprovers := &coredata.DocumentVersionApprovers{}
+	if err := versionApprovers.LoadByDocumentVersionID(ctx, conn, scope, documentVersionID); err != nil {
+		return nil, fmt.Errorf("cannot load document version approvers: %w", err)
+	}
+
+	approverProfiles := coredata.MembershipProfiles{}
+	if err := approverProfiles.LoadByIDs(ctx, conn, scope, versionApprovers.ApproverProfileIDs()); err != nil {
+		return nil, fmt.Errorf("cannot load document approver profiles: %w", err)
+	}
+
+	profileByID := make(map[gid.GID]*coredata.MembershipProfile, len(approverProfiles))
+	for _, p := range approverProfiles {
+		profileByID[p.ID] = p
+	}
+
+	approverNames := make([]string, 0, len(*versionApprovers))
+	for _, a := range *versionApprovers {
+		if p, ok := profileByID[a.ApproverProfileID]; ok {
+			approverNames = append(approverNames, p.FullName)
+		}
 	}
 
 	if err := organization.LoadByID(ctx, conn, scope, document.OrganizationID); err != nil {
@@ -1701,7 +1927,7 @@ func exportDocumentPDF(
 		Content:                     version.Content,
 		Version:                     version.VersionNumber,
 		Classification:              classification,
-		Approver:                    owner.FullName,
+		Approvers:                   approverNames,
 		PublishedAt:                 version.PublishedAt,
 		Signatures:                  signatureData,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,

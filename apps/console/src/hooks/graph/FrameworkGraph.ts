@@ -101,8 +101,6 @@ export const frameworkControlNodeQuery = graphql`
         name
         sectionTitle
         description
-        status
-        exclusionJustification
         canUpdate: permission(action: "core:control:update")
         canDelete: permission(action: "core:control:delete")
         canCreateMeasureMapping: permission(

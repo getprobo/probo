@@ -34,7 +34,6 @@ type (
 		OrganizationID gid.GID                `db:"organization_id"`
 		DocumentID     gid.GID                `db:"document_id"`
 		Title          string                 `db:"title"`
-		OwnerID        gid.GID                `db:"owner_id"`
 		VersionNumber  int                    `db:"version_number"`
 		Classification DocumentClassification `db:"classification"`
 		Content        string                 `db:"content"`
@@ -77,7 +76,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	owner_id,
 	version_number,
 	classification,
 	content,
@@ -139,7 +137,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	owner_id,
 	version_number,
 	classification,
 	content,
@@ -190,7 +187,6 @@ INSERT INTO document_versions (
 	organization_id,
 	document_id,
 	title,
-	owner_id,
 	version_number,
 	classification,
 	content,
@@ -205,7 +201,6 @@ VALUES (
 	@organization_id,
 	@document_id,
 	@title,
-	@owner_id,
 	@version_number,
 	@classification,
 	@content,
@@ -221,7 +216,6 @@ VALUES (
 		"organization_id": dv.OrganizationID,
 		"document_id":     dv.DocumentID,
 		"title":           dv.Title,
-		"owner_id":        dv.OwnerID,
 		"version_number":  dv.VersionNumber,
 		"classification":  dv.Classification,
 		"content":         dv.Content,
@@ -260,7 +254,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	owner_id,
 	version_number,
 	classification,
 	content,
@@ -313,7 +306,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	owner_id,
 	version_number,
 	classification,
 	content,
@@ -364,7 +356,6 @@ SELECT
 	organization_id,
 	document_id,
 	title,
-	owner_id,
 	version_number,
 	classification,
 	content,
@@ -413,7 +404,6 @@ func (dv DocumentVersion) Update(
 	q := `
 UPDATE document_versions SET
 	title = @title,
-	owner_id = @owner_id,
 	changelog = @changelog,
 	status = @status,
 	content = @content,
@@ -429,7 +419,6 @@ WHERE %s
 	args := pgx.StrictNamedArgs{
 		"document_version_id": dv.ID,
 		"title":               dv.Title,
-		"owner_id":            dv.OwnerID,
 		"changelog":           dv.Changelog,
 		"status":              dv.Status,
 		"content":             dv.Content,

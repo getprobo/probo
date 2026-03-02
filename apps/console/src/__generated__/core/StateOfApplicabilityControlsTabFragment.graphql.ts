@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6a0d32b2293db5f05fee4b79e61db4b6>>
+ * @generated SignedSource<<3eedb29b73b6e2c450d59f1d1ae0d88a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -144,7 +144,7 @@ return {
           "name": "orderBy",
           "value": {
             "direction": "ASC",
-            "field": "CREATED_AT"
+            "field": "CONTROL_SECTION_TITLE"
           }
         }
       ],
@@ -304,7 +304,7 @@ return {
           ]
         }
       ],
-      "storageKey": "__StateOfApplicabilityControlsTab_applicabilityStatements_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+      "storageKey": "__StateOfApplicabilityControlsTab_applicabilityStatements_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"CONTROL_SECTION_TITLE\"})"
     }
   ],
   "type": "StateOfApplicability",
@@ -312,6 +312,6 @@ return {
 };
 })();
 
-(node as any).hash = "b5a28520cb7a702b208cbfad2c904a99";
+(node as any).hash = "b80671ffb8f18997cb72a9beddd6cad3";
 
 export default node;

@@ -22,6 +22,7 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func SafeName(prefix string) string {
@@ -92,16 +93,50 @@ func (a Attrs) getBool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
-func (a Attrs) getSlice(key string, defaultVal []string) []string {
-	if a == nil {
-		return defaultVal
+func CreateUser(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
 	}
-	if v, ok := a[key]; ok {
-		if slice, ok := v.([]string); ok {
-			return slice
+
+	const query = `
+		mutation($input: CreateUserInput!) {
+			createUser(input: $input) {
+				profileEdge {
+					node { id }
+				}
+			}
 		}
+	`
+
+	input := map[string]any{
+		"organizationId":           c.GetOrganizationID(),
+		"emailAddress":             a.getString("emailAddress", SafeEmail()),
+		"fullName":                 a.getString("fullName", SafeName("User")),
+		"role":                     a.getString("role", "EMPLOYEE"),
+		"kind":                     coredata.MembershipProfileKindEmployee.String(),
+		"additionalEmailAddresses": []string{},
 	}
-	return defaultVal
+	if position := a.getStringPtr("position"); position != nil {
+		input["position"] = *position
+	}
+
+	var result struct {
+		CreateUser struct {
+			ProfileEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"profileEdge"`
+		} `json:"createUser"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createUser mutation failed")
+
+	return result.CreateUser.ProfileEdge.Node.ID
 }
 
 func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
@@ -217,7 +252,6 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 		"name":         a.getString("name", SafeName("Control")),
 		"description":  a.getString("description", "Test control description"),
 		"sectionTitle": a.getString("sectionTitle", fmt.Sprintf("Section %s", gofakeit.LetterN(3))),
-		"status":       a.getString("status", "INCLUDED"),
 		"bestPractice": a.getBool("bestPractice", true),
 	}
 
@@ -369,48 +403,6 @@ func CreateRisk(c *testutil.Client, attrs ...Attrs) string {
 	require.NoError(c.T, err, "createRisk mutation failed")
 
 	return result.CreateRisk.RiskEdge.Node.ID
-}
-
-func CreatePeople(c *testutil.Client, attrs ...Attrs) string {
-	c.T.Helper()
-
-	var a Attrs
-	if len(attrs) > 0 {
-		a = attrs[0]
-	}
-
-	const query = `
-		mutation($input: CreatePeopleInput!) {
-			createPeople(input: $input) {
-				peopleEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	input := map[string]any{
-		"organizationId":           c.GetOrganizationID().String(),
-		"fullName":                 a.getString("fullName", SafeName("Person")),
-		"primaryEmailAddress":      a.getString("primaryEmailAddress", SafeEmail()),
-		"additionalEmailAddresses": a.getSlice("additionalEmailAddresses", []string{}),
-		"kind":                     a.getString("kind", "EMPLOYEE"),
-	}
-
-	var result struct {
-		CreatePeople struct {
-			PeopleEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"peopleEdge"`
-		} `json:"createPeople"`
-	}
-
-	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createPeople mutation failed")
-
-	return result.CreatePeople.PeopleEdge.Node.ID
 }
 
 type VendorBuilder struct {
@@ -605,29 +597,6 @@ func (b *RiskBuilder) WithImpact(impact int) *RiskBuilder {
 
 func (b *RiskBuilder) Create() string {
 	return CreateRisk(b.client, b.attrs)
-}
-
-type PeopleBuilder struct {
-	client *testutil.Client
-	attrs  Attrs
-}
-
-func NewPeople(c *testutil.Client) *PeopleBuilder {
-	return &PeopleBuilder{client: c, attrs: Attrs{}}
-}
-
-func (b *PeopleBuilder) WithFullName(name string) *PeopleBuilder {
-	b.attrs["fullName"] = name
-	return b
-}
-
-func (b *PeopleBuilder) WithKind(kind string) *PeopleBuilder {
-	b.attrs["kind"] = kind
-	return b
-}
-
-func (b *PeopleBuilder) Create() string {
-	return CreatePeople(b.client, b.attrs)
 }
 
 func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string {
@@ -841,7 +810,7 @@ func (b *MeetingBuilder) Create() string {
 	return CreateMeeting(b.client, b.attrs)
 }
 
-func CreateDocument(c *testutil.Client, ownerID string, attrs ...Attrs) string {
+func CreateDocument(c *testutil.Client, approverID string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -861,7 +830,7 @@ func CreateDocument(c *testutil.Client, ownerID string, attrs ...Attrs) string {
 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
-		"ownerId":        ownerID,
+		"approverIds":    []string{approverID},
 		"title":          a.getString("title", SafeName("Document")),
 		"content":        a.getString("content", "Document content"),
 		"documentType":   a.getString("documentType", "POLICY"),
@@ -885,13 +854,13 @@ func CreateDocument(c *testutil.Client, ownerID string, attrs ...Attrs) string {
 }
 
 type DocumentBuilder struct {
-	client  *testutil.Client
-	ownerID string
-	attrs   Attrs
+	client     *testutil.Client
+	approverID string
+	attrs      Attrs
 }
 
-func NewDocument(c *testutil.Client, ownerID string) *DocumentBuilder {
-	return &DocumentBuilder{client: c, ownerID: ownerID, attrs: Attrs{}}
+func NewDocument(c *testutil.Client, approverID string) *DocumentBuilder {
+	return &DocumentBuilder{client: c, approverID: approverID, attrs: Attrs{}}
 }
 
 func (b *DocumentBuilder) WithTitle(title string) *DocumentBuilder {
@@ -915,7 +884,7 @@ func (b *DocumentBuilder) WithClassification(classification string) *DocumentBui
 }
 
 func (b *DocumentBuilder) Create() string {
-	return CreateDocument(b.client, b.ownerID, b.attrs)
+	return CreateDocument(b.client, b.approverID, b.attrs)
 }
 
 func CreateProcessingActivity(c *testutil.Client, attrs ...Attrs) string {

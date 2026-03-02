@@ -82,7 +82,6 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 			"name":         "Control for Mapping",
 			"description":  "Test control for mapping",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createControlResult)
@@ -362,7 +361,6 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			"name":         "Control for Document Mapping",
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createControlResult)
@@ -370,7 +368,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
 
 	// Create a document
-	peopleID := factory.NewPeople(owner).WithFullName("Doc Owner").Create()
+	profileID := factory.CreateUser(owner)
 	var createDocumentResult struct {
 		CreateDocument struct {
 			DocumentEdge struct {
@@ -395,7 +393,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Control Mapping",
 			"content":        "Document content",
-			"ownerId":        peopleID,
+			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -504,7 +502,6 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 			"name":         "Control for Audit Mapping",
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createControlResult)
@@ -642,7 +639,6 @@ func TestControlSnapshotMapping_CreateDelete(t *testing.T) {
 			"name":         "Control for Snapshot Mapping",
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createControlResult)
@@ -760,7 +756,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create a document
-	peopleID := factory.NewPeople(owner).WithFullName("Doc Owner").Create()
+	profileID := factory.CreateUser(owner)
 	var createDocumentResult struct {
 		CreateDocument struct {
 			DocumentEdge struct {
@@ -785,7 +781,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"title":          "Document for Risk Mapping",
 			"content":        "Document content",
-			"ownerId":        peopleID,
+			"approverIds":    []string{profileID},
 			"documentType":   "POLICY",
 			"classification": "INTERNAL",
 		},
@@ -874,7 +870,7 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create an obligation
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := factory.CreateUser(owner)
 	var createObligationResult struct {
 		CreateObligation struct {
 			ObligationEdge struct {
@@ -899,7 +895,7 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"area":           "Risk Management",
 			"requirement":    "Obligation for Risk Mapping",
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "NON_COMPLIANT",
 			"type":           "LEGAL",
 		},

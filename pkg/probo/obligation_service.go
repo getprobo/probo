@@ -24,6 +24,8 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 type ObligationService struct {
@@ -69,7 +71,7 @@ func (cor *CreateObligationRequest) Validate() error {
 	v.Check(cor.Requirement, "requirement", validator.SafeText(ContentMaxLength))
 	v.Check(cor.ActionsToBeImplemented, "actions_to_be_implemented", validator.SafeText(ContentMaxLength))
 	v.Check(cor.Regulator, "regulator", validator.SafeText(TitleMaxLength))
-	v.Check(cor.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cor.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(cor.Status, "status", validator.OneOfSlice(coredata.ObligationStatuses()))
 	v.Check(cor.Type, "type", validator.OneOfSlice(coredata.ObligationTypes()))
 
@@ -85,7 +87,7 @@ func (uor *UpdateObligationRequest) Validate() error {
 	v.Check(uor.Requirement, "requirement", validator.SafeText(ContentMaxLength))
 	v.Check(uor.ActionsToBeImplemented, "actions_to_be_implemented", validator.SafeText(ContentMaxLength))
 	v.Check(uor.Regulator, "regulator", validator.SafeText(NameMaxLength))
-	v.Check(uor.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(uor.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(uor.Status, "status", validator.OneOfSlice(coredata.ObligationStatuses()))
 	v.Check(uor.Type, "type", validator.OneOfSlice(coredata.ObligationTypes()))
 
@@ -151,13 +153,17 @@ func (s *ObligationService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			owner := &coredata.People{}
+			owner := &coredata.MembershipProfile{}
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner: %w", err)
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
 			if err := obligation.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert obligation: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, req.OrganizationID, coredata.WebhookEventTypeObligationCreated, webhooktypes.NewObligation(obligation)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil
@@ -209,9 +215,9 @@ func (s *ObligationService) Update(
 			}
 
 			if req.OwnerID != nil {
-				owner := &coredata.People{}
+				owner := &coredata.MembershipProfile{}
 				if err := owner.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner: %w", err)
+					return fmt.Errorf("cannot load owner profile: %w", err)
 				}
 				obligation.OwnerID = *req.OwnerID
 			}
@@ -238,6 +244,10 @@ func (s *ObligationService) Update(
 				return fmt.Errorf("cannot update obligation: %w", err)
 			}
 
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, obligation.OrganizationID, coredata.WebhookEventTypeObligationUpdated, webhooktypes.NewObligation(obligation)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -259,6 +269,10 @@ func (s *ObligationService) Delete(
 			obligation := &coredata.Obligation{}
 			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, obligation.OrganizationID, coredata.WebhookEventTypeObligationDeleted, webhooktypes.NewObligation(obligation)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if err := obligation.Delete(ctx, conn, s.svc.scope); err != nil {

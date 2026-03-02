@@ -97,10 +97,10 @@ export function LinkedControlsDialog(props: Props) {
   return (
     <Dialog trigger={props.children} title={__("Link controls")}>
       <DialogContent>
-        <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
+        <div className="flex items-center gap-2 sticky top-0 py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
           <Input
             icon={IconMagnifyingGlass}
-            placeholder={__("Search measures...")}
+            placeholder={__("Search controls...")}
             onValueChange={onSearch}
           />
         </div>

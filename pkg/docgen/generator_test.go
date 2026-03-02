@@ -41,7 +41,7 @@ func TestRenderHTML(t *testing.T) {
 				Content:        "# Main Title\n\nThis is **bold** text with *italic* formatting.",
 				Version:        1,
 				Classification: ClassificationPublic,
-				Approver:       "John Doe",
+				Approvers:      []string{"John Doe"},
 				PublishedAt:    &now,
 				Signatures: []SignatureData{
 					{
@@ -66,9 +66,9 @@ func TestRenderHTML(t *testing.T) {
 		{
 			name: "document with HTML characters that need escaping",
 			data: DocumentData{
-				Title:    "Test & <Script> Title",
-				Content:  "Normal markdown content",
-				Approver: "John <script>alert('xss')</script> Doe",
+				Title:     "Test & <Script> Title",
+				Content:   "Normal markdown content",
+				Approvers: []string{"John <script>alert('xss')</script> Doe"},
 				Signatures: []SignatureData{
 					{
 						SignedBy: "Alice & <Bob>",
@@ -253,8 +253,8 @@ func TestClassificationConstants(t *testing.T) {
 
 func TestHTMLEscaping(t *testing.T) {
 	dangerousData := DocumentData{
-		Title:    "<script>alert('xss')</script>",
-		Approver: "User & <Company>",
+		Title:     "<script>alert('xss')</script>",
+		Approvers: []string{"User & <Company>"},
 		Signatures: []SignatureData{
 			{
 				SignedBy: "<malicious>tag",
@@ -385,7 +385,7 @@ func BenchmarkGenerateHTML(b *testing.B) {
 		Content:        "# Title\n\nThis is **bold** text with *italic* formatting.\n\n- Item 1\n- Item 2",
 		Version:        1,
 		Classification: ClassificationPublic,
-		Approver:       "John Doe",
+		Approvers:      []string{"John Doe"},
 		PublishedAt:    &now,
 		Signatures: []SignatureData{
 			{

@@ -1,8 +1,5 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
-import {
-  UnAuthenticatedError,
-} from "@probo/relay";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { CenteredLayout } from "@probo/ui";
 import { use } from "react";
@@ -10,12 +7,14 @@ import {
   createBrowserRouter,
   Navigate,
   redirect,
-  useRouteError,
 } from "react-router";
 
+import { OrganizationErrorBoundary } from "./components/OrganizationErrorBoundary";
 import { PageError } from "./components/PageError";
+import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
+import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { assetRoutes } from "./routes/assetRoutes";
@@ -28,7 +27,6 @@ import { measureRoutes } from "./routes/measureRoutes";
 import { meetingsRoutes } from "./routes/meetingsRoutes";
 import { nonconformityRoutes } from "./routes/nonconformityRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
-import { peopleRoutes } from "./routes/peopleRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { riskRoutes } from "./routes/riskRoutes";
@@ -36,19 +34,6 @@ import { snapshotsRoutes } from "./routes/snapshotsRoutes";
 import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
 import { vendorRoutes } from "./routes/vendorRoutes";
-
-/**
- * Top level error boundary
- */
-function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (error instanceof UnAuthenticatedError) {
-    return <Navigate to="/auth/login" />;
-  }
-
-  return <PageError error={error instanceof Error ? error : new Error("unknown error")} />;
-}
 
 const routes = [
   {
@@ -71,16 +56,22 @@ const routes = [
       },
       {
         path: "register",
-        Component: lazy(() => import("./pages/iam/auth/sign-up/SignUpPage")),
+        Component: lazy(() => import("./pages/iam/auth/SignUpPage")),
       },
       {
         path: "verify-email",
         Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
       },
       {
-        path: "signup-from-invitation",
+        path: "activate-account",
         Component: lazy(
-          () => import("./pages/iam/auth/sign-up/SignUpFromInvitationPage"),
+          () => import("./pages/iam/auth/ActivateAccountPage"),
+        ),
+      },
+      {
+        path: "create-password",
+        Component: lazy(
+          () => import("./pages/iam/auth/CreatePasswordPage"),
         ),
       },
       {
@@ -95,7 +86,7 @@ const routes = [
   },
   {
     path: "/",
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
     children: [
       {
         Component: lazy(() => import("./pages/iam/memberships/ViewerLayoutLoader")),
@@ -130,125 +121,133 @@ const routes = [
   },
   {
     path: "documents/signing-requests",
-    ErrorBoundary: ErrorBoundary,
+    ErrorBoundary: RootErrorBoundary,
     Component: lazy(
       () => import("./pages/DocumentSigningRequestsPage"),
     ),
   },
   {
-    path: "/organizations/:organizationId/employee",
-    Component: lazy(
-      () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
-    ),
-    ErrorBoundary: ErrorBoundary,
-    children: [
-      {
-        index: true,
-        Component: lazy(
-          () =>
-            import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),
-        ),
-      },
-      {
-        path: ":documentId",
-        ErrorBoundary: ErrorBoundary,
-        Component: lazy(
-          () =>
-            import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
-        ),
-      },
-    ],
-  },
-  {
     path: "/organizations/:organizationId",
-    Component: lazy(
-      () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
-    ),
-    ErrorBoundary: ErrorBoundary,
     children: [
       {
-        path: "",
-        Component: () => {
-          const { role } = use(CurrentUser);
-          switch (role) {
-            case Role.EMPLOYEE:
-              return <Navigate to="employee" />;
-            case Role.AUDITOR:
-              return <Navigate to="measures" />;
-            default:
-              return <Navigate to="tasks" />;
-          }
-        },
+        path: "assume",
+        Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
       },
       {
-        path: "settings",
-        Fallback: PageSkeleton,
+        path: "employee",
+        ErrorBoundary: OrganizationErrorBoundary,
         Component: lazy(
-          () => import("./pages/iam/organizations/settings/SettingsLayout"),
+          () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
         ),
         children: [
           {
             index: true,
-            loader: () => {
-              // eslint-disable-next-line
-              throw redirect("general");
-            },
-          },
-          {
-            path: "general",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
+                import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),
             ),
           },
           {
-            path: "members",
+            path: ":documentId",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/MembersPageLoader"),
-            ),
-          },
-          {
-            path: "saml-sso",
-            Component: lazy(
-              () =>
-                import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
-            ),
-          },
-          {
-            path: "scim",
-            Component: lazy(
-              () =>
-                import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
+                import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
             ),
           },
         ],
       },
-      ...riskRoutes,
-      ...measureRoutes,
-      ...documentsRoutes,
-      ...peopleRoutes,
-      ...vendorRoutes,
-      ...frameworkRoutes,
-      ...taskRoutes,
-      ...assetRoutes,
-      ...dataRoutes,
-      ...auditRoutes,
-      ...meetingsRoutes,
-      ...nonconformityRoutes,
-      ...obligationRoutes,
-      ...continualImprovementRoutes,
-      ...rightsRequestRoutes,
-      ...processingActivityRoutes,
-      ...statesOfApplicabilityRoutes,
-      ...compliancePageRoutes,
-      ...snapshotsRoutes,
       {
-        path: "*",
-        Component: PageError,
+        Component: lazy(
+          () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
+        ),
+        ErrorBoundary: OrganizationErrorBoundary,
+        children: [
+          {
+            path: "",
+            Component: () => {
+              const { role } = use(CurrentUser);
+              switch (role) {
+                case Role.EMPLOYEE:
+                  return <Navigate to="employee" />;
+                case Role.AUDITOR:
+                  return <Navigate to="measures" />;
+                default:
+                  return <Navigate to="tasks" />;
+              }
+            },
+          },
+          {
+            path: "settings",
+            Fallback: PageSkeleton,
+            Component: lazy(
+              () => import("./pages/iam/organizations/settings/SettingsLayout"),
+            ),
+            children: [
+              {
+                index: true,
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("general");
+                },
+              },
+              {
+                path: "general",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
+                ),
+              },
+              {
+                path: "saml-sso",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
+                ),
+              },
+              {
+                path: "scim",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
+                ),
+              },
+              {
+                path: "webhooks",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
+                ),
+              },
+            ],
+          },
+          ...peopleRoutes,
+          ...riskRoutes,
+          ...measureRoutes,
+          ...documentsRoutes,
+          ...vendorRoutes,
+          ...frameworkRoutes,
+          ...taskRoutes,
+          ...assetRoutes,
+          ...dataRoutes,
+          ...auditRoutes,
+          ...meetingsRoutes,
+          ...nonconformityRoutes,
+          ...obligationRoutes,
+          ...continualImprovementRoutes,
+          ...rightsRequestRoutes,
+          ...processingActivityRoutes,
+          ...statesOfApplicabilityRoutes,
+          ...compliancePageRoutes,
+          ...snapshotsRoutes,
+          {
+            path: "*",
+            Component: PageError,
+          },
+        ],
       },
     ],
   },
+
   // Fallback URL to the NotFound Page
   {
     path: "*",

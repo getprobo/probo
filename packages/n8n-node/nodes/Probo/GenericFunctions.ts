@@ -168,3 +168,78 @@ export async function proboConnectApiRequestAllItems(
 		limit,
 	);
 }
+
+export async function proboApiMultipartRequest(
+	this: IExecuteFunctions,
+	query: string,
+	variables: IDataObject,
+	fileVariablePath: string,
+	fileBuffer: Buffer,
+	fileName: string,
+	mimeType: string = 'application/octet-stream',
+): Promise<IDataObject> {
+	const credentials = await this.getCredentials('proboApi');
+
+	if (!credentials?.apiKey) {
+		throw new NodeApiError(this.getNode(), { message: 'API Key is required' } as JsonObject);
+	}
+
+	const boundary = `----n8nFormBoundary${Date.now().toString(16)}`;
+
+	const safeFileName = fileName
+		.replace(/[\r\n]/g, '')
+		.replace(/\\/g, '\\\\')
+		.replace(/"/g, '\\"');
+	const safeMimeType = mimeType.replace(/[\r\n]/g, '');
+
+	const operations = JSON.stringify({ query, variables });
+	const map = JSON.stringify({ '0': [fileVariablePath] });
+
+	const parts: Buffer[] = [];
+
+	parts.push(Buffer.from(
+		`--${boundary}\r\nContent-Disposition: form-data; name="operations"\r\n\r\n${operations}\r\n`,
+	));
+
+	parts.push(Buffer.from(
+		`--${boundary}\r\nContent-Disposition: form-data; name="map"\r\n\r\n${map}\r\n`,
+	));
+
+	parts.push(Buffer.from(
+		`--${boundary}\r\nContent-Disposition: form-data; name="0"; filename="${safeFileName}"\r\nContent-Type: ${safeMimeType}\r\n\r\n`,
+	));
+	parts.push(fileBuffer);
+	parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+
+	const body = Buffer.concat(parts);
+
+	const options: IHttpRequestOptions = {
+		method: 'POST',
+		baseURL: `${credentials.server}`,
+		url: '/api/console/v1/graphql',
+		headers: {
+			Authorization: `Bearer ${credentials.apiKey}`,
+			'Content-Type': `multipart/form-data; boundary=${boundary}`,
+			'User-Agent': `probo-n8n-node/${version}`,
+		},
+		body,
+	};
+
+	try {
+		const response = await this.helpers.httpRequest(options);
+
+		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+			const errorMessages = response.errors.map((err: IDataObject) =>
+				err.message || JSON.stringify(err)
+			).join('; ');
+			throw new NodeApiError(this.getNode(), {
+				message: `GraphQL errors: ${errorMessages}`,
+				httpCode: '200',
+			} as JsonObject);
+		}
+
+		return response;
+	} catch (error) {
+		throw new NodeApiError(this.getNode(), error as JsonObject);
+	}
+}

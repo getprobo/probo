@@ -363,8 +363,18 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>Approver</td>
-                            <td>{{.Approver}}</td>
+                            <td>Approver{{- if gt (len .Approvers) 1}}s{{- end}}</td>
+                            <td>
+                                {{- if eq (len .Approvers) 1}}
+                                {{index .Approvers 0}}
+                                {{- else}}
+                                <ul style="margin: 0; padding-left: 18px;">
+                                {{- range .Approvers}}
+                                    <li>{{.}}</li>
+                                {{- end}}
+                                </ul>
+                                {{- end}}
+                            </td>
                         </tr>
                         <tr>
                             <td>Version:</td>

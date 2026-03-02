@@ -48,8 +48,8 @@
 {{- end }}
 
 💾 Object Storage:
-{{- if .Values.minio.enabled }}
-  Using MinIO: {{ include "probo.fullname" . }}-minio:9000
+{{- if .Values.seaweedfs.enabled }}
+  Using SeaweedFS: {{ include "probo.fullname" . }}-seaweedfs:8333
   Bucket: {{ .Values.s3.bucket }}
 {{- else }}
   Using S3 storage
@@ -64,8 +64,8 @@
 {{- if not .Values.ingress.tls }}
   ⚠️  TLS is not enabled! Enable it for production by configuring ingress.tls
 {{- end }}
-{{- if or .Values.postgresql.enabled .Values.minio.enabled }}
-  ⚠️  Using internal PostgreSQL or MinIO - FOR TESTING ONLY!
+{{- if or .Values.postgresql.enabled .Values.seaweedfs.enabled }}
+  ⚠️  Using internal PostgreSQL or SeaweedFS - FOR TESTING ONLY!
   For production, disable these and use external managed services.
 {{- end }}
 

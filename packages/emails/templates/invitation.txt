@@ -2,11 +2,11 @@ Probo
 
 Hi {{.RecipientFullName}},
 
-You have been invited to join organization {{.OrganizationName}} on Probo. Click the link below to accept the invitation:
+You have been invited to join organization {{.OrganizationName}} on Probo. Click the link below to activate your account:
 
 {{.InvitationUrl}}
 
-If you don't want to accept the invitation, you can ignore this email.
+If you don't want to do so, you can ignore this email.
 
 {{.SenderCompanyHeadquarterAddress}}
 Powered By Probo

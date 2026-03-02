@@ -14,25 +14,11 @@ export class InternalServerError extends Error {
   }
 }
 
-export class AuthenticationRequiredError extends Error {
-  public redirectUrl: string;
-  public requiresSaml: boolean;
-  public organizationId: string;
-  public samlConfigId?: string;
-
-  constructor(extensions: {
-    redirectUrl: string;
-    requiresSaml: boolean;
-    organizationId: string;
-    samlConfigId?: string;
-  }) {
-    super("AUTHENTICATION_REQUIRED");
-    this.name = "AuthenticationRequiredError";
-    Object.setPrototypeOf(this, AuthenticationRequiredError.prototype);
-    this.redirectUrl = extensions.redirectUrl;
-    this.requiresSaml = extensions.requiresSaml;
-    this.organizationId = extensions.organizationId;
-    this.samlConfigId = extensions.samlConfigId;
+export class AssumptionRequiredError extends Error {
+  constructor(message?: string) {
+    super(message ?? "ASSUMPTION_REQUIRED");
+    this.name = "AssumptionRequiredError";
+    Object.setPrototypeOf(this, AssumptionRequiredError.prototype)
   }
 }
 

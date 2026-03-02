@@ -105,7 +105,7 @@ func (cpar *CreateProcessingActivityRequest) Validate() error {
 	v.Check(cpar.DataProtectionImpactAssessmentNeeded, "data_protection_impact_assessment_needed", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
 	v.Check(cpar.TransferImpactAssessmentNeeded, "transfer_impact_assessment_needed", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
 	v.Check(cpar.Role, "role", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityRoles()))
-	v.Check(cpar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(cpar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.CheckEach(cpar.VendorIDs, "vendor_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
 	})
@@ -132,7 +132,7 @@ func (upar *UpdateProcessingActivityRequest) Validate() error {
 	v.Check(upar.DataProtectionImpactAssessmentNeeded, "data_protection_impact_assessment_needed", validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
 	v.Check(upar.TransferImpactAssessmentNeeded, "transfer_impact_assessment_needed", validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
 	v.Check(upar.Role, "role", validator.OneOfSlice(coredata.ProcessingActivityRoles()))
-	v.Check(upar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(upar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.CheckEach(upar.VendorIDs, "vendor_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
 	})
@@ -462,7 +462,7 @@ func (s *ProcessingActivityService) ExportPDF(
 			for i, pa := range processingActivities {
 				dpoFullName := (*string)(nil)
 				if pa.DataProtectionOfficerID != nil {
-					dpo := &coredata.People{}
+					dpo := &coredata.MembershipProfile{}
 					if err := dpo.LoadByID(ctx, conn, s.svc.scope, *pa.DataProtectionOfficerID); err == nil {
 						dpoFullName = &dpo.FullName
 					}

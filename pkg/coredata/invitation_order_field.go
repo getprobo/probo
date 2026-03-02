@@ -21,28 +21,13 @@ type InvitationOrderField string
 
 // InvitationOrderField constants
 const (
-	InvitationOrderFieldFullName   InvitationOrderField = "FULL_NAME"
-	InvitationOrderFieldEmail      InvitationOrderField = "EMAIL"
-	InvitationOrderFieldRole       InvitationOrderField = "ROLE"
-	InvitationOrderFieldCreatedAt  InvitationOrderField = "CREATED_AT"
-	InvitationOrderFieldExpiresAt  InvitationOrderField = "EXPIRES_AT"
-	InvitationOrderFieldAcceptedAt InvitationOrderField = "ACCEPTED_AT"
+	InvitationOrderFieldCreatedAt InvitationOrderField = "CREATED_AT"
 )
 
 func (p InvitationOrderField) Column() string {
 	switch p {
-	case InvitationOrderFieldFullName:
-		return "full_name"
-	case InvitationOrderFieldEmail:
-		return "email"
-	case InvitationOrderFieldRole:
-		return "role"
 	case InvitationOrderFieldCreatedAt:
 		return "created_at"
-	case InvitationOrderFieldExpiresAt:
-		return "expires_at"
-	case InvitationOrderFieldAcceptedAt:
-		return "accepted_at"
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
@@ -50,7 +35,7 @@ func (p InvitationOrderField) Column() string {
 
 func (e InvitationOrderField) IsValid() bool {
 	switch e {
-	case InvitationOrderFieldFullName, InvitationOrderFieldEmail, InvitationOrderFieldRole, InvitationOrderFieldCreatedAt, InvitationOrderFieldExpiresAt, InvitationOrderFieldAcceptedAt:
+	case InvitationOrderFieldCreatedAt:
 		return true
 	}
 	return false

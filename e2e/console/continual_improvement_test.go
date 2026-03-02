@@ -28,7 +28,7 @@ import (
 func TestContinualImprovement_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("CI Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	query := `
 		mutation CreateContinualImprovement($input: CreateContinualImprovementInput!) {
@@ -68,7 +68,7 @@ func TestContinualImprovement_Create(t *testing.T) {
 			"referenceId":    fmt.Sprintf("CI-%d", time.Now().UnixNano()),
 			"description":    "Improve security training program",
 			"source":         "Internal Audit",
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "OPEN",
 			"priority":       "HIGH",
 		},
@@ -86,7 +86,7 @@ func TestContinualImprovement_Create(t *testing.T) {
 func TestContinualImprovement_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("CI Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	createQuery := `
 		mutation CreateContinualImprovement($input: CreateContinualImprovementInput!) {
@@ -115,7 +115,7 @@ func TestContinualImprovement_Update(t *testing.T) {
 			"organizationId": owner.GetOrganizationID().String(),
 			"referenceId":    fmt.Sprintf("CI-UPDATE-%d", time.Now().UnixNano()),
 			"description":    "Original description",
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "OPEN",
 			"priority":       "LOW",
 		},
@@ -166,7 +166,7 @@ func TestContinualImprovement_Update(t *testing.T) {
 func TestContinualImprovement_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("CI Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	createQuery := `
 		mutation CreateContinualImprovement($input: CreateContinualImprovementInput!) {
@@ -194,7 +194,7 @@ func TestContinualImprovement_Delete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"referenceId":    fmt.Sprintf("CI-DELETE-%d", time.Now().UnixNano()),
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "OPEN",
 			"priority":       "LOW",
 		},
@@ -228,7 +228,7 @@ func TestContinualImprovement_Delete(t *testing.T) {
 func TestContinualImprovement_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("CI Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	createQuery := `
 		mutation CreateContinualImprovement($input: CreateContinualImprovementInput!) {
@@ -248,7 +248,7 @@ func TestContinualImprovement_List(t *testing.T) {
 				"organizationId": owner.GetOrganizationID().String(),
 				"referenceId":    fmt.Sprintf("CI-LIST-%d-%d", i, time.Now().UnixNano()),
 				"description":    fmt.Sprintf("Improvement %d", i),
-				"ownerId":        peopleID,
+				"ownerId":        profileID,
 				"status":         "OPEN",
 				"priority":       "MEDIUM",
 			},
@@ -302,7 +302,7 @@ func TestContinualImprovement_List(t *testing.T) {
 func TestContinualImprovement_StatusAndPriorityValues(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("CI Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	t.Run("status values", func(t *testing.T) {
 		statuses := []string{"OPEN", "IN_PROGRESS", "CLOSED"}
@@ -337,7 +337,7 @@ func TestContinualImprovement_StatusAndPriorityValues(t *testing.T) {
 					"input": map[string]any{
 						"organizationId": owner.GetOrganizationID().String(),
 						"referenceId":    fmt.Sprintf("CI-STATUS-%s-%d", status, time.Now().UnixNano()),
-						"ownerId":        peopleID,
+						"ownerId":        profileID,
 						"status":         status,
 						"priority":       "LOW",
 					},
@@ -381,7 +381,7 @@ func TestContinualImprovement_StatusAndPriorityValues(t *testing.T) {
 					"input": map[string]any{
 						"organizationId": owner.GetOrganizationID().String(),
 						"referenceId":    fmt.Sprintf("CI-PRIORITY-%s-%d", priority, time.Now().UnixNano()),
-						"ownerId":        peopleID,
+						"ownerId":        profileID,
 						"status":         "OPEN",
 						"priority":       priority,
 					},

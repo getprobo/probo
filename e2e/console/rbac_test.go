@@ -174,36 +174,6 @@ const (
 			}
 		}`
 
-	createPeopleMutation = `
-		mutation CreatePeople($input: CreatePeopleInput!) {
-			createPeople(input: $input) {
-				peopleEdge { node { id } }
-			}
-		}`
-
-	updatePeopleMutation = `
-		mutation UpdatePeople($input: UpdatePeopleInput!) {
-			updatePeople(input: $input) {
-				people { id }
-			}
-		}`
-
-	deletePeopleMutation = `
-		mutation DeletePeople($input: DeletePeopleInput!) {
-			deletePeople(input: $input) {
-				deletedPeopleId
-			}
-		}`
-
-	listPeoplesQuery = `
-		query GetPeoples($id: ID!) {
-			node(id: $id) {
-				... on Organization {
-					peoples(first: 10) { totalCount }
-				}
-			}
-		}`
-
 	createVendorMutation = `
 		mutation CreateVendor($input: CreateVendorInput!) {
 			createVendor(input: $input) {
@@ -251,11 +221,11 @@ const (
 			}
 		}`
 
-	listMembersQuery = `
-		query GetMembers($id: ID!) {
+	listUsersQuery = `
+		query GetProfiles($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					members(first: 10) { totalCount }
+					profiles(first: 10) { totalCount }
 				}
 			}
 		}`
@@ -274,7 +244,6 @@ func TestRBAC(t *testing.T) {
 	measureID := factory.NewMeasure(owner).WithName("RBAC Test Measure").Create()
 	taskID := factory.NewTask(owner, measureID).WithName("RBAC Test Task").Create()
 	riskID := factory.NewRisk(owner).WithName("RBAC Test Risk").Create()
-	peopleID := factory.NewPeople(owner).WithFullName("RBAC Test Person").Create()
 	vendorID := factory.NewVendor(owner).WithName("RBAC Test Vendor").Create()
 
 	tests := []struct {
@@ -415,7 +384,7 @@ func TestRBAC(t *testing.T) {
 			client: owner,
 			query:  createControlMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Owner"), "status": "INCLUDED", "bestPractice": true}}
+				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Owner"), "bestPractice": true}}
 			},
 			shouldAllow: true,
 		},
@@ -425,7 +394,7 @@ func TestRBAC(t *testing.T) {
 			client: admin,
 			query:  createControlMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Admin"), "status": "INCLUDED", "bestPractice": true}}
+				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Admin"), "bestPractice": true}}
 			},
 			shouldAllow: true,
 		},
@@ -435,7 +404,7 @@ func TestRBAC(t *testing.T) {
 			client: viewer,
 			query:  createControlMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Viewer"), "status": "INCLUDED", "bestPractice": true}}
+				return map[string]any{"input": map[string]any{"frameworkId": frameworkID, "name": factory.SafeName("Control"), "description": "Test", "sectionTitle": factory.SafeName("Section Viewer"), "bestPractice": true}}
 			},
 			shouldAllow: false,
 		},
@@ -905,130 +874,6 @@ func TestRBAC(t *testing.T) {
 			shouldAllow: true,
 		},
 		{
-			name:   "owner can create people",
-			role:   "owner",
-			client: owner,
-			query:  createPeopleMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "additionalEmailAddresses": []string{}, "kind": "EMPLOYEE"}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can create people",
-			role:   "admin",
-			client: admin,
-			query:  createPeopleMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "additionalEmailAddresses": []string{}, "kind": "EMPLOYEE"}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot create people",
-			role:   "viewer",
-			client: viewer,
-			query:  createPeopleMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "additionalEmailAddresses": []string{}, "kind": "EMPLOYEE"}}
-			},
-			shouldAllow: false,
-		},
-		// TODO: Fix server-side issue - updatePeople mutation returns internal server error
-		// {
-		// 	name:   "owner can update people",
-		// 	role:   "owner",
-		// 	client: owner,
-		// 	query:  updatePeopleMutation,
-		// 	variables: func() map[string]any {
-		// 		return map[string]any{"input": map[string]any{"id": peopleID, "fullName": factory.SafeName("Updated Person")}}
-		// 	},
-		// 	shouldAllow: true,
-		// },
-		// {
-		// 	name:   "admin can update people",
-		// 	role:   "admin",
-		// 	client: admin,
-		// 	query:  updatePeopleMutation,
-		// 	variables: func() map[string]any {
-		// 		return map[string]any{"input": map[string]any{"id": peopleID, "fullName": factory.SafeName("Updated Person")}}
-		// 	},
-		// 	shouldAllow: true,
-		// },
-		{
-			name:   "viewer cannot update people",
-			role:   "viewer",
-			client: viewer,
-			query:  updatePeopleMutation,
-			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"id": peopleID, "fullName": factory.SafeName("Updated Person")}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can delete people",
-			role:   "owner",
-			client: owner,
-			query:  deletePeopleMutation,
-			variables: func() map[string]any {
-				id := factory.NewPeople(owner).WithFullName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"peopleId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can delete people",
-			role:   "admin",
-			client: admin,
-			query:  deletePeopleMutation,
-			variables: func() map[string]any {
-				id := factory.NewPeople(owner).WithFullName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"peopleId": id}}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer cannot delete people",
-			role:   "viewer",
-			client: viewer,
-			query:  deletePeopleMutation,
-			variables: func() map[string]any {
-				id := factory.NewPeople(owner).WithFullName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"peopleId": id}}
-			},
-			shouldAllow: false,
-		},
-		{
-			name:   "owner can list peoples",
-			role:   "owner",
-			client: owner,
-			query:  listPeoplesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "admin can list peoples",
-			role:   "admin",
-			client: admin,
-			query:  listPeoplesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
-			name:   "viewer can list peoples",
-			role:   "viewer",
-			client: viewer,
-			query:  listPeoplesQuery,
-			variables: func() map[string]any {
-				return map[string]any{"id": owner.GetOrganizationID().String()}
-			},
-			shouldAllow: true,
-		},
-		{
 			name:   "owner can create vendor",
 			role:   "owner",
 			client: owner,
@@ -1218,10 +1063,10 @@ func TestRBAC(t *testing.T) {
 			useConnect:  true,
 		},
 		{
-			name:   "owner can list members",
+			name:   "owner can list users",
 			role:   "owner",
 			client: owner,
-			query:  listMembersQuery,
+			query:  listUsersQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
@@ -1229,10 +1074,10 @@ func TestRBAC(t *testing.T) {
 			useConnect:  true,
 		},
 		{
-			name:   "admin can list members",
+			name:   "admin can list users",
 			role:   "admin",
 			client: admin,
-			query:  listMembersQuery,
+			query:  listUsersQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
@@ -1240,10 +1085,10 @@ func TestRBAC(t *testing.T) {
 			useConnect:  true,
 		},
 		{
-			name:   "viewer can list members",
+			name:   "viewer can list users",
 			role:   "viewer",
 			client: viewer,
-			query:  listMembersQuery,
+			query:  listUsersQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},

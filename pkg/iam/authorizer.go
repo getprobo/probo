@@ -81,11 +81,10 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	resourceOrgID := resourceAttrs["organization_id"]
 
 	// Find role for resource's organization
-	memberships, err := a.loadMemberships(ctx, conn, params.Principal)
+	membership, err := a.loadMembership(ctx, conn, params.Principal, resourceOrgID)
 	if err != nil {
 		return fmt.Errorf("cannot load memberships for principal: %w", err)
 	}
-	membership := findMembershipForOrg(memberships, resourceOrgID)
 
 	// Check whether the viewer is currently assuming the org of the accessed resource
 	if membership != nil && params.Session != nil {
@@ -99,7 +98,7 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 			var errSessionExpired *ErrSessionExpired
 
 			if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
-				return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
+				return NewAssumptionRequiredError(params.Principal, membership.ID)
 			}
 
 			return fmt.Errorf("cannot get active child session for membership: %w", err)
@@ -144,12 +143,31 @@ func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params Authori
 	return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
 }
 
-func (a *Authorizer) loadMemberships(ctx context.Context, conn pg.Conn, principalID gid.GID) (coredata.Memberships, error) {
-	var memberships coredata.Memberships
-	if err := memberships.LoadAllByIdentityID(ctx, conn, principalID); err != nil {
-		return nil, fmt.Errorf("cannot load memberships: %w", err)
+func (a *Authorizer) loadMembership(
+	ctx context.Context,
+	conn pg.Conn,
+	principalID gid.GID,
+	resourceOrgID string,
+) (*coredata.Membership, error) {
+	if resourceOrgID == "" {
+		return nil, nil
 	}
-	return memberships, nil
+
+	orgID, err := gid.ParseGID(resourceOrgID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse gid: %w", err)
+	}
+
+	membership := &coredata.Membership{}
+	if err := membership.LoadActiveByIdentityIDAndOrganizationID(ctx, conn, principalID, orgID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load active membership: %w", err)
+	}
+
+	return membership, nil
 }
 
 func (a *Authorizer) getActiveChildSessionForMembership(
@@ -239,14 +257,4 @@ func (a *Authorizer) buildPoliciesForRole(role string) []*policy.Policy {
 	}
 
 	return policies
-}
-
-func findMembershipForOrg(memberships coredata.Memberships, orgID string) *coredata.Membership {
-	for _, m := range memberships {
-		if m.OrganizationID.String() == orgID && m.State == coredata.MembershipStateActive {
-			return m
-		}
-	}
-
-	return nil
 }

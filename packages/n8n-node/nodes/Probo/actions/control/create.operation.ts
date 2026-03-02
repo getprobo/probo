@@ -45,30 +45,6 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Status',
-		name: 'status',
-		type: 'options',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['create'],
-			},
-		},
-		options: [
-			{
-				name: 'Included',
-				value: 'INCLUDED',
-			},
-			{
-				name: 'Excluded',
-				value: 'EXCLUDED',
-			},
-		],
-		default: 'INCLUDED',
-		description: 'The status of the control',
-		required: true,
-	},
-	{
 		displayName: 'Description',
 		name: 'description',
 		type: 'string',
@@ -81,19 +57,6 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The description of the control',
 	},
-	{
-		displayName: 'Exclusion Justification',
-		name: 'exclusionJustification',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The justification for excluding the control',
-	},
 ];
 
 export async function execute(
@@ -103,9 +66,7 @@ export async function execute(
 	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
 	const sectionTitle = this.getNodeParameter('sectionTitle', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
-	const status = this.getNodeParameter('status', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
-	const exclusionJustification = this.getNodeParameter('exclusionJustification', itemIndex, '') as string;
 
 	const query = `
 		mutation CreateControl($input: CreateControlInput!) {
@@ -116,8 +77,6 @@ export async function execute(
 						sectionTitle
 						name
 						description
-						status
-						exclusionJustification
 						createdAt
 						updatedAt
 					}
@@ -131,9 +90,8 @@ export async function execute(
 			frameworkId,
 			sectionTitle,
 			name,
-			status,
+			bestPractice: true,
 			...(description && { description }),
-			...(exclusionJustification && { exclusionJustification }),
 		},
 	};
 
@@ -144,4 +102,3 @@ export async function execute(
 		pairedItem: { item: itemIndex },
 	};
 }
-

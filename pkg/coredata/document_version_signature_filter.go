@@ -53,8 +53,8 @@ func (f *DocumentVersionSignatureFilter) SQLFragment() string {
         THEN TRUE
     ELSE EXISTS (
         SELECT 1
-        FROM peoples p
-        WHERE p.id = signed_by
+        FROM iam_membership_profiles p
+        WHERE p.id = signed_by_profile_id
         AND (
             (
                 @active_contract::boolean = TRUE

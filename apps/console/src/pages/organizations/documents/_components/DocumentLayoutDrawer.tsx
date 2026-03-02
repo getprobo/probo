@@ -12,7 +12,7 @@ import type { DocumentLayoutDrawerMutation } from "#/__generated__/core/Document
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
+import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -22,6 +22,14 @@ const documentFragment = graphql`
     id
     documentType
     canUpdate: permission(action: "core:document:update")
+    approvers(first: 100) {
+      edges {
+        node {
+          id
+          fullName
+        }
+      }
+    }
   }
 `;
 
@@ -29,10 +37,6 @@ const versionFragment = graphql`
   fragment DocumentLayoutDrawer_versionFragment on DocumentVersion {
     id
     classification
-    owner {
-      id
-      fullName
-    }
     version
     status
     updatedAt
@@ -47,9 +51,13 @@ const updateDocumentMutation = graphql`
         id
         documentType
         classification
-        owner {
-          id
-          fullName
+        approvers(first: 100) {
+          edges {
+            node {
+              id
+              fullName
+            }
+          }
         }
       }
     }
@@ -57,7 +65,7 @@ const updateDocumentMutation = graphql`
 `;
 
 const schema = z.object({
-  ownerId: z.string().min(1, "Owner is required"),
+  approverIds: z.array(z.string()).min(1, "At least one approver is required"),
   documentType: z.enum(documentTypes),
   classification: z.enum(documentClassifications),
 });
@@ -71,7 +79,7 @@ export function DocumentLayoutDrawer(props: {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
-  const [isEditingOwner, setIsEditingOwner] = useState(false);
+  const [isEditingApprover, setIsEditingApprover] = useState(false);
   const [isEditingType, setIsEditingType] = useState(false);
   const [isEditingClassification, setIsEditingClassification] = useState(false);
 
@@ -80,11 +88,13 @@ export function DocumentLayoutDrawer(props: {
 
   const isDraft = version.status === "DRAFT";
 
+  const approvers = document.approvers.edges.map(e => e.node);
+
   const { control, handleSubmit, reset } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        ownerId: version.owner.id,
+        approverIds: approvers.map(a => a.id),
         documentType: document.documentType,
         classification: version.classification,
       },
@@ -100,16 +110,16 @@ export function DocumentLayoutDrawer(props: {
       },
     );
 
-  const handleUpdateOwner = async (data: { ownerId: string }) => {
+  const handleUpdateApprover = async (data: { approverIds: string[] }) => {
     await updateDocument({
       variables: {
         input: {
           id: document.id,
-          ownerId: data.ownerId,
+          approverIds: data.approverIds,
         },
       },
       onSuccess: () => {
-        setIsEditingOwner(false);
+        setIsEditingApprover(false);
       },
     });
   };
@@ -151,33 +161,39 @@ export function DocumentLayoutDrawer(props: {
       <div className="text-base text-txt-primary font-medium mb-4">
         {__("Properties")}
       </div>
-      <PropertyRow label={__("Owner")}>
-        {isEditingOwner
+      <PropertyRow label={__("Approvers")}>
+        {isEditingApprover
           ? (
               <EditablePropertyContent
-                onSave={() => void handleSubmit(handleUpdateOwner)()}
+                onSave={() => void handleSubmit(handleUpdateApprover)()}
                 onCancel={() => {
-                  setIsEditingOwner(false);
+                  setIsEditingApprover(false);
                   reset();
                 }}
                 disabled={isUpdatingDocument}
               >
-                <PeopleSelectField
-                  name="ownerId"
+                <PeopleMultiSelectField
+                  name="approverIds"
                   control={control}
                   organizationId={organizationId}
+                  selectedPeople={approvers}
+                  placeholder={__("Add approvers...")}
                 />
               </EditablePropertyContent>
             )
           : (
               <ReadOnlyPropertyContent
-                onEdit={() => setIsEditingOwner(true)}
+                onEdit={() => setIsEditingApprover(true)}
                 canEdit={document.canUpdate}
               >
-                <Badge variant="highlight" size="md" className="gap-2">
-                  <Avatar name={version.owner.fullName} />
-                  {version.owner.fullName}
-                </Badge>
+                <div className="flex flex-wrap gap-2">
+                  {approvers.map(approver => (
+                    <Badge key={approver.id} variant="highlight" size="md" className="gap-2">
+                      <Avatar name={approver.fullName} />
+                      {approver.fullName}
+                    </Badge>
+                  ))}
+                </div>
               </ReadOnlyPropertyContent>
             )}
       </PropertyRow>

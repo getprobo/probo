@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dfac9f61dc942eb4d9fa426b09f98b10>>
+ * @generated SignedSource<<7a85ed904a58646c75806d80ef39fe3d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -213,6 +213,32 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
+                "alias": "canCreateControlMeasureMapping",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:control:create-measure-mapping"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
+              },
+              {
+                "alias": "canDeleteControlMeasureMapping",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:control:delete-measure-mapping"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
+              },
+              {
                 "alias": null,
                 "args": (v15/*: any*/),
                 "concreteType": "ControlConnection",
@@ -237,32 +263,6 @@ return {
                         "plural": false,
                         "selections": [
                           (v14/*: any*/),
-                          {
-                            "alias": "canCreateMeasureMapping",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:control:create-measure-mapping"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
-                          },
-                          {
-                            "alias": "canDeleteMeasureMapping",
-                            "args": [
-                              {
-                                "kind": "Literal",
-                                "name": "action",
-                                "value": "core:control:delete-measure-mapping"
-                              }
-                            ],
-                            "kind": "ScalarField",
-                            "name": "permission",
-                            "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
-                          },
                           (v16/*: any*/),
                           {
                             "alias": null,
@@ -374,16 +374,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "61b16a84cb9903560d86e0b5ee031abe",
+    "cacheID": "f70203cc76e2ffe7c817cba8aa3942a3",
     "id": null,
     "metadata": {},
     "name": "MeasureControlsTabControlsQuery",
     "operationKind": "query",
-    "text": "query MeasureControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment MeasureControlsTabFragment_4cFWzS on Measure {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n        canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n"
+    "text": "query MeasureControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment MeasureControlsTabFragment_4cFWzS on Measure {\n  id\n  canCreateControlMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n  canDeleteControlMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6cd1d286921188abc2a9fdc1c1e0ed08";
+(node as any).hash = "f1553367470d92ddfc910b2eea87109f";
 
 export default node;

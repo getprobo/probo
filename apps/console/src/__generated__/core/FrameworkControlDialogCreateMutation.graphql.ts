@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<35c2c66dca0c895c7abca2b0f4917a68>>
+ * @generated SignedSource<<10bdb7f9b009009a66d93605d3d671c4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,15 +10,12 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type ControlStatus = "EXCLUDED" | "INCLUDED";
 export type CreateControlInput = {
   bestPractice: boolean;
   description?: string | null | undefined;
-  exclusionJustification?: string | null | undefined;
   frameworkId: string;
   name: string;
   sectionTitle: string;
-  status: ControlStatus;
 };
 export type FrameworkControlDialogCreateMutation$variables = {
   connections: ReadonlyArray<string>;
@@ -173,20 +170,6 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "status",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "exclusionJustification",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "bestPractice",
                     "storageKey": null
                   }
@@ -218,12 +201,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "81df1f9c65937d3e387edffc6e9a28ac",
+    "cacheID": "51536092f1e2e37d1499182357306138",
     "id": null,
     "metadata": {},
     "name": "FrameworkControlDialogCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkControlDialogCreateMutation(\n  $input: CreateControlInput!\n) {\n  createControl(input: $input) {\n    controlEdge {\n      node {\n        ...FrameworkControlDialogFragment\n        id\n      }\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n  bestPractice\n}\n"
+    "text": "mutation FrameworkControlDialogCreateMutation(\n  $input: CreateControlInput!\n) {\n  createControl(input: $input) {\n    controlEdge {\n      node {\n        ...FrameworkControlDialogFragment\n        id\n      }\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  bestPractice\n}\n"
   }
 };
 })();

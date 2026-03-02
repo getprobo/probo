@@ -29,6 +29,7 @@ type (
 		Database     string `json:"database"`
 		PoolSize     int32  `json:"pool-size"`
 		CACertBundle string `json:"ca-cert-bundle"`
+		Debug        bool   `json:"debug"`
 	}
 )
 
@@ -39,6 +40,10 @@ func (cfg pgConfig) Options(options ...pg.Option) []pg.Option {
 		pg.WithPassword(cfg.Password),
 		pg.WithDatabase(cfg.Database),
 		pg.WithPoolSize(cfg.PoolSize),
+	}
+
+	if cfg.Debug {
+		opts = append(opts, pg.WithDebug())
 	}
 
 	if cfg.CACertBundle != "" {

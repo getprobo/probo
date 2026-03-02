@@ -39,7 +39,6 @@ func TestControl_Create(t *testing.T) {
 							id
 							name
 							sectionTitle
-							status
 						}
 					}
 				}
@@ -53,7 +52,6 @@ func TestControl_Create(t *testing.T) {
 						ID           string `json:"id"`
 						Name         string `json:"name"`
 						SectionTitle string `json:"sectionTitle"`
-						Status       string `json:"status"`
 					} `json:"node"`
 				} `json:"controlEdge"`
 			} `json:"createControl"`
@@ -65,7 +63,6 @@ func TestControl_Create(t *testing.T) {
 				"sectionTitle": "A.5",
 				"name":         "Information Security Policies",
 				"description":  "Policies for information security",
-				"status":       "INCLUDED",
 				"bestPractice": true,
 			},
 		}, &result)
@@ -75,52 +72,6 @@ func TestControl_Create(t *testing.T) {
 		assert.NotEmpty(t, control.ID)
 		assert.Equal(t, "Information Security Policies", control.Name)
 		assert.Equal(t, "A.5", control.SectionTitle)
-		assert.Equal(t, "INCLUDED", control.Status)
-	})
-
-	t.Run("with excluded status and justification", func(t *testing.T) {
-		query := `
-			mutation CreateControl($input: CreateControlInput!) {
-				createControl(input: $input) {
-					controlEdge {
-						node {
-							id
-							status
-							exclusionJustification
-						}
-					}
-				}
-			}
-		`
-
-		var result struct {
-			CreateControl struct {
-				ControlEdge struct {
-					Node struct {
-						ID                     string  `json:"id"`
-						Status                 string  `json:"status"`
-						ExclusionJustification *string `json:"exclusionJustification"`
-					} `json:"node"`
-				} `json:"controlEdge"`
-			} `json:"createControl"`
-		}
-
-		err := owner.Execute(query, map[string]any{
-			"input": map[string]any{
-				"frameworkId":            frameworkID,
-				"sectionTitle":           "A.10",
-				"name":                   "Cryptography",
-				"description":            "Cryptography controls",
-				"status":                 "EXCLUDED",
-				"exclusionJustification": "Not applicable - no cryptographic data processing",
-				"bestPractice":           false,
-			},
-		}, &result)
-		require.NoError(t, err)
-
-		control := result.CreateControl.ControlEdge.Node
-		assert.Equal(t, "EXCLUDED", control.Status)
-		assert.Equal(t, "Not applicable - no cryptographic data processing", *control.ExclusionJustification)
 	})
 }
 
@@ -167,46 +118,6 @@ func TestControl_Update(t *testing.T) {
 		assert.Equal(t, "Updated Control Name", result.UpdateControl.Control.Name)
 	})
 
-	t.Run("changes status from INCLUDED to EXCLUDED", func(t *testing.T) {
-		statusTestControlID := factory.CreateControl(owner, frameworkID, factory.Attrs{
-			"name":   "Status Change Control",
-			"status": "INCLUDED",
-		})
-
-		query := `
-			mutation UpdateControl($input: UpdateControlInput!) {
-				updateControl(input: $input) {
-					control {
-						id
-						status
-						exclusionJustification
-					}
-				}
-			}
-		`
-
-		var result struct {
-			UpdateControl struct {
-				Control struct {
-					ID                     string  `json:"id"`
-					Status                 string  `json:"status"`
-					ExclusionJustification *string `json:"exclusionJustification"`
-				} `json:"control"`
-			} `json:"updateControl"`
-		}
-
-		err := owner.Execute(query, map[string]any{
-			"input": map[string]any{
-				"id":                     statusTestControlID,
-				"status":                 "EXCLUDED",
-				"exclusionJustification": "No physical assets in scope",
-			},
-		}, &result)
-		require.NoError(t, err)
-
-		assert.Equal(t, "EXCLUDED", result.UpdateControl.Control.Status)
-		assert.Equal(t, "No physical assets in scope", *result.UpdateControl.Control.ExclusionJustification)
-	})
 }
 
 func TestControl_Delete(t *testing.T) {
@@ -357,7 +268,6 @@ func TestControl_RequiredFields(t *testing.T) {
 					"name":         "Test Control",
 					"description":  "Test",
 					"sectionTitle": "Section 1",
-					"status":       "INCLUDED",
 					"bestPractice": true,
 				},
 			},
@@ -370,7 +280,6 @@ func TestControl_RequiredFields(t *testing.T) {
 					"frameworkId":  frameworkID,
 					"description":  "Test",
 					"sectionTitle": "Section 1",
-					"status":       "INCLUDED",
 					"bestPractice": true,
 				},
 			},
@@ -383,20 +292,6 @@ func TestControl_RequiredFields(t *testing.T) {
 					"frameworkId":  frameworkID,
 					"name":         "Test Control",
 					"description":  "Test",
-					"status":       "INCLUDED",
-					"bestPractice": true,
-				},
-			},
-			wantError: true,
-		},
-		{
-			name: "Missing status should fail",
-			variables: map[string]any{
-				"input": map[string]any{
-					"frameworkId":  frameworkID,
-					"name":         "Test Control",
-					"description":  "Test",
-					"sectionTitle": "Section 1",
 					"bestPractice": true,
 				},
 			},
@@ -409,7 +304,6 @@ func TestControl_RequiredFields(t *testing.T) {
 					"frameworkId":  frameworkID,
 					"name":         "Test Control",
 					"sectionTitle": "Section 1",
-					"status":       "INCLUDED",
 					"bestPractice": true,
 				},
 			},
@@ -423,21 +317,6 @@ func TestControl_RequiredFields(t *testing.T) {
 					"name":         "Test Control",
 					"description":  "Test",
 					"sectionTitle": "Section 1",
-					"status":       "INCLUDED",
-				},
-			},
-			wantError: true,
-		},
-		{
-			name: "Invalid status enum should fail",
-			variables: map[string]any{
-				"input": map[string]any{
-					"frameworkId":  frameworkID,
-					"name":         "Test Control",
-					"description":  "Test",
-					"sectionTitle": "Section 1",
-					"status":       "INVALID_STATUS",
-					"bestPractice": true,
 				},
 			},
 			wantError: true,
@@ -524,7 +403,6 @@ func TestControl_OmittableDescription(t *testing.T) {
 			"name":         "Omittable Test Control",
 			"description":  "Initial description",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &createResult)
@@ -689,7 +567,6 @@ func TestControl_SubResolvers(t *testing.T) {
 			"name":         "SubResolver Test Control",
 			"description":  "Test description",
 			"sectionTitle": "Section 1",
-			"status":       "INCLUDED",
 			"bestPractice": true,
 		},
 	}, &controlResult)
@@ -830,154 +707,5 @@ func TestControl_SubResolvers(t *testing.T) {
 		}, &result)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, len(result.Node.Measures.Edges), 1)
-	})
-}
-
-func TestControl_ExclusionJustification(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	// Create framework
-	createFrameworkQuery := `
-		mutation CreateFramework($input: CreateFrameworkInput!) {
-			createFramework(input: $input) {
-				frameworkEdge {
-					node {
-						id
-					}
-				}
-			}
-		}
-	`
-
-	var frameworkResult struct {
-		CreateFramework struct {
-			FrameworkEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"frameworkEdge"`
-		} `json:"createFramework"`
-	}
-
-	err := owner.Execute(createFrameworkQuery, map[string]any{
-		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"name":           fmt.Sprintf("Exclusion Test %d", time.Now().UnixNano()),
-		},
-	}, &frameworkResult)
-	require.NoError(t, err)
-	frameworkID := frameworkResult.CreateFramework.FrameworkEdge.Node.ID
-
-	t.Run("EXCLUDED status should have exclusionJustification", func(t *testing.T) {
-		createControlQuery := `
-			mutation CreateControl($input: CreateControlInput!) {
-				createControl(input: $input) {
-					controlEdge {
-						node {
-							id
-							status
-							exclusionJustification
-						}
-					}
-				}
-			}
-		`
-
-		var result struct {
-			CreateControl struct {
-				ControlEdge struct {
-					Node struct {
-						ID                     string `json:"id"`
-						Status                 string `json:"status"`
-						ExclusionJustification string `json:"exclusionJustification"`
-					} `json:"node"`
-				} `json:"controlEdge"`
-			} `json:"createControl"`
-		}
-
-		err := owner.Execute(createControlQuery, map[string]any{
-			"input": map[string]any{
-				"frameworkId":            frameworkID,
-				"name":                   "Excluded Control",
-				"description":            "Test",
-				"sectionTitle":           "Section 1",
-				"status":                 "EXCLUDED",
-				"exclusionJustification": "Not applicable to our business",
-				"bestPractice":           false,
-			},
-		}, &result)
-		require.NoError(t, err)
-		assert.Equal(t, "EXCLUDED", result.CreateControl.ControlEdge.Node.Status)
-		assert.Equal(t, "Not applicable to our business", result.CreateControl.ControlEdge.Node.ExclusionJustification)
-	})
-
-	t.Run("Change status from INCLUDED to EXCLUDED", func(t *testing.T) {
-		// Create included control first
-		createControlQuery := `
-			mutation CreateControl($input: CreateControlInput!) {
-				createControl(input: $input) {
-					controlEdge {
-						node {
-							id
-						}
-					}
-				}
-			}
-		`
-
-		var createResult struct {
-			CreateControl struct {
-				ControlEdge struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"controlEdge"`
-			} `json:"createControl"`
-		}
-
-		err := owner.Execute(createControlQuery, map[string]any{
-			"input": map[string]any{
-				"frameworkId":  frameworkID,
-				"name":         "To Be Excluded Control",
-				"description":  "Test",
-				"sectionTitle": "Section 2",
-				"status":       "INCLUDED",
-				"bestPractice": true,
-			},
-		}, &createResult)
-		require.NoError(t, err)
-
-		// Update to excluded
-		updateControlQuery := `
-			mutation UpdateControl($input: UpdateControlInput!) {
-				updateControl(input: $input) {
-					control {
-						id
-						status
-						exclusionJustification
-					}
-				}
-			}
-		`
-
-		var updateResult struct {
-			UpdateControl struct {
-				Control struct {
-					ID                     string `json:"id"`
-					Status                 string `json:"status"`
-					ExclusionJustification string `json:"exclusionJustification"`
-				} `json:"control"`
-			} `json:"updateControl"`
-		}
-
-		err = owner.Execute(updateControlQuery, map[string]any{
-			"input": map[string]any{
-				"id":                     createResult.CreateControl.ControlEdge.Node.ID,
-				"status":                 "EXCLUDED",
-				"exclusionJustification": "Decided to exclude",
-			},
-		}, &updateResult)
-		require.NoError(t, err)
 	})
 }

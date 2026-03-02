@@ -18,16 +18,16 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewTrustCenter(tc *coredata.TrustCenter, file *coredata.File) *TrustCenter {
-	var ndaFileName *string
-	if file != nil {
-		ndaFileName = &file.FileName
-	}
-
+func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
 	return &TrustCenter{
-		ID:          tc.ID,
-		Active:      tc.Active,
-		Slug:        tc.Slug,
-		NdaFileName: ndaFileName,
+		ID:     tc.ID,
+		Active: tc.Active,
+		Slug:   tc.Slug,
+	}
+}
+
+func NewNonDisclosureAgreement(file *coredata.File) *NonDisclosureAgreement {
+	return &NonDisclosureAgreement{
+		FileName: file.FileName,
 	}
 }

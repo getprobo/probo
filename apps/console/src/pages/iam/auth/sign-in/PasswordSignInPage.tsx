@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
-import { Link } from "react-router";
+import { Link, matchPath, useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -19,8 +19,10 @@ const signInMutation = graphql`
 `;
 
 export default function PasswordSignInPage() {
-  const { __ } = useTranslate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
+  const { __ } = useTranslate();
   const { toast } = useToast();
 
   const [signIn, isSigningIn]
@@ -34,11 +36,32 @@ export default function PasswordSignInPage() {
 
     if (!emailValue || !passwordValue) return;
 
+    const continueUrlParam = searchParams.get("continue");
+    let safeContinueUrl: URL;
+    if (continueUrlParam) {
+      let continueUrl: URL;
+      try {
+        continueUrl = new URL(continueUrlParam, window.location.origin);
+      } catch {
+        continueUrl = new URL(window.location.origin);
+      }
+      safeContinueUrl = new URL(continueUrl.pathname + continueUrl.search, window.location.origin);
+    } else {
+      safeContinueUrl = new URL(window.location.origin);
+    }
+
+    const match = matchPath(
+      { path: "/organizations/:organizationId", caseSensitive: false, end: false },
+      safeContinueUrl.pathname,
+    );
+
     signIn({
       variables: {
         input: {
           email: emailValue,
           password: passwordValue,
+          // Assume when signing in
+          organizationId: match && match.params.organizationId,
         },
       },
       onCompleted: (_, error) => {
@@ -51,10 +74,11 @@ export default function PasswordSignInPage() {
             ),
             variant: "error",
           });
+          window.location.href = "/";
           return;
         }
 
-        window.location.href = "/";
+        window.location.href = safeContinueUrl.href;
       },
       onError: (e) => {
         toast({
@@ -62,6 +86,7 @@ export default function PasswordSignInPage() {
           description: e.message,
           variant: "error",
         });
+        window.location.href = "/";
       },
     });
   };
@@ -69,7 +94,7 @@ export default function PasswordSignInPage() {
   return (
     <form className="space-y-6 w-full max-w-md mx-auto pt-4" onSubmit={handlePasswordLogin}>
       <Link
-        to="/auth/login"
+        to={{ pathname: "/auth/login", search: location.search }}
         className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
       >
         <IconChevronLeft size={20} />
@@ -109,7 +134,7 @@ export default function PasswordSignInPage() {
       <div className="text-center mt-6 text-sm text-txt-secondary">
         {__("Don't have an account ?")}
         {" "}
-        <Link to="/auth/register" className="underline hover:text-txt-primary">
+        <Link to={{ pathname: "/auth/register", search: location.search }} className="underline hover:text-txt-primary">
           {__("Register")}
         </Link>
       </div>

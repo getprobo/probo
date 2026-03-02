@@ -8,17 +8,17 @@ import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 export const risksFragment = graphql`
   fragment MeasureRisksTabFragment on Measure {
     id
+    canCreateRiskMeasureMapping: permission(
+      action: "core:risk:create-measure-mapping"
+    )
+    canDeleteRiskMeasureMapping: permission(
+      action: "core:risk:delete-measure-mapping"
+    )
     risks(first: 100) @connection(key: "Measure__risks") {
       __id
       edges {
         node {
           id
-          canCreateMeasureMapping: permission(
-            action: "core:risk:create-measure-mapping"
-          )
-          canDeleteMeasureMapping: permission(
-            action: "core:risk:delete-measure-mapping"
-          )
           ...LinkedRisksCardFragment
         }
       }
@@ -61,12 +61,8 @@ export default function MeasureRisksTab() {
   const connectionId = data.risks.__id;
   const risks = data.risks?.edges?.map(edge => edge.node) ?? [];
 
-  const canLinkRisk = risks.some(
-    ({ canCreateMeasureMapping }) => canCreateMeasureMapping,
-  );
-  const canUnlinkRisk = risks.some(
-    ({ canDeleteMeasureMapping }) => canDeleteMeasureMapping,
-  );
+  const canLinkRisk = data.canCreateRiskMeasureMapping;
+  const canUnlinkRisk = data.canDeleteRiskMeasureMapping;
   const readOnly = !canLinkRisk && !canUnlinkRisk;
 
   const incrementOptions = {

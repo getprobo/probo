@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3265a0991323eee4011c668b68d1b365>>
+ * @generated SignedSource<<9540bd74ce3b0dd5366c237b56070d9f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type AuditRowFragment$data = {
     readonly lightLogoURL: string | null | undefined;
     readonly name: string;
   };
+  readonly name: string | null | undefined;
   readonly report: {
     readonly filename: string;
     readonly hasUserRequestedAccess: boolean;
@@ -35,6 +36,13 @@ var v0 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 };
@@ -44,6 +52,7 @@ return {
   "metadata": null,
   "name": "AuditRowFragment",
   "selections": [
+    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -52,7 +61,7 @@ return {
       "name": "report",
       "plural": false,
       "selections": [
-        (v0/*: any*/),
+        (v1/*: any*/),
         {
           "alias": null,
           "args": null,
@@ -85,14 +94,8 @@ return {
       "name": "framework",
       "plural": false,
       "selections": [
+        (v1/*: any*/),
         (v0/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "name",
-          "storageKey": null
-        },
         {
           "alias": null,
           "args": null,
@@ -116,6 +119,6 @@ return {
 };
 })();
 
-(node as any).hash = "417e65b500df4b4cff874dab2bea90ee";
+(node as any).hash = "ebf47a97014ba4dad0da94f2bb01666f";
 
 export default node;

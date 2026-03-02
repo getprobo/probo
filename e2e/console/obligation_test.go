@@ -26,7 +26,7 @@ import (
 func TestObligation_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	query := `
 		mutation CreateObligation($input: CreateObligationInput!) {
@@ -39,6 +39,7 @@ func TestObligation_Create(t *testing.T) {
 						requirement
 						regulator
 						status
+						type
 					}
 				}
 			}
@@ -55,6 +56,7 @@ func TestObligation_Create(t *testing.T) {
 					Requirement string `json:"requirement"`
 					Regulator   string `json:"regulator"`
 					Status      string `json:"status"`
+					Type        string `json:"type"`
 				} `json:"node"`
 			} `json:"obligationEdge"`
 		} `json:"createObligation"`
@@ -67,7 +69,7 @@ func TestObligation_Create(t *testing.T) {
 			"source":         "GDPR Article 5",
 			"requirement":    "Data must be processed lawfully",
 			"regulator":      "ICO",
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "NON_COMPLIANT",
 			"type":           "LEGAL",
 		},
@@ -80,12 +82,13 @@ func TestObligation_Create(t *testing.T) {
 	assert.Equal(t, "Data must be processed lawfully", result.CreateObligation.ObligationEdge.Node.Requirement)
 	assert.Equal(t, "ICO", result.CreateObligation.ObligationEdge.Node.Regulator)
 	assert.Equal(t, "NON_COMPLIANT", result.CreateObligation.ObligationEdge.Node.Status)
+	assert.Equal(t, "LEGAL", result.CreateObligation.ObligationEdge.Node.Type)
 }
 
 func TestObligation_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	// Create an obligation to update
 	createQuery := `
@@ -114,7 +117,7 @@ func TestObligation_Update(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"area":           "Original Area",
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "NON_COMPLIANT",
 			"type":           "LEGAL",
 		},
@@ -130,6 +133,7 @@ func TestObligation_Update(t *testing.T) {
 					id
 					area
 					status
+					type
 				}
 			}
 		}
@@ -141,6 +145,7 @@ func TestObligation_Update(t *testing.T) {
 				ID     string `json:"id"`
 				Area   string `json:"area"`
 				Status string `json:"status"`
+				Type   string `json:"type"`
 			} `json:"obligation"`
 		} `json:"updateObligation"`
 	}
@@ -150,6 +155,7 @@ func TestObligation_Update(t *testing.T) {
 			"id":     obligationID,
 			"area":   "Updated Area",
 			"status": "COMPLIANT",
+			"type":   "CONTRACTUAL",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -157,12 +163,13 @@ func TestObligation_Update(t *testing.T) {
 	assert.Equal(t, obligationID, result.UpdateObligation.Obligation.ID)
 	assert.Equal(t, "Updated Area", result.UpdateObligation.Obligation.Area)
 	assert.Equal(t, "COMPLIANT", result.UpdateObligation.Obligation.Status)
+	assert.Equal(t, "CONTRACTUAL", result.UpdateObligation.Obligation.Type)
 }
 
 func TestObligation_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	// Create an obligation to delete
 	createQuery := `
@@ -191,7 +198,7 @@ func TestObligation_Delete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"area":           "Obligation to Delete",
-			"ownerId":        peopleID,
+			"ownerId":        profileID,
 			"status":         "NON_COMPLIANT",
 			"type":           "LEGAL",
 		},
@@ -226,7 +233,7 @@ func TestObligation_Delete(t *testing.T) {
 func TestObligation_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	// Create multiple obligations
 	areas := []string{"Area A", "Area B", "Area C"}
@@ -257,7 +264,7 @@ func TestObligation_List(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"area":           area,
-				"ownerId":        peopleID,
+				"ownerId":        profileID,
 				"status":         "NON_COMPLIANT",
 				"type":           "LEGAL",
 			},
@@ -310,7 +317,7 @@ func TestObligation_List(t *testing.T) {
 func TestObligation_StatusValues(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	peopleID := factory.NewPeople(owner).WithFullName("Obligation Owner").Create()
+	profileID := factory.CreateUser(owner)
 
 	statuses := []string{"NON_COMPLIANT", "PARTIALLY_COMPLIANT", "COMPLIANT"}
 
@@ -344,7 +351,7 @@ func TestObligation_StatusValues(t *testing.T) {
 				"input": map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
 					"area":           "Status Test " + status,
-					"ownerId":        peopleID,
+					"ownerId":        profileID,
 					"status":         status,
 					"type":           "LEGAL",
 				},

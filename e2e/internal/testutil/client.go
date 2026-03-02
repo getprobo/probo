@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 	"testing"
 	"time"
 
@@ -46,6 +47,7 @@ type Client struct {
 	T              testing.TB
 	httpClient     *http.Client
 	baseURL        string
+	mailpitBaseURL string
 	role           TestRole
 	userID         gid.GID
 	organizationID gid.GID
@@ -58,9 +60,10 @@ func NewClient(t testing.TB, role TestRole) *Client {
 	require.NoError(t, err, "cannot create cookie jar")
 
 	client := &Client{
-		T:       t,
-		baseURL: GetBaseURL(),
-		role:    role,
+		T:              t,
+		baseURL:        GetBaseURL(),
+		mailpitBaseURL: GetMailpitBaseURL(),
+		role:           role,
 		httpClient: &http.Client{
 			Jar:     jar,
 			Timeout: 30 * time.Second,
@@ -81,6 +84,7 @@ func NewClientInOrg(t testing.TB, role TestRole, ownerClient *Client) *Client {
 	client := &Client{
 		T:              t,
 		baseURL:        GetBaseURL(),
+		mailpitBaseURL: GetMailpitBaseURL(),
 		role:           role,
 		organizationID: ownerClient.organizationID,
 		httpClient: &http.Client{
@@ -89,7 +93,7 @@ func NewClientInOrg(t testing.TB, role TestRole, ownerClient *Client) *Client {
 		},
 	}
 
-	client.setupTestUserInOrg(ownerClient)
+	client.SetupTestUserInOrg(ownerClient)
 
 	return client
 }
@@ -116,20 +120,20 @@ func (c *Client) setupTestUser() {
 	}
 }
 
-func (c *Client) setupTestUserInOrg(ownerClient *Client) {
+func (c *Client) SetupTestUserInOrg(ownerClient *Client) {
 	uniqueID := generateUniqueID()
 	email := fmt.Sprintf("test-%s@e2e.probo.test", uniqueID)
 	password := "TestPassword123!"
 	fullName := fmt.Sprintf("Test User %s", uniqueID)
 
-	// Sign up new user
-	c.userID = c.signUp(email, password, fullName)
-
 	// Owner invites user to organization
-	invitationID := ownerClient.inviteMember(email, fullName, coredata.MembershipRole(c.role))
-
-	// New user accepts invitation
-	c.acceptInvitation(invitationID)
+	profileID, identityID := ownerClient.createUser(email, fullName, coredata.MembershipRole(c.role))
+	c.userID = identityID
+	ownerClient.inviteUser(profileID)
+	token := c.getActivationToken(email)
+	passwordToken := c.activateUser(token)
+	c.resetPassword(password, passwordToken)
+	c.signIn(email, password)
 
 	// Assume organization session to use console API
 	c.assumeOrganizationSession()
@@ -167,11 +171,38 @@ func (c *Client) signUp(email, password, fullName string) gid.GID {
 	return userID
 }
 
+func (c *Client) signIn(email string, password string) {
+	const query = `
+		mutation($input: SignInInput!) {
+			signIn(input: $input) {
+				identity { id }
+			}
+		}
+	`
+
+	var result struct {
+		SignIn struct {
+			Identity struct {
+				ID string `json:"id"`
+			} `json:"identity"`
+		} `json:"signIn"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"email":    email,
+			"password": password,
+		},
+	}, &result)
+	require.NoError(c.T, err, "signIn mutation failed")
+}
+
 func (c *Client) createOrganization(name string) gid.GID {
 	const query = `
 		mutation($input: CreateOrganizationInput!) {
 			createOrganization(input: $input) {
 				organization { id }
+				profile { id }
 			}
 		}
 	`
@@ -267,10 +298,60 @@ func (c *Client) updateOwnMembershipRole(role coredata.MembershipRole) {
 	require.NoError(c.T, err, "updateMembership mutation failed")
 }
 
-func (c *Client) inviteMember(email, fullName string, role coredata.MembershipRole) gid.GID {
+func (c *Client) createUser(email, fullName string, role coredata.MembershipRole) (gid.GID, gid.GID) {
 	const query = `
-		mutation($input: InviteMemberInput!) {
-			inviteMember(input: $input) {
+		mutation($input: CreateUserInput!) {
+			createUser(input: $input) {
+				profileEdge {
+					node {
+						id
+						identity {
+							id
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		CreateUser struct {
+			ProfileEdge struct {
+				Node struct {
+					ID       string `json:"id"`
+					Identity struct {
+						ID string `json:"id"`
+					} `json:"identity"`
+				} `json:"node"`
+			} `json:"profileEdge"`
+		} `json:"createUser"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"organizationId":           c.organizationID.String(),
+			"emailAddress":             email,
+			"fullName":                 fullName,
+			"role":                     string(role),
+			"kind":                     coredata.MembershipProfileKindEmployee,
+			"additionalEmailAddresses": []string{},
+		},
+	}, &result)
+	require.NoError(c.T, err, "createUser mutation failed")
+
+	profileID, err := gid.ParseGID(result.CreateUser.ProfileEdge.Node.ID)
+	require.NoError(c.T, err, "cannot parse profile ID")
+
+	identityID, err := gid.ParseGID(result.CreateUser.ProfileEdge.Node.Identity.ID)
+	require.NoError(c.T, err, "cannot parse identity ID")
+
+	return profileID, identityID
+}
+
+func (c *Client) inviteUser(profileID gid.GID) {
+	const query = `
+		mutation($input: InviteUserInput!) {
+			inviteUser(input: $input) {
 				invitationEdge {
 					node { id }
 				}
@@ -279,48 +360,101 @@ func (c *Client) inviteMember(email, fullName string, role coredata.MembershipRo
 	`
 
 	var result struct {
-		InviteMember struct {
+		InviteUser struct {
 			InvitationEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
 			} `json:"invitationEdge"`
-		} `json:"inviteMember"`
+		} `json:"inviteUser"`
 	}
 
 	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": c.organizationID.String(),
-			"email":          email,
-			"fullName":       fullName,
-			"role":           string(role),
+			"profileId":      profileID.String(),
 		},
 	}, &result)
-	require.NoError(c.T, err, "inviteMember mutation failed")
-
-	invitationID, err := gid.ParseGID(result.InviteMember.InvitationEdge.Node.ID)
-	require.NoError(c.T, err, "cannot parse invitation ID")
-
-	return invitationID
+	require.NoError(c.T, err, "inviteUser mutation failed")
 }
 
-func (c *Client) acceptInvitation(invitationID gid.GID) {
-	const query = `
-		mutation($input: AcceptInvitationInput!) {
-			acceptInvitation(input: $input) {
-				membershipEdge {
-					node { id }
+func (c *Client) getActivationToken(email string) string {
+	deadline := time.Now().Add(10 * time.Second)
+
+	for time.Now().Before(deadline) {
+		searchMails, err := c.SearchMails(fmt.Sprintf("to:%s subject:\"Invitation to join\"", email))
+		require.NoError(c.T, err, "mailpit messages search failed")
+
+		for _, msg := range searchMails.Messages {
+			linksCheck, err := c.CheckMessageLinks(msg.ID)
+			require.NoError(c.T, err, "mailpit link check failed")
+
+			for _, link := range linksCheck.Links {
+				linkURL, err := url.Parse(link.URL)
+				require.NoError(c.T, err, "mailpit link invalid URL")
+
+				query := linkURL.Query()
+				if query.Get("token") != "" {
+					return query.Get("token")
 				}
+			}
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	c.T.Logf("activation token not found")
+	c.T.FailNow()
+	return ""
+}
+
+func (c *Client) activateUser(token string) string {
+	const query = `
+		mutation($input: ActivateAccountInput!) {
+			activateAccount(input: $input) {
+				createPasswordToken
 			}
 		}
 	`
 
+	var result struct {
+		ActivateAccount struct {
+			CreatePasswordToken string `json:"createPasswordToken"`
+		} `json:"activateAccount"`
+	}
+
 	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{
-			"invitationId": invitationID.String(),
+			"token": token,
 		},
-	}, nil)
-	require.NoError(c.T, err, "acceptInvitation mutation failed")
+	}, &result)
+	require.NoError(c.T, err, "activateAccount mutation failed")
+
+	return result.ActivateAccount.CreatePasswordToken
+}
+
+func (c *Client) resetPassword(password string, token string) {
+	const query = `
+		mutation($input: ResetPasswordInput!) {
+			resetPassword(input: $input) {
+				success
+			}
+		}
+	`
+
+	var result struct {
+		ResetPassword struct {
+			Success bool `json:"success"`
+		} `json:"resetPassword"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"token":    token,
+			"password": password,
+		},
+	}, &result)
+	require.NoError(c.T, err, "resetPassword mutation failed")
 }
 
 func (c *Client) assumeOrganizationSession() {
@@ -339,6 +473,7 @@ func (c *Client) assumeOrganizationSession() {
 	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": c.organizationID.String(),
+			"continue":       c.baseURL,
 		},
 	}, nil)
 	require.NoError(c.T, err, "assumeOrganizationSession mutation failed")

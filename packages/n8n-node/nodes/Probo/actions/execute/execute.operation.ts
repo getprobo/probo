@@ -1,7 +1,32 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, proboConnectApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
+	{
+		displayName: 'API',
+		name: 'api',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['execute'],
+			},
+		},
+		options: [
+			{
+				name: 'Console API',
+				value: 'console',
+				description: 'Call the Console GraphQL API (/api/console/v1/graphql)',
+			},
+			{
+				name: 'Connect API',
+				value: 'connect',
+				description: 'Call the Connect GraphQL API (/api/connect/v1/graphql)',
+			},
+		],
+		default: 'console',
+		description: 'Which Probo API to call',
+	},
 	{
 		displayName: 'Query',
 		name: 'query',
@@ -36,6 +61,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
+	const api = this.getNodeParameter('api', itemIndex, 'console') as string;
 	const query = this.getNodeParameter('query', itemIndex) as string;
 	const variablesParam = this.getNodeParameter('variables', itemIndex) as string;
 
@@ -63,7 +89,8 @@ export async function execute(
 		}
 	}
 
-	const responseData = await proboApiRequest.call(this, query, variables);
+	const requestFn = api === 'connect' ? proboConnectApiRequest : proboApiRequest;
+	const responseData = await requestFn.call(this, query, variables);
 
 	return {
 		json: responseData,

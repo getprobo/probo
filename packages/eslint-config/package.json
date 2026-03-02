@@ -25,19 +25,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@probo/eslint-plugin-relay-types": "^1.0.0",
     "@stylistic/eslint-plugin": "^5.7.0",
     "eslint-plugin-import-x": "^4.16.1",
-    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-relay": "^2.0.0",
-    "globals": "^17.0.0",
-    "typescript-eslint": "^8.53.1"
-  },
-  "devDependencies": {
-    "@probo/eslint-plugin-relay-types": "^1.0.0",
     "eslint": "^9.39.2",
+    "globals": "^17.0.0",
+    "typescript-eslint": "^8.53.1",
     "typescript": "^5.8.3"
   }
 }
