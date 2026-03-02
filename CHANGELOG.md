@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.134.1] - 2026-03-02
+
+### Fixed
+
+- Fix n8n get many organizations
+
 ## [0.134.0] - 2026-02-27
 
 ### Added
