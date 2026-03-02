@@ -77,7 +77,7 @@ export async function execute(
 		(response: IDataObject) => {
 			const data = response?.data as IDataObject | undefined;
 			const viewer = data?.viewer as IDataObject | undefined;
-			return viewer?.memberships as IDataObject | undefined;
+			return viewer?.profiles as IDataObject | undefined;
 		},
 		returnAll,
 		limit,
