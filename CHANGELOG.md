@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.134.2] - 2026-03-02
+
+### Fixed
+
+- Fix CVEs by updating go and open telemetry
+
 ## [0.134.1] - 2026-03-02
 
 ### Fixed
