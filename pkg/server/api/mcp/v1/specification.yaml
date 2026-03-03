@@ -291,8 +291,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
-              description: Snapshot ID
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only vendors with no snapshot (current live data). Pass a specific snapshot ID to retrieve vendors as they were at that snapshot.
+              default: null
 
     ListVendorsOutput:
       type: object
@@ -1164,8 +1167,11 @@ components:
               type: string
               description: Search query
             snapshot_id:
-              $ref: "#/components/schemas/GID"
-              description: Snapshot ID
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only risks with no snapshot (current live data). Pass a specific snapshot ID to retrieve risks as they were at that snapshot.
+              default: null
 
     ListRisksOutput:
       type: object
@@ -1967,8 +1973,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
-              description: Snapshot ID
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only assets with no snapshot (current live data). Pass a specific snapshot ID to retrieve assets as they were at that snapshot.
+              default: null
 
     ListAssetsOutput:
       type: object
@@ -2175,8 +2184,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
-              description: Snapshot ID
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only data with no snapshot (current live data). Pass a specific snapshot ID to retrieve data as it was at that snapshot.
+              default: null
 
     ListDataOutput:
       type: object
@@ -2408,8 +2420,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
-              description: Snapshot ID
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only nonconformities with no snapshot (current live data). Pass a specific snapshot ID to retrieve nonconformities as they were at that snapshot.
+              default: null
 
     ListNonconformitiesOutput:
       type: object
@@ -2705,8 +2720,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
-              description: Snapshot ID
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only obligations with no snapshot (current live data). Pass a specific snapshot ID to retrieve obligations as they were at that snapshot.
+              default: null
 
     ListObligationsOutput:
       type: object
@@ -3070,8 +3088,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
-              description: Snapshot ID
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only processing activities with no snapshot (current live data). Pass a specific snapshot ID to retrieve processing activities as they were at that snapshot.
+              default: null
 
     ListProcessingActivitiesOutput:
       type: object
@@ -3374,7 +3395,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only DPIAs with no snapshot (current live data). Pass a specific snapshot ID to retrieve DPIAs as they were at that snapshot.
+              default: null
 
     ListDataProtectionImpactAssessmentsOutput:
       type: object
@@ -3554,7 +3579,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only TIAs with no snapshot (current live data). Pass a specific snapshot ID to retrieve TIAs as they were at that snapshot.
+              default: null
 
     ListTransferImpactAssessmentsOutput:
       type: object
@@ -3784,8 +3813,11 @@ components:
           type: object
           properties:
             snapshot_id:
-              $ref: "#/components/schemas/GID"
-              description: Snapshot ID
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by snapshot ID. Defaults to null, which returns only continual improvements with no snapshot (current live data). Pass a specific snapshot ID to retrieve continual improvements as they were at that snapshot.
+              default: null
 
     ListContinualImprovementsOutput:
       type: object

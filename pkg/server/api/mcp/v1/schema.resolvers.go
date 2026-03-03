@@ -63,7 +63,8 @@ func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var vendorFilter = coredata.NewVendorFilter(nil, nil)
+	noSnapshot := (*gid.GID)(nil)
+	vendorFilter := coredata.NewVendorFilter(&noSnapshot, nil)
 	if input.Filter != nil {
 		vendorFilter = coredata.NewVendorFilter(&input.Filter.SnapshotID, nil)
 	}
@@ -275,7 +276,8 @@ func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var riskFilter = coredata.NewRiskFilter(nil, nil)
+	noSnapshot := (*gid.GID)(nil)
+	riskFilter := coredata.NewRiskFilter(nil, &noSnapshot)
 	if input.Filter != nil {
 		riskFilter = coredata.NewRiskFilter(input.Filter.Query, &input.Filter.SnapshotID)
 	}
@@ -556,7 +558,8 @@ func (r *Resolver) ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var assetFilter = coredata.NewAssetFilter(nil)
+	noSnapshot := (*gid.GID)(nil)
+	assetFilter := coredata.NewAssetFilter(&noSnapshot)
 	if input.Filter != nil {
 		assetFilter = coredata.NewAssetFilter(&input.Filter.SnapshotID)
 	}
@@ -654,7 +657,8 @@ func (r *Resolver) ListDataTool(ctx context.Context, req *mcp.CallToolRequest, i
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var datumFilter = coredata.NewDatumFilter(nil)
+	noSnapshot := (*gid.GID)(nil)
+	datumFilter := coredata.NewDatumFilter(&noSnapshot)
 	if input.Filter != nil {
 		datumFilter = coredata.NewDatumFilter(&input.Filter.SnapshotID)
 	}
@@ -748,7 +752,8 @@ func (r *Resolver) ListNonconformitiesTool(ctx context.Context, req *mcp.CallToo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var nonconformityFilter = coredata.NewNonconformityFilter(nil)
+	noSnapshot := (*gid.GID)(nil)
+	nonconformityFilter := coredata.NewNonconformityFilter(&noSnapshot)
 	if input.Filter != nil {
 		nonconformityFilter = coredata.NewNonconformityFilter(&input.Filter.SnapshotID)
 	}
@@ -854,7 +859,8 @@ func (r *Resolver) ListObligationsTool(ctx context.Context, req *mcp.CallToolReq
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var obligationFilter = coredata.NewObligationFilter(nil)
+	noSnapshot := (*gid.GID)(nil)
+	obligationFilter := coredata.NewObligationFilter(&noSnapshot)
 	if input.Filter != nil {
 		obligationFilter = coredata.NewObligationFilter(&input.Filter.SnapshotID)
 	}
@@ -960,7 +966,8 @@ func (r *Resolver) ListProcessingActivitiesTool(ctx context.Context, req *mcp.Ca
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var filter = coredata.NewProcessingActivityFilter(nil)
+	noSnapshot := (*gid.GID)(nil)
+	filter := coredata.NewProcessingActivityFilter(&noSnapshot)
 	if input.Filter != nil {
 		filter = coredata.NewProcessingActivityFilter(&input.Filter.SnapshotID)
 	}
@@ -1106,7 +1113,8 @@ func (r *Resolver) ListDataProtectionImpactAssessmentsTool(ctx context.Context, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var filter = coredata.NewDataProtectionImpactAssessmentFilter(nil)
+	noSnapshot := (*gid.GID)(nil)
+	filter := coredata.NewDataProtectionImpactAssessmentFilter(&noSnapshot)
 	if input.Filter != nil {
 		filter = coredata.NewDataProtectionImpactAssessmentFilter(&input.Filter.SnapshotID)
 	}
@@ -1202,7 +1210,8 @@ func (r *Resolver) ListTransferImpactAssessmentsTool(ctx context.Context, req *m
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var filter = coredata.NewTransferImpactAssessmentFilter(nil)
+	noSnapshot := (*gid.GID)(nil)
+	filter := coredata.NewTransferImpactAssessmentFilter(&noSnapshot)
 	if input.Filter != nil {
 		filter = coredata.NewTransferImpactAssessmentFilter(&input.Filter.SnapshotID)
 	}
@@ -1313,7 +1322,8 @@ func (r *Resolver) ListContinualImprovementsTool(ctx context.Context, req *mcp.C
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var continualImprovementFilter = coredata.NewContinualImprovementFilter(nil)
+	noSnapshot := (*gid.GID)(nil)
+	continualImprovementFilter := coredata.NewContinualImprovementFilter(&noSnapshot)
 	if input.Filter != nil {
 		continualImprovementFilter = coredata.NewContinualImprovementFilter(&input.Filter.SnapshotID)
 	}
