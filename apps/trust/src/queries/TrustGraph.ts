@@ -6,7 +6,6 @@ export const currentTrustGraphQuery = graphql`
     currentTrustCenter @required(action: THROW) {
       id
       slug
-      isViewerMember
       logoFileUrl
       darkLogoFileUrl
       nonDisclosureAgreement {

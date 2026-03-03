@@ -506,7 +506,6 @@ type TrustCenter implements Node {
 
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
-  isViewerMember: Boolean! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
   documents(

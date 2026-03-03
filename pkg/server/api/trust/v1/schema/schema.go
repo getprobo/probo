@@ -202,7 +202,6 @@ type ComplexityRoot struct {
 		DarkLogoFileURL        func(childComplexity int) int
 		Documents              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		ID                     func(childComplexity int) int
-		IsViewerMember         func(childComplexity int) int
 		LogoFileURL            func(childComplexity int) int
 		NonDisclosureAgreement func(childComplexity int) int
 		Organization           func(childComplexity int) int
@@ -327,7 +326,6 @@ type TrustCenterResolver interface {
 	LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	NonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (*types.NonDisclosureAgreement, error)
-	IsViewerMember(ctx context.Context, obj *types.TrustCenter) (bool, error)
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error)
 	Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error)
@@ -922,12 +920,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TrustCenter.ID(childComplexity), true
-	case "TrustCenter.isViewerMember":
-		if e.ComplexityRoot.TrustCenter.IsViewerMember == nil {
-			break
-		}
-
-		return e.ComplexityRoot.TrustCenter.IsViewerMember(childComplexity), true
 	case "TrustCenter.logoFileUrl":
 		if e.ComplexityRoot.TrustCenter.LogoFileURL == nil {
 			break
@@ -1814,7 +1806,6 @@ type TrustCenter implements Node {
 
   nonDisclosureAgreement: NonDisclosureAgreement @goField(forceResolver: true)
 
-  isViewerMember: Boolean! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
   documents(
@@ -5046,8 +5037,6 @@ func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_darkLogoFileUrl(ctx, field)
 			case "nonDisclosureAgreement":
 				return ec.fieldContext_TrustCenter_nonDisclosureAgreement(ctx, field)
-			case "isViewerMember":
-				return ec.fieldContext_TrustCenter_isViewerMember(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenter_organization(ctx, field)
 			case "documents":
@@ -5567,35 +5556,6 @@ func (ec *executionContext) fieldContext_TrustCenter_nonDisclosureAgreement(_ co
 				return ec.fieldContext_NonDisclosureAgreement_viewerSignature(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NonDisclosureAgreement", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenter_isViewerMember(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenter_isViewerMember,
-		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.TrustCenter().IsViewerMember(ctx, obj)
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenter_isViewerMember(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenter",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10588,42 +10548,6 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 					}
 				}()
 				res = ec._TrustCenter_nonDisclosureAgreement(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "isViewerMember":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._TrustCenter_isViewerMember(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 

@@ -209,7 +209,6 @@ type TrustCenter struct {
 	LogoFileURL            *string                         `json:"logoFileUrl,omitempty"`
 	DarkLogoFileURL        *string                         `json:"darkLogoFileUrl,omitempty"`
 	NonDisclosureAgreement *NonDisclosureAgreement         `json:"nonDisclosureAgreement,omitempty"`
-	IsViewerMember         bool                            `json:"isViewerMember"`
 	Organization           *Organization                   `json:"organization"`
 	Documents              *DocumentConnection             `json:"documents"`
 	Audits                 *AuditConnection                `json:"audits"`

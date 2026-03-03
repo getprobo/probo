@@ -911,13 +911,6 @@ func (r *trustCenterResolver) NonDisclosureAgreement(ctx context.Context, obj *t
 	return types.NewNonDisclosureAgreement(file), nil
 }
 
-// IsViewerMember is the resolver for the isViewerMember field.
-func (r *trustCenterResolver) IsViewerMember(ctx context.Context, obj *types.TrustCenter) (bool, error) {
-	membership := compliancepage.ComplianceMembershipFromContext(ctx)
-
-	return membership != nil, nil
-}
-
 // Organization is the resolver for the organization field.
 func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
 	return obj.Organization, nil
