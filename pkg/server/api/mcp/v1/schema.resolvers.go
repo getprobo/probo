@@ -3192,3 +3192,18 @@ func (r *Resolver) AddVendorRiskAssessmentTool(ctx context.Context, req *mcp.Cal
 
 	return nil, types.NewAddVendorRiskAssessmentOutput(assessment), nil
 }
+
+func (r *Resolver) DeleteVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteVendorInput) (*mcp.CallToolResult, types.DeleteVendorOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionVendorDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Vendors.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteVendorOutput{}, fmt.Errorf("failed to delete vendor: %w", err)
+	}
+
+	return nil, types.DeleteVendorOutput{
+		DeletedVendorID: input.ID,
+	}, nil
+}

@@ -766,6 +766,24 @@ components:
         vendor:
           $ref: "#/components/schemas/Vendor"
 
+    DeleteVendorInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+
+    DeleteVendorOutput:
+      type: object
+      required:
+        - deleted_vendor_id
+      properties:
+        deleted_vendor_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted vendor ID
+
     GetUserInput:
       type: object
       required:
@@ -6394,6 +6412,15 @@ tools:
       $ref: "#/components/schemas/AddVendorRiskAssessmentInput"
     outputSchema:
       $ref: "#/components/schemas/AddVendorRiskAssessmentOutput"
+  - name: deleteVendor
+    description: Delete a vendor
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteVendorOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:

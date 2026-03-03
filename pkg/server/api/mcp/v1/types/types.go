@@ -85,6 +85,8 @@ var (
 	DeleteTaskToolOutputSchema                           = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_task_id":{"type":"string","format":"string"}},"required":["deleted_task_id"]}`)
 	DeleteTransferImpactAssessmentToolInputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	DeleteTransferImpactAssessmentToolOutputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_transfer_impact_assessment_id":{"type":"string","format":"string"}},"required":["deleted_transfer_impact_assessment_id"]}`)
+	DeleteVendorToolInputSchema                          = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
+	DeleteVendorToolOutputSchema                         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"deleted_vendor_id":{"type":"string","format":"string"}},"required":["deleted_vendor_id"]}`)
 	ExportStateOfApplicabilityPDFToolInputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
 	ExportStateOfApplicabilityPDFToolOutputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"filename":{"type":"string","description":"Suggested filename for the PDF"},"pdf_base64":{"type":"string","description":"Base64-encoded PDF content"}},"required":["pdf_base64","filename"]}`)
 	GetApplicabilityStatementToolInputSchema             = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"id":{"type":"string","format":"string"}},"required":["id"]}`)
@@ -1529,6 +1531,18 @@ type DeleteTransferImpactAssessmentInput struct {
 // DeleteTransferImpactAssessmentOutput represents the schema
 type DeleteTransferImpactAssessmentOutput struct {
 	DeletedTransferImpactAssessmentID gid.GID `json:"deleted_transfer_impact_assessment_id"`
+}
+
+// DeleteVendorInput represents the schema
+type DeleteVendorInput struct {
+	// Vendor ID
+	ID gid.GID `json:"id"`
+}
+
+// DeleteVendorOutput represents the schema
+type DeleteVendorOutput struct {
+	// Deleted vendor ID
+	DeletedVendorID gid.GID `json:"deleted_vendor_id"`
 }
 
 // Document represents the schema

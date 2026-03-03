@@ -23,6 +23,7 @@ type ResolverInterface interface {
 	UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error)
 	ListVendorRiskAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorRiskAssessmentsInput) (*mcp.CallToolResult, types.ListVendorRiskAssessmentsOutput, error)
 	AddVendorRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorRiskAssessmentInput) (*mcp.CallToolResult, types.AddVendorRiskAssessmentOutput, error)
+	DeleteVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteVendorInput) (*mcp.CallToolResult, types.DeleteVendorOutput, error)
 	ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error)
 	GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error)
 	AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error)
@@ -306,6 +307,19 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.AddVendorRiskAssessmentToolOutputSchema,
 		},
 		resolver.AddVendorRiskAssessmentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteVendor",
+			Description:  "Delete a vendor",
+			InputSchema:  types.DeleteVendorToolInputSchema,
+			OutputSchema: types.DeleteVendorToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteVendorTool,
 	)
 	mcp.AddTool(
 		server,
