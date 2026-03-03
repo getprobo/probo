@@ -115,30 +115,35 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 	return documentAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
 }
 
-// HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
-func (r *documentResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Document) (bool, error) {
+// Access is the resolver for the access field.
+func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*types.DocumentAccess, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return false, nil // User is not authenticated, so no access requested
+		return nil, nil // User is not authenticated, so no access requested
 	}
 
-	// Try to load document access - if it exists (regardless of active status), user has requested it
-	_, err := trustService.TrustCenterAccesses.GetDocumentAccess(
+	access, err := trustService.TrustCenterAccesses.GetDocumentAccess(
 		ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check trust center file access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
-		return false, nil
+		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
-	return true, nil // Access exists (requested)
+
+	return &types.DocumentAccess{
+		ID:     access.ID,
+		Status: access.Status,
+	}, nil
 }
 
 // LightLogoURL is the resolver for the lightLogoURL field.
@@ -410,7 +415,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 }
 
 // RequestDocumentAccess is the resolver for the requestDocumentAccess field.
-func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestAccessesPayload, error) {
+func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestDocumentAccessPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
@@ -431,7 +436,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
-	access, err := trustService.TrustCenterAccesses.Request(
+	if _, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
@@ -441,25 +446,18 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 			ReportIDs:          []gid.GID{},
 			TrustCenterFileIDs: []gid.GID{},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot request document access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.RequestAccessesPayload{
-		TrustCenterAccess: &types.TrustCenterAccess{
-			ID:        access.ID,
-			Email:     access.Email,
-			Name:      access.Name,
-			CreatedAt: access.CreatedAt,
-			UpdatedAt: access.UpdatedAt,
-		},
+	return &types.RequestDocumentAccessPayload{
+		Document: types.NewDocument(document),
 	}, nil
 }
 
 // RequestReportAccess is the resolver for the requestReportAccess field.
-func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestAccessesPayload, error) {
+func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestReportAccessPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
@@ -481,7 +479,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
-	access, err := trustService.TrustCenterAccesses.Request(
+	if _, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
@@ -491,25 +489,18 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 			ReportIDs:          []gid.GID{input.ReportID},
 			TrustCenterFileIDs: []gid.GID{},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot request report access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.RequestAccessesPayload{
-		TrustCenterAccess: &types.TrustCenterAccess{
-			ID:        access.ID,
-			Email:     access.Email,
-			Name:      access.Name,
-			CreatedAt: access.CreatedAt,
-			UpdatedAt: access.UpdatedAt,
-		},
+	return &types.RequestReportAccessPayload{
+		Audit: types.NewAudit(audit),
 	}, nil
 }
 
 // RequestTrustCenterFileAccess is the resolver for the requestTrustCenterFileAccess field.
-func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error) {
+func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestFileAccessPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
@@ -531,7 +522,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
-	access, err := trustService.TrustCenterAccesses.Request(
+	if _, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
@@ -541,20 +532,13 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 			ReportIDs:          []gid.GID{},
 			TrustCenterFileIDs: []gid.GID{input.TrustCenterFileID},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot request trust center file access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.RequestAccessesPayload{
-		TrustCenterAccess: &types.TrustCenterAccess{
-			ID:        access.ID,
-			Email:     access.Email,
-			Name:      access.Name,
-			CreatedAt: access.CreatedAt,
-			UpdatedAt: access.UpdatedAt,
-		},
+	return &types.RequestFileAccessPayload{
+		File: types.NewTrustCenterFile(trustCenterFile),
 	}, nil
 }
 
@@ -850,30 +834,35 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 	return reportAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
 }
 
-// HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
-func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Report) (bool, error) {
+// Access is the resolver for the access field.
+func (r *reportResolver) Access(ctx context.Context, obj *types.Report) (*types.DocumentAccess, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return false, nil // User is not authenticated, so no access requested
+		return nil, nil // User is not authenticated, so no access requested
 	}
 
-	_, err := trustService.TrustCenterAccesses.GetReportAccess(ctx,
+	access, err := trustService.TrustCenterAccesses.GetReportAccess(
+		ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check report access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
-		return false, nil
+		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return true, nil
+	return &types.DocumentAccess{
+		ID:     access.ID,
+		Status: access.Status,
+	}, nil
 }
 
 // LogoFileURL is the resolver for the logoFileUrl field.
@@ -1061,30 +1050,35 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 	return fileAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
 }
 
-// HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
-func (r *trustCenterFileResolver) HasUserRequestedAccess(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
+// Access is the resolver for the access field.
+func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCenterFile) (*types.DocumentAccess, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
-
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return false, nil // User is not authenticated, so no access requested
+		return nil, nil // User is not authenticated, so no access requested
 	}
 
-	_, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx,
+	access, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(
+		ctx,
 		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
 	)
 	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check trust center file access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
-		return false, nil
+		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return true, nil
+	return &types.DocumentAccess{
+		ID:     access.ID,
+		Status: access.Status,
+	}, nil
 }
 
 // LogoURL is the resolver for the logoUrl field.

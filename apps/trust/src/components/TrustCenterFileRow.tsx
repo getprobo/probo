@@ -9,7 +9,6 @@ import {
   Spinner,
   useToast,
 } from "@probo/ui";
-import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -26,8 +25,11 @@ const requestAccessMutation = graphql`
     $input: RequestTrustCenterFileAccessInput!
   ) {
     requestTrustCenterFileAccess(input: $input) {
-      trustCenterAccess {
-        id
+      file {
+        access {
+          id
+          status
+        }
       }
     }
   }
@@ -48,7 +50,10 @@ const trustCenterFileRowFragment = graphql`
     id
     name
     isUserAuthorized
-    hasUserRequestedAccess
+    access {
+      id
+      status
+    }
   }
 `;
 
@@ -62,7 +67,7 @@ export function TrustCenterFileRow(props: {
   const navigate = useNavigate();
 
   const file = useFragment(trustCenterFileRowFragment, props.file);
-  const [hasRequested, setHasRequested] = useState(file.hasUserRequestedAccess);
+  const hasRequested = !!file.access;
 
   const [requestAccess, isRequestingAccess]
     = useMutation<TrustCenterFileRow_requestAccessMutation>(
@@ -87,7 +92,6 @@ export function TrustCenterFileRow(props: {
           });
           return;
         }
-        setHasRequested(true);
         toast({
           title: __("Success"),
           description: __("Access request submitted successfully."),

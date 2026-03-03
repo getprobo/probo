@@ -63,7 +63,7 @@ type Document implements Node @nda {
   title: String!
   documentType: DocumentType!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
-  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
 }
 
 type DocumentConnection @nda {
@@ -87,7 +87,7 @@ type Report implements Node @nda {
   id: ID!
   filename: String!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
-  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
 }
 
 type Audit implements Node @nda {
@@ -478,7 +478,7 @@ type TrustCenterFile implements Node @nda {
   name: String!
   category: String!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
-  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
 }
 
 type TrustCenterFileConnection @nda {
@@ -552,6 +552,33 @@ type TrustCenterAccess implements Node {
   updatedAt: Datetime!
 }
 
+enum DocumentAccessStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatus"
+  ) {
+  REQUESTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRequested"
+    )
+  GRANTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusGranted"
+    )
+  REJECTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRejected"
+    )
+  REVOKED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRevoked"
+    )
+}
+
+type DocumentAccess implements Node {
+  id: ID!
+  status: DocumentAccessStatus!
+}
+
 input SendMagicLinkInput {
   email: EmailAddr!
   continue: String
@@ -567,6 +594,18 @@ input VerifyMagicLinkInput {
 
 type VerifyMagicLinkPayload {
   continue: String
+}
+
+type RequestDocumentAccessPayload {
+  document: Document
+}
+
+type RequestReportAccessPayload {
+  audit: Audit
+}
+
+type RequestFileAccessPayload {
+  file: TrustCenterFile
 }
 
 type RequestAccessesPayload {
@@ -772,15 +811,15 @@ type Mutation {
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT) @nda
+  ): RequestDocumentAccessPayload! @session(required: PRESENT) @nda
 
   requestReportAccess(
     input: RequestReportAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT) @nda
+  ): RequestReportAccessPayload! @session(required: PRESENT) @nda
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT) @nda
+  ): RequestFileAccessPayload! @session(required: PRESENT) @nda
 
   acceptElectronicSignature(
     input: AcceptElectronicSignatureInput!

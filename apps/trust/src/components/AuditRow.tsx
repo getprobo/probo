@@ -14,7 +14,7 @@ import {
   Table,
   useToast,
 } from "@probo/ui";
-import { type PropsWithChildren, useState } from "react";
+import { type PropsWithChildren } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -29,8 +29,13 @@ import type { AuditRowFragment$key } from "./__generated__/AuditRowFragment.grap
 const requestAccessMutation = graphql`
   mutation AuditRow_requestAccessMutation($input: RequestReportAccessInput!) {
     requestReportAccess(input: $input) {
-      trustCenterAccess {
-        id
+      audit {
+        report {
+          access {
+            id
+            status
+          }
+        }
       }
     }
   }
@@ -51,7 +56,10 @@ const auditRowFragment = graphql`
       id
       filename
       isUserAuthorized
-      hasUserRequestedAccess
+      access {
+        id
+        status
+      }
     }
     framework {
       id
@@ -70,9 +78,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
   const navigate = useNavigate();
 
   const audit = useFragment(auditRowFragment, props.audit);
-  const [hasRequested, setHasRequested] = useState(
-    audit.report?.hasUserRequestedAccess,
-  );
+  const hasRequested = !!audit.report?.access;
 
   const [requestAccess, isRequestingAccess]
     = useMutation<AuditRow_requestAccessMutation>(requestAccessMutation);
@@ -95,7 +101,6 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
           });
           return;
         }
-        setHasRequested(true);
         toast({
           title: __("Success"),
           description: __("Access request submitted successfully."),

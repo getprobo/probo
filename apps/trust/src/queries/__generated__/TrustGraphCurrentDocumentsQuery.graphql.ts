@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dabe16493c003a98ed8fd555efc85ddc>>
+ * @generated SignedSource<<49da700d766fbc346562bd5c8ec01ade>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -89,8 +89,20 @@ v5 = {
 v6 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
-  "name": "hasUserRequestedAccess",
+  "concreteType": "DocumentAccess",
+  "kind": "LinkedField",
+  "name": "access",
+  "plural": false,
+  "selections": [
+    (v0/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "status",
+      "storageKey": null
+    }
+  ],
   "storageKey": null
 };
 return {
@@ -324,12 +336,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c9c4cb18da98c40646fbbe21c2c5b46f",
+    "cacheID": "479815df76932e5e2a6c57f97efdd029",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentDocumentsQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentDocumentsQuery {\n  currentTrustCenter {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n    trustCenterFiles(first: 50) {\n      edges {\n        node {\n          id\n          category\n          ...TrustCenterFileRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n"
+    "text": "query TrustGraphCurrentDocumentsQuery {\n  currentTrustCenter {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n    trustCenterFiles(first: 50) {\n      edges {\n        node {\n          id\n          category\n          ...TrustCenterFileRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  access {\n    id\n    status\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  access {\n    id\n    status\n  }\n}\n"
   }
 };
 })();

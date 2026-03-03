@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useEffect } from "react";
 import { useMutation } from "react-relay";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { useRequestAccessCallback_allMutation } from "./__generated__/useRequestAccessCallback_allMutation.graphql";
@@ -16,8 +16,11 @@ const documentMutation = graphql`
     $input: RequestDocumentAccessInput!
   ) {
     requestDocumentAccess(input: $input) {
-      trustCenterAccess {
-        id
+      document {
+        access {
+          id
+          status
+        }
       }
     }
   }
@@ -28,8 +31,13 @@ const reportMutation = graphql`
     $input: RequestReportAccessInput!
   ) {
     requestReportAccess(input: $input) {
-      trustCenterAccess {
-        id
+      audit {
+        report {
+          access {
+            id
+            status
+          }
+        }
       }
     }
   }
@@ -40,8 +48,11 @@ const fileMutation = graphql`
     $input: RequestTrustCenterFileAccessInput!
   ) {
     requestTrustCenterFileAccess(input: $input) {
-      trustCenterAccess {
-        id
+      file {
+        access {
+          id
+          status
+        }
       }
     }
   }
@@ -75,6 +86,7 @@ function successToastArgs(__: (s: string) => string) {
 
 export function useRequestAccessCallback() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   const documentId = searchParams.get("request-document-id");
   const reportId = searchParams.get("request-report-id");
@@ -173,6 +185,7 @@ export function useRequestAccessCallback() {
           toast(successToastArgs(__));
           searchParams.delete("request-all");
           setSearchParams(searchParams);
+          window.location.href = location.pathname;
         },
         onError: (error) => {
           toast(errorToastArgs(__, error));
@@ -194,5 +207,6 @@ export function useRequestAccessCallback() {
     searchParams,
     setSearchParams,
     toast,
+    location,
   ]);
 }

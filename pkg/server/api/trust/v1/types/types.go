@@ -46,15 +46,23 @@ type AuditEdge struct {
 }
 
 type Document struct {
-	ID                     gid.GID               `json:"id"`
-	Title                  string                `json:"title"`
-	DocumentType           coredata.DocumentType `json:"documentType"`
-	IsUserAuthorized       bool                  `json:"isUserAuthorized"`
-	HasUserRequestedAccess bool                  `json:"hasUserRequestedAccess"`
+	ID               gid.GID               `json:"id"`
+	Title            string                `json:"title"`
+	DocumentType     coredata.DocumentType `json:"documentType"`
+	IsUserAuthorized bool                  `json:"isUserAuthorized"`
+	Access           *DocumentAccess       `json:"access,omitempty"`
 }
 
 func (Document) IsNode()             {}
 func (this Document) GetID() gid.GID { return this.ID }
+
+type DocumentAccess struct {
+	ID     gid.GID                                  `json:"id"`
+	Status coredata.TrustCenterDocumentAccessStatus `json:"status"`
+}
+
+func (DocumentAccess) IsNode()             {}
+func (this DocumentAccess) GetID() gid.GID { return this.ID }
 
 type DocumentConnection struct {
 	Edges    []*DocumentEdge `json:"edges"`
@@ -168,10 +176,10 @@ type RecordSigningEventPayload struct {
 }
 
 type Report struct {
-	ID                     gid.GID `json:"id"`
-	Filename               string  `json:"filename"`
-	IsUserAuthorized       bool    `json:"isUserAuthorized"`
-	HasUserRequestedAccess bool    `json:"hasUserRequestedAccess"`
+	ID               gid.GID         `json:"id"`
+	Filename         string          `json:"filename"`
+	IsUserAuthorized bool            `json:"isUserAuthorized"`
+	Access           *DocumentAccess `json:"access,omitempty"`
 }
 
 func (Report) IsNode()             {}
@@ -185,8 +193,20 @@ type RequestDocumentAccessInput struct {
 	DocumentID gid.GID `json:"documentId"`
 }
 
+type RequestDocumentAccessPayload struct {
+	Document *Document `json:"document,omitempty"`
+}
+
+type RequestFileAccessPayload struct {
+	File *TrustCenterFile `json:"file,omitempty"`
+}
+
 type RequestReportAccessInput struct {
 	ReportID gid.GID `json:"reportId"`
+}
+
+type RequestReportAccessPayload struct {
+	Audit *Audit `json:"audit,omitempty"`
 }
 
 type RequestTrustCenterFileAccessInput struct {
@@ -232,11 +252,11 @@ func (TrustCenterAccess) IsNode()             {}
 func (this TrustCenterAccess) GetID() gid.GID { return this.ID }
 
 type TrustCenterFile struct {
-	ID                     gid.GID `json:"id"`
-	Name                   string  `json:"name"`
-	Category               string  `json:"category"`
-	IsUserAuthorized       bool    `json:"isUserAuthorized"`
-	HasUserRequestedAccess bool    `json:"hasUserRequestedAccess"`
+	ID               gid.GID         `json:"id"`
+	Name             string          `json:"name"`
+	Category         string          `json:"category"`
+	IsUserAuthorized bool            `json:"isUserAuthorized"`
+	Access           *DocumentAccess `json:"access,omitempty"`
 }
 
 func (TrustCenterFile) IsNode()             {}

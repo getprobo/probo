@@ -9,7 +9,6 @@ import {
   Spinner,
   useToast,
 } from "@probo/ui";
-import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -26,8 +25,11 @@ const requestAccessMutation = graphql`
     $input: RequestDocumentAccessInput!
   ) {
     requestDocumentAccess(input: $input) {
-      trustCenterAccess {
-        id
+      document {
+        access {
+          id
+          status
+        }
       }
     }
   }
@@ -46,7 +48,10 @@ const documentRowFragment = graphql`
     id
     title
     isUserAuthorized
-    hasUserRequestedAccess
+    access {
+      id
+      status
+    }
   }
 `;
 
@@ -58,9 +63,7 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
   const [searchParams] = useSearchParams();
 
   const document = useFragment(documentRowFragment, props.document);
-  const [hasRequested, setHasRequested] = useState(
-    document.hasUserRequestedAccess,
-  );
+  const hasRequested = !!document.access;
 
   const [requestAccess, isRequestingAccess]
     = useMutation<DocumentRow_requestAccessMutation>(requestAccessMutation);
@@ -83,7 +86,6 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
           });
           return;
         }
-        setHasRequested(true);
         toast({
           title: __("Success"),
           description: __("Access request submitted successfully."),

@@ -78,11 +78,16 @@ type ComplexityRoot struct {
 	}
 
 	Document struct {
-		DocumentType           func(childComplexity int) int
-		HasUserRequestedAccess func(childComplexity int) int
-		ID                     func(childComplexity int) int
-		IsUserAuthorized       func(childComplexity int) int
-		Title                  func(childComplexity int) int
+		Access           func(childComplexity int) int
+		DocumentType     func(childComplexity int) int
+		ID               func(childComplexity int) int
+		IsUserAuthorized func(childComplexity int) int
+		Title            func(childComplexity int) int
+	}
+
+	DocumentAccess struct {
+		ID     func(childComplexity int) int
+		Status func(childComplexity int) int
 	}
 
 	DocumentConnection struct {
@@ -182,14 +187,26 @@ type ComplexityRoot struct {
 	}
 
 	Report struct {
-		Filename               func(childComplexity int) int
-		HasUserRequestedAccess func(childComplexity int) int
-		ID                     func(childComplexity int) int
-		IsUserAuthorized       func(childComplexity int) int
+		Access           func(childComplexity int) int
+		Filename         func(childComplexity int) int
+		ID               func(childComplexity int) int
+		IsUserAuthorized func(childComplexity int) int
 	}
 
 	RequestAccessesPayload struct {
 		TrustCenterAccess func(childComplexity int) int
+	}
+
+	RequestDocumentAccessPayload struct {
+		Document func(childComplexity int) int
+	}
+
+	RequestFileAccessPayload struct {
+		File func(childComplexity int) int
+	}
+
+	RequestReportAccessPayload struct {
+		Audit func(childComplexity int) int
 	}
 
 	SendMagicLinkPayload struct {
@@ -220,11 +237,11 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenterFile struct {
-		Category               func(childComplexity int) int
-		HasUserRequestedAccess func(childComplexity int) int
-		ID                     func(childComplexity int) int
-		IsUserAuthorized       func(childComplexity int) int
-		Name                   func(childComplexity int) int
+		Access           func(childComplexity int) int
+		Category         func(childComplexity int) int
+		ID               func(childComplexity int) int
+		IsUserAuthorized func(childComplexity int) int
+		Name             func(childComplexity int) int
 	}
 
 	TrustCenterFileConnection struct {
@@ -287,7 +304,7 @@ type AuditResolver interface {
 }
 type DocumentResolver interface {
 	IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error)
-	HasUserRequestedAccess(ctx context.Context, obj *types.Document) (bool, error)
+	Access(ctx context.Context, obj *types.Document) (*types.DocumentAccess, error)
 }
 type FrameworkResolver interface {
 	LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error)
@@ -300,9 +317,9 @@ type MutationResolver interface {
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
 	ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error)
 	ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error)
-	RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestAccessesPayload, error)
-	RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestAccessesPayload, error)
-	RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error)
+	RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestDocumentAccessPayload, error)
+	RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestReportAccessPayload, error)
+	RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestFileAccessPayload, error)
 	AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error)
 	RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error)
 }
@@ -320,7 +337,7 @@ type QueryResolver interface {
 }
 type ReportResolver interface {
 	IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error)
-	HasUserRequestedAccess(ctx context.Context, obj *types.Report) (bool, error)
+	Access(ctx context.Context, obj *types.Report) (*types.DocumentAccess, error)
 }
 type TrustCenterResolver interface {
 	LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
@@ -335,7 +352,7 @@ type TrustCenterResolver interface {
 }
 type TrustCenterFileResolver interface {
 	IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error)
-	HasUserRequestedAccess(ctx context.Context, obj *types.TrustCenterFile) (bool, error)
+	Access(ctx context.Context, obj *types.TrustCenterFile) (*types.DocumentAccess, error)
 }
 type TrustCenterReferenceResolver interface {
 	LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error)
@@ -416,18 +433,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AuditEdge.Node(childComplexity), true
 
+	case "Document.access":
+		if e.ComplexityRoot.Document.Access == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Document.Access(childComplexity), true
 	case "Document.documentType":
 		if e.ComplexityRoot.Document.DocumentType == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Document.DocumentType(childComplexity), true
-	case "Document.hasUserRequestedAccess":
-		if e.ComplexityRoot.Document.HasUserRequestedAccess == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Document.HasUserRequestedAccess(childComplexity), true
 	case "Document.id":
 		if e.ComplexityRoot.Document.ID == nil {
 			break
@@ -446,6 +463,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Document.Title(childComplexity), true
+
+	case "DocumentAccess.id":
+		if e.ComplexityRoot.DocumentAccess.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentAccess.ID(childComplexity), true
+	case "DocumentAccess.status":
+		if e.ComplexityRoot.DocumentAccess.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentAccess.Status(childComplexity), true
 
 	case "DocumentConnection.edges":
 		if e.ComplexityRoot.DocumentConnection.Edges == nil {
@@ -841,18 +871,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.RecordSigningEventPayload.Success(childComplexity), true
 
+	case "Report.access":
+		if e.ComplexityRoot.Report.Access == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Report.Access(childComplexity), true
 	case "Report.filename":
 		if e.ComplexityRoot.Report.Filename == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Report.Filename(childComplexity), true
-	case "Report.hasUserRequestedAccess":
-		if e.ComplexityRoot.Report.HasUserRequestedAccess == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Report.HasUserRequestedAccess(childComplexity), true
 	case "Report.id":
 		if e.ComplexityRoot.Report.ID == nil {
 			break
@@ -872,6 +902,27 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RequestAccessesPayload.TrustCenterAccess(childComplexity), true
+
+	case "RequestDocumentAccessPayload.document":
+		if e.ComplexityRoot.RequestDocumentAccessPayload.Document == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RequestDocumentAccessPayload.Document(childComplexity), true
+
+	case "RequestFileAccessPayload.file":
+		if e.ComplexityRoot.RequestFileAccessPayload.File == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RequestFileAccessPayload.File(childComplexity), true
+
+	case "RequestReportAccessPayload.audit":
+		if e.ComplexityRoot.RequestReportAccessPayload.Audit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RequestReportAccessPayload.Audit(childComplexity), true
 
 	case "SendMagicLinkPayload.success":
 		if e.ComplexityRoot.SendMagicLinkPayload.Success == nil {
@@ -1009,18 +1060,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.TrustCenterAccess.UpdatedAt(childComplexity), true
 
+	case "TrustCenterFile.access":
+		if e.ComplexityRoot.TrustCenterFile.Access == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TrustCenterFile.Access(childComplexity), true
 	case "TrustCenterFile.category":
 		if e.ComplexityRoot.TrustCenterFile.Category == nil {
 			break
 		}
 
 		return e.ComplexityRoot.TrustCenterFile.Category(childComplexity), true
-	case "TrustCenterFile.hasUserRequestedAccess":
-		if e.ComplexityRoot.TrustCenterFile.HasUserRequestedAccess == nil {
-			break
-		}
-
-		return e.ComplexityRoot.TrustCenterFile.HasUserRequestedAccess(childComplexity), true
 	case "TrustCenterFile.id":
 		if e.ComplexityRoot.TrustCenterFile.ID == nil {
 			break
@@ -1363,7 +1414,7 @@ type Document implements Node @nda {
   title: String!
   documentType: DocumentType!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
-  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
 }
 
 type DocumentConnection @nda {
@@ -1387,7 +1438,7 @@ type Report implements Node @nda {
   id: ID!
   filename: String!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
-  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
 }
 
 type Audit implements Node @nda {
@@ -1778,7 +1829,7 @@ type TrustCenterFile implements Node @nda {
   name: String!
   category: String!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
-  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
+  access: DocumentAccess @goField(forceResolver: true)
 }
 
 type TrustCenterFileConnection @nda {
@@ -1852,6 +1903,33 @@ type TrustCenterAccess implements Node {
   updatedAt: Datetime!
 }
 
+enum DocumentAccessStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatus"
+  ) {
+  REQUESTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRequested"
+    )
+  GRANTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusGranted"
+    )
+  REJECTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRejected"
+    )
+  REVOKED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRevoked"
+    )
+}
+
+type DocumentAccess implements Node {
+  id: ID!
+  status: DocumentAccessStatus!
+}
+
 input SendMagicLinkInput {
   email: EmailAddr!
   continue: String
@@ -1867,6 +1945,18 @@ input VerifyMagicLinkInput {
 
 type VerifyMagicLinkPayload {
   continue: String
+}
+
+type RequestDocumentAccessPayload {
+  document: Document
+}
+
+type RequestReportAccessPayload {
+  audit: Audit
+}
+
+type RequestFileAccessPayload {
+  file: TrustCenterFile
 }
 
 type RequestAccessesPayload {
@@ -2072,15 +2162,15 @@ type Mutation {
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT) @nda
+  ): RequestDocumentAccessPayload! @session(required: PRESENT) @nda
 
   requestReportAccess(
     input: RequestReportAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT) @nda
+  ): RequestReportAccessPayload! @session(required: PRESENT) @nda
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT) @nda
+  ): RequestFileAccessPayload! @session(required: PRESENT) @nda
 
   acceptElectronicSignature(
     input: AcceptElectronicSignatureInput!
@@ -2662,8 +2752,8 @@ func (ec *executionContext) fieldContext_Audit_report(_ context.Context, field g
 				return ec.fieldContext_Report_filename(ctx, field)
 			case "isUserAuthorized":
 				return ec.fieldContext_Report_isUserAuthorized(ctx, field)
-			case "hasUserRequestedAccess":
-				return ec.fieldContext_Report_hasUserRequestedAccess(ctx, field)
+			case "access":
+				return ec.fieldContext_Report_access(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Report", field.Name)
 		},
@@ -2955,30 +3045,94 @@ func (ec *executionContext) fieldContext_Document_isUserAuthorized(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Document_hasUserRequestedAccess(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+func (ec *executionContext) _Document_access(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Document_hasUserRequestedAccess,
+		ec.fieldContext_Document_access,
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.Document().HasUserRequestedAccess(ctx, obj)
+			return ec.Resolvers.Document().Access(ctx, obj)
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalODocumentAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentAccess,
 		true,
-		true,
+		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_Document_hasUserRequestedAccess(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_access(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Document",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DocumentAccess_id(ctx, field)
+			case "status":
+				return ec.fieldContext_DocumentAccess_status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentAccess", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentAccess_id(ctx context.Context, field graphql.CollectedField, obj *types.DocumentAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DocumentAccess_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DocumentAccess_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentAccess",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentAccess_status(ctx context.Context, field graphql.CollectedField, obj *types.DocumentAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DocumentAccess_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DocumentAccess_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentAccess",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DocumentAccessStatus does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3145,8 +3299,8 @@ func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, fi
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "isUserAuthorized":
 				return ec.fieldContext_Document_isUserAuthorized(ctx, field)
-			case "hasUserRequestedAccess":
-				return ec.fieldContext_Document_hasUserRequestedAccess(ctx, field)
+			case "access":
+				return ec.fieldContext_Document_access(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
@@ -4173,18 +4327,18 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 			directive1 := func(ctx context.Context) (any, error) {
 				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestDocumentAccessPayload
 					return zeroVal, err
 				}
 				if ec.Directives.Session == nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestDocumentAccessPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 			directive2 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Nda == nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestDocumentAccessPayload
 					return zeroVal, errors.New("directive nda is not implemented")
 				}
 				return ec.Directives.Nda(ctx, nil, directive1)
@@ -4193,7 +4347,7 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 			next = directive2
 			return next
 		},
-		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
+		ec.marshalNRequestDocumentAccessPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestDocumentAccessPayload,
 		true,
 		true,
 	)
@@ -4207,10 +4361,10 @@ func (ec *executionContext) fieldContext_Mutation_requestDocumentAccess(ctx cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "trustCenterAccess":
-				return ec.fieldContext_RequestAccessesPayload_trustCenterAccess(ctx, field)
+			case "document":
+				return ec.fieldContext_RequestDocumentAccessPayload_document(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type RequestAccessesPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type RequestDocumentAccessPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -4243,18 +4397,18 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 			directive1 := func(ctx context.Context) (any, error) {
 				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestReportAccessPayload
 					return zeroVal, err
 				}
 				if ec.Directives.Session == nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestReportAccessPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 			directive2 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Nda == nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestReportAccessPayload
 					return zeroVal, errors.New("directive nda is not implemented")
 				}
 				return ec.Directives.Nda(ctx, nil, directive1)
@@ -4263,7 +4417,7 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 			next = directive2
 			return next
 		},
-		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
+		ec.marshalNRequestReportAccessPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestReportAccessPayload,
 		true,
 		true,
 	)
@@ -4277,10 +4431,10 @@ func (ec *executionContext) fieldContext_Mutation_requestReportAccess(ctx contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "trustCenterAccess":
-				return ec.fieldContext_RequestAccessesPayload_trustCenterAccess(ctx, field)
+			case "audit":
+				return ec.fieldContext_RequestReportAccessPayload_audit(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type RequestAccessesPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type RequestReportAccessPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -4313,18 +4467,18 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 			directive1 := func(ctx context.Context) (any, error) {
 				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestFileAccessPayload
 					return zeroVal, err
 				}
 				if ec.Directives.Session == nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestFileAccessPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 			directive2 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Nda == nil {
-					var zeroVal *types.RequestAccessesPayload
+					var zeroVal *types.RequestFileAccessPayload
 					return zeroVal, errors.New("directive nda is not implemented")
 				}
 				return ec.Directives.Nda(ctx, nil, directive1)
@@ -4333,7 +4487,7 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 			next = directive2
 			return next
 		},
-		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
+		ec.marshalNRequestFileAccessPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestFileAccessPayload,
 		true,
 		true,
 	)
@@ -4347,10 +4501,10 @@ func (ec *executionContext) fieldContext_Mutation_requestTrustCenterFileAccess(c
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "trustCenterAccess":
-				return ec.fieldContext_RequestAccessesPayload_trustCenterAccess(ctx, field)
+			case "file":
+				return ec.fieldContext_RequestFileAccessPayload_file(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type RequestAccessesPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type RequestFileAccessPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -5280,30 +5434,36 @@ func (ec *executionContext) fieldContext_Report_isUserAuthorized(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Report_hasUserRequestedAccess(ctx context.Context, field graphql.CollectedField, obj *types.Report) (ret graphql.Marshaler) {
+func (ec *executionContext) _Report_access(ctx context.Context, field graphql.CollectedField, obj *types.Report) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Report_hasUserRequestedAccess,
+		ec.fieldContext_Report_access,
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.Report().HasUserRequestedAccess(ctx, obj)
+			return ec.Resolvers.Report().Access(ctx, obj)
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalODocumentAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentAccess,
 		true,
-		true,
+		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_Report_hasUserRequestedAccess(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Report_access(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Report",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DocumentAccess_id(ctx, field)
+			case "status":
+				return ec.fieldContext_DocumentAccess_status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentAccess", field.Name)
 		},
 	}
 	return fc, nil
@@ -5345,6 +5505,166 @@ func (ec *executionContext) fieldContext_RequestAccessesPayload_trustCenterAcces
 				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterAccess", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RequestDocumentAccessPayload_document(ctx context.Context, field graphql.CollectedField, obj *types.RequestDocumentAccessPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RequestDocumentAccessPayload_document,
+		func(ctx context.Context) (any, error) {
+			return obj.Document, nil
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.Document
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalODocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocument,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RequestDocumentAccessPayload_document(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RequestDocumentAccessPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Document_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Document_title(ctx, field)
+			case "documentType":
+				return ec.fieldContext_Document_documentType(ctx, field)
+			case "isUserAuthorized":
+				return ec.fieldContext_Document_isUserAuthorized(ctx, field)
+			case "access":
+				return ec.fieldContext_Document_access(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RequestFileAccessPayload_file(ctx context.Context, field graphql.CollectedField, obj *types.RequestFileAccessPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RequestFileAccessPayload_file,
+		func(ctx context.Context) (any, error) {
+			return obj.File, nil
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.TrustCenterFile
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOTrustCenterFile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFile,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RequestFileAccessPayload_file(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RequestFileAccessPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenterFile_id(ctx, field)
+			case "name":
+				return ec.fieldContext_TrustCenterFile_name(ctx, field)
+			case "category":
+				return ec.fieldContext_TrustCenterFile_category(ctx, field)
+			case "isUserAuthorized":
+				return ec.fieldContext_TrustCenterFile_isUserAuthorized(ctx, field)
+			case "access":
+				return ec.fieldContext_TrustCenterFile_access(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenterFile", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RequestReportAccessPayload_audit(ctx context.Context, field graphql.CollectedField, obj *types.RequestReportAccessPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RequestReportAccessPayload_audit,
+		func(ctx context.Context) (any, error) {
+			return obj.Audit, nil
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.Audit
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAudit,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RequestReportAccessPayload_audit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RequestReportAccessPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Audit_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Audit_name(ctx, field)
+			case "framework":
+				return ec.fieldContext_Audit_framework(ctx, field)
+			case "report":
+				return ec.fieldContext_Audit_report(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
 		},
 	}
 	return fc, nil
@@ -6169,30 +6489,36 @@ func (ec *executionContext) fieldContext_TrustCenterFile_isUserAuthorized(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterFile_hasUserRequestedAccess(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterFile) (ret graphql.Marshaler) {
+func (ec *executionContext) _TrustCenterFile_access(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterFile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_TrustCenterFile_hasUserRequestedAccess,
+		ec.fieldContext_TrustCenterFile_access,
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.TrustCenterFile().HasUserRequestedAccess(ctx, obj)
+			return ec.Resolvers.TrustCenterFile().Access(ctx, obj)
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalODocumentAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentAccess,
 		true,
-		true,
+		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_TrustCenterFile_hasUserRequestedAccess(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TrustCenterFile_access(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenterFile",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DocumentAccess_id(ctx, field)
+			case "status":
+				return ec.fieldContext_DocumentAccess_status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentAccess", field.Name)
 		},
 	}
 	return fc, nil
@@ -6359,8 +6685,8 @@ func (ec *executionContext) fieldContext_TrustCenterFileEdge_node(_ context.Cont
 				return ec.fieldContext_TrustCenterFile_category(ctx, field)
 			case "isUserAuthorized":
 				return ec.fieldContext_TrustCenterFile_isUserAuthorized(ctx, field)
-			case "hasUserRequestedAccess":
-				return ec.fieldContext_TrustCenterFile_hasUserRequestedAccess(ctx, field)
+			case "access":
+				return ec.fieldContext_TrustCenterFile_access(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterFile", field.Name)
 		},
@@ -8923,6 +9249,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._ElectronicSignature(ctx, sel, obj)
+	case types.DocumentAccess:
+		return ec._DocumentAccess(ctx, sel, &obj)
+	case *types.DocumentAccess:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DocumentAccess(ctx, sel, obj)
 	case types.Document:
 		return ec._Document(ctx, sel, &obj)
 	case *types.Document:
@@ -9249,19 +9582,16 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "hasUserRequestedAccess":
+		case "access":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Document_hasUserRequestedAccess(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
+				res = ec._Document_access(ctx, field, obj)
 				return res
 			}
 
@@ -9285,6 +9615,50 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentAccessImplementors = []string{"DocumentAccess", "Node"}
+
+func (ec *executionContext) _DocumentAccess(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentAccess) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentAccessImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentAccess")
+		case "id":
+			out.Values[i] = ec._DocumentAccess_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._DocumentAccess_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10309,19 +10683,16 @@ func (ec *executionContext) _Report(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "hasUserRequestedAccess":
+		case "access":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Report_hasUserRequestedAccess(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
+				res = ec._Report_access(ctx, field, obj)
 				return res
 			}
 
@@ -10384,6 +10755,114 @@ func (ec *executionContext) _RequestAccessesPayload(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var requestDocumentAccessPayloadImplementors = []string{"RequestDocumentAccessPayload"}
+
+func (ec *executionContext) _RequestDocumentAccessPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RequestDocumentAccessPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, requestDocumentAccessPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RequestDocumentAccessPayload")
+		case "document":
+			out.Values[i] = ec._RequestDocumentAccessPayload_document(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var requestFileAccessPayloadImplementors = []string{"RequestFileAccessPayload"}
+
+func (ec *executionContext) _RequestFileAccessPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RequestFileAccessPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, requestFileAccessPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RequestFileAccessPayload")
+		case "file":
+			out.Values[i] = ec._RequestFileAccessPayload_file(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var requestReportAccessPayloadImplementors = []string{"RequestReportAccessPayload"}
+
+func (ec *executionContext) _RequestReportAccessPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RequestReportAccessPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, requestReportAccessPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RequestReportAccessPayload")
+		case "audit":
+			out.Values[i] = ec._RequestReportAccessPayload_audit(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10931,19 +11410,16 @@ func (ec *executionContext) _TrustCenterFile(ctx context.Context, sel ast.Select
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "hasUserRequestedAccess":
+		case "access":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._TrustCenterFile_hasUserRequestedAccess(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
+				res = ec._TrustCenterFile_access(ctx, field, obj)
 				return res
 			}
 
@@ -12474,6 +12950,38 @@ func (ec *executionContext) marshalNDocument2ᚖgoᚗproboᚗincᚋproboᚋpkg�
 	return ec._Document(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus(ctx context.Context, v any) (coredata.TrustCenterDocumentAccessStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus(ctx context.Context, sel ast.SelectionSet, v coredata.TrustCenterDocumentAccessStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus = map[string]coredata.TrustCenterDocumentAccessStatus{
+		"REQUESTED": coredata.TrustCenterDocumentAccessStatusRequested,
+		"GRANTED":   coredata.TrustCenterDocumentAccessStatusGranted,
+		"REJECTED":  coredata.TrustCenterDocumentAccessStatusRejected,
+		"REVOKED":   coredata.TrustCenterDocumentAccessStatusRevoked,
+	}
+	marshalNDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus = map[coredata.TrustCenterDocumentAccessStatus]string{
+		coredata.TrustCenterDocumentAccessStatusRequested: "REQUESTED",
+		coredata.TrustCenterDocumentAccessStatusGranted:   "GRANTED",
+		coredata.TrustCenterDocumentAccessStatusRejected:  "REJECTED",
+		coredata.TrustCenterDocumentAccessStatusRevoked:   "REVOKED",
+	}
+)
+
 func (ec *executionContext) marshalNDocumentConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentConnection) graphql.Marshaler {
 	return ec._DocumentConnection(ctx, sel, &v)
 }
@@ -12853,9 +13361,51 @@ func (ec *executionContext) unmarshalNRequestDocumentAccessInput2goᚗproboᚗin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNRequestDocumentAccessPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestDocumentAccessPayload(ctx context.Context, sel ast.SelectionSet, v types.RequestDocumentAccessPayload) graphql.Marshaler {
+	return ec._RequestDocumentAccessPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRequestDocumentAccessPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestDocumentAccessPayload(ctx context.Context, sel ast.SelectionSet, v *types.RequestDocumentAccessPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RequestDocumentAccessPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRequestFileAccessPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestFileAccessPayload(ctx context.Context, sel ast.SelectionSet, v types.RequestFileAccessPayload) graphql.Marshaler {
+	return ec._RequestFileAccessPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRequestFileAccessPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestFileAccessPayload(ctx context.Context, sel ast.SelectionSet, v *types.RequestFileAccessPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RequestFileAccessPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRequestReportAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestReportAccessInput(ctx context.Context, v any) (types.RequestReportAccessInput, error) {
 	res, err := ec.unmarshalInputRequestReportAccessInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRequestReportAccessPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestReportAccessPayload(ctx context.Context, sel ast.SelectionSet, v types.RequestReportAccessPayload) graphql.Marshaler {
+	return ec._RequestReportAccessPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRequestReportAccessPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestReportAccessPayload(ctx context.Context, sel ast.SelectionSet, v *types.RequestReportAccessPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RequestReportAccessPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRequestTrustCenterFileAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestTrustCenterFileAccessInput(ctx context.Context, v any) (types.RequestTrustCenterFileAccessInput, error) {
@@ -13295,6 +13845,13 @@ func (ec *executionContext) marshalOAcceptElectronicSignaturePayload2ᚖgoᚗpro
 	return ec._AcceptElectronicSignaturePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v *types.Audit) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Audit(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -13359,6 +13916,20 @@ func (ec *executionContext) marshalODatetime2ᚖtimeᚐTime(ctx context.Context,
 	_ = ctx
 	res := graphql.MarshalTime(*v)
 	return res
+}
+
+func (ec *executionContext) marshalODocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v *types.Document) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Document(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalODocumentAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentAccess(ctx context.Context, sel ast.SelectionSet, v *types.DocumentAccess) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DocumentAccess(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOElectronicSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐElectronicSignature(ctx context.Context, sel ast.SelectionSet, v *types.ElectronicSignature) graphql.Marshaler {
@@ -13480,6 +14051,13 @@ func (ec *executionContext) marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpk
 		return graphql.Null
 	}
 	return ec._TrustCenter(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTrustCenterFile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFile(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterFile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TrustCenterFile(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOVerifyMagicLinkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVerifyMagicLinkPayload(ctx context.Context, sel ast.SelectionSet, v *types.VerifyMagicLinkPayload) graphql.Marshaler {

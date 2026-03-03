@@ -12,7 +12,7 @@ import {
 } from "@probo/ui";
 import { type PropsWithChildren } from "react";
 import { useMutation } from "react-relay";
-import { useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
@@ -41,6 +41,7 @@ export function OrganizationSidebar({
   const theme = useSystemTheme();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const logoFileUrl = theme === "dark" ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl) : trustCenter?.logoFileUrl;
 
@@ -66,6 +67,8 @@ export function OrganizationSidebar({
           description: __("Access request submitted successfully."),
           variant: "success",
         });
+
+        window.location.href = location.pathname;
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {

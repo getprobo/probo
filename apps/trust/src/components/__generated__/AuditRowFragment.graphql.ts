@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9540bd74ce3b0dd5366c237b56070d9f>>
+ * @generated SignedSource<<beb9130a1b213333ae647116467056a0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type DocumentAccessStatus = "GRANTED" | "REJECTED" | "REQUESTED" | "REVOKED";
 import { FragmentRefs } from "relay-runtime";
 export type AuditRowFragment$data = {
   readonly framework: {
@@ -19,8 +20,11 @@ export type AuditRowFragment$data = {
   };
   readonly name: string | null | undefined;
   readonly report: {
+    readonly access: {
+      readonly id: string;
+      readonly status: DocumentAccessStatus;
+    } | null | undefined;
     readonly filename: string;
-    readonly hasUserRequestedAccess: boolean;
     readonly id: string;
     readonly isUserAuthorized: boolean;
   } | null | undefined;
@@ -79,8 +83,20 @@ return {
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "hasUserRequestedAccess",
+          "concreteType": "DocumentAccess",
+          "kind": "LinkedField",
+          "name": "access",
+          "plural": false,
+          "selections": [
+            (v1/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "status",
+              "storageKey": null
+            }
+          ],
           "storageKey": null
         }
       ],
@@ -119,6 +135,6 @@ return {
 };
 })();
 
-(node as any).hash = "ebf47a97014ba4dad0da94f2bb01666f";
+(node as any).hash = "1e3e89368594b05e0926b5ee8bc7c0b5";
 
 export default node;
