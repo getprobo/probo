@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -31,20 +30,10 @@ import (
 
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
-	return &executableSchema{
-		schema:     cfg.Schema,
-		resolvers:  cfg.Resolvers,
-		directives: cfg.Directives,
-		complexity: cfg.Complexity,
-	}
+	return &executableSchema{SchemaData: cfg.Schema, Resolvers: cfg.Resolvers, Directives: cfg.Directives, ComplexityRoot: cfg.Complexity}
 }
 
-type Config struct {
-	Schema     *ast.Schema
-	Resolvers  ResolverRoot
-	Directives DirectiveRoot
-	Complexity ComplexityRoot
-}
+type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	Audit() AuditResolver
@@ -356,274 +345,269 @@ type VendorConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error)
 }
 
-type executableSchema struct {
-	schema     *ast.Schema
-	resolvers  ResolverRoot
-	directives DirectiveRoot
-	complexity ComplexityRoot
-}
+type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 func (e *executableSchema) Schema() *ast.Schema {
-	if e.schema != nil {
-		return e.schema
+	if e.SchemaData != nil {
+		return e.SchemaData
 	}
 	return parsedSchema
 }
 
 func (e *executableSchema) Complexity(ctx context.Context, typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
-	ec := executionContext{nil, e, 0, 0, nil}
+	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
 
 	case "AcceptElectronicSignaturePayload.signature":
-		if e.complexity.AcceptElectronicSignaturePayload.Signature == nil {
+		if e.ComplexityRoot.AcceptElectronicSignaturePayload.Signature == nil {
 			break
 		}
 
-		return e.complexity.AcceptElectronicSignaturePayload.Signature(childComplexity), true
+		return e.ComplexityRoot.AcceptElectronicSignaturePayload.Signature(childComplexity), true
 
 	case "Audit.framework":
-		if e.complexity.Audit.Framework == nil {
+		if e.ComplexityRoot.Audit.Framework == nil {
 			break
 		}
 
-		return e.complexity.Audit.Framework(childComplexity), true
+		return e.ComplexityRoot.Audit.Framework(childComplexity), true
 	case "Audit.id":
-		if e.complexity.Audit.ID == nil {
+		if e.ComplexityRoot.Audit.ID == nil {
 			break
 		}
 
-		return e.complexity.Audit.ID(childComplexity), true
+		return e.ComplexityRoot.Audit.ID(childComplexity), true
 	case "Audit.name":
-		if e.complexity.Audit.Name == nil {
+		if e.ComplexityRoot.Audit.Name == nil {
 			break
 		}
 
-		return e.complexity.Audit.Name(childComplexity), true
+		return e.ComplexityRoot.Audit.Name(childComplexity), true
 	case "Audit.report":
-		if e.complexity.Audit.Report == nil {
+		if e.ComplexityRoot.Audit.Report == nil {
 			break
 		}
 
-		return e.complexity.Audit.Report(childComplexity), true
+		return e.ComplexityRoot.Audit.Report(childComplexity), true
 
 	case "AuditConnection.edges":
-		if e.complexity.AuditConnection.Edges == nil {
+		if e.ComplexityRoot.AuditConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.AuditConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.AuditConnection.Edges(childComplexity), true
 	case "AuditConnection.pageInfo":
-		if e.complexity.AuditConnection.PageInfo == nil {
+		if e.ComplexityRoot.AuditConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.AuditConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.AuditConnection.PageInfo(childComplexity), true
 
 	case "AuditEdge.cursor":
-		if e.complexity.AuditEdge.Cursor == nil {
+		if e.ComplexityRoot.AuditEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.AuditEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.AuditEdge.Cursor(childComplexity), true
 	case "AuditEdge.node":
-		if e.complexity.AuditEdge.Node == nil {
+		if e.ComplexityRoot.AuditEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.AuditEdge.Node(childComplexity), true
+		return e.ComplexityRoot.AuditEdge.Node(childComplexity), true
 
 	case "Document.documentType":
-		if e.complexity.Document.DocumentType == nil {
+		if e.ComplexityRoot.Document.DocumentType == nil {
 			break
 		}
 
-		return e.complexity.Document.DocumentType(childComplexity), true
+		return e.ComplexityRoot.Document.DocumentType(childComplexity), true
 	case "Document.hasUserRequestedAccess":
-		if e.complexity.Document.HasUserRequestedAccess == nil {
+		if e.ComplexityRoot.Document.HasUserRequestedAccess == nil {
 			break
 		}
 
-		return e.complexity.Document.HasUserRequestedAccess(childComplexity), true
+		return e.ComplexityRoot.Document.HasUserRequestedAccess(childComplexity), true
 	case "Document.id":
-		if e.complexity.Document.ID == nil {
+		if e.ComplexityRoot.Document.ID == nil {
 			break
 		}
 
-		return e.complexity.Document.ID(childComplexity), true
+		return e.ComplexityRoot.Document.ID(childComplexity), true
 	case "Document.isUserAuthorized":
-		if e.complexity.Document.IsUserAuthorized == nil {
+		if e.ComplexityRoot.Document.IsUserAuthorized == nil {
 			break
 		}
 
-		return e.complexity.Document.IsUserAuthorized(childComplexity), true
+		return e.ComplexityRoot.Document.IsUserAuthorized(childComplexity), true
 	case "Document.title":
-		if e.complexity.Document.Title == nil {
+		if e.ComplexityRoot.Document.Title == nil {
 			break
 		}
 
-		return e.complexity.Document.Title(childComplexity), true
+		return e.ComplexityRoot.Document.Title(childComplexity), true
 
 	case "DocumentConnection.edges":
-		if e.complexity.DocumentConnection.Edges == nil {
+		if e.ComplexityRoot.DocumentConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.DocumentConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.DocumentConnection.Edges(childComplexity), true
 	case "DocumentConnection.pageInfo":
-		if e.complexity.DocumentConnection.PageInfo == nil {
+		if e.ComplexityRoot.DocumentConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.DocumentConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.DocumentConnection.PageInfo(childComplexity), true
 
 	case "DocumentEdge.cursor":
-		if e.complexity.DocumentEdge.Cursor == nil {
+		if e.ComplexityRoot.DocumentEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.DocumentEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.DocumentEdge.Cursor(childComplexity), true
 	case "DocumentEdge.node":
-		if e.complexity.DocumentEdge.Node == nil {
+		if e.ComplexityRoot.DocumentEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.DocumentEdge.Node(childComplexity), true
+		return e.ComplexityRoot.DocumentEdge.Node(childComplexity), true
 
 	case "ElectronicSignature.consentText":
-		if e.complexity.ElectronicSignature.ConsentText == nil {
+		if e.ComplexityRoot.ElectronicSignature.ConsentText == nil {
 			break
 		}
 
-		return e.complexity.ElectronicSignature.ConsentText(childComplexity), true
+		return e.ComplexityRoot.ElectronicSignature.ConsentText(childComplexity), true
 	case "ElectronicSignature.createdAt":
-		if e.complexity.ElectronicSignature.CreatedAt == nil {
+		if e.ComplexityRoot.ElectronicSignature.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.ElectronicSignature.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.ElectronicSignature.CreatedAt(childComplexity), true
 	case "ElectronicSignature.documentType":
-		if e.complexity.ElectronicSignature.DocumentType == nil {
+		if e.ComplexityRoot.ElectronicSignature.DocumentType == nil {
 			break
 		}
 
-		return e.complexity.ElectronicSignature.DocumentType(childComplexity), true
+		return e.ComplexityRoot.ElectronicSignature.DocumentType(childComplexity), true
 	case "ElectronicSignature.id":
-		if e.complexity.ElectronicSignature.ID == nil {
+		if e.ComplexityRoot.ElectronicSignature.ID == nil {
 			break
 		}
 
-		return e.complexity.ElectronicSignature.ID(childComplexity), true
+		return e.ComplexityRoot.ElectronicSignature.ID(childComplexity), true
 	case "ElectronicSignature.lastError":
-		if e.complexity.ElectronicSignature.LastError == nil {
+		if e.ComplexityRoot.ElectronicSignature.LastError == nil {
 			break
 		}
 
-		return e.complexity.ElectronicSignature.LastError(childComplexity), true
+		return e.ComplexityRoot.ElectronicSignature.LastError(childComplexity), true
 	case "ElectronicSignature.signedAt":
-		if e.complexity.ElectronicSignature.SignedAt == nil {
+		if e.ComplexityRoot.ElectronicSignature.SignedAt == nil {
 			break
 		}
 
-		return e.complexity.ElectronicSignature.SignedAt(childComplexity), true
+		return e.ComplexityRoot.ElectronicSignature.SignedAt(childComplexity), true
 	case "ElectronicSignature.status":
-		if e.complexity.ElectronicSignature.Status == nil {
+		if e.ComplexityRoot.ElectronicSignature.Status == nil {
 			break
 		}
 
-		return e.complexity.ElectronicSignature.Status(childComplexity), true
+		return e.ComplexityRoot.ElectronicSignature.Status(childComplexity), true
 	case "ElectronicSignature.updatedAt":
-		if e.complexity.ElectronicSignature.UpdatedAt == nil {
+		if e.ComplexityRoot.ElectronicSignature.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.ElectronicSignature.UpdatedAt(childComplexity), true
+		return e.ComplexityRoot.ElectronicSignature.UpdatedAt(childComplexity), true
 
 	case "ExportDocumentPDFPayload.data":
-		if e.complexity.ExportDocumentPDFPayload.Data == nil {
+		if e.ComplexityRoot.ExportDocumentPDFPayload.Data == nil {
 			break
 		}
 
-		return e.complexity.ExportDocumentPDFPayload.Data(childComplexity), true
+		return e.ComplexityRoot.ExportDocumentPDFPayload.Data(childComplexity), true
 
 	case "ExportReportPDFPayload.data":
-		if e.complexity.ExportReportPDFPayload.Data == nil {
+		if e.ComplexityRoot.ExportReportPDFPayload.Data == nil {
 			break
 		}
 
-		return e.complexity.ExportReportPDFPayload.Data(childComplexity), true
+		return e.ComplexityRoot.ExportReportPDFPayload.Data(childComplexity), true
 
 	case "ExportTrustCenterFilePayload.data":
-		if e.complexity.ExportTrustCenterFilePayload.Data == nil {
+		if e.ComplexityRoot.ExportTrustCenterFilePayload.Data == nil {
 			break
 		}
 
-		return e.complexity.ExportTrustCenterFilePayload.Data(childComplexity), true
+		return e.ComplexityRoot.ExportTrustCenterFilePayload.Data(childComplexity), true
 
 	case "Framework.darkLogoURL":
-		if e.complexity.Framework.DarkLogoURL == nil {
+		if e.ComplexityRoot.Framework.DarkLogoURL == nil {
 			break
 		}
 
-		return e.complexity.Framework.DarkLogoURL(childComplexity), true
+		return e.ComplexityRoot.Framework.DarkLogoURL(childComplexity), true
 	case "Framework.id":
-		if e.complexity.Framework.ID == nil {
+		if e.ComplexityRoot.Framework.ID == nil {
 			break
 		}
 
-		return e.complexity.Framework.ID(childComplexity), true
+		return e.ComplexityRoot.Framework.ID(childComplexity), true
 	case "Framework.lightLogoURL":
-		if e.complexity.Framework.LightLogoURL == nil {
+		if e.ComplexityRoot.Framework.LightLogoURL == nil {
 			break
 		}
 
-		return e.complexity.Framework.LightLogoURL(childComplexity), true
+		return e.ComplexityRoot.Framework.LightLogoURL(childComplexity), true
 	case "Framework.name":
-		if e.complexity.Framework.Name == nil {
+		if e.ComplexityRoot.Framework.Name == nil {
 			break
 		}
 
-		return e.complexity.Framework.Name(childComplexity), true
+		return e.ComplexityRoot.Framework.Name(childComplexity), true
 
 	case "Identity.createdAt":
-		if e.complexity.Identity.CreatedAt == nil {
+		if e.ComplexityRoot.Identity.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Identity.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.Identity.CreatedAt(childComplexity), true
 	case "Identity.email":
-		if e.complexity.Identity.Email == nil {
+		if e.ComplexityRoot.Identity.Email == nil {
 			break
 		}
 
-		return e.complexity.Identity.Email(childComplexity), true
+		return e.ComplexityRoot.Identity.Email(childComplexity), true
 	case "Identity.emailVerified":
-		if e.complexity.Identity.EmailVerified == nil {
+		if e.ComplexityRoot.Identity.EmailVerified == nil {
 			break
 		}
 
-		return e.complexity.Identity.EmailVerified(childComplexity), true
+		return e.ComplexityRoot.Identity.EmailVerified(childComplexity), true
 	case "Identity.fullName":
-		if e.complexity.Identity.FullName == nil {
+		if e.ComplexityRoot.Identity.FullName == nil {
 			break
 		}
 
-		return e.complexity.Identity.FullName(childComplexity), true
+		return e.ComplexityRoot.Identity.FullName(childComplexity), true
 	case "Identity.id":
-		if e.complexity.Identity.ID == nil {
+		if e.ComplexityRoot.Identity.ID == nil {
 			break
 		}
 
-		return e.complexity.Identity.ID(childComplexity), true
+		return e.ComplexityRoot.Identity.ID(childComplexity), true
 	case "Identity.updatedAt":
-		if e.complexity.Identity.UpdatedAt == nil {
+		if e.ComplexityRoot.Identity.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.Identity.UpdatedAt(childComplexity), true
+		return e.ComplexityRoot.Identity.UpdatedAt(childComplexity), true
 
 	case "Mutation.acceptElectronicSignature":
-		if e.complexity.Mutation.AcceptElectronicSignature == nil {
+		if e.ComplexityRoot.Mutation.AcceptElectronicSignature == nil {
 			break
 		}
 
@@ -632,9 +616,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AcceptElectronicSignature(childComplexity, args["input"].(types.AcceptElectronicSignatureInput)), true
+		return e.ComplexityRoot.Mutation.AcceptElectronicSignature(childComplexity, args["input"].(types.AcceptElectronicSignatureInput)), true
 	case "Mutation.exportDocumentPDF":
-		if e.complexity.Mutation.ExportDocumentPDF == nil {
+		if e.ComplexityRoot.Mutation.ExportDocumentPDF == nil {
 			break
 		}
 
@@ -643,9 +627,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ExportDocumentPDF(childComplexity, args["input"].(types.ExportDocumentPDFInput)), true
+		return e.ComplexityRoot.Mutation.ExportDocumentPDF(childComplexity, args["input"].(types.ExportDocumentPDFInput)), true
 	case "Mutation.exportReportPDF":
-		if e.complexity.Mutation.ExportReportPDF == nil {
+		if e.ComplexityRoot.Mutation.ExportReportPDF == nil {
 			break
 		}
 
@@ -654,9 +638,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ExportReportPDF(childComplexity, args["input"].(types.ExportReportPDFInput)), true
+		return e.ComplexityRoot.Mutation.ExportReportPDF(childComplexity, args["input"].(types.ExportReportPDFInput)), true
 	case "Mutation.exportTrustCenterFile":
-		if e.complexity.Mutation.ExportTrustCenterFile == nil {
+		if e.ComplexityRoot.Mutation.ExportTrustCenterFile == nil {
 			break
 		}
 
@@ -665,9 +649,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ExportTrustCenterFile(childComplexity, args["input"].(types.ExportTrustCenterFileInput)), true
+		return e.ComplexityRoot.Mutation.ExportTrustCenterFile(childComplexity, args["input"].(types.ExportTrustCenterFileInput)), true
 	case "Mutation.recordSigningEvent":
-		if e.complexity.Mutation.RecordSigningEvent == nil {
+		if e.ComplexityRoot.Mutation.RecordSigningEvent == nil {
 			break
 		}
 
@@ -676,15 +660,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RecordSigningEvent(childComplexity, args["input"].(types.RecordSigningEventInput)), true
+		return e.ComplexityRoot.Mutation.RecordSigningEvent(childComplexity, args["input"].(types.RecordSigningEventInput)), true
 	case "Mutation.requestAllAccesses":
-		if e.complexity.Mutation.RequestAllAccesses == nil {
+		if e.ComplexityRoot.Mutation.RequestAllAccesses == nil {
 			break
 		}
 
-		return e.complexity.Mutation.RequestAllAccesses(childComplexity), true
+		return e.ComplexityRoot.Mutation.RequestAllAccesses(childComplexity), true
 	case "Mutation.requestDocumentAccess":
-		if e.complexity.Mutation.RequestDocumentAccess == nil {
+		if e.ComplexityRoot.Mutation.RequestDocumentAccess == nil {
 			break
 		}
 
@@ -693,9 +677,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RequestDocumentAccess(childComplexity, args["input"].(types.RequestDocumentAccessInput)), true
+		return e.ComplexityRoot.Mutation.RequestDocumentAccess(childComplexity, args["input"].(types.RequestDocumentAccessInput)), true
 	case "Mutation.requestReportAccess":
-		if e.complexity.Mutation.RequestReportAccess == nil {
+		if e.ComplexityRoot.Mutation.RequestReportAccess == nil {
 			break
 		}
 
@@ -704,9 +688,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RequestReportAccess(childComplexity, args["input"].(types.RequestReportAccessInput)), true
+		return e.ComplexityRoot.Mutation.RequestReportAccess(childComplexity, args["input"].(types.RequestReportAccessInput)), true
 	case "Mutation.requestTrustCenterFileAccess":
-		if e.complexity.Mutation.RequestTrustCenterFileAccess == nil {
+		if e.ComplexityRoot.Mutation.RequestTrustCenterFileAccess == nil {
 			break
 		}
 
@@ -715,9 +699,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RequestTrustCenterFileAccess(childComplexity, args["input"].(types.RequestTrustCenterFileAccessInput)), true
+		return e.ComplexityRoot.Mutation.RequestTrustCenterFileAccess(childComplexity, args["input"].(types.RequestTrustCenterFileAccessInput)), true
 	case "Mutation.sendMagicLink":
-		if e.complexity.Mutation.SendMagicLink == nil {
+		if e.ComplexityRoot.Mutation.SendMagicLink == nil {
 			break
 		}
 
@@ -726,9 +710,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SendMagicLink(childComplexity, args["input"].(types.SendMagicLinkInput)), true
+		return e.ComplexityRoot.Mutation.SendMagicLink(childComplexity, args["input"].(types.SendMagicLinkInput)), true
 	case "Mutation.verifyMagicLink":
-		if e.complexity.Mutation.VerifyMagicLink == nil {
+		if e.ComplexityRoot.Mutation.VerifyMagicLink == nil {
 			break
 		}
 
@@ -737,103 +721,104 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.VerifyMagicLink(childComplexity, args["input"].(types.VerifyMagicLinkInput)), true
+		return e.ComplexityRoot.Mutation.VerifyMagicLink(childComplexity, args["input"].(types.VerifyMagicLinkInput)), true
 
 	case "NonDisclosureAgreement.fileName":
-		if e.complexity.NonDisclosureAgreement.FileName == nil {
+		if e.ComplexityRoot.NonDisclosureAgreement.FileName == nil {
 			break
 		}
 
-		return e.complexity.NonDisclosureAgreement.FileName(childComplexity), true
+		return e.ComplexityRoot.NonDisclosureAgreement.FileName(childComplexity), true
 	case "NonDisclosureAgreement.fileUrl":
-		if e.complexity.NonDisclosureAgreement.FileURL == nil {
+		if e.ComplexityRoot.NonDisclosureAgreement.FileURL == nil {
 			break
 		}
 
-		return e.complexity.NonDisclosureAgreement.FileURL(childComplexity), true
+		return e.ComplexityRoot.NonDisclosureAgreement.FileURL(childComplexity), true
 	case "NonDisclosureAgreement.viewerSignature":
-		if e.complexity.NonDisclosureAgreement.ViewerSignature == nil {
+		if e.ComplexityRoot.NonDisclosureAgreement.ViewerSignature == nil {
 			break
 		}
 
-		return e.complexity.NonDisclosureAgreement.ViewerSignature(childComplexity), true
+		return e.ComplexityRoot.NonDisclosureAgreement.ViewerSignature(childComplexity), true
 
 	case "Organization.description":
-		if e.complexity.Organization.Description == nil {
+		if e.ComplexityRoot.Organization.Description == nil {
 			break
 		}
 
-		return e.complexity.Organization.Description(childComplexity), true
+		return e.ComplexityRoot.Organization.Description(childComplexity), true
 	case "Organization.email":
-		if e.complexity.Organization.Email == nil {
+		if e.ComplexityRoot.Organization.Email == nil {
 			break
 		}
 
-		return e.complexity.Organization.Email(childComplexity), true
+		return e.ComplexityRoot.Organization.Email(childComplexity), true
 	case "Organization.headquarterAddress":
-		if e.complexity.Organization.HeadquarterAddress == nil {
+		if e.ComplexityRoot.Organization.HeadquarterAddress == nil {
 			break
 		}
 
-		return e.complexity.Organization.HeadquarterAddress(childComplexity), true
+		return e.ComplexityRoot.Organization.HeadquarterAddress(childComplexity), true
 	case "Organization.id":
-		if e.complexity.Organization.ID == nil {
+		if e.ComplexityRoot.Organization.ID == nil {
 			break
 		}
 
-		return e.complexity.Organization.ID(childComplexity), true
+		return e.ComplexityRoot.Organization.ID(childComplexity), true
 	case "Organization.logoUrl":
-		if e.complexity.Organization.LogoURL == nil {
+		if e.ComplexityRoot.Organization.LogoURL == nil {
 			break
 		}
 
-		return e.complexity.Organization.LogoURL(childComplexity), true
+		return e.ComplexityRoot.Organization.LogoURL(childComplexity), true
 	case "Organization.name":
-		if e.complexity.Organization.Name == nil {
+		if e.ComplexityRoot.Organization.Name == nil {
 			break
 		}
 
-		return e.complexity.Organization.Name(childComplexity), true
+		return e.ComplexityRoot.Organization.Name(childComplexity), true
 	case "Organization.websiteUrl":
-		if e.complexity.Organization.WebsiteURL == nil {
+		if e.ComplexityRoot.Organization.WebsiteURL == nil {
 			break
 		}
 
-		return e.complexity.Organization.WebsiteURL(childComplexity), true
+		return e.ComplexityRoot.Organization.WebsiteURL(childComplexity), true
 
 	case "PageInfo.endCursor":
-		if e.complexity.PageInfo.EndCursor == nil {
+		if e.ComplexityRoot.PageInfo.EndCursor == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.EndCursor(childComplexity), true
+		return e.ComplexityRoot.PageInfo.EndCursor(childComplexity), true
 	case "PageInfo.hasNextPage":
-		if e.complexity.PageInfo.HasNextPage == nil {
+		if e.ComplexityRoot.PageInfo.HasNextPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+		return e.ComplexityRoot.PageInfo.HasNextPage(childComplexity), true
 	case "PageInfo.hasPreviousPage":
-		if e.complexity.PageInfo.HasPreviousPage == nil {
+		if e.ComplexityRoot.PageInfo.HasPreviousPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
+		return e.ComplexityRoot.PageInfo.HasPreviousPage(childComplexity), true
 	case "PageInfo.startCursor":
-		if e.complexity.PageInfo.StartCursor == nil {
+		if e.ComplexityRoot.PageInfo.StartCursor == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.StartCursor(childComplexity), true
+		return e.ComplexityRoot.PageInfo.StartCursor(childComplexity), true
 
 	case "Query.currentTrustCenter":
-		if e.complexity.Query.CurrentTrustCenter == nil {
+		if e.ComplexityRoot.Query.CurrentTrustCenter == nil {
 			break
 		}
 
-		return e.complexity.Query.CurrentTrustCenter(childComplexity), true
+		return e.ComplexityRoot.Query.CurrentTrustCenter(childComplexity), true
+
 	case "Query.node":
-		if e.complexity.Query.Node == nil {
+		if e.ComplexityRoot.Query.Node == nil {
 			break
 		}
 
@@ -842,68 +827,68 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Node(childComplexity, args["id"].(gid.GID)), true
+		return e.ComplexityRoot.Query.Node(childComplexity, args["id"].(gid.GID)), true
 	case "Query.viewer":
-		if e.complexity.Query.Viewer == nil {
+		if e.ComplexityRoot.Query.Viewer == nil {
 			break
 		}
 
-		return e.complexity.Query.Viewer(childComplexity), true
+		return e.ComplexityRoot.Query.Viewer(childComplexity), true
 
 	case "RecordSigningEventPayload.success":
-		if e.complexity.RecordSigningEventPayload.Success == nil {
+		if e.ComplexityRoot.RecordSigningEventPayload.Success == nil {
 			break
 		}
 
-		return e.complexity.RecordSigningEventPayload.Success(childComplexity), true
+		return e.ComplexityRoot.RecordSigningEventPayload.Success(childComplexity), true
 
 	case "Report.filename":
-		if e.complexity.Report.Filename == nil {
+		if e.ComplexityRoot.Report.Filename == nil {
 			break
 		}
 
-		return e.complexity.Report.Filename(childComplexity), true
+		return e.ComplexityRoot.Report.Filename(childComplexity), true
 	case "Report.hasUserRequestedAccess":
-		if e.complexity.Report.HasUserRequestedAccess == nil {
+		if e.ComplexityRoot.Report.HasUserRequestedAccess == nil {
 			break
 		}
 
-		return e.complexity.Report.HasUserRequestedAccess(childComplexity), true
+		return e.ComplexityRoot.Report.HasUserRequestedAccess(childComplexity), true
 	case "Report.id":
-		if e.complexity.Report.ID == nil {
+		if e.ComplexityRoot.Report.ID == nil {
 			break
 		}
 
-		return e.complexity.Report.ID(childComplexity), true
+		return e.ComplexityRoot.Report.ID(childComplexity), true
 	case "Report.isUserAuthorized":
-		if e.complexity.Report.IsUserAuthorized == nil {
+		if e.ComplexityRoot.Report.IsUserAuthorized == nil {
 			break
 		}
 
-		return e.complexity.Report.IsUserAuthorized(childComplexity), true
+		return e.ComplexityRoot.Report.IsUserAuthorized(childComplexity), true
 
 	case "RequestAccessesPayload.trustCenterAccess":
-		if e.complexity.RequestAccessesPayload.TrustCenterAccess == nil {
+		if e.ComplexityRoot.RequestAccessesPayload.TrustCenterAccess == nil {
 			break
 		}
 
-		return e.complexity.RequestAccessesPayload.TrustCenterAccess(childComplexity), true
+		return e.ComplexityRoot.RequestAccessesPayload.TrustCenterAccess(childComplexity), true
 
 	case "SendMagicLinkPayload.success":
-		if e.complexity.SendMagicLinkPayload.Success == nil {
+		if e.ComplexityRoot.SendMagicLinkPayload.Success == nil {
 			break
 		}
 
-		return e.complexity.SendMagicLinkPayload.Success(childComplexity), true
+		return e.ComplexityRoot.SendMagicLinkPayload.Success(childComplexity), true
 
 	case "TrustCenter.active":
-		if e.complexity.TrustCenter.Active == nil {
+		if e.ComplexityRoot.TrustCenter.Active == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.Active(childComplexity), true
+		return e.ComplexityRoot.TrustCenter.Active(childComplexity), true
 	case "TrustCenter.audits":
-		if e.complexity.TrustCenter.Audits == nil {
+		if e.ComplexityRoot.TrustCenter.Audits == nil {
 			break
 		}
 
@@ -912,15 +897,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.TrustCenter.Audits(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.ComplexityRoot.TrustCenter.Audits(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 	case "TrustCenter.darkLogoFileUrl":
-		if e.complexity.TrustCenter.DarkLogoFileURL == nil {
+		if e.ComplexityRoot.TrustCenter.DarkLogoFileURL == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.DarkLogoFileURL(childComplexity), true
+		return e.ComplexityRoot.TrustCenter.DarkLogoFileURL(childComplexity), true
 	case "TrustCenter.documents":
-		if e.complexity.TrustCenter.Documents == nil {
+		if e.ComplexityRoot.TrustCenter.Documents == nil {
 			break
 		}
 
@@ -929,39 +914,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.TrustCenter.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.ComplexityRoot.TrustCenter.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 	case "TrustCenter.id":
-		if e.complexity.TrustCenter.ID == nil {
+		if e.ComplexityRoot.TrustCenter.ID == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.ID(childComplexity), true
+		return e.ComplexityRoot.TrustCenter.ID(childComplexity), true
 	case "TrustCenter.isViewerMember":
-		if e.complexity.TrustCenter.IsViewerMember == nil {
+		if e.ComplexityRoot.TrustCenter.IsViewerMember == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.IsViewerMember(childComplexity), true
+		return e.ComplexityRoot.TrustCenter.IsViewerMember(childComplexity), true
 	case "TrustCenter.logoFileUrl":
-		if e.complexity.TrustCenter.LogoFileURL == nil {
+		if e.ComplexityRoot.TrustCenter.LogoFileURL == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.LogoFileURL(childComplexity), true
+		return e.ComplexityRoot.TrustCenter.LogoFileURL(childComplexity), true
 	case "TrustCenter.nonDisclosureAgreement":
-		if e.complexity.TrustCenter.NonDisclosureAgreement == nil {
+		if e.ComplexityRoot.TrustCenter.NonDisclosureAgreement == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.NonDisclosureAgreement(childComplexity), true
+		return e.ComplexityRoot.TrustCenter.NonDisclosureAgreement(childComplexity), true
 	case "TrustCenter.organization":
-		if e.complexity.TrustCenter.Organization == nil {
+		if e.ComplexityRoot.TrustCenter.Organization == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.Organization(childComplexity), true
+		return e.ComplexityRoot.TrustCenter.Organization(childComplexity), true
 	case "TrustCenter.references":
-		if e.complexity.TrustCenter.References == nil {
+		if e.ComplexityRoot.TrustCenter.References == nil {
 			break
 		}
 
@@ -970,15 +955,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.TrustCenter.References(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.ComplexityRoot.TrustCenter.References(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 	case "TrustCenter.slug":
-		if e.complexity.TrustCenter.Slug == nil {
+		if e.ComplexityRoot.TrustCenter.Slug == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.Slug(childComplexity), true
+		return e.ComplexityRoot.TrustCenter.Slug(childComplexity), true
 	case "TrustCenter.trustCenterFiles":
-		if e.complexity.TrustCenter.TrustCenterFiles == nil {
+		if e.ComplexityRoot.TrustCenter.TrustCenterFiles == nil {
 			break
 		}
 
@@ -987,9 +972,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.TrustCenter.TrustCenterFiles(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.ComplexityRoot.TrustCenter.TrustCenterFiles(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 	case "TrustCenter.vendors":
-		if e.complexity.TrustCenter.Vendors == nil {
+		if e.ComplexityRoot.TrustCenter.Vendors == nil {
 			break
 		}
 
@@ -998,234 +983,234 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.TrustCenter.Vendors(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.ComplexityRoot.TrustCenter.Vendors(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 
 	case "TrustCenterAccess.createdAt":
-		if e.complexity.TrustCenterAccess.CreatedAt == nil {
+		if e.ComplexityRoot.TrustCenterAccess.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterAccess.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.TrustCenterAccess.CreatedAt(childComplexity), true
 	case "TrustCenterAccess.email":
-		if e.complexity.TrustCenterAccess.Email == nil {
+		if e.ComplexityRoot.TrustCenterAccess.Email == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterAccess.Email(childComplexity), true
+		return e.ComplexityRoot.TrustCenterAccess.Email(childComplexity), true
 	case "TrustCenterAccess.id":
-		if e.complexity.TrustCenterAccess.ID == nil {
+		if e.ComplexityRoot.TrustCenterAccess.ID == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterAccess.ID(childComplexity), true
+		return e.ComplexityRoot.TrustCenterAccess.ID(childComplexity), true
 	case "TrustCenterAccess.name":
-		if e.complexity.TrustCenterAccess.Name == nil {
+		if e.ComplexityRoot.TrustCenterAccess.Name == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterAccess.Name(childComplexity), true
+		return e.ComplexityRoot.TrustCenterAccess.Name(childComplexity), true
 	case "TrustCenterAccess.updatedAt":
-		if e.complexity.TrustCenterAccess.UpdatedAt == nil {
+		if e.ComplexityRoot.TrustCenterAccess.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterAccess.UpdatedAt(childComplexity), true
+		return e.ComplexityRoot.TrustCenterAccess.UpdatedAt(childComplexity), true
 
 	case "TrustCenterFile.category":
-		if e.complexity.TrustCenterFile.Category == nil {
+		if e.ComplexityRoot.TrustCenterFile.Category == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFile.Category(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFile.Category(childComplexity), true
 	case "TrustCenterFile.hasUserRequestedAccess":
-		if e.complexity.TrustCenterFile.HasUserRequestedAccess == nil {
+		if e.ComplexityRoot.TrustCenterFile.HasUserRequestedAccess == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFile.HasUserRequestedAccess(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFile.HasUserRequestedAccess(childComplexity), true
 	case "TrustCenterFile.id":
-		if e.complexity.TrustCenterFile.ID == nil {
+		if e.ComplexityRoot.TrustCenterFile.ID == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFile.ID(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFile.ID(childComplexity), true
 	case "TrustCenterFile.isUserAuthorized":
-		if e.complexity.TrustCenterFile.IsUserAuthorized == nil {
+		if e.ComplexityRoot.TrustCenterFile.IsUserAuthorized == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFile.IsUserAuthorized(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFile.IsUserAuthorized(childComplexity), true
 	case "TrustCenterFile.name":
-		if e.complexity.TrustCenterFile.Name == nil {
+		if e.ComplexityRoot.TrustCenterFile.Name == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFile.Name(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFile.Name(childComplexity), true
 
 	case "TrustCenterFileConnection.edges":
-		if e.complexity.TrustCenterFileConnection.Edges == nil {
+		if e.ComplexityRoot.TrustCenterFileConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFileConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFileConnection.Edges(childComplexity), true
 	case "TrustCenterFileConnection.pageInfo":
-		if e.complexity.TrustCenterFileConnection.PageInfo == nil {
+		if e.ComplexityRoot.TrustCenterFileConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFileConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFileConnection.PageInfo(childComplexity), true
 
 	case "TrustCenterFileEdge.cursor":
-		if e.complexity.TrustCenterFileEdge.Cursor == nil {
+		if e.ComplexityRoot.TrustCenterFileEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFileEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFileEdge.Cursor(childComplexity), true
 	case "TrustCenterFileEdge.node":
-		if e.complexity.TrustCenterFileEdge.Node == nil {
+		if e.ComplexityRoot.TrustCenterFileEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterFileEdge.Node(childComplexity), true
+		return e.ComplexityRoot.TrustCenterFileEdge.Node(childComplexity), true
 
 	case "TrustCenterReference.description":
-		if e.complexity.TrustCenterReference.Description == nil {
+		if e.ComplexityRoot.TrustCenterReference.Description == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReference.Description(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReference.Description(childComplexity), true
 	case "TrustCenterReference.id":
-		if e.complexity.TrustCenterReference.ID == nil {
+		if e.ComplexityRoot.TrustCenterReference.ID == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReference.ID(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReference.ID(childComplexity), true
 	case "TrustCenterReference.logoUrl":
-		if e.complexity.TrustCenterReference.LogoURL == nil {
+		if e.ComplexityRoot.TrustCenterReference.LogoURL == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReference.LogoURL(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReference.LogoURL(childComplexity), true
 	case "TrustCenterReference.name":
-		if e.complexity.TrustCenterReference.Name == nil {
+		if e.ComplexityRoot.TrustCenterReference.Name == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReference.Name(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReference.Name(childComplexity), true
 	case "TrustCenterReference.websiteUrl":
-		if e.complexity.TrustCenterReference.WebsiteURL == nil {
+		if e.ComplexityRoot.TrustCenterReference.WebsiteURL == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReference.WebsiteURL(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReference.WebsiteURL(childComplexity), true
 
 	case "TrustCenterReferenceConnection.edges":
-		if e.complexity.TrustCenterReferenceConnection.Edges == nil {
+		if e.ComplexityRoot.TrustCenterReferenceConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReferenceConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReferenceConnection.Edges(childComplexity), true
 	case "TrustCenterReferenceConnection.pageInfo":
-		if e.complexity.TrustCenterReferenceConnection.PageInfo == nil {
+		if e.ComplexityRoot.TrustCenterReferenceConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReferenceConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReferenceConnection.PageInfo(childComplexity), true
 
 	case "TrustCenterReferenceEdge.cursor":
-		if e.complexity.TrustCenterReferenceEdge.Cursor == nil {
+		if e.ComplexityRoot.TrustCenterReferenceEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReferenceEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReferenceEdge.Cursor(childComplexity), true
 	case "TrustCenterReferenceEdge.node":
-		if e.complexity.TrustCenterReferenceEdge.Node == nil {
+		if e.ComplexityRoot.TrustCenterReferenceEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterReferenceEdge.Node(childComplexity), true
+		return e.ComplexityRoot.TrustCenterReferenceEdge.Node(childComplexity), true
 
 	case "Vendor.category":
-		if e.complexity.Vendor.Category == nil {
+		if e.ComplexityRoot.Vendor.Category == nil {
 			break
 		}
 
-		return e.complexity.Vendor.Category(childComplexity), true
+		return e.ComplexityRoot.Vendor.Category(childComplexity), true
 	case "Vendor.countries":
-		if e.complexity.Vendor.Countries == nil {
+		if e.ComplexityRoot.Vendor.Countries == nil {
 			break
 		}
 
-		return e.complexity.Vendor.Countries(childComplexity), true
+		return e.ComplexityRoot.Vendor.Countries(childComplexity), true
 	case "Vendor.description":
-		if e.complexity.Vendor.Description == nil {
+		if e.ComplexityRoot.Vendor.Description == nil {
 			break
 		}
 
-		return e.complexity.Vendor.Description(childComplexity), true
+		return e.ComplexityRoot.Vendor.Description(childComplexity), true
 	case "Vendor.id":
-		if e.complexity.Vendor.ID == nil {
+		if e.ComplexityRoot.Vendor.ID == nil {
 			break
 		}
 
-		return e.complexity.Vendor.ID(childComplexity), true
+		return e.ComplexityRoot.Vendor.ID(childComplexity), true
 	case "Vendor.name":
-		if e.complexity.Vendor.Name == nil {
+		if e.ComplexityRoot.Vendor.Name == nil {
 			break
 		}
 
-		return e.complexity.Vendor.Name(childComplexity), true
+		return e.ComplexityRoot.Vendor.Name(childComplexity), true
 	case "Vendor.privacyPolicyUrl":
-		if e.complexity.Vendor.PrivacyPolicyURL == nil {
+		if e.ComplexityRoot.Vendor.PrivacyPolicyURL == nil {
 			break
 		}
 
-		return e.complexity.Vendor.PrivacyPolicyURL(childComplexity), true
+		return e.ComplexityRoot.Vendor.PrivacyPolicyURL(childComplexity), true
 	case "Vendor.websiteUrl":
-		if e.complexity.Vendor.WebsiteURL == nil {
+		if e.ComplexityRoot.Vendor.WebsiteURL == nil {
 			break
 		}
 
-		return e.complexity.Vendor.WebsiteURL(childComplexity), true
+		return e.ComplexityRoot.Vendor.WebsiteURL(childComplexity), true
 
 	case "VendorConnection.edges":
-		if e.complexity.VendorConnection.Edges == nil {
+		if e.ComplexityRoot.VendorConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.VendorConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.VendorConnection.Edges(childComplexity), true
 	case "VendorConnection.pageInfo":
-		if e.complexity.VendorConnection.PageInfo == nil {
+		if e.ComplexityRoot.VendorConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.VendorConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.VendorConnection.PageInfo(childComplexity), true
 	case "VendorConnection.totalCount":
-		if e.complexity.VendorConnection.TotalCount == nil {
+		if e.ComplexityRoot.VendorConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.VendorConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.VendorConnection.TotalCount(childComplexity), true
 
 	case "VendorEdge.cursor":
-		if e.complexity.VendorEdge.Cursor == nil {
+		if e.ComplexityRoot.VendorEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.VendorEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.VendorEdge.Cursor(childComplexity), true
 	case "VendorEdge.node":
-		if e.complexity.VendorEdge.Node == nil {
+		if e.ComplexityRoot.VendorEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.VendorEdge.Node(childComplexity), true
+		return e.ComplexityRoot.VendorEdge.Node(childComplexity), true
 
 	case "VerifyMagicLinkPayload.success":
-		if e.complexity.VerifyMagicLinkPayload.Success == nil {
+		if e.ComplexityRoot.VerifyMagicLinkPayload.Success == nil {
 			break
 		}
 
-		return e.complexity.VerifyMagicLinkPayload.Success(childComplexity), true
+		return e.ComplexityRoot.VerifyMagicLinkPayload.Success(childComplexity), true
 
 	}
 	return 0, false
@@ -1233,7 +1218,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
-	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
+	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAcceptElectronicSignatureInput,
 		ec.unmarshalInputExportDocumentPDFInput,
@@ -1258,9 +1243,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
-				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
-					result := <-ec.deferredResults
-					atomic.AddInt32(&ec.pendingDeferred, -1)
+				if atomic.LoadInt32(&ec.PendingDeferred) > 0 {
+					result := <-ec.DeferredResults
+					atomic.AddInt32(&ec.PendingDeferred, -1)
 					data = result.Result
 					response.Path = result.Path
 					response.Label = result.Label
@@ -1272,8 +1257,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 			response.Data = buf.Bytes()
-			if atomic.LoadInt32(&ec.deferred) > 0 {
-				hasNext := atomic.LoadInt32(&ec.pendingDeferred) > 0
+			if atomic.LoadInt32(&ec.Deferred) > 0 {
+				hasNext := atomic.LoadInt32(&ec.PendingDeferred) > 0
 				response.HasNext = &hasNext
 			}
 
@@ -1301,44 +1286,22 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 }
 
 type executionContext struct {
-	*graphql.OperationContext
-	*executableSchema
-	deferred        int32
-	pendingDeferred int32
-	deferredResults chan graphql.DeferredResult
+	*graphql.ExecutionContextState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 }
 
-func (ec *executionContext) processDeferredGroup(dg graphql.DeferredGroup) {
-	atomic.AddInt32(&ec.pendingDeferred, 1)
-	go func() {
-		ctx := graphql.WithFreshResponseContext(dg.Context)
-		dg.FieldSet.Dispatch(ctx)
-		ds := graphql.DeferredResult{
-			Path:   dg.Path,
-			Label:  dg.Label,
-			Result: dg.FieldSet,
-			Errors: graphql.GetErrors(ctx),
-		}
-		// null fields should bubble up
-		if dg.FieldSet.Invalids > 0 {
-			ds.Result = graphql.Null
-		}
-		ec.deferredResults <- ds
-	}()
-}
-
-func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
-	if ec.DisableIntrospection {
-		return nil, errors.New("introspection disabled")
+func newExecutionContext(
+	opCtx *graphql.OperationContext,
+	execSchema *executableSchema,
+	deferredResults chan graphql.DeferredResult,
+) executionContext {
+	return executionContext{
+		ExecutionContextState: graphql.NewExecutionContextState[ResolverRoot, DirectiveRoot, ComplexityRoot](
+			opCtx,
+			(*graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot])(execSchema),
+			parsedSchema,
+			deferredResults,
+		),
 	}
-	return introspection.WrapSchema(ec.Schema()), nil
-}
-
-func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
-	if ec.DisableIntrospection {
-		return nil, errors.New("introspection disabled")
-	}
-	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
 var sources = []*ast.Source{
@@ -2616,7 +2579,7 @@ func (ec *executionContext) _Audit_framework(ctx context.Context, field graphql.
 		field,
 		ec.fieldContext_Audit_framework,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Audit().Framework(ctx, obj)
+			return ec.Resolvers.Audit().Framework(ctx, obj)
 		},
 		nil,
 		ec.marshalNFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework,
@@ -2655,7 +2618,7 @@ func (ec *executionContext) _Audit_report(ctx context.Context, field graphql.Col
 		field,
 		ec.fieldContext_Audit_report,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Audit().Report(ctx, obj)
+			return ec.Resolvers.Audit().Report(ctx, obj)
 		},
 		nil,
 		ec.marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐReport,
@@ -2923,7 +2886,7 @@ func (ec *executionContext) _Document_isUserAuthorized(ctx context.Context, fiel
 		field,
 		ec.fieldContext_Document_isUserAuthorized,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Document().IsUserAuthorized(ctx, obj)
+			return ec.Resolvers.Document().IsUserAuthorized(ctx, obj)
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -2952,7 +2915,7 @@ func (ec *executionContext) _Document_hasUserRequestedAccess(ctx context.Context
 		field,
 		ec.fieldContext_Document_hasUserRequestedAccess,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Document().HasUserRequestedAccess(ctx, obj)
+			return ec.Resolvers.Document().HasUserRequestedAccess(ctx, obj)
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3502,7 +3465,7 @@ func (ec *executionContext) _Framework_lightLogoURL(ctx context.Context, field g
 		field,
 		ec.fieldContext_Framework_lightLogoURL,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Framework().LightLogoURL(ctx, obj)
+			return ec.Resolvers.Framework().LightLogoURL(ctx, obj)
 		},
 		nil,
 		ec.marshalOString2ᚖstring,
@@ -3531,7 +3494,7 @@ func (ec *executionContext) _Framework_darkLogoURL(ctx context.Context, field gr
 		field,
 		ec.fieldContext_Framework_darkLogoURL,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Framework().DarkLogoURL(ctx, obj)
+			return ec.Resolvers.Framework().DarkLogoURL(ctx, obj)
 		},
 		nil,
 		ec.marshalOString2ᚖstring,
@@ -3735,7 +3698,7 @@ func (ec *executionContext) _Mutation_sendMagicLink(ctx context.Context, field g
 		ec.fieldContext_Mutation_sendMagicLink,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().SendMagicLink(ctx, fc.Args["input"].(types.SendMagicLinkInput))
+			return ec.Resolvers.Mutation().SendMagicLink(ctx, fc.Args["input"].(types.SendMagicLinkInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -3746,11 +3709,11 @@ func (ec *executionContext) _Mutation_sendMagicLink(ctx context.Context, field g
 					var zeroVal *types.SendMagicLinkPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.SendMagicLinkPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3798,7 +3761,7 @@ func (ec *executionContext) _Mutation_verifyMagicLink(ctx context.Context, field
 		ec.fieldContext_Mutation_verifyMagicLink,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().VerifyMagicLink(ctx, fc.Args["input"].(types.VerifyMagicLinkInput))
+			return ec.Resolvers.Mutation().VerifyMagicLink(ctx, fc.Args["input"].(types.VerifyMagicLinkInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -3809,11 +3772,11 @@ func (ec *executionContext) _Mutation_verifyMagicLink(ctx context.Context, field
 					var zeroVal *types.VerifyMagicLinkPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.VerifyMagicLinkPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3860,7 +3823,7 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 		field,
 		ec.fieldContext_Mutation_requestAllAccesses,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Mutation().RequestAllAccesses(ctx)
+			return ec.Resolvers.Mutation().RequestAllAccesses(ctx)
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -3871,11 +3834,11 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3912,7 +3875,7 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 		ec.fieldContext_Mutation_exportDocumentPDF,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ExportDocumentPDF(ctx, fc.Args["input"].(types.ExportDocumentPDFInput))
+			return ec.Resolvers.Mutation().ExportDocumentPDF(ctx, fc.Args["input"].(types.ExportDocumentPDFInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -3923,11 +3886,11 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 					var zeroVal *types.ExportDocumentPDFPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.ExportDocumentPDFPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3975,7 +3938,7 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 		ec.fieldContext_Mutation_exportReportPDF,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ExportReportPDF(ctx, fc.Args["input"].(types.ExportReportPDFInput))
+			return ec.Resolvers.Mutation().ExportReportPDF(ctx, fc.Args["input"].(types.ExportReportPDFInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -3986,11 +3949,11 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 					var zeroVal *types.ExportReportPDFPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.ExportReportPDFPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -4038,7 +4001,7 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 		ec.fieldContext_Mutation_exportTrustCenterFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ExportTrustCenterFile(ctx, fc.Args["input"].(types.ExportTrustCenterFileInput))
+			return ec.Resolvers.Mutation().ExportTrustCenterFile(ctx, fc.Args["input"].(types.ExportTrustCenterFileInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -4049,11 +4012,11 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 					var zeroVal *types.ExportTrustCenterFilePayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.ExportTrustCenterFilePayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -4101,7 +4064,7 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 		ec.fieldContext_Mutation_requestDocumentAccess,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RequestDocumentAccess(ctx, fc.Args["input"].(types.RequestDocumentAccessInput))
+			return ec.Resolvers.Mutation().RequestDocumentAccess(ctx, fc.Args["input"].(types.RequestDocumentAccessInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -4112,11 +4075,11 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -4164,7 +4127,7 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 		ec.fieldContext_Mutation_requestReportAccess,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RequestReportAccess(ctx, fc.Args["input"].(types.RequestReportAccessInput))
+			return ec.Resolvers.Mutation().RequestReportAccess(ctx, fc.Args["input"].(types.RequestReportAccessInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -4175,11 +4138,11 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -4227,7 +4190,7 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 		ec.fieldContext_Mutation_requestTrustCenterFileAccess,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RequestTrustCenterFileAccess(ctx, fc.Args["input"].(types.RequestTrustCenterFileAccessInput))
+			return ec.Resolvers.Mutation().RequestTrustCenterFileAccess(ctx, fc.Args["input"].(types.RequestTrustCenterFileAccessInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -4238,11 +4201,11 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -4290,7 +4253,7 @@ func (ec *executionContext) _Mutation_acceptElectronicSignature(ctx context.Cont
 		ec.fieldContext_Mutation_acceptElectronicSignature,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().AcceptElectronicSignature(ctx, fc.Args["input"].(types.AcceptElectronicSignatureInput))
+			return ec.Resolvers.Mutation().AcceptElectronicSignature(ctx, fc.Args["input"].(types.AcceptElectronicSignatureInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -4301,11 +4264,11 @@ func (ec *executionContext) _Mutation_acceptElectronicSignature(ctx context.Cont
 					var zeroVal *types.AcceptElectronicSignaturePayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.AcceptElectronicSignaturePayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -4353,7 +4316,7 @@ func (ec *executionContext) _Mutation_recordSigningEvent(ctx context.Context, fi
 		ec.fieldContext_Mutation_recordSigningEvent,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RecordSigningEvent(ctx, fc.Args["input"].(types.RecordSigningEventInput))
+			return ec.Resolvers.Mutation().RecordSigningEvent(ctx, fc.Args["input"].(types.RecordSigningEventInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -4364,11 +4327,11 @@ func (ec *executionContext) _Mutation_recordSigningEvent(ctx context.Context, fi
 					var zeroVal *types.RecordSigningEventPayload
 					return zeroVal, err
 				}
-				if ec.directives.Session == nil {
+				if ec.Directives.Session == nil {
 					var zeroVal *types.RecordSigningEventPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.Session(ctx, nil, directive0, required)
+				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -4444,7 +4407,7 @@ func (ec *executionContext) _NonDisclosureAgreement_fileUrl(ctx context.Context,
 		field,
 		ec.fieldContext_NonDisclosureAgreement_fileUrl,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.NonDisclosureAgreement().FileURL(ctx, obj)
+			return ec.Resolvers.NonDisclosureAgreement().FileURL(ctx, obj)
 		},
 		nil,
 		ec.marshalNString2string,
@@ -4473,7 +4436,7 @@ func (ec *executionContext) _NonDisclosureAgreement_viewerSignature(ctx context.
 		field,
 		ec.fieldContext_NonDisclosureAgreement_viewerSignature,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.NonDisclosureAgreement().ViewerSignature(ctx, obj)
+			return ec.Resolvers.NonDisclosureAgreement().ViewerSignature(ctx, obj)
 		},
 		nil,
 		ec.marshalOElectronicSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐElectronicSignature,
@@ -4578,7 +4541,7 @@ func (ec *executionContext) _Organization_logoUrl(ctx context.Context, field gra
 		field,
 		ec.fieldContext_Organization_logoUrl,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Organization().LogoURL(ctx, obj)
+			return ec.Resolvers.Organization().LogoURL(ctx, obj)
 		},
 		nil,
 		ec.marshalOString2ᚖstring,
@@ -4839,7 +4802,7 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 		field,
 		ec.fieldContext_Query_viewer,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().Viewer(ctx)
+			return ec.Resolvers.Query().Viewer(ctx)
 		},
 		nil,
 		ec.marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐIdentity,
@@ -4883,7 +4846,7 @@ func (ec *executionContext) _Query_node(ctx context.Context, field graphql.Colle
 		ec.fieldContext_Query_node,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Node(ctx, fc.Args["id"].(gid.GID))
+			return ec.Resolvers.Query().Node(ctx, fc.Args["id"].(gid.GID))
 		},
 		nil,
 		ec.marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNode,
@@ -4923,7 +4886,7 @@ func (ec *executionContext) _Query_currentTrustCenter(ctx context.Context, field
 		field,
 		ec.fieldContext_Query_currentTrustCenter,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().CurrentTrustCenter(ctx)
+			return ec.Resolvers.Query().CurrentTrustCenter(ctx)
 		},
 		nil,
 		ec.marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter,
@@ -4981,7 +4944,7 @@ func (ec *executionContext) _Query___type(ctx context.Context, field graphql.Col
 		ec.fieldContext_Query___type,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.introspectType(fc.Args["name"].(string))
+			return ec.IntrospectType(fc.Args["name"].(string))
 		},
 		nil,
 		ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType,
@@ -5045,7 +5008,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 		field,
 		ec.fieldContext_Query___schema,
 		func(ctx context.Context) (any, error) {
-			return ec.introspectSchema()
+			return ec.IntrospectSchema()
 		},
 		nil,
 		ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema,
@@ -5175,7 +5138,7 @@ func (ec *executionContext) _Report_isUserAuthorized(ctx context.Context, field 
 		field,
 		ec.fieldContext_Report_isUserAuthorized,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Report().IsUserAuthorized(ctx, obj)
+			return ec.Resolvers.Report().IsUserAuthorized(ctx, obj)
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -5204,7 +5167,7 @@ func (ec *executionContext) _Report_hasUserRequestedAccess(ctx context.Context, 
 		field,
 		ec.fieldContext_Report_hasUserRequestedAccess,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Report().HasUserRequestedAccess(ctx, obj)
+			return ec.Resolvers.Report().HasUserRequestedAccess(ctx, obj)
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -5390,7 +5353,7 @@ func (ec *executionContext) _TrustCenter_logoFileUrl(ctx context.Context, field 
 		field,
 		ec.fieldContext_TrustCenter_logoFileUrl,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().LogoFileURL(ctx, obj)
+			return ec.Resolvers.TrustCenter().LogoFileURL(ctx, obj)
 		},
 		nil,
 		ec.marshalOString2ᚖstring,
@@ -5419,7 +5382,7 @@ func (ec *executionContext) _TrustCenter_darkLogoFileUrl(ctx context.Context, fi
 		field,
 		ec.fieldContext_TrustCenter_darkLogoFileUrl,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().DarkLogoFileURL(ctx, obj)
+			return ec.Resolvers.TrustCenter().DarkLogoFileURL(ctx, obj)
 		},
 		nil,
 		ec.marshalOString2ᚖstring,
@@ -5448,7 +5411,7 @@ func (ec *executionContext) _TrustCenter_nonDisclosureAgreement(ctx context.Cont
 		field,
 		ec.fieldContext_TrustCenter_nonDisclosureAgreement,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().NonDisclosureAgreement(ctx, obj)
+			return ec.Resolvers.TrustCenter().NonDisclosureAgreement(ctx, obj)
 		},
 		nil,
 		ec.marshalONonDisclosureAgreement2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNonDisclosureAgreement,
@@ -5485,7 +5448,7 @@ func (ec *executionContext) _TrustCenter_isViewerMember(ctx context.Context, fie
 		field,
 		ec.fieldContext_TrustCenter_isViewerMember,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().IsViewerMember(ctx, obj)
+			return ec.Resolvers.TrustCenter().IsViewerMember(ctx, obj)
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -5514,7 +5477,7 @@ func (ec *executionContext) _TrustCenter_organization(ctx context.Context, field
 		field,
 		ec.fieldContext_TrustCenter_organization,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().Organization(ctx, obj)
+			return ec.Resolvers.TrustCenter().Organization(ctx, obj)
 		},
 		nil,
 		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐOrganization,
@@ -5560,7 +5523,7 @@ func (ec *executionContext) _TrustCenter_documents(ctx context.Context, field gr
 		ec.fieldContext_TrustCenter_documents,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.TrustCenter().Documents(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+			return ec.Resolvers.TrustCenter().Documents(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
 		nil,
 		ec.marshalNDocumentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection,
@@ -5607,7 +5570,7 @@ func (ec *executionContext) _TrustCenter_audits(ctx context.Context, field graph
 		ec.fieldContext_TrustCenter_audits,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.TrustCenter().Audits(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+			return ec.Resolvers.TrustCenter().Audits(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
 		nil,
 		ec.marshalNAuditConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditConnection,
@@ -5654,7 +5617,7 @@ func (ec *executionContext) _TrustCenter_vendors(ctx context.Context, field grap
 		ec.fieldContext_TrustCenter_vendors,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.TrustCenter().Vendors(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+			return ec.Resolvers.TrustCenter().Vendors(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
 		nil,
 		ec.marshalNVendorConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorConnection,
@@ -5703,7 +5666,7 @@ func (ec *executionContext) _TrustCenter_references(ctx context.Context, field g
 		ec.fieldContext_TrustCenter_references,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.TrustCenter().References(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+			return ec.Resolvers.TrustCenter().References(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
 		nil,
 		ec.marshalNTrustCenterReferenceConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceConnection,
@@ -5750,7 +5713,7 @@ func (ec *executionContext) _TrustCenter_trustCenterFiles(ctx context.Context, f
 		ec.fieldContext_TrustCenter_trustCenterFiles,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.TrustCenter().TrustCenterFiles(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+			return ec.Resolvers.TrustCenter().TrustCenterFiles(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
 		nil,
 		ec.marshalNTrustCenterFileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileConnection,
@@ -6028,7 +5991,7 @@ func (ec *executionContext) _TrustCenterFile_isUserAuthorized(ctx context.Contex
 		field,
 		ec.fieldContext_TrustCenterFile_isUserAuthorized,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenterFile().IsUserAuthorized(ctx, obj)
+			return ec.Resolvers.TrustCenterFile().IsUserAuthorized(ctx, obj)
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -6057,7 +6020,7 @@ func (ec *executionContext) _TrustCenterFile_hasUserRequestedAccess(ctx context.
 		field,
 		ec.fieldContext_TrustCenterFile_hasUserRequestedAccess,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenterFile().HasUserRequestedAccess(ctx, obj)
+			return ec.Resolvers.TrustCenterFile().HasUserRequestedAccess(ctx, obj)
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -6346,7 +6309,7 @@ func (ec *executionContext) _TrustCenterReference_logoUrl(ctx context.Context, f
 		field,
 		ec.fieldContext_TrustCenterReference_logoUrl,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenterReference().LogoURL(ctx, obj)
+			return ec.Resolvers.TrustCenterReference().LogoURL(ctx, obj)
 		},
 		nil,
 		ec.marshalNString2string,
@@ -6796,7 +6759,7 @@ func (ec *executionContext) _VendorConnection_totalCount(ctx context.Context, fi
 		field,
 		ec.fieldContext_VendorConnection_totalCount,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.VendorConnection().TotalCount(ctx, obj)
+			return ec.Resolvers.VendorConnection().TotalCount(ctx, obj)
 		},
 		nil,
 		ec.marshalNInt2int,
@@ -8397,7 +8360,6 @@ func (ec *executionContext) unmarshalInputAcceptElectronicSignatureInput(ctx con
 			it.FullName = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8424,7 +8386,6 @@ func (ec *executionContext) unmarshalInputExportDocumentPDFInput(ctx context.Con
 			it.DocumentID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8451,7 +8412,6 @@ func (ec *executionContext) unmarshalInputExportReportPDFInput(ctx context.Conte
 			it.ReportID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8478,7 +8438,6 @@ func (ec *executionContext) unmarshalInputExportTrustCenterFileInput(ctx context
 			it.TrustCenterFileID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8512,7 +8471,6 @@ func (ec *executionContext) unmarshalInputRecordSigningEventInput(ctx context.Co
 			it.EventType = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8539,7 +8497,6 @@ func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context
 			it.DocumentID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8566,7 +8523,6 @@ func (ec *executionContext) unmarshalInputRequestReportAccessInput(ctx context.C
 			it.ReportID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8593,7 +8549,6 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 			it.TrustCenterFileID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8620,7 +8575,6 @@ func (ec *executionContext) unmarshalInputSendMagicLinkInput(ctx context.Context
 			it.Email = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8647,7 +8601,6 @@ func (ec *executionContext) unmarshalInputVerifyMagicLinkInput(ctx context.Conte
 			it.Token = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8781,10 +8734,10 @@ func (ec *executionContext) _AcceptElectronicSignaturePayload(ctx context.Contex
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8891,10 +8844,10 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8935,10 +8888,10 @@ func (ec *executionContext) _AuditConnection(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8979,10 +8932,10 @@ func (ec *executionContext) _AuditEdge(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9100,10 +9053,10 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9144,10 +9097,10 @@ func (ec *executionContext) _DocumentConnection(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9188,10 +9141,10 @@ func (ec *executionContext) _DocumentEdge(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9256,10 +9209,10 @@ func (ec *executionContext) _ElectronicSignature(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9295,10 +9248,10 @@ func (ec *executionContext) _ExportDocumentPDFPayload(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9334,10 +9287,10 @@ func (ec *executionContext) _ExportReportPDFPayload(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9373,10 +9326,10 @@ func (ec *executionContext) _ExportTrustCenterFilePayload(ctx context.Context, s
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9483,10 +9436,10 @@ func (ec *executionContext) _Framework(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9547,10 +9500,10 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9654,10 +9607,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9762,10 +9715,10 @@ func (ec *executionContext) _NonDisclosureAgreement(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9847,10 +9800,10 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9895,10 +9848,10 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10005,10 +9958,10 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10044,10 +9997,10 @@ func (ec *executionContext) _RecordSigningEventPayload(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10160,10 +10113,10 @@ func (ec *executionContext) _Report(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10199,10 +10152,10 @@ func (ec *executionContext) _RequestAccessesPayload(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10238,10 +10191,10 @@ func (ec *executionContext) _SendMagicLinkPayload(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10638,10 +10591,10 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10697,10 +10650,10 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10818,10 +10771,10 @@ func (ec *executionContext) _TrustCenterFile(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10862,10 +10815,10 @@ func (ec *executionContext) _TrustCenterFileConnection(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10906,10 +10859,10 @@ func (ec *executionContext) _TrustCenterFileEdge(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10993,10 +10946,10 @@ func (ec *executionContext) _TrustCenterReference(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11037,10 +10990,10 @@ func (ec *executionContext) _TrustCenterReferenceConnection(ctx context.Context,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11081,10 +11034,10 @@ func (ec *executionContext) _TrustCenterReferenceEdge(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11141,10 +11094,10 @@ func (ec *executionContext) _Vendor(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11221,10 +11174,10 @@ func (ec *executionContext) _VendorConnection(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11265,10 +11218,10 @@ func (ec *executionContext) _VendorEdge(ctx context.Context, sel ast.SelectionSe
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11304,10 +11257,10 @@ func (ec *executionContext) _VerifyMagicLinkPayload(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11360,10 +11313,10 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11408,10 +11361,10 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11466,10 +11419,10 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11521,10 +11474,10 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11576,10 +11529,10 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11635,10 +11588,10 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -11683,39 +11636,11 @@ func (ec *executionContext) marshalNAuditConnection2ᚖgoᚗproboᚗincᚋprobo�
 }
 
 func (ec *executionContext) marshalNAuditEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AuditEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAuditEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAuditEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -12290,39 +12215,11 @@ func (ec *executionContext) unmarshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋ
 }
 
 func (ec *executionContext) marshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx context.Context, sel ast.SelectionSet, v []coredata.CountryCode) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -12390,39 +12287,11 @@ func (ec *executionContext) marshalNDocumentConnection2ᚖgoᚗproboᚗincᚋpro
 }
 
 func (ec *executionContext) marshalNDocumentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDocumentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -12878,39 +12747,11 @@ func (ec *executionContext) marshalNTrustCenterFileConnection2ᚖgoᚗproboᚗin
 }
 
 func (ec *executionContext) marshalNTrustCenterFileEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TrustCenterFileEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNTrustCenterFileEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTrustCenterFileEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -12956,39 +12797,11 @@ func (ec *executionContext) marshalNTrustCenterReferenceConnection2ᚖgoᚗprobo
 }
 
 func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TrustCenterReferenceEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNTrustCenterReferenceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTrustCenterReferenceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13102,39 +12915,11 @@ func (ec *executionContext) marshalNVendorConnection2ᚖgoᚗproboᚗincᚋprobo
 }
 
 func (ec *executionContext) marshalNVendorEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.VendorEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNVendorEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNVendorEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13165,39 +12950,11 @@ func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlge
 }
 
 func (ec *executionContext) marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirectiveᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.Directive) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13240,39 +12997,11 @@ func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx conte
 }
 
 func (ec *executionContext) marshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__DirectiveLocation2string(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__DirectiveLocation2string(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13296,39 +13025,11 @@ func (ec *executionContext) marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlg
 }
 
 func (ec *executionContext) marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.InputValue) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13344,39 +13045,11 @@ func (ec *executionContext) marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋg
 }
 
 func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.Type) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13618,39 +13291,11 @@ func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgq
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__EnumValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__EnumValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13665,39 +13310,11 @@ func (ec *executionContext) marshalO__Field2ᚕgithubᚗcomᚋ99designsᚋgqlgen
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Field2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐField(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Field2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐField(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13712,39 +13329,11 @@ func (ec *executionContext) marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -13766,39 +13355,11 @@ func (ec *executionContext) marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {

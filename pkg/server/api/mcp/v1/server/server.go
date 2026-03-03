@@ -4,7 +4,6 @@ package server
 
 import (
 	"context"
-
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 )
