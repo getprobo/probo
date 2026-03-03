@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.135.0] - 2026-03-03
+
+### Added
+
+- Add delete vendor tool on mcp
+
 ## [0.134.3] - 2026-03-03
 
 ### Fixed
