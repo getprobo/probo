@@ -1,5 +1,6 @@
 import { downloadFile, formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+import { UnAuthenticatedError } from "@probo/relay";
 import {
   Breadcrumb,
   Button,
@@ -13,13 +14,13 @@ import {
   Table,
   useToast,
 } from "@probo/ui";
-import { type PropsWithChildren, use, useState } from "react";
+import { type PropsWithChildren, useState } from "react";
 import { useFragment, useMutation } from "react-relay";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
-import { Viewer } from "#/providers/Viewer";
+import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { AuditRow_requestAccessMutation } from "./__generated__/AuditRow_requestAccessMutation.graphql";
 import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadMutation.graphql";
@@ -63,8 +64,10 @@ const auditRowFragment = graphql`
 
 export function AuditRow(props: { audit: AuditRowFragment$key }) {
   const { __ } = useTranslate();
-  const viewer = use(Viewer);
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const audit = useFragment(auditRowFragment, props.audit);
   const [hasRequested, setHasRequested] = useState(
@@ -100,6 +103,18 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
         });
       },
       onError: (error) => {
+        if (error instanceof UnAuthenticatedError) {
+          const pathPrefix = getPathPrefix();
+          searchParams.set("request-report-id", audit.report?.id ?? "");
+          const urlSearchParams = new URLSearchParams([[
+            "continue",
+            window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
+          ]]);
+          void navigate(`/connect?${urlSearchParams.toString()}`);
+
+          return;
+        }
+
         toast({
           title: __("Error"),
           description: error.message ?? __("Cannot request access"),
@@ -143,28 +158,17 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
               {downloading ? __("Downloading") : __("Download")}
             </Button>
           )
-        : viewer
-          ? (
-              <Button
-                disabled={hasRequested || isRequestingAccess}
-                className="w-full md:w-max"
-                variant="secondary"
-                icon={IconLock}
-                onClick={handleRequestAccess}
-              >
-                {hasRequested ? __("Access requested") : __("Request access")}
-              </Button>
-            )
-          : (
-              <Button
-                className="w-full md:w-max"
-                variant="secondary"
-                icon={IconLock}
-                to="/connect"
-              >
-                {hasRequested ? __("Access requested") : __("Request access")}
-              </Button>
-            )}
+        : (
+            <Button
+              disabled={hasRequested || isRequestingAccess}
+              className="w-full md:w-max"
+              variant="secondary"
+              icon={IconLock}
+              onClick={handleRequestAccess}
+            >
+              {hasRequested ? __("Access requested") : __("Request access")}
+            </Button>
+          )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { downloadFile, formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+import { UnAuthenticatedError } from "@probo/relay";
 import {
   Button,
   IconArrowInbox,
@@ -8,12 +9,13 @@ import {
   Spinner,
   useToast,
 } from "@probo/ui";
-import { use, useState } from "react";
+import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
-import { Viewer } from "#/providers/Viewer";
+import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { TrustCenterFileRow_requestAccessMutation } from "./__generated__/TrustCenterFileRow_requestAccessMutation.graphql";
 import type { TrustCenterFileRowDownloadMutation } from "./__generated__/TrustCenterFileRowDownloadMutation.graphql";
@@ -54,8 +56,10 @@ export function TrustCenterFileRow(props: {
   file: TrustCenterFileRowFragment$key;
 }) {
   const { __ } = useTranslate();
-  const viewer = use(Viewer);
   const { toast } = useToast();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const file = useFragment(trustCenterFileRowFragment, props.file);
   const [hasRequested, setHasRequested] = useState(file.hasUserRequestedAccess);
@@ -91,6 +95,18 @@ export function TrustCenterFileRow(props: {
         });
       },
       onError: (error) => {
+        if (error instanceof UnAuthenticatedError) {
+          const pathPrefix = getPathPrefix();
+          searchParams.set("request-file-id", file.id);
+          const urlSearchParams = new URLSearchParams([[
+            "continue",
+            window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
+          ]]);
+          void navigate(`/connect?${urlSearchParams.toString()}`);
+
+          return;
+        }
+
         toast({
           title: __("Error"),
           description: error.message ?? __("Cannot request access"),
@@ -131,28 +147,17 @@ export function TrustCenterFileRow(props: {
               {downloading ? __("Downloading") : __("Download")}
             </Button>
           )
-        : viewer
-          ? (
-              <Button
-                disabled={hasRequested || isRequestingAccess}
-                className="w-full md:w-max"
-                variant="secondary"
-                icon={IconLock}
-                onClick={handleRequestAccess}
-              >
-                {hasRequested ? __("Access requested") : __("Request access")}
-              </Button>
-            )
-          : (
-              <Button
-                className="w-full md:w-max"
-                variant="secondary"
-                icon={IconLock}
-                to="/connect"
-              >
-                {hasRequested ? __("Access requested") : __("Request access")}
-              </Button>
-            )}
+        : (
+            <Button
+              disabled={hasRequested || isRequestingAccess}
+              className="w-full md:w-max"
+              variant="secondary"
+              icon={IconLock}
+              onClick={handleRequestAccess}
+            >
+              {hasRequested ? __("Access requested") : __("Request access")}
+            </Button>
+          )}
     </div>
   );
 }

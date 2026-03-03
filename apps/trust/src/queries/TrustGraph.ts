@@ -3,10 +3,6 @@ import { graphql } from "relay-runtime";
 // Queries for custom domain (subdomain) approach
 export const currentTrustGraphQuery = graphql`
   query TrustGraphCurrentQuery {
-    viewer {
-      email
-      fullName
-    }
     currentTrustCenter @required(action: THROW) {
       id
       slug

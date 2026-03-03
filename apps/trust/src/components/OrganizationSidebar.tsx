@@ -1,6 +1,7 @@
 import { formatError } from "@probo/helpers";
 import { useSystemTheme } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
+import { UnAuthenticatedError } from "@probo/relay";
 import {
   Button,
   Card,
@@ -9,12 +10,13 @@ import {
   IconMedal,
   useToast,
 } from "@probo/ui";
-import { type PropsWithChildren, use } from "react";
+import { type PropsWithChildren } from "react";
 import { useMutation } from "react-relay";
+import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import { Viewer } from "#/providers/Viewer";
 import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
 import { AuditRowAvatar } from "./AuditRow";
@@ -35,9 +37,10 @@ export function OrganizationSidebar({
   trustCenter: TrustGraphCurrentQuery$data["currentTrustCenter"];
 }) {
   const { __ } = useTranslate();
-  const isAuthenticated = !!use(Viewer);
   const { toast } = useToast();
   const theme = useSystemTheme();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const logoFileUrl = theme === "dark" ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl) : trustCenter?.logoFileUrl;
 
@@ -65,6 +68,18 @@ export function OrganizationSidebar({
         });
       },
       onError: (error) => {
+        if (error instanceof UnAuthenticatedError) {
+          const pathPrefix = getPathPrefix();
+          searchParams.set("request-all", "true");
+          const urlSearchParams = new URLSearchParams([[
+            "continue",
+            window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
+          ]]);
+          void navigate(`/connect?${urlSearchParams.toString()}`);
+
+          return;
+        }
+
         toast({
           title: __("Error"),
           description: error.message ?? __("Cannot request access"),
@@ -159,29 +174,15 @@ export function OrganizationSidebar({
           </>
         )}
 
-        {/* Actions */}
-        {isAuthenticated
-          ? (
-              <Button
-                disabled={isRequestingAccess}
-                variant="primary"
-                icon={IconLock}
-                className="w-full h-10"
-                onClick={handleRequestAllAccesses}
-              >
-                {__("Request access")}
-              </Button>
-            )
-          : (
-              <Button
-                variant="primary"
-                icon={IconLock}
-                className="w-full h-10"
-                to="/connect"
-              >
-                {__("Request access")}
-              </Button>
-            )}
+        <Button
+          disabled={isRequestingAccess}
+          variant="primary"
+          icon={IconLock}
+          className="w-full h-10"
+          onClick={handleRequestAllAccesses}
+        >
+          {__("Request access")}
+        </Button>
       </div>
     </Card>
   );
