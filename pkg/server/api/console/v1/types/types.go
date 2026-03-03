@@ -149,6 +149,11 @@ type CancelSignatureRequestPayload struct {
 	DeletedDocumentVersionSignatureID gid.GID `json:"deletedDocumentVersionSignatureId"`
 }
 
+type ComplianceFrameworkEdge struct {
+	Cursor page.CursorKey       `json:"cursor"`
+	Node   *ComplianceFramework `json:"node"`
+}
+
 type ContinualImprovement struct {
 	ID           gid.GID                               `json:"id"`
 	SnapshotID   *gid.GID                              `json:"snapshotId,omitempty"`
@@ -248,6 +253,15 @@ type CreateAuditInput struct {
 
 type CreateAuditPayload struct {
 	AuditEdge *AuditEdge `json:"auditEdge"`
+}
+
+type CreateComplianceFrameworkInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	FrameworkID   gid.GID `json:"frameworkId"`
+}
+
+type CreateComplianceFrameworkPayload struct {
+	ComplianceFrameworkEdge *ComplianceFrameworkEdge `json:"complianceFrameworkEdge"`
 }
 
 type CreateContinualImprovementInput struct {
@@ -787,6 +801,14 @@ type DeleteAuditReportInput struct {
 
 type DeleteAuditReportPayload struct {
 	Audit *Audit `json:"audit"`
+}
+
+type DeleteComplianceFrameworkInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteComplianceFrameworkPayload struct {
+	DeletedComplianceFrameworkID gid.GID `json:"deletedComplianceFrameworkId"`
 }
 
 type DeleteContinualImprovementInput struct {
@@ -1851,18 +1873,19 @@ type TransferImpactAssessmentFilter struct {
 }
 
 type TrustCenter struct {
-	ID              gid.GID                         `json:"id"`
-	Active          bool                            `json:"active"`
-	LogoFileURL     *string                         `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL *string                         `json:"darkLogoFileUrl,omitempty"`
-	NdaFileName     *string                         `json:"ndaFileName,omitempty"`
-	NdaFileURL      *string                         `json:"ndaFileUrl,omitempty"`
-	CreatedAt       time.Time                       `json:"createdAt"`
-	UpdatedAt       time.Time                       `json:"updatedAt"`
-	Organization    *Organization                   `json:"organization"`
-	Accesses        *TrustCenterAccessConnection    `json:"accesses"`
-	References      *TrustCenterReferenceConnection `json:"references"`
-	Permission      bool                            `json:"permission"`
+	ID                   gid.GID                         `json:"id"`
+	Active               bool                            `json:"active"`
+	LogoFileURL          *string                         `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL      *string                         `json:"darkLogoFileUrl,omitempty"`
+	NdaFileName          *string                         `json:"ndaFileName,omitempty"`
+	NdaFileURL           *string                         `json:"ndaFileUrl,omitempty"`
+	CreatedAt            time.Time                       `json:"createdAt"`
+	UpdatedAt            time.Time                       `json:"updatedAt"`
+	Organization         *Organization                   `json:"organization"`
+	Accesses             *TrustCenterAccessConnection    `json:"accesses"`
+	References           *TrustCenterReferenceConnection `json:"references"`
+	ComplianceFrameworks *ComplianceFrameworkConnection  `json:"complianceFrameworks"`
+	Permission           bool                            `json:"permission"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -1992,6 +2015,15 @@ type UpdateAuditInput struct {
 
 type UpdateAuditPayload struct {
 	Audit *Audit `json:"audit"`
+}
+
+type UpdateComplianceFrameworkInput struct {
+	ID   gid.GID `json:"id"`
+	Rank int     `json:"rank"`
+}
+
+type UpdateComplianceFrameworkPayload struct {
+	ComplianceFramework *ComplianceFramework `json:"complianceFramework"`
 }
 
 type UpdateContinualImprovementInput struct {

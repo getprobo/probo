@@ -1227,6 +1227,34 @@ enum TrustCenterReferenceOrderField
         )
 }
 
+enum ComplianceFrameworkOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderFieldCreatedAt"
+        )
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderFieldRank"
+        )
+}
+
+enum ComplianceFrameworkVisibility
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibility"
+    ) {
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibilityNone"
+        )
+    PUBLIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibilityPublic"
+        )
+}
+
 enum TrustCenterFileOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField"
@@ -1463,6 +1491,14 @@ input TrustCenterFileOrder
     field: TrustCenterFileOrderField!
 }
 
+input ComplianceFrameworkOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFrameworkOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ComplianceFrameworkOrderField!
+}
+
 input EvidenceOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EvidenceOrderBy"
@@ -1613,6 +1649,14 @@ type TrustCenter implements Node {
         before: CursorKey
         orderBy: TrustCenterReferenceOrder
     ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+    complianceFrameworks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ComplianceFrameworkOrder
+    ): ComplianceFrameworkConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -2806,6 +2850,31 @@ type TrustCenterReferenceEdge {
     node: TrustCenterReference!
 }
 
+type ComplianceFramework implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFramework"
+    ) {
+    id: ID!
+    framework: Framework! @goField(forceResolver: true)
+    rank: Int!
+    visibility: ComplianceFrameworkVisibility!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ComplianceFrameworkConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFrameworkConnection"
+    ) {
+    edges: [ComplianceFrameworkEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ComplianceFrameworkEdge {
+    cursor: CursorKey!
+    node: ComplianceFramework!
+}
+
 type TrustCenterFile implements Node {
     id: ID!
     name: String!
@@ -3247,6 +3316,16 @@ type Mutation {
     deleteTrustCenterReference(
         input: DeleteTrustCenterReferenceInput!
     ): DeleteTrustCenterReferencePayload!
+    # Compliance Framework mutations
+    createComplianceFramework(
+        input: CreateComplianceFrameworkInput!
+    ): CreateComplianceFrameworkPayload!
+    updateComplianceFramework(
+        input: UpdateComplianceFrameworkInput!
+    ): UpdateComplianceFrameworkPayload!
+    deleteComplianceFramework(
+        input: DeleteComplianceFrameworkInput!
+    ): DeleteComplianceFrameworkPayload!
     # Trust Center File mutations
     createTrustCenterFile(
         input: CreateTrustCenterFileInput!
@@ -3644,6 +3723,20 @@ input UpdateTrustCenterReferenceInput {
 }
 
 input DeleteTrustCenterReferenceInput {
+    id: ID!
+}
+
+input CreateComplianceFrameworkInput {
+    trustCenterId: ID!
+    frameworkId: ID!
+}
+
+input UpdateComplianceFrameworkInput {
+    id: ID!
+    rank: Int!
+}
+
+input DeleteComplianceFrameworkInput {
     id: ID!
 }
 
@@ -4460,6 +4553,18 @@ type UpdateTrustCenterReferencePayload {
 
 type DeleteTrustCenterReferencePayload {
     deletedTrustCenterReferenceId: ID!
+}
+
+type CreateComplianceFrameworkPayload {
+    complianceFrameworkEdge: ComplianceFrameworkEdge!
+}
+
+type UpdateComplianceFrameworkPayload {
+    complianceFramework: ComplianceFramework!
+}
+
+type DeleteComplianceFrameworkPayload {
+    deletedComplianceFrameworkId: ID!
 }
 
 type CreateTrustCenterFilePayload {

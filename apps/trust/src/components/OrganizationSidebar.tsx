@@ -19,7 +19,7 @@ import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustG
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
-import { AuditRowAvatar } from "./AuditRow";
+import { FrameworkBadge } from "./FrameworkBadge";
 
 const requestAllAccessesMutation = graphql`
   mutation OrganizationSidebar_requestAllAccessesMutation {
@@ -154,7 +154,7 @@ export function OrganizationSidebar({
         <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
 
         {/* Certifications */}
-        {trustCenter.audits.edges.length > 0 && (
+        {trustCenter.complianceFrameworks.edges.length > 0 && (
           <>
             <div className="space-y-4">
               <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
@@ -167,8 +167,8 @@ export function OrganizationSidebar({
                   gridTemplateColumns: "repeat(auto-fit, 75px",
                 }}
               >
-                {trustCenter.audits.edges.map(audit => (
-                  <AuditRowAvatar key={audit.node.id} audit={audit.node} />
+                {trustCenter.complianceFrameworks.edges.map(edge => (
+                  <FrameworkBadge key={edge.node.id} framework={edge.node.framework} />
                 ))}
               </div>
             </div>

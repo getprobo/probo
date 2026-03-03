@@ -15,28 +15,41 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewFramework(f *coredata.Framework) *Framework {
-	return &Framework{
-		ID:   f.ID,
-		Name: f.Name,
-	}
+type ComplianceFrameworkOrderBy = OrderBy[coredata.ComplianceFrameworkOrderField]
+
+type ComplianceFramework struct {
+	ID          gid.GID                                `json:"id"`
+	Framework   *Framework                             `json:"framework"`
+	Rank        int                                    `json:"rank"`
+	Visibility  coredata.ComplianceFrameworkVisibility `json:"visibility"`
+	CreatedAt   time.Time                              `json:"createdAt"`
+	UpdatedAt   time.Time                              `json:"updatedAt"`
+	FrameworkID gid.GID                                `json:"-"`
+}
+
+func (ComplianceFramework) IsNode()          {}
+func (c ComplianceFramework) GetID() gid.GID { return c.ID }
+
+type ComplianceFrameworkConnection struct {
+	Edges    []*ComplianceFrameworkEdge `json:"edges"`
+	PageInfo *PageInfo                  `json:"pageInfo"`
 }
 
 func NewComplianceFramework(cf *coredata.ComplianceFramework) *ComplianceFramework {
 	return &ComplianceFramework{
 		ID:          cf.ID,
 		FrameworkID: cf.FrameworkID,
-	}
-}
-
-func NewComplianceFrameworkEdge(cf *coredata.ComplianceFramework) *ComplianceFrameworkEdge {
-	return &ComplianceFrameworkEdge{
-		Cursor: cf.CursorKey(coredata.ComplianceFrameworkOrderFieldRank),
-		Node:   NewComplianceFramework(cf),
+		Rank:        cf.Rank,
+		Visibility:  cf.Visibility,
+		CreatedAt:   cf.CreatedAt,
+		UpdatedAt:   cf.UpdatedAt,
 	}
 }
 
@@ -44,12 +57,20 @@ func NewComplianceFrameworkConnection(
 	p *page.Page[*coredata.ComplianceFramework, coredata.ComplianceFrameworkOrderField],
 ) *ComplianceFrameworkConnection {
 	edges := make([]*ComplianceFrameworkEdge, len(p.Data))
-	for i, cf := range p.Data {
-		edges[i] = NewComplianceFrameworkEdge(cf)
+
+	for i := range edges {
+		edges[i] = NewComplianceFrameworkEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
 	return &ComplianceFrameworkConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
+	}
+}
+
+func NewComplianceFrameworkEdge(cf *coredata.ComplianceFramework, orderBy coredata.ComplianceFrameworkOrderField) *ComplianceFrameworkEdge {
+	return &ComplianceFrameworkEdge{
+		Cursor: cf.CursorKey(orderBy),
+		Node:   NewComplianceFramework(cf),
 	}
 }

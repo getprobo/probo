@@ -324,6 +324,23 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 	return count, nil
 }
 
+// Framework is the resolver for the framework field.
+func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.ComplianceFramework) (*types.Framework, error) {
+	if err := r.authorize(ctx, obj.FrameworkID, probo.ActionFrameworkGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.FrameworkID.TenantID())
+
+	framework, err := prb.Frameworks.Get(ctx, obj.FrameworkID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFramework(framework), nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *continualImprovementResolver) Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -2095,6 +2112,77 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 	return &types.DeleteTrustCenterReferencePayload{
 		DeletedTrustCenterReferenceID: input.ID,
+	}, nil
+}
+
+// CreateComplianceFramework is the resolver for the createComplianceFramework field.
+func (r *mutationResolver) CreateComplianceFramework(ctx context.Context, input types.CreateComplianceFrameworkInput) (*types.CreateComplianceFrameworkPayload, error) {
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionComplianceFrameworkCreate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	cf, err := prb.ComplianceFrameworks.Create(
+		ctx,
+		&probo.CreateComplianceFrameworkRequest{
+			TrustCenterID: input.TrustCenterID,
+			FrameworkID:   input.FrameworkID,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create compliance framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateComplianceFrameworkPayload{
+		ComplianceFrameworkEdge: types.NewComplianceFrameworkEdge(cf, coredata.ComplianceFrameworkOrderFieldRank),
+	}, nil
+}
+
+// UpdateComplianceFramework is the resolver for the updateComplianceFramework field.
+func (r *mutationResolver) UpdateComplianceFramework(ctx context.Context, input types.UpdateComplianceFrameworkInput) (*types.UpdateComplianceFrameworkPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionComplianceFrameworkUpdateRank); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	cf, err := prb.ComplianceFrameworks.Update(ctx, &probo.UpdateComplianceFrameworkRequest{
+		ID:   input.ID,
+		Rank: input.Rank,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update compliance framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateComplianceFrameworkPayload{
+		ComplianceFramework: types.NewComplianceFramework(cf),
+	}, nil
+}
+
+// DeleteComplianceFramework is the resolver for the deleteComplianceFramework field.
+func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input types.DeleteComplianceFrameworkInput) (*types.DeleteComplianceFrameworkPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionComplianceFrameworkDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	err := prb.ComplianceFrameworks.Delete(
+		ctx,
+		&probo.DeleteComplianceFrameworkRequest{
+			ID: input.ID,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete compliance framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteComplianceFrameworkPayload{
+		DeletedComplianceFrameworkID: input.ID,
 	}, nil
 }
 
@@ -7814,6 +7902,36 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
 }
 
+// ComplianceFrameworks is the resolver for the complianceFrameworks field.
+func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceFrameworkOrderField]) (*types.ComplianceFrameworkConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionComplianceFrameworkList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceFrameworkOrderField]{
+		Field:     coredata.ComplianceFrameworkOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ComplianceFrameworkOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.ComplianceFrameworks.ListWithHiddenForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceFrameworkConnection(result), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -8776,6 +8894,11 @@ func (r *Resolver) AuditConnection() schema.AuditConnectionResolver {
 	return &auditConnectionResolver{r}
 }
 
+// ComplianceFramework returns schema.ComplianceFrameworkResolver implementation.
+func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
+	return &complianceFrameworkResolver{r}
+}
+
 // ContinualImprovement returns schema.ContinualImprovementResolver implementation.
 func (r *Resolver) ContinualImprovement() schema.ContinualImprovementResolver {
 	return &continualImprovementResolver{r}
@@ -9078,6 +9201,7 @@ type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
 type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
+type complianceFrameworkResolver struct{ *Resolver }
 type continualImprovementResolver struct{ *Resolver }
 type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }

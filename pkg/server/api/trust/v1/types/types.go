@@ -45,6 +45,26 @@ type AuditEdge struct {
 	Node   *Audit         `json:"node"`
 }
 
+type ComplianceFramework struct {
+	ID          gid.GID    `json:"id"`
+	// FrameworkID is a non-schema field used by the Framework resolver to avoid an extra DB lookup.
+	FrameworkID gid.GID    `json:"-"`
+	Framework   *Framework `json:"framework"`
+}
+
+func (ComplianceFramework) IsNode()             {}
+func (this ComplianceFramework) GetID() gid.GID { return this.ID }
+
+type ComplianceFrameworkConnection struct {
+	Edges    []*ComplianceFrameworkEdge `json:"edges"`
+	PageInfo *PageInfo                  `json:"pageInfo"`
+}
+
+type ComplianceFrameworkEdge struct {
+	Cursor page.CursorKey       `json:"cursor"`
+	Node   *ComplianceFramework `json:"node"`
+}
+
 type Document struct {
 	ID               gid.GID               `json:"id"`
 	Title            string                `json:"title"`
@@ -235,6 +255,7 @@ type TrustCenter struct {
 	Vendors                *VendorConnection               `json:"vendors"`
 	References             *TrustCenterReferenceConnection `json:"references"`
 	TrustCenterFiles       *TrustCenterFileConnection      `json:"trustCenterFiles"`
+	ComplianceFrameworks   *ComplianceFrameworkConnection  `json:"complianceFrameworks"`
 }
 
 func (TrustCenter) IsNode()             {}

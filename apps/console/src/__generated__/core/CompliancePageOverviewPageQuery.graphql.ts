@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<18bb7ea1b507c374c33d9f4f7a56db2d>>
+ * @generated SignedSource<<cf316aa4cda5fc4c9aebae8f0f10c365>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type CompliancePageOverviewPageQuery$data = {
   readonly organization: {
     readonly compliancePage?: {
       readonly canGetNDA: boolean;
+      readonly " $fragmentSpreads": FragmentRefs<"CompliancePageFrameworkList_compliancePageFragment">;
     } | null | undefined;
     readonly " $fragmentSpreads": FragmentRefs<"CompliancePageNDASectionFragment" | "CompliancePageSlackSectionFragment" | "CompliancePageStatusSectionFragment">;
   };
@@ -58,9 +59,32 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v5 = {
+  "kind": "Literal",
+  "name": "first",
+  "value": 100
+},
+v6 = [
+  (v5/*: any*/),
+  {
+    "kind": "Literal",
+    "name": "orderBy",
+    "value": {
+      "direction": "ASC",
+      "field": "RANK"
+    }
+  }
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -87,7 +111,12 @@ return {
                 "name": "trustCenter",
                 "plural": false,
                 "selections": [
-                  (v2/*: any*/)
+                  (v2/*: any*/),
+                  {
+                    "args": null,
+                    "kind": "FragmentSpread",
+                    "name": "CompliancePageFrameworkList_compliancePageFragment"
+                  }
                 ],
                 "storageKey": null
               }
@@ -131,13 +160,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          },
+          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
@@ -150,14 +173,7 @@ return {
                 "plural": false,
                 "selections": [
                   (v2/*: any*/),
-                  (v3/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "active",
-                    "storageKey": null
-                  },
+                  (v4/*: any*/),
                   {
                     "alias": "canUpdate",
                     "args": [
@@ -170,6 +186,150 @@ return {
                     "kind": "ScalarField",
                     "name": "permission",
                     "storageKey": "permission(action:\"core:trust-center:update\")"
+                  },
+                  {
+                    "alias": null,
+                    "args": (v6/*: any*/),
+                    "concreteType": "ComplianceFrameworkConnection",
+                    "kind": "LinkedField",
+                    "name": "complianceFrameworks",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "ComplianceFrameworkEdge",
+                        "kind": "LinkedField",
+                        "name": "edges",
+                        "plural": true,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "ComplianceFramework",
+                            "kind": "LinkedField",
+                            "name": "node",
+                            "plural": false,
+                            "selections": [
+                              (v4/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "rank",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "visibility",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "concreteType": "Framework",
+                                "kind": "LinkedField",
+                                "name": "framework",
+                                "plural": false,
+                                "selections": [
+                                  (v4/*: any*/),
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "kind": "ScalarField",
+                                    "name": "name",
+                                    "storageKey": null
+                                  },
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "kind": "ScalarField",
+                                    "name": "lightLogoURL",
+                                    "storageKey": null
+                                  },
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "kind": "ScalarField",
+                                    "name": "darkLogoURL",
+                                    "storageKey": null
+                                  }
+                                ],
+                                "storageKey": null
+                              },
+                              (v3/*: any*/)
+                            ],
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "cursor",
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "PageInfo",
+                        "kind": "LinkedField",
+                        "name": "pageInfo",
+                        "plural": false,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "endCursor",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "hasNextPage",
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      },
+                      {
+                        "kind": "ClientExtension",
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "__id",
+                            "storageKey": null
+                          }
+                        ]
+                      }
+                    ],
+                    "storageKey": "complianceFrameworks(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"RANK\"})"
+                  },
+                  {
+                    "alias": null,
+                    "args": (v6/*: any*/),
+                    "filters": [
+                      "orderBy"
+                    ],
+                    "handle": "connection",
+                    "key": "CompliancePageFrameworkList_complianceFrameworks",
+                    "kind": "LinkedHandle",
+                    "name": "complianceFrameworks"
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "active",
+                    "storageKey": null
                   },
                   {
                     "alias": null,
@@ -229,18 +389,14 @@ return {
                     "name": "domain",
                     "storageKey": null
                   },
-                  (v3/*: any*/)
+                  (v4/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
                 "args": [
-                  {
-                    "kind": "Literal",
-                    "name": "first",
-                    "value": 100
-                  }
+                  (v5/*: any*/)
                 ],
                 "concreteType": "SlackConnectionConnection",
                 "kind": "LinkedField",
@@ -263,7 +419,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v4/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -291,23 +447,23 @@ return {
             "type": "Organization",
             "abstractKey": null
           },
-          (v3/*: any*/)
+          (v4/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "0041132d3ac46a3193d9acbd6f27bdf5",
+    "cacheID": "e6cc68fe4df4a8dffc558f6db82ead9c",
     "id": null,
     "metadata": {},
     "name": "CompliancePageOverviewPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageOverviewPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        canGetNDA: permission(action: \"core:trust-center:get-nda\")\n        id\n      }\n    }\n    ...CompliancePageStatusSectionFragment\n    ...CompliancePageNDASectionFragment\n    ...CompliancePageSlackSectionFragment\n    id\n  }\n}\n\nfragment CompliancePageNDASectionFragment on Organization {\n  compliancePage: trustCenter {\n    id\n    ndaFileName\n    ndaFileUrl\n    canUpdate: permission(action: \"core:trust-center:update\")\n    canUploadNDA: permission(action: \"core:trust-center:upload-nda\")\n    canDeleteNDA: permission(action: \"core:trust-center:delete-nda\")\n  }\n}\n\nfragment CompliancePageSlackSectionFragment on Organization {\n  compliancePage: trustCenter {\n    canUpdate: permission(action: \"core:trust-center:update\")\n    id\n  }\n  slackConnections(first: 100) {\n    edges {\n      node {\n        id\n        channel\n        createdAt\n      }\n    }\n  }\n}\n\nfragment CompliancePageStatusSectionFragment on Organization {\n  customDomain {\n    domain\n    id\n  }\n  compliancePage: trustCenter {\n    id\n    active\n    canUpdate: permission(action: \"core:trust-center:update\")\n  }\n}\n"
+    "text": "query CompliancePageOverviewPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        canGetNDA: permission(action: \"core:trust-center:get-nda\")\n        ...CompliancePageFrameworkList_compliancePageFragment\n        id\n      }\n    }\n    ...CompliancePageStatusSectionFragment\n    ...CompliancePageNDASectionFragment\n    ...CompliancePageSlackSectionFragment\n    id\n  }\n}\n\nfragment CompliancePageFrameworkList_compliancePageFragment on TrustCenter {\n  id\n  canUpdate: permission(action: \"core:trust-center:update\")\n  complianceFrameworks(first: 100, orderBy: {field: RANK, direction: ASC}) {\n    edges {\n      node {\n        id\n        rank\n        visibility\n        framework {\n          id\n          name\n          lightLogoURL\n          darkLogoURL\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment CompliancePageNDASectionFragment on Organization {\n  compliancePage: trustCenter {\n    id\n    ndaFileName\n    ndaFileUrl\n    canUpdate: permission(action: \"core:trust-center:update\")\n    canUploadNDA: permission(action: \"core:trust-center:upload-nda\")\n    canDeleteNDA: permission(action: \"core:trust-center:delete-nda\")\n  }\n}\n\nfragment CompliancePageSlackSectionFragment on Organization {\n  compliancePage: trustCenter {\n    canUpdate: permission(action: \"core:trust-center:update\")\n    id\n  }\n  slackConnections(first: 100) {\n    edges {\n      node {\n        id\n        channel\n        createdAt\n      }\n    }\n  }\n}\n\nfragment CompliancePageStatusSectionFragment on Organization {\n  customDomain {\n    domain\n    id\n  }\n  compliancePage: trustCenter {\n    id\n    active\n    canUpdate: permission(action: \"core:trust-center:update\")\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "689133b7f1c380266e6f15a60c527c91";
+(node as any).hash = "be0dff83941c21755ea2ff77a865805b";
 
 export default node;

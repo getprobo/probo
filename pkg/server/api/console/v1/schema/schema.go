@@ -42,6 +42,7 @@ type ResolverRoot interface {
 	AssetConnection() AssetConnectionResolver
 	Audit() AuditResolver
 	AuditConnection() AuditConnectionResolver
+	ComplianceFramework() ComplianceFrameworkResolver
 	ContinualImprovement() ContinualImprovementResolver
 	ContinualImprovementConnection() ContinualImprovementConnectionResolver
 	Control() ControlResolver
@@ -219,6 +220,25 @@ type ComplexityRoot struct {
 		DeletedDocumentVersionSignatureID func(childComplexity int) int
 	}
 
+	ComplianceFramework struct {
+		CreatedAt  func(childComplexity int) int
+		Framework  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Rank       func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+		Visibility func(childComplexity int) int
+	}
+
+	ComplianceFrameworkConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	ComplianceFrameworkEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	ContinualImprovement struct {
 		CreatedAt    func(childComplexity int) int
 		Description  func(childComplexity int) int
@@ -289,6 +309,10 @@ type ComplexityRoot struct {
 
 	CreateAuditPayload struct {
 		AuditEdge func(childComplexity int) int
+	}
+
+	CreateComplianceFrameworkPayload struct {
+		ComplianceFrameworkEdge func(childComplexity int) int
 	}
 
 	CreateContinualImprovementPayload struct {
@@ -523,6 +547,10 @@ type ComplexityRoot struct {
 
 	DeleteAuditReportPayload struct {
 		Audit func(childComplexity int) int
+	}
+
+	DeleteComplianceFrameworkPayload struct {
+		DeletedComplianceFrameworkID func(childComplexity int) int
 	}
 
 	DeleteContinualImprovementPayload struct {
@@ -956,6 +984,7 @@ type ComplexityRoot struct {
 		CreateApplicabilityStatement             func(childComplexity int, input types.CreateApplicabilityStatementInput) int
 		CreateAsset                              func(childComplexity int, input types.CreateAssetInput) int
 		CreateAudit                              func(childComplexity int, input types.CreateAuditInput) int
+		CreateComplianceFramework                func(childComplexity int, input types.CreateComplianceFrameworkInput) int
 		CreateContinualImprovement               func(childComplexity int, input types.CreateContinualImprovementInput) int
 		CreateControl                            func(childComplexity int, input types.CreateControlInput) int
 		CreateControlAuditMapping                func(childComplexity int, input types.CreateControlAuditMappingInput) int
@@ -995,6 +1024,7 @@ type ComplexityRoot struct {
 		DeleteAsset                              func(childComplexity int, input types.DeleteAssetInput) int
 		DeleteAudit                              func(childComplexity int, input types.DeleteAuditInput) int
 		DeleteAuditReport                        func(childComplexity int, input types.DeleteAuditReportInput) int
+		DeleteComplianceFramework                func(childComplexity int, input types.DeleteComplianceFrameworkInput) int
 		DeleteContinualImprovement               func(childComplexity int, input types.DeleteContinualImprovementInput) int
 		DeleteControl                            func(childComplexity int, input types.DeleteControlInput) int
 		DeleteControlAuditMapping                func(childComplexity int, input types.DeleteControlAuditMappingInput) int
@@ -1052,6 +1082,7 @@ type ComplexityRoot struct {
 		UpdateApplicabilityStatement             func(childComplexity int, input types.UpdateApplicabilityStatementInput) int
 		UpdateAsset                              func(childComplexity int, input types.UpdateAssetInput) int
 		UpdateAudit                              func(childComplexity int, input types.UpdateAuditInput) int
+		UpdateComplianceFramework                func(childComplexity int, input types.UpdateComplianceFrameworkInput) int
 		UpdateContinualImprovement               func(childComplexity int, input types.UpdateContinualImprovementInput) int
 		UpdateControl                            func(childComplexity int, input types.UpdateControlInput) int
 		UpdateDataProtectionImpactAssessment     func(childComplexity int, input types.UpdateDataProtectionImpactAssessmentInput) int
@@ -1507,18 +1538,19 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenter struct {
-		Accesses        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) int
-		Active          func(childComplexity int) int
-		CreatedAt       func(childComplexity int) int
-		DarkLogoFileURL func(childComplexity int) int
-		ID              func(childComplexity int) int
-		LogoFileURL     func(childComplexity int) int
-		NdaFileName     func(childComplexity int) int
-		NdaFileURL      func(childComplexity int) int
-		Organization    func(childComplexity int) int
-		Permission      func(childComplexity int, action string) int
-		References      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) int
-		UpdatedAt       func(childComplexity int) int
+		Accesses             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) int
+		Active               func(childComplexity int) int
+		ComplianceFrameworks func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceFrameworkOrderField]) int
+		CreatedAt            func(childComplexity int) int
+		DarkLogoFileURL      func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		LogoFileURL          func(childComplexity int) int
+		NdaFileName          func(childComplexity int) int
+		NdaFileURL           func(childComplexity int) int
+		Organization         func(childComplexity int) int
+		Permission           func(childComplexity int, action string) int
+		References           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) int
+		UpdatedAt            func(childComplexity int) int
 	}
 
 	TrustCenterAccess struct {
@@ -1632,6 +1664,10 @@ type ComplexityRoot struct {
 
 	UpdateAuditPayload struct {
 		Audit func(childComplexity int) int
+	}
+
+	UpdateComplianceFrameworkPayload struct {
+		ComplianceFramework func(childComplexity int) int
 	}
 
 	UpdateContinualImprovementPayload struct {
@@ -2015,6 +2051,9 @@ type AuditResolver interface {
 type AuditConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error)
 }
+type ComplianceFrameworkResolver interface {
+	Framework(ctx context.Context, obj *types.ComplianceFramework) (*types.Framework, error)
+}
 type ContinualImprovementResolver interface {
 	Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error)
 
@@ -2159,6 +2198,9 @@ type MutationResolver interface {
 	CreateTrustCenterReference(ctx context.Context, input types.CreateTrustCenterReferenceInput) (*types.CreateTrustCenterReferencePayload, error)
 	UpdateTrustCenterReference(ctx context.Context, input types.UpdateTrustCenterReferenceInput) (*types.UpdateTrustCenterReferencePayload, error)
 	DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error)
+	CreateComplianceFramework(ctx context.Context, input types.CreateComplianceFrameworkInput) (*types.CreateComplianceFrameworkPayload, error)
+	UpdateComplianceFramework(ctx context.Context, input types.UpdateComplianceFrameworkInput) (*types.UpdateComplianceFrameworkPayload, error)
+	DeleteComplianceFramework(ctx context.Context, input types.DeleteComplianceFrameworkInput) (*types.DeleteComplianceFrameworkPayload, error)
 	CreateTrustCenterFile(ctx context.Context, input types.CreateTrustCenterFileInput) (*types.CreateTrustCenterFilePayload, error)
 	UpdateTrustCenterFile(ctx context.Context, input types.UpdateTrustCenterFileInput) (*types.UpdateTrustCenterFilePayload, error)
 	GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error)
@@ -2448,6 +2490,7 @@ type TrustCenterResolver interface {
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error)
 	References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error)
+	ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceFrameworkOrderField]) (*types.ComplianceFrameworkConnection, error)
 	Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error)
 }
 type TrustCenterAccessResolver interface {
@@ -2944,6 +2987,69 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.CancelSignatureRequestPayload.DeletedDocumentVersionSignatureID(childComplexity), true
 
+	case "ComplianceFramework.createdAt":
+		if e.ComplexityRoot.ComplianceFramework.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFramework.CreatedAt(childComplexity), true
+	case "ComplianceFramework.framework":
+		if e.ComplexityRoot.ComplianceFramework.Framework == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFramework.Framework(childComplexity), true
+	case "ComplianceFramework.id":
+		if e.ComplexityRoot.ComplianceFramework.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFramework.ID(childComplexity), true
+	case "ComplianceFramework.rank":
+		if e.ComplexityRoot.ComplianceFramework.Rank == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFramework.Rank(childComplexity), true
+	case "ComplianceFramework.updatedAt":
+		if e.ComplexityRoot.ComplianceFramework.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFramework.UpdatedAt(childComplexity), true
+	case "ComplianceFramework.visibility":
+		if e.ComplexityRoot.ComplianceFramework.Visibility == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFramework.Visibility(childComplexity), true
+
+	case "ComplianceFrameworkConnection.edges":
+		if e.ComplexityRoot.ComplianceFrameworkConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFrameworkConnection.Edges(childComplexity), true
+	case "ComplianceFrameworkConnection.pageInfo":
+		if e.ComplexityRoot.ComplianceFrameworkConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFrameworkConnection.PageInfo(childComplexity), true
+
+	case "ComplianceFrameworkEdge.cursor":
+		if e.ComplexityRoot.ComplianceFrameworkEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFrameworkEdge.Cursor(childComplexity), true
+	case "ComplianceFrameworkEdge.node":
+		if e.ComplexityRoot.ComplianceFrameworkEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceFrameworkEdge.Node(childComplexity), true
+
 	case "ContinualImprovement.createdAt":
 		if e.ComplexityRoot.ContinualImprovement.CreatedAt == nil {
 			break
@@ -3257,6 +3363,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CreateAuditPayload.AuditEdge(childComplexity), true
+
+	case "CreateComplianceFrameworkPayload.complianceFrameworkEdge":
+		if e.ComplexityRoot.CreateComplianceFrameworkPayload.ComplianceFrameworkEdge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreateComplianceFrameworkPayload.ComplianceFrameworkEdge(childComplexity), true
 
 	case "CreateContinualImprovementPayload.continualImprovementEdge":
 		if e.ComplexityRoot.CreateContinualImprovementPayload.ContinualImprovementEdge == nil {
@@ -3882,6 +3995,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DeleteAuditReportPayload.Audit(childComplexity), true
+
+	case "DeleteComplianceFrameworkPayload.deletedComplianceFrameworkId":
+		if e.ComplexityRoot.DeleteComplianceFrameworkPayload.DeletedComplianceFrameworkID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DeleteComplianceFrameworkPayload.DeletedComplianceFrameworkID(childComplexity), true
 
 	case "DeleteContinualImprovementPayload.deletedContinualImprovementId":
 		if e.ComplexityRoot.DeleteContinualImprovementPayload.DeletedContinualImprovementID == nil {
@@ -5335,6 +5455,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateAudit(childComplexity, args["input"].(types.CreateAuditInput)), true
+	case "Mutation.createComplianceFramework":
+		if e.ComplexityRoot.Mutation.CreateComplianceFramework == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createComplianceFramework_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateComplianceFramework(childComplexity, args["input"].(types.CreateComplianceFrameworkInput)), true
 	case "Mutation.createContinualImprovement":
 		if e.ComplexityRoot.Mutation.CreateContinualImprovement == nil {
 			break
@@ -5764,6 +5895,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteAuditReport(childComplexity, args["input"].(types.DeleteAuditReportInput)), true
+	case "Mutation.deleteComplianceFramework":
+		if e.ComplexityRoot.Mutation.DeleteComplianceFramework == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteComplianceFramework_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteComplianceFramework(childComplexity, args["input"].(types.DeleteComplianceFrameworkInput)), true
 	case "Mutation.deleteContinualImprovement":
 		if e.ComplexityRoot.Mutation.DeleteContinualImprovement == nil {
 			break
@@ -6391,6 +6533,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateAudit(childComplexity, args["input"].(types.UpdateAuditInput)), true
+	case "Mutation.updateComplianceFramework":
+		if e.ComplexityRoot.Mutation.UpdateComplianceFramework == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateComplianceFramework_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateComplianceFramework(childComplexity, args["input"].(types.UpdateComplianceFrameworkInput)), true
 	case "Mutation.updateContinualImprovement":
 		if e.ComplexityRoot.Mutation.UpdateContinualImprovement == nil {
 			break
@@ -8761,6 +8914,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TrustCenter.Active(childComplexity), true
+	case "TrustCenter.complianceFrameworks":
+		if e.ComplexityRoot.TrustCenter.ComplianceFrameworks == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenter_complianceFrameworks_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.TrustCenter.ComplianceFrameworks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.OrderBy[coredata.ComplianceFrameworkOrderField])), true
 	case "TrustCenter.createdAt":
 		if e.ComplexityRoot.TrustCenter.CreatedAt == nil {
 			break
@@ -9240,6 +9404,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.UpdateAuditPayload.Audit(childComplexity), true
+
+	case "UpdateComplianceFrameworkPayload.complianceFramework":
+		if e.ComplexityRoot.UpdateComplianceFrameworkPayload.ComplianceFramework == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UpdateComplianceFrameworkPayload.ComplianceFramework(childComplexity), true
 
 	case "UpdateContinualImprovementPayload.continualImprovement":
 		if e.ComplexityRoot.UpdateContinualImprovementPayload.ContinualImprovement == nil {
@@ -10408,6 +10579,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkPublishDocumentVersionsInput,
 		ec.unmarshalInputBulkRequestSignaturesInput,
 		ec.unmarshalInputCancelSignatureRequestInput,
+		ec.unmarshalInputComplianceFrameworkOrder,
 		ec.unmarshalInputContinualImprovementFilter,
 		ec.unmarshalInputContinualImprovementOrder,
 		ec.unmarshalInputControlFilter,
@@ -10415,6 +10587,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateApplicabilityStatementInput,
 		ec.unmarshalInputCreateAssetInput,
 		ec.unmarshalInputCreateAuditInput,
+		ec.unmarshalInputCreateComplianceFrameworkInput,
 		ec.unmarshalInputCreateContinualImprovementInput,
 		ec.unmarshalInputCreateControlAuditMappingInput,
 		ec.unmarshalInputCreateControlDocumentMappingInput,
@@ -10458,6 +10631,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteAssetInput,
 		ec.unmarshalInputDeleteAuditInput,
 		ec.unmarshalInputDeleteAuditReportInput,
+		ec.unmarshalInputDeleteComplianceFrameworkInput,
 		ec.unmarshalInputDeleteContinualImprovementInput,
 		ec.unmarshalInputDeleteControlAuditMappingInput,
 		ec.unmarshalInputDeleteControlDocumentMappingInput,
@@ -10548,6 +10722,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateApplicabilityStatementInput,
 		ec.unmarshalInputUpdateAssetInput,
 		ec.unmarshalInputUpdateAuditInput,
+		ec.unmarshalInputUpdateComplianceFrameworkInput,
 		ec.unmarshalInputUpdateContinualImprovementInput,
 		ec.unmarshalInputUpdateControlInput,
 		ec.unmarshalInputUpdateDataProtectionImpactAssessmentInput,
@@ -11895,6 +12070,34 @@ enum TrustCenterReferenceOrderField
         )
 }
 
+enum ComplianceFrameworkOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderFieldCreatedAt"
+        )
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderFieldRank"
+        )
+}
+
+enum ComplianceFrameworkVisibility
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibility"
+    ) {
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibilityNone"
+        )
+    PUBLIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkVisibilityPublic"
+        )
+}
+
 enum TrustCenterFileOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField"
@@ -12131,6 +12334,14 @@ input TrustCenterFileOrder
     field: TrustCenterFileOrderField!
 }
 
+input ComplianceFrameworkOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFrameworkOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ComplianceFrameworkOrderField!
+}
+
 input EvidenceOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EvidenceOrderBy"
@@ -12281,6 +12492,14 @@ type TrustCenter implements Node {
         before: CursorKey
         orderBy: TrustCenterReferenceOrder
     ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+    complianceFrameworks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ComplianceFrameworkOrder
+    ): ComplianceFrameworkConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -13474,6 +13693,31 @@ type TrustCenterReferenceEdge {
     node: TrustCenterReference!
 }
 
+type ComplianceFramework implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFramework"
+    ) {
+    id: ID!
+    framework: Framework! @goField(forceResolver: true)
+    rank: Int!
+    visibility: ComplianceFrameworkVisibility!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ComplianceFrameworkConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFrameworkConnection"
+    ) {
+    edges: [ComplianceFrameworkEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ComplianceFrameworkEdge {
+    cursor: CursorKey!
+    node: ComplianceFramework!
+}
+
 type TrustCenterFile implements Node {
     id: ID!
     name: String!
@@ -13915,6 +14159,16 @@ type Mutation {
     deleteTrustCenterReference(
         input: DeleteTrustCenterReferenceInput!
     ): DeleteTrustCenterReferencePayload!
+    # Compliance Framework mutations
+    createComplianceFramework(
+        input: CreateComplianceFrameworkInput!
+    ): CreateComplianceFrameworkPayload!
+    updateComplianceFramework(
+        input: UpdateComplianceFrameworkInput!
+    ): UpdateComplianceFrameworkPayload!
+    deleteComplianceFramework(
+        input: DeleteComplianceFrameworkInput!
+    ): DeleteComplianceFrameworkPayload!
     # Trust Center File mutations
     createTrustCenterFile(
         input: CreateTrustCenterFileInput!
@@ -14312,6 +14566,20 @@ input UpdateTrustCenterReferenceInput {
 }
 
 input DeleteTrustCenterReferenceInput {
+    id: ID!
+}
+
+input CreateComplianceFrameworkInput {
+    trustCenterId: ID!
+    frameworkId: ID!
+}
+
+input UpdateComplianceFrameworkInput {
+    id: ID!
+    rank: Int!
+}
+
+input DeleteComplianceFrameworkInput {
     id: ID!
 }
 
@@ -15128,6 +15396,18 @@ type UpdateTrustCenterReferencePayload {
 
 type DeleteTrustCenterReferencePayload {
     deletedTrustCenterReferenceId: ID!
+}
+
+type CreateComplianceFrameworkPayload {
+    complianceFrameworkEdge: ComplianceFrameworkEdge!
+}
+
+type UpdateComplianceFrameworkPayload {
+    complianceFramework: ComplianceFramework!
+}
+
+type DeleteComplianceFrameworkPayload {
+    deletedComplianceFrameworkId: ID!
 }
 
 type CreateTrustCenterFilePayload {
@@ -17094,6 +17374,17 @@ func (ec *executionContext) field_Mutation_createAudit_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createComplianceFramework_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceFrameworkInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createContinualImprovement_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17516,6 +17807,17 @@ func (ec *executionContext) field_Mutation_deleteAudit_args(ctx context.Context,
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteAuditInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAuditInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteComplianceFramework_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceFrameworkInput)
 	if err != nil {
 		return nil, err
 	}
@@ -18143,6 +18445,17 @@ func (ec *executionContext) field_Mutation_updateAudit_args(ctx context.Context,
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateAuditInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAuditInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateComplianceFramework_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceFrameworkInput)
 	if err != nil {
 		return nil, err
 	}
@@ -19900,6 +20213,37 @@ func (ec *executionContext) field_TrustCenter_accesses_args(ctx context.Context,
 	}
 	args["before"] = arg3
 	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOTrustCenterAccessOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_TrustCenter_complianceFrameworks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOComplianceFrameworkOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrderBy)
 	if err != nil {
 		return nil, err
 	}
@@ -22481,6 +22825,348 @@ func (ec *executionContext) fieldContext_CancelSignatureRequestPayload_deletedDo
 	return fc, nil
 }
 
+func (ec *executionContext) _ComplianceFramework_id(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFramework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFramework_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFramework_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFramework",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFramework_framework(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFramework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFramework_framework,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.ComplianceFramework().Framework(ctx, obj)
+		},
+		nil,
+		ec.marshalNFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐFramework,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFramework_framework(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFramework",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Framework_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Framework_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Framework_description(ctx, field)
+			case "organization":
+				return ec.fieldContext_Framework_organization(ctx, field)
+			case "controls":
+				return ec.fieldContext_Framework_controls(ctx, field)
+			case "lightLogoURL":
+				return ec.fieldContext_Framework_lightLogoURL(ctx, field)
+			case "darkLogoURL":
+				return ec.fieldContext_Framework_darkLogoURL(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Framework_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Framework_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Framework_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Framework", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFramework_rank(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFramework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFramework_rank,
+		func(ctx context.Context) (any, error) {
+			return obj.Rank, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFramework_rank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFramework",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFramework_visibility(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFramework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFramework_visibility,
+		func(ctx context.Context) (any, error) {
+			return obj.Visibility, nil
+		},
+		nil,
+		ec.marshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFramework_visibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFramework",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ComplianceFrameworkVisibility does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFramework_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFramework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFramework_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFramework_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFramework",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFramework_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFramework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFramework_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFramework_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFramework",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFrameworkConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFrameworkConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFrameworkConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNComplianceFrameworkEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFrameworkEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFrameworkConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFrameworkConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ComplianceFrameworkEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ComplianceFrameworkEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceFrameworkEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFrameworkConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFrameworkConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFrameworkConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFrameworkConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFrameworkConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFrameworkEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFrameworkEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFrameworkEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFrameworkEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFrameworkEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceFrameworkEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFrameworkEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceFrameworkEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNComplianceFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFramework,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceFrameworkEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceFrameworkEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ComplianceFramework_id(ctx, field)
+			case "framework":
+				return ec.fieldContext_ComplianceFramework_framework(ctx, field)
+			case "rank":
+				return ec.fieldContext_ComplianceFramework_rank(ctx, field)
+			case "visibility":
+				return ec.fieldContext_ComplianceFramework_visibility(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ComplianceFramework_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ComplianceFramework_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceFramework", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ContinualImprovement_id(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -24225,6 +24911,41 @@ func (ec *executionContext) fieldContext_CreateAuditPayload_auditEdge(_ context.
 				return ec.fieldContext_AuditEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AuditEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateComplianceFrameworkPayload_complianceFrameworkEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateComplianceFrameworkPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateComplianceFrameworkPayload_complianceFrameworkEdge,
+		func(ctx context.Context) (any, error) {
+			return obj.ComplianceFrameworkEdge, nil
+		},
+		nil,
+		ec.marshalNComplianceFrameworkEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFrameworkEdge,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateComplianceFrameworkPayload_complianceFrameworkEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateComplianceFrameworkPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ComplianceFrameworkEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ComplianceFrameworkEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceFrameworkEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -27735,6 +28456,35 @@ func (ec *executionContext) fieldContext_DeleteAuditReportPayload_audit(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteComplianceFrameworkPayload_deletedComplianceFrameworkId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteComplianceFrameworkPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteComplianceFrameworkPayload_deletedComplianceFrameworkId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedComplianceFrameworkID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteComplianceFrameworkPayload_deletedComplianceFrameworkId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteComplianceFrameworkPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteContinualImprovementPayload_deletedContinualImprovementId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteContinualImprovementPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -28883,6 +29633,8 @@ func (ec *executionContext) fieldContext_DeleteTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "complianceFrameworks":
+				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -35057,6 +35809,141 @@ func (ec *executionContext) fieldContext_Mutation_deleteTrustCenterReference(ctx
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteTrustCenterReference_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createComplianceFramework(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createComplianceFramework,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateComplianceFramework(ctx, fc.Args["input"].(types.CreateComplianceFrameworkInput))
+		},
+		nil,
+		ec.marshalNCreateComplianceFrameworkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceFrameworkPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createComplianceFramework(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "complianceFrameworkEdge":
+				return ec.fieldContext_CreateComplianceFrameworkPayload_complianceFrameworkEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateComplianceFrameworkPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createComplianceFramework_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateComplianceFramework(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateComplianceFramework,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateComplianceFramework(ctx, fc.Args["input"].(types.UpdateComplianceFrameworkInput))
+		},
+		nil,
+		ec.marshalNUpdateComplianceFrameworkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceFrameworkPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateComplianceFramework(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "complianceFramework":
+				return ec.fieldContext_UpdateComplianceFrameworkPayload_complianceFramework(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateComplianceFrameworkPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateComplianceFramework_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteComplianceFramework(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteComplianceFramework,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteComplianceFramework(ctx, fc.Args["input"].(types.DeleteComplianceFrameworkInput))
+		},
+		nil,
+		ec.marshalNDeleteComplianceFrameworkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceFrameworkPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteComplianceFramework(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedComplianceFrameworkId":
+				return ec.fieldContext_DeleteComplianceFrameworkPayload_deletedComplianceFrameworkId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteComplianceFrameworkPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteComplianceFramework_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -43951,6 +44838,8 @@ func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "complianceFrameworks":
+				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -52171,6 +53060,53 @@ func (ec *executionContext) fieldContext_TrustCenter_references(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenter_complianceFrameworks(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_complianceFrameworks,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.TrustCenter().ComplianceFrameworks(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.OrderBy[coredata.ComplianceFrameworkOrderField]))
+		},
+		nil,
+		ec.marshalNComplianceFrameworkConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFrameworkConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_complianceFrameworks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_ComplianceFrameworkConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ComplianceFrameworkConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceFrameworkConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TrustCenter_complianceFrameworks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenter_permission(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -53342,6 +54278,8 @@ func (ec *executionContext) fieldContext_TrustCenterEdge_node(_ context.Context,
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "complianceFrameworks":
+				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -54498,6 +55436,49 @@ func (ec *executionContext) fieldContext_UpdateAuditPayload_audit(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateComplianceFrameworkPayload_complianceFramework(ctx context.Context, field graphql.CollectedField, obj *types.UpdateComplianceFrameworkPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateComplianceFrameworkPayload_complianceFramework,
+		func(ctx context.Context) (any, error) {
+			return obj.ComplianceFramework, nil
+		},
+		nil,
+		ec.marshalNComplianceFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFramework,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateComplianceFrameworkPayload_complianceFramework(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateComplianceFrameworkPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ComplianceFramework_id(ctx, field)
+			case "framework":
+				return ec.fieldContext_ComplianceFramework_framework(ctx, field)
+			case "rank":
+				return ec.fieldContext_ComplianceFramework_rank(ctx, field)
+			case "visibility":
+				return ec.fieldContext_ComplianceFramework_visibility(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ComplianceFramework_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ComplianceFramework_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceFramework", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateContinualImprovementPayload_continualImprovement(ctx context.Context, field graphql.CollectedField, obj *types.UpdateContinualImprovementPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -55649,6 +56630,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterBrandPayload_trustCent
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "complianceFrameworks":
+				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -55753,6 +56736,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterPayload_trustCenter(_ 
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "complianceFrameworks":
+				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -56291,6 +57276,8 @@ func (ec *executionContext) fieldContext_UploadTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "complianceFrameworks":
+				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -63316,6 +64303,39 @@ func (ec *executionContext) unmarshalInputCancelSignatureRequestInput(ctx contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputComplianceFrameworkOrder(ctx context.Context, obj any) (types.OrderBy[coredata.ComplianceFrameworkOrderField], error) {
+	var it types.OrderBy[coredata.ComplianceFrameworkOrderField]
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNComplianceFrameworkOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputContinualImprovementFilter(ctx context.Context, obj any) (types.ContinualImprovementFilter, error) {
 	var it types.ContinualImprovementFilter
 	asMap := map[string]any{}
@@ -63612,6 +64632,39 @@ func (ec *executionContext) unmarshalInputCreateAuditInput(ctx context.Context, 
 				return it, err
 			}
 			it.TrustCenterVisibility = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateComplianceFrameworkInput(ctx context.Context, obj any) (types.CreateComplianceFrameworkInput, error) {
+	var it types.CreateComplianceFrameworkInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"trustCenterId", "frameworkId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "trustCenterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterID = data
+		case "frameworkId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frameworkId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FrameworkID = data
 		}
 	}
 	return it, nil
@@ -65864,6 +66917,32 @@ func (ec *executionContext) unmarshalInputDeleteAuditReportInput(ctx context.Con
 				return it, err
 			}
 			it.AuditID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteComplianceFrameworkInput(ctx context.Context, obj any) (types.DeleteComplianceFrameworkInput, error) {
+	var it types.DeleteComplianceFrameworkInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
 		}
 	}
 	return it, nil
@@ -68601,6 +69680,39 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateComplianceFrameworkInput(ctx context.Context, obj any) (types.UpdateComplianceFrameworkInput, error) {
+	var it types.UpdateComplianceFrameworkInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "rank"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "rank":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rank"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rank = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateContinualImprovementInput(ctx context.Context, obj any) (types.UpdateContinualImprovementInput, error) {
 	var it types.UpdateContinualImprovementInput
 	asMap := map[string]any{}
@@ -71267,6 +72379,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._ContinualImprovement(ctx, sel, obj)
+	case types.ComplianceFramework:
+		return ec._ComplianceFramework(ctx, sel, &obj)
+	case *types.ComplianceFramework:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ComplianceFramework(ctx, sel, obj)
 	case types.Audit:
 		return ec._Audit(ctx, sel, &obj)
 	case *types.Audit:
@@ -72569,6 +73688,189 @@ func (ec *executionContext) _CancelSignatureRequestPayload(ctx context.Context, 
 	return out
 }
 
+var complianceFrameworkImplementors = []string{"ComplianceFramework", "Node"}
+
+func (ec *executionContext) _ComplianceFramework(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceFramework) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceFrameworkImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceFramework")
+		case "id":
+			out.Values[i] = ec._ComplianceFramework_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "framework":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ComplianceFramework_framework(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "rank":
+			out.Values[i] = ec._ComplianceFramework_rank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visibility":
+			out.Values[i] = ec._ComplianceFramework_visibility(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._ComplianceFramework_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ComplianceFramework_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceFrameworkConnectionImplementors = []string{"ComplianceFrameworkConnection"}
+
+func (ec *executionContext) _ComplianceFrameworkConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceFrameworkConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceFrameworkConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceFrameworkConnection")
+		case "edges":
+			out.Values[i] = ec._ComplianceFrameworkConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ComplianceFrameworkConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceFrameworkEdgeImplementors = []string{"ComplianceFrameworkEdge"}
+
+func (ec *executionContext) _ComplianceFrameworkEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceFrameworkEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceFrameworkEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceFrameworkEdge")
+		case "cursor":
+			out.Values[i] = ec._ComplianceFrameworkEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._ComplianceFrameworkEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var continualImprovementImplementors = []string{"ContinualImprovement", "Node"}
 
 func (ec *executionContext) _ContinualImprovement(ctx context.Context, sel ast.SelectionSet, obj *types.ContinualImprovement) graphql.Marshaler {
@@ -73549,6 +74851,45 @@ func (ec *executionContext) _CreateAuditPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("CreateAuditPayload")
 		case "auditEdge":
 			out.Values[i] = ec._CreateAuditPayload_auditEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createComplianceFrameworkPayloadImplementors = []string{"CreateComplianceFrameworkPayload"}
+
+func (ec *executionContext) _CreateComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateComplianceFrameworkPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createComplianceFrameworkPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateComplianceFrameworkPayload")
+		case "complianceFrameworkEdge":
+			out.Values[i] = ec._CreateComplianceFrameworkPayload_complianceFrameworkEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -75901,6 +77242,45 @@ func (ec *executionContext) _DeleteAuditReportPayload(ctx context.Context, sel a
 			out.Values[i] = graphql.MarshalString("DeleteAuditReportPayload")
 		case "audit":
 			out.Values[i] = ec._DeleteAuditReportPayload_audit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteComplianceFrameworkPayloadImplementors = []string{"DeleteComplianceFrameworkPayload"}
+
+func (ec *executionContext) _DeleteComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteComplianceFrameworkPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteComplianceFrameworkPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteComplianceFrameworkPayload")
+		case "deletedComplianceFrameworkId":
+			out.Values[i] = ec._DeleteComplianceFrameworkPayload_deletedComplianceFrameworkId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -80722,6 +82102,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteTrustCenterReference":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteTrustCenterReference(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createComplianceFramework":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createComplianceFramework(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateComplianceFramework":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateComplianceFramework(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteComplianceFramework":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteComplianceFramework(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -87233,6 +88634,42 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "complianceFrameworks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_complianceFrameworks(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "permission":
 			field := field
 
@@ -88632,6 +90069,45 @@ func (ec *executionContext) _UpdateAuditPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("UpdateAuditPayload")
 		case "audit":
 			out.Values[i] = ec._UpdateAuditPayload_audit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateComplianceFrameworkPayloadImplementors = []string{"UpdateComplianceFrameworkPayload"}
+
+func (ec *executionContext) _UpdateComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateComplianceFrameworkPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateComplianceFrameworkPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateComplianceFrameworkPayload")
+		case "complianceFramework":
+			out.Values[i] = ec._UpdateComplianceFrameworkPayload_complianceFramework(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -93277,6 +94753,112 @@ func (ec *executionContext) marshalNCancelSignatureRequestPayload2ᚖgoᚗprobo�
 	return ec._CancelSignatureRequestPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNComplianceFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFramework(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceFramework) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceFramework(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceFrameworkConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFrameworkConnection(ctx context.Context, sel ast.SelectionSet, v types.ComplianceFrameworkConnection) graphql.Marshaler {
+	return ec._ComplianceFrameworkConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNComplianceFrameworkConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFrameworkConnection(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceFrameworkConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceFrameworkConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceFrameworkEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFrameworkEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ComplianceFrameworkEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNComplianceFrameworkEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFrameworkEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNComplianceFrameworkEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFrameworkEdge(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceFrameworkEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceFrameworkEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNComplianceFrameworkOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkOrderField(ctx context.Context, v any) (coredata.ComplianceFrameworkOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNComplianceFrameworkOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNComplianceFrameworkOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ComplianceFrameworkOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNComplianceFrameworkOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNComplianceFrameworkOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkOrderField = map[string]coredata.ComplianceFrameworkOrderField{
+		"CREATED_AT": coredata.ComplianceFrameworkOrderFieldCreatedAt,
+		"RANK":       coredata.ComplianceFrameworkOrderFieldRank,
+	}
+	marshalNComplianceFrameworkOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkOrderField = map[coredata.ComplianceFrameworkOrderField]string{
+		coredata.ComplianceFrameworkOrderFieldCreatedAt: "CREATED_AT",
+		coredata.ComplianceFrameworkOrderFieldRank:      "RANK",
+	}
+)
+
+func (ec *executionContext) unmarshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility(ctx context.Context, v any) (coredata.ComplianceFrameworkVisibility, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility(ctx context.Context, sel ast.SelectionSet, v coredata.ComplianceFrameworkVisibility) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility = map[string]coredata.ComplianceFrameworkVisibility{
+		"NONE":   coredata.ComplianceFrameworkVisibilityNone,
+		"PUBLIC": coredata.ComplianceFrameworkVisibilityPublic,
+	}
+	marshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility = map[coredata.ComplianceFrameworkVisibility]string{
+		coredata.ComplianceFrameworkVisibilityNone:   "NONE",
+		coredata.ComplianceFrameworkVisibilityPublic: "PUBLIC",
+	}
+)
+
 func (ec *executionContext) marshalNContinualImprovement2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovement(ctx context.Context, sel ast.SelectionSet, v *types.ContinualImprovement) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -94111,6 +95693,25 @@ func (ec *executionContext) marshalNCreateAuditPayload2ᚖgoᚗproboᚗincᚋpro
 		return graphql.Null
 	}
 	return ec._CreateAuditPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreateComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceFrameworkInput(ctx context.Context, v any) (types.CreateComplianceFrameworkInput, error) {
+	res, err := ec.unmarshalInputCreateComplianceFrameworkInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateComplianceFrameworkPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateComplianceFrameworkPayload) graphql.Marshaler {
+	return ec._CreateComplianceFrameworkPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateComplianceFrameworkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateComplianceFrameworkPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateComplianceFrameworkPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateContinualImprovementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateContinualImprovementInput(ctx context.Context, v any) (types.CreateContinualImprovementInput, error) {
@@ -95142,6 +96743,25 @@ func (ec *executionContext) marshalNDeleteAuditReportPayload2ᚖgoᚗproboᚗinc
 		return graphql.Null
 	}
 	return ec._DeleteAuditReportPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceFrameworkInput(ctx context.Context, v any) (types.DeleteComplianceFrameworkInput, error) {
+	res, err := ec.unmarshalInputDeleteComplianceFrameworkInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteComplianceFrameworkPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteComplianceFrameworkPayload) graphql.Marshaler {
+	return ec._DeleteComplianceFrameworkPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteComplianceFrameworkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteComplianceFrameworkPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteComplianceFrameworkPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteContinualImprovementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteContinualImprovementInput(ctx context.Context, v any) (types.DeleteContinualImprovementInput, error) {
@@ -99222,6 +100842,25 @@ func (ec *executionContext) marshalNUpdateAuditPayload2ᚖgoᚗproboᚗincᚋpro
 	return ec._UpdateAuditPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceFrameworkInput(ctx context.Context, v any) (types.UpdateComplianceFrameworkInput, error) {
+	res, err := ec.unmarshalInputUpdateComplianceFrameworkInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateComplianceFrameworkPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateComplianceFrameworkPayload) graphql.Marshaler {
+	return ec._UpdateComplianceFrameworkPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateComplianceFrameworkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceFrameworkPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateComplianceFrameworkPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateComplianceFrameworkPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNUpdateContinualImprovementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateContinualImprovementInput(ctx context.Context, v any) (types.UpdateContinualImprovementInput, error) {
 	res, err := ec.unmarshalInputUpdateContinualImprovementInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -100938,6 +102577,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOComplianceFrameworkOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrderBy(ctx context.Context, v any) (*types.OrderBy[coredata.ComplianceFrameworkOrderField], error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputComplianceFrameworkOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOContinualImprovementFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovementFilter(ctx context.Context, v any) (*types.ContinualImprovementFilter, error) {

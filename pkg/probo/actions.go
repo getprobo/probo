@@ -47,6 +47,12 @@ const (
 	ActionTrustCenterReferenceUpdate     = "core:trust-center-reference:update"
 	ActionTrustCenterReferenceDelete     = "core:trust-center-reference:delete"
 
+	// ComplianceFramework actions
+	ActionComplianceFrameworkList       = "core:compliance-framework:list"
+	ActionComplianceFrameworkCreate     = "core:compliance-framework:create"
+	ActionComplianceFrameworkDelete     = "core:compliance-framework:delete"
+	ActionComplianceFrameworkUpdateRank = "core:compliance-framework:update-rank"
+
 	// TrustCenterFile actions
 	ActionTrustCenterFileGet        = "core:trust-center-file:get"
 	ActionTrustCenterFileList       = "core:trust-center-file:list"

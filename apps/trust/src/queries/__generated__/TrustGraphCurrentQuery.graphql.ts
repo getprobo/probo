@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<47a6e80d3532b4c93d18495c2be7676d>>
+ * @generated SignedSource<<4eef287e3e3152affa1b16189a504c36>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,6 +19,16 @@ export type TrustGraphCurrentQuery$data = {
         readonly node: {
           readonly id: string;
           readonly " $fragmentSpreads": FragmentRefs<"AuditRowFragment">;
+        };
+      }>;
+    };
+    readonly complianceFrameworks: {
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly framework: {
+            readonly " $fragmentSpreads": FragmentRefs<"FrameworkBadgeFragment">;
+          };
+          readonly id: string;
         };
       }>;
     };
@@ -193,6 +203,33 @@ v16 = {
     (v6/*: any*/)
   ],
   "storageKey": null
+},
+v17 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "Framework",
+  "kind": "LinkedField",
+  "name": "framework",
+  "plural": false,
+  "selections": [
+    (v0/*: any*/),
+    (v7/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "lightLogoURL",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "darkLogoURL",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
 };
 return {
   "fragment": {
@@ -300,6 +337,56 @@ return {
                 }
               ],
               "storageKey": "audits(first:50)"
+            },
+            {
+              "alias": null,
+              "args": (v13/*: any*/),
+              "concreteType": "ComplianceFrameworkConnection",
+              "kind": "LinkedField",
+              "name": "complianceFrameworks",
+              "plural": false,
+              "selections": [
+                {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "ComplianceFrameworkEdge",
+                  "kind": "LinkedField",
+                  "name": "edges",
+                  "plural": true,
+                  "selections": [
+                    {
+                      "alias": null,
+                      "args": null,
+                      "concreteType": "ComplianceFramework",
+                      "kind": "LinkedField",
+                      "name": "node",
+                      "plural": false,
+                      "selections": [
+                        (v0/*: any*/),
+                        {
+                          "alias": null,
+                          "args": null,
+                          "concreteType": "Framework",
+                          "kind": "LinkedField",
+                          "name": "framework",
+                          "plural": false,
+                          "selections": [
+                            {
+                              "args": null,
+                              "kind": "FragmentSpread",
+                              "name": "FrameworkBadgeFragment"
+                            }
+                          ],
+                          "storageKey": null
+                        }
+                      ],
+                      "storageKey": null
+                    }
+                  ],
+                  "storageKey": null
+                }
+              ],
+              "storageKey": "complianceFrameworks(first:50)"
             }
           ],
           "storageKey": null
@@ -612,33 +699,7 @@ return {
                         ],
                         "storageKey": null
                       },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Framework",
-                        "kind": "LinkedField",
-                        "name": "framework",
-                        "plural": false,
-                        "selections": [
-                          (v0/*: any*/),
-                          (v7/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "lightLogoURL",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "darkLogoURL",
-                            "storageKey": null
-                          }
-                        ],
-                        "storageKey": null
-                      }
+                      (v17/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -647,6 +708,41 @@ return {
               }
             ],
             "storageKey": "audits(first:50)"
+          },
+          {
+            "alias": null,
+            "args": (v13/*: any*/),
+            "concreteType": "ComplianceFrameworkConnection",
+            "kind": "LinkedField",
+            "name": "complianceFrameworks",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "ComplianceFrameworkEdge",
+                "kind": "LinkedField",
+                "name": "edges",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "ComplianceFramework",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v0/*: any*/),
+                      (v17/*: any*/)
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": "complianceFrameworks(first:50)"
           }
         ],
         "storageKey": null
@@ -654,16 +750,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "42b477429f092f97b0f444433a78c6d1",
+    "cacheID": "e64b984bdcf5a5fb2f19e69c6205ba9a",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentQuery {\n  currentTrustCenter {\n    id\n    slug\n    logoFileUrl\n    darkLogoFileUrl\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    organization {\n      name\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    vendorInfo: vendors(first: 0) {\n      totalCount\n    }\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  name\n  report {\n    id\n    filename\n    isUserAuthorized\n    access {\n      id\n      status\n    }\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  access {\n    id\n    status\n  }\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  access {\n    id\n    status\n  }\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
+    "text": "query TrustGraphCurrentQuery {\n  currentTrustCenter {\n    id\n    slug\n    logoFileUrl\n    darkLogoFileUrl\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    organization {\n      name\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    vendorInfo: vendors(first: 0) {\n      totalCount\n    }\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n    complianceFrameworks(first: 50) {\n      edges {\n        node {\n          id\n          framework {\n            ...FrameworkBadgeFragment\n            id\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  name\n  report {\n    id\n    filename\n    isUserAuthorized\n    access {\n      id\n      status\n    }\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  access {\n    id\n    status\n  }\n}\n\nfragment FrameworkBadgeFragment on Framework {\n  id\n  name\n  lightLogoURL\n  darkLogoURL\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  access {\n    id\n    status\n  }\n}\n\nfragment VendorRowFragment on Vendor {\n  name\n  description\n  websiteUrl\n  countries\n}\n"
   }
 };
 })();
 
-(node as any).hash = "41cf8e5383cefdd5b3b7b85263eccb1f";
+(node as any).hash = "d1ce7e38b42fad48e9f38bf00bb34d56";
 
 export default node;

@@ -71,6 +71,19 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 	return types.NewReport(report), nil
 }
 
+// Framework is the resolver for the framework field on ComplianceFramework.
+func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.ComplianceFramework) (*types.Framework, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	framework, err := trustService.Frameworks.Get(ctx, obj.FrameworkID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFramework(framework), nil
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
@@ -1014,6 +1027,25 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 	return types.NewTrustCenterFileConnection(trustCenterFilePage), nil
 }
 
+// ComplianceFrameworks is the resolver for the complianceFrameworks field.
+func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceFrameworkConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceFrameworkOrderField]{
+		Field:     coredata.ComplianceFrameworkOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	cfPage, err := trustService.ComplianceFrameworks.ListByTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceFrameworkConnection(cfPage), nil
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
@@ -1124,6 +1156,11 @@ func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.Ve
 // Audit returns schema.AuditResolver implementation.
 func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
 
+// ComplianceFramework returns schema.ComplianceFrameworkResolver implementation.
+func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
+	return &complianceFrameworkResolver{r}
+}
+
 // Document returns schema.DocumentResolver implementation.
 func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
 
@@ -1166,6 +1203,7 @@ func (r *Resolver) VendorConnection() schema.VendorConnectionResolver {
 }
 
 type auditResolver struct{ *Resolver }
+type complianceFrameworkResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }

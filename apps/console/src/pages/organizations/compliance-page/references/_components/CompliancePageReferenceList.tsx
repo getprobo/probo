@@ -126,7 +126,7 @@ export function CompliancePageReferenceList(props: {
         </Tbody>
       </Table>
 
-      <p className="text-xs text-txt-tertiary">
+      <p className="text-sm text-txt-tertiary">
         {__("Drag and drop references to change their displayed order")}
       </p>
     </>

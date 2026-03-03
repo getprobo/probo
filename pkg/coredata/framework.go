@@ -47,7 +47,7 @@ type (
 func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 	switch orderBy {
 	case FrameworkOrderFieldCreatedAt:
-		return page.CursorKey{ID: f.ID, Value: f.CreatedAt}
+		return page.NewCursorKey(f.ID, f.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

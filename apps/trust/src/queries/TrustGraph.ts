@@ -34,6 +34,16 @@ export const currentTrustGraphQuery = graphql`
           }
         }
       }
+      complianceFrameworks(first: 50) {
+        edges {
+          node {
+            id
+            framework {
+              ...FrameworkBadgeFragment
+            }
+          }
+        }
+      }
     }
   }
 `;

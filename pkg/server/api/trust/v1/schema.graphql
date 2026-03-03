@@ -107,6 +107,21 @@ type AuditEdge @nda {
   node: Audit!
 }
 
+type ComplianceFramework implements Node {
+  id: ID!
+  framework: Framework! @goField(forceResolver: true)
+}
+
+type ComplianceFrameworkConnection {
+  edges: [ComplianceFrameworkEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ComplianceFrameworkEdge {
+  cursor: CursorKey!
+  node: ComplianceFramework!
+}
+
 enum CountryCode
   @goModel(model: "go.probo.inc/probo/pkg/coredata.CountryCode") {
   AD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAD")
@@ -542,6 +557,13 @@ type TrustCenter implements Node {
     last: Int
     before: CursorKey
   ): TrustCenterFileConnection! @goField(forceResolver: true)
+
+  complianceFrameworks(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): ComplianceFrameworkConnection! @goField(forceResolver: true)
 }
 
 type TrustCenterAccess implements Node {
