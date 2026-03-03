@@ -22,9 +22,9 @@ import (
 type WebhookEventStatus string
 
 const (
-	WebhookEventStatusPending WebhookEventStatus = "PENDING"
-	WebhookEventStatusSucceeded  WebhookEventStatus = "SUCCEEDED"
-	WebhookEventStatusFailed     WebhookEventStatus = "FAILED"
+	WebhookEventStatusPending   WebhookEventStatus = "PENDING"
+	WebhookEventStatusSucceeded WebhookEventStatus = "SUCCEEDED"
+	WebhookEventStatusFailed    WebhookEventStatus = "FAILED"
 )
 
 func (s WebhookEventStatus) String() string {

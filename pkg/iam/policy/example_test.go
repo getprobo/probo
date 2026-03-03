@@ -204,4 +204,3 @@ func Example_conditionBasedAccess() {
 	// User update own profile: allow
 	// User update other profile: no_match
 }
-

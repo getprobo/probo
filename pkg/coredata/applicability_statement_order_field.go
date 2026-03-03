@@ -21,8 +21,8 @@ import (
 type ApplicabilityStatementOrderField string
 
 const (
-	ApplicabilityStatementOrderFieldCreatedAt            ApplicabilityStatementOrderField = "CREATED_AT"
-	ApplicabilityStatementOrderFieldControlSectionTitle  ApplicabilityStatementOrderField = "CONTROL_SECTION_TITLE"
+	ApplicabilityStatementOrderFieldCreatedAt           ApplicabilityStatementOrderField = "CREATED_AT"
+	ApplicabilityStatementOrderFieldControlSectionTitle ApplicabilityStatementOrderField = "CONTROL_SECTION_TITLE"
 )
 
 func (p ApplicabilityStatementOrderField) Column() string {

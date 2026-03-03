@@ -19,9 +19,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"html/template"
 	"io"
 	"strings"
-	"html/template"
 	"time"
 
 	"github.com/digitorus/timestamp"

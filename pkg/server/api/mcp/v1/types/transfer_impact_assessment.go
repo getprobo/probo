@@ -47,7 +47,7 @@ func NewListTransferImpactAssessmentsOutput(pg *page.Page[*coredata.TransferImpa
 		nextCursor = &cursorKey
 	}
 	return ListTransferImpactAssessmentsOutput{
-		NextCursor:                 nextCursor,
+		NextCursor:                nextCursor,
 		TransferImpactAssessments: items,
 	}
 }

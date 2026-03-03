@@ -203,9 +203,9 @@ func TestEvaluator_Evaluate_MultipleConditions(t *testing.T) {
 	)
 
 	tests := []struct {
-		name     string
-		ctx      ConditionContext
-		want     Decision
+		name string
+		ctx  ConditionContext
+		want Decision
 	}{
 		{
 			name: "both conditions satisfied",
@@ -260,10 +260,10 @@ func TestEvaluator_Evaluate_WildcardActions(t *testing.T) {
 	evaluator := NewEvaluator()
 
 	tests := []struct {
-		name    string
-		policy  *Policy
-		action  string
-		want    Decision
+		name   string
+		policy *Policy
+		action string
+		want   Decision
 	}{
 		{
 			name:   "full wildcard allows everything",
@@ -443,4 +443,3 @@ func TestEvaluationResult_IsAllowed(t *testing.T) {
 		})
 	}
 }
-

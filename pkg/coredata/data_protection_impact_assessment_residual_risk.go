@@ -66,4 +66,3 @@ func (p *DataProtectionImpactAssessmentResidualRisk) Scan(value any) error {
 func (p DataProtectionImpactAssessmentResidualRisk) Value() (driver.Value, error) {
 	return p.String(), nil
 }
-

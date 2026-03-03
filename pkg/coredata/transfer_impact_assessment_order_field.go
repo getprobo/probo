@@ -43,4 +43,3 @@ func (p *TransferImpactAssessmentOrderField) UnmarshalText(text []byte) error {
 	}
 	return fmt.Errorf("invalid TransferImpactAssessmentOrderField value: %q", val)
 }
-

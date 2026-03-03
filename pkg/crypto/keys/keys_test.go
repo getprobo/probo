@@ -21,9 +21,9 @@ import (
 	"errors"
 	"testing"
 
-	"go.probo.inc/probo/pkg/crypto/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/crypto/keys"
 )
 
 func TestGenerate(t *testing.T) {

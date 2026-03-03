@@ -29,12 +29,12 @@ import (
 
 type (
 	WebhookData struct {
-		ID             gid.GID         `db:"id"`
-		OrganizationID gid.GID         `db:"organization_id"`
+		ID             gid.GID          `db:"id"`
+		OrganizationID gid.GID          `db:"organization_id"`
 		EventType      WebhookEventType `db:"event_type"`
-		Data           json.RawMessage `db:"data"`
-		CreatedAt      time.Time       `db:"created_at"`
-		ProcessedAt    *time.Time      `db:"processed_at"`
+		Data           json.RawMessage  `db:"data"`
+		CreatedAt      time.Time        `db:"created_at"`
+		ProcessedAt    *time.Time       `db:"processed_at"`
 	}
 
 	WebhookDataList []*WebhookData

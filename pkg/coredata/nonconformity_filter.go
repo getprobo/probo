@@ -15,8 +15,8 @@
 package coredata
 
 import (
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (

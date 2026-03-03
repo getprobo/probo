@@ -166,11 +166,11 @@ func TestActionRegistry_ByService(t *testing.T) {
 
 func TestParseAction(t *testing.T) {
 	tests := []struct {
-		action    Action
-		wantSvc   string
-		wantRes   string
-		wantOp    string
-		wantErr   bool
+		action  Action
+		wantSvc string
+		wantRes string
+		wantOp  string
+		wantErr bool
 	}{
 		{
 			action:  "iam:identity:get",
@@ -217,4 +217,3 @@ func TestParseAction(t *testing.T) {
 		})
 	}
 }
-

@@ -86,4 +86,3 @@ func (m *ActionMatcher) MatchesAny(patterns []string, target string) bool {
 	}
 	return false
 }
-

@@ -15,8 +15,8 @@
 package pageinfo
 
 import (
-	"go.probo.inc/probo/pkg/page"
 	"go.gearno.de/x/ref"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type PageInfo struct {

@@ -100,13 +100,13 @@ const (
 	ActionVendorRiskAssessmentList   = "core:vendor-risk-assessment:list"
 
 	// Framework actions
-	ActionFrameworkGet                          = "core:framework:get"
-	ActionFrameworkList                         = "core:framework:list"
-	ActionFrameworkCreate                       = "core:framework:create"
-	ActionFrameworkUpdate                       = "core:framework:update"
-	ActionFrameworkDelete                       = "core:framework:delete"
+	ActionFrameworkGet    = "core:framework:get"
+	ActionFrameworkList   = "core:framework:list"
+	ActionFrameworkCreate = "core:framework:create"
+	ActionFrameworkUpdate = "core:framework:update"
+	ActionFrameworkDelete = "core:framework:delete"
 	ActionFrameworkExport = "core:framework:export"
-	ActionFrameworkImport                       = "core:framework:import"
+	ActionFrameworkImport = "core:framework:import"
 
 	// Control actions
 	ActionControlGet                     = "core:control:get"

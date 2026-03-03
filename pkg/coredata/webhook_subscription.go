@@ -281,14 +281,14 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":               scope.GetTenantID(),
-		"webhook_subscription_id": w.ID,
-		"organization_id":         w.OrganizationID,
-		"endpoint_url":            w.EndpointURL,
-		"selected_events":         w.SelectedEvents,
+		"tenant_id":                scope.GetTenantID(),
+		"webhook_subscription_id":  w.ID,
+		"organization_id":          w.OrganizationID,
+		"endpoint_url":             w.EndpointURL,
+		"selected_events":          w.SelectedEvents,
 		"encrypted_signing_secret": w.EncryptedSigningSecret,
-		"created_at":              w.CreatedAt,
-		"updated_at":              w.UpdatedAt,
+		"created_at":               w.CreatedAt,
+		"updated_at":               w.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 

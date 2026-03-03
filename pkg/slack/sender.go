@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 )
 
 type (

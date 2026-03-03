@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
 )
 
 type AuditService struct {

@@ -29,12 +29,12 @@ import (
 
 type (
 	WebhookEvent struct {
-		ID                     gid.GID            `db:"id"`
-		WebhookDataID          gid.GID            `db:"webhook_data_id"`
+		ID                    gid.GID            `db:"id"`
+		WebhookDataID         gid.GID            `db:"webhook_data_id"`
 		WebhookSubscriptionID gid.GID            `db:"webhook_subscription_id"`
-		Status                 WebhookEventStatus `db:"status"`
-		Response               json.RawMessage    `db:"response"`
-		CreatedAt              time.Time          `db:"created_at"`
+		Status                WebhookEventStatus `db:"status"`
+		Response              json.RawMessage    `db:"response"`
+		CreatedAt             time.Time          `db:"created_at"`
 	}
 
 	WebhookEvents []*WebhookEvent
@@ -143,13 +143,13 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                       w.ID,
-		"tenant_id":                scope.GetTenantID(),
-		"webhook_data_id":          w.WebhookDataID,
+		"id":                      w.ID,
+		"tenant_id":               scope.GetTenantID(),
+		"webhook_data_id":         w.WebhookDataID,
 		"webhook_subscription_id": w.WebhookSubscriptionID,
-		"status":                   w.Status,
-		"response":                 w.Response,
-		"created_at":               w.CreatedAt,
+		"status":                  w.Status,
+		"response":                w.Response,
+		"created_at":              w.CreatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

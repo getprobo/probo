@@ -62,11 +62,11 @@ ON CONFLICT (document_id, approver_profile_id) DO NOTHING;
 `
 
 	args := pgx.StrictNamedArgs{
-		"document_id":        da.DocumentID,
+		"document_id":         da.DocumentID,
 		"approver_profile_id": da.ApproverProfileID,
-		"organization_id":    da.OrganizationID,
-		"tenant_id":          scope.GetTenantID(),
-		"created_at":         da.CreatedAt,
+		"organization_id":     da.OrganizationID,
+		"tenant_id":           scope.GetTenantID(),
+		"created_at":          da.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 

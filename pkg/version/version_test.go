@@ -18,9 +18,9 @@ import (
 	"strings"
 	"testing"
 
-	"go.probo.inc/probo/pkg/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/version"
 )
 
 func TestGetBuildInfo(t *testing.T) {

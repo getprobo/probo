@@ -22,8 +22,8 @@ import (
 type RightsRequestType string
 
 const (
-	RightsRequestTypeAccess     RightsRequestType = "ACCESS"
-	RightsRequestTypeDeletion   RightsRequestType = "DELETION"
+	RightsRequestTypeAccess      RightsRequestType = "ACCESS"
+	RightsRequestTypeDeletion    RightsRequestType = "DELETION"
 	RightsRequestTypePortability RightsRequestType = "PORTABILITY"
 )
 
