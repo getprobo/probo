@@ -129,13 +129,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
     <div className="text-sm border border-border-solid -mt-px flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
-        {audit.framework.name}
-        {audit.name && (
-          <>
-            {" "}
-            <em>{audit.name}</em>
-          </>
-        )}
+        {audit.name ?? audit.framework.name}
       </div>
       {audit.report && audit.report.isUserAuthorized
         ? (
