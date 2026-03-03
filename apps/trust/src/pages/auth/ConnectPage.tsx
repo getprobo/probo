@@ -67,7 +67,7 @@ export function ConnectPage(props: {
     safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
   } else {
     const pathPrefix = getPathPrefix();
-    safeContinueUrl = window.location.origin + pathPrefix ? getPathPrefix() : "/";
+    safeContinueUrl = window.location.origin + (pathPrefix ? getPathPrefix() : "/");
   }
 
   useEffect(() => {

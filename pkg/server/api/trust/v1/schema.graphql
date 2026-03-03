@@ -12,6 +12,8 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
+directive @nda on FIELD_DEFINITION | OBJECT
+
 scalar CursorKey
 scalar Datetime
 scalar EmailAddr
@@ -56,7 +58,7 @@ enum DocumentType
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
 }
 
-type Document implements Node {
+type Document implements Node @nda {
   id: ID!
   title: String!
   documentType: DocumentType!
@@ -64,43 +66,43 @@ type Document implements Node {
   hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
-type DocumentConnection {
+type DocumentConnection @nda {
   edges: [DocumentEdge!]!
   pageInfo: PageInfo!
 }
 
-type DocumentEdge {
+type DocumentEdge @nda {
   cursor: CursorKey!
   node: Document!
 }
 
-type Framework implements Node {
+type Framework implements Node @nda {
   id: ID!
   name: String!
   lightLogoURL: String @goField(forceResolver: true)
   darkLogoURL: String @goField(forceResolver: true)
 }
 
-type Report implements Node {
+type Report implements Node @nda {
   id: ID!
   filename: String!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
-type Audit implements Node {
+type Audit implements Node @nda {
   id: ID!
   name: String
   framework: Framework! @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
 }
 
-type AuditConnection {
+type AuditConnection @nda {
   edges: [AuditEdge!]!
   pageInfo: PageInfo!
 }
 
-type AuditEdge {
+type AuditEdge @nda {
   cursor: CursorKey!
   node: Audit!
 }
@@ -429,7 +431,7 @@ enum VendorCategory
     )
 }
 
-type Vendor implements Node {
+type Vendor implements Node @nda {
   id: ID!
   name: String!
   description: String
@@ -442,18 +444,18 @@ type Vendor implements Node {
 type VendorConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.VendorConnection"
-  ) {
+  ) @nda {
   edges: [VendorEdge!]!
   pageInfo: PageInfo!
   totalCount: Int! @goField(forceResolver: true)
 }
 
-type VendorEdge {
+type VendorEdge @nda {
   cursor: CursorKey!
   node: Vendor!
 }
 
-type TrustCenterReference implements Node {
+type TrustCenterReference implements Node @nda {
   id: ID!
   name: String!
   description: String
@@ -461,17 +463,17 @@ type TrustCenterReference implements Node {
   logoUrl: String! @goField(forceResolver: true)
 }
 
-type TrustCenterReferenceConnection {
+type TrustCenterReferenceConnection @nda {
   edges: [TrustCenterReferenceEdge!]!
   pageInfo: PageInfo!
 }
 
-type TrustCenterReferenceEdge {
+type TrustCenterReferenceEdge @nda {
   cursor: CursorKey!
   node: TrustCenterReference!
 }
 
-type TrustCenterFile implements Node {
+type TrustCenterFile implements Node @nda {
   id: ID!
   name: String!
   category: String!
@@ -479,12 +481,12 @@ type TrustCenterFile implements Node {
   hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
-type TrustCenterFileConnection {
+type TrustCenterFileConnection @nda {
   edges: [TrustCenterFileEdge!]!
   pageInfo: PageInfo!
 }
 
-type TrustCenterFileEdge {
+type TrustCenterFileEdge @nda {
   cursor: CursorKey!
   node: TrustCenterFile!
 }
@@ -757,29 +759,29 @@ type Mutation {
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
     @session(required: NONE)
 
-  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT)
+  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT) @nda
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @session(required: OPTIONAL)
+    @session(required: OPTIONAL) @nda
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @session(required: OPTIONAL)
+    @session(required: OPTIONAL) @nda
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL)
+  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL) @nda
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT)
+  ): RequestAccessesPayload! @session(required: PRESENT) @nda
 
   requestReportAccess(
     input: RequestReportAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT)
+  ): RequestAccessesPayload! @session(required: PRESENT) @nda
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT)
+  ): RequestAccessesPayload! @session(required: PRESENT) @nda
 
   acceptElectronicSignature(
     input: AcceptElectronicSignatureInput!

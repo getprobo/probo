@@ -51,6 +51,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	Nda     func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 	Session func(ctx context.Context, obj any, next graphql.Resolver, required session.SessionRequirement) (res any, err error)
 }
 
@@ -1319,6 +1320,8 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
+directive @nda on FIELD_DEFINITION | OBJECT
+
 scalar CursorKey
 scalar Datetime
 scalar EmailAddr
@@ -1363,7 +1366,7 @@ enum DocumentType
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
 }
 
-type Document implements Node {
+type Document implements Node @nda {
   id: ID!
   title: String!
   documentType: DocumentType!
@@ -1371,43 +1374,43 @@ type Document implements Node {
   hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
-type DocumentConnection {
+type DocumentConnection @nda {
   edges: [DocumentEdge!]!
   pageInfo: PageInfo!
 }
 
-type DocumentEdge {
+type DocumentEdge @nda {
   cursor: CursorKey!
   node: Document!
 }
 
-type Framework implements Node {
+type Framework implements Node @nda {
   id: ID!
   name: String!
   lightLogoURL: String @goField(forceResolver: true)
   darkLogoURL: String @goField(forceResolver: true)
 }
 
-type Report implements Node {
+type Report implements Node @nda {
   id: ID!
   filename: String!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
-type Audit implements Node {
+type Audit implements Node @nda {
   id: ID!
   name: String
   framework: Framework! @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
 }
 
-type AuditConnection {
+type AuditConnection @nda {
   edges: [AuditEdge!]!
   pageInfo: PageInfo!
 }
 
-type AuditEdge {
+type AuditEdge @nda {
   cursor: CursorKey!
   node: Audit!
 }
@@ -1736,7 +1739,7 @@ enum VendorCategory
     )
 }
 
-type Vendor implements Node {
+type Vendor implements Node @nda {
   id: ID!
   name: String!
   description: String
@@ -1749,18 +1752,18 @@ type Vendor implements Node {
 type VendorConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.VendorConnection"
-  ) {
+  ) @nda {
   edges: [VendorEdge!]!
   pageInfo: PageInfo!
   totalCount: Int! @goField(forceResolver: true)
 }
 
-type VendorEdge {
+type VendorEdge @nda {
   cursor: CursorKey!
   node: Vendor!
 }
 
-type TrustCenterReference implements Node {
+type TrustCenterReference implements Node @nda {
   id: ID!
   name: String!
   description: String
@@ -1768,17 +1771,17 @@ type TrustCenterReference implements Node {
   logoUrl: String! @goField(forceResolver: true)
 }
 
-type TrustCenterReferenceConnection {
+type TrustCenterReferenceConnection @nda {
   edges: [TrustCenterReferenceEdge!]!
   pageInfo: PageInfo!
 }
 
-type TrustCenterReferenceEdge {
+type TrustCenterReferenceEdge @nda {
   cursor: CursorKey!
   node: TrustCenterReference!
 }
 
-type TrustCenterFile implements Node {
+type TrustCenterFile implements Node @nda {
   id: ID!
   name: String!
   category: String!
@@ -1786,12 +1789,12 @@ type TrustCenterFile implements Node {
   hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
-type TrustCenterFileConnection {
+type TrustCenterFileConnection @nda {
   edges: [TrustCenterFileEdge!]!
   pageInfo: PageInfo!
 }
 
-type TrustCenterFileEdge {
+type TrustCenterFileEdge @nda {
   cursor: CursorKey!
   node: TrustCenterFile!
 }
@@ -2064,29 +2067,29 @@ type Mutation {
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
     @session(required: NONE)
 
-  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT)
+  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT) @nda
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @session(required: OPTIONAL)
+    @session(required: OPTIONAL) @nda
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @session(required: OPTIONAL)
+    @session(required: OPTIONAL) @nda
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL)
+  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL) @nda
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT)
+  ): RequestAccessesPayload! @session(required: PRESENT) @nda
 
   requestReportAccess(
     input: RequestReportAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT)
+  ): RequestAccessesPayload! @session(required: PRESENT) @nda
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload! @session(required: PRESENT)
+  ): RequestAccessesPayload! @session(required: PRESENT) @nda
 
   acceptElectronicSignature(
     input: AcceptElectronicSignatureInput!
@@ -2582,7 +2585,20 @@ func (ec *executionContext) _Audit_framework(ctx context.Context, field graphql.
 		func(ctx context.Context) (any, error) {
 			return ec.Resolvers.Audit().Framework(ctx, obj)
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.Framework
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework,
 		true,
 		true,
@@ -2621,7 +2637,20 @@ func (ec *executionContext) _Audit_report(ctx context.Context, field graphql.Col
 		func(ctx context.Context) (any, error) {
 			return ec.Resolvers.Audit().Report(ctx, obj)
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.Report
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐReport,
 		true,
 		false,
@@ -2660,7 +2689,20 @@ func (ec *executionContext) _AuditConnection_edges(ctx context.Context, field gr
 		func(ctx context.Context) (any, error) {
 			return obj.Edges, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal []*types.AuditEdge
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNAuditEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdgeᚄ,
 		true,
 		true,
@@ -2763,7 +2805,20 @@ func (ec *executionContext) _AuditEdge_node(ctx context.Context, field graphql.C
 		func(ctx context.Context) (any, error) {
 			return obj.Node, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.Audit
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAudit,
 		true,
 		true,
@@ -2947,7 +3002,20 @@ func (ec *executionContext) _DocumentConnection_edges(ctx context.Context, field
 		func(ctx context.Context) (any, error) {
 			return obj.Edges, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal []*types.DocumentEdge
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNDocumentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdgeᚄ,
 		true,
 		true,
@@ -3050,7 +3118,20 @@ func (ec *executionContext) _DocumentEdge_node(ctx context.Context, field graphq
 		func(ctx context.Context) (any, error) {
 			return obj.Node, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.Document
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNDocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocument,
 		true,
 		true,
@@ -3841,8 +3922,15 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
@@ -3893,8 +3981,15 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.ExportDocumentPDFPayload
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNExportDocumentPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload,
@@ -3956,8 +4051,15 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.ExportReportPDFPayload
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNExportReportPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload,
@@ -4019,8 +4121,15 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.ExportTrustCenterFilePayload
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNExportTrustCenterFilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload,
@@ -4082,8 +4191,15 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
@@ -4145,8 +4261,15 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
@@ -4208,8 +4331,15 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 				}
 				return ec.Directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
@@ -5526,7 +5656,20 @@ func (ec *executionContext) _TrustCenter_documents(ctx context.Context, field gr
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.TrustCenter().Documents(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.DocumentConnection
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNDocumentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection,
 		true,
 		true,
@@ -5573,7 +5716,20 @@ func (ec *executionContext) _TrustCenter_audits(ctx context.Context, field graph
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.TrustCenter().Audits(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.AuditConnection
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNAuditConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditConnection,
 		true,
 		true,
@@ -5620,7 +5776,20 @@ func (ec *executionContext) _TrustCenter_vendors(ctx context.Context, field grap
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.TrustCenter().Vendors(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.VendorConnection
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNVendorConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorConnection,
 		true,
 		true,
@@ -5669,7 +5838,20 @@ func (ec *executionContext) _TrustCenter_references(ctx context.Context, field g
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.TrustCenter().References(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.TrustCenterReferenceConnection
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNTrustCenterReferenceConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceConnection,
 		true,
 		true,
@@ -5716,7 +5898,20 @@ func (ec *executionContext) _TrustCenter_trustCenterFiles(ctx context.Context, f
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.TrustCenter().TrustCenterFiles(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.TrustCenterFileConnection
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNTrustCenterFileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileConnection,
 		true,
 		true,
@@ -6052,7 +6247,20 @@ func (ec *executionContext) _TrustCenterFileConnection_edges(ctx context.Context
 		func(ctx context.Context) (any, error) {
 			return obj.Edges, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal []*types.TrustCenterFileEdge
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNTrustCenterFileEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdgeᚄ,
 		true,
 		true,
@@ -6155,7 +6363,20 @@ func (ec *executionContext) _TrustCenterFileEdge_node(ctx context.Context, field
 		func(ctx context.Context) (any, error) {
 			return obj.Node, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.TrustCenterFile
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNTrustCenterFile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFile,
 		true,
 		true,
@@ -6341,7 +6562,20 @@ func (ec *executionContext) _TrustCenterReferenceConnection_edges(ctx context.Co
 		func(ctx context.Context) (any, error) {
 			return obj.Edges, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal []*types.TrustCenterReferenceEdge
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNTrustCenterReferenceEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdgeᚄ,
 		true,
 		true,
@@ -6444,7 +6678,20 @@ func (ec *executionContext) _TrustCenterReferenceEdge_node(ctx context.Context, 
 		func(ctx context.Context) (any, error) {
 			return obj.Node, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.TrustCenterReference
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNTrustCenterReference2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReference,
 		true,
 		true,
@@ -6688,7 +6935,20 @@ func (ec *executionContext) _VendorConnection_edges(ctx context.Context, field g
 		func(ctx context.Context) (any, error) {
 			return obj.Edges, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal []*types.VendorEdge
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNVendorEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdgeᚄ,
 		true,
 		true,
@@ -6820,7 +7080,20 @@ func (ec *executionContext) _VendorEdge_node(ctx context.Context, field graphql.
 		func(ctx context.Context) (any, error) {
 			return obj.Node, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.Vendor
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNVendor2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendor,
 		true,
 		true,

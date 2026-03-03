@@ -42,6 +42,7 @@ func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, esignSvc *e
 			safeRedirect:  &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()},
 		},
 		Directives: schema.DirectiveRoot{
+			Nda:     newNDADirectiveFunc(logger, trustSvc, esignSvc),
 			Session: session.Directive,
 		},
 	}

@@ -2,14 +2,14 @@ import { useFavicon, useSystemTheme } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Logo, TabLink, Tabs } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Navigate, Outlet } from "react-router";
+import { Outlet } from "react-router";
 
 import { OrganizationSidebar } from "#/components/OrganizationSidebar";
 import { useRequestAccessCallback } from "#/hooks/useRequestAccessCallback";
 import { TrustCenterProvider } from "#/providers/TrustCenterProvider";
 import { Viewer } from "#/providers/Viewer";
-import { currentTrustGraphQuery } from "#/queries/TrustGraph";
 import type { TrustGraphCurrentQuery } from "#/queries/__generated__/TrustGraphCurrentQuery.graphql";
+import { currentTrustGraphQuery } from "#/queries/TrustGraph";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphCurrentQuery>;
@@ -28,16 +28,6 @@ export function MainLayout(props: Props) {
       : trustCenter?.logoFileUrl,
   );
   useRequestAccessCallback();
-
-  const hasPendingNDA
-    = data.viewer
-      && trustCenter.nonDisclosureAgreement
-      && trustCenter.nonDisclosureAgreement.viewerSignature
-      && trustCenter.nonDisclosureAgreement.viewerSignature.status !== "COMPLETED";
-
-  if (hasPendingNDA) {
-    return <Navigate to="/nda" replace />;
-  }
 
   return (
     <Viewer value={data.viewer}>
