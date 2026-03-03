@@ -14,11 +14,13 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
@@ -156,6 +158,17 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 // SendMagicLink is the resolver for the sendMagicLink field.
 func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+	baseURL := compliancepage.CompliancePageBaseURLFromContext(ctx)
+
+	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseurl.MustParse(*baseURL).Host()}
+
+	if input.Continue != nil {
+		_, ok := safeRedirect.Validate(*input.Continue)
+		if !ok {
+			return nil, gqlutils.Invalidf(ctx, "invalid continue URL")
+		}
+	}
 
 	req := &iam.SendMagicLinkRequest{
 		Email:            input.Email,

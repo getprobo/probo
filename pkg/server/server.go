@@ -109,16 +109,16 @@ func NewServer(cfg Config) (*Server, error) {
 		logger:            cfg.Logger,
 	}
 
-	server.setupRoutes()
+	server.setupRoutes(cfg.BaseURL.String())
 
 	return server, nil
 }
 
-func (s *Server) setupRoutes() {
+func (s *Server) setupRoutes(baseURL string) {
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
-		r.Use(compliancepage.NewIDMiddleware(s.trustService))
+		r.Use(compliancepage.NewIDMiddleware(s.trustService, baseURL))
 		r.Use(s.stripTrustPrefix)
 		r.Mount("/", s.trustCenterRouter())
 	})

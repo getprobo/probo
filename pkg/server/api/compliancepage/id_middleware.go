@@ -23,12 +23,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
 )
 
-func NewIDMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Handler {
+func NewIDMiddleware(trustSvc *trust.Service, baseURL string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +56,10 @@ func NewIDMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Handl
 						)
 						return
 					}
+
+					baseURL := baseurl.MustParse(baseURL).AppendPath("/trust/" + id.String()).MustString()
+					ctx = context.WithValue(ctx, compliancePageBaseURLKey, &baseURL)
+					r = r.WithContext(ctx)
 
 					if !compliancePage.Active {
 						next.ServeHTTP(w, r)
@@ -84,6 +89,10 @@ func NewIDMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Handl
 					)
 					return
 				}
+
+				baseURL := baseurl.MustParse(baseURL).AppendPath("/trust/" + value).MustString()
+				ctx = context.WithValue(ctx, compliancePageBaseURLKey, &baseURL)
+				r = r.WithContext(ctx)
 
 				if compliancePage.Active {
 					ctx = context.WithValue(ctx, compliancePageKey, compliancePage)

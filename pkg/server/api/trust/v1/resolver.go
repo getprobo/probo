@@ -26,7 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
@@ -53,7 +52,6 @@ type (
 		iam           *iam.Service
 		sessionCookie *authn.Cookie
 		baseURL       *baseurl.BaseURL
-		safeRedirect  *saferedirect.SafeRedirect
 	}
 )
 

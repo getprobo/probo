@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -54,6 +55,19 @@ func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Hand
 				)
 				return
 			}
+
+			baseURL := &url.URL{
+				Host:   r.Host,
+				Path:   r.URL.Path,
+				Scheme: "https",
+			}
+
+			ctx = context.WithValue(
+				ctx,
+				compliancePageBaseURLKey,
+				new(baseURL.String()),
+			)
+			r = r.WithContext(ctx)
 
 			if compliancePage.Active {
 				ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
