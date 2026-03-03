@@ -164,6 +164,10 @@ $(echo "${SAML_PRIVATE_KEY:-}" | sed 's/^/        /')
       email: "${ACME_EMAIL:-admin@getprobo.com}"
       key-type: "${ACME_KEY_TYPE:-EC256}"
       root-ca: "${ACME_ROOT_CA:-}"
+
+  trust-center:
+    http-addr: "${TRUST_CENTER_HTTP_ADDR:-:80}"
+    https-addr: "${TRUST_CENTER_HTTPS_ADDR:-:443}"
 EOF
 
   # Add connectors if configured
