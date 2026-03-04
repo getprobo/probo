@@ -1529,17 +1529,26 @@ type AuditEdge @nda {
   node: Audit!
 }
 
-type ComplianceFramework implements Node {
+type ComplianceFramework implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFramework"
+  ) {
   id: ID!
   framework: Framework! @goField(forceResolver: true)
 }
 
-type ComplianceFrameworkConnection {
+type ComplianceFrameworkConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFrameworkConnection"
+  ) {
   edges: [ComplianceFrameworkEdge!]!
   pageInfo: PageInfo!
 }
 
-type ComplianceFrameworkEdge {
+type ComplianceFrameworkEdge
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFrameworkEdge"
+  ) {
   cursor: CursorKey!
   node: ComplianceFramework!
 }
@@ -3086,7 +3095,20 @@ func (ec *executionContext) _ComplianceFramework_framework(ctx context.Context, 
 		func(ctx context.Context) (any, error) {
 			return ec.Resolvers.ComplianceFramework().Framework(ctx, obj)
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Nda == nil {
+					var zeroVal *types.Framework
+					return zeroVal, errors.New("directive nda is not implemented")
+				}
+				return ec.Directives.Nda(ctx, obj, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework,
 		true,
 		true,

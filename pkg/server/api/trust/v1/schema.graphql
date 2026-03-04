@@ -107,17 +107,26 @@ type AuditEdge @nda {
   node: Audit!
 }
 
-type ComplianceFramework implements Node {
+type ComplianceFramework implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFramework"
+  ) {
   id: ID!
   framework: Framework! @goField(forceResolver: true)
 }
 
-type ComplianceFrameworkConnection {
+type ComplianceFrameworkConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFrameworkConnection"
+  ) {
   edges: [ComplianceFrameworkEdge!]!
   pageInfo: PageInfo!
 }
 
-type ComplianceFrameworkEdge {
+type ComplianceFrameworkEdge
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceFrameworkEdge"
+  ) {
   cursor: CursorKey!
   node: ComplianceFramework!
 }

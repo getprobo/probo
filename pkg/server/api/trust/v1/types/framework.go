@@ -16,40 +16,11 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/page"
 )
 
 func NewFramework(f *coredata.Framework) *Framework {
 	return &Framework{
 		ID:   f.ID,
 		Name: f.Name,
-	}
-}
-
-func NewComplianceFramework(cf *coredata.ComplianceFramework) *ComplianceFramework {
-	return &ComplianceFramework{
-		ID:          cf.ID,
-		FrameworkID: cf.FrameworkID,
-	}
-}
-
-func NewComplianceFrameworkEdge(cf *coredata.ComplianceFramework) *ComplianceFrameworkEdge {
-	return &ComplianceFrameworkEdge{
-		Cursor: cf.CursorKey(coredata.ComplianceFrameworkOrderFieldRank),
-		Node:   NewComplianceFramework(cf),
-	}
-}
-
-func NewComplianceFrameworkConnection(
-	p *page.Page[*coredata.ComplianceFramework, coredata.ComplianceFrameworkOrderField],
-) *ComplianceFrameworkConnection {
-	edges := make([]*ComplianceFrameworkEdge, len(p.Data))
-	for i, cf := range p.Data {
-		edges[i] = NewComplianceFrameworkEdge(cf)
-	}
-
-	return &ComplianceFrameworkConnection{
-		Edges:    edges,
-		PageInfo: NewPageInfo(p),
 	}
 }
