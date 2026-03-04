@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.137.0] - 2026-03-04
+
+### Added
+
+- Compliance page frameworks ordering and display toggling
+
+### Fixed
+
+- Cmopliance page connect redirection fix for existing identities
+
 ## [0.136.0] - 2026-03-04
 
 ### Added
