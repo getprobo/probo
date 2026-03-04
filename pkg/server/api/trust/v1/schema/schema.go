@@ -2033,6 +2033,7 @@ type DocumentAccess implements Node {
 }
 
 input SendMagicLinkInput {
+  fullName: String!
   email: EmailAddr!
   continue: String
 }
@@ -9515,13 +9516,20 @@ func (ec *executionContext) unmarshalInputSendMagicLinkInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"email", "continue"}
+	fieldsInOrder := [...]string{"fullName", "email", "continue"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FullName = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)

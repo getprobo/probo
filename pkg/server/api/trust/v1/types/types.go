@@ -214,6 +214,7 @@ type RequestTrustCenterFileAccessInput struct {
 }
 
 type SendMagicLinkInput struct {
+	FullName string    `json:"fullName"`
 	Email    mail.Addr `json:"email"`
 	Continue *string   `json:"continue,omitempty"`
 }

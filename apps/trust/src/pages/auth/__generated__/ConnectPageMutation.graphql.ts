@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<711ecaa392c23004a3bd1dfb24a5751f>>
+ * @generated SignedSource<<f567da0a977d6ae788cdd5d6eff1d59f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 export type SendMagicLinkInput = {
   continue?: string | null | undefined;
   email: any;
+  fullName: string;
 };
 export type ConnectPageMutation$variables = {
   input: SendMagicLinkInput;
