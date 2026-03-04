@@ -673,6 +673,15 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 	)
 }
 
+func (s AuthService) GetMagincLinkEmail(ctx context.Context, tokenString string) (mail.Addr, error) {
+	payload, err := statelesstoken.ValidateToken[MagicLinkData](s.tokenSecret, TokenTypeMagicLink, tokenString)
+	if err != nil {
+		return mail.Nil, NewInvalidTokenError()
+	}
+
+	return payload.Data.Email, nil
+}
+
 func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString string) (*coredata.Identity, *coredata.Session, *string, error) {
 	var (
 		now      = time.Now()

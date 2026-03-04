@@ -16,7 +16,6 @@ package trust_v1
 
 import (
 	"context"
-	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
@@ -25,12 +24,10 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/trust"
 )
 
-func newNDADirectiveFunc(
+func newNDADirective(
 	logger *log.Logger,
-	trustSvc *trust.Service,
 	esignSvc *esign.Service,
 ) func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
 	return func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
@@ -41,24 +38,7 @@ func newNDADirectiveFunc(
 
 		membership := compliancepage.ComplianceMembershipFromContext(ctx)
 		if membership == nil {
-			// Connected user should always have a membership
-			logger.ErrorCtx(ctx, "cannot get membership from context")
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		compliancePage := compliancepage.CompliancePageFromContext(ctx)
-		if compliancePage == nil {
-			logger.ErrorCtx(ctx, "cannot get compliance page from context")
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		if _, err := trustSvc.GetNDAFile(ctx, compliancePage.ID); err != nil {
-			if errors.Is(err, trust.ErrNDAFileNotFound) {
-				return next(ctx)
-			}
-
-			logger.ErrorCtx(ctx, "cannot get NDA file", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlutils.Unauthenticatedf(ctx, "authentication needed")
 		}
 
 		if membership.ElectronicSignatureID == nil {

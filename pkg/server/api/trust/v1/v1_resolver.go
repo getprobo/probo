@@ -210,15 +210,52 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 
 // VerifyMagicLink is the resolver for the verifyMagicLink field.
 func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.VerifyMagicLinkInput) (*types.VerifyMagicLinkPayload, error) {
-	identity, session, continueURL, err := r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
+	session := authn.SessionFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
+
+	email, err := r.iam.AuthService.GetMagincLinkEmail(ctx, input.Token)
 	if err != nil {
 		var errInvalidToken *iam.ErrInvalidToken
 		if errors.As(err, &errInvalidToken) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get magic link email", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	var continueURL *string
+
+	switch {
+	case session == nil:
+		var err error
+		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
+		if err != nil {
+			var errInvalidToken *iam.ErrInvalidToken
+			if errors.As(err, &errInvalidToken) {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	case identity.EmailAddress != email:
+		if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
+			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		var err error
+		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
+		if err != nil {
+			var errInvalidToken *iam.ErrInvalidToken
+			if errors.As(err, &errInvalidToken) {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
 	}
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)

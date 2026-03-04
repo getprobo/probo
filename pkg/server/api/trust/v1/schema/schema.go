@@ -2246,9 +2246,9 @@ type Query {
 
 type Mutation {
   sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
-    @session(required: NONE)
+    @session(required: OPTIONAL)
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
-    @session(required: NONE)
+    @session(required: OPTIONAL)
 
   requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT) @nda
 
@@ -4278,7 +4278,7 @@ func (ec *executionContext) _Mutation_sendMagicLink(ctx context.Context, field g
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "OPTIONAL")
 				if err != nil {
 					var zeroVal *types.SendMagicLinkPayload
 					return zeroVal, err
@@ -4341,7 +4341,7 @@ func (ec *executionContext) _Mutation_verifyMagicLink(ctx context.Context, field
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "OPTIONAL")
 				if err != nil {
 					var zeroVal *types.VerifyMagicLinkPayload
 					return zeroVal, err

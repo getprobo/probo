@@ -40,7 +40,7 @@ func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, esignSvc *e
 			sessionCookie: authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
-			Nda:     newNDADirectiveFunc(logger, trustSvc, esignSvc),
+			Nda:     newNDADirective(logger, esignSvc),
 			Session: session.Directive,
 		},
 	}
