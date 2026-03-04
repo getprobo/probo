@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-## [0.135.1] - 2026-03-04
+## [0.136.0] - 2026-03-04
+
+### Added
+
+- continue URLs for compliance page for better access request flow
+- enforce NDA signature with explicit API error catched in error boundary
+
+### Changed
+
+- framework display name on compliange page org sidebar
+
+## [0.135.1] - 2026-03-03
 
 ### Fixed
 
