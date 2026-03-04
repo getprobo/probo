@@ -213,7 +213,7 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 	session := authn.SessionFromContext(ctx)
 	identity := authn.IdentityFromContext(ctx)
 
-	email, err := r.iam.AuthService.GetMagincLinkEmail(ctx, input.Token)
+	email, err := r.iam.AuthService.GetMagicLinkEmail(ctx, input.Token)
 	if err != nil {
 		var errInvalidToken *iam.ErrInvalidToken
 		if errors.As(err, &errInvalidToken) {

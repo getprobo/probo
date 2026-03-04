@@ -673,7 +673,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 	)
 }
 
-func (s AuthService) GetMagincLinkEmail(ctx context.Context, tokenString string) (mail.Addr, error) {
+func (s AuthService) GetMagicLinkEmail(ctx context.Context, tokenString string) (mail.Addr, error) {
 	payload, err := statelesstoken.ValidateToken[MagicLinkData](s.tokenSecret, TokenTypeMagicLink, tokenString)
 	if err != nil {
 		return mail.Nil, NewInvalidTokenError()
