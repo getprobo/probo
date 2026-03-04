@@ -12755,7 +12755,7 @@ type Profile implements Node {
     fullName: String!
     emailAddress: EmailAddr!
     additionalEmailAddresses: [EmailAddr!]!
-    kind: ProfileKind!
+    kind: ProfileKind
     position: String
     contractStartDate: Datetime
     contractEndDate: Datetime
@@ -46590,9 +46590,9 @@ func (ec *executionContext) _Profile_kind(ctx context.Context, field graphql.Col
 			return obj.Kind, nil
 		},
 		nil,
-		ec.marshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind,
+		ec.marshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -85393,9 +85393,6 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "kind":
 			out.Values[i] = ec._Profile_kind(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "position":
 			out.Values[i] = ec._Profile_position(ctx, field, obj)
 		case "contractStartDate":
@@ -99383,36 +99380,6 @@ func (ec *executionContext) marshalNProfileEdge2ᚖgoᚗproboᚗincᚋproboᚋpk
 	return ec._ProfileEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, v any) (coredata.MembershipProfileKind, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipProfileKind) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[string]coredata.MembershipProfileKind{
-		"EMPLOYEE":        coredata.MembershipProfileKindEmployee,
-		"CONTRACTOR":      coredata.MembershipProfileKindContractor,
-		"SERVICE_ACCOUNT": coredata.MembershipProfileKindServiceAccount,
-	}
-	marshalNProfileKind2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[coredata.MembershipProfileKind]string{
-		coredata.MembershipProfileKindEmployee:       "EMPLOYEE",
-		coredata.MembershipProfileKindContractor:     "CONTRACTOR",
-		coredata.MembershipProfileKindServiceAccount: "SERVICE_ACCOUNT",
-	}
-)
-
 func (ec *executionContext) unmarshalNProfileOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileOrderField(ctx context.Context, v any) (coredata.MembershipProfileOrderField, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNProfileOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileOrderField[tmp]
@@ -103629,6 +103596,38 @@ func (ec *executionContext) unmarshalOProfileFilter2ᚖgoᚗproboᚗincᚋprobo�
 	res, err := ec.unmarshalInputProfileFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
+
+func (ec *executionContext) unmarshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, v any) (*coredata.MembershipProfileKind, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, sel ast.SelectionSet, v *coredata.MembershipProfileKind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[*v])
+	return res
+}
+
+var (
+	unmarshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[string]coredata.MembershipProfileKind{
+		"EMPLOYEE":        coredata.MembershipProfileKindEmployee,
+		"CONTRACTOR":      coredata.MembershipProfileKindContractor,
+		"SERVICE_ACCOUNT": coredata.MembershipProfileKindServiceAccount,
+	}
+	marshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[coredata.MembershipProfileKind]string{
+		coredata.MembershipProfileKindEmployee:       "EMPLOYEE",
+		coredata.MembershipProfileKindContractor:     "CONTRACTOR",
+		coredata.MembershipProfileKindServiceAccount: "SERVICE_ACCOUNT",
+	}
+)
 
 func (ec *executionContext) unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileOrderBy(ctx context.Context, v any) (*types.ProfileOrderBy, error) {
 	if v == nil {

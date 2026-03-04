@@ -1620,17 +1620,17 @@ type ProcessingActivityFilter struct {
 }
 
 type Profile struct {
-	ID                       gid.GID                        `json:"id"`
-	FullName                 string                         `json:"fullName"`
-	EmailAddress             mail.Addr                      `json:"emailAddress"`
-	AdditionalEmailAddresses []mail.Addr                    `json:"additionalEmailAddresses"`
-	Kind                     coredata.MembershipProfileKind `json:"kind"`
-	Position                 *string                        `json:"position,omitempty"`
-	ContractStartDate        *time.Time                     `json:"contractStartDate,omitempty"`
-	ContractEndDate          *time.Time                     `json:"contractEndDate,omitempty"`
-	CreatedAt                time.Time                      `json:"createdAt"`
-	UpdatedAt                time.Time                      `json:"updatedAt"`
-	Permission               bool                           `json:"permission"`
+	ID                       gid.GID                         `json:"id"`
+	FullName                 string                          `json:"fullName"`
+	EmailAddress             mail.Addr                       `json:"emailAddress"`
+	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses"`
+	Kind                     *coredata.MembershipProfileKind `json:"kind,omitempty"`
+	Position                 *string                         `json:"position,omitempty"`
+	ContractStartDate        *time.Time                      `json:"contractStartDate,omitempty"`
+	ContractEndDate          *time.Time                      `json:"contractEndDate,omitempty"`
+	CreatedAt                time.Time                       `json:"createdAt"`
+	UpdatedAt                time.Time                       `json:"updatedAt"`
+	Permission               bool                            `json:"permission"`
 }
 
 func (Profile) IsNode()             {}

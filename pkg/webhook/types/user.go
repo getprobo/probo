@@ -23,19 +23,19 @@ import (
 )
 
 type User struct {
-	ID                       gid.GID                        `json:"id"`
-	OrganizationID           gid.GID                        `json:"organizationId"`
-	EmailAddress             mail.Addr                      `json:"emailAddress"`
-	FullName                 string                         `json:"fullName"`
-	Kind                     coredata.MembershipProfileKind `json:"kind"`
-	Source                   coredata.ProfileSource         `json:"source"`
-	State                    coredata.ProfileState          `json:"state"`
-	AdditionalEmailAddresses mail.Addrs                     `json:"additionalEmailAddresses"`
-	Position                 *string                        `json:"position"`
-	ContractStartDate        *time.Time                     `json:"contractStartDate"`
-	ContractEndDate          *time.Time                     `json:"contractEndDate"`
-	CreatedAt                time.Time                      `json:"createdAt"`
-	UpdatedAt                time.Time                      `json:"updatedAt"`
+	ID                       gid.GID                         `json:"id"`
+	OrganizationID           gid.GID                         `json:"organizationId"`
+	EmailAddress             mail.Addr                       `json:"emailAddress"`
+	FullName                 string                          `json:"fullName"`
+	Kind                     *coredata.MembershipProfileKind `json:"kind"`
+	Source                   coredata.ProfileSource          `json:"source"`
+	State                    coredata.ProfileState           `json:"state"`
+	AdditionalEmailAddresses mail.Addrs                      `json:"additionalEmailAddresses"`
+	Position                 *string                         `json:"position"`
+	ContractStartDate        *time.Time                      `json:"contractStartDate"`
+	ContractEndDate          *time.Time                      `json:"contractEndDate"`
+	CreatedAt                time.Time                       `json:"createdAt"`
+	UpdatedAt                time.Time                       `json:"updatedAt"`
 }
 
 func NewUser(p *coredata.MembershipProfile) *User {

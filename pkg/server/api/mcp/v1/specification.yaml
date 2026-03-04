@@ -151,7 +151,9 @@ components:
             $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/ProfileKind"
+          anyOf:
+            - $ref: "#/components/schemas/ProfileKind"
+            - type: "null"
           description: Profile kind
         position:
           type:
@@ -828,7 +830,9 @@ components:
             $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/ProfileKind"
+          anyOf:
+            - $ref: "#/components/schemas/ProfileKind"
+            - type: "null"
           description: User kind
         position:
           type: ["string", "null"]
@@ -893,7 +897,9 @@ components:
             - type: "null"
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/ProfileKind"
+          anyOf:
+            - $ref: "#/components/schemas/ProfileKind"
+            - type: "null"
           description: User kind
         position:
           type: ["string", "null"]

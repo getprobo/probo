@@ -176,7 +176,7 @@ type Profile implements Node {
   source: String!
   state: ProfileState!
   additionalEmailAddresses: [EmailAddr!]!
-  kind: ProfileKind!
+  kind: ProfileKind
   position: String
   contractStartDate: Datetime
   contractEndDate: Datetime
@@ -709,7 +709,7 @@ input CreateUserInput {
   emailAddress: EmailAddr!
   role: MembershipRole!
   additionalEmailAddresses: [EmailAddr!]
-  kind: ProfileKind!
+  kind: ProfileKind
   position: String
   contractStartDate: Datetime @goField(omittable: true)
   contractEndDate: Datetime @goField(omittable: true)
@@ -734,7 +734,7 @@ input UpdateUserInput {
   id: ID!
   fullName: String!
   additionalEmailAddresses: [EmailAddr!]
-  kind: ProfileKind!
+  kind: ProfileKind
   position: String
   contractStartDate: Datetime @goField(omittable: true)
   contractEndDate: Datetime @goField(omittable: true)

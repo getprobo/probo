@@ -31,21 +31,21 @@ import (
 
 type (
 	MembershipProfile struct {
-		ID                       gid.GID               `db:"id"`
-		IdentityID               gid.GID               `db:"identity_id"`
-		OrganizationID           gid.GID               `db:"organization_id"`
-		EmailAddress             mail.Addr             `db:"email_address"`
-		Source                   ProfileSource         `db:"source"`
-		State                    ProfileState          `db:"state"`
-		FullName                 string                `db:"full_name"`
-		Kind                     MembershipProfileKind `db:"kind"`
-		AdditionalEmailAddresses mail.Addrs            `db:"additional_email_addresses"`
-		Position                 *string               `db:"position"`
-		ContractStartDate        *time.Time            `db:"contract_start_date"`
-		ContractEndDate          *time.Time            `db:"contract_end_date"`
-		OrganizationName         string                `db:"organization_name"`
-		CreatedAt                time.Time             `db:"created_at"`
-		UpdatedAt                time.Time             `db:"updated_at"`
+		ID                       gid.GID                `db:"id"`
+		IdentityID               gid.GID                `db:"identity_id"`
+		OrganizationID           gid.GID                `db:"organization_id"`
+		EmailAddress             mail.Addr              `db:"email_address"`
+		Source                   ProfileSource          `db:"source"`
+		State                    ProfileState           `db:"state"`
+		FullName                 string                 `db:"full_name"`
+		Kind                     *MembershipProfileKind `db:"kind"`
+		AdditionalEmailAddresses mail.Addrs             `db:"additional_email_addresses"`
+		Position                 *string                `db:"position"`
+		ContractStartDate        *time.Time             `db:"contract_start_date"`
+		ContractEndDate          *time.Time             `db:"contract_end_date"`
+		OrganizationName         string                 `db:"organization_name"`
+		CreatedAt                time.Time              `db:"created_at"`
+		UpdatedAt                time.Time              `db:"updated_at"`
 	}
 
 	MembershipProfiles []*MembershipProfile

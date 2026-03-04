@@ -1912,7 +1912,7 @@ type Profile implements Node {
     fullName: String!
     emailAddress: EmailAddr!
     additionalEmailAddresses: [EmailAddr!]!
-    kind: ProfileKind!
+    kind: ProfileKind
     position: String
     contractStartDate: Datetime
     contractEndDate: Datetime

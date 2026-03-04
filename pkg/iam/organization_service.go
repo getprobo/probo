@@ -105,7 +105,7 @@ type (
 		Role                     coredata.MembershipRole
 		FullName                 string
 		AdditionalEmailAddresses mail.Addrs
-		Kind                     coredata.MembershipProfileKind
+		Kind                     *coredata.MembershipProfileKind
 		Position                 *string
 		ContractStartDate        **time.Time
 		ContractEndDate          **time.Time
@@ -115,7 +115,7 @@ type (
 		ID                       gid.GID
 		FullName                 string
 		AdditionalEmailAddresses mail.Addrs
-		Kind                     coredata.MembershipProfileKind
+		Kind                     *coredata.MembershipProfileKind
 		Position                 *string
 		ContractStartDate        **time.Time
 		ContractEndDate          **time.Time
