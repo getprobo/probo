@@ -27,7 +27,7 @@ type ComplianceFramework struct {
 }
 
 func (ComplianceFramework) IsNode()             {}
-func (this ComplianceFramework) GetID() gid.GID { return this.ID }
+func (cf ComplianceFramework) GetID() gid.GID { return cf.ID }
 
 type ComplianceFrameworkConnection struct {
 	Edges    []*ComplianceFrameworkEdge `json:"edges"`
