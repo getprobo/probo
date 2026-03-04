@@ -16,7 +16,6 @@ package coredata
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -26,25 +25,20 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	TrustCenterAccess struct {
-		ID                                        gid.GID                `db:"id"`
-		OrganizationID                            gid.GID                `db:"organization_id"`
-		TenantID                                  gid.TenantID           `db:"tenant_id"`
-		TrustCenterID                             gid.GID                `db:"trust_center_id"`
-		Email                                     mail.Addr              `db:"email"`
-		Name                                      string                 `db:"name"`
-		State                                     TrustCenterAccessState `db:"state"`
-		HasAcceptedNonDisclosureAgreement         bool                   `db:"has_accepted_non_disclosure_agreement"`
-		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage        `db:"has_accepted_non_disclosure_agreement_metadata"`
-		NDAFileID                                 *gid.GID               `db:"nda_file_id"`
-		ElectronicSignatureID                     *gid.GID               `db:"electronic_signature_id"`
-		CreatedAt                                 time.Time              `db:"created_at"`
-		UpdatedAt                                 time.Time              `db:"updated_at"`
+		ID                    gid.GID      `db:"id"`
+		OrganizationID        gid.GID      `db:"organization_id"`
+		TenantID              gid.TenantID `db:"tenant_id"`
+		IdentityID            gid.GID      `db:"identity_id"`
+		TrustCenterID         gid.GID      `db:"trust_center_id"`
+		NDAFileID             *gid.GID     `db:"nda_file_id"`
+		ElectronicSignatureID *gid.GID     `db:"electronic_signature_id"`
+		CreatedAt             time.Time    `db:"created_at"`
+		UpdatedAt             time.Time    `db:"updated_at"`
 	}
 
 	TrustCenterAccesses []*TrustCenterAccess
@@ -85,11 +79,6 @@ SELECT
 	organization_id,
 	tenant_id,
 	trust_center_id,
-	email,
-	name,
-	state,
-	has_accepted_non_disclosure_agreement,
-	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
 	electronic_signature_id,
 	created_at,
@@ -126,12 +115,12 @@ LIMIT 1;
 	return nil
 }
 
-func (tca *TrustCenterAccess) LoadByTrustCenterIDAndEmail(
+func (tca *TrustCenterAccess) LoadByTrustCenterIDAndIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	trustCenterID gid.GID,
-	email mail.Addr,
+	identityID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -139,11 +128,6 @@ SELECT
 	organization_id,
 	tenant_id,
 	trust_center_id,
-	email,
-	name,
-	state,
-	has_accepted_non_disclosure_agreement,
-	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
 	electronic_signature_id,
 	created_at,
@@ -153,7 +137,7 @@ FROM
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
-	AND email = @email
+	AND identity_id = @identity_id
 LIMIT 1;
 `
 
@@ -161,7 +145,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_id": trustCenterID,
-		"email":           email,
+		"identity_id":     identityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -195,10 +179,6 @@ INSERT INTO trust_center_accesses (
 	tenant_id,
 	organization_id,
 	trust_center_id,
-	email,
-	name,
-	state,
-	has_accepted_non_disclosure_agreement,
 	electronic_signature_id,
 	created_at,
 	updated_at
@@ -207,10 +187,6 @@ INSERT INTO trust_center_accesses (
 	@tenant_id,
 	@organization_id,
 	@trust_center_id,
-	@email,
-	@name,
-	@state,
-	@has_accepted_non_disclosure_agreement,
 	@electronic_signature_id,
 	@created_at,
 	@updated_at
@@ -218,17 +194,13 @@ INSERT INTO trust_center_accesses (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                                    tca.ID,
-		"tenant_id":                             tca.TenantID,
-		"organization_id":                       tca.OrganizationID,
-		"trust_center_id":                       tca.TrustCenterID,
-		"email":                                 tca.Email,
-		"name":                                  tca.Name,
-		"state":                                 tca.State,
-		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
-		"electronic_signature_id":               tca.ElectronicSignatureID,
-		"created_at":                            tca.CreatedAt,
-		"updated_at":                            tca.UpdatedAt,
+		"id":                      tca.ID,
+		"tenant_id":               tca.TenantID,
+		"organization_id":         tca.OrganizationID,
+		"trust_center_id":         tca.TrustCenterID,
+		"electronic_signature_id": tca.ElectronicSignatureID,
+		"created_at":              tca.CreatedAt,
+		"updated_at":              tca.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -252,11 +224,7 @@ func (tca *TrustCenterAccess) Update(
 ) error {
 	q := `
 UPDATE trust_center_accesses SET
-	name = @name,
-	state = @state,
 	updated_at = @updated_at,
-	has_accepted_non_disclosure_agreement = @has_accepted_non_disclosure_agreement,
-	has_accepted_non_disclosure_agreement_metadata = @has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id = @nda_file_id,
 	electronic_signature_id = @electronic_signature_id
 WHERE
@@ -267,12 +235,8 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                                    tca.ID,
-		"name":                                  tca.Name,
-		"state":                                 tca.State,
-		"updated_at":                            tca.UpdatedAt,
-		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
-		"has_accepted_non_disclosure_agreement_metadata": tca.HasAcceptedNonDisclosureAgreementMetadata,
+		"id":                      tca.ID,
+		"updated_at":              tca.UpdatedAt,
 		"nda_file_id":             tca.NDAFileID,
 		"electronic_signature_id": tca.ElectronicSignatureID,
 	}
@@ -326,11 +290,6 @@ SELECT
 	organization_id,
 	tenant_id,
 	trust_center_id,
-	email,
-	name,
-	state,
-	has_accepted_non_disclosure_agreement,
-	has_accepted_non_disclosure_agreement_metadata,
 	nda_file_id,
 	electronic_signature_id,
 	created_at,

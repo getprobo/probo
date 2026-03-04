@@ -30,7 +30,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -277,18 +276,18 @@ func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgI
 	return s.WithTenant(orgID.TenantID()).TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
 }
 
-func (s *Service) GetMembershipByCompliancePageIDAndEmail(ctx context.Context, compliancePageID gid.GID, email mail.Addr) (*coredata.TrustCenterAccess, error) {
+func (s *Service) GetMembershipByCompliancePageIDAndIdentityID(ctx context.Context, compliancePageID gid.GID, identityID gid.GID) (*coredata.TrustCenterAccess, error) {
 	membership := &coredata.TrustCenterAccess{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return membership.LoadByTrustCenterIDAndEmail(
+			return membership.LoadByTrustCenterIDAndIdentityID(
 				ctx,
 				conn,
 				coredata.NewScopeFromObjectID(compliancePageID),
 				compliancePageID,
-				email,
+				identityID,
 			)
 		},
 	)

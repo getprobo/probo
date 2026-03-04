@@ -28,7 +28,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -40,8 +39,7 @@ type (
 
 	TrustCenterAccessRequest struct {
 		TrustCenterID      gid.GID
-		Email              mail.Addr
-		FullName           string
+		IdentityID         gid.GID
 		DocumentIDs        []gid.GID
 		ReportIDs          []gid.GID
 		TrustCenterFileIDs []gid.GID
@@ -52,20 +50,11 @@ const (
 	TrustCenterAccessURLFormat = "https://%s/organizations/%s/trust-center/access"
 )
 
-func (tcar *TrustCenterAccessRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(tcar.Email.Domain(), "email", validator.NotBlacklisted())
-
-	return v.Error()
-}
-
 func (s TrustCenterAccessService) ensureAccessInTx(
 	ctx context.Context,
 	tx pg.Conn,
 	trustCenterID gid.GID,
-	email mail.Addr,
-	fullName string,
+	identityID gid.GID,
 ) (*coredata.TrustCenterAccess, *coredata.TrustCenter, error) {
 	now := time.Now()
 
@@ -74,8 +63,13 @@ func (s TrustCenterAccessService) ensureAccessInTx(
 		return nil, nil, fmt.Errorf("cannot load trust center: %w", err)
 	}
 
+	identity := &coredata.Identity{}
+	if err := identity.LoadByID(ctx, tx, identityID); err != nil {
+		return nil, nil, fmt.Errorf("cannot load identity: %w", err)
+	}
+
 	existingAccess := &coredata.TrustCenterAccess{}
-	err := existingAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, email)
+	err := existingAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, s.svc.scope, trustCenterID, identityID)
 	if err == nil {
 		return existingAccess, trustCenter, nil
 	}
@@ -85,16 +79,12 @@ func (s TrustCenterAccessService) ensureAccessInTx(
 	}
 
 	access := &coredata.TrustCenterAccess{
-		ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-		OrganizationID:                    trustCenter.OrganizationID,
-		TenantID:                          s.svc.scope.GetTenantID(),
-		TrustCenterID:                     trustCenterID,
-		Email:                             email,
-		Name:                              fullName,
-		State:                             coredata.TrustCenterAccessStateActive,
-		HasAcceptedNonDisclosureAgreement: false,
-		CreatedAt:                         now,
-		UpdatedAt:                         now,
+		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+		OrganizationID: trustCenter.OrganizationID,
+		TenantID:       s.svc.scope.GetTenantID(),
+		TrustCenterID:  trustCenterID,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
@@ -105,7 +95,7 @@ func (s TrustCenterAccessService) ensureAccessInTx(
 				OrganizationID: access.OrganizationID,
 				DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
 				FileID:         *trustCenter.NonDisclosureAgreementFileID,
-				SignerEmail:    access.Email,
+				SignerEmail:    identity.EmailAddress,
 			},
 		)
 		if err != nil {
@@ -124,8 +114,7 @@ func (s TrustCenterAccessService) ensureAccessInTx(
 func (s TrustCenterAccessService) EnsureAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email mail.Addr,
-	fullName string,
+	identityID gid.GID,
 ) (*coredata.TrustCenterAccess, error) {
 	var access *coredata.TrustCenterAccess
 
@@ -133,7 +122,7 @@ func (s TrustCenterAccessService) EnsureAccess(
 		ctx,
 		func(tx pg.Conn) error {
 			var err error
-			access, _, err = s.ensureAccessInTx(ctx, tx, trustCenterID, email, fullName)
+			access, _, err = s.ensureAccessInTx(ctx, tx, trustCenterID, identityID)
 			return err
 		},
 	)
@@ -145,10 +134,6 @@ func (s TrustCenterAccessService) Request(
 	ctx context.Context,
 	req *TrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request arguments: %w", err)
-	}
-
 	var (
 		now    = time.Now()
 		access *coredata.TrustCenterAccess
@@ -160,7 +145,7 @@ func (s TrustCenterAccessService) Request(
 			var trustCenter *coredata.TrustCenter
 			var err error
 
-			access, trustCenter, err = s.ensureAccessInTx(ctx, tx, req.TrustCenterID, req.Email, req.FullName)
+			access, trustCenter, err = s.ensureAccessInTx(ctx, tx, req.TrustCenterID, req.IdentityID)
 			if err != nil {
 				return err
 			}
@@ -272,7 +257,7 @@ func (s TrustCenterAccessService) Request(
 		return nil, err
 	}
 
-	if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.Email, req.TrustCenterID); err != nil {
+	if err := s.svc.SlackMessages.QueueSlackNotification(ctx, req.IdentityID, req.TrustCenterID); err != nil {
 		s.logger.ErrorCtx(ctx, "cannot queue slack notification", log.Error(err))
 	}
 
@@ -282,12 +267,12 @@ func (s TrustCenterAccessService) Request(
 func (s TrustCenterAccessService) GetAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email mail.Addr,
+	identityID gid.GID,
 ) (coredata.TrustCenterAccess, error) {
 	var access coredata.TrustCenterAccess
 
 	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
+		return access.LoadByTrustCenterIDAndIdentityID(ctx, conn, s.svc.scope, trustCenterID, identityID)
 	})
 
 	return access, err
@@ -296,14 +281,14 @@ func (s TrustCenterAccessService) GetAccess(
 func (s TrustCenterAccessService) GetDocumentAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email mail.Addr,
+	identityID gid.GID,
 	documentID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
 	var documentAccess *coredata.TrustCenterDocumentAccess
 
 	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
 		access := &coredata.TrustCenterAccess{}
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
+		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, s.svc.scope, trustCenterID, identityID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrMembershipNotFound
@@ -312,8 +297,15 @@ func (s TrustCenterAccessService) GetDocumentAccess(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		if access.State != coredata.TrustCenterAccessStateActive {
-			return ErrMembershipInactive
+		profile := &coredata.MembershipProfile{}
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, s.svc.scope, identityID, access.OrganizationID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrUserNotFound
+			}
+		}
+
+		if profile.State != coredata.ProfileStateActive {
+			return ErrUserInactive
 		}
 
 		documentAccess = &coredata.TrustCenterDocumentAccess{}
@@ -339,14 +331,14 @@ func (s TrustCenterAccessService) GetDocumentAccess(
 func (s TrustCenterAccessService) GetReportAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email mail.Addr,
+	identityID gid.GID,
 	reportID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
 	var reportAccess *coredata.TrustCenterDocumentAccess
 
 	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
 		access := &coredata.TrustCenterAccess{}
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
+		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, s.svc.scope, trustCenterID, identityID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrMembershipNotFound
@@ -355,8 +347,15 @@ func (s TrustCenterAccessService) GetReportAccess(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		if access.State != coredata.TrustCenterAccessStateActive {
-			return ErrMembershipInactive
+		profile := &coredata.MembershipProfile{}
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, s.svc.scope, identityID, access.OrganizationID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrUserNotFound
+			}
+		}
+
+		if profile.State != coredata.ProfileStateActive {
+			return ErrUserInactive
 		}
 
 		reportAccess = &coredata.TrustCenterDocumentAccess{}
@@ -382,14 +381,14 @@ func (s TrustCenterAccessService) GetReportAccess(
 func (s TrustCenterAccessService) GetTrustCenterFileAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email mail.Addr,
+	identityID gid.GID,
 	trustCenterFileID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
 	var fileAccess *coredata.TrustCenterDocumentAccess
 
 	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
 		access := &coredata.TrustCenterAccess{}
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
+		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, s.svc.scope, trustCenterID, identityID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrMembershipNotFound
@@ -398,8 +397,15 @@ func (s TrustCenterAccessService) GetTrustCenterFileAccess(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		if access.State != coredata.TrustCenterAccessStateActive {
-			return ErrMembershipInactive
+		profile := &coredata.MembershipProfile{}
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, s.svc.scope, identityID, access.OrganizationID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrUserNotFound
+			}
+		}
+
+		if profile.State != coredata.ProfileStateActive {
+			return ErrUserInactive
 		}
 
 		fileAccess = &coredata.TrustCenterDocumentAccess{}
@@ -436,12 +442,28 @@ func (s *TrustCenterAccessService) GrantByIDs(
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
+		identity := &coredata.Identity{}
+		if err := identity.LoadByEmail(ctx, tx, email); err != nil {
+			return fmt.Errorf("cannot load identity: %w", err)
+		}
+
 		access := &coredata.TrustCenterAccess{}
-		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenter.ID, email); err != nil {
+		if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, s.svc.scope, trustCenter.ID, identity.ID); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		shouldSendEmail := access.State != coredata.TrustCenterAccessStateActive
+		profile := &coredata.MembershipProfile{}
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, s.svc.scope, identity.ID, access.OrganizationID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return ErrUserNotFound
+			}
+		}
+
+		if profile.State != coredata.ProfileStateActive {
+			return ErrUserInactive
+		}
+
+		shouldSendEmail := profile.State != coredata.ProfileStateActive
 		now := time.Now()
 
 		if len(documentIDs) > 0 {
@@ -461,13 +483,13 @@ func (s *TrustCenterAccessService) GrantByIDs(
 		}
 
 		if shouldSendEmail {
-			access.State = coredata.TrustCenterAccessStateActive
-			access.UpdatedAt = now
-			if err := access.Update(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update trust center access: %w", err)
+			profile.State = coredata.ProfileStateActive
+			profile.UpdatedAt = now
+			if err := profile.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update profile: %w", err)
 			}
 
-			if err := s.sendAccessEmail(ctx, tx, access); err != nil {
+			if err := s.sendAccessEmail(ctx, tx, access, profile); err != nil {
 				return fmt.Errorf("cannot send access email: %w", err)
 			}
 		}
@@ -476,7 +498,7 @@ func (s *TrustCenterAccessService) GrantByIDs(
 	})
 }
 
-func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess) error {
+func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess, profile *coredata.MembershipProfile) error {
 	organization := &coredata.Organization{}
 	if err := organization.LoadByID(ctx, tx, s.svc.scope, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
@@ -494,7 +516,7 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, access.Name)
+	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, profile.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
 	if err != nil {
@@ -502,8 +524,8 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 	}
 
 	accessEmail := coredata.NewEmail(
-		access.Name,
-		access.Email,
+		profile.FullName,
+		profile.EmailAddress,
 		subject,
 		textBody,
 		htmlBody,
@@ -529,9 +551,19 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
+		identity := &coredata.Identity{}
+		if err := identity.LoadByEmail(ctx, tx, email); err != nil {
+			return fmt.Errorf("cannot load identity: %w", err)
+		}
+
 		access := &coredata.TrustCenterAccess{}
-		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenter.ID, email); err != nil {
+		if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, s.svc.scope, trustCenter.ID, identity.ID); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
+		}
+
+		profile := &coredata.MembershipProfile{}
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, s.svc.scope, identity.ID, access.OrganizationID); err != nil {
+			return fmt.Errorf("cannot load profile: %w", err)
 		}
 
 		shouldSendEmail := false
@@ -557,7 +589,7 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 		}
 
 		if shouldSendEmail {
-			if err := s.sendDocumentAccessRejectedEmail(ctx, tx, access, documentIDs, reportIDs, fileIDs); err != nil {
+			if err := s.sendDocumentAccessRejectedEmail(ctx, tx, access, profile, documentIDs, reportIDs, fileIDs); err != nil {
 				return fmt.Errorf("cannot send access email: %w", err)
 			}
 		}
@@ -570,6 +602,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	ctx context.Context,
 	tx pg.Conn,
 	access *coredata.TrustCenterAccess,
+	profile *coredata.MembershipProfile,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
 	fileIDs []gid.GID,
@@ -613,11 +646,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	fullName := access.Name
-	if fullName == "" {
-		fullName = access.Email.Username()
-	}
-	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, fullName)
+	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, profile.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterDocumentAccessRejected(
 		ctx,
@@ -629,8 +658,8 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	}
 
 	accessEmail := coredata.NewEmail(
-		access.Name,
-		access.Email,
+		profile.FullName,
+		profile.EmailAddress,
 		subject,
 		textBody,
 		htmlBody,

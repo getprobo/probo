@@ -38,8 +38,7 @@ type (
 
 	CreateTrustCenterAccessRequest struct {
 		TrustCenterID gid.GID
-		Email         mail.Addr
-		FullName      string
+		IdentityID    gid.GID
 	}
 
 	UpdateTrustCenterDocumentAccessRequest struct {
@@ -49,8 +48,6 @@ type (
 
 	UpdateTrustCenterAccessRequest struct {
 		ID                      gid.GID
-		Name                    *string
-		State                   *coredata.TrustCenterAccessState
 		DocumentAccesses        []UpdateTrustCenterDocumentAccessRequest
 		ReportAccesses          []UpdateTrustCenterDocumentAccessRequest
 		TrustCenterFileAccesses []UpdateTrustCenterDocumentAccessRequest
@@ -66,9 +63,6 @@ func (ctcar *CreateTrustCenterAccessRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ctcar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
-	v.Check(ctcar.Email, "email", validator.Required(), validator.NotEmpty())
-	v.Check(ctcar.Email.Domain(), "email", validator.NotBlacklisted())
-	v.Check(ctcar.FullName, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
 }
@@ -77,7 +71,6 @@ func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(utcar.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterAccessEntityType))
-	v.Check(utcar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	for i, docAccess := range utcar.DocumentAccesses {
 		v.Check(docAccess.ID, fmt.Sprintf("documentAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.DocumentEntityType))
 	}
@@ -237,17 +230,25 @@ func (s TrustCenterAccessService) Create(
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
+			// FIXME: need to change UX
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, s.svc.scope, trustCenter.OrganizationID, req.IdentityID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load profile: %w", err)
+				}
+
+				if err := profile.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert profile: %w", err)
+				}
+			}
+
 			access = &coredata.TrustCenterAccess{
-				ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-				OrganizationID:                    trustCenter.OrganizationID,
-				TenantID:                          s.svc.scope.GetTenantID(),
-				TrustCenterID:                     req.TrustCenterID,
-				Email:                             req.Email,
-				Name:                              req.FullName,
-				State:                             coredata.TrustCenterAccessStateActive,
-				HasAcceptedNonDisclosureAgreement: false,
-				CreatedAt:                         now,
-				UpdatedAt:                         now,
+				ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+				OrganizationID: trustCenter.OrganizationID,
+				TenantID:       s.svc.scope.GetTenantID(),
+				TrustCenterID:  req.TrustCenterID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
@@ -258,7 +259,7 @@ func (s TrustCenterAccessService) Create(
 						OrganizationID: access.OrganizationID,
 						DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
 						FileID:         *trustCenter.NonDisclosureAgreementFileID,
-						SignerEmail:    access.Email,
+						SignerEmail:    profile.EmailAddress,
 					},
 				)
 				if err != nil {
@@ -292,9 +293,13 @@ func (s TrustCenterAccessService) Update(
 	}
 
 	now := time.Now()
-	var access *coredata.TrustCenterAccess
-	var trustCenterAcessActivated bool
-	var shouldUpdateSlackMessage bool
+	var (
+		access                    *coredata.TrustCenterAccess
+		profile                   *coredata.MembershipProfile
+		trustCenterAcessActivated bool
+		shouldUpdateSlackMessage  bool
+	)
+
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -304,17 +309,22 @@ func (s TrustCenterAccessService) Update(
 				return fmt.Errorf("cannot load trust center access: %w", err)
 			}
 
-			trustCenterAcessActivated = req.State != nil && *req.State == coredata.TrustCenterAccessStateActive && access.State != coredata.TrustCenterAccessStateActive
-			if req.Name != nil {
-				access.Name = *req.Name
-			}
-			if req.State != nil {
-				access.State = *req.State
-			}
 			access.UpdatedAt = now
 
 			if err := access.Update(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update trust center access: %w", err)
+			}
+
+			// FIXME: need to change UX
+			profile = &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, s.svc.scope, access.OrganizationID, access.IdentityID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load profile: %w", err)
+				}
+
+				if err := profile.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert profile: %w", err)
+				}
 			}
 
 			var tcdas coredata.TrustCenterDocumentAccesses
@@ -370,8 +380,7 @@ func (s TrustCenterAccessService) Update(
 			shouldUpdateSlackMessage = trustCenterAcessActivated ||
 				len(req.DocumentAccesses) > 0 ||
 				len(req.ReportAccesses) > 0 ||
-				len(req.TrustCenterFileAccesses) > 0 ||
-				req.Name != nil
+				len(req.TrustCenterFileAccesses) > 0
 
 			return nil
 		},
@@ -382,7 +391,7 @@ func (s TrustCenterAccessService) Update(
 	}
 
 	if shouldUpdateSlackMessage {
-		if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.Email, access.TrustCenterID); err != nil {
+		if err := s.svc.SlackMessages.QueueSlackNotification(ctx, profile.IdentityID, access.TrustCenterID); err != nil {
 			if !errors.Is(err, slack.ErrNoSlackConnector) {
 				return nil, fmt.Errorf("cannot queue slack notification: %w", err)
 			}
@@ -429,12 +438,23 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Con
 		return fmt.Errorf("cannot update trust center access with expiration: %w", err)
 	}
 
+	profile := &coredata.MembershipProfile{}
+	if err := profile.LoadByIdentityIDAndOrganizationID(
+		ctx,
+		tx,
+		s.svc.scope,
+		access.IdentityID,
+		access.OrganizationID,
+	); err != nil {
+		return fmt.Errorf("cannot load profile: %w", err)
+	}
+
 	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, access.TrustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, access.Name)
+	emailPresenter := emails.NewPresenterFromConfig(s.svc.fileManager, emailPresenterCfg, profile.FullName)
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderTrustCenterAccess(ctx, organization.Name)
 	if err != nil {
@@ -442,8 +462,8 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Con
 	}
 
 	accessEmail := coredata.NewEmail(
-		access.Name,
-		access.Email,
+		profile.FullName,
+		profile.EmailAddress,
 		subject,
 		textBody,
 		htmlBody,

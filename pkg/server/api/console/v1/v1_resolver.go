@@ -1940,8 +1940,7 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 		ctx,
 		&probo.CreateTrustCenterAccessRequest{
 			TrustCenterID: input.TrustCenterID,
-			Email:         identity.EmailAddress,
-			FullName:      identity.FullName,
+			IdentityID:    identity.ID,
 		},
 	)
 	if err != nil {
@@ -1991,8 +1990,6 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 		ctx,
 		&probo.UpdateTrustCenterAccessRequest{
 			ID:                      input.ID,
-			Name:                    input.Name,
-			State:                   input.State,
 			DocumentAccesses:        documentAccesses,
 			ReportAccesses:          reportAccesses,
 			TrustCenterFileAccesses: fileAccesses,

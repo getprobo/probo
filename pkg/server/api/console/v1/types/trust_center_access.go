@@ -45,12 +45,8 @@ func NewTrustCenterAccessEdge(tca *coredata.TrustCenterAccess, orderBy coredata.
 
 func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
 	return &TrustCenterAccess{
-		ID:                                tca.ID,
-		Email:                             tca.Email,
-		Name:                              tca.Name,
-		State:                             tca.State,
-		HasAcceptedNonDisclosureAgreement: tca.HasAcceptedNonDisclosureAgreement,
-		CreatedAt:                         tca.CreatedAt,
-		UpdatedAt:                         tca.UpdatedAt,
+		ID:        tca.ID,
+		CreatedAt: tca.CreatedAt,
+		UpdatedAt: tca.UpdatedAt,
 	}
 }

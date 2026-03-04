@@ -118,8 +118,13 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
+		identity := &coredata.Identity{}
+		if err := identity.LoadByEmail(ctx, tx, requesterEmail); err != nil {
+			return fmt.Errorf("cannot load identity: %w", err)
+		}
+
 		var trustCenterAccess coredata.TrustCenterAccess
-		if err := trustCenterAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenter.ID, requesterEmail); err != nil {
+		if err := trustCenterAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, s.svc.scope, trustCenter.ID, identity.ID); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
@@ -132,7 +137,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 
 		updatedBody, err := s.buildAccessRequestMessage(
 			newSlackMessageID,
-			trustCenterAccess.Name,
+			identity.FullName,
 			requesterEmail,
 			trustCenter.OrganizationID,
 			documents,
@@ -179,12 +184,21 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 
 func (s *SlackMessageService) QueueSlackNotification(
 	ctx context.Context,
-	requesterEmail mail.Addr,
+	identityID gid.GID,
 	trustCenterID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
-		var trustCenterAccess coredata.TrustCenterAccess
-		if err := trustCenterAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, requesterEmail); err != nil {
+		var (
+			identity          = &coredata.Identity{}
+			trustCenterAccess *coredata.TrustCenterAccess
+		)
+
+		if err := identity.LoadByID(ctx, tx, identityID); err != nil {
+			return fmt.Errorf("cannot load identity: %w", err)
+		}
+
+		trustCenterAccess = &coredata.TrustCenterAccess{}
+		if err := trustCenterAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, s.svc.scope, trustCenterID, identityID); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
@@ -224,8 +238,8 @@ func (s *SlackMessageService) QueueSlackNotification(
 
 		body, err := s.buildAccessRequestMessage(
 			slackMessageID,
-			trustCenterAccess.Name,
-			requesterEmail,
+			identity.FullName,
+			identity.EmailAddress,
 			trustCenter.OrganizationID,
 			documents,
 			reports,
@@ -247,7 +261,7 @@ func (s *SlackMessageService) QueueSlackNotification(
 			OrganizationID: trustCenter.OrganizationID,
 			Type:           coredata.SlackMessageTypeTrustCenterAccessRequest,
 			Body:           body,
-			RequesterEmail: &requesterEmail,
+			RequesterEmail: &identity.EmailAddress,
 			Metadata:       metadata.toMap(),
 			CreatedAt:      now,
 			UpdatedAt:      now,
@@ -261,7 +275,7 @@ func (s *SlackMessageService) QueueSlackNotification(
 			tx,
 			s.svc.scope,
 			trustCenter.OrganizationID,
-			requesterEmail,
+			identity.EmailAddress,
 			coredata.SlackMessageTypeTrustCenterAccessRequest,
 			sevenDaysAgo,
 		)

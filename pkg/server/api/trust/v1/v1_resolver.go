@@ -107,17 +107,14 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 	documentAccess, err := trustService.TrustCenterAccesses.GetDocumentAccess(
 		ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) {
-			return false, nil
-		}
-		if errors.Is(err, trust.ErrMembershipInactive) {
-			return false, nil
-		}
-		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) ||
+			errors.Is(err, trust.ErrUserNotFound) ||
+			errors.Is(err, trust.ErrUserInactive) ||
+			errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return false, nil
 		}
 
@@ -141,15 +138,17 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 	access, err := trustService.TrustCenterAccesses.GetDocumentAccess(
 		ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) || errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) ||
+			errors.Is(err, trust.ErrUserNotFound) ||
+			errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return nil, nil
 		}
 
-		if errors.Is(err, trust.ErrMembershipInactive) {
+		if errors.Is(err, trust.ErrUserInactive) {
 			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
@@ -262,7 +261,7 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
-	if _, err := trustService.TrustCenterAccesses.EnsureAccess(ctx, trustCenter.ID, identity.EmailAddress, identity.FullName); err != nil {
+	if _, err := trustService.TrustCenterAccesses.EnsureAccess(ctx, trustCenter.ID, identity.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot ensure trust center access", log.Error(err))
 	}
 
@@ -288,8 +287,7 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.Reque
 		ctx,
 		&trust.TrustCenterAccessRequest{
 			TrustCenterID: trustCenter.ID,
-			Email:         identity.EmailAddress,
-			FullName:      identity.FullName,
+			IdentityID:    identity.ID,
 			DocumentIDs:   nil,
 			ReportIDs:     nil,
 		},
@@ -302,8 +300,6 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.Reque
 	return &types.RequestAccessesPayload{
 		TrustCenterAccess: &types.TrustCenterAccess{
 			ID:        access.ID,
-			Email:     access.Email,
-			Name:      access.Name,
 			CreatedAt: access.CreatedAt,
 			UpdatedAt: access.UpdatedAt,
 		},
@@ -341,7 +337,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	documentAccess, err := trustService.TrustCenterAccesses.GetDocumentAccess(
 		ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		input.DocumentID,
 	)
 	if err != nil {
@@ -395,7 +391,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	reportAccess, err := trustService.TrustCenterAccesses.GetReportAccess(
 		ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		input.ReportID,
 	)
 	if err != nil {
@@ -447,7 +443,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 
 	fileAccess, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		input.TrustCenterFileID,
 	)
 	if err != nil {
@@ -495,8 +491,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 		ctx,
 		&trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
-			Email:              identity.EmailAddress,
-			FullName:           identity.FullName,
+			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{input.DocumentID},
 			ReportIDs:          []gid.GID{},
 			TrustCenterFileIDs: []gid.GID{},
@@ -538,8 +533,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 		ctx,
 		&trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
-			Email:              identity.EmailAddress,
-			FullName:           identity.FullName,
+			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{},
 			ReportIDs:          []gid.GID{input.ReportID},
 			TrustCenterFileIDs: []gid.GID{},
@@ -581,8 +575,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 		ctx,
 		&trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
-			Email:              identity.EmailAddress,
-			FullName:           identity.FullName,
+			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{},
 			ReportIDs:          []gid.GID{},
 			TrustCenterFileIDs: []gid.GID{input.TrustCenterFileID},
@@ -676,7 +669,7 @@ func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types
 	if identity := authn.IdentityFromContext(ctx); identity != nil && r.esign != nil {
 		trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
-		access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.EmailAddress)
+		access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.ID)
 		if err == nil && access.ElectronicSignatureID != nil {
 			fileURL, err := r.esign.GenerateSignatureFileURL(ctx, *access.ElectronicSignatureID, 15*time.Minute)
 			if err == nil {
@@ -707,7 +700,7 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
-	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.EmailAddress)
+	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.ID)
 	if err != nil {
 		return nil, nil
 	}
@@ -868,17 +861,14 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 
 	reportAccess, err := trustService.TrustCenterAccesses.GetReportAccess(ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) {
-			return false, nil
-		}
-		if errors.Is(err, trust.ErrMembershipInactive) {
-			return false, nil
-		}
-		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) ||
+			errors.Is(err, trust.ErrUserNotFound) ||
+			errors.Is(err, trust.ErrUserInactive) ||
+			errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return false, nil
 		}
 
@@ -902,15 +892,17 @@ func (r *reportResolver) Access(ctx context.Context, obj *types.Report) (*types.
 	access, err := trustService.TrustCenterAccesses.GetReportAccess(
 		ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) || errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) ||
+			errors.Is(err, trust.ErrUserNotFound) ||
+			errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return nil, nil
 		}
 
-		if errors.Is(err, trust.ErrMembershipInactive) {
+		if errors.Is(err, trust.ErrUserInactive) {
 			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
@@ -1107,17 +1099,14 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 
 	fileAccess, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) {
-			return false, nil
-		}
-		if errors.Is(err, trust.ErrMembershipInactive) {
-			return false, nil
-		}
-		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) ||
+			errors.Is(err, trust.ErrUserNotFound) ||
+			errors.Is(err, trust.ErrUserInactive) ||
+			errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return false, nil
 		}
 
@@ -1141,15 +1130,17 @@ func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCe
 	access, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(
 		ctx,
 		trustCenter.ID,
-		identity.EmailAddress,
+		identity.ID,
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrMembershipNotFound) || errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) ||
+			errors.Is(err, trust.ErrUserNotFound) ||
+			errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return nil, nil
 		}
 
-		if errors.Is(err, trust.ErrMembershipInactive) {
+		if errors.Is(err, trust.ErrUserInactive) {
 			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
