@@ -319,7 +319,7 @@ func (s *Service) GetNDAFile(
 			}
 
 			if trustCenter.NonDisclosureAgreementFileID == nil {
-				return nil
+				return ErrNDAFileNotFound
 			}
 
 			file = &coredata.File{}

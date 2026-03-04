@@ -103,6 +103,7 @@ export function useRequestAccessCallback() {
 
   useEffect(() => {
     if (documentId) {
+      searchParams.delete("request-document-id");
       void requestDocumentAccess({
         variables: {
           input: { documentId },
@@ -110,22 +111,18 @@ export function useRequestAccessCallback() {
         onCompleted: (_, errors) => {
           if (errors?.length) {
             toast(errorToastArgs(__, errors));
-            searchParams.delete("request-document-id");
-            setSearchParams(searchParams);
             return;
           }
 
           toast(successToastArgs(__));
-          searchParams.delete("request-document-id");
-          setSearchParams(searchParams);
         },
         onError: (error) => {
           toast(errorToastArgs(__, error));
-          searchParams.delete("request-document-id");
-          setSearchParams(searchParams);
         },
       });
+      setSearchParams(searchParams);
     } else if (reportId) {
+      searchParams.delete("request-report-id");
       void requestReportAccess({
         variables: {
           input: { reportId },
@@ -133,22 +130,18 @@ export function useRequestAccessCallback() {
         onCompleted: (_, errors) => {
           if (errors?.length) {
             toast(errorToastArgs(__, errors));
-            searchParams.delete("request-report-id");
-            setSearchParams(searchParams);
             return;
           }
 
           toast(successToastArgs(__));
-          searchParams.delete("request-report-id");
-          setSearchParams(searchParams);
         },
         onError: (error) => {
           toast(errorToastArgs(__, error));
-          searchParams.delete("request-report-id");
-          setSearchParams(searchParams);
         },
       });
+      setSearchParams(searchParams);
     } else if (fileId) {
+      searchParams.delete("request-file-id");
       void requestFileAccess({
         variables: {
           input: { trustCenterFileId: fileId },
@@ -156,43 +149,34 @@ export function useRequestAccessCallback() {
         onCompleted: (_, errors) => {
           if (errors?.length) {
             toast(errorToastArgs(__, errors));
-            searchParams.delete("request-file-id");
-            setSearchParams(searchParams);
             return;
           }
 
           toast(successToastArgs(__));
-          searchParams.delete("request-file-id");
-          setSearchParams(searchParams);
         },
         onError: (error) => {
           toast(errorToastArgs(__, error));
-          searchParams.delete("request-file-id");
-          setSearchParams(searchParams);
         },
       });
+      setSearchParams(searchParams);
     } else if (all) {
+      searchParams.delete("request-all");
       void requestAll({
         variables: {},
         onCompleted: (_, errors) => {
           if (errors?.length) {
             toast(errorToastArgs(__, errors));
-            searchParams.delete("request-all");
-            setSearchParams(searchParams);
             return;
           }
 
           toast(successToastArgs(__));
-          searchParams.delete("request-all");
-          setSearchParams(searchParams);
           window.location.href = location.pathname;
         },
         onError: (error) => {
           toast(errorToastArgs(__, error));
-          searchParams.delete("request-all");
-          setSearchParams(searchParams);
         },
       });
+      setSearchParams(searchParams);
     }
   }, [
     documentId,

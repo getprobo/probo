@@ -132,8 +132,12 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) || errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return nil, nil
+		}
+
+		if errors.Is(err, trust.ErrMembershipInactive) {
+			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
@@ -851,11 +855,15 @@ func (r *reportResolver) Access(ctx context.Context, obj *types.Report) (*types.
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) || errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
+		if errors.Is(err, trust.ErrMembershipInactive) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get audit report access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1067,11 +1075,15 @@ func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCe
 		obj.ID,
 	)
 	if err != nil {
-		if errors.Is(err, trust.ErrDocumentAccessNotFound) {
+		if errors.Is(err, trust.ErrMembershipNotFound) || errors.Is(err, trust.ErrDocumentAccessNotFound) {
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
+		if errors.Is(err, trust.ErrMembershipInactive) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get file access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 

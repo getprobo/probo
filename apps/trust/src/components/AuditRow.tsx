@@ -78,7 +78,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
   const navigate = useNavigate();
 
   const audit = useFragment(auditRowFragment, props.audit);
-  const hasRequested = !!audit.report?.access;
+  const hasRequested = audit.report?.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
     = useMutation<AuditRow_requestAccessMutation>(requestAccessMutation);

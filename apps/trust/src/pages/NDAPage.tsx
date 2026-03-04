@@ -108,8 +108,16 @@ export function NDAPage(props: {
   const continueUrlParam = searchParams.get("continue");
   let safeContinueUrl: string;
   if (continueUrlParam) {
-    const continueUrl = new URL(continueUrlParam);
-    safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
+    try {
+      const continueUrl = new URL(continueUrlParam, window.location.origin);
+      if (continueUrl.origin === window.location.origin && continueUrl.pathname.startsWith(`${getPathPrefix()}/`)) {
+        safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
+      } else {
+        safeContinueUrl = window.location.origin + getPathPrefix();
+      }
+    } catch {
+      safeContinueUrl = window.location.origin + getPathPrefix();
+    }
   } else {
     safeContinueUrl = window.location.origin + getPathPrefix();
   }

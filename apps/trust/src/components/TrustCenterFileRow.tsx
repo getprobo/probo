@@ -67,7 +67,7 @@ export function TrustCenterFileRow(props: {
   const navigate = useNavigate();
 
   const file = useFragment(trustCenterFileRowFragment, props.file);
-  const hasRequested = !!file.access;
+  const hasRequested = file.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
     = useMutation<TrustCenterFileRow_requestAccessMutation>(

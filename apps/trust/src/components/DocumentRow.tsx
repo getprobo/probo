@@ -63,7 +63,7 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
   const [searchParams] = useSearchParams();
 
   const document = useFragment(documentRowFragment, props.document);
-  const hasRequested = !!document.access;
+  const hasRequested = document.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
     = useMutation<DocumentRow_requestAccessMutation>(requestAccessMutation);

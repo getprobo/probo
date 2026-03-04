@@ -42,8 +42,7 @@ export default function VerifyMagicLinkPagePageMutation() {
         if (errors) {
           for (const err of errors) {
             if (err.extensions?.code === "ALREADY_AUTHENTICATED") {
-              const pathPrefix = getPathPrefix();
-              window.location.href = pathPrefix ? getPathPrefix() : "/";
+              window.location.href = getPathPrefix() || "/";
               return;
             }
           }
@@ -64,11 +63,14 @@ export default function VerifyMagicLinkPagePageMutation() {
         });
 
         if (verifyMagicLink?.continue) {
-          const continueUrl = new URL(verifyMagicLink.continue);
-          window.location.href = window.location.origin + continueUrl.pathname + continueUrl.search;
+          try {
+            const continueUrl = new URL(verifyMagicLink.continue, window.location.origin);
+            window.location.href = window.location.origin + continueUrl.pathname + continueUrl.search;
+          } catch {
+            window.location.href = getPathPrefix() || "/";
+          }
         } else {
-          const pathPrefix = getPathPrefix();
-          window.location.href = pathPrefix ? getPathPrefix() : "/";
+          window.location.href = getPathPrefix() || "/";
         }
       },
       onError: (err) => {

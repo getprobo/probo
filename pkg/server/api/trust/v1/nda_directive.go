@@ -47,6 +47,10 @@ func newNDADirectiveFunc(
 		}
 
 		compliancePage := compliancepage.CompliancePageFromContext(ctx)
+		if compliancePage == nil {
+			logger.ErrorCtx(ctx, "cannot get compliance page from context")
+			return nil, gqlutils.Internal(ctx)
+		}
 
 		if _, err := trustSvc.GetNDAFile(ctx, compliancePage.ID); err != nil {
 			if errors.Is(err, trust.ErrNDAFileNotFound) {

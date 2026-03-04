@@ -19,20 +19,24 @@ export function RootErrorBoundary() {
 
   if (error instanceof UnAuthenticatedError) {
     return (
-      <Navigate to={{
-        pathname: "/connect",
-        search: queryString ? "?" + queryString : "",
-      }}
+      <Navigate
+        replace
+        to={{
+          pathname: "/connect",
+          search: queryString ? "?" + queryString : "",
+        }}
       />
     );
   }
 
   if (error instanceof NDASignatureRequiredError) {
     return (
-      <Navigate to={{
-        pathname: "/nda",
-        search: queryString ? "?" + queryString : "",
-      }}
+      <Navigate
+        replace
+        to={{
+          pathname: "/nda",
+          search: queryString ? "?" + queryString : "",
+        }}
       />
     );
   }
