@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.137.1] - 2026-03-05
+
+### Fixed
+
+- Compliance page request all callback page refresh
+
 ## [0.137.0] - 2026-03-04
 
 ### Added
