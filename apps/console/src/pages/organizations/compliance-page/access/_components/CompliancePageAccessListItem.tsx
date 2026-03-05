@@ -53,12 +53,11 @@ const toggleAccessStateMutation = graphql`
 
 export function CompliancePageAccessListItem(props: {
   fragmentRef: CompliancePageAccessListItemFragment$key;
-  dialogOpen: boolean;
 }) {
-  const { fragmentRef, dialogOpen: initialDialogOpen } = props;
+  const { fragmentRef } = props;
 
   const { __ } = useTranslate();
-  const [dialogOpen, setDialogOpen] = useState<boolean>(initialDialogOpen);
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
 
   const access = useFragment<CompliancePageAccessListItemFragment$key>(fragment, fragmentRef);
 

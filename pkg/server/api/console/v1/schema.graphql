@@ -3304,9 +3304,6 @@ type Mutation {
         input: UpdateTrustCenterBrandInput!
     ): UpdateTrustCenterBrandPayload!
     # Trust Center Access CRUD mutations
-    createTrustCenterAccess(
-        input: CreateTrustCenterAccessInput!
-    ): CreateTrustCenterAccessPayload!
     updateTrustCenterAccess(
         input: UpdateTrustCenterAccessInput!
     ): UpdateTrustCenterAccessPayload!
@@ -3686,12 +3683,6 @@ input UpdateTrustCenterBrandInput {
     trustCenterId: ID!
     logoFile: Upload @goField(omittable: true)
     darkLogoFile: Upload @goField(omittable: true)
-}
-
-input CreateTrustCenterAccessInput {
-    trustCenterId: ID!
-    email: EmailAddr!
-    name: String!
 }
 
 input TrustCenterDocumentAccessInput {
@@ -4536,10 +4527,6 @@ type DeleteTrustCenterNDAPayload {
 
 type UpdateTrustCenterBrandPayload {
     trustCenter: TrustCenter!
-}
-
-type CreateTrustCenterAccessPayload {
-    trustCenterAccessEdge: TrustCenterAccessEdge!
 }
 
 type UpdateTrustCenterAccessPayload {

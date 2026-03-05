@@ -1915,48 +1915,6 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 	}, nil
 }
 
-// CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.
-func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error) {
-	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterAccessCreate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
-
-	// TODO: should not create an access nor identity, but send a compliance page invitation
-	identity, err := r.iam.AuthService.LoadOrCreateIdentity(
-		ctx,
-		&iam.LoadOrCreateIdentityRequest{
-			Email:    input.Email,
-			FullName: input.Name,
-		},
-	)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load or create identity", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	access, err := prb.TrustCenterAccesses.Create(
-		ctx,
-		&probo.CreateTrustCenterAccessRequest{
-			TrustCenterID: input.TrustCenterID,
-			IdentityID:    identity.ID,
-		},
-	)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot create trust center access", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.CreateTrustCenterAccessPayload{
-		TrustCenterAccessEdge: types.NewTrustCenterAccessEdge(access, coredata.TrustCenterAccessOrderFieldCreatedAt),
-	}, nil
-}
-
 // UpdateTrustCenterAccess is the resolver for the updateTrustCenterAccess field.
 func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error) {
 	if err := r.authorize(ctx, input.ID, probo.ActionTrustCenterAccessUpdate); err != nil {

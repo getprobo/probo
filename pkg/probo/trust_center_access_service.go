@@ -23,7 +23,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
@@ -210,78 +209,6 @@ func (s TrustCenterAccessService) CountActiveDocumentAccesses(
 	}
 
 	return count, nil
-}
-
-func (s TrustCenterAccessService) Create(
-	ctx context.Context,
-	req *CreateTrustCenterAccessRequest,
-) (*coredata.TrustCenterAccess, error) {
-	if err := req.Validate(); err != nil {
-		return nil, err
-	}
-
-	now := time.Now()
-	var access *coredata.TrustCenterAccess
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
-			}
-
-			// FIXME: need to change UX
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, s.svc.scope, trustCenter.OrganizationID, req.IdentityID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load profile: %w", err)
-				}
-
-				if err := profile.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert profile: %w", err)
-				}
-			}
-
-			access = &coredata.TrustCenterAccess{
-				ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-				OrganizationID: trustCenter.OrganizationID,
-				TenantID:       s.svc.scope.GetTenantID(),
-				IdentityID:     profile.IdentityID,
-				TrustCenterID:  req.TrustCenterID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
-			if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
-				sig, err := s.svc.esign.CreateSignature(
-					ctx,
-					tx,
-					&esign.CreateSignatureRequest{
-						OrganizationID: access.OrganizationID,
-						DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
-						FileID:         *trustCenter.NonDisclosureAgreementFileID,
-						SignerEmail:    profile.EmailAddress,
-					},
-				)
-				if err != nil {
-					return fmt.Errorf("cannot create pending signature: %w", err)
-				}
-				access.ElectronicSignatureID = &sig.ID
-			}
-
-			if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert trust center access: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return access, nil
 }
 
 func (s TrustCenterAccessService) Update(

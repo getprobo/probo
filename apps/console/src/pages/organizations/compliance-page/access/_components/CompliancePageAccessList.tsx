@@ -41,9 +41,8 @@ const fragment = graphql`
 
 export function CompliancePageAccessList(props: {
   fragmentRef: CompliancePageAccessListFragment$key;
-  editingAccessId: string | null;
 }) {
-  const { editingAccessId, fragmentRef } = props;
+  const { fragmentRef } = props;
 
   const { __ } = useTranslate();
 
@@ -86,9 +85,8 @@ export function CompliancePageAccessList(props: {
             <Tbody>
               {accesses.edges.map(({ node: access }) => (
                 <CompliancePageAccessListItem
-                  key={`${access.id}-${editingAccessId === access.id}`}
+                  key={access.id}
                   fragmentRef={access}
-                  dialogOpen={editingAccessId === access.id}
                 />
               ))}
             </Tbody>

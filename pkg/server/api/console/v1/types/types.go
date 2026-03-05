@@ -606,16 +606,6 @@ type CreateTransferImpactAssessmentPayload struct {
 	TransferImpactAssessment *TransferImpactAssessment `json:"transferImpactAssessment"`
 }
 
-type CreateTrustCenterAccessInput struct {
-	TrustCenterID gid.GID   `json:"trustCenterId"`
-	Email         mail.Addr `json:"email"`
-	Name          string    `json:"name"`
-}
-
-type CreateTrustCenterAccessPayload struct {
-	TrustCenterAccessEdge *TrustCenterAccessEdge `json:"trustCenterAccessEdge"`
-}
-
 type CreateTrustCenterFileInput struct {
 	OrganizationID        gid.GID                        `json:"organizationId"`
 	Name                  string                         `json:"name"`

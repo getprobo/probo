@@ -366,51 +366,6 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 	)
 }
 
-func (s AuthService) LoadOrCreateIdentity(
-	ctx context.Context,
-	req *LoadOrCreateIdentityRequest,
-) (*coredata.Identity, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	var (
-		identity *coredata.Identity
-		now      = time.Now()
-	)
-
-	if err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
-		identity = &coredata.Identity{}
-
-		if err := identity.LoadByEmail(ctx, tx, req.Email); err != nil {
-			if !errors.Is(err, coredata.ErrResourceNotFound) {
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-
-			identity = &coredata.Identity{
-				ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
-				EmailAddress:         req.Email,
-				FullName:             req.FullName,
-				HashedPassword:       nil,
-				EmailAddressVerified: false,
-				CreatedAt:            now,
-				UpdatedAt:            now,
-			}
-
-			err = identity.Insert(ctx, tx)
-			if err != nil {
-				return fmt.Errorf("cannot insert identity: %w", err)
-			}
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return identity, nil
-}
-
 func (s AuthService) CreateIdentityWithPassword(
 	ctx context.Context,
 	req *CreateIdentityWithPasswordRequest,
