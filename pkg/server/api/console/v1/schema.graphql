@@ -1911,6 +1911,7 @@ type Profile implements Node {
     id: ID!
     fullName: String!
     emailAddress: EmailAddr!
+    state: ProfileState!
     additionalEmailAddresses: [EmailAddr!]!
     kind: ProfileKind
     position: String
@@ -1920,6 +1921,13 @@ type Profile implements Node {
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum ProfileState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
 }
 
 type Vendor implements Node {
@@ -2766,16 +2774,15 @@ type TrustCenterEdge {
 
 type TrustCenterAccess implements Node {
     id: ID!
-    email: EmailAddr!
-    name: String!
-    state: TrustCenterAccessState!
-    hasAcceptedNonDisclosureAgreement: Boolean!
     ndaSignature: ElectronicSignature @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
-    lastTokenExpiresAt: Datetime
     pendingRequestCount: Int! @goField(forceResolver: true)
     activeCount: Int! @goField(forceResolver: true)
+    organizationId: ID!
+    identityID: ID!
+
+    profile: Profile! @goField(forceResolver: true)
 
     availableDocumentAccesses(
         first: Int

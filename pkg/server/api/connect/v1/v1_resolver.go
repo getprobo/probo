@@ -1185,6 +1185,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 	}
 
 	filter := coredata.NewMembershipProfileFilter(nil)
+	filter = filter.WithMembership()
 
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{

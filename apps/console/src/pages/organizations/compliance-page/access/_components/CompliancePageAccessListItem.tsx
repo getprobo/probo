@@ -15,10 +15,12 @@ import { NdaSignatureBadge } from "./NdaSignatureBadge";
 const fragment = graphql`
   fragment CompliancePageAccessListItemFragment on TrustCenterAccess {
     id
-    name
-    email
     createdAt
-    state
+    profile {
+      fullName
+      emailAddress
+      state
+    }
     activeCount
     pendingRequestCount
     ndaSignature {
@@ -35,14 +37,15 @@ const toggleAccessStateMutation = graphql`
     updateTrustCenterAccess(input: $input) {
       trustCenterAccess {
         id
-        email
-        name
-        state
-        hasAcceptedNonDisclosureAgreement
         createdAt
         updatedAt
         pendingRequestCount
         activeCount
+        profile {
+          fullName
+          emailAddress
+          state
+        }
       }
     }
   }
@@ -59,7 +62,7 @@ export function CompliancePageAccessListItem(props: {
 
   const access = useFragment<CompliancePageAccessListItemFragment$key>(fragment, fragmentRef);
 
-  const isActive = access.state === "ACTIVE";
+  const isActive = access.profile.state === "ACTIVE";
 
   const [toggleAccessState, isToggling] = useMutationWithToasts<CompliancePageAccessListItemUpdateMutation>(
     toggleAccessStateMutation,
@@ -78,12 +81,11 @@ export function CompliancePageAccessListItem(props: {
       variables: {
         input: {
           id: access.id,
-          name: access.name,
           state: isActive ? "INACTIVE" : "ACTIVE",
         },
       },
     });
-  }, [toggleAccessState, access.id, access.name, isActive]);
+  }, [toggleAccessState, access.id, isActive]);
 
   return (
     <>
@@ -92,8 +94,8 @@ export function CompliancePageAccessListItem(props: {
         onClick={() => access.canUpdate && isActive && setDialogOpen(true)}
         className={`cursor-pointer hover:bg-bg-secondary transition-colors${!isActive ? " opacity-50" : ""}`}
       >
-        <Td className="font-medium">{access.name}</Td>
-        <Td>{access.email}</Td>
+        <Td className="font-medium">{access.profile.fullName}</Td>
+        <Td>{access.profile.emailAddress}</Td>
         <Td>{formatDate(access.createdAt)}</Td>
         <Td className="text-center">{access.activeCount}</Td>
         <Td className="text-center">

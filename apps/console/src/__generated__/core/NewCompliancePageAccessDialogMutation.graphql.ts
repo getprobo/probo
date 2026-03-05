@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9b82b09c2b56467a1dfa0fcdf809bc34>>
+ * @generated SignedSource<<eab35c7d6cd3334dc38eae117619b5ec>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -160,28 +160,40 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "name",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "email",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "createdAt",
                     "storageKey": null
                   },
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "state",
+                    "concreteType": "Profile",
+                    "kind": "LinkedField",
+                    "name": "profile",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "fullName",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "emailAddress",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "state",
+                        "storageKey": null
+                      },
+                      (v4/*: any*/)
+                    ],
                     "storageKey": null
                   },
                   {
@@ -258,12 +270,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "685bbdb5f629501f61631592530f46a7",
+    "cacheID": "da08cb11a0a3e5668078201ca7c634ef",
     "id": null,
     "metadata": {},
     "name": "NewCompliancePageAccessDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation NewCompliancePageAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  name\n  email\n  createdAt\n  state\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
+    "text": "mutation NewCompliancePageAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n      }\n    }\n  }\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  createdAt\n  profile {\n    fullName\n    emailAddress\n    state\n    id\n  }\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
   }
 };
 })();

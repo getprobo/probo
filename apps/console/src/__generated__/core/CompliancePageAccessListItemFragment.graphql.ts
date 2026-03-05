@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<97bc9b075b82bb1543c80843430ced5d>>
+ * @generated SignedSource<<382df5177a666b0cc6c3feef198c8354>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,20 +10,22 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type ElectronicSignatureStatus = "ACCEPTED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING";
-export type TrustCenterAccessState = "ACTIVE" | "INACTIVE";
+export type ProfileState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageAccessListItemFragment$data = {
   readonly activeCount: number;
   readonly canUpdate: boolean;
   readonly createdAt: string;
-  readonly email: string;
   readonly id: string;
-  readonly name: string;
   readonly ndaSignature: {
     readonly status: ElectronicSignatureStatus;
   } | null | undefined;
   readonly pendingRequestCount: number;
-  readonly state: TrustCenterAccessState;
+  readonly profile: {
+    readonly emailAddress: string;
+    readonly fullName: string;
+    readonly state: ProfileState;
+  };
   readonly " $fragmentType": "CompliancePageAccessListItemFragment";
 };
 export type CompliancePageAccessListItemFragment$key = {
@@ -48,28 +50,39 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "name",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "email",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "createdAt",
       "storageKey": null
     },
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
-      "name": "state",
+      "concreteType": "Profile",
+      "kind": "LinkedField",
+      "name": "profile",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "fullName",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "emailAddress",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "state",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     },
     {
@@ -122,6 +135,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "9047d3d3f232d43c6f951c74b0395b58";
+(node as any).hash = "a08d6999781177cb0896f372c570fca8";
 
 export default node;

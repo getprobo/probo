@@ -45,8 +45,10 @@ func NewTrustCenterAccessEdge(tca *coredata.TrustCenterAccess, orderBy coredata.
 
 func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
 	return &TrustCenterAccess{
-		ID:        tca.ID,
-		CreatedAt: tca.CreatedAt,
-		UpdatedAt: tca.UpdatedAt,
+		ID:             tca.ID,
+		OrganizationID: tca.OrganizationID,
+		IdentityID:     tca.IdentityID,
+		CreatedAt:      tca.CreatedAt,
+		UpdatedAt:      tca.UpdatedAt,
 	}
 }

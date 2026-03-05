@@ -1288,6 +1288,7 @@ type ComplexityRoot struct {
 		Kind                     func(childComplexity int) int
 		Permission               func(childComplexity int, action string) int
 		Position                 func(childComplexity int) int
+		State                    func(childComplexity int) int
 		UpdatedAt                func(childComplexity int) int
 	}
 
@@ -1554,19 +1555,17 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenterAccess struct {
-		ActiveCount                       func(childComplexity int) int
-		AvailableDocumentAccesses         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) int
-		CreatedAt                         func(childComplexity int) int
-		Email                             func(childComplexity int) int
-		HasAcceptedNonDisclosureAgreement func(childComplexity int) int
-		ID                                func(childComplexity int) int
-		LastTokenExpiresAt                func(childComplexity int) int
-		Name                              func(childComplexity int) int
-		NdaSignature                      func(childComplexity int) int
-		PendingRequestCount               func(childComplexity int) int
-		Permission                        func(childComplexity int, action string) int
-		State                             func(childComplexity int) int
-		UpdatedAt                         func(childComplexity int) int
+		ActiveCount               func(childComplexity int) int
+		AvailableDocumentAccesses func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) int
+		CreatedAt                 func(childComplexity int) int
+		ID                        func(childComplexity int) int
+		IdentityID                func(childComplexity int) int
+		NdaSignature              func(childComplexity int) int
+		OrganizationID            func(childComplexity int) int
+		PendingRequestCount       func(childComplexity int) int
+		Permission                func(childComplexity int, action string) int
+		Profile                   func(childComplexity int) int
+		UpdatedAt                 func(childComplexity int) int
 	}
 
 	TrustCenterAccessConnection struct {
@@ -2498,6 +2497,8 @@ type TrustCenterAccessResolver interface {
 
 	PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error)
 	ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error)
+
+	Profile(ctx context.Context, obj *types.TrustCenterAccess) (*types.Profile, error)
 	AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error)
 	Permission(ctx context.Context, obj *types.TrustCenterAccess, action string) (bool, error)
 }
@@ -7878,6 +7879,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Profile.Position(childComplexity), true
+	case "Profile.state":
+		if e.ComplexityRoot.Profile.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Profile.State(childComplexity), true
 	case "Profile.updatedAt":
 		if e.ComplexityRoot.Profile.UpdatedAt == nil {
 			break
@@ -9019,42 +9026,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TrustCenterAccess.CreatedAt(childComplexity), true
-	case "TrustCenterAccess.email":
-		if e.ComplexityRoot.TrustCenterAccess.Email == nil {
-			break
-		}
-
-		return e.ComplexityRoot.TrustCenterAccess.Email(childComplexity), true
-	case "TrustCenterAccess.hasAcceptedNonDisclosureAgreement":
-		if e.ComplexityRoot.TrustCenterAccess.HasAcceptedNonDisclosureAgreement == nil {
-			break
-		}
-
-		return e.ComplexityRoot.TrustCenterAccess.HasAcceptedNonDisclosureAgreement(childComplexity), true
 	case "TrustCenterAccess.id":
 		if e.ComplexityRoot.TrustCenterAccess.ID == nil {
 			break
 		}
 
 		return e.ComplexityRoot.TrustCenterAccess.ID(childComplexity), true
-	case "TrustCenterAccess.lastTokenExpiresAt":
-		if e.ComplexityRoot.TrustCenterAccess.LastTokenExpiresAt == nil {
+	case "TrustCenterAccess.identityID":
+		if e.ComplexityRoot.TrustCenterAccess.IdentityID == nil {
 			break
 		}
 
-		return e.ComplexityRoot.TrustCenterAccess.LastTokenExpiresAt(childComplexity), true
-	case "TrustCenterAccess.name":
-		if e.ComplexityRoot.TrustCenterAccess.Name == nil {
-			break
-		}
-
-		return e.ComplexityRoot.TrustCenterAccess.Name(childComplexity), true
+		return e.ComplexityRoot.TrustCenterAccess.IdentityID(childComplexity), true
 	case "TrustCenterAccess.ndaSignature":
 		if e.ComplexityRoot.TrustCenterAccess.NdaSignature == nil {
 			break
 		}
 
 		return e.ComplexityRoot.TrustCenterAccess.NdaSignature(childComplexity), true
+	case "TrustCenterAccess.organizationId":
+		if e.ComplexityRoot.TrustCenterAccess.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TrustCenterAccess.OrganizationID(childComplexity), true
 	case "TrustCenterAccess.pendingRequestCount":
 		if e.ComplexityRoot.TrustCenterAccess.PendingRequestCount == nil {
 			break
@@ -9072,12 +9067,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TrustCenterAccess.Permission(childComplexity, args["action"].(string)), true
-	case "TrustCenterAccess.state":
-		if e.ComplexityRoot.TrustCenterAccess.State == nil {
+	case "TrustCenterAccess.profile":
+		if e.ComplexityRoot.TrustCenterAccess.Profile == nil {
 			break
 		}
 
-		return e.ComplexityRoot.TrustCenterAccess.State(childComplexity), true
+		return e.ComplexityRoot.TrustCenterAccess.Profile(childComplexity), true
 	case "TrustCenterAccess.updatedAt":
 		if e.ComplexityRoot.TrustCenterAccess.UpdatedAt == nil {
 			break
@@ -12754,6 +12749,7 @@ type Profile implements Node {
     id: ID!
     fullName: String!
     emailAddress: EmailAddr!
+    state: ProfileState!
     additionalEmailAddresses: [EmailAddr!]!
     kind: ProfileKind
     position: String
@@ -12763,6 +12759,13 @@ type Profile implements Node {
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum ProfileState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
 }
 
 type Vendor implements Node {
@@ -13609,16 +13612,15 @@ type TrustCenterEdge {
 
 type TrustCenterAccess implements Node {
     id: ID!
-    email: EmailAddr!
-    name: String!
-    state: TrustCenterAccessState!
-    hasAcceptedNonDisclosureAgreement: Boolean!
     ndaSignature: ElectronicSignature @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
-    lastTokenExpiresAt: Datetime
     pendingRequestCount: Int! @goField(forceResolver: true)
     activeCount: Int! @goField(forceResolver: true)
+    organizationId: ID!
+    identityID: ID!
+
+    profile: Profile! @goField(forceResolver: true)
 
     availableDocumentAccesses(
         first: Int
@@ -21359,6 +21361,8 @@ func (ec *executionContext) fieldContext_Asset_owner(_ context.Context, field gr
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -23478,6 +23482,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_owner(_ context.Co
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -27849,6 +27855,8 @@ func (ec *executionContext) fieldContext_Datum_owner(_ context.Context, field gr
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -31482,6 +31490,8 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_signedBy(_ con
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -34910,6 +34920,8 @@ func (ec *executionContext) fieldContext_Meeting_attendees(_ context.Context, fi
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -42192,6 +42204,8 @@ func (ec *executionContext) fieldContext_Nonconformity_owner(_ context.Context, 
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -42965,6 +42979,8 @@ func (ec *executionContext) fieldContext_Obligation_owner(_ context.Context, fie
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -45966,6 +45982,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_dataProtectionOffice
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -46551,6 +46569,35 @@ func (ec *executionContext) fieldContext_Profile_emailAddress(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Profile_state(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Profile_state,
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		ec.marshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Profile_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProfileState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Profile_additionalEmailAddresses(ctx context.Context, field graphql.CollectedField, obj *types.Profile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -46957,6 +47004,8 @@ func (ec *executionContext) fieldContext_ProfileEdge_node(_ context.Context, fie
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -48685,6 +48734,8 @@ func (ec *executionContext) fieldContext_Risk_owner(_ context.Context, field gra
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -50891,6 +50942,8 @@ func (ec *executionContext) fieldContext_StateOfApplicability_owner(_ context.Co
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -51449,6 +51502,8 @@ func (ec *executionContext) fieldContext_Task_assignedTo(_ context.Context, fiel
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -53177,122 +53232,6 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_id(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterAccess_email(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenterAccess_email,
-		func(ctx context.Context) (any, error) {
-			return obj.Email, nil
-		},
-		nil,
-		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterAccess_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type EmailAddr does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenterAccess_name(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenterAccess_name,
-		func(ctx context.Context) (any, error) {
-			return obj.Name, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterAccess_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenterAccess_state(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenterAccess_state,
-		func(ctx context.Context) (any, error) {
-			return obj.State, nil
-		},
-		nil,
-		ec.marshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterAccess_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type TrustCenterAccessState does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement,
-		func(ctx context.Context) (any, error) {
-			return obj.HasAcceptedNonDisclosureAgreement, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _TrustCenterAccess_ndaSignature(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -53402,35 +53341,6 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_updatedAt(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterAccess_lastTokenExpiresAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt,
-		func(ctx context.Context) (any, error) {
-			return obj.LastTokenExpiresAt, nil
-		},
-		nil,
-		ec.marshalODatetime2ᚖtimeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterAccess_lastTokenExpiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _TrustCenterAccess_pendingRequestCount(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -53484,6 +53394,119 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_activeCount(_ context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenterAccess_organizationId(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenterAccess_organizationId,
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenterAccess_identityID(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenterAccess_identityID,
+		func(ctx context.Context) (any, error) {
+			return obj.IdentityID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_identityID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenterAccess_profile(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenterAccess_profile,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.TrustCenterAccess().Profile(ctx, obj)
+		},
+		nil,
+		ec.marshalNProfile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfile,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_profile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Profile_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_Profile_fullName(ctx, field)
+			case "emailAddress":
+				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_Profile_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_Profile_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_Profile_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_Profile_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Profile_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Profile_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Profile_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
 	}
 	return fc, nil
@@ -53708,26 +53731,22 @@ func (ec *executionContext) fieldContext_TrustCenterAccessEdge_node(_ context.Co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_TrustCenterAccess_id(ctx, field)
-			case "email":
-				return ec.fieldContext_TrustCenterAccess_email(ctx, field)
-			case "name":
-				return ec.fieldContext_TrustCenterAccess_name(ctx, field)
-			case "state":
-				return ec.fieldContext_TrustCenterAccess_state(ctx, field)
-			case "hasAcceptedNonDisclosureAgreement":
-				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
 			case "ndaSignature":
 				return ec.fieldContext_TrustCenterAccess_ndaSignature(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
-			case "lastTokenExpiresAt":
-				return ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt(ctx, field)
 			case "pendingRequestCount":
 				return ec.fieldContext_TrustCenterAccess_pendingRequestCount(ctx, field)
 			case "activeCount":
 				return ec.fieldContext_TrustCenterAccess_activeCount(ctx, field)
+			case "organizationId":
+				return ec.fieldContext_TrustCenterAccess_organizationId(ctx, field)
+			case "identityID":
+				return ec.fieldContext_TrustCenterAccess_identityID(ctx, field)
+			case "profile":
+				return ec.fieldContext_TrustCenterAccess_profile(ctx, field)
 			case "availableDocumentAccesses":
 				return ec.fieldContext_TrustCenterAccess_availableDocumentAccesses(ctx, field)
 			case "permission":
@@ -56553,26 +56572,22 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterAccessPayload_trustCen
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_TrustCenterAccess_id(ctx, field)
-			case "email":
-				return ec.fieldContext_TrustCenterAccess_email(ctx, field)
-			case "name":
-				return ec.fieldContext_TrustCenterAccess_name(ctx, field)
-			case "state":
-				return ec.fieldContext_TrustCenterAccess_state(ctx, field)
-			case "hasAcceptedNonDisclosureAgreement":
-				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
 			case "ndaSignature":
 				return ec.fieldContext_TrustCenterAccess_ndaSignature(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
-			case "lastTokenExpiresAt":
-				return ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt(ctx, field)
 			case "pendingRequestCount":
 				return ec.fieldContext_TrustCenterAccess_pendingRequestCount(ctx, field)
 			case "activeCount":
 				return ec.fieldContext_TrustCenterAccess_activeCount(ctx, field)
+			case "organizationId":
+				return ec.fieldContext_TrustCenterAccess_organizationId(ctx, field)
+			case "identityID":
+				return ec.fieldContext_TrustCenterAccess_identityID(ctx, field)
+			case "profile":
+				return ec.fieldContext_TrustCenterAccess_profile(ctx, field)
 			case "availableDocumentAccesses":
 				return ec.fieldContext_TrustCenterAccess_availableDocumentAccesses(ctx, field)
 			case "permission":
@@ -57996,6 +58011,8 @@ func (ec *executionContext) fieldContext_Vendor_businessOwner(_ context.Context,
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -58049,6 +58066,8 @@ func (ec *executionContext) fieldContext_Vendor_securityOwner(_ context.Context,
 				return ec.fieldContext_Profile_fullName(ctx, field)
 			case "emailAddress":
 				return ec.fieldContext_Profile_emailAddress(ctx, field)
+			case "state":
+				return ec.fieldContext_Profile_state(ctx, field)
 			case "additionalEmailAddresses":
 				return ec.fieldContext_Profile_additionalEmailAddresses(ctx, field)
 			case "kind":
@@ -85386,6 +85405,11 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "state":
+			out.Values[i] = ec._Profile_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "additionalEmailAddresses":
 			out.Values[i] = ec._Profile_additionalEmailAddresses(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -88742,26 +88766,6 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "email":
-			out.Values[i] = ec._TrustCenterAccess_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "name":
-			out.Values[i] = ec._TrustCenterAccess_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "state":
-			out.Values[i] = ec._TrustCenterAccess_state(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "hasAcceptedNonDisclosureAgreement":
-			out.Values[i] = ec._TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "ndaSignature":
 			field := field
 
@@ -88805,8 +88809,6 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "lastTokenExpiresAt":
-			out.Values[i] = ec._TrustCenterAccess_lastTokenExpiresAt(ctx, field, obj)
 		case "pendingRequestCount":
 			field := field
 
@@ -88853,6 +88855,52 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 					}
 				}()
 				res = ec._TrustCenterAccess_activeCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "organizationId":
+			out.Values[i] = ec._TrustCenterAccess_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "identityID":
+			out.Values[i] = ec._TrustCenterAccess_identityID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "profile":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenterAccess_profile(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -99410,6 +99458,34 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState(ctx context.Context, v any) (coredata.ProfileState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState(ctx context.Context, sel ast.SelectionSet, v coredata.ProfileState) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState = map[string]coredata.ProfileState{
+		"ACTIVE":   coredata.ProfileStateActive,
+		"INACTIVE": coredata.ProfileStateInactive,
+	}
+	marshalNProfileState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProfileState = map[coredata.ProfileState]string{
+		coredata.ProfileStateActive:   "ACTIVE",
+		coredata.ProfileStateInactive: "INACTIVE",
+	}
+)
+
 func (ec *executionContext) unmarshalNPublishDocumentVersionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionInput(ctx context.Context, v any) (types.PublishDocumentVersionInput, error) {
 	res, err := ec.unmarshalInputPublishDocumentVersionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -100390,34 +100466,6 @@ var (
 	}
 	marshalNTrustCenterAccessOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessOrderField = map[coredata.TrustCenterAccessOrderField]string{
 		coredata.TrustCenterAccessOrderFieldCreatedAt: "CREATED_AT",
-	}
-)
-
-func (ec *executionContext) unmarshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState(ctx context.Context, v any) (coredata.TrustCenterAccessState, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState(ctx context.Context, sel ast.SelectionSet, v coredata.TrustCenterAccessState) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState = map[string]coredata.TrustCenterAccessState{
-		"ACTIVE":   coredata.TrustCenterAccessStateActive,
-		"INACTIVE": coredata.TrustCenterAccessStateInactive,
-	}
-	marshalNTrustCenterAccessState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterAccessState = map[coredata.TrustCenterAccessState]string{
-		coredata.TrustCenterAccessStateActive:   "ACTIVE",
-		coredata.TrustCenterAccessStateInactive: "INACTIVE",
 	}
 )
 

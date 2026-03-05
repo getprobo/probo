@@ -1623,6 +1623,7 @@ type Profile struct {
 	ID                       gid.GID                         `json:"id"`
 	FullName                 string                          `json:"fullName"`
 	EmailAddress             mail.Addr                       `json:"emailAddress"`
+	State                    coredata.ProfileState           `json:"state"`
 	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses"`
 	Kind                     *coredata.MembershipProfileKind `json:"kind,omitempty"`
 	Position                 *string                         `json:"position,omitempty"`
@@ -1892,19 +1893,17 @@ func (TrustCenter) IsNode()             {}
 func (this TrustCenter) GetID() gid.GID { return this.ID }
 
 type TrustCenterAccess struct {
-	ID                                gid.GID                              `json:"id"`
-	Email                             mail.Addr                            `json:"email"`
-	Name                              string                               `json:"name"`
-	State                             coredata.TrustCenterAccessState      `json:"state"`
-	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
-	NdaSignature                      *ElectronicSignature                 `json:"ndaSignature,omitempty"`
-	CreatedAt                         time.Time                            `json:"createdAt"`
-	UpdatedAt                         time.Time                            `json:"updatedAt"`
-	LastTokenExpiresAt                *time.Time                           `json:"lastTokenExpiresAt,omitempty"`
-	PendingRequestCount               int                                  `json:"pendingRequestCount"`
-	ActiveCount                       int                                  `json:"activeCount"`
-	AvailableDocumentAccesses         *TrustCenterDocumentAccessConnection `json:"availableDocumentAccesses"`
-	Permission                        bool                                 `json:"permission"`
+	ID                        gid.GID                              `json:"id"`
+	NdaSignature              *ElectronicSignature                 `json:"ndaSignature,omitempty"`
+	CreatedAt                 time.Time                            `json:"createdAt"`
+	UpdatedAt                 time.Time                            `json:"updatedAt"`
+	PendingRequestCount       int                                  `json:"pendingRequestCount"`
+	ActiveCount               int                                  `json:"activeCount"`
+	OrganizationID            gid.GID                              `json:"organizationId"`
+	IdentityID                gid.GID                              `json:"identityID"`
+	Profile                   *Profile                             `json:"profile"`
+	AvailableDocumentAccesses *TrustCenterDocumentAccessConnection `json:"availableDocumentAccesses"`
+	Permission                bool                                 `json:"permission"`
 }
 
 func (TrustCenterAccess) IsNode()             {}

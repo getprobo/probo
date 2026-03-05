@@ -23,11 +23,13 @@ import (
 
 type (
 	MembershipProfileFilter struct {
-		excludeContractEnded *bool
-		currentDate          time.Time
-		email                *mail.Addr
-		state                *ProfileState
-		source               *ProfileSource
+		withMembership        *bool
+		withTrustCenterAccess *bool
+		excludeContractEnded  *bool
+		currentDate           time.Time
+		email                 *mail.Addr
+		state                 *ProfileState
+		source                *ProfileSource
 	}
 )
 
@@ -36,6 +38,16 @@ func NewMembershipProfileFilter(excludeContractEnded *bool) *MembershipProfileFi
 		excludeContractEnded: excludeContractEnded,
 		currentDate:          time.Now(),
 	}
+}
+
+func (f *MembershipProfileFilter) WithMembership() *MembershipProfileFilter {
+	f.withMembership = new(true)
+	return f
+}
+
+func (f *MembershipProfileFilter) WithTrustCenterAccess() *MembershipProfileFilter {
+	f.withTrustCenterAccess = new(true)
+	return f
 }
 
 func (f *MembershipProfileFilter) WithEmail(email *mail.Addr) *MembershipProfileFilter {
@@ -67,17 +79,37 @@ func (f *MembershipProfileFilter) Source() *ProfileSource {
 
 func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
-		"filter_email":           f.email,
-		"exclude_contract_ended": f.excludeContractEnded,
-		"current_date":           f.currentDate,
-		"filter_state":           f.state,
-		"filter_source":          f.source,
+		"filter_email":             f.email,
+		"with_membership":          f.withMembership,
+		"with_trust_center_access": f.withTrustCenterAccess,
+		"exclude_contract_ended":   f.excludeContractEnded,
+		"current_date":             f.currentDate,
+		"filter_state":             f.state,
+		"filter_source":            f.source,
 	}
 }
 
 func (f *MembershipProfileFilter) SQLFragment() string {
 	return `
 (
+	CASE
+		WHEN @with_trust_center_access::boolean IS NOT NULL AND @with_trust_center_access::boolean = TRUE THEN
+			EXISTS (SELECT 1 FROM trust_center_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
+		WHEN @with_trust_center_access::boolean IS NOT NULL AND @with_trust_center_access::boolean = FALSE THEN
+			NOT EXISTS (SELECT 1 FROM trust_center_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @with_membership::boolean IS NOT NULL AND @with_membership::boolean = TRUE THEN
+			EXISTS (SELECT 1 FROM iam_memberships WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
+		WHEN @with_membership::boolean IS NOT NULL AND @with_membership::boolean = FALSE THEN
+			NOT EXISTS (SELECT 1 FROM iam_memberships WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
+		ELSE TRUE
+	END
+)
+AND (
 	CASE
 		WHEN @filter_email::citext IS NOT NULL THEN
 			i.email_address = @filter_email::citext

@@ -288,15 +288,12 @@ func (s TrustCenterAccessService) Update(
 	ctx context.Context,
 	req *UpdateTrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
-
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	now := time.Now()
 	var (
 		access                    *coredata.TrustCenterAccess
-		profile                   *coredata.MembershipProfile
 		trustCenterAcessActivated bool
 		shouldUpdateSlackMessage  bool
 	)
@@ -308,24 +305,6 @@ func (s TrustCenterAccessService) Update(
 
 			if err := access.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load trust center access: %w", err)
-			}
-
-			access.UpdatedAt = now
-
-			if err := access.Update(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update trust center access: %w", err)
-			}
-
-			// FIXME: need to change UX
-			profile = &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, s.svc.scope, access.OrganizationID, access.IdentityID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load profile: %w", err)
-				}
-
-				if err := profile.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert profile: %w", err)
-				}
 			}
 
 			var tcdas coredata.TrustCenterDocumentAccesses
@@ -392,7 +371,7 @@ func (s TrustCenterAccessService) Update(
 	}
 
 	if shouldUpdateSlackMessage {
-		if err := s.svc.SlackMessages.QueueSlackNotification(ctx, profile.IdentityID, access.TrustCenterID); err != nil {
+		if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.IdentityID, access.TrustCenterID); err != nil {
 			if !errors.Is(err, slack.ErrNoSlackConnector) {
 				return nil, fmt.Errorf("cannot queue slack notification: %w", err)
 			}

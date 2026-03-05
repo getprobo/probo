@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7c575bd72e0d697cf92b9dd57038995c>>
+ * @generated SignedSource<<b9fc06fe9a0b5d316298bb77804e29b1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -31,12 +31,8 @@ export type CompliancePageAccessEditDialogUpdateMutation$data = {
     readonly trustCenterAccess: {
       readonly activeCount: number;
       readonly createdAt: string;
-      readonly email: string;
-      readonly hasAcceptedNonDisclosureAgreement: boolean;
       readonly id: string;
-      readonly name: string;
       readonly pendingRequestCount: number;
-      readonly state: TrustCenterAccessState;
       readonly updatedAt: string;
     };
   };
@@ -82,34 +78,6 @@ v1 = [
             "args": null,
             "kind": "ScalarField",
             "name": "id",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "email",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "name",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "state",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "hasAcceptedNonDisclosureAgreement",
             "storageKey": null
           },
           {
@@ -165,16 +133,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "e8401f17211bce414eee9048b939235a",
+    "cacheID": "39cf57753ab2bd46878a9200ef892894",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAccessEditDialogUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation CompliancePageAccessEditDialogUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      state\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      pendingRequestCount\n      activeCount\n    }\n  }\n}\n"
+    "text": "mutation CompliancePageAccessEditDialogUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      createdAt\n      updatedAt\n      pendingRequestCount\n      activeCount\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e511d9060cc29db26cd6ff281fe2722b";
+(node as any).hash = "896760c6c5c2d6adfca8ffcd7c7e22c7";
 
 export default node;

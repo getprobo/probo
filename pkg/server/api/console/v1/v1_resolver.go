@@ -7990,6 +7990,25 @@ func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.
 	return count, nil
 }
 
+// Profile is the resolver for the profile field.
+func (r *trustCenterAccessResolver) Profile(ctx context.Context, obj *types.TrustCenterAccess) (*types.Profile, error) {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
+	}
+
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, obj.IdentityID, obj.OrganizationID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfile(profile), nil
+}
+
 // AvailableDocumentAccesses is the resolver for the availableDocumentAccesses field.
 func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet); err != nil {
