@@ -21,19 +21,18 @@ import (
 	"go.gearno.de/kit/pg"
 )
 
-type (
-	pgConfig struct {
-		Addr         string `json:"addr"`
-		Username     string `json:"username"`
-		Password     string `json:"password"`
-		Database     string `json:"database"`
-		PoolSize     int32  `json:"pool-size"`
-		CACertBundle string `json:"ca-cert-bundle"`
-		Debug        bool   `json:"debug"`
-	}
-)
+// PgConfig contains PostgreSQL database configuration.
+type PgConfig struct {
+	Addr         string `json:"addr"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Database     string `json:"database"`
+	PoolSize     int32  `json:"pool-size"`
+	CACertBundle string `json:"ca-cert-bundle"`
+	Debug        bool   `json:"debug"`
+}
 
-func (cfg pgConfig) Options(options ...pg.Option) []pg.Option {
+func (cfg PgConfig) Options(options ...pg.Option) []pg.Option {
 	opts := []pg.Option{
 		pg.WithAddr(cfg.Addr),
 		pg.WithUser(cfg.Username),

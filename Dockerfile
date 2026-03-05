@@ -13,9 +13,11 @@ RUN useradd -m probo && \
 
 ARG TARGETPLATFORM
 COPY $TARGETPLATFORM/probod /usr/local/bin/probod
+COPY $TARGETPLATFORM/probod-bootstrap /usr/local/bin/probod-bootstrap
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/probod && \
+    chmod +x /usr/local/bin/probod-bootstrap && \
     chmod +x /usr/local/bin/entrypoint.sh && \
     setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod && \
     mkdir -p /etc/probod && \

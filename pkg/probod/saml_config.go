@@ -18,7 +18,8 @@ import (
 	"time"
 )
 
-type samlConfig struct {
+// SAMLConfig contains SAML authentication configuration.
+type SAMLConfig struct {
 	SessionDuration                   int    `json:"session-duration"`
 	CleanupIntervalSeconds            int    `json:"cleanup-interval-seconds"`
 	Certificate                       string `json:"certificate"`
@@ -27,14 +28,14 @@ type samlConfig struct {
 	DomainVerificationResolverAddr    string `json:"domain-verification-resolver-addr"`
 }
 
-func (c samlConfig) SessionDurationTime() time.Duration {
+func (c SAMLConfig) SessionDurationTime() time.Duration {
 	if c.SessionDuration == 0 {
 		return 7 * 24 * time.Hour
 	}
 	return time.Duration(c.SessionDuration) * time.Second
 }
 
-func (c samlConfig) CleanupInterval() time.Duration {
+func (c SAMLConfig) CleanupInterval() time.Duration {
 	if c.CleanupIntervalSeconds == 0 {
 		return 0
 	}
@@ -42,6 +43,6 @@ func (c samlConfig) CleanupInterval() time.Duration {
 	return time.Duration(c.CleanupIntervalSeconds) * time.Second
 }
 
-func (c samlConfig) DomainVerificationInterval() time.Duration {
+func (c SAMLConfig) DomainVerificationInterval() time.Duration {
 	return time.Duration(c.DomainVerificationIntervalSeconds) * time.Second
 }

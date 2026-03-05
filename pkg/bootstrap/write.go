@@ -12,22 +12,33 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package bootstrap
 
-// CustomDomainsConfig contains custom domain configuration.
-type CustomDomainsConfig struct {
-	RenewalInterval   int        `json:"renewal-interval"`
-	ProvisionInterval int        `json:"provision-interval"`
-	ResolverAddr      string     `json:"resolver-addr"`
-	CnameTarget       string     `json:"cname-target"`
-	ACME              ACMEConfig `json:"acme"`
-}
+import (
+	"fmt"
+	"os"
+	"path/filepath"
 
-// ACMEConfig contains ACME certificate configuration.
-type ACMEConfig struct {
-	Directory  string `json:"directory"`
-	Email      string `json:"email"`
-	KeyType    string `json:"key-type"`
-	AccountKey string `json:"account-key"`
-	RootCA     string `json:"root-ca"`
+	"go.probo.inc/probo/pkg/probod"
+	"gopkg.in/yaml.v3"
+)
+
+// WriteConfig writes the configuration to the specified path as YAML.
+// It creates the parent directory if it doesn't exist.
+func WriteConfig(cfg *probod.FullConfig, path string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("create directory %s: %w", dir, err)
+	}
+
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("marshal config: %w", err)
+	}
+
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		return fmt.Errorf("write config file: %w", err)
+	}
+
+	return nil
 }

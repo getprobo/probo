@@ -14,13 +14,15 @@
 
 package probod
 
-type notificationsConfig struct {
-	Mailer  mailerConfig  `json:"mailer"`
-	Slack   slackConfig   `json:"slack"`
-	Webhook webhookConfig `json:"webhook"`
+// NotificationsConfig contains notification configuration.
+type NotificationsConfig struct {
+	Mailer  MailerConfig  `json:"mailer"`
+	Slack   SlackConfig   `json:"slack"`
+	Webhook WebhookConfig `json:"webhook"`
 }
 
-type webhookConfig struct {
+// WebhookConfig contains webhook configuration.
+type WebhookConfig struct {
 	SenderInterval int `json:"sender-interval"`
 	CacheTTL       int `json:"cache-ttl"`
 }

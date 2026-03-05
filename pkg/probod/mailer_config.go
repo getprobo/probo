@@ -14,18 +14,18 @@
 
 package probod
 
-type (
-	mailerConfig struct {
-		MailerInterval int        `json:"mailer-interval"`
-		SenderName     string     `json:"sender-name"`
-		SenderEmail    string     `json:"sender-email"`
-		SMTP           smtpConfig `json:"smtp"`
-	}
+// MailerConfig contains email mailer configuration.
+type MailerConfig struct {
+	MailerInterval int        `json:"mailer-interval"`
+	SenderName     string     `json:"sender-name"`
+	SenderEmail    string     `json:"sender-email"`
+	SMTP           SMTPConfig `json:"smtp"`
+}
 
-	smtpConfig struct {
-		Addr        string `json:"addr"`
-		User        string `json:"user"`
-		Password    string `json:"password"`
-		TLSRequired bool   `json:"tls-required"`
-	}
-)
+// SMTPConfig contains SMTP server configuration.
+type SMTPConfig struct {
+	Addr        string `json:"addr"`
+	User        string `json:"user"`
+	Password    string `json:"password"`
+	TLSRequired bool   `json:"tls-required"`
+}
