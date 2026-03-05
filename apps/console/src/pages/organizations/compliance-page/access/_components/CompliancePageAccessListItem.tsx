@@ -1,13 +1,11 @@
 import { formatDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, DropdownItem, IconArchive, IconPencil, IconRotateCw, Td, Tr } from "@probo/ui";
-import { useCallback, useState } from "react";
+import { ActionDropdown, DropdownItem, IconPencil, Td, Tr } from "@probo/ui";
+import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageAccessListItemFragment$key } from "#/__generated__/core/CompliancePageAccessListItemFragment.graphql";
-import type { CompliancePageAccessListItemUpdateMutation } from "#/__generated__/core/CompliancePageAccessListItemUpdateMutation.graphql";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CompliancePageAccessEditDialog } from "./CompliancePageAccessEditDialog";
 import { NdaSignatureBadge } from "./NdaSignatureBadge";
@@ -30,27 +28,6 @@ const fragment = graphql`
   }
 `;
 
-const toggleAccessStateMutation = graphql`
-  mutation CompliancePageAccessListItemUpdateMutation(
-    $input: UpdateTrustCenterAccessInput!
-  ) {
-    updateTrustCenterAccess(input: $input) {
-      trustCenterAccess {
-        id
-        createdAt
-        updatedAt
-        pendingRequestCount
-        activeCount
-        profile {
-          fullName
-          emailAddress
-          state
-        }
-      }
-    }
-  }
-`;
-
 export function CompliancePageAccessListItem(props: {
   fragmentRef: CompliancePageAccessListItemFragment$key;
 }) {
@@ -62,29 +39,6 @@ export function CompliancePageAccessListItem(props: {
   const access = useFragment<CompliancePageAccessListItemFragment$key>(fragment, fragmentRef);
 
   const isActive = access.profile.state === "ACTIVE";
-
-  const [toggleAccessState, isToggling] = useMutationWithToasts<CompliancePageAccessListItemUpdateMutation>(
-    toggleAccessStateMutation,
-    {
-      successMessage: isActive
-        ? __("Access deactivated successfully")
-        : __("Access activated successfully"),
-      errorMessage: isActive
-        ? __("Failed to deactivate access")
-        : __("Failed to activate access"),
-    },
-  );
-
-  const handleToggleState = useCallback(() => {
-    void toggleAccessState({
-      variables: {
-        input: {
-          id: access.id,
-          state: isActive ? "INACTIVE" : "ACTIVE",
-        },
-      },
-    });
-  }, [toggleAccessState, access.id, isActive]);
 
   return (
     <>
@@ -126,14 +80,6 @@ export function CompliancePageAccessListItem(props: {
                     {__("Edit")}
                   </DropdownItem>
                 )}
-                <DropdownItem
-                  icon={isActive ? IconArchive : IconRotateCw}
-                  onClick={handleToggleState}
-                  disabled={isToggling}
-                  variant={isActive ? "danger" : "primary"}
-                >
-                  {isActive ? __("Deactivate") : __("Activate")}
-                </DropdownItem>
               </ActionDropdown>
             )}
           </div>
