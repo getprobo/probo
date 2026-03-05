@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.137.2] - 2026-03-05
+
+### Fixed
+
+- Compliance page full name unified handling through identities and profiles
+
 ## [0.137.1] - 2026-03-05
 
 ### Fixed
