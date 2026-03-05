@@ -122,8 +122,47 @@ func (s TrustCenterAccessService) EnsureAccess(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			var err error
-			access, _, err = s.ensureAccessInTx(ctx, tx, trustCenterID, identityID)
+			now := time.Now()
+
+			access, _, err := s.ensureAccessInTx(ctx, tx, trustCenterID, identityID)
+			if err != nil {
+				return fmt.Errorf("cannot ensure access presence: %w", err)
+			}
+
+			identity := &coredata.Identity{}
+			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(access.ID),
+				identityID,
+				access.OrganizationID,
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load profile: %w", err)
+				}
+
+				profile = &coredata.MembershipProfile{
+					ID:             gid.New(access.TenantID, coredata.MembershipProfileEntityType),
+					IdentityID:     identityID,
+					OrganizationID: access.OrganizationID,
+					EmailAddress:   identity.EmailAddress,
+					Source:         coredata.ProfileSourceManual,
+					State:          coredata.ProfileStateActive,
+					FullName:       identity.FullName,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if err := profile.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert profile: %w", err)
+				}
+			}
+
 			return err
 		},
 	)
@@ -143,12 +182,14 @@ func (s TrustCenterAccessService) Request(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			var trustCenter *coredata.TrustCenter
-			var err error
+			trustCenter := &coredata.TrustCenter{}
+			if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
 
-			access, trustCenter, err = s.ensureAccessInTx(ctx, tx, req.TrustCenterID, req.IdentityID)
-			if err != nil {
-				return err
+			access := &coredata.TrustCenterAccess{}
+			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, s.svc.scope, req.TrustCenterID, req.IdentityID); err != nil {
+				return fmt.Errorf("cannot load compliance page membership: %w", err)
 			}
 
 			organizationID := trustCenter.OrganizationID
