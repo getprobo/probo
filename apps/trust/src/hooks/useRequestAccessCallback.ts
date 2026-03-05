@@ -6,6 +6,8 @@ import { useMutation } from "react-relay";
 import { useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
+import { getPathPrefix } from "#/utils/pathPrefix";
+
 import type { useRequestAccessCallback_allMutation } from "./__generated__/useRequestAccessCallback_allMutation.graphql";
 import type { useRequestAccessCallback_documentMutation } from "./__generated__/useRequestAccessCallback_documentMutation.graphql";
 import type { useRequestAccessCallback_fileMutation } from "./__generated__/useRequestAccessCallback_fileMutation.graphql";
@@ -170,7 +172,7 @@ export function useRequestAccessCallback() {
           }
 
           toast(successToastArgs(__));
-          window.location.href = location.pathname;
+          window.location.href = (getPathPrefix() || "/") + location.pathname;
         },
         onError: (error) => {
           toast(errorToastArgs(__, error));
