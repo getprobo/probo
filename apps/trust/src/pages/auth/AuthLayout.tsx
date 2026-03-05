@@ -37,7 +37,7 @@ export function AuthLayout(props: { queryRef: PreloadedQuery<AuthLayoutQuery> })
                   className="h-20 rounded-2xl"
                 />
               )
-            : <Logo withPicto className="w-[440px]" />}
+            : <Logo withPicto className="w-[110px]" />}
           <div className="w-full border-t border-t-border-mid" />
         </div>
 
