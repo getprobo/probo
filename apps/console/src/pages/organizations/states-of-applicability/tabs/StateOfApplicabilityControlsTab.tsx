@@ -294,66 +294,58 @@ export default function StateOfApplicabilityControlsTab({
                 </Td>
                 <Td>
                   <div className="flex justify-center">
-                    <Badge
-                      variant={
-                        control.regulatory
-                          ? "success"
-                          : "danger"
-                      }
-                      size="sm"
-                    >
-                      {control.regulatory
-                        ? __("Yes")
-                        : __("No")}
-                    </Badge>
+                    {control.applicability === false
+                      ? <span className="text-txt-tertiary">-</span>
+                      : (
+                          <Badge
+                            variant={control.regulatory ? "success" : "danger"}
+                            size="sm"
+                          >
+                            {control.regulatory ? __("Yes") : __("No")}
+                          </Badge>
+                        )}
                   </div>
                 </Td>
                 <Td>
                   <div className="flex justify-center">
-                    <Badge
-                      variant={
-                        control.contractual
-                          ? "success"
-                          : "danger"
-                      }
-                      size="sm"
-                    >
-                      {control.contractual
-                        ? __("Yes")
-                        : __("No")}
-                    </Badge>
+                    {control.applicability === false
+                      ? <span className="text-txt-tertiary">-</span>
+                      : (
+                          <Badge
+                            variant={control.contractual ? "success" : "danger"}
+                            size="sm"
+                          >
+                            {control.contractual ? __("Yes") : __("No")}
+                          </Badge>
+                        )}
                   </div>
                 </Td>
                 <Td>
                   <div className="flex justify-center">
-                    <Badge
-                      variant={
-                        control.bestPractice
-                          ? "success"
-                          : "danger"
-                      }
-                      size="sm"
-                    >
-                      {control.bestPractice
-                        ? __("Yes")
-                        : __("No")}
-                    </Badge>
+                    {control.applicability === false
+                      ? <span className="text-txt-tertiary">-</span>
+                      : (
+                          <Badge
+                            variant={control.bestPractice ? "success" : "danger"}
+                            size="sm"
+                          >
+                            {control.bestPractice ? __("Yes") : __("No")}
+                          </Badge>
+                        )}
                   </div>
                 </Td>
                 <Td>
                   <div className="flex justify-center">
-                    <Badge
-                      variant={
-                        control.riskAssessment
-                          ? "success"
-                          : "danger"
-                      }
-                      size="sm"
-                    >
-                      {control.riskAssessment
-                        ? __("Yes")
-                        : __("No")}
-                    </Badge>
+                    {control.applicability === false
+                      ? <span className="text-txt-tertiary">-</span>
+                      : (
+                          <Badge
+                            variant={control.riskAssessment ? "success" : "danger"}
+                            size="sm"
+                          >
+                            {control.riskAssessment ? __("Yes") : __("No")}
+                          </Badge>
+                        )}
                   </div>
                 </Td>
                 {(canUpdate || canDelete) && (

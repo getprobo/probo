@@ -543,6 +543,7 @@ func (s StateOfApplicabilityService) ExportPDF(
 
 				var regulatory *bool
 				var contractual *bool
+				var bestPractice *bool
 				var riskAssessment *bool
 
 				if stmt.Applicability {
@@ -562,6 +563,8 @@ func (s StateOfApplicabilityService) ExportPDF(
 					if hasRisk {
 						riskAssessment = &trueVal
 					}
+
+					bestPractice = &control.BestPractice
 				}
 
 				applicability := stmt.Applicability
@@ -574,7 +577,7 @@ func (s StateOfApplicabilityService) ExportPDF(
 						Name:           control.Name,
 						Applicability:  &applicability,
 						Justification:  stmt.Justification,
-						BestPractice:   control.BestPractice,
+						BestPractice:   bestPractice,
 						Regulatory:     regulatory,
 						Contractual:    contractual,
 						RiskAssessment: riskAssessment,
