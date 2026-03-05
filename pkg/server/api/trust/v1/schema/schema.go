@@ -93,6 +93,23 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	ComplianceNews struct {
+		Body      func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Title     func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
+	ComplianceNewsConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	ComplianceNewsEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Document struct {
 		Access           func(childComplexity int) int
 		DocumentType     func(childComplexity int) int
@@ -158,6 +175,7 @@ type ComplexityRoot struct {
 	MailingListSubscriber struct {
 		CreatedAt func(childComplexity int) int
 		Email     func(childComplexity int) int
+		FullName  func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Status    func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
@@ -248,6 +266,7 @@ type ComplexityRoot struct {
 		Active                 func(childComplexity int) int
 		Audits                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		ComplianceFrameworks   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		ComplianceNews         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		DarkLogoFileURL        func(childComplexity int) int
 		Documents              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		ID                     func(childComplexity int) int
@@ -398,6 +417,7 @@ type TrustCenterResolver interface {
 	References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterReferenceConnection, error)
 	TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterFileConnection, error)
 	ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceFrameworkConnection, error)
+	ComplianceNews(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceNewsConnection, error)
 }
 type TrustCenterFileResolver interface {
 	IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error)
@@ -520,6 +540,57 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ComplianceFrameworkEdge.Node(childComplexity), true
+
+	case "ComplianceNews.body":
+		if e.ComplexityRoot.ComplianceNews.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceNews.Body(childComplexity), true
+	case "ComplianceNews.id":
+		if e.ComplexityRoot.ComplianceNews.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceNews.ID(childComplexity), true
+	case "ComplianceNews.title":
+		if e.ComplexityRoot.ComplianceNews.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceNews.Title(childComplexity), true
+	case "ComplianceNews.updatedAt":
+		if e.ComplexityRoot.ComplianceNews.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceNews.UpdatedAt(childComplexity), true
+
+	case "ComplianceNewsConnection.edges":
+		if e.ComplexityRoot.ComplianceNewsConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceNewsConnection.Edges(childComplexity), true
+	case "ComplianceNewsConnection.pageInfo":
+		if e.ComplexityRoot.ComplianceNewsConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceNewsConnection.PageInfo(childComplexity), true
+
+	case "ComplianceNewsEdge.cursor":
+		if e.ComplexityRoot.ComplianceNewsEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceNewsEdge.Cursor(childComplexity), true
+	case "ComplianceNewsEdge.node":
+		if e.ComplexityRoot.ComplianceNewsEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceNewsEdge.Node(childComplexity), true
 
 	case "Document.access":
 		if e.ComplexityRoot.Document.Access == nil {
@@ -735,6 +806,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.MailingListSubscriber.Email(childComplexity), true
+	case "MailingListSubscriber.fullName":
+		if e.ComplexityRoot.MailingListSubscriber.FullName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MailingListSubscriber.FullName(childComplexity), true
 	case "MailingListSubscriber.id":
 		if e.ComplexityRoot.MailingListSubscriber.ID == nil {
 			break
@@ -1108,6 +1185,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TrustCenter.ComplianceFrameworks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+	case "TrustCenter.complianceNews":
+		if e.ComplexityRoot.TrustCenter.ComplianceNews == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenter_complianceNews_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.TrustCenter.ComplianceNews(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 	case "TrustCenter.darkLogoFileUrl":
 		if e.ComplexityRoot.TrustCenter.DarkLogoFileURL == nil {
 			break
@@ -1663,6 +1751,32 @@ type ComplianceFrameworkEdge
   node: ComplianceFramework!
 }
 
+type ComplianceNews implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceNews"
+  ) {
+  id: ID!
+  title: String!
+  body: String!
+  updatedAt: Datetime!
+}
+
+type ComplianceNewsConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceNewsConnection"
+  ) {
+  edges: [ComplianceNewsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ComplianceNewsEdge
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceNewsEdge"
+  ) {
+  cursor: CursorKey!
+  node: ComplianceNews!
+}
+
 enum CountryCode
   @goModel(model: "go.probo.inc/probo/pkg/coredata.CountryCode") {
   AD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAD")
@@ -2106,6 +2220,14 @@ type TrustCenter implements Node {
     last: Int
     before: CursorKey
   ): ComplianceFrameworkConnection! @goField(forceResolver: true)
+
+  complianceNews(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): ComplianceNewsConnection! @goField(forceResolver: true)
+
 }
 
 type TrustCenterAccess implements Node {
@@ -2434,6 +2556,7 @@ type MailingListSubscriber implements Node
     model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListSubscriber"
   ) {
   id: ID!
+  fullName: String!
   email: EmailAddr!
   status: MailingListSubscriberStatus!
   createdAt: Datetime!
@@ -2667,6 +2790,32 @@ func (ec *executionContext) field_TrustCenter_audits_args(ctx context.Context, r
 }
 
 func (ec *executionContext) field_TrustCenter_complianceFrameworks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_TrustCenter_complianceNews_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
@@ -3439,6 +3588,264 @@ func (ec *executionContext) fieldContext_ComplianceFrameworkEdge_node(_ context.
 				return ec.fieldContext_ComplianceFramework_framework(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ComplianceFramework", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNews_id(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNews) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNews_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNews_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNews",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNews_title(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNews) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNews_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNews_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNews",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNews_body(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNews) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNews_body,
+		func(ctx context.Context) (any, error) {
+			return obj.Body, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNews_body(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNews",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNews_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNews) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNews_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNews_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNews",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNComplianceNewsEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNewsEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ComplianceNewsEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ComplianceNewsEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceNewsEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceNewsEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceNewsEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceNewsEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNComplianceNews2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNews,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceNewsEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceNewsEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ComplianceNews_id(ctx, field)
+			case "title":
+				return ec.fieldContext_ComplianceNews_title(ctx, field)
+			case "body":
+				return ec.fieldContext_ComplianceNews_body(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ComplianceNews_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceNews", field.Name)
 		},
 	}
 	return fc, nil
@@ -4456,6 +4863,35 @@ func (ec *executionContext) fieldContext_MailingListSubscriber_id(_ context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MailingListSubscriber_fullName(ctx context.Context, field graphql.CollectedField, obj *types.MailingListSubscriber) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MailingListSubscriber_fullName,
+		func(ctx context.Context) (any, error) {
+			return obj.FullName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MailingListSubscriber_fullName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MailingListSubscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6032,6 +6468,8 @@ func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_trustCenterFiles(ctx, field)
 			case "complianceFrameworks":
 				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
+			case "complianceNews":
+				return ec.fieldContext_TrustCenter_complianceNews(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
 		},
@@ -6554,6 +6992,8 @@ func (ec *executionContext) fieldContext_SubscribeToMailingListPayload_subscript
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_MailingListSubscriber_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_MailingListSubscriber_fullName(ctx, field)
 			case "email":
 				return ec.fieldContext_MailingListSubscriber_email(ctx, field)
 			case "status":
@@ -6777,6 +7217,8 @@ func (ec *executionContext) fieldContext_TrustCenter_viewerSubscription(_ contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_MailingListSubscriber_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_MailingListSubscriber_fullName(ctx, field)
 			case "email":
 				return ec.fieldContext_MailingListSubscriber_email(ctx, field)
 			case "status":
@@ -7180,6 +7622,53 @@ func (ec *executionContext) fieldContext_TrustCenter_complianceFrameworks(ctx co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_TrustCenter_complianceFrameworks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_complianceNews(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_complianceNews,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.TrustCenter().ComplianceNews(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+		},
+		nil,
+		ec.marshalNComplianceNewsConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNewsConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_complianceNews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_ComplianceNewsConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ComplianceNewsConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceNewsConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TrustCenter_complianceNews_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10305,6 +10794,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Document(ctx, sel, obj)
+	case types.ComplianceNews:
+		return ec._ComplianceNews(ctx, sel, &obj)
+	case *types.ComplianceNews:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ComplianceNews(ctx, sel, obj)
 	case types.ComplianceFramework:
 		return ec._ComplianceFramework(ctx, sel, &obj)
 	case *types.ComplianceFramework:
@@ -10706,6 +11202,148 @@ func (ec *executionContext) _ComplianceFrameworkEdge(ctx context.Context, sel as
 			}
 		case "node":
 			out.Values[i] = ec._ComplianceFrameworkEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceNewsImplementors = []string{"ComplianceNews", "Node"}
+
+func (ec *executionContext) _ComplianceNews(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceNews) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceNewsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceNews")
+		case "id":
+			out.Values[i] = ec._ComplianceNews_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._ComplianceNews_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "body":
+			out.Values[i] = ec._ComplianceNews_body(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ComplianceNews_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceNewsConnectionImplementors = []string{"ComplianceNewsConnection"}
+
+func (ec *executionContext) _ComplianceNewsConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceNewsConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceNewsConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceNewsConnection")
+		case "edges":
+			out.Values[i] = ec._ComplianceNewsConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ComplianceNewsConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceNewsEdgeImplementors = []string{"ComplianceNewsEdge"}
+
+func (ec *executionContext) _ComplianceNewsEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceNewsEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceNewsEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceNewsEdge")
+		case "cursor":
+			out.Values[i] = ec._ComplianceNewsEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._ComplianceNewsEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11354,6 +11992,11 @@ func (ec *executionContext) _MailingListSubscriber(ctx context.Context, sel ast.
 			out.Values[i] = graphql.MarshalString("MailingListSubscriber")
 		case "id":
 			out.Values[i] = ec._MailingListSubscriber_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fullName":
+			out.Values[i] = ec._MailingListSubscriber_fullName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -12663,6 +13306,42 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "complianceNews":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_complianceNews(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13875,6 +14554,56 @@ func (ec *executionContext) marshalNComplianceFrameworkEdge2ᚖgoᚗproboᚗinc�
 		return graphql.Null
 	}
 	return ec._ComplianceFrameworkEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceNews2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNews(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceNews) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceNews(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceNewsConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNewsConnection(ctx context.Context, sel ast.SelectionSet, v types.ComplianceNewsConnection) graphql.Marshaler {
+	return ec._ComplianceNewsConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNComplianceNewsConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNewsConnection(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceNewsConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceNewsConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceNewsEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNewsEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ComplianceNewsEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNComplianceNewsEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNewsEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNComplianceNewsEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐComplianceNewsEdge(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceNewsEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceNewsEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx context.Context, v any) (coredata.CountryCode, error) {

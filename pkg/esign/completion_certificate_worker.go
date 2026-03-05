@@ -321,6 +321,8 @@ func (w *CompletionCertificateWorker) generateCertificate(
 		subject,
 		textBody,
 		htmlBody,
+		nil,
+		nil,
 	)
 
 	attachments := coredata.EmailAttachments{

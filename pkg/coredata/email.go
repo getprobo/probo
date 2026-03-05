@@ -31,6 +31,8 @@ type (
 		ID             gid.GID    `db:"id"`
 		RecipientEmail string     `db:"recipient_email"`
 		RecipientName  string     `db:"recipient_name"`
+		ReplyTo        *mail.Addr `db:"reply_to"`
+		UnsubscribeURL *string    `db:"unsubscribe_url"`
 		Subject        string     `db:"subject"`
 		TextBody       string     `db:"text_body"`
 		HtmlBody       *string    `db:"html_body"`
@@ -38,6 +40,8 @@ type (
 		UpdatedAt      time.Time  `db:"updated_at"`
 		SentAt         *time.Time `db:"sent_at"`
 	}
+
+	Emails []*Email
 )
 
 var (
@@ -56,12 +60,16 @@ func NewEmail(
 	subject string,
 	textBody string,
 	htmlBody *string,
+	replyTo *mail.Addr,
+	unsubscribeURL *string,
 ) *Email {
 	now := time.Now()
 	return &Email{
 		ID:             gid.New(gid.NilTenant, EmailEntityType),
 		RecipientName:  recipientName,
 		RecipientEmail: recipientEmail.String(),
+		ReplyTo:        replyTo,
+		UnsubscribeURL: unsubscribeURL,
 		Subject:        subject,
 		TextBody:       textBody,
 		HtmlBody:       htmlBody,
@@ -75,14 +83,16 @@ func (e *Email) Insert(
 	conn pg.Conn,
 ) error {
 	q := `
-INSERT INTO emails (id, recipient_email, recipient_name, subject, text_body, html_body, created_at, updated_at)
-VALUES (@id, @recipient_email, @recipient_name, @subject, @text_body, @html_body, @created_at, @updated_at)
+INSERT INTO emails (id, recipient_email, recipient_name, reply_to, unsubscribe_url, subject, text_body, html_body, created_at, updated_at)
+VALUES (@id, @recipient_email, @recipient_name, @reply_to, @unsubscribe_url, @subject, @text_body, @html_body, @created_at, @updated_at)
 	`
 
 	args := pgx.StrictNamedArgs{
 		"id":              e.ID,
 		"recipient_email": e.RecipientEmail,
 		"recipient_name":  e.RecipientName,
+		"reply_to":        e.ReplyTo,
+		"unsubscribe_url": e.UnsubscribeURL,
 		"subject":         e.Subject,
 		"text_body":       e.TextBody,
 		"html_body":       e.HtmlBody,
@@ -94,12 +104,45 @@ VALUES (@id, @recipient_email, @recipient_name, @subject, @text_body, @html_body
 	return err
 }
 
+func (emails Emails) BulkInsert(
+	ctx context.Context,
+	conn pg.Conn,
+) error {
+	if len(emails) == 0 {
+		return nil
+	}
+
+	rows := make([][]any, 0, len(emails))
+	for _, e := range emails {
+		rows = append(rows, []any{
+			e.ID,
+			e.RecipientEmail,
+			e.RecipientName,
+			e.ReplyTo,
+			e.UnsubscribeURL,
+			e.Subject,
+			e.TextBody,
+			e.HtmlBody,
+			e.CreatedAt,
+			e.UpdatedAt,
+		})
+	}
+
+	_, err := conn.CopyFrom(
+		ctx,
+		pgx.Identifier{"emails"},
+		[]string{"id", "recipient_email", "recipient_name", "reply_to", "unsubscribe_url", "subject", "text_body", "html_body", "created_at", "updated_at"},
+		pgx.CopyFromRows(rows),
+	)
+	return err
+}
+
 func (e *Email) LoadNextUnsentForUpdate(
 	ctx context.Context,
 	conn pg.Conn,
 ) error {
 	q := `
-SELECT id, recipient_email, recipient_name, subject, text_body, html_body, created_at, updated_at, sent_at
+SELECT id, recipient_email, recipient_name, reply_to, unsubscribe_url, subject, text_body, html_body, created_at, updated_at, sent_at
 FROM emails
 WHERE sent_at IS NULL
 ORDER BY created_at ASC

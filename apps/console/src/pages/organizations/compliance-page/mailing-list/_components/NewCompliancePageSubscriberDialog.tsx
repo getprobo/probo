@@ -36,7 +36,7 @@ export function NewCompliancePageSubscriberDialog(props: {
   const { __ } = useTranslate();
 
   const schema = z.object({
-    fullName: z.string().min(1, __("Full name is required")).trim(),
+    fullName: z.string().trim().min(1, __("Full name is required")),
     email: z
       .string()
       .min(1, __("Email is required"))
@@ -90,6 +90,7 @@ export function NewCompliancePageSubscriberDialog(props: {
             label={__("Full Name")}
             required
             error={form.formState.errors.fullName?.message}
+            type="text"
             {...form.register("fullName")}
             placeholder={__("John Doe")}
           />

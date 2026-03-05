@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Field, IconPlusLarge, Spinner, useDialogRef } from "@probo/ui";
+import { Button, Card, Field, IconPlusLarge, Spinner, TabItem, Tabs, useDialogRef } from "@probo/ui";
 import { useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
@@ -9,6 +9,9 @@ import type { CompliancePageMailingListPageQuery } from "#/__generated__/core/Co
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CompliancePageMailingList } from "./_components/CompliancePageMailingList";
+import { CompliancePageNewsList } from "./_components/CompliancePageNewsList";
+import { EditComplianceNewsDialog } from "./_components/EditComplianceNewsDialog";
+import { NewComplianceNewsDialog } from "./_components/NewComplianceNewsDialog";
 import { NewCompliancePageSubscriberDialog } from "./_components/NewCompliancePageSubscriberDialog";
 
 export const compliancePageMailingListPageQuery = graphql`
@@ -23,6 +26,7 @@ export const compliancePageMailingListPageQuery = graphql`
             replyTo
           }
           ...CompliancePageMailingListFragment
+          ...CompliancePageNewsListFragment
         }
       }
     }
@@ -40,12 +44,28 @@ const updateMailingListMutation = graphql`
   }
 `;
 
+type NewsNode = {
+  id: string;
+  title: string;
+  body: string;
+  status: "DRAFT" | "SENT";
+  createdAt: string;
+  updatedAt: string;
+};
+
+type Tab = "updates" | "subscribers";
+
 export function CompliancePageMailingListPage(props: {
   queryRef: PreloadedQuery<CompliancePageMailingListPageQuery>;
 }) {
   const { queryRef } = props;
   const { __ } = useTranslate();
-  const dialogRef = useDialogRef();
+  const subscriberDialogRef = useDialogRef();
+  const newNewsDialogRef = useDialogRef();
+  const editNewsDialogRef = useDialogRef();
+
+  const [activeTab, setActiveTab] = useState<Tab>("updates");
+  const [selectedNews, setSelectedNews] = useState<NewsNode | null>(null);
 
   const { organization } = usePreloadedQuery<CompliancePageMailingListPageQuery>(
     compliancePageMailingListPageQuery,
@@ -56,12 +76,19 @@ export function CompliancePageMailingListPage(props: {
     throw new Error("invalid type for node");
   }
 
-  const mailingList = organization.compliancePage.mailingList;
+  const { compliancePage } = organization;
+  const mailingList = compliancePage.mailingList;
   const mailingListId = mailingList?.id;
+  const trustCenterId = compliancePage.id;
 
-  const connectionId = mailingListId
+  const subscriberConnectionId = mailingListId
     ? ConnectionHandler.getConnectionID(mailingListId, "CompliancePageMailingList_subscribers")
     : null;
+
+  const newsConnectionId = ConnectionHandler.getConnectionID(
+    trustCenterId,
+    "CompliancePageNewsList_complianceNews",
+  );
 
   const [replyTo, setReplyTo] = useState(mailingList?.replyTo ?? "");
 
@@ -83,6 +110,11 @@ export function CompliancePageMailingListPage(props: {
         },
       },
     });
+  };
+
+  const handleEditNews = (news: NewsNode) => {
+    setSelectedNews({ ...news });
+    editNewsDialogRef.current?.open();
   };
 
   return (
@@ -119,27 +151,55 @@ export function CompliancePageMailingListPage(props: {
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-medium">{__("Subscribers")}</h3>
-            <p className="text-sm text-txt-tertiary">
-              {__("People subscribed to receive security and compliance updates")}
-            </p>
-          </div>
-          {mailingListId && (
-            <Button icon={IconPlusLarge} onClick={() => dialogRef.current?.open()}>
+          <Tabs>
+            <TabItem active={activeTab === "updates"} onClick={() => setActiveTab("updates")}>
+              {__("News")}
+            </TabItem>
+            <TabItem active={activeTab === "subscribers"} onClick={() => setActiveTab("subscribers")}>
+              {__("Subscribers")}
+            </TabItem>
+          </Tabs>
+
+          {activeTab === "updates" && (
+            <Button icon={IconPlusLarge} onClick={() => newNewsDialogRef.current?.open()}>
+              {__("Add News")}
+            </Button>
+          )}
+          {activeTab === "subscribers" && mailingListId && (
+            <Button icon={IconPlusLarge} onClick={() => subscriberDialogRef.current?.open()}>
               {__("Add Subscriber")}
             </Button>
           )}
         </div>
 
-        <CompliancePageMailingList fragmentRef={organization.compliancePage} />
+        {activeTab === "updates" && (
+          <CompliancePageNewsList
+            fragmentRef={compliancePage}
+            onEdit={handleEditNews}
+          />
+        )}
+
+        {activeTab === "subscribers" && (
+          <CompliancePageMailingList fragmentRef={compliancePage} />
+        )}
       </div>
 
-      {mailingListId && connectionId && (
+      <NewComplianceNewsDialog
+        ref={newNewsDialogRef}
+        trustCenterId={trustCenterId}
+        connectionId={newsConnectionId}
+      />
+
+      <EditComplianceNewsDialog
+        ref={editNewsDialogRef}
+        news={selectedNews}
+      />
+
+      {mailingListId && subscriberConnectionId && (
         <NewCompliancePageSubscriberDialog
-          ref={dialogRef}
+          ref={subscriberDialogRef}
           mailingListId={mailingListId}
-          connectionId={connectionId}
+          connectionId={subscriberConnectionId}
         />
       )}
     </div>

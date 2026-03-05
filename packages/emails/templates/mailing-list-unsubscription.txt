@@ -1,0 +1,8 @@
+{{.SenderCompanyName}}
+
+Hi {{.RecipientFullName}},
+
+You've been successfully unsubscribed from {{.OrganizationName}}'s compliance updates. You will no longer receive notifications when new information is published on their compliance page.
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

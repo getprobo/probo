@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}}</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: #f3f4f6;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        color: #111827;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 0.75rem;
+        border: 1px solid #e5e7eb;
+        padding: 2.5rem 2rem;
+        max-width: 26rem;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      }
+
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        line-height: 1.4;
+        margin-bottom: 0.625rem;
+      }
+
+      p {
+        font-size: 0.9375rem;
+        color: #6b7280;
+        line-height: 1.6;
+        margin-top: 0.5rem;
+      }
+
+      form {
+        margin-top: 1.75rem;
+      }
+
+      button {
+        font-family: inherit;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        border: none;
+        cursor: pointer;
+        line-height: 1.5;
+      }
+
+      .primary {
+        background: #111827;
+        color: #fff;
+      }
+
+      .primary:hover {
+        background: #1f2937;
+      }
+
+      .danger {
+        background: #dc2626;
+        color: #fff;
+      }
+
+      .danger:hover {
+        background: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>{{.Heading}}</h1>
+      <p>{{.Body}}</p>
+      {{- if .Form}}
+      <form method="POST" action="{{.Form.ActionURL}}">
+        <button type="submit" class="{{if .Form.Danger}}danger{{else}}primary{{end}}">
+          {{.Form.Button}}
+        </button>
+      </form>
+      {{- end}}
+    </div>
+  </body>
+</html>

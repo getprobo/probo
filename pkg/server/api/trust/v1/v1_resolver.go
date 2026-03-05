@@ -704,18 +704,18 @@ func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.S
 
 	identity := authn.IdentityFromContext(ctx)
 
-	subscriber, err := r.mailman.CreateSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress, identity.FullName)
+	subscriber, err := r.mailman.CreateSubscriber(
+		ctx,
+		*trustCenter.MailingListID,
+		identity.EmailAddress,
+		identity.FullName,
+	)
 	if err != nil {
 		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
-			subscriber, err = r.mailman.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
-			if err != nil {
-				r.logger.ErrorCtx(ctx, "cannot get existing mailing list subscription", log.Error(err))
-				return nil, gqlutils.Internal(ctx)
-			}
-		} else {
-			r.logger.ErrorCtx(ctx, "cannot subscribe to mailing list", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlutils.Conflictf(ctx, "already subscribed to this mailing list")
 		}
+		r.logger.ErrorCtx(ctx, "cannot subscribe to mailing list", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.SubscribeToMailingListPayload{
@@ -738,10 +738,13 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 		return nil, gqlutils.Internal(ctx)
 	}
 	if subscriber == nil {
-		return nil, gqlutils.NotFoundf(ctx, "mailing list subscription not found")
+		return nil, gqlutils.NotFoundf(ctx, "not subscribed to this mailing list")
 	}
 
 	if err := r.mailman.DeleteSubscriber(ctx, subscriber.ID); err != nil {
+		if errors.Is(err, mailman.ErrSubscriberNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "not subscribed to this mailing list")
+		}
 		r.logger.ErrorCtx(ctx, "cannot unsubscribe from mailing list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1186,6 +1189,30 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 	}
 
 	return types.NewComplianceFrameworkConnection(cfPage), nil
+}
+
+// ComplianceNews is the resolver for the complianceNews field.
+func (r *trustCenterResolver) ComplianceNews(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceNewsConnection, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return &types.ComplianceNewsConnection{Edges: []*types.ComplianceNewsEdge{}, PageInfo: &types.PageInfo{}}, nil
+	}
+
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceNewsOrderField]{
+		Field:     coredata.ComplianceNewsOrderFieldUpdatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := trustService.ComplianceNews.ListSent(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance news", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceNewsConnection(result), nil
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.

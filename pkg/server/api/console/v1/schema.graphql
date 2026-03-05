@@ -1663,6 +1663,13 @@ type TrustCenter implements Node
 
     mailingList: MailingList @goField(forceResolver: true)
 
+    complianceNews(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): ComplianceNewsConnection! @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
@@ -1713,6 +1720,43 @@ type MailingListSubscriberConnection
 type MailingListSubscriberEdge {
     cursor: CursorKey!
     node: MailingListSubscriber!
+}
+
+enum ComplianceNewsStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceNewsStatus"
+    ) {
+    DRAFT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceNewsStatusDraft"
+        )
+    SENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceNewsStatusSent"
+        )
+}
+
+type ComplianceNews implements Node {
+    id: ID!
+    title: String!
+    body: String!
+    status: ComplianceNewsStatus!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ComplianceNewsConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceNewsConnection"
+    ) {
+    edges: [ComplianceNewsEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type ComplianceNewsEdge {
+    cursor: CursorKey!
+    node: ComplianceNews!
 }
 
 type Organization implements Node {
@@ -3364,6 +3408,16 @@ type Mutation {
     deleteTrustCenterAccess(
         input: DeleteTrustCenterAccessInput!
     ): DeleteTrustCenterAccessPayload!
+    # Compliance News mutations
+    createComplianceNews(
+        input: CreateComplianceNewsInput!
+    ): CreateComplianceNewsPayload!
+    updateComplianceNews(
+        input: UpdateComplianceNewsInput!
+    ): UpdateComplianceNewsPayload!
+    deleteComplianceNews(
+        input: DeleteComplianceNewsInput!
+    ): DeleteComplianceNewsPayload!
     # Mailing List mutations
     updateMailingList(
         input: UpdateMailingListInput!
@@ -3775,6 +3829,23 @@ input UpdateMailingListInput {
 
 type UpdateMailingListPayload {
     mailingList: MailingList!
+}
+
+input CreateComplianceNewsInput {
+    trustCenterId: ID!
+    title: String!
+    body: String!
+}
+
+input UpdateComplianceNewsInput {
+    id: ID!
+    title: String!
+    body: String!
+    status: ComplianceNewsStatus!
+}
+
+input DeleteComplianceNewsInput {
+    id: ID!
 }
 
 input CreateMailingListSubscriberInput {
@@ -4619,6 +4690,18 @@ type UpdateTrustCenterAccessPayload {
 
 type DeleteTrustCenterAccessPayload {
     deletedTrustCenterAccessId: ID!
+}
+
+type CreateComplianceNewsPayload {
+    complianceNews: ComplianceNews!
+}
+
+type UpdateComplianceNewsPayload {
+    complianceNews: ComplianceNews!
+}
+
+type DeleteComplianceNewsPayload {
+    deletedComplianceNewsId: ID!
 }
 
 type CreateMailingListSubscriberPayload {

@@ -154,6 +154,23 @@ type ComplianceFrameworkEdge struct {
 	Node   *ComplianceFramework `json:"node"`
 }
 
+type ComplianceNews struct {
+	ID        gid.GID                       `json:"id"`
+	Title     string                        `json:"title"`
+	Body      string                        `json:"body"`
+	Status    coredata.ComplianceNewsStatus `json:"status"`
+	CreatedAt time.Time                     `json:"createdAt"`
+	UpdatedAt time.Time                     `json:"updatedAt"`
+}
+
+func (ComplianceNews) IsNode()             {}
+func (this ComplianceNews) GetID() gid.GID { return this.ID }
+
+type ComplianceNewsEdge struct {
+	Cursor page.CursorKey  `json:"cursor"`
+	Node   *ComplianceNews `json:"node"`
+}
+
 type ContinualImprovement struct {
 	ID           gid.GID                               `json:"id"`
 	SnapshotID   *gid.GID                              `json:"snapshotId,omitempty"`
@@ -262,6 +279,16 @@ type CreateComplianceFrameworkInput struct {
 
 type CreateComplianceFrameworkPayload struct {
 	ComplianceFrameworkEdge *ComplianceFrameworkEdge `json:"complianceFrameworkEdge"`
+}
+
+type CreateComplianceNewsInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	Title         string  `json:"title"`
+	Body          string  `json:"body"`
+}
+
+type CreateComplianceNewsPayload struct {
+	ComplianceNews *ComplianceNews `json:"complianceNews"`
 }
 
 type CreateContinualImprovementInput struct {
@@ -809,6 +836,14 @@ type DeleteComplianceFrameworkInput struct {
 
 type DeleteComplianceFrameworkPayload struct {
 	DeletedComplianceFrameworkID gid.GID `json:"deletedComplianceFrameworkId"`
+}
+
+type DeleteComplianceNewsInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteComplianceNewsPayload struct {
+	DeletedComplianceNewsID gid.GID `json:"deletedComplianceNewsId"`
 }
 
 type DeleteContinualImprovementInput struct {
@@ -2038,6 +2073,17 @@ type UpdateComplianceFrameworkInput struct {
 
 type UpdateComplianceFrameworkPayload struct {
 	ComplianceFramework *ComplianceFramework `json:"complianceFramework"`
+}
+
+type UpdateComplianceNewsInput struct {
+	ID     gid.GID                       `json:"id"`
+	Title  string                        `json:"title"`
+	Body   string                        `json:"body"`
+	Status coredata.ComplianceNewsStatus `json:"status"`
+}
+
+type UpdateComplianceNewsPayload struct {
+	ComplianceNews *ComplianceNews `json:"complianceNews"`
 }
 
 type UpdateContinualImprovementInput struct {

@@ -1,0 +1,20 @@
+{{.SenderCompanyName}}
+
+Hi {{.RecipientFullName}},
+
+{{.NewsTitle}}
+
+{{.NewsBody}}
+
+View the compliance page:
+
+{{.CompliancePageURL}}
+
+You are receiving this email because you subscribed to compliance updates from {{.OrganizationName}}.
+
+To unsubscribe, visit:
+
+{{.UnsubscribeURL}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

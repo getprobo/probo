@@ -394,6 +394,8 @@ func (impl *Implm) Run(
 		l.Named("esign"),
 	)
 
+	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, impl.cfg.BaseURL.String(), impl.cfg.AWS.Bucket, impl.cfg.EncryptionKey, l)
+
 	proboService, err := probo.NewService(
 		ctx,
 		impl.cfg.EncryptionKey,
@@ -429,8 +431,6 @@ func (impl *Implm) Run(
 		l,
 		slackService,
 	)
-
-	mailmanService := mailman.NewService(pgClient)
 
 	serverHandler, err := server.NewServer(
 		server.Config{

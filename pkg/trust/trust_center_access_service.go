@@ -571,6 +571,8 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 		subject,
 		textBody,
 		htmlBody,
+		nil,
+		nil,
 	)
 
 	if err := accessEmail.Insert(ctx, tx); err != nil {
@@ -705,6 +707,8 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 		subject,
 		textBody,
 		htmlBody,
+		nil,
+		nil,
 	)
 
 	if err := accessEmail.Insert(ctx, tx); err != nil {
