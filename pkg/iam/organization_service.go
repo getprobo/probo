@@ -415,6 +415,7 @@ func (s *OrganizationService) InviteUser(
 				subject,
 				textBody,
 				htmlBody,
+				nil,
 			)
 
 			err = email.Insert(ctx, tx)

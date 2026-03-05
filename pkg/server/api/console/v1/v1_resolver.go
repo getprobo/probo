@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -1546,6 +1547,28 @@ func (r *mailingListResolver) Subscribers(ctx context.Context, obj *types.Mailin
 	return types.NewMailingListSubscriberConnection(result, r, obj.ID), nil
 }
 
+// Updates is the resolver for the updates field on MailingList.
+func (r *mailingListResolver) Updates(ctx context.Context, obj *types.MailingList, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListUpdateConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMailingListUpdateList); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
+		Field:     coredata.MailingListUpdateOrderFieldUpdatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := r.mailman.ListMailingListUpdates(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMailingListUpdateConnection(result, r, obj.ID), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context, obj *types.MailingListSubscriberConnection) (int, error) {
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionMailingListSubscriberList); err != nil {
@@ -1563,6 +1586,21 @@ func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context
 	}
 
 	panic(fmt.Errorf("not implemented: TotalCount for parent type %T", obj.Resolver))
+}
+
+// TotalCount is the resolver for the totalCount field on MailingListUpdateConnection.
+func (r *mailingListUpdateConnectionResolver) TotalCount(ctx context.Context, obj *types.MailingListUpdateConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionMailingListUpdateList); err != nil {
+		return 0, err
+	}
+
+	count, err := r.mailman.CountMailingListUpdates(ctx, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count mailing list updates", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // Evidences is the resolver for the evidences field.
@@ -2028,6 +2066,88 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 	}, nil
 }
 
+// CreateMailingListUpdate is the resolver for the createMailingListUpdate field.
+func (r *mutationResolver) CreateMailingListUpdate(ctx context.Context, input types.CreateMailingListUpdateInput) (*types.CreateMailingListUpdatePayload, error) {
+	if err := r.authorize(ctx, input.MailingListID, probo.ActionMailingListUpdateCreate); err != nil {
+		return nil, err
+	}
+
+	mlu, err := r.mailman.CreateMailingListUpdate(ctx, input.MailingListID, input.Title, input.Body)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create mailing list update", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateMailingListUpdatePayload{
+		MailingListUpdate: types.NewMailingListUpdate(mlu),
+	}, nil
+}
+
+// UpdateMailingListUpdate is the resolver for the updateMailingListUpdate field.
+func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input types.UpdateMailingListUpdateInput) (*types.UpdateMailingListUpdatePayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionMailingListUpdateUpdate); err != nil {
+		return nil, err
+	}
+
+	mlu, err := r.mailman.UpdateMailingListUpdate(ctx, input.ID, input.Title, input.Body)
+	if err != nil {
+		if errors.Is(err, mailman.ErrMailingListUpdateAlreadySent) {
+			return nil, gqlutils.Conflictf(ctx, "mailing list update can only be edited when in draft")
+		}
+		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
+		}
+		r.logger.ErrorCtx(ctx, "cannot update mailing list update", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateMailingListUpdatePayload{
+		MailingListUpdate: types.NewMailingListUpdate(mlu),
+	}, nil
+}
+
+// SendMailingListUpdate is the resolver for the sendMailingListUpdate field.
+func (r *mutationResolver) SendMailingListUpdate(ctx context.Context, input types.SendMailingListUpdateInput) (*types.SendMailingListUpdatePayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionMailingListUpdateUpdate); err != nil {
+		return nil, err
+	}
+
+	mlu, err := r.mailman.SendMailingListUpdate(ctx, input.ID)
+	if err != nil {
+		if errors.Is(err, mailman.ErrMailingListUpdateAlreadySent) {
+			return nil, gqlutils.Conflictf(ctx, "mailing list update has already been queued for sending")
+		}
+		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
+		}
+		r.logger.ErrorCtx(ctx, "cannot queue mailing list update for sending", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.SendMailingListUpdatePayload{
+		MailingListUpdate: types.NewMailingListUpdate(mlu),
+	}, nil
+}
+
+// DeleteMailingListUpdate is the resolver for the deleteMailingListUpdate field.
+func (r *mutationResolver) DeleteMailingListUpdate(ctx context.Context, input types.DeleteMailingListUpdateInput) (*types.DeleteMailingListUpdatePayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionMailingListUpdateDelete); err != nil {
+		return nil, err
+	}
+
+	if err := r.mailman.DeleteMailingListUpdate(ctx, input.ID); err != nil {
+		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
+		}
+		r.logger.ErrorCtx(ctx, "cannot delete mailing list update", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteMailingListUpdatePayload{
+		DeletedMailingListUpdateID: input.ID,
+	}, nil
+}
+
 // UpdateMailingList is the resolver for the updateMailingList field.
 func (r *mutationResolver) UpdateMailingList(ctx context.Context, input types.UpdateMailingListInput) (*types.UpdateMailingListPayload, error) {
 	if err := r.authorize(ctx, input.ID, probo.ActionMailingListUpdate); err != nil {
@@ -2051,8 +2171,16 @@ func (r *mutationResolver) CreateMailingListSubscriber(ctx context.Context, inpu
 		return nil, err
 	}
 
-	subscriber, err := r.mailman.CreateSubscriber(ctx, input.MailingListID, input.Email, input.FullName)
+	subscriber, err := r.mailman.CreateSubscriber(
+		ctx,
+		input.MailingListID,
+		input.Email,
+		input.FullName,
+	)
 	if err != nil {
+		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
+			return nil, gqlutils.Conflictf(ctx, "subscriber already exists in this mailing list")
+		}
 		r.logger.ErrorCtx(ctx, "cannot create mailing list subscriber", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -2069,6 +2197,9 @@ func (r *mutationResolver) DeleteMailingListSubscriber(ctx context.Context, inpu
 	}
 
 	if err := r.mailman.DeleteSubscriber(ctx, input.ID); err != nil {
+		if errors.Is(err, mailman.ErrSubscriberNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "mailing list subscriber not found")
+		}
 		r.logger.ErrorCtx(ctx, "cannot delete mailing list subscriber", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -9196,6 +9327,11 @@ func (r *Resolver) MailingListSubscriberConnection() schema.MailingListSubscribe
 	return &mailingListSubscriberConnectionResolver{r}
 }
 
+// MailingListUpdateConnection returns schema.MailingListUpdateConnectionResolver implementation.
+func (r *Resolver) MailingListUpdateConnection() schema.MailingListUpdateConnectionResolver {
+	return &mailingListUpdateConnectionResolver{r}
+}
+
 // Measure returns schema.MeasureResolver implementation.
 func (r *Resolver) Measure() schema.MeasureResolver { return &measureResolver{r} }
 
@@ -9432,6 +9568,7 @@ type frameworkResolver struct{ *Resolver }
 type frameworkConnectionResolver struct{ *Resolver }
 type mailingListResolver struct{ *Resolver }
 type mailingListSubscriberConnectionResolver struct{ *Resolver }
+type mailingListUpdateConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
 type meetingResolver struct{ *Resolver }

@@ -664,6 +664,7 @@ func (s *DocumentService) SendSigningNotifications(
 					subject,
 					textBody,
 					htmlBody,
+					nil,
 				)
 
 				if err := email.Insert(ctx, tx); err != nil {
@@ -2010,6 +2011,7 @@ func (s *DocumentService) SendExportEmail(
 				subject,
 				textBody,
 				htmlBody,
+				nil,
 			)
 
 			if err := email.Insert(ctx, tx); err != nil {

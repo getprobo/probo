@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7e30e59b53799ccae49199d7b46f0320>>
+ * @generated SignedSource<<1ddc7eb54e71de0d95fb5af865fc0348>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,6 +21,7 @@ export type CompliancePageMailingListPageQuery$data = {
       readonly mailingList: {
         readonly id: string;
         readonly replyTo: string | null | undefined;
+        readonly " $fragmentSpreads": FragmentRefs<"CompliancePageUpdatesListFragment">;
       } | null | undefined;
       readonly " $fragmentSpreads": FragmentRefs<"CompliancePageMailingListFragment">;
     };
@@ -77,7 +78,65 @@ v5 = [
     "name": "first",
     "value": 20
   }
-];
+],
+v6 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "PageInfo",
+  "kind": "LinkedField",
+  "name": "pageInfo",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasNextPage",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "endCursor",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v7 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "status",
+  "storageKey": null
+},
+v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "createdAt",
+  "storageKey": null
+},
+v9 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v10 = {
+  "kind": "ClientExtension",
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "__id",
+      "storageKey": null
+    }
+  ]
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -117,7 +176,12 @@ return {
                       "plural": false,
                       "selections": [
                         (v3/*: any*/),
-                        (v4/*: any*/)
+                        (v4/*: any*/),
+                        {
+                          "args": null,
+                          "kind": "FragmentSpread",
+                          "name": "CompliancePageUpdatesListFragment"
+                        }
                       ],
                       "storageKey": null
                     },
@@ -182,36 +246,82 @@ return {
                       {
                         "alias": null,
                         "args": (v5/*: any*/),
+                        "concreteType": "MailingListUpdateConnection",
+                        "kind": "LinkedField",
+                        "name": "updates",
+                        "plural": false,
+                        "selections": [
+                          (v6/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "MailingListUpdateEdge",
+                            "kind": "LinkedField",
+                            "name": "edges",
+                            "plural": true,
+                            "selections": [
+                              {
+                                "alias": null,
+                                "args": null,
+                                "concreteType": "MailingListUpdate",
+                                "kind": "LinkedField",
+                                "name": "node",
+                                "plural": false,
+                                "selections": [
+                                  (v3/*: any*/),
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "kind": "ScalarField",
+                                    "name": "title",
+                                    "storageKey": null
+                                  },
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "kind": "ScalarField",
+                                    "name": "body",
+                                    "storageKey": null
+                                  },
+                                  (v7/*: any*/),
+                                  (v8/*: any*/),
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "kind": "ScalarField",
+                                    "name": "updatedAt",
+                                    "storageKey": null
+                                  },
+                                  (v2/*: any*/)
+                                ],
+                                "storageKey": null
+                              },
+                              (v9/*: any*/)
+                            ],
+                            "storageKey": null
+                          },
+                          (v10/*: any*/)
+                        ],
+                        "storageKey": "updates(first:20)"
+                      },
+                      {
+                        "alias": null,
+                        "args": (v5/*: any*/),
+                        "filters": null,
+                        "handle": "connection",
+                        "key": "CompliancePageUpdatesList_updates",
+                        "kind": "LinkedHandle",
+                        "name": "updates"
+                      },
+                      {
+                        "alias": null,
+                        "args": (v5/*: any*/),
                         "concreteType": "MailingListSubscriberConnection",
                         "kind": "LinkedField",
                         "name": "subscribers",
                         "plural": false,
                         "selections": [
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "PageInfo",
-                            "kind": "LinkedField",
-                            "name": "pageInfo",
-                            "plural": false,
-                            "selections": [
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "hasNextPage",
-                                "storageKey": null
-                              },
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "endCursor",
-                                "storageKey": null
-                              }
-                            ],
-                            "storageKey": null
-                          },
+                          (v6/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -243,46 +353,17 @@ return {
                                     "name": "email",
                                     "storageKey": null
                                   },
-                                  {
-                                    "alias": null,
-                                    "args": null,
-                                    "kind": "ScalarField",
-                                    "name": "status",
-                                    "storageKey": null
-                                  },
-                                  {
-                                    "alias": null,
-                                    "args": null,
-                                    "kind": "ScalarField",
-                                    "name": "createdAt",
-                                    "storageKey": null
-                                  },
+                                  (v7/*: any*/),
+                                  (v8/*: any*/),
                                   (v2/*: any*/)
                                 ],
                                 "storageKey": null
                               },
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "cursor",
-                                "storageKey": null
-                              }
+                              (v9/*: any*/)
                             ],
                             "storageKey": null
                           },
-                          {
-                            "kind": "ClientExtension",
-                            "selections": [
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "__id",
-                                "storageKey": null
-                              }
-                            ]
-                          }
+                          (v10/*: any*/)
                         ],
                         "storageKey": "subscribers(first:20)"
                       },
@@ -312,16 +393,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8eb57a5cf8f8b1294da6aee3228176f3",
+    "cacheID": "c8ba2eeecdfac4115f0ab1493ecf02ce",
     "id": null,
     "metadata": {},
     "name": "CompliancePageMailingListPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageMailingListPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        mailingList {\n          id\n          replyTo\n        }\n        ...CompliancePageMailingListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageMailingListFragment on TrustCenter {\n  mailingList {\n    id\n    subscribers(first: 20) {\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n      edges {\n        node {\n          id\n          fullName\n          email\n          status\n          createdAt\n          __typename\n        }\n        cursor\n      }\n    }\n  }\n  id\n}\n"
+    "text": "query CompliancePageMailingListPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        mailingList {\n          id\n          replyTo\n          ...CompliancePageUpdatesListFragment\n        }\n        ...CompliancePageMailingListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageMailingListFragment on TrustCenter {\n  mailingList {\n    id\n    subscribers(first: 20) {\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n      edges {\n        node {\n          id\n          fullName\n          email\n          status\n          createdAt\n          __typename\n        }\n        cursor\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageUpdatesListFragment on MailingList {\n  updates(first: 20) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0df7b2a8b9f0d2f421f354bd56773e43";
+(node as any).hash = "bda0ad6e5ff15a324d4c2ad76d0c94cd";
 
 export default node;

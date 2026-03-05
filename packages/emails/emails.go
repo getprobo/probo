@@ -219,6 +219,9 @@ const (
 	subjectTrustCenterDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
 	subjectMagicLink                         = "Connect to %s"
 	subjectElectronicSignatureCertificate    = "Your signed %s - Certificate of Completion"
+	subjectMailingListSubscription           = "%s – Confirm Your Compliance Updates Subscription"
+	subjectMailingListUnsubscription         = "%s – You've been unsubscribed"
+	subjectMailingListUpdates                = "%s – %s"
 )
 
 var (
@@ -242,6 +245,12 @@ var (
 	magicLinkTextTemplate                         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/magic-link.txt.tmpl"))
 	electronicSignatureCertificateHTMLTemplate    = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/electronic-signature-certificate.html.tmpl"))
 	electronicSignatureCertificateTextTemplate    = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/electronic-signature-certificate.txt.tmpl"))
+	mailingListSubscriptionHTMLTemplate           = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-subscription.html.tmpl"))
+	mailingListSubscriptionTextTemplate           = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-subscription.txt.tmpl"))
+	mailingListUnsubscriptionHTMLTemplate         = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-unsubscription.html.tmpl"))
+	mailingListUnsubscriptionTextTemplate         = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-unsubscription.txt.tmpl"))
+	mailingListUpdatesHTMLTemplate                = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/mailing-list-updates.html.tmpl"))
+	mailingListUpdatesTextTemplate                = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-updates.txt.tmpl"))
 )
 
 func (p *Presenter) getCommonVariables(ctx context.Context) (*CommonVariables, error) {
@@ -487,6 +496,84 @@ func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, si
 
 	textBody, htmlBody, err = renderEmail(electronicSignatureCertificateTextTemplate, electronicSignatureCertificateHTMLTemplate, data)
 	return fmt.Sprintf(subjectElectronicSignatureCertificate, documentType), textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderMailingListSubscription(ctx context.Context, organizationName string, confirmURL string, unsubscribeURL string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		OrganizationName string
+		ConfirmURL       string
+		UnsubscribeURL   string
+	}{
+		CommonVariables:  vars,
+		OrganizationName: organizationName,
+		ConfirmURL:       confirmURL,
+		UnsubscribeURL:   unsubscribeURL,
+	}
+
+	textBody, htmlBody, err = renderEmail(mailingListSubscriptionTextTemplate, mailingListSubscriptionHTMLTemplate, data)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	return fmt.Sprintf(subjectMailingListSubscription, organizationName), textBody, htmlBody, nil
+}
+
+func (p *Presenter) RenderMailingListUnsubscription(ctx context.Context, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		OrganizationName string
+	}{
+		CommonVariables:  vars,
+		OrganizationName: organizationName,
+	}
+
+	textBody, htmlBody, err = renderEmail(mailingListUnsubscriptionTextTemplate, mailingListUnsubscriptionHTMLTemplate, data)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	return fmt.Sprintf(subjectMailingListUnsubscription, organizationName), textBody, htmlBody, nil
+}
+
+func (p *Presenter) RenderMailingListNews(ctx context.Context, organizationName string, newsTitle string, newsBody string, compliancePageURL string, unsubscribeURL string) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables(ctx)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		OrganizationName  string
+		NewsTitle         string
+		NewsBody          string
+		CompliancePageURL string
+		UnsubscribeURL    string
+	}{
+		CommonVariables:   vars,
+		OrganizationName:  organizationName,
+		NewsTitle:         newsTitle,
+		NewsBody:          newsBody,
+		CompliancePageURL: compliancePageURL,
+		UnsubscribeURL:    unsubscribeURL,
+	}
+
+	textBody, htmlBody, err = renderEmail(mailingListUpdatesTextTemplate, mailingListUpdatesHTMLTemplate, data)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	return fmt.Sprintf(subjectMailingListUpdates, organizationName, newsTitle), textBody, htmlBody, nil
 }
 
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {

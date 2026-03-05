@@ -13,6 +13,7 @@ import { MainLayout } from "#/layouts/MainLayout";
 import { DocumentsPage } from "#/pages/DocumentsPage";
 import { OverviewPage } from "#/pages/OverviewPage";
 import { SubprocessorsPage } from "#/pages/SubprocessorsPage";
+import { currentTrustUpdatesQuery, UpdatesPage } from "#/pages/UpdatesPage";
 import {
   currentTrustDocumentsQuery,
   currentTrustGraphQuery,
@@ -109,6 +110,25 @@ const routes = [
         ),
         Fallback: TabSkeleton,
         Component: withQueryRef(SubprocessorsPage),
+      },
+    ],
+  },
+  {
+    path: "/updates",
+    loader: loaderFromQueryLoader(() =>
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+    ),
+    Component: withQueryRef(MainLayout),
+    Fallback: MainSkeleton,
+    ErrorBoundary: RootErrorBoundary,
+    children: [
+      {
+        path: "",
+        loader: loaderFromQueryLoader(() =>
+          loadQuery(consoleEnvironment, currentTrustUpdatesQuery, {}),
+        ),
+        Fallback: TabSkeleton,
+        Component: withQueryRef(UpdatesPage),
       },
     ],
   },

@@ -436,6 +436,8 @@ func (impl *Implm) Run(
 		l.Named("esign"),
 	)
 
+	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -471,8 +473,6 @@ func (impl *Implm) Run(
 		l,
 		slackService,
 	)
-
-	mailmanService := mailman.NewService(pgClient)
 
 	serverHandler, err := server.NewServer(
 		server.Config{
@@ -593,6 +593,16 @@ func (impl *Implm) Run(
 		},
 	)
 
+	mailingListWorker := mailman.NewMailingListWorker(mailmanService, pgClient, l.Named("mailing-list-worker"))
+	mailingListWorkerCtx, stopMailingListWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := mailingListWorker.Run(mailingListWorkerCtx); err != nil {
+				cancel(fmt.Errorf("mailing list worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 	wg.Go(
@@ -619,6 +629,7 @@ func (impl *Implm) Run(
 	stopTrustCenterServer()
 	stopWebhookSender()
 	stopESignService()
+	stopMailingListWorker()
 	stopExportJobExporter()
 	stopIAMService()
 	stopMailer()

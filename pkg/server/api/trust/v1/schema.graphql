@@ -131,6 +131,23 @@ type ComplianceFrameworkEdge
   node: ComplianceFramework!
 }
 
+type MailingListUpdate implements Node @nda {
+  id: ID!
+  title: String!
+  body: String!
+  updatedAt: Datetime!
+}
+
+type MailingListUpdateConnection @nda {
+  edges: [MailingListUpdateEdge!]!
+  pageInfo: PageInfo!
+}
+
+type MailingListUpdateEdge @nda {
+  cursor: CursorKey!
+  node: MailingListUpdate!
+}
+
 enum CountryCode
   @goModel(model: "go.probo.inc/probo/pkg/coredata.CountryCode") {
   AD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAD")
@@ -581,6 +598,13 @@ type TrustCenter implements Node {
     last: Int
     before: CursorKey
   ): ComplianceExternalURLConnection! @goField(forceResolver: true)
+
+  updates(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): MailingListUpdateConnection! @goField(forceResolver: true)
 }
 
 type ComplianceExternalURL implements Node {
@@ -926,6 +950,7 @@ type MailingListSubscriber implements Node
     model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListSubscriber"
   ) {
   id: ID!
+  fullName: String!
   email: EmailAddr!
   status: MailingListSubscriberStatus!
   createdAt: Datetime!

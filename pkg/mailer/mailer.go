@@ -208,8 +208,18 @@ func (w *SendingWorker) sendAndCommit(
 				To(email.RecipientName, email.RecipientEmail).
 				Text([]byte(email.TextBody))
 
+			if email.ReplyTo != nil {
+				mail = mail.ReplyTo("", email.ReplyTo.String())
+			}
+
 			if email.HtmlBody != nil {
 				mail = mail.HTML([]byte(*email.HtmlBody))
+			}
+
+			if email.UnsubscribeURL != nil {
+				mail = mail.
+					Header("List-Unsubscribe", "<"+*email.UnsubscribeURL+">").
+					Header("List-Unsubscribe-Post", "List-Unsubscribe=One-Click")
 			}
 
 			for _, att := range attachments {

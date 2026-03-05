@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/mailactions"
 	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
@@ -57,14 +58,15 @@ type Config struct {
 }
 
 type Server struct {
-	apiServer         *api.Server
-	consoleWebServer  *console_web.Server
-	trustWebServer    *trust_web.Server
-	router            *chi.Mux
-	extraHeaderFields map[string]string
-	proboService      *probo.Service
-	trustService      *trust.Service
-	logger            *log.Logger
+	apiServer          *api.Server
+	mailActionsHandler http.Handler
+	consoleWebServer   *console_web.Server
+	trustWebServer     *trust_web.Server
+	router             *chi.Mux
+	extraHeaderFields  map[string]string
+	proboService       *probo.Service
+	trustService       *trust.Service
+	logger             *log.Logger
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -102,14 +104,15 @@ func NewServer(cfg Config) (*Server, error) {
 	router := chi.NewRouter()
 
 	server := &Server{
-		apiServer:         apiServer,
-		consoleWebServer:  consoleWebServer,
-		trustWebServer:    trustWebServer,
-		router:            router,
-		extraHeaderFields: cfg.ExtraHeaderFields,
-		proboService:      cfg.Probo,
-		trustService:      cfg.Trust,
-		logger:            cfg.Logger,
+		apiServer:          apiServer,
+		mailActionsHandler: mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
+		consoleWebServer:   consoleWebServer,
+		trustWebServer:     trustWebServer,
+		router:             router,
+		extraHeaderFields:  cfg.ExtraHeaderFields,
+		proboService:       cfg.Probo,
+		trustService:       cfg.Trust,
+		logger:             cfg.Logger,
 	}
 
 	server.setupRoutes(cfg.BaseURL.String())
@@ -119,6 +122,7 @@ func NewServer(cfg Config) (*Server, error) {
 
 func (s *Server) setupRoutes(baseURL string) {
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
+	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
 		r.Use(compliancepage.NewIDMiddleware(s.trustService, baseURL))

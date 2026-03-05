@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Field, IconPlusLarge, Spinner, useDialogRef } from "@probo/ui";
+import { Button, Card, Field, IconPlusLarge, Spinner, TabItem, Tabs, useDialogRef } from "@probo/ui";
 import { useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
@@ -9,7 +9,10 @@ import type { CompliancePageMailingListPageQuery } from "#/__generated__/core/Co
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CompliancePageMailingList } from "./_components/CompliancePageMailingList";
+import { CompliancePageUpdatesList, type UpdateNode } from "./_components/CompliancePageUpdatesList";
+import { EditComplianceUpdateDialog } from "./_components/EditComplianceUpdateDialog";
 import { NewCompliancePageSubscriberDialog } from "./_components/NewCompliancePageSubscriberDialog";
+import { NewComplianceUpdateDialog } from "./_components/NewComplianceUpdateDialog";
 
 export const compliancePageMailingListPageQuery = graphql`
   query CompliancePageMailingListPageQuery($organizationId: ID!) {
@@ -21,6 +24,7 @@ export const compliancePageMailingListPageQuery = graphql`
           mailingList {
             id
             replyTo
+            ...CompliancePageUpdatesListFragment
           }
           ...CompliancePageMailingListFragment
         }
@@ -40,12 +44,19 @@ const updateMailingListMutation = graphql`
   }
 `;
 
+type Tab = "updates" | "subscribers";
+
 export function CompliancePageMailingListPage(props: {
   queryRef: PreloadedQuery<CompliancePageMailingListPageQuery>;
 }) {
   const { queryRef } = props;
   const { __ } = useTranslate();
-  const dialogRef = useDialogRef();
+  const subscriberDialogRef = useDialogRef();
+  const newUpdateDialogRef = useDialogRef();
+  const editUpdateDialogRef = useDialogRef();
+
+  const [activeTab, setActiveTab] = useState<Tab>("updates");
+  const [selectedUpdate, setSelectedUpdate] = useState<UpdateNode | null>(null);
 
   const { organization } = usePreloadedQuery<CompliancePageMailingListPageQuery>(
     compliancePageMailingListPageQuery,
@@ -56,11 +67,16 @@ export function CompliancePageMailingListPage(props: {
     throw new Error("invalid type for node");
   }
 
-  const mailingList = organization.compliancePage.mailingList;
+  const { compliancePage } = organization;
+  const mailingList = compliancePage.mailingList;
   const mailingListId = mailingList?.id;
 
-  const connectionId = mailingListId
+  const subscriberConnectionId = mailingListId
     ? ConnectionHandler.getConnectionID(mailingListId, "CompliancePageMailingList_subscribers")
+    : null;
+
+  const updatesConnectionId = mailingListId
+    ? ConnectionHandler.getConnectionID(mailingListId, "CompliancePageUpdatesList_updates")
     : null;
 
   const [replyTo, setReplyTo] = useState(mailingList?.replyTo ?? "");
@@ -83,6 +99,11 @@ export function CompliancePageMailingListPage(props: {
         },
       },
     });
+  };
+
+  const handleEditUpdate = (update: UpdateNode) => {
+    setSelectedUpdate({ ...update });
+    editUpdateDialogRef.current?.open();
   };
 
   return (
@@ -119,27 +140,57 @@ export function CompliancePageMailingListPage(props: {
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-medium">{__("Subscribers")}</h3>
-            <p className="text-sm text-txt-tertiary">
-              {__("People subscribed to receive security and compliance updates")}
-            </p>
-          </div>
-          {mailingListId && (
-            <Button icon={IconPlusLarge} onClick={() => dialogRef.current?.open()}>
+          <Tabs>
+            <TabItem active={activeTab === "updates"} onClick={() => setActiveTab("updates")}>
+              {__("Updates")}
+            </TabItem>
+            <TabItem active={activeTab === "subscribers"} onClick={() => setActiveTab("subscribers")}>
+              {__("Subscribers")}
+            </TabItem>
+          </Tabs>
+
+          {activeTab === "updates" && mailingListId && (
+            <Button icon={IconPlusLarge} onClick={() => newUpdateDialogRef.current?.open()}>
+              {__("Add Update")}
+            </Button>
+          )}
+          {activeTab === "subscribers" && mailingListId && (
+            <Button icon={IconPlusLarge} onClick={() => subscriberDialogRef.current?.open()}>
               {__("Add Subscriber")}
             </Button>
           )}
         </div>
 
-        <CompliancePageMailingList fragmentRef={organization.compliancePage} />
+        {activeTab === "updates" && mailingList && (
+          <CompliancePageUpdatesList
+            fragmentRef={mailingList}
+            onEdit={handleEditUpdate}
+          />
+        )}
+
+        {activeTab === "subscribers" && (
+          <CompliancePageMailingList fragmentRef={compliancePage} />
+        )}
       </div>
 
-      {mailingListId && connectionId && (
-        <NewCompliancePageSubscriberDialog
-          ref={dialogRef}
+      {mailingListId && updatesConnectionId && (
+        <NewComplianceUpdateDialog
+          ref={newUpdateDialogRef}
           mailingListId={mailingListId}
-          connectionId={connectionId}
+          connectionId={updatesConnectionId}
+        />
+      )}
+
+      <EditComplianceUpdateDialog
+        ref={editUpdateDialogRef}
+        update={selectedUpdate}
+      />
+
+      {mailingListId && subscriberConnectionId && (
+        <NewCompliancePageSubscriberDialog
+          ref={subscriberDialogRef}
+          mailingListId={mailingListId}
+          connectionId={subscriberConnectionId}
         />
       )}
     </div>

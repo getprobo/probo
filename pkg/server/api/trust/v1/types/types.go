@@ -153,6 +153,26 @@ type Identity struct {
 func (Identity) IsNode()             {}
 func (this Identity) GetID() gid.GID { return this.ID }
 
+type MailingListUpdate struct {
+	ID        gid.GID   `json:"id"`
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (MailingListUpdate) IsNode()             {}
+func (this MailingListUpdate) GetID() gid.GID { return this.ID }
+
+type MailingListUpdateConnection struct {
+	Edges    []*MailingListUpdateEdge `json:"edges"`
+	PageInfo *PageInfo                `json:"pageInfo"`
+}
+
+type MailingListUpdateEdge struct {
+	Cursor page.CursorKey     `json:"cursor"`
+	Node   *MailingListUpdate `json:"node"`
+}
+
 type Mutation struct {
 }
 
@@ -261,6 +281,7 @@ type TrustCenter struct {
 	TrustCenterFiles       *TrustCenterFileConnection       `json:"trustCenterFiles"`
 	ComplianceFrameworks   *ComplianceFrameworkConnection   `json:"complianceFrameworks"`
 	ExternalUrls           *ComplianceExternalURLConnection `json:"externalUrls"`
+	Updates                *MailingListUpdateConnection     `json:"updates"`
 }
 
 func (TrustCenter) IsNode()             {}
