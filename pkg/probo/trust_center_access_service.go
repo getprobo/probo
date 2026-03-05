@@ -246,6 +246,7 @@ func (s TrustCenterAccessService) Create(
 				ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
 				OrganizationID: trustCenter.OrganizationID,
 				TenantID:       s.svc.scope.GetTenantID(),
+				IdentityID:     profile.IdentityID,
 				TrustCenterID:  req.TrustCenterID,
 				CreatedAt:      now,
 				UpdatedAt:      now,

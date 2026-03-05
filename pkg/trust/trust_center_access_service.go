@@ -82,6 +82,7 @@ func (s TrustCenterAccessService) ensureAccessInTx(
 		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
 		OrganizationID: trustCenter.OrganizationID,
 		TenantID:       s.svc.scope.GetTenantID(),
+		IdentityID:     identityID,
 		TrustCenterID:  trustCenterID,
 		CreatedAt:      now,
 		UpdatedAt:      now,

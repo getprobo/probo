@@ -62,7 +62,15 @@ ALTER TABLE
 ALTER COLUMN
     identity_id
 SET
-    NOT NULL;
+    NOT NULL,
+ALTER COLUMN
+    email DROP NOT NULL,
+ALTER COLUMN
+    name DROP NOT NULL,
+ALTER COLUMN
+    state DROP NOT NULL,
+ALTER COLUMN
+    has_accepted_non_disclosure_agreement DROP NOT NULL;
 
 CREATE UNIQUE INDEX idx_trust_center_accesses_identity_id_organization_id ON trust_center_accesses(identity_id, organization_id);
 
