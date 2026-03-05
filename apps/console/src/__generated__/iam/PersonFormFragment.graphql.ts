@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1eea90ca68f7381b881c68f0489837cb>>
+ * @generated SignedSource<<e88375170021c3387ee6a5491bc60e52>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type PersonFormFragment$data = {
   readonly emailAddress: string;
   readonly fullName: string;
   readonly id: string;
-  readonly kind: ProfileKind;
+  readonly kind: ProfileKind | null | undefined;
   readonly membership: {
     readonly role: MembershipRole;
   };

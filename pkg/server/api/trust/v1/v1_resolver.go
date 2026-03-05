@@ -597,16 +597,6 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		httpReq  = gqlutils.HTTPRequestFromContext(ctx)
 	)
 
-	if _, err := r.iam.AuthService.UpdateIdentity(ctx, identity.ID, input.FullName); err != nil {
-		var errNotFound *iam.ErrIdentityNotFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
 	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
 	if signerIP == "" {
 		signerIP = httpReq.RemoteAddr
@@ -616,7 +606,7 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		ctx,
 		&esign.AcceptSignatureRequest{
 			SignatureID:    input.SignatureID,
-			SignerFullName: input.FullName,
+			SignerFullName: identity.FullName,
 			SignerEmail:    identity.EmailAddress,
 			SignerIPAddr:   signerIP,
 			SignerUA:       httpReq.UserAgent(),

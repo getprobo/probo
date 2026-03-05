@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<41e415a03c63efbb590b1c2c782d5eac>>
+ * @generated SignedSource<<319d6df7ac6b5452d4a74501a35cec43>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,6 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type ElectronicSignatureStatus = "ACCEPTED" | "COMPLETED" | "FAILED" | "PENDING" | "PROCESSING";
 export type AcceptElectronicSignatureInput = {
-  fullName: string;
   signatureId: string;
 };
 export type NDAPageAcceptElectronicSignatureMutation$variables = {

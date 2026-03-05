@@ -18,7 +18,6 @@ type Node interface {
 
 type AcceptElectronicSignatureInput struct {
 	SignatureID gid.GID `json:"signatureId"`
-	FullName    string  `json:"fullName"`
 }
 
 type AcceptElectronicSignaturePayload struct {

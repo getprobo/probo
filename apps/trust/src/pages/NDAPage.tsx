@@ -1,6 +1,6 @@
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, Card, Field, IconCircleX, Logo, Spinner } from "@probo/ui";
+import { Button, Card, IconCircleX, Logo, Spinner } from "@probo/ui";
 import { startTransition, useEffect, useRef } from "react";
 import {
   type PreloadedQuery,
@@ -11,10 +11,8 @@ import {
 import { Navigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { useWindowSize } from "usehooks-ts";
-import { z } from "zod";
 
 import { PDFPreview } from "#/components/PDFPreview";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { NDAPageAcceptElectronicSignatureMutation } from "./__generated__/NDAPageAcceptElectronicSignatureMutation.graphql";
@@ -81,10 +79,6 @@ const recordSigningEventMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  fullName: z.string().min(1),
-});
-
 export function NDAPage(props: {
   queryRef: PreloadedQuery<NDAPageQueryType>;
 }) {
@@ -137,16 +131,6 @@ export function NDAPage(props: {
   const isFailed = ndaSignature?.status === "FAILED";
   const isCompleted = ndaSignature?.status === "COMPLETED";
 
-  const {
-    handleSubmit: handleSubmitWrapper,
-    register,
-    formState,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      fullName: viewer?.fullName,
-    },
-  });
-
   useEffect(() => {
     if (isCompleted) {
       window.location.href = safeContinueUrl;
@@ -182,7 +166,7 @@ export function NDAPage(props: {
     }
   }, [ndaSignature, recordSigningEvent]);
 
-  const handleSubmit = handleSubmitWrapper(({ fullName }) => {
+  const handleAccept = () => {
     if (!ndaSignature) return;
 
     if (ndaSignature.status === "PENDING") {
@@ -208,13 +192,12 @@ export function NDAPage(props: {
           variables: {
             input: {
               signatureId: ndaSignature.id,
-              fullName,
             },
           },
         });
       },
     });
-  });
+  };
 
   const nda = trustCenter.nonDisclosureAgreement;
   if (!viewer) {
@@ -260,18 +243,7 @@ export function NDAPage(props: {
                 </Button>
               </Card>
             )}
-            <form
-              onSubmit={e => void handleSubmit(e)}
-              className="mt-8"
-            >
-              <Field
-                required
-                label={__("Full name")}
-                placeholder="John Doe"
-                {...register("fullName")}
-                type="text"
-                disabled={isProcessing}
-              />
+            <div className="mt-8">
               <p className="text-xs text-txt-tertiary mt-6">
                 {consentText}
               </p>
@@ -302,9 +274,10 @@ export function NDAPage(props: {
                   )
                 : (
                     <Button
-                      type="submit"
+                      type="button"
+                      onClick={handleAccept}
                       className="h-10 w-full mt-4"
-                      disabled={formState.isSubmitting || !formState.isValid}
+                      disabled={isProcessing}
                       icon={isAccepting ? Spinner : undefined}
                     >
                       {isFailed
@@ -312,7 +285,7 @@ export function NDAPage(props: {
                         : __("Accept")}
                     </Button>
                   )}
-            </form>
+            </div>
           </div>
           <a
             href="https://www.getprobo.com/"

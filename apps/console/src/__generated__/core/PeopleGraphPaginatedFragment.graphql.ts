@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d9088a212dfa65ed0a833670cf8bc6d4>>
+ * @generated SignedSource<<426a1227dea8949a1d77d75edf05437a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,7 +26,7 @@ export type PeopleGraphPaginatedFragment$data = {
         readonly emailAddress: string;
         readonly fullName: string;
         readonly id: string;
-        readonly kind: ProfileKind;
+        readonly kind: ProfileKind | null | undefined;
         readonly position: string | null | undefined;
       };
     }>;

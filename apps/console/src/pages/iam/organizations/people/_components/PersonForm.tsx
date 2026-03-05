@@ -68,7 +68,7 @@ const schema = z.object({
     v => (v as string[]).filter(v => !!v),
     z.array(z.string().email()),
   ),
-  kind: z.enum(peopleRoles),
+  kind: z.enum(peopleRoles).optional().nullable(),
   contractStartDate: z.string().optional().nullable(),
   contractEndDate: z.string().optional().nullable(),
 });

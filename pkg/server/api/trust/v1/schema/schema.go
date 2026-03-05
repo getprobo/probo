@@ -2223,7 +2223,6 @@ type ElectronicSignature implements Node {
 
 input AcceptElectronicSignatureInput {
   signatureId: ID!
-  fullName: String!
 }
 
 type AcceptElectronicSignaturePayload {
@@ -9294,7 +9293,7 @@ func (ec *executionContext) unmarshalInputAcceptElectronicSignatureInput(ctx con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"signatureId", "fullName"}
+	fieldsInOrder := [...]string{"signatureId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9308,13 +9307,6 @@ func (ec *executionContext) unmarshalInputAcceptElectronicSignatureInput(ctx con
 				return it, err
 			}
 			it.SignatureID = data
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
 		}
 	}
 	return it, nil

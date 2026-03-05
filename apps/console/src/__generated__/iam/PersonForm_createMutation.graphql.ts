@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7889e38e185230a2c5b41c3b0fb73cca>>
+ * @generated SignedSource<<8ef1dc9de9a669636884e4f60f7f39fc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type CreateUserInput = {
   contractStartDate?: string | null | undefined;
   emailAddress: string;
   fullName: string;
-  kind: ProfileKind;
+  kind?: ProfileKind | null | undefined;
   organizationId: string;
   position?: string | null | undefined;
   role: MembershipRole;

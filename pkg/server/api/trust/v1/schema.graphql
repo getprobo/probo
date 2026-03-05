@@ -801,7 +801,6 @@ type ElectronicSignature implements Node {
 
 input AcceptElectronicSignatureInput {
   signatureId: ID!
-  fullName: String!
 }
 
 type AcceptElectronicSignaturePayload {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8563f3b122bb8d5b6c2e5e7354a0a0c8>>
+ * @generated SignedSource<<dc04e9218150e42554925f8c39d83b41>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type UpdateUserInput = {
   contractStartDate?: string | null | undefined;
   fullName: string;
   id: string;
-  kind: ProfileKind;
+  kind?: ProfileKind | null | undefined;
   position?: string | null | undefined;
 };
 export type PersonForm_updateMutation$variables = {
