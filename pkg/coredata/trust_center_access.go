@@ -35,7 +35,6 @@ type (
 		TenantID              gid.TenantID `db:"tenant_id"`
 		IdentityID            gid.GID      `db:"identity_id"`
 		TrustCenterID         gid.GID      `db:"trust_center_id"`
-		NDAFileID             *gid.GID     `db:"nda_file_id"`
 		ElectronicSignatureID *gid.GID     `db:"electronic_signature_id"`
 		CreatedAt             time.Time    `db:"created_at"`
 		UpdatedAt             time.Time    `db:"updated_at"`
@@ -230,7 +229,6 @@ func (tca *TrustCenterAccess) Update(
 	q := `
 UPDATE trust_center_accesses SET
 	updated_at = @updated_at,
-	nda_file_id = @nda_file_id,
 	electronic_signature_id = @electronic_signature_id
 WHERE
 	%s
@@ -242,7 +240,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                      tca.ID,
 		"updated_at":              tca.UpdatedAt,
-		"nda_file_id":             tca.NDAFileID,
 		"electronic_signature_id": tca.ElectronicSignatureID,
 	}
 	maps.Copy(args, scope.SQLArguments())
