@@ -10,32 +10,6 @@ import {
 
 import { getPathPrefix } from "#/utils/pathPrefix";
 
-export class UnAuthenticatedError extends Error {
-  constructor() {
-    super("UNAUTHENTICATED");
-    this.name = "UnAuthenticatedError";
-  }
-}
-
-export class InvalidError extends Error {
-  field?: string;
-  cause?: string;
-
-  constructor(message?: string, field?: string, cause?: string) {
-    super(message || "INVALID");
-    this.name = "InvalidError";
-    this.field = field;
-    this.cause = cause;
-  }
-}
-
-export class InternalServerError extends Error {
-  constructor() {
-    super("INTERNAL_SERVER_ERROR");
-    this.name = "InternalServerError";
-  }
-}
-
 export function buildEndpoint(): string {
   let host = import.meta.env.VITE_API_URL;
 

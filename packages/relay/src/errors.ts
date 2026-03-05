@@ -6,6 +6,14 @@ export class UnAuthenticatedError extends Error {
   }
 }
 
+export class FullNameRequiredError extends Error {
+  constructor(message?: string) {
+    super(message || "FULL_NAME_REQUIRED");
+    this.name = "FullNameRequiredError";
+    Object.setPrototypeOf(this, FullNameRequiredError.prototype);
+  }
+}
+
 export class NDASignatureRequiredError extends Error {
   constructor(message?: string) {
     super(message || "NDA_SIGNATURE_REQUIRED");

@@ -1,4 +1,4 @@
-import { NDASignatureRequiredError, UnAuthenticatedError } from "@probo/relay";
+import { FullNameRequiredError, NDASignatureRequiredError, UnAuthenticatedError } from "@probo/relay";
 import { Navigate, useLocation, useRouteError } from "react-router";
 
 import { getPathPrefix } from "#/utils/pathPrefix";
@@ -23,6 +23,18 @@ export function RootErrorBoundary() {
         replace
         to={{
           pathname: "/connect",
+          search: queryString ? "?" + queryString : "",
+        }}
+      />
+    );
+  }
+
+  if (error instanceof FullNameRequiredError) {
+    return (
+      <Navigate
+        replace
+        to={{
+          pathname: "/full-name",
           search: queryString ? "?" + queryString : "",
         }}
       />

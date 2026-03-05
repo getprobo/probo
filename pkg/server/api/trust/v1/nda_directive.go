@@ -65,6 +65,11 @@ func newNDADirective(
 			return nil, gqlutils.Internal(ctx)
 		}
 
+		// We need full name before user signs NDA
+		if identity.FullName == "" {
+			return nil, gqlutils.FullNameRequiredf(ctx, "full name is required")
+		}
+
 		if sig.Status != coredata.ElectronicSignatureStatusCompleted {
 			return nil, gqlutils.NDASignatureRequiredf(ctx, "NDA signature required")
 		}

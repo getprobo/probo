@@ -187,7 +187,7 @@ func (s TrustCenterAccessService) Request(
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			access := &coredata.TrustCenterAccess{}
+			access = &coredata.TrustCenterAccess{}
 			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, s.svc.scope, req.TrustCenterID, req.IdentityID); err != nil {
 				return fmt.Errorf("cannot load compliance page membership: %w", err)
 			}

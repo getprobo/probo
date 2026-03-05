@@ -47,6 +47,15 @@ type (
 		IdentityID gid.GID   `json:"uid"`
 		Email      mail.Addr `json:"email"`
 	}
+
+	ChangeEmailRequest struct {
+		NewEmail mail.Addr
+		Password string
+	}
+
+	UpdateIdentityRequest struct {
+		FullName string `json:"fullName"`
+	}
 )
 
 const (
@@ -57,15 +66,18 @@ func NewAccountService(svc *Service) *AccountService {
 	return &AccountService{Service: svc}
 }
 
-type ChangeEmailRequest struct {
-	NewEmail mail.Addr
-	Password string
-}
-
 func (req ChangeEmailRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.Password, "password", validator.NotEmpty(), validator.MaxLen(255)) // We cannot use PasswordValidator here because legacy password may not be aligned with the current password policy, therefore we at least enforce a maximum length to mitigate DDoS attacks.
+
+	return v.Error()
+}
+
+func (req UpdateIdentityRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(req.FullName, "full_name", validator.NotEmpty(), validator.MinLen(2), validator.MaxLen(255))
 
 	return v.Error()
 }
@@ -327,6 +339,42 @@ func (s AccountService) GetIdentity(ctx context.Context, identityID gid.GID) (*c
 				}
 
 				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity, nil
+}
+
+func (s AccountService) UpdateIdentity(ctx context.Context, identityID gid.GID, req *UpdateIdentityRequest) (*coredata.Identity, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	identity := &coredata.Identity{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			err := identity.LoadByID(ctx, tx, identityID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewIdentityNotFoundError(identityID)
+				}
+
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			identity.FullName = req.FullName
+			identity.UpdatedAt = time.Now()
+
+			if err := identity.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
 			return nil

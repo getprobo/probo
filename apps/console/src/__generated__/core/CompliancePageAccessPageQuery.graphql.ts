@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d32c91bec3630db95573556172f06d35>>
+ * @generated SignedSource<<35d27a50dd067775566c69dd0e555b25>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,6 @@ export type CompliancePageAccessPageQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
     readonly compliancePage: {
-      readonly canCreateAccess: boolean;
       readonly id: string;
       readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAccessListFragment">;
     };
@@ -61,20 +60,7 @@ v3 = {
   "name": "id",
   "storageKey": null
 },
-v4 = {
-  "alias": "canCreateAccess",
-  "args": [
-    {
-      "kind": "Literal",
-      "name": "action",
-      "value": "core:trust-center-access:create"
-    }
-  ],
-  "kind": "ScalarField",
-  "name": "permission",
-  "storageKey": "permission(action:\"core:trust-center-access:create\")"
-},
-v5 = [
+v4 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -119,7 +105,6 @@ return {
                   "plural": false,
                   "selections": [
                     (v3/*: any*/),
-                    (v4/*: any*/),
                     {
                       "args": null,
                       "kind": "FragmentSpread",
@@ -168,10 +153,9 @@ return {
                 "plural": false,
                 "selections": [
                   (v3/*: any*/),
-                  (v4/*: any*/),
                   {
                     "alias": null,
-                    "args": (v5/*: any*/),
+                    "args": (v4/*: any*/),
                     "concreteType": "TrustCenterAccessConnection",
                     "kind": "LinkedField",
                     "name": "accesses",
@@ -350,7 +334,7 @@ return {
                   },
                   {
                     "alias": null,
-                    "args": (v5/*: any*/),
+                    "args": (v4/*: any*/),
                     "filters": [
                       "orderBy"
                     ],
@@ -373,16 +357,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c556c1f73c80950e432e5298b7aa1162",
+    "cacheID": "b4d6f7aa127d6ee60ec6344fb291ab4e",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAccessPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageAccessPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        canCreateAccess: permission(action: \"core:trust-center-access:create\")\n        ...CompliancePageAccessListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment on TrustCenter {\n  accesses(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  createdAt\n  profile {\n    fullName\n    emailAddress\n    state\n    id\n  }\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
+    "text": "query CompliancePageAccessPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        ...CompliancePageAccessListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment on TrustCenter {\n  accesses(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  createdAt\n  profile {\n    fullName\n    emailAddress\n    state\n    id\n  }\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4cc473e91fd49ddd83b6cdb0c8da0abf";
+(node as any).hash = "29f59aac000603a1d11c88a441fb595b";
 
 export default node;

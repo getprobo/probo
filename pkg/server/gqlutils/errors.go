@@ -66,6 +66,20 @@ func AssumptionRequiredf(ctx context.Context, format string, a ...any) *gqlerror
 	return AssumptionRequired(ctx, fmt.Errorf(format, a...))
 }
 
+func FullNameRequired(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "FULL_NAME_REQUIRED",
+		},
+	}
+}
+
+func FullNameRequiredf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return FullNameRequired(ctx, fmt.Errorf(format, a...))
+}
+
 func NDASignatureRequired(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),

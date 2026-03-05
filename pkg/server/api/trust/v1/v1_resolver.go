@@ -192,7 +192,6 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 	}
 
 	req := &iam.SendMagicLinkRequest{
-		FullName:         input.FullName,
 		Email:            input.Email,
 		CompliancePageID: &trustCenter.ID,
 		OrganizationID:   trustCenter.OrganizationID,
@@ -271,6 +270,49 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 	return &types.VerifyMagicLinkPayload{
 		Continue: continueURL,
 	}, nil
+}
+
+// UpdateFullName is the resolver for the updateFullName field.
+func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.UpdateFullNameInput) (*types.UpdateFullNamePayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
+	}
+
+	identity, err := r.iam.AccountService.UpdateIdentity(ctx, identity.ID, &iam.UpdateIdentityRequest{
+		FullName: input.FullName,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	compliancePage := compliancepage.CompliancePageFromContext(ctx)
+
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, compliancePage.OrganizationID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); !ok {
+			r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	if profile.Source == coredata.ProfileSourceManual {
+		if _, err := r.iam.OrganizationService.UpdateUser(ctx, &iam.UpdateUserRequest{
+			ID:                       profile.ID,
+			FullName:                 identity.FullName,
+			AdditionalEmailAddresses: profile.AdditionalEmailAddresses,
+			Kind:                     profile.Kind,
+			Position:                 profile.Position,
+			ContractStartDate:        &profile.ContractStartDate,
+			ContractEndDate:          &profile.ContractEndDate,
+		}); err != nil {
+			r.logger.ErrorCtx(ctx, "cannot update profile", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return &types.UpdateFullNamePayload{Success: true}, nil
 }
 
 // RequestAllAccesses is the resolver for the requestAllAccesses field.

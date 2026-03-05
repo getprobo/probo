@@ -5,11 +5,15 @@ import {
     ForbiddenError,
     AssumptionRequiredError,
     NDASignatureRequiredError,
+    FullNameRequiredError,
 } from "./errors";
 import { GraphQLError } from "graphql";
 
 const hasUnauthenticatedError = (error: GraphQLError) =>
     error.extensions?.code == "UNAUTHENTICATED";
+
+const hasFullNameRequiredError = (error: GraphQLError) =>
+    error.extensions?.code == "FULL_NAME_REQUIRED";
 
 const hasAssumptionRequiredError = (error: GraphQLError) =>
     error.extensions?.code == "ASSUMPTION_REQUIRED";
@@ -81,6 +85,11 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
             const unauthenticatedError = errors.find(hasUnauthenticatedError);
             if (unauthenticatedError) {
                 throw new UnAuthenticatedError(unauthenticatedError.message);
+            }
+
+            const fullNameRequiredError = errors.find(hasFullNameRequiredError);
+            if (fullNameRequiredError) {
+                throw new FullNameRequiredError(fullNameRequiredError.message);
             }
 
             const assumptionRequiredError = errors.find(hasAssumptionRequiredError);

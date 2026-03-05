@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<711ecaa392c23004a3bd1dfb24a5751f>>
+ * @generated SignedSource<<7861673355d6d647183c2a4425e9a5b9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,21 +9,20 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type SendMagicLinkInput = {
-  continue?: string | null | undefined;
-  email: any;
+export type UpdateFullNameInput = {
+  fullName: string;
 };
-export type ConnectPageMutation$variables = {
-  input: SendMagicLinkInput;
+export type FullNamePageMutation$variables = {
+  input: UpdateFullNameInput;
 };
-export type ConnectPageMutation$data = {
-  readonly sendMagicLink: {
+export type FullNamePageMutation$data = {
+  readonly updateFullName: {
     readonly success: boolean;
   } | null | undefined;
 };
-export type ConnectPageMutation = {
-  response: ConnectPageMutation$data;
-  variables: ConnectPageMutation$variables;
+export type FullNamePageMutation = {
+  response: FullNamePageMutation$data;
+  variables: FullNamePageMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -44,9 +43,9 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "SendMagicLinkPayload",
+    "concreteType": "UpdateFullNamePayload",
     "kind": "LinkedField",
-    "name": "sendMagicLink",
+    "name": "updateFullName",
     "plural": false,
     "selections": [
       {
@@ -65,7 +64,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "ConnectPageMutation",
+    "name": "FullNamePageMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -74,20 +73,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "ConnectPageMutation",
+    "name": "FullNamePageMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "95987f897611118fa771a2e54cb43b66",
+    "cacheID": "502db67e5bab72aff71fec9a0be0eeaf",
     "id": null,
     "metadata": {},
-    "name": "ConnectPageMutation",
+    "name": "FullNamePageMutation",
     "operationKind": "mutation",
-    "text": "mutation ConnectPageMutation(\n  $input: SendMagicLinkInput!\n) {\n  sendMagicLink(input: $input) {\n    success\n  }\n}\n"
+    "text": "mutation FullNamePageMutation(\n  $input: UpdateFullNameInput!\n) {\n  updateFullName(input: $input) {\n    success\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4680fea978582bb020b4613737c14d9a";
+(node as any).hash = "3d6352889babf98a37fe06a1bcaead15";
 
 export default node;

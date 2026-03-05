@@ -37,6 +37,10 @@ const routes = [
         path: "/verify-magic-link",
         Component: lazy(() => import("#/pages/auth/VerifyMagicLinkPage")),
       },
+      {
+        path: "/full-name",
+        Component: lazy(() => import("#/pages/auth/FullNamePage")),
+      },
     ],
   },
   {

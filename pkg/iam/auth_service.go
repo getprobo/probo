@@ -61,7 +61,6 @@ type (
 	}
 
 	SendMagicLinkRequest struct {
-		FullName       string
 		Email          mail.Addr
 		URLPath        string
 		OrganizationID gid.GID
@@ -75,7 +74,6 @@ type (
 	}
 
 	MagicLinkData struct {
-		FullName string    `json:"fullName"`
 		Email    mail.Addr `json:"email"`
 		Continue *string   `json:"continue"`
 	}
@@ -552,7 +550,6 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 		TokenTypeMagicLink,
 		s.magicLinkTokenValidity,
 		MagicLinkData{
-			FullName: req.FullName,
 			Email:    req.Email,
 			Continue: req.Continue,
 		},
@@ -574,8 +571,19 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				return fmt.Errorf("cannot insert token: %w", err)
 			}
 
-			fullName := req.FullName
+			fullName := req.Email.Username()
+			identity := &coredata.Identity{}
 			organization := &coredata.Organization{}
+
+			if err := identity.LoadByEmail(ctx, tx, req.Email); err == nil {
+				if identity.FullName != "" {
+					fullName = identity.FullName
+				}
+			} else {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load identity: %w", err)
+				}
+			}
 
 			if err := organization.LoadByID(ctx, tx, coredata.NewNoScope(), req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
@@ -673,10 +681,6 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 						EmailAddressVerified: true,
 						CreatedAt:            now,
 						UpdatedAt:            now,
-					}
-
-					if identity.FullName == "" {
-						identity.FullName = payload.Data.FullName
 					}
 
 					if err := identity.Insert(ctx, tx); err != nil {

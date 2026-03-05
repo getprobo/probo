@@ -213,7 +213,6 @@ type RequestTrustCenterFileAccessInput struct {
 }
 
 type SendMagicLinkInput struct {
-	FullName string    `json:"fullName"`
 	Email    mail.Addr `json:"email"`
 	Continue *string   `json:"continue,omitempty"`
 }
@@ -292,6 +291,14 @@ type TrustCenterReferenceConnection struct {
 type TrustCenterReferenceEdge struct {
 	Cursor page.CursorKey        `json:"cursor"`
 	Node   *TrustCenterReference `json:"node"`
+}
+
+type UpdateFullNameInput struct {
+	FullName string `json:"fullName"`
+}
+
+type UpdateFullNamePayload struct {
+	Success bool `json:"success"`
 }
 
 type Vendor struct {

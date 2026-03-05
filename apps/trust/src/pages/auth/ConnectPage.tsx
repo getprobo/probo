@@ -37,7 +37,6 @@ const sendMagicLinkMutation = graphql`
 `;
 
 const schema = z.object({
-  fullName: z.string().min(2),
   email: z.string().email(),
 });
 
@@ -104,7 +103,6 @@ export function ConnectPage(props: {
   } = useFormWithSchema(schema, {
     defaultValues: {
       email: "",
-      fullName: "",
     },
   });
 
@@ -112,8 +110,8 @@ export function ConnectPage(props: {
     sendMagicLinkMutation,
   );
 
-  const handleSubmit = handleSubmitWrapper(({ email, fullName }: FormData) => {
-    const input: SendMagicLinkInput = { email, fullName };
+  const handleSubmit = handleSubmitWrapper(({ email }: FormData) => {
+    const input: SendMagicLinkInput = { email };
     if (safeContinueUrl) {
       input.continue = safeContinueUrl;
     }
@@ -121,7 +119,6 @@ export function ConnectPage(props: {
       variables: {
         input: {
           email,
-          fullName,
           continue: safeContinueUrl,
         },
       },
@@ -173,14 +170,6 @@ export function ConnectPage(props: {
       </div>
 
       <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
-        <Field
-          label={__("Full Name")}
-          placeholder="John Doe"
-          {...register("fullName")}
-          type="text"
-          required
-          error={formState.errors.fullName?.message}
-        />
         <Field
           label={__("Email")}
           placeholder="john.doe@acme.com"

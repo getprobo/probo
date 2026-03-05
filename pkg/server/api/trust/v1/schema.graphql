@@ -611,7 +611,6 @@ type DocumentAccess implements Node {
 }
 
 input SendMagicLinkInput {
-  fullName: String!
   email: EmailAddr!
   continue: String
 }
@@ -626,6 +625,14 @@ input VerifyMagicLinkInput {
 
 type VerifyMagicLinkPayload {
   continue: String
+}
+
+input UpdateFullNameInput {
+  fullName: String!
+}
+
+type UpdateFullNamePayload {
+  success: Boolean!
 }
 
 type RequestDocumentAccessPayload {
@@ -827,6 +834,8 @@ type Mutation {
     @session(required: OPTIONAL)
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
     @session(required: OPTIONAL)
+  updateFullName(input: UpdateFullNameInput!): UpdateFullNamePayload
+    @session(required: PRESENT)
 
   requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT) @nda
 

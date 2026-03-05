@@ -166,6 +166,7 @@ type ComplexityRoot struct {
 		RequestReportAccess          func(childComplexity int, input types.RequestReportAccessInput) int
 		RequestTrustCenterFileAccess func(childComplexity int, input types.RequestTrustCenterFileAccessInput) int
 		SendMagicLink                func(childComplexity int, input types.SendMagicLinkInput) int
+		UpdateFullName               func(childComplexity int, input types.UpdateFullNameInput) int
 		VerifyMagicLink              func(childComplexity int, input types.VerifyMagicLinkInput) int
 	}
 
@@ -289,6 +290,10 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	UpdateFullNamePayload struct {
+		Success func(childComplexity int) int
+	}
+
 	Vendor struct {
 		Category         func(childComplexity int) int
 		Countries        func(childComplexity int) int
@@ -333,6 +338,7 @@ type FrameworkResolver interface {
 type MutationResolver interface {
 	SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error)
 	VerifyMagicLink(ctx context.Context, input types.VerifyMagicLinkInput) (*types.VerifyMagicLinkPayload, error)
+	UpdateFullName(ctx context.Context, input types.UpdateFullNameInput) (*types.UpdateFullNamePayload, error)
 	RequestAllAccesses(ctx context.Context) (*types.RequestAccessesPayload, error)
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
 	ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error)
@@ -800,6 +806,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendMagicLink(childComplexity, args["input"].(types.SendMagicLinkInput)), true
+	case "Mutation.updateFullName":
+		if e.ComplexityRoot.Mutation.UpdateFullName == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateFullName_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateFullName(childComplexity, args["input"].(types.UpdateFullNameInput)), true
 	case "Mutation.verifyMagicLink":
 		if e.ComplexityRoot.Mutation.VerifyMagicLink == nil {
 			break
@@ -1245,6 +1262,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.TrustCenterReferenceEdge.Node(childComplexity), true
 
+	case "UpdateFullNamePayload.success":
+		if e.ComplexityRoot.UpdateFullNamePayload.Success == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UpdateFullNamePayload.Success(childComplexity), true
+
 	case "Vendor.category":
 		if e.ComplexityRoot.Vendor.Category == nil {
 			break
@@ -1344,6 +1368,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRequestReportAccessInput,
 		ec.unmarshalInputRequestTrustCenterFileAccessInput,
 		ec.unmarshalInputSendMagicLinkInput,
+		ec.unmarshalInputUpdateFullNameInput,
 		ec.unmarshalInputVerifyMagicLinkInput,
 	)
 	first := true
@@ -2033,7 +2058,6 @@ type DocumentAccess implements Node {
 }
 
 input SendMagicLinkInput {
-  fullName: String!
   email: EmailAddr!
   continue: String
 }
@@ -2048,6 +2072,14 @@ input VerifyMagicLinkInput {
 
 type VerifyMagicLinkPayload {
   continue: String
+}
+
+input UpdateFullNameInput {
+  fullName: String!
+}
+
+type UpdateFullNamePayload {
+  success: Boolean!
 }
 
 type RequestDocumentAccessPayload {
@@ -2249,6 +2281,8 @@ type Mutation {
     @session(required: OPTIONAL)
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
     @session(required: OPTIONAL)
+  updateFullName(input: UpdateFullNameInput!): UpdateFullNamePayload
+    @session(required: PRESENT)
 
   requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT) @nda
 
@@ -2432,6 +2466,17 @@ func (ec *executionContext) field_Mutation_sendMagicLink_args(ctx context.Contex
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSendMagicLinkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSendMagicLinkInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateFullName_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateFullNameInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUpdateFullNameInput)
 	if err != nil {
 		return nil, err
 	}
@@ -4384,6 +4429,69 @@ func (ec *executionContext) fieldContext_Mutation_verifyMagicLink(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_verifyMagicLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateFullName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateFullName,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateFullName(ctx, fc.Args["input"].(types.UpdateFullNameInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.UpdateFullNamePayload
+					return zeroVal, err
+				}
+				if ec.Directives.Session == nil {
+					var zeroVal *types.UpdateFullNamePayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.Directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOUpdateFullNamePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUpdateFullNamePayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateFullName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_UpdateFullNamePayload_success(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateFullNamePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateFullName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7405,6 +7513,35 @@ func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_node(_ context
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateFullNamePayload_success(ctx context.Context, field graphql.CollectedField, obj *types.UpdateFullNamePayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateFullNamePayload_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateFullNamePayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateFullNamePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Vendor_id(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9508,20 +9645,13 @@ func (ec *executionContext) unmarshalInputSendMagicLinkInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"fullName", "email", "continue"}
+	fieldsInOrder := [...]string{"email", "continue"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
@@ -9536,6 +9666,32 @@ func (ec *executionContext) unmarshalInputSendMagicLinkInput(ctx context.Context
 				return it, err
 			}
 			it.Continue = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateFullNameInput(ctx context.Context, obj any) (types.UpdateFullNameInput, error) {
+	var it types.UpdateFullNameInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fullName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FullName = data
 		}
 	}
 	return it, nil
@@ -10721,6 +10877,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "verifyMagicLink":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_verifyMagicLink(ctx, field)
+			})
+		case "updateFullName":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateFullName(ctx, field)
 			})
 		case "requestAllAccesses":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -12305,6 +12465,45 @@ func (ec *executionContext) _TrustCenterReferenceEdge(ctx context.Context, sel a
 			}
 		case "node":
 			out.Values[i] = ec._TrustCenterReferenceEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateFullNamePayloadImplementors = []string{"UpdateFullNamePayload"}
+
+func (ec *executionContext) _UpdateFullNamePayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateFullNamePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateFullNamePayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateFullNamePayload")
+		case "success":
+			out.Values[i] = ec._UpdateFullNamePayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14226,6 +14425,11 @@ func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚖgoᚗproboᚗinc
 	return ec._TrustCenterReferenceEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateFullNameInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUpdateFullNameInput(ctx context.Context, v any) (types.UpdateFullNameInput, error) {
+	res, err := ec.unmarshalInputUpdateFullNameInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNVendor2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendor(ctx context.Context, sel ast.SelectionSet, v *types.Vendor) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -14710,6 +14914,13 @@ func (ec *executionContext) marshalOTrustCenterFile2ᚖgoᚗproboᚗincᚋprobo�
 		return graphql.Null
 	}
 	return ec._TrustCenterFile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateFullNamePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐUpdateFullNamePayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateFullNamePayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateFullNamePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOVerifyMagicLinkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVerifyMagicLinkPayload(ctx context.Context, sel ast.SelectionSet, v *types.VerifyMagicLinkPayload) graphql.Marshaler {
