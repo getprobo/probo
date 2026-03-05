@@ -79,7 +79,6 @@ SELECT
 	tenant_id,
 	identity_id,
 	trust_center_id,
-	nda_file_id,
 	electronic_signature_id,
 	created_at,
 	updated_at
@@ -129,7 +128,6 @@ SELECT
 	tenant_id,
 	identity_id,
 	trust_center_id,
-	nda_file_id,
 	electronic_signature_id,
 	created_at,
 	updated_at
@@ -293,7 +291,6 @@ SELECT
 	tenant_id,
 	identity_id,
 	trust_center_id,
-	nda_file_id,
 	electronic_signature_id,
 	created_at,
 	updated_at
