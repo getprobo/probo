@@ -14,13 +14,12 @@
 
 package probod
 
-type (
-	awsConfig struct {
-		Region          string `json:"region"`
-		Bucket          string `json:"bucket"`
-		AccessKeyID     string `json:"access-key-id"`
-		SecretAccessKey string `json:"secret-access-key"`
-		Endpoint        string `json:"endpoint"`
-		UsePathStyle    bool   `json:"use-path-style"`
-	}
-)
+// AWSConfig contains AWS S3 configuration.
+type AWSConfig struct {
+	Region          string `json:"region"`
+	Bucket          string `json:"bucket"`
+	AccessKeyID     string `json:"access-key-id"`
+	SecretAccessKey string `json:"secret-access-key"`
+	Endpoint        string `json:"endpoint"`
+	UsePathStyle    bool   `json:"use-path-style"`
+}

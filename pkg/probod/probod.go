@@ -67,34 +67,64 @@ import (
 
 type (
 	Implm struct {
-		cfg config
+		cfg Config
 	}
 
-	esignConfig struct {
+	// FullConfig represents the complete configuration file structure.
+	// This is used by bootstrap to generate the YAML config file.
+	FullConfig struct {
+		Unit   UnitConfig `json:"unit"`
+		Probod Config     `json:"probod"`
+	}
+
+	// UnitConfig contains unit framework configuration.
+	UnitConfig struct {
+		Metrics MetricsConfig `json:"metrics"`
+		Tracing TracingConfig `json:"tracing"`
+	}
+
+	// MetricsConfig contains metrics server configuration.
+	MetricsConfig struct {
+		Addr string `json:"addr"`
+	}
+
+	// TracingConfig contains tracing configuration.
+	TracingConfig struct {
+		Addr          string `json:"addr"`
+		MaxBatchSize  int    `json:"max-batch-size"`
+		BatchTimeout  int    `json:"batch-timeout"`
+		ExportTimeout int    `json:"export-timeout"`
+		MaxQueueSize  int    `json:"max-queue-size"`
+	}
+
+	// ESignConfig contains electronic signature configuration.
+	ESignConfig struct {
 		TSAURL string `json:"tsa-url"`
 	}
 
-	config struct {
-		BaseURL       *baseurl.BaseURL     `json:"base-url"`
-		EncryptionKey cipher.EncryptionKey `json:"encryption-key"`
-		Pg            pgConfig             `json:"pg"`
-		Api           apiConfig            `json:"api"`
-		Auth          authConfig           `json:"auth"`
-		TrustCenter   trustCenterConfig    `json:"trust-center"`
-		AWS           awsConfig            `json:"aws"`
-		Notifications notificationsConfig  `json:"notifications"`
-		Connectors    []connectorConfig    `json:"connectors"`
-		OpenAI        openaiConfig         `json:"openai"`
-		ChromeDPAddr  string               `json:"chrome-dp-addr"`
-		CustomDomains customDomainsConfig  `json:"custom-domains"`
-		SCIMBridge    scimBridgeConfig     `json:"scim-bridge"`
-		ESign         esignConfig          `json:"esign"`
+	// Config represents the probod application configuration.
+	Config struct {
+		BaseURL       string              `json:"base-url"`
+		EncryptionKey string              `json:"encryption-key"`
+		Pg            PgConfig            `json:"pg"`
+		Api           APIConfig           `json:"api"`
+		Auth          AuthConfig          `json:"auth"`
+		TrustCenter   TrustCenterConfig   `json:"trust-center"`
+		AWS           AWSConfig           `json:"aws"`
+		Notifications NotificationsConfig `json:"notifications"`
+		Connectors    []ConnectorConfig   `json:"connectors"`
+		OpenAI        OpenAIConfig        `json:"openai"`
+		ChromeDPAddr  string              `json:"chrome-dp-addr"`
+		CustomDomains CustomDomainsConfig `json:"custom-domains"`
+		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
+		ESign         ESignConfig         `json:"esign"`
 	}
 
-	trustCenterConfig struct {
+	// TrustCenterConfig contains trust center server configuration.
+	TrustCenterConfig struct {
 		HTTPAddr      string              `json:"http-addr"`
 		HTTPSAddr     string              `json:"https-addr"`
-		ProxyProtocol proxyProtocolConfig `json:"proxy-protocol"`
+		ProxyProtocol ProxyProtocolConfig `json:"proxy-protocol"`
 	}
 )
 
@@ -105,12 +135,12 @@ var (
 
 func New() *Implm {
 	return &Implm{
-		cfg: config{
-			BaseURL: baseurl.MustParse("http://localhost:8080"),
-			Api: apiConfig{
+		cfg: Config{
+			BaseURL: "http://localhost:8080",
+			Api: APIConfig{
 				Addr: "localhost:8080",
 			},
-			Pg: pgConfig{
+			Pg: PgConfig{
 				Addr:     "localhost:5432",
 				Username: "postgres",
 				Password: "postgres",
@@ -118,12 +148,12 @@ func New() *Implm {
 				PoolSize: 100,
 			},
 			ChromeDPAddr: "localhost:9222",
-			Auth: authConfig{
-				Password: passwordConfig{
+			Auth: AuthConfig{
+				Password: PasswordConfig{
 					Pepper:     "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes",
 					Iterations: 1000000,
 				},
-				Cookie: cookieConfig{
+				Cookie: CookieConfig{
 					Name:     "SSID",
 					Secret:   "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes",
 					Duration: 24,
@@ -134,53 +164,53 @@ func New() *Implm {
 				InvitationConfirmationTokenValidity: 3600,
 				PasswordResetTokenValidity:          3600,
 				MagicLinkTokenValidity:              900,
-				SAML: samlConfig{
+				SAML: SAMLConfig{
 					SessionDuration:                   604800,
 					CleanupIntervalSeconds:            86400,
 					DomainVerificationIntervalSeconds: 60,
 					DomainVerificationResolverAddr:    "8.8.8.8:53",
 				},
 			},
-			TrustCenter: trustCenterConfig{
+			TrustCenter: TrustCenterConfig{
 				HTTPAddr:  ":80",
 				HTTPSAddr: ":443",
 			},
-			AWS: awsConfig{
+			AWS: AWSConfig{
 				Region: "us-east-1",
 				Bucket: "probod",
 			},
-			Notifications: notificationsConfig{
-				Mailer: mailerConfig{
+			Notifications: NotificationsConfig{
+				Mailer: MailerConfig{
 					MailerInterval: 60,
 					SenderEmail:    "no-reply@notification.getprobo.com",
 					SenderName:     "Probo",
-					SMTP: smtpConfig{
+					SMTP: SMTPConfig{
 						Addr: "localhost:1025",
 					},
 				},
-				Slack: slackConfig{
+				Slack: SlackConfig{
 					SenderInterval: 60,
 				},
-				Webhook: webhookConfig{
+				Webhook: WebhookConfig{
 					SenderInterval: 5,
 					CacheTTL:       86400,
 				},
 			},
-			CustomDomains: customDomainsConfig{
+			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
 				ProvisionInterval: 30,
 				ResolverAddr:      "8.8.8.8:53",
-				ACME: acmeConfig{
+				ACME: ACMEConfig{
 					Directory: "https://acme-v02.api.letsencrypt.org/directory",
 					Email:     "admin@getprobo.com",
 					KeyType:   "EC256",
 				},
 			},
-			SCIMBridge: scimBridgeConfig{
+			SCIMBridge: SCIMBridgeConfig{
 				SyncInterval: 60, // 15 minutes
 				PollInterval: 30, // 30 seconds
 			},
-			ESign: esignConfig{
+			ESign: ESignConfig{
 				TSAURL: "http://timestamp.digicert.com",
 			},
 		},
@@ -200,6 +230,19 @@ func (impl *Implm) Run(
 	tracer := tp.Tracer("probod")
 	ctx, rootSpan := tracer.Start(parentCtx, "probod.Run")
 	defer rootSpan.End()
+
+	// Parse config values that need conversion from strings to complex types
+	baseURL, err := baseurl.Parse(impl.cfg.BaseURL)
+	if err != nil {
+		rootSpan.RecordError(err)
+		return fmt.Errorf("cannot parse base URL: %w", err)
+	}
+
+	var encryptionKey cipher.EncryptionKey
+	if err := encryptionKey.UnmarshalText([]byte(impl.cfg.EncryptionKey)); err != nil {
+		rootSpan.RecordError(err)
+		return fmt.Errorf("cannot parse encryption key: %w", err)
+	}
 
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancelCause(ctx)
@@ -328,8 +371,8 @@ func (impl *Implm) Run(
 			SessionDuration:                time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,
 			Bucket:                         impl.cfg.AWS.Bucket,
 			TokenSecret:                    impl.cfg.Auth.Cookie.Secret,
-			BaseURL:                        impl.cfg.BaseURL,
-			EncryptionKey:                  impl.cfg.EncryptionKey,
+			BaseURL:                        baseURL,
+			EncryptionKey:                  encryptionKey,
 			Certificate:                    samlCert,
 			PrivateKey:                     samlKey,
 			Logger:                         l.Named("iam"),
@@ -378,8 +421,8 @@ func (impl *Implm) Run(
 	slackService := slack.NewService(
 		pgClient,
 		impl.cfg.GetSlackSigningSecret(),
-		impl.cfg.BaseURL.String(),
-		impl.cfg.EncryptionKey,
+		baseURL.String(),
+		encryptionKey,
 		impl.cfg.Auth.Cookie.Secret,
 		l.Named("slack"),
 	)
@@ -395,11 +438,11 @@ func (impl *Implm) Run(
 
 	proboService, err := probo.NewService(
 		ctx,
-		impl.cfg.EncryptionKey,
+		encryptionKey,
 		pgClient,
 		s3Client,
 		impl.cfg.AWS.Bucket,
-		impl.cfg.BaseURL.String(),
+		baseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
 		agentConfig,
 		html2pdfConverter,
@@ -418,8 +461,8 @@ func (impl *Implm) Run(
 		pgClient,
 		s3Client,
 		impl.cfg.AWS.Bucket,
-		impl.cfg.BaseURL.String(),
-		impl.cfg.EncryptionKey,
+		baseURL.String(),
+		encryptionKey,
 		impl.cfg.GetSlackSigningSecret(),
 		iamService,
 		esignService,
@@ -439,7 +482,7 @@ func (impl *Implm) Run(
 			ESign:             esignService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
-			BaseURL:           impl.cfg.BaseURL,
+			BaseURL:           baseURL,
 			Agent:             agent,
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
@@ -495,7 +538,7 @@ func (impl *Implm) Run(
 	)
 
 	slackSenderCtx, stopSlackSender := context.WithCancel(context.Background())
-	slackSender := slack.NewSender(pgClient, l.Named("slack-sender"), impl.cfg.EncryptionKey, slack.Config{
+	slackSender := slack.NewSender(pgClient, l.Named("slack-sender"), encryptionKey, slack.Config{
 		Interval: time.Duration(impl.cfg.Notifications.Slack.SenderInterval) * time.Second,
 	})
 	wg.Go(
@@ -510,7 +553,7 @@ func (impl *Implm) Run(
 	webhookSender := webhook.NewSender(pgClient, l.Named("webhook-sender"), webhook.Config{
 		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
 		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
-		EncryptionKey: impl.cfg.EncryptionKey,
+		EncryptionKey: encryptionKey,
 	})
 	wg.Go(
 		func() {
@@ -560,6 +603,7 @@ func (impl *Implm) Run(
 				serverHandler.TrustCenterHandler(),
 				acmeService,
 				proboService,
+				encryptionKey,
 			); err != nil {
 				cancel(fmt.Errorf("trust center server crashed: %w", err))
 			}
@@ -633,7 +677,7 @@ func (impl *Implm) runApiServer(
 	}
 
 	if len(impl.cfg.Api.ProxyProtocol.TrustedProxies) > 0 {
-		policy := proxyproto.TrustProxyHeaderFrom(impl.cfg.Api.ProxyProtocol.TrustedProxies...)
+		policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.Api.ProxyProtocol.TrustedProxies)...)
 
 		listener = &proxyproto.Listener{
 			Listener:          listener,
@@ -725,14 +769,15 @@ func (impl *Implm) runTrustCenterServer(
 	trustRouter http.Handler,
 	acmeService *certmanager.ACMEService,
 	proboService *probo.Service,
+	encryptionKey cipher.EncryptionKey,
 ) error {
 	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")
 	ctx, span := tracer.Start(ctx, "probod.runTrustCenterServer")
 	defer span.End()
 
-	certSelector := certmanager.NewSelector(pgClient, impl.cfg.EncryptionKey)
+	certSelector := certmanager.NewSelector(pgClient, encryptionKey)
 
-	warmer := certmanager.NewCacheStore(pgClient, impl.cfg.EncryptionKey, l)
+	warmer := certmanager.NewCacheStore(pgClient, encryptionKey, l)
 	if err := warmer.WarmCache(ctx); err != nil {
 		span.RecordError(err)
 		l.ErrorCtx(ctx, "cannot warm certificate cache", log.Error(err))
@@ -743,13 +788,13 @@ func (impl *Implm) runTrustCenterServer(
 		renewalInterval = time.Hour
 	}
 
-	renewer := certmanager.NewRenewer(pgClient, acmeService, impl.cfg.EncryptionKey, renewalInterval, l)
+	renewer := certmanager.NewRenewer(pgClient, acmeService, encryptionKey, renewalInterval, l)
 
 	certProvisioningInterval := time.Duration(impl.cfg.CustomDomains.ProvisionInterval) * time.Second
 	if certProvisioningInterval == 0 {
 		certProvisioningInterval = 30 * time.Second
 	}
-	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, impl.cfg.EncryptionKey, impl.cfg.CustomDomains.CnameTarget, certProvisioningInterval, impl.cfg.CustomDomains.ResolverAddr, l)
+	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, encryptionKey, impl.cfg.CustomDomains.CnameTarget, certProvisioningInterval, impl.cfg.CustomDomains.ResolverAddr, l)
 
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -772,7 +817,7 @@ func (impl *Implm) runTrustCenterServer(
 
 	httpACMEHandler := certmanager.NewACMEChallengeHandler(
 		pgClient,
-		impl.cfg.EncryptionKey,
+		encryptionKey,
 		l.Named("http_acme_handler"),
 	)
 
@@ -798,7 +843,7 @@ func (impl *Implm) runTrustCenterServer(
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy := proxyproto.TrustProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
+				policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)...)
 
 				listener = &proxyproto.Listener{
 					Listener:          listener,
@@ -818,7 +863,7 @@ func (impl *Implm) runTrustCenterServer(
 
 	acmeHandler := certmanager.NewACMEChallengeHandler(
 		pgClient,
-		impl.cfg.EncryptionKey,
+		encryptionKey,
 		l.Named("acme_handler"),
 	)
 
@@ -884,7 +929,7 @@ func (impl *Implm) runTrustCenterServer(
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
-				policy := proxyproto.TrustProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
+				policy := proxyproto.TrustProxyHeaderFrom(parseIPs(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies)...)
 
 				listener = &proxyproto.Listener{
 					Listener:          listener,
@@ -934,4 +979,16 @@ func (impl *Implm) runTrustCenterServer(
 	}
 
 	return ctx.Err()
+}
+
+// parseIPs converts a slice of string IP addresses to net.IP.
+// Invalid IPs are skipped.
+func parseIPs(strs []string) []net.IP {
+	ips := make([]net.IP, 0, len(strs))
+	for _, s := range strs {
+		if ip := net.ParseIP(s); ip != nil {
+			ips = append(ips, ip)
+		}
+	}
+	return ips
 }

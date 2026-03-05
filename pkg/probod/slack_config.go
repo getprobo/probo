@@ -14,9 +14,8 @@
 
 package probod
 
-type (
-	slackConfig struct {
-		SenderInterval int    `json:"sender-interval"`
-		SigningSecret  string `json:"signing-secret"`
-	}
-)
+// SlackConfig contains Slack notification configuration.
+type SlackConfig struct {
+	SenderInterval int    `json:"sender-interval"`
+	SigningSecret  string `json:"signing-secret"`
+}

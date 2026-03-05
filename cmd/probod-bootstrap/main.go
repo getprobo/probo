@@ -12,22 +12,33 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+// probod-bootstrap generates a probod configuration file from environment variables.
+package main
 
-// CustomDomainsConfig contains custom domain configuration.
-type CustomDomainsConfig struct {
-	RenewalInterval   int        `json:"renewal-interval"`
-	ProvisionInterval int        `json:"provision-interval"`
-	ResolverAddr      string     `json:"resolver-addr"`
-	CnameTarget       string     `json:"cname-target"`
-	ACME              ACMEConfig `json:"acme"`
-}
+import (
+	"flag"
+	"fmt"
+	"os"
 
-// ACMEConfig contains ACME certificate configuration.
-type ACMEConfig struct {
-	Directory  string `json:"directory"`
-	Email      string `json:"email"`
-	KeyType    string `json:"key-type"`
-	AccountKey string `json:"account-key"`
-	RootCA     string `json:"root-ca"`
+	"go.probo.inc/probo/pkg/bootstrap"
+)
+
+func main() {
+	outputPath := flag.String("output", "/etc/probod/config.yml", "output path for the generated config file")
+	flag.Parse()
+
+	builder := bootstrap.NewBuilder(nil)
+
+	cfg, err := builder.Build()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := bootstrap.WriteConfig(cfg, *outputPath); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Configuration file generated at: %s\n", *outputPath)
 }

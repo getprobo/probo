@@ -19,32 +19,33 @@ import (
 	"fmt"
 )
 
-type (
-	authConfig struct {
-		Cookie                              cookieConfig   `json:"cookie"`
-		Password                            passwordConfig `json:"password"`
-		DisableSignup                       bool           `json:"disable-signup"`
-		InvitationConfirmationTokenValidity int            `json:"invitation-confirmation-token-validity"`
-		PasswordResetTokenValidity          int            `json:"password-reset-token-validity"`
-		MagicLinkTokenValidity              int            `json:"magic-link-token-validity"`
-		SAML                                samlConfig     `json:"saml"`
-	}
+// AuthConfig contains authentication configuration.
+type AuthConfig struct {
+	Cookie                              CookieConfig `json:"cookie"`
+	Password                            PasswordConfig `json:"password"`
+	DisableSignup                       bool           `json:"disable-signup"`
+	InvitationConfirmationTokenValidity int            `json:"invitation-confirmation-token-validity"`
+	PasswordResetTokenValidity          int            `json:"password-reset-token-validity"`
+	MagicLinkTokenValidity              int            `json:"magic-link-token-validity"`
+	SAML                                SAMLConfig     `json:"saml"`
+}
 
-	cookieConfig struct {
-		Domain   string `json:"domain"`
-		Secret   string `json:"secret"`
-		Duration int    `json:"duration"`
-		Name     string `json:"name"`
-		Secure   bool   `json:"secure"`
-	}
+// CookieConfig contains session cookie configuration.
+type CookieConfig struct {
+	Domain   string `json:"domain"`
+	Secret   string `json:"secret"`
+	Duration int    `json:"duration"`
+	Name     string `json:"name"`
+	Secure   bool   `json:"secure"`
+}
 
-	passwordConfig struct {
-		Iterations uint32 `json:"iterations"`
-		Pepper     string `json:"pepper"`
-	}
-)
+// PasswordConfig contains password hashing configuration.
+type PasswordConfig struct {
+	Iterations int    `json:"iterations"`
+	Pepper     string `json:"pepper"`
+}
 
-func (c authConfig) GetPepperBytes() ([]byte, error) {
+func (c AuthConfig) GetPepperBytes() ([]byte, error) {
 	if c.Password.Pepper == "" {
 		return nil, fmt.Errorf("pepper cannot be empty")
 	}
@@ -63,7 +64,7 @@ func (c authConfig) GetPepperBytes() ([]byte, error) {
 	return []byte(c.Password.Pepper), nil
 }
 
-func (c authConfig) GetCookieSecretBytes() ([]byte, error) {
+func (c AuthConfig) GetCookieSecretBytes() ([]byte, error) {
 	if c.Cookie.Secret == "" {
 		return nil, fmt.Errorf("cookie secret cannot be empty")
 	}

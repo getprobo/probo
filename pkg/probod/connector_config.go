@@ -23,26 +23,32 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 )
 
-type (
-	connectorConfig struct {
-		Provider string                 `json:"provider"`
-		Protocol connector.ProtocolType `json:"protocol"`
-		Config   connector.Connector    `json:"-"`
-		Settings any                    `json:"-"`
+// ConnectorConfig contains connector configuration.
+type ConnectorConfig struct {
+	Provider   string                 `json:"provider"`
+	Protocol   connector.ProtocolType `json:"protocol"`
+	Config     connector.Connector    `json:"-"`
+	RawConfig  any                    `json:"config,omitempty"`
+	Settings   any                    `json:"-"`
+	RawSettings any                   `json:"settings,omitempty"`
+}
+
+// ConnectorConfigOAuth2 contains OAuth2 connector configuration.
+type ConnectorConfigOAuth2 struct {
+	ClientID        string            `json:"client-id"`
+	ClientSecret    string            `json:"client-secret"`
+	RedirectURI     string            `json:"redirect-uri"`
+	AuthURL         string            `json:"auth-url"`
+	TokenURL        string            `json:"token-url"`
+	Scopes          []string          `json:"scopes"`
+	ExtraAuthParams map[string]string `json:"extra-auth-params,omitempty"`
+}
+
+func (c *Config) GetSlackSigningSecret() string {
+	if c.Notifications.Slack.SigningSecret != "" {
+		return c.Notifications.Slack.SigningSecret
 	}
 
-	connectorConfigOAuth2 struct {
-		ClientID        string            `json:"client-id"`
-		ClientSecret    string            `json:"client-secret"`
-		RedirectURI     string            `json:"redirect-uri"`
-		AuthURL         string            `json:"auth-url"`
-		TokenURL        string            `json:"token-url"`
-		Scopes          []string          `json:"scopes"`
-		ExtraAuthParams map[string]string `json:"extra-auth-params,omitempty"`
-	}
-)
-
-func (c *config) GetSlackSigningSecret() string {
 	for _, conn := range c.Connectors {
 		if conn.Provider == "SLACK" {
 			if settings, ok := conn.Settings.(map[string]any); ok {
@@ -55,7 +61,7 @@ func (c *config) GetSlackSigningSecret() string {
 	return ""
 }
 
-func (c *connectorConfig) UnmarshalJSON(data []byte) error {
+func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 	var tmp struct {
 		Provider  string          `json:"provider"`
 		Protocol  string          `json:"protocol"`
@@ -80,7 +86,7 @@ func (c *connectorConfig) UnmarshalJSON(data []byte) error {
 
 	switch c.Protocol {
 	case connector.ProtocolOAuth2:
-		var config connectorConfigOAuth2
+		var config ConnectorConfigOAuth2
 		if err := json.NewDecoder(bytes.NewReader(tmp.RawConfig)).Decode(&config); err != nil {
 			return fmt.Errorf("cannot unmarshal oauth2 connector config: %w", err)
 		}

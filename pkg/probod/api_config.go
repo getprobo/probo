@@ -14,23 +14,20 @@
 
 package probod
 
-import (
-	"net"
-)
+// CorsConfig contains CORS settings.
+type CorsConfig struct {
+	AllowedOrigins []string `json:"allowed-origins"`
+}
 
-type (
-	corsConfig struct {
-		AllowedOrigins []string `json:"allowed-origins"`
-	}
+// ProxyProtocolConfig contains proxy protocol settings.
+type ProxyProtocolConfig struct {
+	TrustedProxies []string `json:"trusted-proxies"`
+}
 
-	proxyProtocolConfig struct {
-		TrustedProxies []net.IP `json:"trusted-proxies"`
-	}
-
-	apiConfig struct {
-		Addr              string              `json:"addr"`
-		ProxyProtocol     proxyProtocolConfig `json:"proxy-protocol"`
-		Cors              corsConfig          `json:"cors"`
-		ExtraHeaderFields map[string]string   `json:"extra-header-fields"`
-	}
-)
+// APIConfig contains HTTP API configuration.
+type APIConfig struct {
+	Addr              string              `json:"addr"`
+	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol"`
+	Cors              CorsConfig          `json:"cors"`
+	ExtraHeaderFields map[string]string   `json:"extra-header-fields"`
+}

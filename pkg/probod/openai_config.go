@@ -14,7 +14,8 @@
 
 package probod
 
-type openaiConfig struct {
+// OpenAIConfig contains OpenAI API configuration.
+type OpenAIConfig struct {
 	APIKey      string  `json:"api-key"`
 	Temperature float64 `json:"temperature"`
 	ModelName   string  `json:"model-name"`

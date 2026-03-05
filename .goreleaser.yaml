@@ -45,6 +45,20 @@ builds:
     goarch:
       - amd64
       - arm64
+  - id: probod-bootstrap-docker
+    main: ./cmd/probod-bootstrap/main.go
+    binary: probod-bootstrap
+    ldflags:
+      - -s -w
+    gcflags:
+      - -e
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
 
 archives:
   - name_template: >-
@@ -87,6 +101,7 @@ dockers_v2:
     dockerfile: Dockerfile
     ids:
       - probod-docker
+      - probod-bootstrap-docker
     extra_files:
       - entrypoint.sh
     labels:

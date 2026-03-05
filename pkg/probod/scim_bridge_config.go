@@ -14,7 +14,8 @@
 
 package probod
 
-type scimBridgeConfig struct {
+// SCIMBridgeConfig contains SCIM bridge configuration.
+type SCIMBridgeConfig struct {
 	// SyncInterval is the time between sync attempts for each bridge (in seconds).
 	// Default: 900 (15 minutes)
 	SyncInterval int `json:"sync-interval"`
