@@ -306,7 +306,7 @@ type (
 		Name           string
 		Applicability  *bool
 		Justification  *string
-		BestPractice   bool
+		BestPractice   *bool
 		Regulatory     *bool
 		Contractual    *bool
 		RiskAssessment *bool

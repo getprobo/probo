@@ -333,19 +333,7 @@
                         </td>
                         <td>{{boolToYesNoDash .Regulatory}}</td>
                         <td>{{boolToYesNoDash .Contractual}}</td>
-                        <td>
-                            {{- if .Applicability}}
-                                {{- if and .Applicability .BestPractice}}
-                                Yes
-                                {{- else if .Applicability}}
-                                No
-                                {{- else}}
-                                -
-                                {{- end}}
-                            {{- else}}
-                            -
-                            {{- end}}
-                        </td>
+                        <td>{{boolToYesNoDash .BestPractice}}</td>
                         <td>{{boolToYesNoDash .RiskAssessment}}</td>
                     </tr>
                     {{- end}}
