@@ -35,6 +35,7 @@ type (
 		TenantID                     gid.TenantID `db:"tenant_id"`
 		Active                       bool         `db:"active"`
 		Slug                         string       `db:"slug"`
+		MailingListID                *gid.GID     `db:"mailing_list_id"`
 		LogoFileID                   *gid.GID     `db:"logo_file_id"`
 		DarkLogoFileID               *gid.GID     `db:"dark_logo_file_id"`
 		NonDisclosureAgreementFileID *gid.GID     `db:"non_disclosure_agreement_file_id"`
@@ -79,6 +80,7 @@ SELECT
 	id,
 	organization_id,
 	tenant_id,
+	mailing_list_id,
 	logo_file_id,
 	dark_logo_file_id,
 	active,
@@ -129,6 +131,7 @@ SELECT
 	id,
 	organization_id,
 	tenant_id,
+	mailing_list_id,
 	logo_file_id,
 	dark_logo_file_id,
 	active,
@@ -179,6 +182,7 @@ SELECT
 	id,
 	organization_id,
 	tenant_id,
+	mailing_list_id,
 	logo_file_id,
 	dark_logo_file_id,
 	active,
@@ -224,6 +228,7 @@ INSERT INTO trust_centers (
 	id,
 	organization_id,
 	tenant_id,
+	mailing_list_id,
 	logo_file_id,
 	dark_logo_file_id,
 	active,
@@ -235,6 +240,7 @@ INSERT INTO trust_centers (
 	@id,
 	@organization_id,
 	@tenant_id,
+	@mailing_list_id,
 	@logo_file_id,
 	@dark_logo_file_id,
 	@active,
@@ -249,6 +255,7 @@ INSERT INTO trust_centers (
 		"id":                               tc.ID,
 		"organization_id":                  tc.OrganizationID,
 		"tenant_id":                        tc.TenantID,
+		"mailing_list_id":                  tc.MailingListID,
 		"logo_file_id":                     tc.LogoFileID,
 		"dark_logo_file_id":                tc.DarkLogoFileID,
 		"active":                           tc.Active,

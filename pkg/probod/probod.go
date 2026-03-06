@@ -56,6 +56,7 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailer"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
@@ -472,6 +473,8 @@ func (impl *Implm) Run(
 		slackService,
 	)
 
+	mailmanService := mailman.NewService(pgClient)
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
@@ -480,6 +483,7 @@ func (impl *Implm) Run(
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,
+			Mailman:           mailmanService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			BaseURL:           baseURL,

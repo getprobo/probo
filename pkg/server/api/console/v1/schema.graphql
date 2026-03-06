@@ -1623,7 +1623,10 @@ input VendorFilter {
 }
 
 # Core Types
-type TrustCenter implements Node {
+type TrustCenter implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenter"
+    ) {
     id: ID!
     active: Boolean!
     logoFileUrl: String @goField(forceResolver: true)
@@ -1658,7 +1661,58 @@ type TrustCenter implements Node {
         orderBy: ComplianceFrameworkOrder
     ): ComplianceFrameworkConnection! @goField(forceResolver: true)
 
+    mailingList: MailingList @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type MailingList implements Node {
+    id: ID!
+    replyTo: EmailAddr
+
+    subscribers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): MailingListSubscriberConnection! @goField(forceResolver: true)
+}
+
+enum MailingListSubscriberStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatus"
+    ) {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusPending"
+        )
+    CONFIRMED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListSubscriberStatusConfirmed"
+        )
+}
+
+type MailingListSubscriber implements Node {
+    id: ID!
+    fullName: String!
+    email: EmailAddr!
+    status: MailingListSubscriberStatus!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type MailingListSubscriberConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MailingListSubscriberConnection"
+    ) {
+    edges: [MailingListSubscriberEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type MailingListSubscriberEdge {
+    cursor: CursorKey!
+    node: MailingListSubscriber!
 }
 
 type Organization implements Node {
@@ -3310,6 +3364,17 @@ type Mutation {
     deleteTrustCenterAccess(
         input: DeleteTrustCenterAccessInput!
     ): DeleteTrustCenterAccessPayload!
+    # Mailing List mutations
+    updateMailingList(
+        input: UpdateMailingListInput!
+    ): UpdateMailingListPayload!
+    # Mailing List Subscriber mutations
+    createMailingListSubscriber(
+        input: CreateMailingListSubscriberInput!
+    ): CreateMailingListSubscriberPayload!
+    deleteMailingListSubscriber(
+        input: DeleteMailingListSubscriberInput!
+    ): DeleteMailingListSubscriberPayload!
     # Trust Center Reference mutations
     createTrustCenterReference(
         input: CreateTrustCenterReferenceInput!
@@ -3700,6 +3765,25 @@ input UpdateTrustCenterAccessInput {
 }
 
 input DeleteTrustCenterAccessInput {
+    id: ID!
+}
+
+input UpdateMailingListInput {
+    id: ID!
+    replyTo: EmailAddr
+}
+
+type UpdateMailingListPayload {
+    mailingList: MailingList!
+}
+
+input CreateMailingListSubscriberInput {
+    mailingListId: ID!
+    fullName: String!
+    email: EmailAddr!
+}
+
+input DeleteMailingListSubscriberInput {
     id: ID!
 }
 
@@ -4535,6 +4619,14 @@ type UpdateTrustCenterAccessPayload {
 
 type DeleteTrustCenterAccessPayload {
     deletedTrustCenterAccessId: ID!
+}
+
+type CreateMailingListSubscriberPayload {
+    mailingListSubscriberEdge: MailingListSubscriberEdge!
+}
+
+type DeleteMailingListSubscriberPayload {
+    deletedMailingListSubscriberId: ID!
 }
 
 type CreateTrustCenterReferencePayload {

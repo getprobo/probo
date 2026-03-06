@@ -5,6 +5,7 @@ import { UnAuthenticatedError } from "@probo/relay";
 import {
   Button,
   Card,
+  IconBell2,
   IconBlock,
   IconLock,
   IconMedal,
@@ -19,6 +20,8 @@ import type { TrustGraphCurrentQuery$data } from "#/queries/__generated__/TrustG
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
+import type { OrganizationSidebar_subscribeToMailingListMutation } from "./__generated__/OrganizationSidebar_subscribeToMailingListMutation.graphql";
+import type { OrganizationSidebar_unsubscribeFromMailingListMutation } from "./__generated__/OrganizationSidebar_unsubscribeFromMailingListMutation.graphql";
 import { FrameworkBadge } from "./FrameworkBadge";
 
 const requestAllAccessesMutation = graphql`
@@ -31,11 +34,35 @@ const requestAllAccessesMutation = graphql`
   }
 `;
 
+const subscribeToMailingListMutation = graphql`
+  mutation OrganizationSidebar_subscribeToMailingListMutation {
+    subscribeToMailingList {
+      subscription {
+        id
+        email
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+const unsubscribeFromMailingListMutation = graphql`
+  mutation OrganizationSidebar_unsubscribeFromMailingListMutation {
+    unsubscribeFromMailingList {
+      deletedMailingListSubscriberId @deleteRecord
+    }
+  }
+`;
+
 export function OrganizationSidebar({
   trustCenter,
+  isAuthenticated,
 }: {
   trustCenter: TrustGraphCurrentQuery$data["currentTrustCenter"];
+  isAuthenticated: boolean;
 }) {
+  const trustCenterId = trustCenter?.id;
   const { __ } = useTranslate();
   const { toast } = useToast();
   const theme = useSystemTheme();
@@ -48,6 +75,16 @@ export function OrganizationSidebar({
   const [requestAllAccesses, isRequestingAccess]
     = useMutation<OrganizationSidebar_requestAllAccessesMutation>(
       requestAllAccessesMutation,
+    );
+
+  const [subscribeToMailingList, isSubscribing]
+    = useMutation<OrganizationSidebar_subscribeToMailingListMutation>(
+      subscribeToMailingListMutation,
+    );
+
+  const [unsubscribeFromMailingList, isUnsubscribing]
+    = useMutation<OrganizationSidebar_unsubscribeFromMailingListMutation>(
+      unsubscribeFromMailingListMutation,
     );
 
   const handleRequestAllAccesses = () => {
@@ -86,6 +123,71 @@ export function OrganizationSidebar({
         toast({
           title: __("Error"),
           description: error.message ?? __("Cannot request access"),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleSubscribe = () => {
+    subscribeToMailingList({
+      variables: {},
+      updater: (store, data) => {
+        const subscription = data?.subscribeToMailingList?.subscription;
+        if (!subscription?.id || !trustCenterId) return;
+        const trustCenterRecord = store.get(trustCenterId);
+        if (!trustCenterRecord) return;
+        const subscriptionRecord = store.get(subscription.id);
+        if (!subscriptionRecord) return;
+        trustCenterRecord.setLinkedRecord(subscriptionRecord, "viewerSubscription");
+      },
+      onCompleted: (_, errors) => {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Cannot subscribe"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Subscribed"),
+          description: __("You will be notified of security updates."),
+          variant: "success",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: __("Error"),
+          description: error.message ?? __("Cannot subscribe"),
+          variant: "error",
+        });
+      },
+    });
+  };
+
+  const handleUnsubscribe = () => {
+    unsubscribeFromMailingList({
+      variables: {},
+      onCompleted: (_, errors) => {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Cannot unsubscribe"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Unsubscribed"),
+          description: __("You will no longer receive security updates."),
+          variant: "success",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: __("Error"),
+          description: error.message ?? __("Cannot unsubscribe"),
           variant: "error",
         });
       },
@@ -177,15 +279,43 @@ export function OrganizationSidebar({
           </>
         )}
 
-        <Button
-          disabled={isRequestingAccess}
-          variant="primary"
-          icon={IconLock}
-          className="w-full h-10"
-          onClick={handleRequestAllAccesses}
-        >
-          {__("Request access")}
-        </Button>
+        {/* Actions */}
+        <div className="space-y-2">
+          <Button
+            disabled={isRequestingAccess}
+            variant="primary"
+            icon={IconLock}
+            className="w-full h-10"
+            onClick={handleRequestAllAccesses}
+          >
+            {__("Request access")}
+          </Button>
+          {isAuthenticated && (
+            trustCenter.viewerSubscription
+              ? (
+                  <Button
+                    disabled={isUnsubscribing}
+                    variant="secondary"
+                    icon={IconBell2}
+                    className="w-full h-10"
+                    onClick={handleUnsubscribe}
+                  >
+                    {__("Unsubscribe from updates")}
+                  </Button>
+                )
+              : (
+                  <Button
+                    disabled={isSubscribing}
+                    variant="secondary"
+                    icon={IconBell2}
+                    className="w-full h-10"
+                    onClick={handleSubscribe}
+                  >
+                    {__("Subscribe to updates")}
+                  </Button>
+                )
+          )}
+        </div>
       </div>
     </Card>
   );

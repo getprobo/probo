@@ -18,6 +18,7 @@ export function MainLayout(props: Props) {
   const { __ } = useTranslate();
   const data = usePreloadedQuery(currentTrustGraphQuery, props.queryRef);
   const trustCenter = data.currentTrustCenter;
+  const isAuthenticated = data.viewer != null;
 
   const theme = useSystemTheme();
 
@@ -31,7 +32,7 @@ export function MainLayout(props: Props) {
   return (
     <TrustCenterProvider trustCenter={trustCenter}>
       <div className="grid grid-cols-1 max-w-[1280px] mx-4 pt-6 gap-4 lg:mx-auto lg:gap-10 lg:pt-20 lg:grid-cols-[400px_1fr] lg:items-start ">
-        <OrganizationSidebar trustCenter={trustCenter} />
+        <OrganizationSidebar trustCenter={trustCenter} isAuthenticated={isAuthenticated} />
         <main>
           <Tabs className="mb-8">
             <TabLink to="/overview">{__("Overview")}</TabLink>
