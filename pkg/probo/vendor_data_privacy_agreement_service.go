@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
@@ -126,10 +125,11 @@ func (s VendorDataPrivacyAgreementService) Upload(
 
 			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
 			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-				Bucket:      &s.svc.bucket,
-				Key:         aws.String(objectKey.String()),
-				Body:        req.File,
-				ContentType: &mimeType,
+				Bucket:       &s.svc.bucket,
+				Key:          new(objectKey.String()),
+				Body:         req.File,
+				ContentType:  &mimeType,
+				CacheControl: new("private, max-age=3600"),
 				Metadata: map[string]string{
 					"type":            "vendor-data-privacy-agreement",
 					"vendor-id":       vendorID.String(),
@@ -140,8 +140,8 @@ func (s VendorDataPrivacyAgreementService) Upload(
 				return fmt.Errorf("cannot upload file to S3: %w", err)
 			}
 			headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-				Bucket: aws.String(s.svc.bucket),
-				Key:    aws.String(objectKey.String()),
+				Bucket: new(s.svc.bucket),
+				Key:    new(objectKey.String()),
 			})
 			if err != nil {
 				return fmt.Errorf("cannot get object metadata: %w", err)
@@ -256,10 +256,10 @@ func (s VendorDataPrivacyAgreementService) GenerateFileURL(
 		encodedFilename, encodedFilename)
 
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     aws.String(s.svc.bucket),
-		Key:                        aws.String(file.FileKey),
-		ResponseCacheControl:       aws.String("max-age=3600, public"),
-		ResponseContentDisposition: aws.String(contentDisposition),
+		Bucket:                     new(s.svc.bucket),
+		Key:                        new(file.FileKey),
+		ResponseCacheControl:       new("max-age=3600, public"),
+		ResponseContentDisposition: new(contentDisposition),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expiresIn
 	})

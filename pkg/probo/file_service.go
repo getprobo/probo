@@ -21,7 +21,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
@@ -96,11 +95,12 @@ func (s FileService) UploadAndSaveFile(
 	_, err = s.svc.s3.PutObject(
 		ctx,
 		&s3.PutObjectInput{
-			Bucket:      &s.svc.bucket,
-			Key:         aws.String(objectKey.String()),
-			Body:        req.Content,
-			Metadata:    s3Metadata,
-			ContentType: aws.String(mimeType),
+			Bucket:       &s.svc.bucket,
+			Key:          new(objectKey.String()),
+			Body:         req.Content,
+			Metadata:     s3Metadata,
+			ContentType:  new(mimeType),
+			CacheControl: new("private, max-age=3600"),
 		},
 	)
 	if err != nil {
@@ -108,8 +108,8 @@ func (s FileService) UploadAndSaveFile(
 	}
 
 	headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(objectKey.String()),
+		Bucket: new(s.svc.bucket),
+		Key:    new(objectKey.String()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot get object metadata: %w", err)
@@ -183,7 +183,7 @@ func (s FileService) GenerateFileTempURL(
 		&s3.GetObjectInput{
 			Bucket:                     &s.svc.bucket,
 			Key:                        &file.FileKey,
-			ResponseCacheControl:       aws.String("max-age=3600, public"),
+			ResponseCacheControl:       new("max-age=3600, public"),
 			ResponseContentType:        &file.MimeType,
 			ResponseContentDisposition: &contentDisposition,
 		},

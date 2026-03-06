@@ -20,7 +20,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -87,10 +86,10 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 		encodedFilename, encodedFilename)
 
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     aws.String(s.svc.bucket),
-		Key:                        aws.String(file.FileKey),
-		ResponseCacheControl:       aws.String("max-age=3600, public"),
-		ResponseContentDisposition: aws.String(contentDisposition),
+		Bucket:                     new(s.svc.bucket),
+		Key:                        new(file.FileKey),
+		ResponseCacheControl:       new("max-age=3600, public"),
+		ResponseContentDisposition: new(contentDisposition),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = duration
 	})

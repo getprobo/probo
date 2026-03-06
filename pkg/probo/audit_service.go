@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
@@ -347,10 +346,11 @@ func (s AuditService) UploadReport(
 			}
 
 			_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-				Bucket:      aws.String(s.svc.bucket),
-				Key:         aws.String(objectKey.String()),
-				Body:        req.File.Content,
-				ContentType: aws.String(req.File.ContentType),
+				Bucket:       new(s.svc.bucket),
+				Key:          new(objectKey.String()),
+				Body:         req.File.Content,
+				ContentType:  new(req.File.ContentType),
+				CacheControl: new("private, max-age=3600"),
 				Metadata: map[string]string{
 					"type":            "report",
 					"report-id":       reportID.String(),

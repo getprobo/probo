@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
@@ -231,10 +230,11 @@ func (s TrustCenterService) UploadNDA(
 			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
 
 			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-				Bucket:      &s.svc.bucket,
-				Key:         aws.String(objectKey.String()),
-				Body:        req.File,
-				ContentType: &mimeType,
+				Bucket:       &s.svc.bucket,
+				Key:          new(objectKey.String()),
+				Body:         req.File,
+				ContentType:  &mimeType,
+				CacheControl: new("private, max-age=3600"),
 				Metadata: map[string]string{
 					"type":            "trust-center-nda",
 					"trust-center-id": req.TrustCenterID.String(),
@@ -246,8 +246,8 @@ func (s TrustCenterService) UploadNDA(
 			}
 
 			headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-				Bucket: aws.String(s.svc.bucket),
-				Key:    aws.String(objectKey.String()),
+				Bucket: new(s.svc.bucket),
+				Key:    new(objectKey.String()),
 			})
 			if err != nil {
 				return fmt.Errorf("cannot get object metadata: %w", err)
@@ -408,10 +408,11 @@ func (s TrustCenterService) uploadFile(
 	}
 
 	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      &s.svc.bucket,
-		Key:         aws.String(objectKey.String()),
-		Body:        fileUpload.Content,
-		ContentType: &mimeType,
+		Bucket:       &s.svc.bucket,
+		Key:          new(objectKey.String()),
+		Body:         fileUpload.Content,
+		ContentType:  &mimeType,
+		CacheControl: new("max-age=3600, public"),
 		Metadata: map[string]string{
 			"type":            fileType,
 			"trust-center-id": trustCenter.ID.String(),
@@ -423,8 +424,8 @@ func (s TrustCenterService) uploadFile(
 	}
 
 	headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(objectKey.String()),
+		Bucket: new(s.svc.bucket),
+		Key:    new(objectKey.String()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot get object metadata: %w", err)

@@ -22,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/coredata"
@@ -342,7 +341,7 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 			scope = coredata.NewScope(exportJob.ID.TenantID())
 
 			exportJob.Status = coredata.ExportJobStatusProcessing
-			exportJob.StartedAt = ref.Ref(time.Now())
+			exportJob.StartedAt = new(time.Now())
 			if err := exportJob.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
@@ -358,7 +357,7 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 }
 
 func (s *Service) commitFailedExport(ctx context.Context, exportJob *coredata.ExportJob, failureErr error) error {
-	exportJob.CompletedAt = ref.Ref(time.Now())
+	exportJob.CompletedAt = new(time.Now())
 	exportJob.Status = coredata.ExportJobStatusFailed
 	errorMsg := failureErr.Error()
 	exportJob.Error = &errorMsg
@@ -377,7 +376,7 @@ func (s *Service) commitFailedExport(ctx context.Context, exportJob *coredata.Ex
 }
 
 func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredata.ExportJob) error {
-	exportJob.CompletedAt = ref.Ref(time.Now())
+	exportJob.CompletedAt = new(time.Now())
 	exportJob.Status = coredata.ExportJobStatusCompleted
 
 	return s.pg.WithConn(

@@ -16,8 +16,6 @@ package validator
 
 import (
 	"testing"
-
-	"go.gearno.de/x/ref"
 )
 
 func TestMinLen(t *testing.T) {
@@ -31,7 +29,7 @@ func TestMinLen(t *testing.T) {
 		{"exact length", "hello", 5, false},
 		{"too short", "hi", 5, true},
 		{"nil pointer", (*string)(nil), 5, false}, // Skip validation
-		{"valid pointer", ref.Ref("hello"), 3, false},
+		{"valid pointer", new("hello"), 3, false},
 		{"non-string", 123, 5, true},
 	}
 
@@ -56,7 +54,7 @@ func TestMaxLen(t *testing.T) {
 		{"exact length", "hello", 5, false},
 		{"too long", "hello world", 5, true},
 		{"nil pointer", (*string)(nil), 5, false}, // Skip validation
-		{"valid pointer", ref.Ref("hi"), 5, false},
+		{"valid pointer", new("hi"), 5, false},
 	}
 
 	for _, tt := range tests {

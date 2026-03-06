@@ -22,7 +22,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -52,8 +51,8 @@ func (s *Service) GetFileBase64(
 	result, err := s.s3Client.GetObject(
 		ctx,
 		&s3.GetObjectInput{
-			Bucket: aws.String(file.GetBucketName()),
-			Key:    aws.String(file.GetObjectKey()),
+			Bucket: new(file.GetBucketName()),
+			Key:    new(file.GetObjectKey()),
 		},
 	)
 	if err != nil {
@@ -84,8 +83,8 @@ func (s *Service) GetFileBytes(
 	result, err := s.s3Client.GetObject(
 		ctx,
 		&s3.GetObjectInput{
-			Bucket: aws.String(file.GetBucketName()),
-			Key:    aws.String(file.GetObjectKey()),
+			Bucket: new(file.GetBucketName()),
+			Key:    new(file.GetObjectKey()),
 		},
 	)
 	if err != nil {
@@ -129,11 +128,12 @@ func (s *Service) PutFile(
 	_, err := s.s3Client.PutObject(
 		ctx,
 		&s3.PutObjectInput{
-			Bucket:      aws.String(file.GetBucketName()),
-			Key:         aws.String(file.GetObjectKey()),
-			Body:        content,
-			ContentType: aws.String(file.GetMimeType()),
-			Metadata:    metadata,
+			Bucket:       new(file.GetBucketName()),
+			Key:          new(file.GetObjectKey()),
+			Body:         content,
+			ContentType:  new(file.GetMimeType()),
+			CacheControl: new("private, max-age=3600"),
+			Metadata:     metadata,
 		},
 	)
 	if err != nil {
@@ -143,8 +143,8 @@ func (s *Service) PutFile(
 	headOutput, err := s.s3Client.HeadObject(
 		ctx,
 		&s3.HeadObjectInput{
-			Bucket: aws.String(file.GetBucketName()),
-			Key:    aws.String(file.GetObjectKey()),
+			Bucket: new(file.GetBucketName()),
+			Key:    new(file.GetObjectKey()),
 		},
 	)
 	if err != nil {
@@ -168,10 +168,10 @@ func (s *Service) GenerateFileUrl(
 	presignedReq, err := presignClient.PresignGetObject(
 		ctx,
 		&s3.GetObjectInput{
-			Bucket:                     aws.String(file.GetBucketName()),
-			Key:                        aws.String(file.GetObjectKey()),
-			ResponseCacheControl:       aws.String("max-age=3600, public"),
-			ResponseContentType:        aws.String(file.GetMimeType()),
+			Bucket:                     new(file.GetBucketName()),
+			Key:                        new(file.GetObjectKey()),
+			ResponseCacheControl:       new("max-age=3600, public"),
+			ResponseContentType:        new(file.GetMimeType()),
 			ResponseContentDisposition: &contentDisposition,
 		},
 		func(opts *s3.PresignOptions) {

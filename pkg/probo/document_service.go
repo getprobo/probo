@@ -16,7 +16,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
@@ -1787,11 +1786,12 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 			_, err = s.svc.s3.PutObject(
 				ctx,
 				&s3.PutObjectInput{
-					Bucket:        ref.Ref(s.svc.bucket),
-					Key:           ref.Ref(uuid.String()),
+					Bucket:        new(s.svc.bucket),
+					Key:           new(uuid.String()),
 					Body:          tempFile,
-					ContentLength: ref.Ref(fileInfo.Size()),
-					ContentType:   ref.Ref("application/zip"),
+					ContentLength: new(fileInfo.Size()),
+					ContentType:   new("application/zip"),
+					CacheControl:  new("private, max-age=3600"),
 					Metadata: map[string]string{
 						"type":            "document-export",
 						"export-job-id":   exportJob.ID.String(),
@@ -2086,11 +2086,11 @@ func (s *DocumentService) GenerateDocumentExportDownloadURL(
 	presignedReq, err := presignClient.PresignGetObject(
 		ctx,
 		&s3.GetObjectInput{
-			Bucket:                     ref.Ref(s.svc.bucket),
-			Key:                        ref.Ref(file.FileKey),
-			ResponseCacheControl:       ref.Ref("max-age=3600, public"),
-			ResponseContentType:        ref.Ref(file.MimeType),
-			ResponseContentDisposition: ref.Ref(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
+			Bucket:                     new(s.svc.bucket),
+			Key:                        new(file.FileKey),
+			ResponseCacheControl:       new("max-age=3600, public"),
+			ResponseContentType:        new(file.MimeType),
+			ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
 		},
 		func(opts *s3.PresignOptions) {
 			opts.Expires = documentExportEmailExpiresIn

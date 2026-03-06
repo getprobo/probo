@@ -108,7 +108,7 @@ func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) aws.Co
 	}
 
 	if opts.Endpoint != "" {
-		cfg.BaseEndpoint = aws.String(opts.Endpoint)
+		cfg.BaseEndpoint = new(opts.Endpoint)
 	}
 
 	return cfg.Copy()

@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -55,7 +54,7 @@ func (s *APIKeyService) GetAPIKey(ctx context.Context, keyID gid.GID) (*coredata
 			}
 
 			if now.After(apiKey.ExpiresAt) {
-				apiKey.ExpireReason = ref.Ref(coredata.ExpireReasonIdleTimeout)
+				apiKey.ExpireReason = new(coredata.ExpireReasonIdleTimeout)
 				apiKey.ExpiresAt = now
 				apiKey.UpdatedAt = now
 
