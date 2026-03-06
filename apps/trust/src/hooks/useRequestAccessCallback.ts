@@ -172,7 +172,7 @@ export function useRequestAccessCallback() {
           }
 
           toast(successToastArgs(__));
-          window.location.href = (getPathPrefix() || "/") + location.pathname;
+          window.location.href = window.location.origin + (getPathPrefix() || "/") + location.pathname;
         },
         onError: (error) => {
           toast(errorToastArgs(__, error));
