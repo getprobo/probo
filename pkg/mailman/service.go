@@ -331,6 +331,222 @@ func (s *Service) ListSubscribers(
 	return page.NewPage(subscribers, cursor), nil
 }
 
+func (s *Service) CreateMailingListUpdate(
+	ctx context.Context,
+	mailingListID gid.GID,
+	title string,
+	body string,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	now := time.Now()
+
+	mlu := &coredata.MailingListUpdate{
+		ID:            gid.New(scope.GetTenantID(), coredata.MailingListUpdateEntityType),
+		MailingListID: mailingListID,
+		Title:         title,
+		Body:          body,
+		Status:        coredata.MailingListUpdateStatusDraft,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var ml coredata.MailingList
+			if err := ml.LoadByID(ctx, conn, scope, mailingListID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListNotFound
+				}
+				return fmt.Errorf("cannot load mailing list: %w", err)
+			}
+
+			mlu.OrganizationID = ml.OrganizationID
+
+			if err := mlu.Insert(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot insert mailing list update: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return mlu, nil
+}
+
+func (s *Service) GetMailingListUpdate(
+	ctx context.Context,
+	id gid.GID,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(id)
+	var mlu coredata.MailingListUpdate
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+				return fmt.Errorf("cannot load mailing list update: %w", err)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mlu, nil
+}
+
+func (s *Service) UpdateMailingListUpdate(
+	ctx context.Context,
+	id gid.GID,
+	title string,
+	body string,
+	status coredata.MailingListUpdateStatus,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(id)
+	var mlu coredata.MailingListUpdate
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+				return fmt.Errorf("cannot load mailing list update: %w", err)
+			}
+
+			if mlu.Status == coredata.MailingListUpdateStatusSent {
+				return ErrMailingListUpdateAlreadySent
+			}
+
+			mlu.Title = title
+			mlu.Body = body
+			mlu.Status = status
+			mlu.UpdatedAt = time.Now()
+
+			if err := mlu.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update mailing list update: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if status == coredata.MailingListUpdateStatusSent {
+		if err := s.CreateNewsEmails(ctx, mlu.MailingListID, mlu.Title, mlu.Body); err != nil {
+			return nil, fmt.Errorf("cannot send mailing list update emails: %w", err)
+		}
+	}
+
+	return &mlu, nil
+}
+
+func (s *Service) DeleteMailingListUpdate(
+	ctx context.Context,
+	id gid.GID,
+) error {
+	scope := coredata.NewScopeFromObjectID(id)
+
+	return s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			mlu := coredata.MailingListUpdate{ID: id}
+			if err := mlu.Delete(ctx, conn, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+				return fmt.Errorf("cannot delete mailing list update: %w", err)
+			}
+			return nil
+		},
+	)
+}
+
+func (s *Service) ListMailingListUpdates(
+	ctx context.Context,
+	mailingListID gid.GID,
+	cursor *page.Cursor[coredata.MailingListUpdateOrderField],
+) (*page.Page[*coredata.MailingListUpdate, coredata.MailingListUpdateOrderField], error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	var items coredata.MailingListUpdateItems
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := items.LoadByMailingListID(ctx, conn, scope, mailingListID, cursor); err != nil {
+				return fmt.Errorf("cannot load mailing list updates: %w", err)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(items, cursor), nil
+}
+
+func (s *Service) ListSentMailingListUpdates(
+	ctx context.Context,
+	mailingListID gid.GID,
+	cursor *page.Cursor[coredata.MailingListUpdateOrderField],
+) (*page.Page[*coredata.MailingListUpdate, coredata.MailingListUpdateOrderField], error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	var items coredata.MailingListUpdateItems
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := items.LoadSentByMailingListID(ctx, conn, scope, mailingListID, cursor); err != nil {
+				return fmt.Errorf("cannot load sent mailing list updates: %w", err)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(items, cursor), nil
+}
+
+func (s *Service) CountMailingListUpdates(
+	ctx context.Context,
+	mailingListID gid.GID,
+) (int, error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var items coredata.MailingListUpdateItems
+			var err error
+			count, err = items.CountByMailingListID(ctx, conn, scope, mailingListID)
+			if err != nil {
+				return fmt.Errorf("cannot count mailing list updates: %w", err)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *Service) CreateNewsEmails(
 	ctx context.Context,
 	mailingListID gid.GID,
@@ -360,7 +576,7 @@ func (s *Service) CreateNewsEmails(
 			for _, sub := range subscribers {
 				unsubscribeURL, err := s.buildUnsubscribeURL(mailingListID, sub.Email)
 				if err != nil {
-					return fmt.Errorf("cannot generate unsubscribe URL")
+					return fmt.Errorf("cannot generate unsubscribe URL: %w", err)
 				}
 
 				subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(s.fm, presenterCfg, sub.FullName).

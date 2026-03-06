@@ -40,11 +40,12 @@ const (
 	ActionTrustCenterAccessUpdate = "core:trust-center-access:update"
 	ActionTrustCenterAccessDelete = "core:trust-center-access:delete"
 
-	// ComplianceNews actions
-	ActionComplianceNewsList   = "core:compliance-news:list"
-	ActionComplianceNewsCreate = "core:compliance-news:create"
-	ActionComplianceNewsUpdate = "core:compliance-news:update"
-	ActionComplianceNewsDelete = "core:compliance-news:delete"
+	// MailingListUpdate actions
+	ActionMailingListUpdateList   = "core:mailing-list-update:list"
+	ActionMailingListUpdateCreate = "core:mailing-list-update:create"
+	ActionMailingListUpdateUpdate = "core:mailing-list-update:update"
+	ActionMailingListUpdateSend   = "core:mailing-list-update:send"
+	ActionMailingListUpdateDelete = "core:mailing-list-update:delete"
 
 	// MailingList actions
 	ActionMailingListUpdate = "core:mailing-list:update"

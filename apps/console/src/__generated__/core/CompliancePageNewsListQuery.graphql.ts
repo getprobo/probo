@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fa34987c57c882489b90ce82b2193464>>
+ * @generated SignedSource<<6191b4dd6c600b3e9b55a4e0d4222346>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -125,9 +125,9 @@ return {
               {
                 "alias": null,
                 "args": (v2/*: any*/),
-                "concreteType": "ComplianceNewsConnection",
+                "concreteType": "MailingListUpdateConnection",
                 "kind": "LinkedField",
-                "name": "complianceNews",
+                "name": "mailingListUpdates",
                 "plural": false,
                 "selections": [
                   {
@@ -158,7 +158,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "ComplianceNewsEdge",
+                    "concreteType": "MailingListUpdateEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -166,7 +166,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "ComplianceNews",
+                        "concreteType": "MailingListUpdate",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -241,9 +241,9 @@ return {
                 "args": (v2/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "CompliancePageNewsList_complianceNews",
+                "key": "CompliancePageNewsList_mailingListUpdates",
                 "kind": "LinkedHandle",
-                "name": "complianceNews"
+                "name": "mailingListUpdates"
               }
             ],
             "type": "TrustCenter",
@@ -255,16 +255,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9121bf1f648039b386ee44755f48aaa2",
+    "cacheID": "f79a5a1d6d6da52c3fb51a4658fa97a7",
     "id": null,
     "metadata": {},
     "name": "CompliancePageNewsListQuery",
     "operationKind": "query",
-    "text": "query CompliancePageNewsListQuery(\n  $after: CursorKey = null\n  $first: Int = 20\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageNewsListFragment_2HEEH6\n    id\n  }\n}\n\nfragment CompliancePageNewsListFragment_2HEEH6 on TrustCenter {\n  complianceNews(first: $first, after: $after) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
+    "text": "query CompliancePageNewsListQuery(\n  $after: CursorKey = null\n  $first: Int = 20\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageNewsListFragment_2HEEH6\n    id\n  }\n}\n\nfragment CompliancePageNewsListFragment_2HEEH6 on TrustCenter {\n  mailingListUpdates(first: $first, after: $after) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b1949da57290c584b06e515d2db834a8";
+(node as any).hash = "20cf59407b0f7b664638454e2a70e2c6";
 
 export default node;

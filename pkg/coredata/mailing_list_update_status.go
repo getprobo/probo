@@ -19,18 +19,18 @@ import (
 	"fmt"
 )
 
-type ComplianceNewsStatus string
+type MailingListUpdateStatus string
 
 const (
-	ComplianceNewsStatusDraft ComplianceNewsStatus = "DRAFT"
-	ComplianceNewsStatusSent  ComplianceNewsStatus = "SENT"
+	MailingListUpdateStatusDraft MailingListUpdateStatus = "DRAFT"
+	MailingListUpdateStatusSent  MailingListUpdateStatus = "SENT"
 )
 
-func (s ComplianceNewsStatus) String() string {
+func (s MailingListUpdateStatus) String() string {
 	return string(s)
 }
 
-func (s *ComplianceNewsStatus) Scan(value any) error {
+func (s *MailingListUpdateStatus) Scan(value any) error {
 	var str string
 	switch v := value.(type) {
 	case string:
@@ -38,21 +38,21 @@ func (s *ComplianceNewsStatus) Scan(value any) error {
 	case []byte:
 		str = string(v)
 	default:
-		return fmt.Errorf("unsupported type for ComplianceNewsStatus: %T", value)
+		return fmt.Errorf("unsupported type for MailingListUpdateStatus: %T", value)
 	}
 
 	switch str {
 	case "DRAFT":
-		*s = ComplianceNewsStatusDraft
+		*s = MailingListUpdateStatusDraft
 	case "SENT":
-		*s = ComplianceNewsStatusSent
+		*s = MailingListUpdateStatusSent
 	default:
-		return fmt.Errorf("invalid ComplianceNewsStatus value: %q", str)
+		return fmt.Errorf("invalid MailingListUpdateStatus value: %q", str)
 	}
 
 	return nil
 }
 
-func (s ComplianceNewsStatus) Value() (driver.Value, error) {
+func (s MailingListUpdateStatus) Value() (driver.Value, error) {
 	return s.String(), nil
 }

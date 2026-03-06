@@ -28,52 +28,52 @@ import (
 )
 
 type (
-	ComplianceNews struct {
-		ID             gid.GID              `db:"id"`
-		OrganizationID gid.GID              `db:"organization_id"`
-		TrustCenterID  gid.GID              `db:"trust_center_id"`
-		Title          string               `db:"title"`
-		Body           string               `db:"body"`
-		Status         ComplianceNewsStatus `db:"status"`
-		CreatedAt      time.Time            `db:"created_at"`
-		UpdatedAt      time.Time            `db:"updated_at"`
+	MailingListUpdate struct {
+		ID             gid.GID                 `db:"id"`
+		OrganizationID gid.GID                 `db:"organization_id"`
+		MailingListID  gid.GID                 `db:"mailing_list_id"`
+		Title          string                  `db:"title"`
+		Body           string                  `db:"body"`
+		Status         MailingListUpdateStatus `db:"status"`
+		CreatedAt      time.Time               `db:"created_at"`
+		UpdatedAt      time.Time               `db:"updated_at"`
 	}
 
-	ComplianceNewsItems []*ComplianceNews
+	MailingListUpdateItems []*MailingListUpdate
 )
 
-func (cn *ComplianceNews) CursorKey(orderBy ComplianceNewsOrderField) page.CursorKey {
+func (mlu *MailingListUpdate) CursorKey(orderBy MailingListUpdateOrderField) page.CursorKey {
 	switch orderBy {
-	case ComplianceNewsOrderFieldCreatedAt:
-		return page.NewCursorKey(cn.ID, cn.CreatedAt)
-	case ComplianceNewsOrderFieldUpdatedAt:
-		return page.NewCursorKey(cn.ID, cn.UpdatedAt)
+	case MailingListUpdateOrderFieldCreatedAt:
+		return page.NewCursorKey(mlu.ID, mlu.CreatedAt)
+	case MailingListUpdateOrderFieldUpdatedAt:
+		return page.NewCursorKey(mlu.ID, mlu.UpdatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (cn *ComplianceNews) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id FROM compliance_news WHERE id = $1 LIMIT 1;`
+func (mlu *MailingListUpdate) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM mailing_list_updates WHERE id = $1 LIMIT 1;`
 
 	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, cn.ID).Scan(&organizationID); err != nil {
+	if err := conn.QueryRow(ctx, q, mlu.ID).Scan(&organizationID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
-		return nil, fmt.Errorf("cannot query compliance news authorization attributes: %w", err)
+		return nil, fmt.Errorf("cannot query mailing list update authorization attributes: %w", err)
 	}
 
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (cn *ComplianceNews) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (mlu *MailingListUpdate) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	q := `
-INSERT INTO compliance_news (
+INSERT INTO mailing_list_updates (
 	id,
 	tenant_id,
 	organization_id,
-	trust_center_id,
+	mailing_list_id,
 	title,
 	body,
 	status,
@@ -83,7 +83,7 @@ INSERT INTO compliance_news (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@trust_center_id,
+	@mailing_list_id,
 	@title,
 	@body,
 	@status,
@@ -92,14 +92,14 @@ INSERT INTO compliance_news (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"id":              cn.ID,
-		"organization_id": cn.OrganizationID,
-		"trust_center_id": cn.TrustCenterID,
-		"title":           cn.Title,
-		"body":            cn.Body,
-		"status":          cn.Status,
-		"created_at":      cn.CreatedAt,
-		"updated_at":      cn.UpdatedAt,
+		"id":              mlu.ID,
+		"organization_id": mlu.OrganizationID,
+		"mailing_list_id": mlu.MailingListID,
+		"title":           mlu.Title,
+		"body":            mlu.Body,
+		"status":          mlu.Status,
+		"created_at":      mlu.CreatedAt,
+		"updated_at":      mlu.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -107,9 +107,9 @@ INSERT INTO compliance_news (
 	return err
 }
 
-func (cn *ComplianceNews) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (mlu *MailingListUpdate) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	q := `
-UPDATE compliance_news
+UPDATE mailing_list_updates
 SET
 	title      = @title,
 	body       = @body,
@@ -122,17 +122,17 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":         cn.ID,
-		"title":      cn.Title,
-		"body":       cn.Body,
-		"status":     cn.Status,
-		"updated_at": cn.UpdatedAt,
+		"id":         mlu.ID,
+		"title":      mlu.Title,
+		"body":       mlu.Body,
+		"status":     mlu.Status,
+		"updated_at": mlu.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	tag, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update compliance news: %w", err)
+		return fmt.Errorf("cannot update mailing list update: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return ErrResourceNotFound
@@ -140,9 +140,9 @@ WHERE
 	return nil
 }
 
-func (cn *ComplianceNews) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (mlu *MailingListUpdate) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	q := `
-DELETE FROM compliance_news
+DELETE FROM mailing_list_updates
 WHERE
 	%s
 	AND id = @id
@@ -150,13 +150,13 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id": cn.ID,
+		"id": mlu.ID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	tag, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete compliance news: %w", err)
+		return fmt.Errorf("cannot delete mailing list update: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return ErrResourceNotFound
@@ -164,18 +164,18 @@ WHERE
 	return nil
 }
 
-func (cn *ComplianceNews) LoadByID(ctx context.Context, conn pg.Conn, scope Scoper, id gid.GID) error {
+func (mlu *MailingListUpdate) LoadByID(ctx context.Context, conn pg.Conn, scope Scoper, id gid.GID) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	mailing_list_id,
 	title,
 	body,
 	status,
 	created_at,
 	updated_at
-FROM compliance_news
+FROM mailing_list_updates
 WHERE
 	%s
 	AND id = @id
@@ -190,42 +190,42 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query compliance news: %w", err)
+		return fmt.Errorf("cannot query mailing list update: %w", err)
 	}
 
-	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ComplianceNews])
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MailingListUpdate])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
-		return fmt.Errorf("cannot collect compliance news: %w", err)
+		return fmt.Errorf("cannot collect mailing list update: %w", err)
 	}
 
-	*cn = result
+	*mlu = result
 	return nil
 }
 
-func (cnl *ComplianceNewsItems) LoadSentByTrustCenterID(
+func (mlul *MailingListUpdateItems) LoadSentByMailingListID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	trustCenterID gid.GID,
-	cursor *page.Cursor[ComplianceNewsOrderField],
+	mailingListID gid.GID,
+	cursor *page.Cursor[MailingListUpdateOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	mailing_list_id,
 	title,
 	body,
 	status,
 	created_at,
 	updated_at
-FROM compliance_news
+FROM mailing_list_updates
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND mailing_list_id = @mailing_list_id
 	AND status = 'SENT'
 	AND %s
 `
@@ -233,95 +233,95 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": trustCenterID,
+		"mailing_list_id": mailingListID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query sent compliance news: %w", err)
+		return fmt.Errorf("cannot query sent mailing list updates: %w", err)
 	}
 
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ComplianceNews])
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MailingListUpdate])
 	if err != nil {
-		return fmt.Errorf("cannot collect sent compliance news: %w", err)
+		return fmt.Errorf("cannot collect sent mailing list updates: %w", err)
 	}
 
-	*cnl = results
+	*mlul = results
 	return nil
 }
 
-func (cnl *ComplianceNewsItems) LoadByTrustCenterID(
+func (mlul *MailingListUpdateItems) LoadByMailingListID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	trustCenterID gid.GID,
-	cursor *page.Cursor[ComplianceNewsOrderField],
+	mailingListID gid.GID,
+	cursor *page.Cursor[MailingListUpdateOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	trust_center_id,
+	mailing_list_id,
 	title,
 	body,
 	status,
 	created_at,
 	updated_at
-FROM compliance_news
+FROM mailing_list_updates
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND mailing_list_id = @mailing_list_id
 	AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": trustCenterID,
+		"mailing_list_id": mailingListID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query compliance news: %w", err)
+		return fmt.Errorf("cannot query mailing list updates: %w", err)
 	}
 
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ComplianceNews])
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MailingListUpdate])
 	if err != nil {
-		return fmt.Errorf("cannot collect compliance news: %w", err)
+		return fmt.Errorf("cannot collect mailing list updates: %w", err)
 	}
 
-	*cnl = results
+	*mlul = results
 	return nil
 }
 
-func (cnl *ComplianceNewsItems) CountByTrustCenterID(
+func (mlul *MailingListUpdateItems) CountByMailingListID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	trustCenterID gid.GID,
+	mailingListID gid.GID,
 ) (int, error) {
 	q := `
 SELECT COUNT(*)
-FROM compliance_news
+FROM mailing_list_updates
 WHERE
 	%s
-	AND trust_center_id = @trust_center_id
+	AND mailing_list_id = @mailing_list_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_id": trustCenterID,
+		"mailing_list_id": mailingListID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot count compliance news: %w", err)
+		return 0, fmt.Errorf("cannot count mailing list updates: %w", err)
 	}
 
 	return count, nil

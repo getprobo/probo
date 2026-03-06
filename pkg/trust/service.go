@@ -70,7 +70,6 @@ type (
 		Vendors               *VendorService
 		Frameworks            *FrameworkService
 		ComplianceFrameworks  *ComplianceFrameworkService
-		ComplianceNews        *ComplianceNewsService
 		TrustCenterAccesses   *TrustCenterAccessService
 		TrustCenterReferences *TrustCenterReferenceService
 		TrustCenterFiles      *TrustCenterFileService
@@ -132,7 +131,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Frameworks = &FrameworkService{svc: tenantService}
 	tenantService.ComplianceFrameworks = &ComplianceFrameworkService{svc: tenantService}
-	tenantService.ComplianceNews = &ComplianceNewsService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, iamSvc: s.iam, logger: s.logger}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}

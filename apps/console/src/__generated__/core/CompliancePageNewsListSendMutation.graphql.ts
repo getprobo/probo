@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<71f99a6bd7535e0b84e60e9a00a7a759>>
+ * @generated SignedSource<<2d84d7da182be5e984032a25b12622c6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,22 +9,22 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ComplianceNewsStatus = "DRAFT" | "SENT";
-export type UpdateComplianceNewsInput = {
+export type MailingListUpdateStatus = "DRAFT" | "SENT";
+export type UpdateMailingListUpdateInput = {
   body: string;
   id: string;
-  status: ComplianceNewsStatus;
+  status: MailingListUpdateStatus;
   title: string;
 };
 export type CompliancePageNewsListSendMutation$variables = {
-  input: UpdateComplianceNewsInput;
+  input: UpdateMailingListUpdateInput;
 };
 export type CompliancePageNewsListSendMutation$data = {
-  readonly updateComplianceNews: {
-    readonly complianceNews: {
+  readonly updateMailingListUpdate: {
+    readonly mailingListUpdate: {
       readonly body: string;
       readonly id: string;
-      readonly status: ComplianceNewsStatus;
+      readonly status: MailingListUpdateStatus;
       readonly title: string;
       readonly updatedAt: string;
     };
@@ -53,17 +53,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "UpdateComplianceNewsPayload",
+    "concreteType": "UpdateMailingListUpdatePayload",
     "kind": "LinkedField",
-    "name": "updateComplianceNews",
+    "name": "updateMailingListUpdate",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "ComplianceNews",
+        "concreteType": "MailingListUpdate",
         "kind": "LinkedField",
-        "name": "complianceNews",
+        "name": "mailingListUpdate",
         "plural": false,
         "selections": [
           {
@@ -126,16 +126,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "5aff1f911ee9f493896c8f6af429c91a",
+    "cacheID": "a49a3e4046a14968ef7e17764b44f124",
     "id": null,
     "metadata": {},
     "name": "CompliancePageNewsListSendMutation",
     "operationKind": "mutation",
-    "text": "mutation CompliancePageNewsListSendMutation(\n  $input: UpdateComplianceNewsInput!\n) {\n  updateComplianceNews(input: $input) {\n    complianceNews {\n      id\n      title\n      body\n      status\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation CompliancePageNewsListSendMutation(\n  $input: UpdateMailingListUpdateInput!\n) {\n  updateMailingListUpdate(input: $input) {\n    mailingListUpdate {\n      id\n      title\n      body\n      status\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "27e89ab1fd7e60850400c81ebdb95edd";
+(node as any).hash = "d0cc0055e43daa81ba346762cae70e27";
 
 export default node;

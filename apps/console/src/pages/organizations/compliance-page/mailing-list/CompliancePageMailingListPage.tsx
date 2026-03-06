@@ -79,7 +79,7 @@ export function CompliancePageMailingListPage(props: {
   const { compliancePage } = organization;
   const mailingList = compliancePage.mailingList;
   const mailingListId = mailingList?.id;
-  const trustCenterId = compliancePage.id;
+  const trustCenterId = compliancePage.id; // used for the news connection ID
 
   const subscriberConnectionId = mailingListId
     ? ConnectionHandler.getConnectionID(mailingListId, "CompliancePageMailingList_subscribers")
@@ -87,7 +87,7 @@ export function CompliancePageMailingListPage(props: {
 
   const newsConnectionId = ConnectionHandler.getConnectionID(
     trustCenterId,
-    "CompliancePageNewsList_complianceNews",
+    "CompliancePageNewsList_mailingListUpdates",
   );
 
   const [replyTo, setReplyTo] = useState(mailingList?.replyTo ?? "");
@@ -184,11 +184,13 @@ export function CompliancePageMailingListPage(props: {
         )}
       </div>
 
-      <NewComplianceNewsDialog
-        ref={newNewsDialogRef}
-        trustCenterId={trustCenterId}
-        connectionId={newsConnectionId}
-      />
+      {mailingListId && (
+        <NewComplianceNewsDialog
+          ref={newNewsDialogRef}
+          mailingListId={mailingListId}
+          connectionId={newsConnectionId}
+        />
+      )}
 
       <EditComplianceNewsDialog
         ref={editNewsDialogRef}

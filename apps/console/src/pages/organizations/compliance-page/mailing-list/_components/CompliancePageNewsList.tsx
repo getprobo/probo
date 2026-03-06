@@ -11,19 +11,19 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const deleteMutation = graphql`
   mutation CompliancePageNewsListDeleteMutation(
-    $input: DeleteComplianceNewsInput!
+    $input: DeleteMailingListUpdateInput!
     $connections: [ID!]!
   ) {
-    deleteComplianceNews(input: $input) {
-      deletedComplianceNewsId @deleteEdge(connections: $connections)
+    deleteMailingListUpdate(input: $input) {
+      deletedMailingListUpdateId @deleteEdge(connections: $connections)
     }
   }
 `;
 
 const sendMutation = graphql`
-  mutation CompliancePageNewsListSendMutation($input: UpdateComplianceNewsInput!) {
-    updateComplianceNews(input: $input) {
-      complianceNews {
+  mutation CompliancePageNewsListSendMutation($input: UpdateMailingListUpdateInput!) {
+    updateMailingListUpdate(input: $input) {
+      mailingListUpdate {
         id
         title
         body
@@ -41,10 +41,10 @@ const fragment = graphql`
     after: { type: CursorKey, defaultValue: null }
   )
   @refetchable(queryName: "CompliancePageNewsListQuery") {
-    complianceNews(
+    mailingListUpdates(
       first: $first
       after: $after
-    ) @connection(key: "CompliancePageNewsList_complianceNews") {
+    ) @connection(key: "CompliancePageNewsList_mailingListUpdates") {
       __id
       pageInfo {
         hasNextPage
@@ -86,7 +86,7 @@ export function CompliancePageNewsList(props: {
     CompliancePageNewsListFragment$key
   >(fragment, fragmentRef);
 
-  const connection = data.complianceNews;
+  const connection = data.mailingListUpdates;
 
   const [deleteNews, isDeleting]
     = useMutationWithToasts<CompliancePageNewsListDeleteMutation>(deleteMutation, {

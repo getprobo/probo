@@ -1663,12 +1663,12 @@ type TrustCenter implements Node
 
     mailingList: MailingList @goField(forceResolver: true)
 
-    complianceNews(
+    mailingListUpdates(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-    ): ComplianceNewsConnection! @goField(forceResolver: true)
+    ): MailingListUpdateConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -1722,41 +1722,41 @@ type MailingListSubscriberEdge {
     node: MailingListSubscriber!
 }
 
-enum ComplianceNewsStatus
+enum MailingListUpdateStatus
     @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.ComplianceNewsStatus"
+        model: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatus"
     ) {
     DRAFT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ComplianceNewsStatusDraft"
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusDraft"
         )
     SENT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ComplianceNewsStatusSent"
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusSent"
         )
 }
 
-type ComplianceNews implements Node {
+type MailingListUpdate implements Node {
     id: ID!
     title: String!
     body: String!
-    status: ComplianceNewsStatus!
+    status: MailingListUpdateStatus!
     createdAt: Datetime!
     updatedAt: Datetime!
 }
 
-type ComplianceNewsConnection
+type MailingListUpdateConnection
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceNewsConnection"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MailingListUpdateConnection"
     ) {
-    edges: [ComplianceNewsEdge!]!
+    edges: [MailingListUpdateEdge!]!
     pageInfo: PageInfo!
     totalCount: Int! @goField(forceResolver: true)
 }
 
-type ComplianceNewsEdge {
+type MailingListUpdateEdge {
     cursor: CursorKey!
-    node: ComplianceNews!
+    node: MailingListUpdate!
 }
 
 type Organization implements Node {
@@ -3409,15 +3409,15 @@ type Mutation {
         input: DeleteTrustCenterAccessInput!
     ): DeleteTrustCenterAccessPayload!
     # Compliance News mutations
-    createComplianceNews(
-        input: CreateComplianceNewsInput!
-    ): CreateComplianceNewsPayload!
-    updateComplianceNews(
-        input: UpdateComplianceNewsInput!
-    ): UpdateComplianceNewsPayload!
-    deleteComplianceNews(
-        input: DeleteComplianceNewsInput!
-    ): DeleteComplianceNewsPayload!
+    createMailingListUpdate(
+        input: CreateMailingListUpdateInput!
+    ): CreateMailingListUpdatePayload!
+    updateMailingListUpdate(
+        input: UpdateMailingListUpdateInput!
+    ): UpdateMailingListUpdatePayload!
+    deleteMailingListUpdate(
+        input: DeleteMailingListUpdateInput!
+    ): DeleteMailingListUpdatePayload!
     # Mailing List mutations
     updateMailingList(
         input: UpdateMailingListInput!
@@ -3831,20 +3831,20 @@ type UpdateMailingListPayload {
     mailingList: MailingList!
 }
 
-input CreateComplianceNewsInput {
-    trustCenterId: ID!
+input CreateMailingListUpdateInput {
+    mailingListId: ID!
     title: String!
     body: String!
 }
 
-input UpdateComplianceNewsInput {
+input UpdateMailingListUpdateInput {
     id: ID!
     title: String!
     body: String!
-    status: ComplianceNewsStatus!
+    status: MailingListUpdateStatus!
 }
 
-input DeleteComplianceNewsInput {
+input DeleteMailingListUpdateInput {
     id: ID!
 }
 
@@ -4692,16 +4692,16 @@ type DeleteTrustCenterAccessPayload {
     deletedTrustCenterAccessId: ID!
 }
 
-type CreateComplianceNewsPayload {
-    complianceNews: ComplianceNews!
+type CreateMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
 }
 
-type UpdateComplianceNewsPayload {
-    complianceNews: ComplianceNews!
+type UpdateMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
 }
 
-type DeleteComplianceNewsPayload {
-    deletedComplianceNewsId: ID!
+type DeleteMailingListUpdatePayload {
+    deletedMailingListUpdateId: ID!
 }
 
 type CreateMailingListSubscriberPayload {

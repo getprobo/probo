@@ -16,22 +16,22 @@ package coredata
 
 import "fmt"
 
-type ComplianceNewsOrderField string
+type MailingListUpdateOrderField string
 
 const (
-	ComplianceNewsOrderFieldCreatedAt ComplianceNewsOrderField = "CREATED_AT"
-	ComplianceNewsOrderFieldUpdatedAt ComplianceNewsOrderField = "UPDATED_AT"
+	MailingListUpdateOrderFieldCreatedAt MailingListUpdateOrderField = "CREATED_AT"
+	MailingListUpdateOrderFieldUpdatedAt MailingListUpdateOrderField = "UPDATED_AT"
 )
 
-func (f ComplianceNewsOrderField) String() string {
+func (f MailingListUpdateOrderField) String() string {
 	return string(f)
 }
 
-func (f ComplianceNewsOrderField) Column() string {
+func (f MailingListUpdateOrderField) Column() string {
 	switch f {
-	case ComplianceNewsOrderFieldCreatedAt:
+	case MailingListUpdateOrderFieldCreatedAt:
 		return "created_at"
-	case ComplianceNewsOrderFieldUpdatedAt:
+	case MailingListUpdateOrderFieldUpdatedAt:
 		return "updated_at"
 	}
 

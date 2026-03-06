@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5d977fa59296dafac2297640e7dd3293>>
+ * @generated SignedSource<<a006942c31a97ab7a7ac843a12295b27>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,8 @@ import { ConcreteRequest } from 'relay-runtime';
 export type TrustGraphCurrentNewsQuery$variables = Record<PropertyKey, never>;
 export type TrustGraphCurrentNewsQuery$data = {
   readonly currentTrustCenter: {
-    readonly complianceNews: {
+    readonly id: string;
+    readonly updates: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly body: string;
@@ -22,7 +23,6 @@ export type TrustGraphCurrentNewsQuery$data = {
         };
       }>;
     };
-    readonly id: string;
   } | null | undefined;
 };
 export type TrustGraphCurrentNewsQuery = {
@@ -57,15 +57,15 @@ v1 = [
             "value": 50
           }
         ],
-        "concreteType": "ComplianceNewsConnection",
+        "concreteType": "MailingListUpdateConnection",
         "kind": "LinkedField",
-        "name": "complianceNews",
+        "name": "updates",
         "plural": false,
         "selections": [
           {
             "alias": null,
             "args": null,
-            "concreteType": "ComplianceNewsEdge",
+            "concreteType": "MailingListUpdateEdge",
             "kind": "LinkedField",
             "name": "edges",
             "plural": true,
@@ -73,7 +73,7 @@ v1 = [
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "ComplianceNews",
+                "concreteType": "MailingListUpdate",
                 "kind": "LinkedField",
                 "name": "node",
                 "plural": false,
@@ -107,7 +107,7 @@ v1 = [
             "storageKey": null
           }
         ],
-        "storageKey": "complianceNews(first:50)"
+        "storageKey": "updates(first:50)"
       }
     ],
     "storageKey": null
@@ -131,16 +131,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "1d714eb435fde8fa61313d497438def1",
+    "cacheID": "33f19ffe9740fe50be600b97a4768d00",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentNewsQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentNewsQuery {\n  currentTrustCenter {\n    id\n    complianceNews(first: 50) {\n      edges {\n        node {\n          id\n          title\n          body\n          updatedAt\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query TrustGraphCurrentNewsQuery {\n  currentTrustCenter {\n    id\n    updates(first: 50) {\n      edges {\n        node {\n          id\n          title\n          body\n          updatedAt\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0a8de5e7274f52a6b47508b98b3b445b";
+(node as any).hash = "daedd5964c39110b4e29a3c63a2a3014";
 
 export default node;

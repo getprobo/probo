@@ -9,12 +9,12 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const createMutation = graphql`
   mutation NewComplianceNewsDialogMutation(
-    $input: CreateComplianceNewsInput!
+    $input: CreateMailingListUpdateInput!
     $connections: [ID!]!
   ) {
-    createComplianceNews(input: $input) {
-      complianceNews
-        @appendNode(connections: $connections, edgeTypeName: "ComplianceNewsEdge") {
+    createMailingListUpdate(input: $input) {
+      mailingListUpdate
+        @appendNode(connections: $connections, edgeTypeName: "MailingListUpdateEdge") {
         id
         title
         body
@@ -27,12 +27,12 @@ const createMutation = graphql`
 `;
 
 export function NewComplianceNewsDialog(props: {
-  trustCenterId: string;
+  mailingListId: string;
   connectionId: string;
   ref: DialogRef;
   onCreated?: () => void;
 }) {
-  const { trustCenterId, connectionId, ref, onCreated } = props;
+  const { mailingListId, connectionId, ref, onCreated } = props;
   const { __ } = useTranslate();
 
   const schema = z.object({
@@ -56,7 +56,7 @@ export function NewComplianceNewsDialog(props: {
     await createNews({
       variables: {
         input: {
-          trustCenterId,
+          mailingListId,
           title: data.title.trim(),
           body: data.body.trim(),
         },

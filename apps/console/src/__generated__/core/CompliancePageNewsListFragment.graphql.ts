@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<37648a8b5c3994905bee39664cacf682>>
+ * @generated SignedSource<<410ea092645689cebf4488dbb3371293>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,17 +9,18 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type ComplianceNewsStatus = "DRAFT" | "SENT";
+export type MailingListUpdateStatus = "DRAFT" | "SENT";
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageNewsListFragment$data = {
-  readonly complianceNews: {
+  readonly id: string;
+  readonly mailingListUpdates: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly body: string;
         readonly createdAt: string;
         readonly id: string;
-        readonly status: ComplianceNewsStatus;
+        readonly status: MailingListUpdateStatus;
         readonly title: string;
         readonly updatedAt: string;
       };
@@ -29,7 +30,6 @@ export type CompliancePageNewsListFragment$data = {
       readonly hasNextPage: boolean;
     };
   };
-  readonly id: string;
   readonly " $fragmentType": "CompliancePageNewsListFragment";
 };
 export type CompliancePageNewsListFragment$key = {
@@ -41,7 +41,7 @@ import CompliancePageNewsListQuery_graphql from './CompliancePageNewsListQuery.g
 
 const node: ReaderFragment = (function(){
 var v0 = [
-  "complianceNews"
+  "mailingListUpdates"
 ],
 v1 = {
   "alias": null,
@@ -95,11 +95,11 @@ return {
   "name": "CompliancePageNewsListFragment",
   "selections": [
     {
-      "alias": "complianceNews",
+      "alias": "mailingListUpdates",
       "args": null,
-      "concreteType": "ComplianceNewsConnection",
+      "concreteType": "MailingListUpdateConnection",
       "kind": "LinkedField",
-      "name": "__CompliancePageNewsList_complianceNews_connection",
+      "name": "__CompliancePageNewsList_mailingListUpdates_connection",
       "plural": false,
       "selections": [
         {
@@ -130,7 +130,7 @@ return {
         {
           "alias": null,
           "args": null,
-          "concreteType": "ComplianceNewsEdge",
+          "concreteType": "MailingListUpdateEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -138,7 +138,7 @@ return {
             {
               "alias": null,
               "args": null,
-              "concreteType": "ComplianceNews",
+              "concreteType": "MailingListUpdate",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -221,6 +221,6 @@ return {
 };
 })();
 
-(node as any).hash = "b1949da57290c584b06e515d2db834a8";
+(node as any).hash = "20cf59407b0f7b664638454e2a70e2c6";
 
 export default node;

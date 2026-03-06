@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d57af8192babfbd781dee133589bbfd2>>
+ * @generated SignedSource<<71d8907869a84e6d2c74367664df8445>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,22 +9,22 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ComplianceNewsStatus = "DRAFT" | "SENT";
-export type UpdateComplianceNewsInput = {
+export type MailingListUpdateStatus = "DRAFT" | "SENT";
+export type UpdateMailingListUpdateInput = {
   body: string;
   id: string;
-  status: ComplianceNewsStatus;
+  status: MailingListUpdateStatus;
   title: string;
 };
 export type EditComplianceNewsDialogMutation$variables = {
-  input: UpdateComplianceNewsInput;
+  input: UpdateMailingListUpdateInput;
 };
 export type EditComplianceNewsDialogMutation$data = {
-  readonly updateComplianceNews: {
-    readonly complianceNews: {
+  readonly updateMailingListUpdate: {
+    readonly mailingListUpdate: {
       readonly body: string;
       readonly id: string;
-      readonly status: ComplianceNewsStatus;
+      readonly status: MailingListUpdateStatus;
       readonly title: string;
       readonly updatedAt: string;
     };
@@ -53,17 +53,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "UpdateComplianceNewsPayload",
+    "concreteType": "UpdateMailingListUpdatePayload",
     "kind": "LinkedField",
-    "name": "updateComplianceNews",
+    "name": "updateMailingListUpdate",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "ComplianceNews",
+        "concreteType": "MailingListUpdate",
         "kind": "LinkedField",
-        "name": "complianceNews",
+        "name": "mailingListUpdate",
         "plural": false,
         "selections": [
           {
@@ -126,16 +126,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "1f9ee25064e1f0beedc089f6300aa64e",
+    "cacheID": "c8bdc40008b9f647adb3428f9d56b5c3",
     "id": null,
     "metadata": {},
     "name": "EditComplianceNewsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation EditComplianceNewsDialogMutation(\n  $input: UpdateComplianceNewsInput!\n) {\n  updateComplianceNews(input: $input) {\n    complianceNews {\n      id\n      title\n      body\n      status\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation EditComplianceNewsDialogMutation(\n  $input: UpdateMailingListUpdateInput!\n) {\n  updateMailingListUpdate(input: $input) {\n    mailingListUpdate {\n      id\n      title\n      body\n      status\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ef3db353b0883df9c7b36d3149d78b48";
+(node as any).hash = "2ecc704698ffaddc66d6498aba1500e1";
 
 export default node;

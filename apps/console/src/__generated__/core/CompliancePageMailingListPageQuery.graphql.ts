@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<69c96c804072098429ac911cf9874809>>
+ * @generated SignedSource<<66aa0163764507cd2f4eaa536f2d3448>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -311,16 +311,16 @@ return {
                   {
                     "alias": null,
                     "args": (v5/*: any*/),
-                    "concreteType": "ComplianceNewsConnection",
+                    "concreteType": "MailingListUpdateConnection",
                     "kind": "LinkedField",
-                    "name": "complianceNews",
+                    "name": "mailingListUpdates",
                     "plural": false,
                     "selections": [
                       (v6/*: any*/),
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "ComplianceNewsEdge",
+                        "concreteType": "MailingListUpdateEdge",
                         "kind": "LinkedField",
                         "name": "edges",
                         "plural": true,
@@ -328,7 +328,7 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "ComplianceNews",
+                            "concreteType": "MailingListUpdate",
                             "kind": "LinkedField",
                             "name": "node",
                             "plural": false,
@@ -367,16 +367,16 @@ return {
                       },
                       (v10/*: any*/)
                     ],
-                    "storageKey": "complianceNews(first:20)"
+                    "storageKey": "mailingListUpdates(first:20)"
                   },
                   {
                     "alias": null,
                     "args": (v5/*: any*/),
                     "filters": null,
                     "handle": "connection",
-                    "key": "CompliancePageNewsList_complianceNews",
+                    "key": "CompliancePageNewsList_mailingListUpdates",
                     "kind": "LinkedHandle",
-                    "name": "complianceNews"
+                    "name": "mailingListUpdates"
                   }
                 ],
                 "storageKey": null
@@ -392,12 +392,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "87c07738d3c6612c4486573cf5639f1c",
+    "cacheID": "f2528b0fa9d5de97c914035e79c68dd1",
     "id": null,
     "metadata": {},
     "name": "CompliancePageMailingListPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageMailingListPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        mailingList {\n          id\n          replyTo\n        }\n        ...CompliancePageMailingListFragment\n        ...CompliancePageNewsListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageMailingListFragment on TrustCenter {\n  mailingList {\n    id\n    subscribers(first: 20) {\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n      edges {\n        node {\n          id\n          fullName\n          email\n          status\n          createdAt\n          __typename\n        }\n        cursor\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageNewsListFragment on TrustCenter {\n  complianceNews(first: 20) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
+    "text": "query CompliancePageMailingListPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        mailingList {\n          id\n          replyTo\n        }\n        ...CompliancePageMailingListFragment\n        ...CompliancePageNewsListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageMailingListFragment on TrustCenter {\n  mailingList {\n    id\n    subscribers(first: 20) {\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n      edges {\n        node {\n          id\n          fullName\n          email\n          status\n          createdAt\n          __typename\n        }\n        cursor\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageNewsListFragment on TrustCenter {\n  mailingListUpdates(first: 20) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

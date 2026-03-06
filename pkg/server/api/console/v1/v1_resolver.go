@@ -342,23 +342,6 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	return types.NewFramework(framework), nil
 }
 
-// TotalCount is the resolver for the totalCount field on ComplianceNewsConnection.
-func (r *complianceNewsConnectionResolver) TotalCount(ctx context.Context, obj *types.ComplianceNewsConnection) (int, error) {
-	if err := r.authorize(ctx, obj.TrustCenterID, probo.ActionComplianceNewsList); err != nil {
-		return 0, err
-	}
-
-	prb := r.ProboService(ctx, obj.TrustCenterID.TenantID())
-
-	count, err := prb.ComplianceNews.Count(ctx, obj.TrustCenterID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count compliance news", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
-	}
-
-	return count, nil
-}
-
 // Organization is the resolver for the organization field.
 func (r *continualImprovementResolver) Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -1578,6 +1561,21 @@ func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context
 	panic(fmt.Errorf("not implemented: TotalCount for parent type %T", obj.Resolver))
 }
 
+// TotalCount is the resolver for the totalCount field on MailingListUpdateConnection.
+func (r *mailingListUpdateConnectionResolver) TotalCount(ctx context.Context, obj *types.MailingListUpdateConnection) (int, error) {
+	if err := r.authorize(ctx, obj.MailingListID, probo.ActionMailingListUpdateList); err != nil {
+		return 0, err
+	}
+
+	count, err := r.mailman.CountMailingListUpdates(ctx, obj.MailingListID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count mailing list updates", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList); err != nil {
@@ -2041,89 +2039,62 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 	}, nil
 }
 
-// UpdateMailingList is the resolver for the updateMailingList field.
-func (r *mutationResolver) CreateComplianceNews(ctx context.Context, input types.CreateComplianceNewsInput) (*types.CreateComplianceNewsPayload, error) {
-	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionComplianceNewsCreate); err != nil {
+// CreateMailingListUpdate is the resolver for the createMailingListUpdate field.
+func (r *mutationResolver) CreateMailingListUpdate(ctx context.Context, input types.CreateMailingListUpdateInput) (*types.CreateMailingListUpdatePayload, error) {
+	if err := r.authorize(ctx, input.MailingListID, probo.ActionMailingListUpdateCreate); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
-
-	cn, err := prb.ComplianceNews.Create(ctx, input.TrustCenterID, input.Title, input.Body)
+	mlu, err := r.mailman.CreateMailingListUpdate(ctx, input.MailingListID, input.Title, input.Body)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create compliance news", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot create mailing list update", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.CreateComplianceNewsPayload{
-		ComplianceNews: types.NewComplianceNews(cn),
+	return &types.CreateMailingListUpdatePayload{
+		MailingListUpdate: types.NewMailingListUpdate(mlu),
 	}, nil
 }
 
-// UpdateComplianceNews is the resolver for the updateComplianceNews field.
-func (r *mutationResolver) UpdateComplianceNews(ctx context.Context, input types.UpdateComplianceNewsInput) (*types.UpdateComplianceNewsPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionComplianceNewsUpdate); err != nil {
+// UpdateMailingListUpdate is the resolver for the updateMailingListUpdate field.
+func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input types.UpdateMailingListUpdateInput) (*types.UpdateMailingListUpdatePayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionMailingListUpdateUpdate); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
-
-	cn, err := prb.ComplianceNews.Update(ctx, input.ID, input.Title, input.Body, input.Status)
+	mlu, err := r.mailman.UpdateMailingListUpdate(ctx, input.ID, input.Title, input.Body, input.Status)
 	if err != nil {
-		if errors.Is(err, probo.ErrComplianceNewsAlreadySent) {
-			return nil, gqlutils.Conflictf(ctx, "compliance news already sent and cannot be modified")
+		if errors.Is(err, mailman.ErrMailingListUpdateAlreadySent) {
+			return nil, gqlutils.Conflictf(ctx, "mailing list update already sent and cannot be modified")
 		}
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance news not found")
+		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
 		}
-		r.logger.ErrorCtx(ctx, "cannot update compliance news", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot update mailing list update", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if input.Status == coredata.ComplianceNewsStatusSent {
-		existing, err := prb.ComplianceNews.Get(ctx, input.ID)
-		if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			r.logger.ErrorCtx(ctx, "cannot load compliance news", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-		if err == nil {
-			trustCenter, err := prb.TrustCenters.Get(ctx, existing.TrustCenterID)
-			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-				r.logger.ErrorCtx(ctx, "cannot load trust center for compliance news", log.Error(err))
-				return nil, gqlutils.Internal(ctx)
-			}
-			if err == nil && trustCenter.MailingListID != nil {
-				if sendErr := r.mailman.CreateNewsEmails(ctx, *trustCenter.MailingListID, input.Title, input.Body); sendErr != nil {
-					r.logger.ErrorCtx(ctx, "cannot send compliance news emails", log.Error(sendErr))
-					return nil, gqlutils.Internal(ctx)
-				}
-			}
-		}
-	}
-
-	return &types.UpdateComplianceNewsPayload{
-		ComplianceNews: types.NewComplianceNews(cn),
+	return &types.UpdateMailingListUpdatePayload{
+		MailingListUpdate: types.NewMailingListUpdate(mlu),
 	}, nil
 }
 
-// DeleteComplianceNews is the resolver for the deleteComplianceNews field.
-func (r *mutationResolver) DeleteComplianceNews(ctx context.Context, input types.DeleteComplianceNewsInput) (*types.DeleteComplianceNewsPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionComplianceNewsDelete); err != nil {
+// DeleteMailingListUpdate is the resolver for the deleteMailingListUpdate field.
+func (r *mutationResolver) DeleteMailingListUpdate(ctx context.Context, input types.DeleteMailingListUpdateInput) (*types.DeleteMailingListUpdatePayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionMailingListUpdateDelete); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
-
-	if err := prb.ComplianceNews.Delete(ctx, input.ID); err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance news not found")
+	if err := r.mailman.DeleteMailingListUpdate(ctx, input.ID); err != nil {
+		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
 		}
-		r.logger.ErrorCtx(ctx, "cannot delete compliance news", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot delete mailing list update", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.DeleteComplianceNewsPayload{
-		DeletedComplianceNewsID: input.ID,
+	return &types.DeleteMailingListUpdatePayload{
+		DeletedMailingListUpdateID: input.ID,
 	}, nil
 }
 
@@ -8118,28 +8089,38 @@ func (r *trustCenterResolver) MailingList(ctx context.Context, obj *types.TrustC
 	return types.NewMailingList(ml), nil
 }
 
-// ComplianceNews is the resolver for the complianceNews field.
-func (r *trustCenterResolver) ComplianceNews(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceNewsConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionComplianceNewsList); err != nil {
+// MailingListUpdates is the resolver for the mailingListUpdates field.
+func (r *trustCenterResolver) MailingListUpdates(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListUpdateConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionMailingListUpdateList); err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.ComplianceNewsOrderField]{
-		Field:     coredata.ComplianceNewsOrderFieldUpdatedAt,
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	tc, err := prb.TrustCenters.Get(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if tc.MailingListID == nil {
+		return &types.MailingListUpdateConnection{Edges: []*types.MailingListUpdateEdge{}, PageInfo: &types.PageInfo{}}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
+		Field:     coredata.MailingListUpdateOrderFieldUpdatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	result, err := prb.ComplianceNews.List(ctx, obj.ID, cursor)
+	result, err := r.mailman.ListMailingListUpdates(ctx, *tc.MailingListID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list compliance news", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewComplianceNewsConnection(result, r, obj.ID), nil
+	return types.NewMailingListUpdateConnection(result, r, *tc.MailingListID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -9128,11 +9109,6 @@ func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
 	return &complianceFrameworkResolver{r}
 }
 
-// ComplianceNewsConnection returns schema.ComplianceNewsConnectionResolver implementation.
-func (r *Resolver) ComplianceNewsConnection() schema.ComplianceNewsConnectionResolver {
-	return &complianceNewsConnectionResolver{r}
-}
-
 // ContinualImprovement returns schema.ContinualImprovementResolver implementation.
 func (r *Resolver) ContinualImprovement() schema.ContinualImprovementResolver {
 	return &continualImprovementResolver{r}
@@ -9230,6 +9206,11 @@ func (r *Resolver) MailingList() schema.MailingListResolver { return &mailingLis
 // MailingListSubscriberConnection returns schema.MailingListSubscriberConnectionResolver implementation.
 func (r *Resolver) MailingListSubscriberConnection() schema.MailingListSubscriberConnectionResolver {
 	return &mailingListSubscriberConnectionResolver{r}
+}
+
+// MailingListUpdateConnection returns schema.MailingListUpdateConnectionResolver implementation.
+func (r *Resolver) MailingListUpdateConnection() schema.MailingListUpdateConnectionResolver {
+	return &mailingListUpdateConnectionResolver{r}
 }
 
 // Measure returns schema.MeasureResolver implementation.
@@ -9444,7 +9425,6 @@ type assetConnectionResolver struct{ *Resolver }
 type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
 type complianceFrameworkResolver struct{ *Resolver }
-type complianceNewsConnectionResolver struct{ *Resolver }
 type continualImprovementResolver struct{ *Resolver }
 type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
@@ -9468,6 +9448,7 @@ type frameworkResolver struct{ *Resolver }
 type frameworkConnectionResolver struct{ *Resolver }
 type mailingListResolver struct{ *Resolver }
 type mailingListSubscriberConnectionResolver struct{ *Resolver }
+type mailingListUpdateConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
 type meetingResolver struct{ *Resolver }

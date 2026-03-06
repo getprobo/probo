@@ -1191,28 +1191,33 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 	return types.NewComplianceFrameworkConnection(cfPage), nil
 }
 
-// ComplianceNews is the resolver for the complianceNews field.
-func (r *trustCenterResolver) ComplianceNews(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceNewsConnection, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return &types.ComplianceNewsConnection{Edges: []*types.ComplianceNewsEdge{}, PageInfo: &types.PageInfo{}}, nil
-	}
-
+// Updates is the resolver for the updates field.
+func (r *trustCenterResolver) Updates(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListUpdateConnection, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.ComplianceNewsOrderField]{
-		Field:     coredata.ComplianceNewsOrderFieldUpdatedAt,
+	tc, err := trustService.TrustCenters.Get(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if tc.MailingListID == nil {
+		return &types.MailingListUpdateConnection{Edges: []*types.MailingListUpdateEdge{}, PageInfo: &types.PageInfo{}}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
+		Field:     coredata.MailingListUpdateOrderFieldUpdatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := trustService.ComplianceNews.ListSent(ctx, obj.ID, cursor)
+	result, err := r.mailman.ListSentMailingListUpdates(ctx, *tc.MailingListID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list compliance news", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewComplianceNewsConnection(result), nil
+	return types.NewMailingListUpdateConnection(result), nil
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.

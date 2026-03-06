@@ -9,9 +9,9 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const updateMutation = graphql`
-  mutation EditComplianceNewsDialogMutation($input: UpdateComplianceNewsInput!) {
-    updateComplianceNews(input: $input) {
-      complianceNews {
+  mutation EditComplianceNewsDialogMutation($input: UpdateMailingListUpdateInput!) {
+    updateMailingListUpdate(input: $input) {
+      mailingListUpdate {
         id
         title
         body

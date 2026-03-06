@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2d67398a2054662f01cd08fbd3ba557a>>
+ * @generated SignedSource<<0fefe3c54e67c68a8a84f46490503ad6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,16 +9,16 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DeleteComplianceNewsInput = {
+export type DeleteMailingListUpdateInput = {
   id: string;
 };
 export type CompliancePageNewsListDeleteMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: DeleteComplianceNewsInput;
+  input: DeleteMailingListUpdateInput;
 };
 export type CompliancePageNewsListDeleteMutation$data = {
-  readonly deleteComplianceNews: {
-    readonly deletedComplianceNewsId: string;
+  readonly deleteMailingListUpdate: {
+    readonly deletedMailingListUpdateId: string;
   };
 };
 export type CompliancePageNewsListDeleteMutation = {
@@ -48,7 +48,7 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "deletedComplianceNewsId",
+  "name": "deletedMailingListUpdateId",
   "storageKey": null
 };
 return {
@@ -64,9 +64,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeleteComplianceNewsPayload",
+        "concreteType": "DeleteMailingListUpdatePayload",
         "kind": "LinkedField",
-        "name": "deleteComplianceNews",
+        "name": "deleteMailingListUpdate",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -89,9 +89,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeleteComplianceNewsPayload",
+        "concreteType": "DeleteMailingListUpdatePayload",
         "kind": "LinkedField",
-        "name": "deleteComplianceNews",
+        "name": "deleteMailingListUpdate",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -102,7 +102,7 @@ return {
             "handle": "deleteEdge",
             "key": "",
             "kind": "ScalarHandle",
-            "name": "deletedComplianceNewsId",
+            "name": "deletedMailingListUpdateId",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -117,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a22b53be0cd104817fa3d80815aecf83",
+    "cacheID": "327bfffc5cb164c2ba13eca99a06f1c1",
     "id": null,
     "metadata": {},
     "name": "CompliancePageNewsListDeleteMutation",
     "operationKind": "mutation",
-    "text": "mutation CompliancePageNewsListDeleteMutation(\n  $input: DeleteComplianceNewsInput!\n) {\n  deleteComplianceNews(input: $input) {\n    deletedComplianceNewsId\n  }\n}\n"
+    "text": "mutation CompliancePageNewsListDeleteMutation(\n  $input: DeleteMailingListUpdateInput!\n) {\n  deleteMailingListUpdate(input: $input) {\n    deletedMailingListUpdateId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "baf4ea185775b5de1272972703d3b7a8";
+(node as any).hash = "d4913b991f7163a1adb1130fe04d591c";
 
 export default node;

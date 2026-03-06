@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5b6f5f2bce7e5fec196dfd4cdc12627e>>
+ * @generated SignedSource<<5d2d663bd0bd393d8eed14ba48feb6f4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,23 +9,23 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ComplianceNewsStatus = "DRAFT" | "SENT";
-export type CreateComplianceNewsInput = {
+export type MailingListUpdateStatus = "DRAFT" | "SENT";
+export type CreateMailingListUpdateInput = {
   body: string;
+  mailingListId: string;
   title: string;
-  trustCenterId: string;
 };
 export type NewComplianceNewsDialogMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: CreateComplianceNewsInput;
+  input: CreateMailingListUpdateInput;
 };
 export type NewComplianceNewsDialogMutation$data = {
-  readonly createComplianceNews: {
-    readonly complianceNews: {
+  readonly createMailingListUpdate: {
+    readonly mailingListUpdate: {
       readonly body: string;
       readonly createdAt: string;
       readonly id: string;
-      readonly status: ComplianceNewsStatus;
+      readonly status: MailingListUpdateStatus;
       readonly title: string;
       readonly updatedAt: string;
     };
@@ -57,9 +57,9 @@ v2 = [
 v3 = {
   "alias": null,
   "args": null,
-  "concreteType": "ComplianceNews",
+  "concreteType": "MailingListUpdate",
   "kind": "LinkedField",
-  "name": "complianceNews",
+  "name": "mailingListUpdate",
   "plural": false,
   "selections": [
     {
@@ -120,9 +120,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "CreateComplianceNewsPayload",
+        "concreteType": "CreateMailingListUpdatePayload",
         "kind": "LinkedField",
-        "name": "createComplianceNews",
+        "name": "createMailingListUpdate",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -145,9 +145,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "CreateComplianceNewsPayload",
+        "concreteType": "CreateMailingListUpdatePayload",
         "kind": "LinkedField",
-        "name": "createComplianceNews",
+        "name": "createMailingListUpdate",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -158,7 +158,7 @@ return {
             "handle": "appendNode",
             "key": "",
             "kind": "LinkedHandle",
-            "name": "complianceNews",
+            "name": "mailingListUpdate",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -168,7 +168,7 @@ return {
               {
                 "kind": "Literal",
                 "name": "edgeTypeName",
-                "value": "ComplianceNewsEdge"
+                "value": "MailingListUpdateEdge"
               }
             ]
           }
@@ -178,16 +178,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "316251945e361b61df5f5e57e7977be1",
+    "cacheID": "9dbae3cb66ebac546de989865832f486",
     "id": null,
     "metadata": {},
     "name": "NewComplianceNewsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation NewComplianceNewsDialogMutation(\n  $input: CreateComplianceNewsInput!\n) {\n  createComplianceNews(input: $input) {\n    complianceNews {\n      id\n      title\n      body\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation NewComplianceNewsDialogMutation(\n  $input: CreateMailingListUpdateInput!\n) {\n  createMailingListUpdate(input: $input) {\n    mailingListUpdate {\n      id\n      title\n      body\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "45756e07f9b412a27bc115aefabcb84e";
+(node as any).hash = "5b842e8d15b5b13841833816fd2948a4";
 
 export default node;

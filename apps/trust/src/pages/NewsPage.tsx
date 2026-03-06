@@ -17,7 +17,7 @@ export function NewsPage({ queryRef }: Props) {
   );
 
   const items
-    = data.currentTrustCenter?.complianceNews.edges.map(e => e.node) ?? [];
+    = data.currentTrustCenter?.updates.edges.map(e => e.node) ?? [];
 
   return (
     <div>

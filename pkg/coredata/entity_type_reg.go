@@ -88,7 +88,7 @@ const (
 	ComplianceFrameworkEntityType              uint16 = 62
 	MailingListEntityType                      uint16 = 63
 	MailingListSubscriberEntityType            uint16 = 64
-	ComplianceNewsEntityType                   uint16 = 65
+	MailingListUpdateEntityType                uint16 = 65
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -219,8 +219,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &MailingList{ID: id}, true
 	case MailingListSubscriberEntityType:
 		return &MailingListSubscriber{ID: id}, true
-	case ComplianceNewsEntityType:
-		return &ComplianceNews{ID: id}, true
+	case MailingListUpdateEntityType:
+		return &MailingListUpdate{ID: id}, true
 	default:
 		return nil, false
 	}

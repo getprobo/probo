@@ -131,9 +131,9 @@ type ComplianceFrameworkEdge
   node: ComplianceFramework!
 }
 
-type ComplianceNews implements Node
+type MailingListUpdate implements Node
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceNews"
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListUpdate"
   ) {
   id: ID!
   title: String!
@@ -141,20 +141,20 @@ type ComplianceNews implements Node
   updatedAt: Datetime!
 }
 
-type ComplianceNewsConnection
+type MailingListUpdateConnection
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceNewsConnection"
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListUpdateConnection"
   ) {
-  edges: [ComplianceNewsEdge!]!
+  edges: [MailingListUpdateEdge!]!
   pageInfo: PageInfo!
 }
 
-type ComplianceNewsEdge
+type MailingListUpdateEdge
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.ComplianceNewsEdge"
+    model: "go.probo.inc/probo/pkg/server/api/trust/v1/types.MailingListUpdateEdge"
   ) {
   cursor: CursorKey!
-  node: ComplianceNews!
+  node: MailingListUpdate!
 }
 
 enum CountryCode
@@ -601,12 +601,12 @@ type TrustCenter implements Node {
     before: CursorKey
   ): ComplianceFrameworkConnection! @goField(forceResolver: true)
 
-  complianceNews(
+  updates(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): ComplianceNewsConnection! @goField(forceResolver: true)
+  ): MailingListUpdateConnection! @goField(forceResolver: true)
 
 }
 

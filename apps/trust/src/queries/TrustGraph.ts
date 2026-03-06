@@ -61,7 +61,7 @@ export const currentTrustNewsQuery = graphql`
   query TrustGraphCurrentNewsQuery {
     currentTrustCenter {
       id
-      complianceNews(first: 50) {
+      updates(first: 50) {
         edges {
           node {
             id

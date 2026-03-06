@@ -98,7 +98,6 @@ type (
 		WebhookSubscriptions              *WebhookSubscriptionService
 		Reports                           *ReportService
 		TrustCenters                      *TrustCenterService
-		ComplianceNews                    *ComplianceNewsService
 		TrustCenterAccesses               *TrustCenterAccessService
 		TrustCenterReferences             *TrustCenterReferenceService
 		TrustCenterFiles                  *TrustCenterFileService
@@ -225,7 +224,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.WebhookSubscriptions = &WebhookSubscriptionService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
-	tenantService.ComplianceNews = &ComplianceNewsService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.ComplianceFrameworks = &ComplianceFrameworkService{svc: tenantService}
