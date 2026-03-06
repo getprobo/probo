@@ -1537,7 +1537,7 @@ func (r *mailingListResolver) Subscribers(ctx context.Context, obj *types.Mailin
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.MailmanService(ctx, obj.ID.TenantID()).ListSubscribers(ctx, obj.ID, cursor)
+	result, err := r.mailman.ListSubscribers(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list mailing list subscribers", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1554,7 +1554,7 @@ func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context
 
 	switch obj.Resolver.(type) {
 	case *mailingListResolver:
-		count, err := r.MailmanService(ctx, obj.ParentID.TenantID()).CountSubscribers(ctx, obj.ParentID)
+		count, err := r.mailman.CountSubscribers(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count mailing list subscribers", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -2034,7 +2034,7 @@ func (r *mutationResolver) UpdateMailingList(ctx context.Context, input types.Up
 		return nil, err
 	}
 
-	ml, err := r.MailmanService(ctx, input.ID.TenantID()).UpdateMailingList(ctx, input.ID, input.ReplyTo)
+	ml, err := r.mailman.UpdateMailingList(ctx, input.ID, input.ReplyTo)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update mailing list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -2051,7 +2051,7 @@ func (r *mutationResolver) CreateMailingListSubscriber(ctx context.Context, inpu
 		return nil, err
 	}
 
-	subscriber, err := r.MailmanService(ctx, input.MailingListID.TenantID()).CreateSubscriber(ctx, input.MailingListID, input.Email, input.FullName)
+	subscriber, err := r.mailman.CreateSubscriber(ctx, input.MailingListID, input.Email, input.FullName)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create mailing list subscriber", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -2068,7 +2068,7 @@ func (r *mutationResolver) DeleteMailingListSubscriber(ctx context.Context, inpu
 		return nil, err
 	}
 
-	if err := r.MailmanService(ctx, input.ID.TenantID()).DeleteSubscriber(ctx, input.ID); err != nil {
+	if err := r.mailman.DeleteSubscriber(ctx, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete mailing list subscriber", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

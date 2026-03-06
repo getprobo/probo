@@ -702,13 +702,12 @@ func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.S
 		return nil, gqlutils.NotFoundf(ctx, "mailing list not found")
 	}
 
-	mlSvc := r.MailmanService(ctx, trustCenter.ID.TenantID())
 	identity := authn.IdentityFromContext(ctx)
 
-	subscriber, err := mlSvc.CreateSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress, identity.FullName)
+	subscriber, err := r.mailman.CreateSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress, identity.FullName)
 	if err != nil {
 		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
-			subscriber, err = mlSvc.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
+			subscriber, err = r.mailman.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
 			if err != nil {
 				r.logger.ErrorCtx(ctx, "cannot get existing mailing list subscription", log.Error(err))
 				return nil, gqlutils.Internal(ctx)
@@ -731,10 +730,9 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 		return nil, gqlutils.NotFoundf(ctx, "mailing list not found")
 	}
 
-	mlSvc := r.MailmanService(ctx, trustCenter.ID.TenantID())
 	identity := authn.IdentityFromContext(ctx)
 
-	subscriber, err := mlSvc.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
+	subscriber, err := r.mailman.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -743,7 +741,7 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 		return nil, gqlutils.NotFoundf(ctx, "mailing list subscription not found")
 	}
 
-	if err := mlSvc.DeleteSubscriber(ctx, subscriber.ID); err != nil {
+	if err := r.mailman.DeleteSubscriber(ctx, subscriber.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot unsubscribe from mailing list", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1052,7 +1050,7 @@ func (r *trustCenterResolver) ViewerSubscription(ctx context.Context, obj *types
 		return nil, nil
 	}
 
-	subscriber, err := r.MailmanService(ctx, trustCenter.ID.TenantID()).GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
+	subscriber, err := r.mailman.GetSubscriber(ctx, *trustCenter.MailingListID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

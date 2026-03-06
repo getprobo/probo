@@ -100,6 +100,3 @@ func (r *Resolver) TrustService(ctx context.Context, tenantID gid.TenantID) *tru
 	return r.trust.WithTenant(tenantID)
 }
 
-func (r *Resolver) MailmanService(ctx context.Context, tenantID gid.TenantID) *mailman.TenantService {
-	return r.mailman.WithTenant(tenantID)
-}

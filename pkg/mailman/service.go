@@ -35,26 +35,18 @@ func NewService(pgClient *pg.Client) *Service {
 	return &Service{pg: pgClient}
 }
 
-func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
-	return &TenantService{pg: s.pg, scope: coredata.NewScope(tenantID)}
-}
-
-type TenantService struct {
-	pg    *pg.Client
-	scope coredata.Scoper
-}
-
-func (s *TenantService) UpdateMailingList(
+func (s *Service) UpdateMailingList(
 	ctx context.Context,
 	id gid.GID,
 	replyTo *mail.Addr,
 ) (*coredata.MailingList, error) {
-	var ml coredata.MailingList
+	scope := coredata.NewScopeFromObjectID(id)
+	ml := coredata.MailingList{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := ml.LoadByID(ctx, conn, s.scope, id); err != nil {
+			if err := ml.LoadByID(ctx, conn, scope, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListNotFound
 				}
@@ -64,7 +56,7 @@ func (s *TenantService) UpdateMailingList(
 			ml.ReplyTo = replyTo
 			ml.UpdatedAt = time.Now()
 
-			if err := ml.Update(ctx, conn, s.scope); err != nil {
+			if err := ml.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update mailing list: %w", err)
 			}
 
@@ -78,17 +70,18 @@ func (s *TenantService) UpdateMailingList(
 	return &ml, nil
 }
 
-func (s *TenantService) GetSubscriber(
+func (s *Service) GetSubscriber(
 	ctx context.Context,
 	mailingListID gid.GID,
 	email mail.Addr,
 ) (*coredata.MailingListSubscriber, error) {
-	var subscriber coredata.MailingListSubscriber
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	subscriber := coredata.MailingListSubscriber{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := subscriber.LoadByMailingListIDAndEmail(ctx, conn, s.scope, mailingListID, email); err != nil {
+			if err := subscriber.LoadByMailingListIDAndEmail(ctx, conn, scope, mailingListID, email); err != nil {
 				return fmt.Errorf("cannot load mailing list subscriber: %w", err)
 			}
 
@@ -105,16 +98,17 @@ func (s *TenantService) GetSubscriber(
 	return &subscriber, nil
 }
 
-func (s *TenantService) CreateSubscriber(
+func (s *Service) CreateSubscriber(
 	ctx context.Context,
 	mailingListID gid.GID,
 	email mail.Addr,
 	fullName string,
 ) (*coredata.MailingListSubscriber, error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
 	now := time.Now()
 
 	subscriber := &coredata.MailingListSubscriber{
-		ID:            gid.New(s.scope.GetTenantID(), coredata.MailingListSubscriberEntityType),
+		ID:            gid.New(scope.GetTenantID(), coredata.MailingListSubscriberEntityType),
 		MailingListID: mailingListID,
 		FullName:      fullName,
 		Email:         email,
@@ -126,13 +120,13 @@ func (s *TenantService) CreateSubscriber(
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			var ml coredata.MailingList
-			if err := ml.LoadByID(ctx, conn, s.scope, mailingListID); err != nil {
+			ml := coredata.MailingList{}
+			if err := ml.LoadByID(ctx, conn, scope, mailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
 			subscriber.OrganizationID = ml.OrganizationID
 
-			if err := subscriber.Insert(ctx, conn, s.scope); err != nil {
+			if err := subscriber.Insert(ctx, conn, scope); err != nil {
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrSubscriberAlreadyExist
 				}
@@ -149,15 +143,17 @@ func (s *TenantService) CreateSubscriber(
 	return subscriber, nil
 }
 
-func (s *TenantService) DeleteSubscriber(
+func (s *Service) DeleteSubscriber(
 	ctx context.Context,
 	id gid.GID,
 ) error {
+	scope := coredata.NewScopeFromObjectID(id)
+
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
 			subscriber := coredata.MailingListSubscriber{ID: id}
-			if err := subscriber.Delete(ctx, conn, s.scope); err != nil {
+			if err := subscriber.Delete(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot delete mailing list subscriber: %w", err)
 			}
 			return nil
@@ -170,17 +166,18 @@ func (s *TenantService) DeleteSubscriber(
 	return nil
 }
 
-func (s *TenantService) CountSubscribers(
+func (s *Service) CountSubscribers(
 	ctx context.Context,
 	mailingListID gid.GID,
 ) (int, error) {
-	var count int
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	count := 0
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			subscribers := coredata.MailingListSubscribers{}
-			count, err = subscribers.CountByMailingListID(ctx, conn, s.scope, mailingListID)
+			count, err = subscribers.CountByMailingListID(ctx, conn, scope, mailingListID)
 			if err != nil {
 				return fmt.Errorf("cannot count mailing list subscribers: %w", err)
 			}
@@ -194,17 +191,18 @@ func (s *TenantService) CountSubscribers(
 	return count, nil
 }
 
-func (s *TenantService) ListSubscribers(
+func (s *Service) ListSubscribers(
 	ctx context.Context,
 	mailingListID gid.GID,
 	cursor *page.Cursor[coredata.MailingListSubscriberOrderField],
 ) (*page.Page[*coredata.MailingListSubscriber, coredata.MailingListSubscriberOrderField], error) {
-	var subscribers coredata.MailingListSubscribers
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	subscribers := coredata.MailingListSubscribers{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := subscribers.LoadByMailingListID(ctx, conn, s.scope, mailingListID, cursor); err != nil {
+			if err := subscribers.LoadByMailingListID(ctx, conn, scope, mailingListID, cursor); err != nil {
 				return fmt.Errorf("cannot load mailing list subscribers: %w", err)
 			}
 			return nil
