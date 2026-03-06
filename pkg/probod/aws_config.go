@@ -14,7 +14,6 @@
 
 package probod
 
-// AWSConfig contains AWS S3 configuration.
 type AWSConfig struct {
 	Region          string `json:"region"`
 	Bucket          string `json:"bucket"`

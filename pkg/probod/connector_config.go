@@ -23,17 +23,15 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 )
 
-// ConnectorConfig contains connector configuration.
 type ConnectorConfig struct {
-	Provider   string                 `json:"provider"`
-	Protocol   connector.ProtocolType `json:"protocol"`
-	Config     connector.Connector    `json:"-"`
-	RawConfig  any                    `json:"config,omitempty"`
-	Settings   any                    `json:"-"`
-	RawSettings any                   `json:"settings,omitempty"`
+	Provider    string                 `json:"provider"`
+	Protocol    connector.ProtocolType `json:"protocol"`
+	Config      connector.Connector    `json:"-"`
+	RawConfig   any                    `json:"config,omitempty"`
+	Settings    any                    `json:"-"`
+	RawSettings any                    `json:"settings,omitempty"`
 }
 
-// ConnectorConfigOAuth2 contains OAuth2 connector configuration.
 type ConnectorConfigOAuth2 struct {
 	ClientID        string            `json:"client-id"`
 	ClientSecret    string            `json:"client-secret"`

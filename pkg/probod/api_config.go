@@ -14,17 +14,14 @@
 
 package probod
 
-// CorsConfig contains CORS settings.
 type CorsConfig struct {
 	AllowedOrigins []string `json:"allowed-origins"`
 }
 
-// ProxyProtocolConfig contains proxy protocol settings.
 type ProxyProtocolConfig struct {
 	TrustedProxies []string `json:"trusted-proxies"`
 }
 
-// APIConfig contains HTTP API configuration.
 type APIConfig struct {
 	Addr              string              `json:"addr"`
 	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol"`

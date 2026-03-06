@@ -21,7 +21,6 @@ import (
 	"go.gearno.de/kit/pg"
 )
 
-// PgConfig contains PostgreSQL database configuration.
 type PgConfig struct {
 	Addr         string `json:"addr"`
 	Username     string `json:"username"`

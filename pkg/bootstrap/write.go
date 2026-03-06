@@ -23,8 +23,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// WriteConfig writes the configuration to the specified path as YAML.
-// It creates the parent directory if it doesn't exist.
 func WriteConfig(cfg *probod.FullConfig, path string) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {

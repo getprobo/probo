@@ -14,7 +14,6 @@
 
 package probod
 
-// MailerConfig contains email mailer configuration.
 type MailerConfig struct {
 	MailerInterval int        `json:"mailer-interval"`
 	SenderName     string     `json:"sender-name"`
@@ -22,7 +21,6 @@ type MailerConfig struct {
 	SMTP           SMTPConfig `json:"smtp"`
 }
 
-// SMTPConfig contains SMTP server configuration.
 type SMTPConfig struct {
 	Addr        string `json:"addr"`
 	User        string `json:"user"`
