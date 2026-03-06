@@ -288,8 +288,8 @@ func (b *Builder) getEnvOrDefault(key, defaultValue string) string {
 
 func (b *Builder) getEnvIntOrDefault(key string, defaultValue int) int {
 	if value := b.getEnv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
+		if intValue, err := strconv.ParseInt(value, 10, 32); err == nil {
+			return int(intValue)
 		}
 	}
 	return defaultValue
