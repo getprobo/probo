@@ -551,6 +551,16 @@ func (impl *Implm) Run(
 		},
 	)
 
+	mailingListWorker := mailman.NewMailingListWorker(mailmanService, pgClient, l.Named("mailing-list-worker"))
+	mailingListWorkerCtx, stopMailingListWorker := context.WithCancel(context.Background())
+	wg.Go(
+		func() {
+			if err := mailingListWorker.Run(mailingListWorkerCtx); err != nil {
+				cancel(fmt.Errorf("mailing list worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 	wg.Go(
@@ -576,6 +586,7 @@ func (impl *Implm) Run(
 	stopTrustCenterServer()
 	stopWebhookSender()
 	stopESignService()
+	stopMailingListWorker()
 	stopExportJobExporter()
 	stopIAMService()
 	stopMailer()

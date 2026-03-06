@@ -48,7 +48,7 @@ type NewsNode = {
   id: string;
   title: string;
   body: string;
-  status: "DRAFT" | "SENT";
+  status: "DRAFT" | "ENQUEUED" | "PROCESSING" | "SENT";
   createdAt: string;
   updatedAt: string;
 };

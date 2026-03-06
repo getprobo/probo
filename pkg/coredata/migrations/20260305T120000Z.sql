@@ -2,7 +2,7 @@ ALTER TABLE emails
 ADD COLUMN reply_to TEXT,
 ADD COLUMN unsubscribe_url TEXT;
 
-CREATE TYPE mailing_list_update_status AS ENUM ('DRAFT', 'SENT');
+CREATE TYPE mailing_list_update_status AS ENUM ('DRAFT', 'ENQUEUED', 'PROCESSING', 'SENT');
 
 CREATE TABLE mailing_list_updates (
     id TEXT PRIMARY KEY,

@@ -1814,6 +1814,14 @@ type RiskFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
+type SendMailingListUpdateInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type SendMailingListUpdatePayload struct {
+	MailingListUpdate *MailingListUpdate `json:"mailingListUpdate"`
+}
+
 type SendSigningNotificationsInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 }
@@ -2170,10 +2178,9 @@ type UpdateMailingListPayload struct {
 }
 
 type UpdateMailingListUpdateInput struct {
-	ID     gid.GID                          `json:"id"`
-	Title  string                           `json:"title"`
-	Body   string                           `json:"body"`
-	Status coredata.MailingListUpdateStatus `json:"status"`
+	ID    gid.GID `json:"id"`
+	Title string  `json:"title"`
+	Body  string  `json:"body"`
 }
 
 type UpdateMailingListUpdatePayload struct {

@@ -22,8 +22,10 @@ import (
 type MailingListUpdateStatus string
 
 const (
-	MailingListUpdateStatusDraft MailingListUpdateStatus = "DRAFT"
-	MailingListUpdateStatusSent  MailingListUpdateStatus = "SENT"
+	MailingListUpdateStatusDraft      MailingListUpdateStatus = "DRAFT"
+	MailingListUpdateStatusEnqueued   MailingListUpdateStatus = "ENQUEUED"
+	MailingListUpdateStatusProcessing MailingListUpdateStatus = "PROCESSING"
+	MailingListUpdateStatusSent       MailingListUpdateStatus = "SENT"
 )
 
 func (s MailingListUpdateStatus) String() string {
@@ -44,6 +46,10 @@ func (s *MailingListUpdateStatus) Scan(value any) error {
 	switch str {
 	case "DRAFT":
 		*s = MailingListUpdateStatusDraft
+	case "ENQUEUED":
+		*s = MailingListUpdateStatusEnqueued
+	case "PROCESSING":
+		*s = MailingListUpdateStatusProcessing
 	case "SENT":
 		*s = MailingListUpdateStatusSent
 	default:

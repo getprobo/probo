@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<410ea092645689cebf4488dbb3371293>>
+ * @generated SignedSource<<7e1f22d5ddb254fbef3ffe8c2cf93823>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type MailingListUpdateStatus = "DRAFT" | "SENT";
+export type MailingListUpdateStatus = "DRAFT" | "ENQUEUED" | "PROCESSING" | "SENT";
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageNewsListFragment$data = {
   readonly id: string;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2d84d7da182be5e984032a25b12622c6>>
+ * @generated SignedSource<<58e2cf8d47422539dd39498c0684980b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,18 +9,15 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MailingListUpdateStatus = "DRAFT" | "SENT";
-export type UpdateMailingListUpdateInput = {
-  body: string;
+export type MailingListUpdateStatus = "DRAFT" | "ENQUEUED" | "PROCESSING" | "SENT";
+export type SendMailingListUpdateInput = {
   id: string;
-  status: MailingListUpdateStatus;
-  title: string;
 };
 export type CompliancePageNewsListSendMutation$variables = {
-  input: UpdateMailingListUpdateInput;
+  input: SendMailingListUpdateInput;
 };
 export type CompliancePageNewsListSendMutation$data = {
-  readonly updateMailingListUpdate: {
+  readonly sendMailingListUpdate: {
     readonly mailingListUpdate: {
       readonly body: string;
       readonly id: string;
@@ -53,9 +50,9 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "UpdateMailingListUpdatePayload",
+    "concreteType": "SendMailingListUpdatePayload",
     "kind": "LinkedField",
-    "name": "updateMailingListUpdate",
+    "name": "sendMailingListUpdate",
     "plural": false,
     "selections": [
       {
@@ -126,16 +123,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "a49a3e4046a14968ef7e17764b44f124",
+    "cacheID": "d16c954883c891dec55c97ba220feb50",
     "id": null,
     "metadata": {},
     "name": "CompliancePageNewsListSendMutation",
     "operationKind": "mutation",
-    "text": "mutation CompliancePageNewsListSendMutation(\n  $input: UpdateMailingListUpdateInput!\n) {\n  updateMailingListUpdate(input: $input) {\n    mailingListUpdate {\n      id\n      title\n      body\n      status\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation CompliancePageNewsListSendMutation(\n  $input: SendMailingListUpdateInput!\n) {\n  sendMailingListUpdate(input: $input) {\n    mailingListUpdate {\n      id\n      title\n      body\n      status\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d0cc0055e43daa81ba346762cae70e27";
+(node as any).hash = "8347fcd29c858a5cf19117470ad51071";
 
 export default node;

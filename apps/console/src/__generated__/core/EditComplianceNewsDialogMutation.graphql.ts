@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<71d8907869a84e6d2c74367664df8445>>
+ * @generated SignedSource<<61363063fd90649e7bdd20e3794c4cd6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,11 +9,10 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MailingListUpdateStatus = "DRAFT" | "SENT";
+export type MailingListUpdateStatus = "DRAFT" | "ENQUEUED" | "PROCESSING" | "SENT";
 export type UpdateMailingListUpdateInput = {
   body: string;
   id: string;
-  status: MailingListUpdateStatus;
   title: string;
 };
 export type EditComplianceNewsDialogMutation$variables = {

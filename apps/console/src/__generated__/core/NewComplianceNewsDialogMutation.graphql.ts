@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5d2d663bd0bd393d8eed14ba48feb6f4>>
+ * @generated SignedSource<<dacbc9c857a3ee6a76f953bfd9aaed54>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MailingListUpdateStatus = "DRAFT" | "SENT";
+export type MailingListUpdateStatus = "DRAFT" | "ENQUEUED" | "PROCESSING" | "SENT";
 export type CreateMailingListUpdateInput = {
   body: string;
   mailingListId: string;
@@ -155,7 +155,7 @@ return {
             "alias": null,
             "args": null,
             "filters": null,
-            "handle": "appendNode",
+            "handle": "prependNode",
             "key": "",
             "kind": "LinkedHandle",
             "name": "mailingListUpdate",
@@ -188,6 +188,6 @@ return {
 };
 })();
 
-(node as any).hash = "5b842e8d15b5b13841833816fd2948a4";
+(node as any).hash = "d78ce5217097d6a916e5316170e28b01";
 
 export default node;

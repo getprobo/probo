@@ -26,7 +26,7 @@ type NewsItem = {
   id: string;
   title: string;
   body: string;
-  status: "DRAFT" | "SENT";
+  status: "DRAFT" | "ENQUEUED" | "PROCESSING" | "SENT";
 };
 
 export function EditComplianceNewsDialog(props: {
@@ -36,7 +36,7 @@ export function EditComplianceNewsDialog(props: {
   const { news, ref } = props;
   const { __ } = useTranslate();
 
-  const isSent = news?.status === "SENT";
+  const isSent = news?.status !== "DRAFT";
 
   const schema = z.object({
     title: z.string().trim().min(1, __("Title is required")),
@@ -69,7 +69,6 @@ export function EditComplianceNewsDialog(props: {
           id: news.id,
           title: data.title.trim(),
           body: data.body.trim(),
-          status: news.status,
         },
       },
       onCompleted: (_, errors) => {

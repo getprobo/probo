@@ -408,7 +408,6 @@ func (s *Service) UpdateMailingListUpdate(
 	id gid.GID,
 	title string,
 	body string,
-	status coredata.MailingListUpdateStatus,
 ) (*coredata.MailingListUpdate, error) {
 	scope := coredata.NewScopeFromObjectID(id)
 	var mlu coredata.MailingListUpdate
@@ -423,13 +422,12 @@ func (s *Service) UpdateMailingListUpdate(
 				return fmt.Errorf("cannot load mailing list update: %w", err)
 			}
 
-			if mlu.Status == coredata.MailingListUpdateStatusSent {
+			if mlu.Status != coredata.MailingListUpdateStatusDraft {
 				return ErrMailingListUpdateAlreadySent
 			}
 
 			mlu.Title = title
 			mlu.Body = body
-			mlu.Status = status
 			mlu.UpdatedAt = time.Now()
 
 			if err := mlu.Update(ctx, conn, scope); err != nil {
@@ -443,10 +441,42 @@ func (s *Service) UpdateMailingListUpdate(
 		return nil, err
 	}
 
-	if status == coredata.MailingListUpdateStatusSent {
-		if err := s.CreateNewsEmails(ctx, mlu.MailingListID, mlu.Title, mlu.Body); err != nil {
-			return nil, fmt.Errorf("cannot send mailing list update emails: %w", err)
-		}
+	return &mlu, nil
+}
+
+func (s *Service) SendMailingListUpdate(
+	ctx context.Context,
+	id gid.GID,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(id)
+	var mlu coredata.MailingListUpdate
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+				return fmt.Errorf("cannot load mailing list update: %w", err)
+			}
+
+			if mlu.Status != coredata.MailingListUpdateStatusDraft {
+				return ErrMailingListUpdateAlreadySent
+			}
+
+			mlu.Status = coredata.MailingListUpdateStatusEnqueued
+			mlu.UpdatedAt = time.Now()
+
+			if err := mlu.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot queue mailing list update for sending: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return &mlu, nil

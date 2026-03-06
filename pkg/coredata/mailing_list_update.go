@@ -326,3 +326,41 @@ WHERE
 
 	return count, nil
 }
+
+func (mlu *MailingListUpdate) LoadNextEnqueuedForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Conn,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	mailing_list_id,
+	title,
+	body,
+	status,
+	created_at,
+	updated_at
+FROM mailing_list_updates
+WHERE status = 'ENQUEUED'
+ORDER BY updated_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query enqueued mailing list updates: %w", err)
+	}
+
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MailingListUpdate])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect enqueued mailing list update: %w", err)
+	}
+
+	*mlu = result
+	return nil
+}

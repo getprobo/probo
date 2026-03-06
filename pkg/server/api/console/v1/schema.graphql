@@ -1730,6 +1730,14 @@ enum MailingListUpdateStatus
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusDraft"
         )
+    ENQUEUED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusEnqueued"
+        )
+    PROCESSING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusProcessing"
+        )
     SENT
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusSent"
@@ -3415,6 +3423,9 @@ type Mutation {
     updateMailingListUpdate(
         input: UpdateMailingListUpdateInput!
     ): UpdateMailingListUpdatePayload!
+    sendMailingListUpdate(
+        input: SendMailingListUpdateInput!
+    ): SendMailingListUpdatePayload!
     deleteMailingListUpdate(
         input: DeleteMailingListUpdateInput!
     ): DeleteMailingListUpdatePayload!
@@ -3841,7 +3852,10 @@ input UpdateMailingListUpdateInput {
     id: ID!
     title: String!
     body: String!
-    status: MailingListUpdateStatus!
+}
+
+input SendMailingListUpdateInput {
+    id: ID!
 }
 
 input DeleteMailingListUpdateInput {
@@ -4697,6 +4711,10 @@ type CreateMailingListUpdatePayload {
 }
 
 type UpdateMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
+}
+
+type SendMailingListUpdatePayload {
     mailingListUpdate: MailingListUpdate!
 }
 

@@ -21,8 +21,8 @@ const deleteMutation = graphql`
 `;
 
 const sendMutation = graphql`
-  mutation CompliancePageNewsListSendMutation($input: UpdateMailingListUpdateInput!) {
-    updateMailingListUpdate(input: $input) {
+  mutation CompliancePageNewsListSendMutation($input: SendMailingListUpdateInput!) {
+    sendMailingListUpdate(input: $input) {
       mailingListUpdate {
         id
         title
@@ -68,7 +68,7 @@ type NewsNode = {
   id: string;
   title: string;
   body: string;
-  status: "DRAFT" | "SENT";
+  status: "DRAFT" | "ENQUEUED" | "PROCESSING" | "SENT";
   createdAt: string;
   updatedAt: string;
 };
@@ -116,9 +116,6 @@ export function CompliancePageNewsList(props: {
           variables: {
             input: {
               id: node.id,
-              title: node.title,
-              body: node.body,
-              status: "SENT",
             },
           },
         }),
@@ -161,8 +158,8 @@ export function CompliancePageNewsList(props: {
                     <Tr key={node.id}>
                       <Td>{node.title}</Td>
                       <Td>
-                        <Badge variant={node.status === "SENT" ? "success" : "warning"}>
-                          {node.status === "SENT" ? __("Sent") : __("Draft")}
+                        <Badge variant={node.status === "SENT" ? "success" : node.status === "DRAFT" ? "warning" : "info"}>
+                          {node.status === "SENT" ? __("Sent") : node.status === "ENQUEUED" ? __("Queued") : node.status === "PROCESSING" ? __("Processing…") : __("Draft")}
                         </Badge>
                       </Td>
                       <Td className="text-txt-tertiary text-sm">
@@ -176,7 +173,7 @@ export function CompliancePageNewsList(props: {
                               disabled={isSending}
                               onClick={() => handleSend(node as NewsNode)}
                               className="bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-none"
-                              aria-label={__("Mark as sent")}
+                              aria-label={__("Send")}
                             >
                               {__("Send")}
                             </Button>

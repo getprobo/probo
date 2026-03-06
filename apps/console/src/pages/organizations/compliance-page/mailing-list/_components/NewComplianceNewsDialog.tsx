@@ -14,7 +14,7 @@ const createMutation = graphql`
   ) {
     createMailingListUpdate(input: $input) {
       mailingListUpdate
-        @appendNode(connections: $connections, edgeTypeName: "MailingListUpdateEdge") {
+        @prependNode(connections: $connections, edgeTypeName: "MailingListUpdateEdge") {
         id
         title
         body

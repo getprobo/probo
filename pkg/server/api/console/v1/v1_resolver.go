@@ -2062,10 +2062,10 @@ func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input ty
 		return nil, err
 	}
 
-	mlu, err := r.mailman.UpdateMailingListUpdate(ctx, input.ID, input.Title, input.Body, input.Status)
+	mlu, err := r.mailman.UpdateMailingListUpdate(ctx, input.ID, input.Title, input.Body)
 	if err != nil {
 		if errors.Is(err, mailman.ErrMailingListUpdateAlreadySent) {
-			return nil, gqlutils.Conflictf(ctx, "mailing list update already sent and cannot be modified")
+			return nil, gqlutils.Conflictf(ctx, "mailing list update can only be edited when in draft")
 		}
 		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
@@ -2075,6 +2075,29 @@ func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input ty
 	}
 
 	return &types.UpdateMailingListUpdatePayload{
+		MailingListUpdate: types.NewMailingListUpdate(mlu),
+	}, nil
+}
+
+// SendMailingListUpdate is the resolver for the sendMailingListUpdate field.
+func (r *mutationResolver) SendMailingListUpdate(ctx context.Context, input types.SendMailingListUpdateInput) (*types.SendMailingListUpdatePayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionMailingListUpdateUpdate); err != nil {
+		return nil, err
+	}
+
+	mlu, err := r.mailman.SendMailingListUpdate(ctx, input.ID)
+	if err != nil {
+		if errors.Is(err, mailman.ErrMailingListUpdateAlreadySent) {
+			return nil, gqlutils.Conflictf(ctx, "mailing list update has already been queued for sending")
+		}
+		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
+		}
+		r.logger.ErrorCtx(ctx, "cannot queue mailing list update for sending", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.SendMailingListUpdatePayload{
 		MailingListUpdate: types.NewMailingListUpdate(mlu),
 	}, nil
 }
