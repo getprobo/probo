@@ -19,9 +19,8 @@ import (
 	"fmt"
 )
 
-// AuthConfig contains authentication configuration.
 type AuthConfig struct {
-	Cookie                              CookieConfig `json:"cookie"`
+	Cookie                              CookieConfig   `json:"cookie"`
 	Password                            PasswordConfig `json:"password"`
 	DisableSignup                       bool           `json:"disable-signup"`
 	InvitationConfirmationTokenValidity int            `json:"invitation-confirmation-token-validity"`
@@ -30,7 +29,6 @@ type AuthConfig struct {
 	SAML                                SAMLConfig     `json:"saml"`
 }
 
-// CookieConfig contains session cookie configuration.
 type CookieConfig struct {
 	Domain   string `json:"domain"`
 	Secret   string `json:"secret"`
@@ -39,7 +37,6 @@ type CookieConfig struct {
 	Secure   bool   `json:"secure"`
 }
 
-// PasswordConfig contains password hashing configuration.
 type PasswordConfig struct {
 	Iterations int    `json:"iterations"`
 	Pepper     string `json:"pepper"`

@@ -23,19 +23,14 @@ import (
 	"go.probo.inc/probo/pkg/probod"
 )
 
-// EnvGetter is a function that retrieves environment variables.
-// This allows for easy testing by injecting a mock implementation.
 type EnvGetter func(key string) string
 
-// Builder creates a Config from environment variables.
 type Builder struct {
 	getEnv          EnvGetter
 	samlCertificate string
 	samlPrivateKey  string
 }
 
-// NewBuilder creates a new Builder with the given environment getter.
-// If getEnv is nil, os.Getenv is used.
 func NewBuilder(getEnv EnvGetter) *Builder {
 	if getEnv == nil {
 		getEnv = os.Getenv
@@ -43,15 +38,11 @@ func NewBuilder(getEnv EnvGetter) *Builder {
 	return &Builder{getEnv: getEnv}
 }
 
-// SetSAMLCredentials sets pre-generated SAML certificate and private key.
-// If not set, they will be generated automatically if not provided via environment.
 func (b *Builder) SetSAMLCredentials(certificate, privateKey string) {
 	b.samlCertificate = certificate
 	b.samlPrivateKey = privateKey
 }
 
-// Build creates a FullConfig from environment variables.
-// Returns an error if required environment variables are missing.
 func (b *Builder) Build() (*probod.FullConfig, error) {
 	if err := b.validateRequired(); err != nil {
 		return nil, err

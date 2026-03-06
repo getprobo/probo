@@ -18,7 +18,6 @@ import (
 	"time"
 )
 
-// SAMLConfig contains SAML authentication configuration.
 type SAMLConfig struct {
 	SessionDuration                   int    `json:"session-duration"`
 	CleanupIntervalSeconds            int    `json:"cleanup-interval-seconds"`

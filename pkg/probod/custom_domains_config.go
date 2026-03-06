@@ -14,7 +14,6 @@
 
 package probod
 
-// CustomDomainsConfig contains custom domain configuration.
 type CustomDomainsConfig struct {
 	RenewalInterval   int        `json:"renewal-interval"`
 	ProvisionInterval int        `json:"provision-interval"`
@@ -23,7 +22,6 @@ type CustomDomainsConfig struct {
 	ACME              ACMEConfig `json:"acme"`
 }
 
-// ACMEConfig contains ACME certificate configuration.
 type ACMEConfig struct {
 	Directory  string `json:"directory"`
 	Email      string `json:"email"`
