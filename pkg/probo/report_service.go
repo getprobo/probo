@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -88,11 +87,11 @@ func (s ReportService) GenerateDownloadURL(
 	presignClient := s3.NewPresignClient(s.svc.s3)
 
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     aws.String(s.svc.bucket),
-		Key:                        aws.String(report.ObjectKey),
-		ResponseCacheControl:       aws.String("max-age=3600, public"),
-		ResponseContentType:        aws.String(report.MimeType),
-		ResponseContentDisposition: aws.String(fmt.Sprintf("attachment; filename=\"%s\"", report.Filename)),
+		Bucket:                     new(s.svc.bucket),
+		Key:                        new(report.ObjectKey),
+		ResponseCacheControl:       new("max-age=3600, public"),
+		ResponseContentType:        new(report.MimeType),
+		ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", report.Filename)),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expiresIn
 	})

@@ -24,11 +24,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -255,8 +253,8 @@ func (s FrameworkService) Export(
 						object, err := s.svc.s3.GetObject(
 							ctx,
 							&s3.GetObjectInput{
-								Bucket: aws.String(s.svc.bucket),
-								Key:    aws.String(evidence_file.FileKey),
+								Bucket: new(s.svc.bucket),
+								Key:    new(evidence_file.FileKey),
 							},
 						)
 						if err != nil {
@@ -657,11 +655,11 @@ func (s FrameworkService) GenerateFrameworkExportDownloadURL(
 	presignedReq, err := presignClient.PresignGetObject(
 		ctx,
 		&s3.GetObjectInput{
-			Bucket:                     ref.Ref(s.svc.bucket),
-			Key:                        ref.Ref(file.FileKey),
-			ResponseCacheControl:       ref.Ref("max-age=3600, public"),
-			ResponseContentType:        ref.Ref(file.MimeType),
-			ResponseContentDisposition: ref.Ref(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
+			Bucket:                     new(s.svc.bucket),
+			Key:                        new(file.FileKey),
+			ResponseCacheControl:       new("max-age=3600, public"),
+			ResponseContentType:        new(file.MimeType),
+			ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
 		},
 		func(opts *s3.PresignOptions) {
 			opts.Expires = frameworkExportEmailExpiresIn
@@ -724,12 +722,12 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 			_, err = s.svc.s3.PutObject(
 				ctx,
 				&s3.PutObjectInput{
-					Bucket:        ref.Ref(s.svc.bucket),
-					Key:           ref.Ref(uuid.String()),
+					Bucket:        new(s.svc.bucket),
+					Key:           new(uuid.String()),
 					Body:          tempFile,
-					ContentLength: ref.Ref(fileInfo.Size()),
-					ContentType:   ref.Ref("application/zip"),
-					CacheControl:  ref.Ref("private, max-age=3600"),
+					ContentLength: new(fileInfo.Size()),
+					ContentType:   new("application/zip"),
+					CacheControl:  new("private, max-age=3600"),
 					Metadata: map[string]string{
 						"type":            "framework-export",
 						"export-job-id":   exportJob.ID.String(),

@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
@@ -375,11 +374,11 @@ func (s TrustCenterFileService) uploadFile(
 	}
 
 	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:       aws.String(s.svc.bucket),
-		Key:          aws.String(objectKey.String()),
+		Bucket:       new(s.svc.bucket),
+		Key:          new(objectKey.String()),
 		Body:         fileContent,
-		ContentType:  aws.String(contentType),
-		CacheControl: aws.String("private, max-age=3600"),
+		ContentType:  new(contentType),
+		CacheControl: new("private, max-age=3600"),
 		Metadata: map[string]string{
 			"type":                 "trust-center-file",
 			"trust-center-file-id": trustCenterFileID.String(),
@@ -414,7 +413,7 @@ func (s TrustCenterFileService) cleanupS3Object(ctx context.Context, s3Key strin
 	}
 
 	_, _ = s.svc.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(s3Key),
+		Bucket: new(s.svc.bucket),
+		Key:    new(s3Key),
 	})
 }

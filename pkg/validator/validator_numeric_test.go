@@ -16,8 +16,6 @@ package validator
 
 import (
 	"testing"
-
-	"go.gearno.de/x/ref"
 )
 
 func TestMin(t *testing.T) {
@@ -30,7 +28,7 @@ func TestMin(t *testing.T) {
 		{"valid int", 10, 5, false},
 		{"exact min", 5, 5, false},
 		{"below min", 3, 5, true},
-		{"valid int pointer", ref.Ref(10), 5, false},
+		{"valid int pointer", new(10), 5, false},
 		{"nil pointer", (*int)(nil), 5, false}, // Skip validation
 		{"non-numeric", "test", 5, true},
 	}
@@ -55,7 +53,7 @@ func TestMax(t *testing.T) {
 		{"valid int", 5, 10, false},
 		{"exact max", 10, 10, false},
 		{"above max", 15, 10, true},
-		{"valid int pointer", ref.Ref(5), 10, false},
+		{"valid int pointer", new(5), 10, false},
 		{"nil pointer", (*int)(nil), 10, false}, // Skip validation
 	}
 

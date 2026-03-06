@@ -27,7 +27,6 @@ import (
 	texttemplate "text/template"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -184,14 +183,14 @@ func UploadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBu
 		_, err = s3Client.PutObject(
 			ctx,
 			&s3.PutObjectInput{
-				Bucket: aws.String(staticAssetsBucket),
-				Key:    aws.String(path),
+				Bucket: new(staticAssetsBucket),
+				Key:    new(path),
 				Body:   file,
 				Metadata: map[string]string{
 					"type": "static-email-asset",
 				},
-				ContentType:  aws.String(mimeType),
-				CacheControl: aws.String("max-age=3600, public"),
+				ContentType:  new(mimeType),
+				CacheControl: new("max-age=3600, public"),
 			},
 		)
 		if err != nil {

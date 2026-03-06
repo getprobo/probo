@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"testing"
 
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/mail"
 )
 
@@ -236,7 +235,7 @@ func TestRealWorldExample(t *testing.T) {
 		Email:    "",
 		Password: "123",
 		Age:      15,
-		Website:  ref.Ref("not-a-url"),
+		Website:  new("not-a-url"),
 		Address: Address{
 			City:    "",
 			ZipCode: "12345",

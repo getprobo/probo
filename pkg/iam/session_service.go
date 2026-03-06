@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
@@ -69,7 +68,7 @@ func (s SessionService) GetSession(ctx context.Context, sessionID gid.GID) (*cor
 			}
 
 			if now.After(session.ExpiredAt) {
-				session.ExpireReason = ref.Ref(coredata.ExpireReasonIdleTimeout)
+				session.ExpireReason = new(coredata.ExpireReasonIdleTimeout)
 				session.ExpiredAt = now
 				session.UpdatedAt = now
 				if err := session.Update(ctx, tx); err != nil {
@@ -107,7 +106,7 @@ func (s SessionService) CloseSession(ctx context.Context, sessionID gid.GID) err
 				return NewSessionExpiredError(sessionID)
 			}
 
-			session.ExpireReason = ref.Ref(coredata.ExpireReasonClosed)
+			session.ExpireReason = new(coredata.ExpireReasonClosed)
 			session.ExpiredAt = time.Now()
 			session.UpdatedAt = time.Now()
 			if err := session.Update(ctx, conn); err != nil {
@@ -158,7 +157,7 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 				return NewSessionExpiredError(sessionID)
 			}
 
-			session.ExpireReason = ref.Ref(coredata.ExpireReasonRevoked)
+			session.ExpireReason = new(coredata.ExpireReasonRevoked)
 			session.ExpiredAt = now
 			session.UpdatedAt = now
 			if err := session.Update(ctx, tx); err != nil {

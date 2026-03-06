@@ -23,7 +23,6 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -346,7 +345,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		)
 
 		domain.SSLRetryCount = domain.SSLRetryCount + 1
-		domain.SSLLastAttemptAt = ref.Ref(time.Now())
+		domain.SSLLastAttemptAt = new(time.Now())
 
 		if domain.SSLRetryCount >= maxRetries {
 			p.logger.ErrorCtx(

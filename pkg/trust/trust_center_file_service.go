@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -135,8 +134,8 @@ func (s *TrustCenterFileService) exportFileData(
 	}
 
 	result, err := s.svc.s3.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(file.FileKey),
+		Bucket: new(s.svc.bucket),
+		Key:    new(file.FileKey),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot download file from S3: %w", err)

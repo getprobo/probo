@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
-	"go.gearno.de/x/ref"
 )
 
 func TestFramework_Create(t *testing.T) {
@@ -720,7 +719,7 @@ func TestFramework_OmittableDescription(t *testing.T) {
 		{
 			name:            "update with new description",
 			input:           map[string]any{"description": "Updated description"},
-			wantDescription: ref.Ref("Updated description"),
+			wantDescription: new("Updated description"),
 		},
 		{
 			name:            "update with null description clears it",
@@ -730,12 +729,12 @@ func TestFramework_OmittableDescription(t *testing.T) {
 		{
 			name:            "set description again",
 			input:           map[string]any{"description": "Should persist"},
-			wantDescription: ref.Ref("Should persist"),
+			wantDescription: new("Should persist"),
 		},
 		{
 			name:            "update without description preserves it",
 			input:           map[string]any{"name": "Updated Name"},
-			wantDescription: ref.Ref("Should persist"),
+			wantDescription: new("Should persist"),
 		},
 	}
 

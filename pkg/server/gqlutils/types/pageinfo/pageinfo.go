@@ -15,7 +15,6 @@
 package pageinfo
 
 import (
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -33,8 +32,8 @@ func NewPageInfo[T page.Paginable[O], O page.OrderField](p *page.Page[T, O]) *Pa
 	)
 
 	if len(p.Data) > 0 {
-		startCursor = ref.Ref(p.First().CursorKey(p.Cursor.OrderBy.Field))
-		endCursor = ref.Ref(p.Last().CursorKey(p.Cursor.OrderBy.Field))
+		startCursor = new(p.First().CursorKey(p.Cursor.OrderBy.Field))
+		endCursor = new(p.Last().CursorKey(p.Cursor.OrderBy.Field))
 	}
 
 	return &PageInfo{
