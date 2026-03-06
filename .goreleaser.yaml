@@ -28,6 +28,24 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+  - id: probod-bootstrap
+    main: ./cmd/probod-bootstrap/main.go
+    binary: probod-bootstrap
+    ldflags:
+      - -s -w
+    gcflags:
+      - -e
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
   # Docker-specific builds for Linux only
   - id: probod-docker
     main: ./cmd/probod/main.go
@@ -61,7 +79,10 @@ builds:
       - arm64
 
 archives:
-  - name_template: >-
+  - builds:
+      - probod
+      - probod-bootstrap
+    name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
