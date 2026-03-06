@@ -4,8 +4,7 @@ CREATE TABLE mailing_lists (
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE,
     reply_to CITEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (organization_id)
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TYPE mailing_list_subscriber_status AS ENUM (
