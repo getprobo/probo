@@ -231,10 +231,11 @@ func (s TrustCenterService) UploadNDA(
 			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
 
 			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-				Bucket:      &s.svc.bucket,
-				Key:         aws.String(objectKey.String()),
-				Body:        req.File,
-				ContentType: &mimeType,
+				Bucket:       &s.svc.bucket,
+				Key:          aws.String(objectKey.String()),
+				Body:         req.File,
+				ContentType:  &mimeType,
+				CacheControl: aws.String("private, max-age=3600"),
 				Metadata: map[string]string{
 					"type":            "trust-center-nda",
 					"trust-center-id": req.TrustCenterID.String(),
@@ -408,10 +409,11 @@ func (s TrustCenterService) uploadFile(
 	}
 
 	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      &s.svc.bucket,
-		Key:         aws.String(objectKey.String()),
-		Body:        fileUpload.Content,
-		ContentType: &mimeType,
+		Bucket:       &s.svc.bucket,
+		Key:          aws.String(objectKey.String()),
+		Body:         fileUpload.Content,
+		ContentType:  &mimeType,
+		CacheControl: aws.String("max-age=3600, public"),
 		Metadata: map[string]string{
 			"type":            fileType,
 			"trust-center-id": trustCenter.ID.String(),

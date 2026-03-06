@@ -395,10 +395,11 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 	}
 
 	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(s.svc.bucket),
-		Key:         aws.String(objectKey.String()),
-		Body:        fileContent,
-		ContentType: aws.String(contentType),
+		Bucket:       aws.String(s.svc.bucket),
+		Key:          aws.String(objectKey.String()),
+		Body:         fileContent,
+		ContentType:  aws.String(contentType),
+		CacheControl: aws.String("max-age=3600, public"),
 		Metadata: map[string]string{
 			"type":                      "trust-center-reference-logo",
 			"trust-center-reference-id": referenceID.String(),

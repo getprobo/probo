@@ -129,11 +129,12 @@ func (s *Service) PutFile(
 	_, err := s.s3Client.PutObject(
 		ctx,
 		&s3.PutObjectInput{
-			Bucket:      aws.String(file.GetBucketName()),
-			Key:         aws.String(file.GetObjectKey()),
-			Body:        content,
-			ContentType: aws.String(file.GetMimeType()),
-			Metadata:    metadata,
+			Bucket:       aws.String(file.GetBucketName()),
+			Key:          aws.String(file.GetObjectKey()),
+			Body:         content,
+			ContentType:  aws.String(file.GetMimeType()),
+			CacheControl: aws.String("private, max-age=3600"),
+			Metadata:     metadata,
 		},
 	)
 	if err != nil {

@@ -190,7 +190,8 @@ func UploadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBu
 				Metadata: map[string]string{
 					"type": "static-email-asset",
 				},
-				ContentType: aws.String(mimeType),
+				ContentType:  aws.String(mimeType),
+				CacheControl: aws.String("max-age=3600, public"),
 			},
 		)
 		if err != nil {

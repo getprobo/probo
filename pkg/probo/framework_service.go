@@ -729,6 +729,7 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 					Body:          tempFile,
 					ContentLength: ref.Ref(fileInfo.Size()),
 					ContentType:   ref.Ref("application/zip"),
+					CacheControl:  ref.Ref("private, max-age=3600"),
 					Metadata: map[string]string{
 						"type":            "framework-export",
 						"export-job-id":   exportJob.ID.String(),

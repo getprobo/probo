@@ -375,10 +375,11 @@ func (s TrustCenterFileService) uploadFile(
 	}
 
 	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(s.svc.bucket),
-		Key:         aws.String(objectKey.String()),
-		Body:        fileContent,
-		ContentType: aws.String(contentType),
+		Bucket:       aws.String(s.svc.bucket),
+		Key:          aws.String(objectKey.String()),
+		Body:         fileContent,
+		ContentType:  aws.String(contentType),
+		CacheControl: aws.String("private, max-age=3600"),
 		Metadata: map[string]string{
 			"type":                 "trust-center-file",
 			"trust-center-file-id": trustCenterFileID.String(),

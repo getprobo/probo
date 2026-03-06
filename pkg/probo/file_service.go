@@ -96,11 +96,12 @@ func (s FileService) UploadAndSaveFile(
 	_, err = s.svc.s3.PutObject(
 		ctx,
 		&s3.PutObjectInput{
-			Bucket:      &s.svc.bucket,
-			Key:         aws.String(objectKey.String()),
-			Body:        req.Content,
-			Metadata:    s3Metadata,
-			ContentType: aws.String(mimeType),
+			Bucket:       &s.svc.bucket,
+			Key:          aws.String(objectKey.String()),
+			Body:         req.Content,
+			Metadata:     s3Metadata,
+			ContentType:  aws.String(mimeType),
+			CacheControl: aws.String("private, max-age=3600"),
 		},
 	)
 	if err != nil {

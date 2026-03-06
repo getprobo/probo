@@ -126,10 +126,11 @@ func (s VendorDataPrivacyAgreementService) Upload(
 
 			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
 			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-				Bucket:      &s.svc.bucket,
-				Key:         aws.String(objectKey.String()),
-				Body:        req.File,
-				ContentType: &mimeType,
+				Bucket:       &s.svc.bucket,
+				Key:          aws.String(objectKey.String()),
+				Body:         req.File,
+				ContentType:  &mimeType,
+				CacheControl: aws.String("private, max-age=3600"),
 				Metadata: map[string]string{
 					"type":            "vendor-data-privacy-agreement",
 					"vendor-id":       vendorID.String(),
