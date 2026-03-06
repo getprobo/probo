@@ -418,6 +418,16 @@ type CreateMailingListSubscriberPayload struct {
 	MailingListSubscriberEdge *MailingListSubscriberEdge `json:"mailingListSubscriberEdge"`
 }
 
+type CreateMailingListUpdateInput struct {
+	MailingListID gid.GID `json:"mailingListId"`
+	Title         string  `json:"title"`
+	Body          string  `json:"body"`
+}
+
+type CreateMailingListUpdatePayload struct {
+	MailingListUpdate *MailingListUpdate `json:"mailingListUpdate"`
+}
+
 type CreateMeasureInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Name           string  `json:"name"`
@@ -941,6 +951,14 @@ type DeleteMailingListSubscriberPayload struct {
 	DeletedMailingListSubscriberID gid.GID `json:"deletedMailingListSubscriberId"`
 }
 
+type DeleteMailingListUpdateInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteMailingListUpdatePayload struct {
+	DeletedMailingListUpdateID gid.GID `json:"deletedMailingListUpdateId"`
+}
+
 type DeleteMeasureInput struct {
 	MeasureID gid.GID `json:"measureId"`
 }
@@ -1439,6 +1457,23 @@ type MailingListSubscriberEdge struct {
 	Node   *MailingListSubscriber `json:"node"`
 }
 
+type MailingListUpdate struct {
+	ID        gid.GID                          `json:"id"`
+	Title     string                           `json:"title"`
+	Body      string                           `json:"body"`
+	Status    coredata.MailingListUpdateStatus `json:"status"`
+	CreatedAt time.Time                        `json:"createdAt"`
+	UpdatedAt time.Time                        `json:"updatedAt"`
+}
+
+func (MailingListUpdate) IsNode()             {}
+func (this MailingListUpdate) GetID() gid.GID { return this.ID }
+
+type MailingListUpdateEdge struct {
+	Cursor page.CursorKey     `json:"cursor"`
+	Node   *MailingListUpdate `json:"node"`
+}
+
 type Measure struct {
 	ID          gid.GID               `json:"id"`
 	Category    string                `json:"category"`
@@ -1777,6 +1812,14 @@ type RiskEdge struct {
 type RiskFilter struct {
 	Query      *string  `json:"query,omitempty"`
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
+type SendMailingListUpdateInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type SendMailingListUpdatePayload struct {
+	MailingListUpdate *MailingListUpdate `json:"mailingListUpdate"`
 }
 
 type SendSigningNotificationsInput struct {
@@ -2132,6 +2175,16 @@ type UpdateMailingListInput struct {
 
 type UpdateMailingListPayload struct {
 	MailingList *MailingList `json:"mailingList"`
+}
+
+type UpdateMailingListUpdateInput struct {
+	ID    gid.GID `json:"id"`
+	Title string  `json:"title"`
+	Body  string  `json:"body"`
+}
+
+type UpdateMailingListUpdatePayload struct {
+	MailingListUpdate *MailingListUpdate `json:"mailingListUpdate"`
 }
 
 type UpdateMeasureInput struct {

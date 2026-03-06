@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as React from "react";
 
+import MailingListNews from "../src/MailingListNews";
 import ConfirmEmail from "../src/ConfirmEmail";
 import DocumentExport from "../src/DocumentExport";
 import DocumentSigning from "../src/DocumentSigning";
@@ -13,6 +14,8 @@ import PasswordReset from "../src/PasswordReset";
 import TrustCenterAccess from "../src/TrustCenterAccess";
 import TrustCenterDocumentAccessRejected from "../src/TrustCenterDocumentAccessRejected";
 import ElectronicSignatureCertificate from "../src/ElectronicSignatureCertificate";
+import MailingListSubscription from "../src/MailingListSubscription";
+import MailingListUnsubscription from "../src/MailingListUnsubscription";
 import MagicLink from "../src/MagicLink";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -63,6 +66,18 @@ const templates: TemplateConfig[] = [
   {
     name: "electronic-signature-certificate",
     render: () => ElectronicSignatureCertificate(),
+  },
+  {
+    name: "mailing-list-subscription",
+    render: () => MailingListSubscription(),
+  },
+  {
+    name: "mailing-list-unsubscription",
+    render: () => MailingListUnsubscription(),
+  },
+  {
+    name: "mailing-list-news",
+    render: () => MailingListNews(),
   },
 ];
 

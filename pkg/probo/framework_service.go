@@ -637,6 +637,7 @@ func (s FrameworkService) SendExportEmail(
 				subject,
 				textBody,
 				htmlBody,
+				nil,
 			)
 
 			if err := email.Insert(ctx, tx); err != nil {

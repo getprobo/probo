@@ -240,6 +240,7 @@ type TrustCenter struct {
 	References             *TrustCenterReferenceConnection `json:"references"`
 	TrustCenterFiles       *TrustCenterFileConnection      `json:"trustCenterFiles"`
 	ComplianceFrameworks   *ComplianceFrameworkConnection  `json:"complianceFrameworks"`
+	Updates                *MailingListUpdateConnection    `json:"updates"`
 }
 
 func (TrustCenter) IsNode()             {}

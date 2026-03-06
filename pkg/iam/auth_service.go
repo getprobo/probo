@@ -352,6 +352,7 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 				subject,
 				textBody,
 				htmlBody,
+				nil,
 			)
 
 			err = passwordResetEmail.Insert(ctx, tx)
@@ -420,6 +421,7 @@ func (s AuthService) CreateIdentityWithPassword(
 		subject,
 		textBody,
 		htmlBody,
+		nil,
 	)
 
 	err = s.pg.WithTx(
@@ -617,6 +619,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				subject,
 				textBody,
 				htmlBody,
+				nil,
 			)
 
 			if err := magicLinkEmail.Insert(ctx, tx); err != nil {

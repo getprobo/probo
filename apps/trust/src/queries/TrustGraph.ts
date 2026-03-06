@@ -57,6 +57,24 @@ export const currentTrustGraphQuery = graphql`
   }
 `;
 
+export const currentTrustNewsQuery = graphql`
+  query TrustGraphCurrentNewsQuery {
+    currentTrustCenter {
+      id
+      updates(first: 50) {
+        edges {
+          node {
+            id
+            title
+            body
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const currentTrustDocumentsQuery = graphql`
   query TrustGraphCurrentDocumentsQuery {
     currentTrustCenter {

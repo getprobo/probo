@@ -120,6 +120,57 @@ LIMIT 1;
 	return nil
 }
 
+func (tc *TrustCenter) LoadByMailingListID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	mailingListID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	mailing_list_id,
+	logo_file_id,
+	dark_logo_file_id,
+	active,
+	slug,
+	non_disclosure_agreement_file_id,
+	created_at,
+	updated_at
+FROM
+	trust_centers
+WHERE
+	%s
+	AND mailing_list_id = @mailing_list_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"mailing_list_id": mailingListID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query trust center by mailing list id: %w", err)
+	}
+
+	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect trust center: %w", err)
+	}
+
+	*tc = trustCenter
+
+	return nil
+}
+
 func (tc *TrustCenter) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,

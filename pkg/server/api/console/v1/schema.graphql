@@ -1663,6 +1663,13 @@ type TrustCenter implements Node
 
     mailingList: MailingList @goField(forceResolver: true)
 
+    mailingListUpdates(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): MailingListUpdateConnection! @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
@@ -1713,6 +1720,51 @@ type MailingListSubscriberConnection
 type MailingListSubscriberEdge {
     cursor: CursorKey!
     node: MailingListSubscriber!
+}
+
+enum MailingListUpdateStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatus"
+    ) {
+    DRAFT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusDraft"
+        )
+    ENQUEUED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusEnqueued"
+        )
+    PROCESSING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusProcessing"
+        )
+    SENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MailingListUpdateStatusSent"
+        )
+}
+
+type MailingListUpdate implements Node {
+    id: ID!
+    title: String!
+    body: String!
+    status: MailingListUpdateStatus!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type MailingListUpdateConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MailingListUpdateConnection"
+    ) {
+    edges: [MailingListUpdateEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type MailingListUpdateEdge {
+    cursor: CursorKey!
+    node: MailingListUpdate!
 }
 
 type Organization implements Node {
@@ -3364,6 +3416,19 @@ type Mutation {
     deleteTrustCenterAccess(
         input: DeleteTrustCenterAccessInput!
     ): DeleteTrustCenterAccessPayload!
+    # Compliance News mutations
+    createMailingListUpdate(
+        input: CreateMailingListUpdateInput!
+    ): CreateMailingListUpdatePayload!
+    updateMailingListUpdate(
+        input: UpdateMailingListUpdateInput!
+    ): UpdateMailingListUpdatePayload!
+    sendMailingListUpdate(
+        input: SendMailingListUpdateInput!
+    ): SendMailingListUpdatePayload!
+    deleteMailingListUpdate(
+        input: DeleteMailingListUpdateInput!
+    ): DeleteMailingListUpdatePayload!
     # Mailing List mutations
     updateMailingList(
         input: UpdateMailingListInput!
@@ -3775,6 +3840,26 @@ input UpdateMailingListInput {
 
 type UpdateMailingListPayload {
     mailingList: MailingList!
+}
+
+input CreateMailingListUpdateInput {
+    mailingListId: ID!
+    title: String!
+    body: String!
+}
+
+input UpdateMailingListUpdateInput {
+    id: ID!
+    title: String!
+    body: String!
+}
+
+input SendMailingListUpdateInput {
+    id: ID!
+}
+
+input DeleteMailingListUpdateInput {
+    id: ID!
 }
 
 input CreateMailingListSubscriberInput {
@@ -4619,6 +4704,22 @@ type UpdateTrustCenterAccessPayload {
 
 type DeleteTrustCenterAccessPayload {
     deletedTrustCenterAccessId: ID!
+}
+
+type CreateMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
+}
+
+type UpdateMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
+}
+
+type SendMailingListUpdatePayload {
+    mailingListUpdate: MailingListUpdate!
+}
+
+type DeleteMailingListUpdatePayload {
+    deletedMailingListUpdateId: ID!
 }
 
 type CreateMailingListSubscriberPayload {

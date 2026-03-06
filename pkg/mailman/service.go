@@ -20,19 +20,34 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
+const (
+	pathUnsubscribe = "/mailing-list/unsubscribe?token="
+	pathConfirm     = "/mailing-list/confirm?token="
+)
+
 type Service struct {
-	pg *pg.Client
+	pg            *pg.Client
+	fm            *filemanager.Service
+	tokenSecret   string
+	apiBaseURL    string
+	bucket        string
+	encryptionKey cipher.EncryptionKey
+	logger        *log.Logger
 }
 
-func NewService(pgClient *pg.Client) *Service {
-	return &Service{pg: pgClient}
+func NewService(pgClient *pg.Client, fm *filemanager.Service, tokenSecret string, apiBaseURL string, bucket string, encryptionKey cipher.EncryptionKey, logger *log.Logger) *Service {
+	return &Service{pg: pgClient, fm: fm, tokenSecret: tokenSecret, apiBaseURL: apiBaseURL, bucket: bucket, encryptionKey: encryptionKey, logger: logger}
 }
 
 func (s *Service) UpdateMailingList(
@@ -40,8 +55,8 @@ func (s *Service) UpdateMailingList(
 	id gid.GID,
 	replyTo *mail.Addr,
 ) (*coredata.MailingList, error) {
+	var ml coredata.MailingList
 	scope := coredata.NewScopeFromObjectID(id)
-	ml := coredata.MailingList{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -105,8 +120,12 @@ func (s *Service) CreateSubscriber(
 	fullName string,
 ) (*coredata.MailingListSubscriber, error) {
 	scope := coredata.NewScopeFromObjectID(mailingListID)
-	now := time.Now()
+	emailRecord, err := s.buildConfirmationMail(ctx, mailingListID, email, fullName)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build confirmation mail: %w", err)
+	}
 
+	now := time.Now()
 	subscriber := &coredata.MailingListSubscriber{
 		ID:            gid.New(scope.GetTenantID(), coredata.MailingListSubscriberEntityType),
 		MailingListID: mailingListID,
@@ -117,30 +136,108 @@ func (s *Service) CreateSubscriber(
 		UpdatedAt:     now,
 	}
 
-	err := s.pg.WithConn(
+	if err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			ml := coredata.MailingList{}
-			if err := ml.LoadByID(ctx, conn, scope, mailingListID); err != nil {
+		func(tx pg.Conn) error {
+			var ml coredata.MailingList
+			if err := ml.LoadByID(ctx, tx, scope, mailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
 			subscriber.OrganizationID = ml.OrganizationID
 
-			if err := subscriber.Insert(ctx, conn, scope); err != nil {
+			if err := subscriber.Insert(ctx, tx, scope); err != nil {
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrSubscriberAlreadyExist
 				}
 				return fmt.Errorf("cannot insert mailing list subscriber: %w", err)
 			}
 
+			if err := emailRecord.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert subscription confirmation email: %w", err)
+			}
+
 			return nil
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
 
 	return subscriber, nil
+}
+
+func (s *Service) UnsubscribeByEmail(
+	ctx context.Context,
+	mailingListID gid.GID,
+	email mail.Addr,
+) error {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			var subscriber coredata.MailingListSubscriber
+			if err := subscriber.LoadByMailingListIDAndEmail(ctx, tx, scope, mailingListID, email); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrSubscriberNotFound
+				}
+				return fmt.Errorf("cannot load mailing list subscriber: %w", err)
+			}
+
+			wasConfirmed := subscriber.Status == coredata.MailingListSubscriberStatusConfirmed
+
+			if err := subscriber.Delete(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrSubscriberNotFound
+				}
+				return fmt.Errorf("cannot delete mailing list subscriber: %w", err)
+			}
+
+			if wasConfirmed {
+				emailRecord, err := s.buildUnsubscriptionMail(ctx, mailingListID, subscriber.Email, subscriber.FullName)
+				if err != nil {
+					return fmt.Errorf("cannot build unsubscription email: %w", err)
+				}
+
+				if err := emailRecord.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert unsubscription email: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) ConfirmSubscriberByEmail(
+	ctx context.Context,
+	mailingListID gid.GID,
+	email mail.Addr,
+) error {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+
+	return s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var subscriber coredata.MailingListSubscriber
+			if err := subscriber.LoadByMailingListIDAndEmail(ctx, conn, scope, mailingListID, email); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrSubscriberNotFound
+				}
+				return fmt.Errorf("cannot load mailing list subscriber: %w", err)
+			}
+
+			subscriber.Status = coredata.MailingListSubscriberStatusConfirmed
+			subscriber.UpdatedAt = time.Now()
+
+			if err := subscriber.Update(ctx, conn, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrSubscriberNotFound
+				}
+				return fmt.Errorf("cannot update mailing list subscriber: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 func (s *Service) DeleteSubscriber(
@@ -149,21 +246,40 @@ func (s *Service) DeleteSubscriber(
 ) error {
 	scope := coredata.NewScopeFromObjectID(id)
 
-	err := s.pg.WithConn(
+	return s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			subscriber := coredata.MailingListSubscriber{ID: id}
-			if err := subscriber.Delete(ctx, conn, scope); err != nil {
+		func(tx pg.Conn) error {
+			var subscriber coredata.MailingListSubscriber
+			if err := subscriber.LoadByID(ctx, tx, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrSubscriberNotFound
+				}
+				return fmt.Errorf("cannot load mailing list subscriber: %w", err)
+			}
+
+			wasConfirmed := subscriber.Status == coredata.MailingListSubscriberStatusConfirmed
+
+			if err := subscriber.Delete(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrSubscriberNotFound
+				}
 				return fmt.Errorf("cannot delete mailing list subscriber: %w", err)
 			}
+
+			if wasConfirmed {
+				emailRecord, err := s.buildUnsubscriptionMail(ctx, subscriber.MailingListID, subscriber.Email, subscriber.FullName)
+				if err != nil {
+					return fmt.Errorf("cannot build unsubscription email: %w", err)
+				}
+
+				if err := emailRecord.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert unsubscription email: %w", err)
+				}
+			}
+
 			return nil
 		},
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (s *Service) CountSubscribers(
@@ -171,7 +287,7 @@ func (s *Service) CountSubscribers(
 	mailingListID gid.GID,
 ) (int, error) {
 	scope := coredata.NewScopeFromObjectID(mailingListID)
-	count := 0
+	var count int
 
 	err := s.pg.WithConn(
 		ctx,
@@ -197,7 +313,7 @@ func (s *Service) ListSubscribers(
 	cursor *page.Cursor[coredata.MailingListSubscriberOrderField],
 ) (*page.Page[*coredata.MailingListSubscriber, coredata.MailingListSubscriberOrderField], error) {
 	scope := coredata.NewScopeFromObjectID(mailingListID)
-	subscribers := coredata.MailingListSubscribers{}
+	var subscribers coredata.MailingListSubscribers
 
 	err := s.pg.WithConn(
 		ctx,
@@ -213,4 +329,387 @@ func (s *Service) ListSubscribers(
 	}
 
 	return page.NewPage(subscribers, cursor), nil
+}
+
+func (s *Service) CreateMailingListUpdate(
+	ctx context.Context,
+	mailingListID gid.GID,
+	title string,
+	body string,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	now := time.Now()
+
+	mlu := &coredata.MailingListUpdate{
+		ID:            gid.New(scope.GetTenantID(), coredata.MailingListUpdateEntityType),
+		MailingListID: mailingListID,
+		Title:         title,
+		Body:          body,
+		Status:        coredata.MailingListUpdateStatusDraft,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var ml coredata.MailingList
+			if err := ml.LoadByID(ctx, conn, scope, mailingListID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListNotFound
+				}
+				return fmt.Errorf("cannot load mailing list: %w", err)
+			}
+
+			mlu.OrganizationID = ml.OrganizationID
+
+			if err := mlu.Insert(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot insert mailing list update: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return mlu, nil
+}
+
+func (s *Service) GetMailingListUpdate(
+	ctx context.Context,
+	id gid.GID,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(id)
+	var mlu coredata.MailingListUpdate
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+				return fmt.Errorf("cannot load mailing list update: %w", err)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mlu, nil
+}
+
+func (s *Service) UpdateMailingListUpdate(
+	ctx context.Context,
+	id gid.GID,
+	title string,
+	body string,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(id)
+	var mlu coredata.MailingListUpdate
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+				return fmt.Errorf("cannot load mailing list update: %w", err)
+			}
+
+			if mlu.Status != coredata.MailingListUpdateStatusDraft {
+				return ErrMailingListUpdateAlreadySent
+			}
+
+			mlu.Title = title
+			mlu.Body = body
+			mlu.UpdatedAt = time.Now()
+
+			if err := mlu.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update mailing list update: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mlu, nil
+}
+
+func (s *Service) SendMailingListUpdate(
+	ctx context.Context,
+	id gid.GID,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(id)
+	var mlu coredata.MailingListUpdate
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+				return fmt.Errorf("cannot load mailing list update: %w", err)
+			}
+
+			if mlu.Status != coredata.MailingListUpdateStatusDraft {
+				return ErrMailingListUpdateAlreadySent
+			}
+
+			mlu.Status = coredata.MailingListUpdateStatusEnqueued
+			mlu.UpdatedAt = time.Now()
+
+			if err := mlu.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot queue mailing list update for sending: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mlu, nil
+}
+
+func (s *Service) DeleteMailingListUpdate(
+	ctx context.Context,
+	id gid.GID,
+) error {
+	scope := coredata.NewScopeFromObjectID(id)
+
+	return s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			mlu := coredata.MailingListUpdate{ID: id}
+			if err := mlu.Delete(ctx, conn, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+				return fmt.Errorf("cannot delete mailing list update: %w", err)
+			}
+			return nil
+		},
+	)
+}
+
+func (s *Service) ListMailingListUpdates(
+	ctx context.Context,
+	mailingListID gid.GID,
+	cursor *page.Cursor[coredata.MailingListUpdateOrderField],
+) (*page.Page[*coredata.MailingListUpdate, coredata.MailingListUpdateOrderField], error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	var items coredata.MailingListUpdateItems
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := items.LoadByMailingListID(ctx, conn, scope, mailingListID, cursor); err != nil {
+				return fmt.Errorf("cannot load mailing list updates: %w", err)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(items, cursor), nil
+}
+
+func (s *Service) ListSentMailingListUpdates(
+	ctx context.Context,
+	mailingListID gid.GID,
+	cursor *page.Cursor[coredata.MailingListUpdateOrderField],
+) (*page.Page[*coredata.MailingListUpdate, coredata.MailingListUpdateOrderField], error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	var items coredata.MailingListUpdateItems
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := items.LoadSentByMailingListID(ctx, conn, scope, mailingListID, cursor); err != nil {
+				return fmt.Errorf("cannot load sent mailing list updates: %w", err)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(items, cursor), nil
+}
+
+func (s *Service) CountMailingListUpdates(
+	ctx context.Context,
+	mailingListID gid.GID,
+) (int, error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var items coredata.MailingListUpdateItems
+			var err error
+			count, err = items.CountByMailingListID(ctx, conn, scope, mailingListID)
+			if err != nil {
+				return fmt.Errorf("cannot count mailing list updates: %w", err)
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) CreateNewsEmails(
+	ctx context.Context,
+	mailingListID gid.GID,
+	mailingListUpdateID gid.GID,
+	newsTitle string,
+	newsBody string,
+) error {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+
+	presenterCfg, orgName, compliancePageURL, replyTo, err := s.NewsEmailConfig(ctx, mailingListID)
+	if err != nil {
+		return fmt.Errorf("cannot get news email config: %w", err)
+	}
+
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			var subscribers coredata.MailingListSubscribers
+			if err := subscribers.LoadAllConfirmedByMailingListID(ctx, tx, scope, mailingListID); err != nil {
+				return fmt.Errorf("cannot load confirmed subscribers: %w", err)
+			}
+
+			if len(subscribers) == 0 {
+				return nil
+			}
+
+			emailRecords := make(coredata.Emails, 0, len(subscribers))
+			for _, sub := range subscribers {
+				unsubscribeURL, err := s.buildUnsubscribeURL(mailingListID, sub.Email)
+				if err != nil {
+					return fmt.Errorf("cannot generate unsubscribe URL: %w", err)
+				}
+
+				subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(s.fm, presenterCfg, sub.FullName).
+					RenderMailingListNews(ctx, orgName, newsTitle, newsBody, compliancePageURL+"/news", unsubscribeURL)
+				if err != nil {
+					return fmt.Errorf("cannot render mailing list news email: %w", err)
+				}
+
+				emailRecords = append(
+					emailRecords,
+					coredata.NewEmail(
+						sub.FullName,
+						sub.Email,
+						subject,
+						textBody,
+						htmlBody,
+						&coredata.EmailOptions{
+							ReplyTo:             replyTo,
+							UnsubscribeURL:      &unsubscribeURL,
+							MailingListUpdateID: &mailingListUpdateID,
+						},
+					),
+				)
+			}
+
+			if err := emailRecords.BulkInsert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot bulk insert news emails: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) buildConfirmationMail(
+	ctx context.Context,
+	mailingListID gid.GID,
+	email mail.Addr,
+	fullName string,
+) (*coredata.Email, error) {
+	unsubscribeURL, err := s.buildUnsubscribeURL(mailingListID, email)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate unsubscribe URL: %w", err)
+	}
+
+	confirmURL, err := s.buildConfirmURL(mailingListID, email)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate confirm URL: %w", err)
+	}
+
+	presenterCfg, orgName, replyTo, err := s.SubscriptionConfirmationEmailConfig(ctx, mailingListID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get subscription confirmation email config: %w", err)
+	}
+
+	subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(s.fm, presenterCfg, fullName).
+		RenderMailingListSubscription(ctx, orgName, confirmURL, unsubscribeURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot render subscription confirmation email: %w", err)
+	}
+
+	return coredata.NewEmail(fullName, email, subject, textBody, htmlBody, &coredata.EmailOptions{ReplyTo: replyTo, UnsubscribeURL: &unsubscribeURL}), nil
+}
+
+func (s *Service) buildUnsubscriptionMail(
+	ctx context.Context,
+	mailingListID gid.GID,
+	email mail.Addr,
+	fullName string,
+) (*coredata.Email, error) {
+	presenterCfg, orgName, replyTo, err := s.UnsubscribeEmailConfig(ctx, mailingListID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get unsubscription email config: %w", err)
+	}
+
+	subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(s.fm, presenterCfg, fullName).
+		RenderMailingListUnsubscription(ctx, orgName)
+	if err != nil {
+		return nil, fmt.Errorf("cannot render unsubscription email: %w", err)
+	}
+
+	return coredata.NewEmail(fullName, email, subject, textBody, htmlBody, &coredata.EmailOptions{ReplyTo: replyTo}), nil
+}
+
+func (s *Service) buildUnsubscribeURL(mailingListID gid.GID, email mail.Addr) (string, error) {
+	if s.tokenSecret == "" {
+		return "", nil
+	}
+	token, err := newUnsubscribeToken(s.tokenSecret, mailingListID, email)
+	if err != nil {
+		return "", err
+	}
+	return s.apiBaseURL + pathUnsubscribe + token, nil
+}
+
+func (s *Service) buildConfirmURL(mailingListID gid.GID, email mail.Addr) (string, error) {
+	if s.tokenSecret == "" {
+		return "", nil
+	}
+	token, err := newConfirmToken(s.tokenSecret, mailingListID, email)
+	if err != nil {
+		return "", err
+	}
+	return s.apiBaseURL + pathConfirm + token, nil
 }

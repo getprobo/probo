@@ -90,7 +90,6 @@ func NewMux(
 	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
-
 	r.Handle("/graphql", graphqlHandler)
 
 	return r
@@ -99,4 +98,3 @@ func NewMux(
 func (r *Resolver) TrustService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
 	return r.trust.WithTenant(tenantID)
 }
-

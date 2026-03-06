@@ -374,6 +374,7 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Con
 		subject,
 		textBody,
 		htmlBody,
+		nil,
 	)
 
 	if err := accessEmail.Insert(ctx, tx); err != nil {

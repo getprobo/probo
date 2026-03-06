@@ -1,0 +1,16 @@
+{{.SenderCompanyName}}
+
+Hi {{.RecipientFullName}},
+
+You requested to subscribe to compliance updates from {{.OrganizationName}}. Please confirm your subscription to start receiving notifications whenever new information is published on their compliance page.
+
+Please confirm your subscription by visiting the link below:
+
+{{.ConfirmURL}}
+
+If you did not request this subscription, or no longer want to receive these emails, unsubscribe here:
+
+{{.UnsubscribeURL}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

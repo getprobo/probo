@@ -4,8 +4,7 @@ import { useCallback, useState, useTransition } from "react";
 import { useRefetchableFragment } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
-import type { CompliancePageFrameworkList_compliancePageFragment$key } from "#/__generated__/core/CompliancePageFrameworkList_compliancePageFragment.graphql";
-import type { CompliancePageFrameworkList_compliancePageFragment$data } from "#/__generated__/core/CompliancePageFrameworkList_compliancePageFragment.graphql";
+import type { CompliancePageFrameworkList_compliancePageFragment$data, CompliancePageFrameworkList_compliancePageFragment$key } from "#/__generated__/core/CompliancePageFrameworkList_compliancePageFragment.graphql";
 import type { CompliancePageFrameworkList_compliancePageRefetchQuery } from "#/__generated__/core/CompliancePageFrameworkList_compliancePageRefetchQuery.graphql";
 import type { CompliancePageFrameworkList_createMutation } from "#/__generated__/core/CompliancePageFrameworkList_createMutation.graphql";
 import type { CompliancePageFrameworkList_deleteMutation } from "#/__generated__/core/CompliancePageFrameworkList_deleteMutation.graphql";

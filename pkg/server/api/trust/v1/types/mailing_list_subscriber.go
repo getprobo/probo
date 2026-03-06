@@ -24,6 +24,7 @@ import (
 
 type MailingListSubscriber struct {
 	ID        gid.GID                              `json:"id"`
+	FullName  string                               `json:"fullName"`
 	Email     mail.Addr                            `json:"email"`
 	Status    coredata.MailingListSubscriberStatus `json:"status"`
 	CreatedAt time.Time                            `json:"createdAt"`
@@ -36,6 +37,7 @@ func (m MailingListSubscriber) GetID() gid.GID { return m.ID }
 func NewMailingListSubscriber(s *coredata.MailingListSubscriber) *MailingListSubscriber {
 	return &MailingListSubscriber{
 		ID:        s.ID,
+		FullName:  s.FullName,
 		Email:     s.Email,
 		Status:    s.Status,
 		CreatedAt: s.CreatedAt,

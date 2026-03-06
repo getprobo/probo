@@ -141,6 +141,7 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 				subject,
 				textBody,
 				htmlBody,
+				nil,
 			)
 
 			err = confirmationEmail.Insert(ctx, tx)

@@ -67,6 +67,56 @@ func (cns *MailingListSubscriber) CursorKey(orderBy MailingListSubscriberOrderFi
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+func (cns *MailingListSubscriber) LoadByID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	mailing_list_id,
+	full_name,
+	email,
+	status,
+	created_at,
+	updated_at
+FROM
+	mailing_list_subscribers
+WHERE
+	%s
+	AND id = @id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id": id,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query mailing list subscriber: %w", err)
+	}
+
+	subscriber, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MailingListSubscriber])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect mailing list subscriber: %w", err)
+	}
+
+	*cns = subscriber
+
+	return nil
+}
+
 func (cns *MailingListSubscriber) LoadByMailingListIDAndEmail(
 	ctx context.Context,
 	conn pg.Conn,
@@ -227,9 +277,13 @@ WHERE
 	args := pgx.StrictNamedArgs{"mailing_list_subscriber_id": cns.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	tag, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete mailing list subscriber: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil
@@ -265,6 +319,50 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (cnss *MailingListSubscribers) LoadAllConfirmedByMailingListID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	mailingListID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	mailing_list_id,
+	full_name,
+	email,
+	status,
+	created_at,
+	updated_at
+FROM
+	mailing_list_subscribers
+WHERE
+	%s
+	AND mailing_list_id = @mailing_list_id
+	AND status = 'CONFIRMED'
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"mailing_list_id": mailingListID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query confirmed mailing list subscribers: %w", err)
+	}
+
+	subscribers, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MailingListSubscriber])
+	if err != nil {
+		return fmt.Errorf("cannot collect confirmed mailing list subscribers: %w", err)
+	}
+
+	*cnss = subscribers
+
+	return nil
 }
 
 func (cnss *MailingListSubscribers) LoadByMailingListID(

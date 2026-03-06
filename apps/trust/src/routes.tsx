@@ -11,11 +11,13 @@ import { createBrowserRouter, redirect } from "react-router";
 
 import { MainLayout } from "#/layouts/MainLayout";
 import { DocumentsPage } from "#/pages/DocumentsPage";
+import { NewsPage } from "#/pages/NewsPage";
 import { OverviewPage } from "#/pages/OverviewPage";
 import { SubprocessorsPage } from "#/pages/SubprocessorsPage";
 import {
   currentTrustDocumentsQuery,
   currentTrustGraphQuery,
+  currentTrustNewsQuery,
   currentTrustVendorsQuery,
 } from "#/queries/TrustGraph";
 
@@ -109,6 +111,25 @@ const routes = [
         ),
         Fallback: TabSkeleton,
         Component: withQueryRef(SubprocessorsPage),
+      },
+    ],
+  },
+  {
+    path: "/news",
+    loader: loaderFromQueryLoader(() =>
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
+    ),
+    Component: withQueryRef(MainLayout),
+    Fallback: MainSkeleton,
+    ErrorBoundary: RootErrorBoundary,
+    children: [
+      {
+        path: "",
+        loader: loaderFromQueryLoader(() =>
+          loadQuery(consoleEnvironment, currentTrustNewsQuery, {}),
+        ),
+        Fallback: TabSkeleton,
+        Component: withQueryRef(NewsPage),
       },
     ],
   },

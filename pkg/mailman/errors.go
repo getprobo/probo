@@ -17,7 +17,9 @@ package mailman
 import "errors"
 
 var (
-	ErrMailingListNotFound    = errors.New("mailing list not found")
-	ErrSubscriberNotFound     = errors.New("mailing list subscriber not found")
-	ErrSubscriberAlreadyExist = errors.New("mailing list subscriber already exists")
+	ErrMailingListNotFound          = errors.New("mailing list not found")
+	ErrSubscriberNotFound           = errors.New("mailing list subscriber not found")
+	ErrSubscriberAlreadyExist       = errors.New("mailing list subscriber already exists")
+	ErrMailingListUpdateNotFound    = errors.New("mailing list update not found")
+	ErrMailingListUpdateAlreadySent = errors.New("mailing list update already sent")
 )
