@@ -160,7 +160,7 @@ export function CompliancePageMailingListPage(props: {
             </TabItem>
           </Tabs>
 
-          {activeTab === "updates" && (
+          {activeTab === "updates" && mailingListId && (
             <Button icon={IconPlusLarge} onClick={() => newNewsDialogRef.current?.open()}>
               {__("Add News")}
             </Button>
