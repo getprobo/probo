@@ -1,6 +1,7 @@
 ALTER TABLE emails
 ADD COLUMN reply_to TEXT,
-ADD COLUMN unsubscribe_url TEXT;
+ADD COLUMN unsubscribe_url TEXT,
+ADD COLUMN mailing_list_update_id TEXT REFERENCES mailing_list_updates(id) ON DELETE SET NULL;
 
 CREATE TYPE mailing_list_update_status AS ENUM ('DRAFT', 'ENQUEUED', 'PROCESSING', 'SENT');
 

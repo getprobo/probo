@@ -580,6 +580,7 @@ func (s *Service) CountMailingListUpdates(
 func (s *Service) CreateNewsEmails(
 	ctx context.Context,
 	mailingListID gid.GID,
+	mailingListUpdateID gid.GID,
 	newsTitle string,
 	newsBody string,
 ) error {
@@ -615,15 +616,21 @@ func (s *Service) CreateNewsEmails(
 					return fmt.Errorf("cannot render mailing list news email: %w", err)
 				}
 
-				emailRecords = append(emailRecords, coredata.NewEmail(
-					sub.FullName,
-					sub.Email,
-					subject,
-					textBody,
-					htmlBody,
-					replyTo,
-					&unsubscribeURL,
-				))
+				emailRecords = append(
+					emailRecords,
+					coredata.NewEmail(
+						sub.FullName,
+						sub.Email,
+						subject,
+						textBody,
+						htmlBody,
+						&coredata.EmailOptions{
+							ReplyTo:             replyTo,
+							UnsubscribeURL:      &unsubscribeURL,
+							MailingListUpdateID: &mailingListUpdateID,
+						},
+					),
+				)
 			}
 
 			if err := emailRecords.BulkInsert(ctx, tx); err != nil {
@@ -662,7 +669,7 @@ func (s *Service) buildConfirmationMail(
 		return nil, fmt.Errorf("cannot render subscription confirmation email: %w", err)
 	}
 
-	return coredata.NewEmail(fullName, email, subject, textBody, htmlBody, replyTo, &unsubscribeURL), nil
+	return coredata.NewEmail(fullName, email, subject, textBody, htmlBody, &coredata.EmailOptions{ReplyTo: replyTo, UnsubscribeURL: &unsubscribeURL}), nil
 }
 
 func (s *Service) buildUnsubscriptionMail(
@@ -682,7 +689,7 @@ func (s *Service) buildUnsubscriptionMail(
 		return nil, fmt.Errorf("cannot render unsubscription email: %w", err)
 	}
 
-	return coredata.NewEmail(fullName, email, subject, textBody, htmlBody, replyTo, nil), nil
+	return coredata.NewEmail(fullName, email, subject, textBody, htmlBody, &coredata.EmailOptions{ReplyTo: replyTo}), nil
 }
 
 func (s *Service) buildUnsubscribeURL(mailingListID gid.GID, email mail.Addr) (string, error) {

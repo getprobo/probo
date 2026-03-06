@@ -166,7 +166,7 @@ func (w *MailingListWorker) processNext(ctx context.Context, sem chan struct{}, 
 }
 
 func (w *MailingListWorker) sendAndCommit(ctx context.Context, mlu *coredata.MailingListUpdate) error {
-	if err := w.service.CreateNewsEmails(ctx, mlu.MailingListID, mlu.Title, mlu.Body); err != nil {
+	if err := w.service.CreateNewsEmails(ctx, mlu.MailingListID, mlu.ID, mlu.Title, mlu.Body); err != nil {
 		return fmt.Errorf("cannot create news emails: %w", err)
 	}
 
