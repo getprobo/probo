@@ -637,7 +637,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 	baseURL := url.URL{
 		Scheme: parsedBaseURL.Scheme,
 		Host:   parsedBaseURL.Host,
-		Path:   "/trust/" + compliancePage.Slug,
+		Path:   "/trust/" + compliancePage.ID.String(),
 	}
 
 	if customDomain != nil && customDomain.SSLStatus == coredata.CustomDomainSSLStatusActive {

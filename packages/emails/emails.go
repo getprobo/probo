@@ -338,7 +338,7 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderDocumentSigning(ctx context.Context, signinURLPath string, token string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderDocumentSigning(ctx context.Context, signinURLPath string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
@@ -346,7 +346,6 @@ func (p *Presenter) RenderDocumentSigning(ctx context.Context, signinURLPath str
 
 	signingURL := baseurl.MustParse(vars.BaseURL).
 		AppendPath(signinURLPath).
-		WithQuery("token", token).
 		MustString()
 
 	data := struct {

@@ -18,14 +18,11 @@ package console_v1
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -40,7 +37,6 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 type (
@@ -195,125 +191,6 @@ func NewMux(
 			safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
 		})
 	})
-
-	r.Get(
-		"/documents/signing-requests",
-		func(w http.ResponseWriter, r *http.Request) {
-			token := r.Header.Get("Authorization")
-			if token == "" {
-				http.Error(w, "token is required", http.StatusUnauthorized)
-				return
-			}
-
-			token = strings.TrimPrefix(token, "Bearer ")
-			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](tokenSecret, probo.TokenTypeSigningRequest, token)
-			if err != nil {
-				http.Error(w, "invalid token", http.StatusUnauthorized)
-				return
-			}
-
-			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
-
-			requests, err := svc.Documents.ListSigningRequests(r.Context(), data.Data.OrganizationID, data.Data.PeopleID)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.WriteHeader(http.StatusOK)
-			if err := json.NewEncoder(w).Encode(requests); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		},
-	)
-
-	r.Get(
-		"/documents/signing-requests/{document_version_id}/pdf",
-		func(w http.ResponseWriter, r *http.Request) {
-			token := r.URL.Query().Get("token")
-			if token == "" {
-				http.Error(w, "token is required", http.StatusUnauthorized)
-				return
-			}
-
-			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](tokenSecret, probo.TokenTypeSigningRequest, token)
-			if err != nil {
-				http.Error(w, "invalid token", http.StatusUnauthorized)
-				return
-			}
-
-			documentVersionID, err := gid.ParseGID(chi.URLParam(r, "document_version_id"))
-			if err != nil {
-				http.Error(w, "invalid document version id", http.StatusBadRequest)
-				return
-			}
-
-			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
-
-			// Get the people to get their email for watermark
-			profile, err := iamSvc.OrganizationService.GetProfile(r.Context(), data.Data.PeopleID)
-			if err != nil {
-				http.Error(w, "cannot get user", http.StatusInternalServerError)
-				return
-			}
-
-			// Generate PDF with watermark
-			pdfData, err := svc.Documents.ExportPDF(r.Context(), documentVersionID, probo.ExportPDFOptions{
-				WithWatermark:  true,
-				WatermarkEmail: &profile.EmailAddress,
-				WithSignatures: false,
-			})
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			uuid, err := uuid.NewV7()
-			if err != nil {
-				http.Error(w, "cannot generate uuid", http.StatusInternalServerError)
-				return
-			}
-
-			w.Header().Set("Content-Type", "application/pdf")
-			w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s.pdf\"", uuid.String()))
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write(pdfData)
-		},
-	)
-
-	r.Post(
-		"/documents/signing-requests/{document_version_id}/sign",
-		func(w http.ResponseWriter, r *http.Request) {
-			token := r.Header.Get("Authorization")
-			if token == "" {
-				http.Error(w, "token is required", http.StatusUnauthorized)
-				return
-			}
-
-			token = strings.TrimPrefix(token, "Bearer ")
-			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](tokenSecret, probo.TokenTypeSigningRequest, token)
-			if err != nil {
-				http.Error(w, "invalid token", http.StatusUnauthorized)
-				return
-			}
-
-			documentVersionID, err := gid.ParseGID(chi.URLParam(r, "document_version_id"))
-			if err != nil {
-				http.Error(w, "invalid document version id", http.StatusBadRequest)
-				return
-			}
-
-			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
-
-			if err := svc.Documents.SignDocumentVersion(r.Context(), documentVersionID, data.Data.PeopleID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.WriteHeader(http.StatusOK)
-		},
-	)
 
 	return r
 }

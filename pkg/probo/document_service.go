@@ -13,7 +13,6 @@ import (
 	"unicode"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/jackc/pgx/v5"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
@@ -23,7 +22,6 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/watermarkpdf"
 )
@@ -79,11 +77,6 @@ type (
 		SignatoryIDs []gid.GID
 	}
 
-	SigningRequestData struct {
-		OrganizationID gid.GID `json:"organization_id"`
-		PeopleID       gid.GID `json:"people_id"`
-	}
-
 	BulkPublishVersionsRequest struct {
 		DocumentIDs []gid.GID
 		PublishedBy gid.GID
@@ -137,8 +130,6 @@ func (udvr *UpdateDocumentVersionRequest) Validate() error {
 }
 
 const (
-	TokenTypeSigningRequest = "signing_request"
-
 	documentExportEmailExpiresIn = 24 * time.Hour
 
 	maxFilenameLength = 200
@@ -593,59 +584,6 @@ func (s *DocumentService) Create(
 	return document, documentVersion, nil
 }
 
-func (s *DocumentService) ListSigningRequests(
-	ctx context.Context,
-	organizationID gid.GID,
-	profileID gid.GID,
-) ([]map[string]any, error) {
-	q := `
-SELECT
-  p.title,
-  pv.id AS document_version_id,
-  o.name AS organization_name
-FROM
-	documents p
-	INNER JOIN document_versions pv ON pv.document_id = p.id
-	INNER JOIN document_version_signatures pvs ON pvs.document_version_id = pv.id
-	INNER JOIN organizations o ON o.id = p.organization_id
-WHERE
-    p.tenant_id = $1
-	AND pvs.signed_by_profile_id = $2
-	AND pvs.signed_at IS NULL
-	AND pv.status = 'PUBLISHED'
-	AND pv.version_number = (
-		SELECT MAX(pv2.version_number)
-		FROM document_versions pv2
-		WHERE pv2.document_id = pv.document_id
-		AND pv2.status = 'PUBLISHED'
-	)
-`
-
-	var results []map[string]any
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			rows, err := conn.Query(ctx, q, s.svc.scope.GetTenantID(), profileID)
-			if err != nil {
-				return fmt.Errorf("cannot query documents: %w", err)
-			}
-
-			results, err = pgx.CollectRows(rows, pgx.RowToMap)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
-}
-
 func (s *DocumentService) SendSigningNotifications(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -664,25 +602,11 @@ func (s *DocumentService) SendSigningNotifications(
 			}
 
 			for _, signatory := range signatories {
-				token, err := statelesstoken.NewToken(
-					s.svc.tokenSecret,
-					TokenTypeSigningRequest,
-					time.Hour*24*30,
-					SigningRequestData{
-						OrganizationID: organizationID,
-						PeopleID:       signatory.ID,
-					},
-				)
-				if err != nil {
-					return fmt.Errorf("cannot create signing request token: %w", err)
-				}
-
 				emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, signatory.FullName)
 
 				subject, textBody, htmlBody, err := emailPresenter.RenderDocumentSigning(
 					ctx,
-					"/documents/signing-requests",
-					token,
+					"/organizations/"+organizationID.String()+"/employee",
 					organization.Name,
 				)
 				if err != nil {
@@ -708,31 +632,6 @@ func (s *DocumentService) SendSigningNotifications(
 
 	if err != nil {
 		return fmt.Errorf("cannot send signing notifications: %w", err)
-	}
-
-	return nil
-}
-
-func (s *DocumentService) SignDocumentVersion(
-	ctx context.Context,
-	documentVersionID gid.GID,
-	signatory gid.GID,
-) error {
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(conn pg.Conn) error {
-			var err error
-			_, err = s.signDocumentVersionInTx(ctx, conn, documentVersionID, signatory)
-			if err != nil {
-				return fmt.Errorf("cannot sign document version: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return fmt.Errorf("cannot sign document version: %w", err)
 	}
 
 	return nil
