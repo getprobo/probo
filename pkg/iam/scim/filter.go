@@ -21,7 +21,6 @@ import (
 	scimerrors "github.com/elimity-com/scim/errors"
 	scimfilter "github.com/scim2/filter-parser/v2"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/mail"
 )
 
 func ParseUserFilter(expr scimfilter.Expression) (*coredata.MembershipProfileFilter, error) {
@@ -52,15 +51,12 @@ func ParseUserFilter(expr scimfilter.Expression) (*coredata.MembershipProfileFil
 			attrName := strings.ToLower(e.AttributePath.AttributeName)
 			switch attrName {
 			case "username":
-				email, err := mail.ParseAddr(value)
-				if err != nil {
-					return nil, scimerrors.ScimErrorBadRequest(
-						fmt.Sprintf("invalid email format for userName: %s", value))
-				}
-				filter.WithEmail(&email)
+				filter.WithUserName(value)
+			case "externalid":
+				filter.WithExternalID(value)
 			default:
 				return nil, scimerrors.ScimErrorBadRequest(
-					fmt.Sprintf("attribute '%s' is not supported for filtering, only 'userName' is supported", e.AttributePath.AttributeName))
+					fmt.Sprintf("attribute '%s' is not supported for filtering, only 'userName' and 'externalId' are supported", e.AttributePath.AttributeName))
 			}
 
 		case *scimfilter.LogicalExpression:

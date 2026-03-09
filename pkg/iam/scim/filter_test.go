@@ -30,15 +30,28 @@ func TestParseUserFilter(t *testing.T) {
 		assert.Nil(t, filter.Email())
 	})
 
-	t.Run("simple userName eq filter", func(t *testing.T) {
+	t.Run("simple userName eq filter with email value", func(t *testing.T) {
 		expr, err := scimfilter.ParseFilter([]byte(`userName eq "test@example.com"`))
 		require.NoError(t, err)
 
 		filter, err := ParseUserFilter(expr)
 		require.NoError(t, err)
 		require.NotNil(t, filter)
-		require.NotNil(t, filter.Email())
-		assert.Equal(t, "test@example.com", filter.Email().String())
+		args := filter.SQLArguments()
+		require.NotNil(t, args["filter_user_name"])
+		assert.Equal(t, "test@example.com", *args["filter_user_name"].(*string))
+	})
+
+	t.Run("userName eq filter with non-email UPN", func(t *testing.T) {
+		expr, err := scimfilter.ParseFilter([]byte(`userName eq "john.doe"`))
+		require.NoError(t, err)
+
+		filter, err := ParseUserFilter(expr)
+		require.NoError(t, err)
+		require.NotNil(t, filter)
+		args := filter.SQLArguments()
+		require.NotNil(t, args["filter_user_name"])
+		assert.Equal(t, "john.doe", *args["filter_user_name"].(*string))
 	})
 
 	t.Run("userName filter is case insensitive", func(t *testing.T) {
@@ -48,8 +61,33 @@ func TestParseUserFilter(t *testing.T) {
 		filter, err := ParseUserFilter(expr)
 		require.NoError(t, err)
 		require.NotNil(t, filter)
-		require.NotNil(t, filter.Email())
-		assert.Equal(t, "test@example.com", filter.Email().String())
+		args := filter.SQLArguments()
+		require.NotNil(t, args["filter_user_name"])
+		assert.Equal(t, "test@example.com", *args["filter_user_name"].(*string))
+	})
+
+	t.Run("externalId eq filter", func(t *testing.T) {
+		expr, err := scimfilter.ParseFilter([]byte(`externalId eq "some-azure-id"`))
+		require.NoError(t, err)
+
+		filter, err := ParseUserFilter(expr)
+		require.NoError(t, err)
+		require.NotNil(t, filter)
+		args := filter.SQLArguments()
+		require.NotNil(t, args["filter_external_id"])
+		assert.Equal(t, "some-azure-id", *args["filter_external_id"].(*string))
+	})
+
+	t.Run("externalId filter is case insensitive", func(t *testing.T) {
+		expr, err := scimfilter.ParseFilter([]byte(`ExternalId eq "azure-obj-id"`))
+		require.NoError(t, err)
+
+		filter, err := ParseUserFilter(expr)
+		require.NoError(t, err)
+		require.NotNil(t, filter)
+		args := filter.SQLArguments()
+		require.NotNil(t, args["filter_external_id"])
+		assert.Equal(t, "azure-obj-id", *args["filter_external_id"].(*string))
 	})
 
 	t.Run("logical AND expression", func(t *testing.T) {
@@ -59,8 +97,8 @@ func TestParseUserFilter(t *testing.T) {
 		filter, err := ParseUserFilter(expr)
 		require.NoError(t, err)
 		require.NotNil(t, filter)
-		// Last processed value wins
-		require.NotNil(t, filter.Email())
+		args := filter.SQLArguments()
+		require.NotNil(t, args["filter_user_name"])
 	})
 
 	t.Run("unsupported operator returns error", func(t *testing.T) {
@@ -113,16 +151,21 @@ func TestParseUserFilter(t *testing.T) {
 		filter, err := ParseUserFilter(expr)
 		require.NoError(t, err)
 		require.NotNil(t, filter)
-		require.NotNil(t, filter.Email())
+		args := filter.SQLArguments()
+		require.NotNil(t, args["filter_user_name"])
 	})
 
-	t.Run("invalid email format returns error", func(t *testing.T) {
-		expr, err := scimfilter.ParseFilter([]byte(`userName eq "not-an-email"`))
+	t.Run("userName and externalId combined", func(t *testing.T) {
+		expr, err := scimfilter.ParseFilter([]byte(`userName eq "john@contoso.com" and externalId eq "abc-123"`))
 		require.NoError(t, err)
 
 		filter, err := ParseUserFilter(expr)
-		assert.Error(t, err)
-		assert.Nil(t, filter)
-		assert.Contains(t, err.Error(), "invalid email format")
+		require.NoError(t, err)
+		require.NotNil(t, filter)
+		args := filter.SQLArguments()
+		require.NotNil(t, args["filter_user_name"])
+		assert.Equal(t, "john@contoso.com", *args["filter_user_name"].(*string))
+		require.NotNil(t, args["filter_external_id"])
+		assert.Equal(t, "abc-123", *args["filter_external_id"].(*string))
 	})
 }

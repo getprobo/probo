@@ -130,9 +130,12 @@ func (s *Service) CreateUser(
 	config *coredata.SCIMConfiguration,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	email, fullName, active, title := ParseUserFromAttributes(attributes)
+	userName, email, fullName, active, title, externalId := ParseUserFromAttributes(attributes)
+	if userName == "" {
+		return scim.Resource{}, scimerrors.ScimErrorBadRequest("userName is required")
+	}
 	if email == "" {
-		return scim.Resource{}, scimerrors.ScimErrorBadRequest("userName or email is required")
+		return scim.Resource{}, scimerrors.ScimErrorBadRequest("a valid email is required (via emails array or userName)")
 	}
 
 	emailAddr, err := mail.ParseAddr(email)
@@ -146,17 +149,20 @@ func (s *Service) CreateUser(
 		profileState = coredata.ProfileStateInactive
 	}
 
+	var externalIdPtr *string
+	if externalId != "" {
+		externalIdPtr = &externalId
+	}
+
 	var membership *coredata.Membership
 	var profile *coredata.MembershipProfile
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	err = s.pg.WithTx(ctx, func(tx pg.Conn) error {
-		// Check if identity exists
 		identity := &coredata.Identity{}
 		if err := identity.LoadByEmail(ctx, tx, emailAddr); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				// Create new identity
 				identity = &coredata.Identity{
 					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 					EmailAddress:         emailAddr,
@@ -175,7 +181,6 @@ func (s *Service) CreateUser(
 			}
 		}
 
-		// Check if profile exists
 		eventType := coredata.WebhookEventTypeUserUpdated
 		profile = &coredata.MembershipProfile{}
 		if err := profile.LoadByIdentityIDAndOrganizationID(
@@ -195,12 +200,17 @@ func (s *Service) CreateUser(
 					State:          profileState,
 					FullName:       fullName,
 					Position:       &title,
+					UserName:       &userName,
+					ExternalID:     externalIdPtr,
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
 
 				err = profile.Insert(ctx, tx)
 				if err != nil {
+					if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+						return scimerrors.ScimErrorUniqueness
+					}
 					return fmt.Errorf("cannot insert profile: %w", err)
 				}
 				eventType = coredata.WebhookEventTypeUserCreated
@@ -212,6 +222,8 @@ func (s *Service) CreateUser(
 			profile.State = profileState
 			profile.FullName = fullName
 			profile.Position = &title
+			profile.UserName = &userName
+			profile.ExternalID = externalIdPtr
 			profile.UpdatedAt = now
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
@@ -219,7 +231,6 @@ func (s *Service) CreateUser(
 		}
 
 		if !active {
-			// Expire pending invitations for user
 			invitations := &coredata.Invitations{}
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 			if err := invitations.ExpireByUserID(
@@ -233,7 +244,6 @@ func (s *Service) CreateUser(
 			}
 		}
 
-		// Check if membership exists
 		membership = &coredata.Membership{}
 		if err := membership.LoadByIdentityIDAndOrganizationID(
 			ctx,
@@ -243,7 +253,6 @@ func (s *Service) CreateUser(
 			config.OrganizationID,
 		); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				// Create new membership
 				membership = &coredata.Membership{
 					ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipEntityType),
 					IdentityID:     identity.ID,
@@ -391,8 +400,8 @@ func (s *Service) ReplaceUser(
 	profileID gid.GID,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	fullName, active, title := ParseUserFromReplaceAttributes(attributes)
-	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title)
+	fullName, active, title, userName, externalId := ParseUserFromReplaceAttributes(attributes)
+	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title, userName, externalId)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -406,8 +415,8 @@ func (s *Service) PatchUser(
 	profileID gid.GID,
 	operations []scim.PatchOperation,
 ) (scim.Resource, error) {
-	fullName, active, title := ParseUserFromPatchOperations(operations)
-	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title)
+	fullName, active, title, userName, externalId := ParseUserFromPatchOperations(operations)
+	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title, userName, externalId)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -422,6 +431,8 @@ func (s *Service) updateUser(
 	fullName string,
 	active *bool,
 	title string,
+	userName *string,
+	externalId *string,
 ) (*coredata.MembershipProfile, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
@@ -464,6 +475,16 @@ func (s *Service) updateUser(
 				profile.Position = nil
 			} else {
 				profile.Position = &title
+			}
+
+			if userName != nil {
+				profile.UserName = userName
+				profile.UpdatedAt = now
+			}
+
+			if externalId != nil {
+				profile.ExternalID = externalId
+				profile.UpdatedAt = now
 			}
 
 			if shouldReactivate {
@@ -621,11 +642,11 @@ func (s *Service) createEvent(
 	return event
 }
 
-func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string, active bool, title string) {
-	userName, _ := attributes["userName"].(string)
+func ParseUserFromAttributes(attributes scim.ResourceAttributes) (userName, email, fullName string, active bool, title, externalId string) {
+	userName, _ = attributes["userName"].(string)
 	displayName, _ := attributes["displayName"].(string)
+	externalId, _ = attributes["externalId"].(string)
 
-	// Default to active if the attribute is not present.
 	active = true
 	if a, ok := attributes["active"].(bool); ok {
 		active = a
@@ -637,8 +658,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 		familyName, _ = name["familyName"].(string)
 	}
 
-	// Get email from emails array or use userName
-	email = userName
+	// Get email from emails array first
 	if emails, ok := attributes["emails"].([]any); ok && len(emails) > 0 {
 		for _, e := range emails {
 			if emailMap, ok := e.(map[string]any); ok {
@@ -650,8 +670,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 				}
 			}
 		}
-		// If no primary email found, use the first one
-		if email == userName {
+		if email == "" {
 			if emailMap, ok := emails[0].(map[string]any); ok {
 				if value, ok := emailMap["value"].(string); ok {
 					email = value
@@ -660,7 +679,13 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 		}
 	}
 
-	// Build full name: prefer displayName, then given+family, then userName
+	// Fall back to userName only if it parses as a valid email
+	if email == "" {
+		if _, err := mail.ParseAddr(userName); err == nil {
+			email = userName
+		}
+	}
+
 	fullName = displayName
 	if fullName == "" {
 		fullName = strings.TrimSpace(givenName + " " + familyName)
@@ -673,10 +698,10 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 		title = t
 	}
 
-	return email, fullName, active, title
+	return userName, email, fullName, active, title, externalId
 }
 
-func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool, title string) {
+func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool, title string, userName *string, externalId *string) {
 	displayName, _ := attributes["displayName"].(string)
 
 	var givenName, familyName string
@@ -699,10 +724,18 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullNam
 		title = t
 	}
 
-	return fullName, &activeVal, title
+	if un, ok := attributes["userName"].(string); ok && un != "" {
+		userName = &un
+	}
+
+	if eid, ok := attributes["externalId"].(string); ok && eid != "" {
+		externalId = &eid
+	}
+
+	return fullName, &activeVal, title, userName, externalId
 }
 
-func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool, title string) {
+func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool, title string, userName *string, externalId *string) {
 	var givenName, familyName string
 
 	for _, op := range operations {
@@ -712,8 +745,6 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 				path = op.Path.String()
 			}
 
-			// Handle empty path with value map (Okta style)
-			// e.g., { "op": "Replace", "value": { "active": false } }
 			if path == "" {
 				if valueMap, ok := op.Value.(map[string]any); ok {
 					if a, ok := valueMap["active"].(bool); ok {
@@ -729,6 +760,12 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 						if fn, ok := nameMap["familyName"].(string); ok {
 							familyName = fn
 						}
+					}
+					if un, ok := valueMap["userName"].(string); ok && un != "" {
+						userName = &un
+					}
+					if eid, ok := valueMap["externalId"].(string); ok && eid != "" {
+						externalId = &eid
 					}
 				}
 				continue
@@ -755,24 +792,36 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 				if t, ok := op.Value.(string); ok {
 					title = t
 				}
+			case "username":
+				if un, ok := op.Value.(string); ok && un != "" {
+					userName = &un
+				}
+			case "externalid":
+				if eid, ok := op.Value.(string); ok && eid != "" {
+					externalId = &eid
+				}
 			}
 		}
 	}
 
-	// If no displayName was set but we have name parts, build full name
 	if fullName == "" && (givenName != "" || familyName != "") {
 		fullName = strings.TrimSpace(givenName + " " + familyName)
 	}
 
-	return fullName, active, title
+	return fullName, active, title, userName, externalId
 }
 
 func userToResource(p *coredata.MembershipProfile) scim.Resource {
+	externalID := optional.NewString(p.ID.String())
+	if p.ExternalID != nil {
+		externalID = optional.NewString(*p.ExternalID)
+	}
+
 	return scim.Resource{
 		ID:         p.ID.String(),
-		ExternalID: optional.NewString(p.ID.String()),
+		ExternalID: externalID,
 		Attributes: scim.ResourceAttributes{
-			"userName":    p.EmailAddress.String(),
+			"userName":    *p.UserName,
 			"displayName": p.FullName,
 			"active":      p.State == coredata.ProfileStateActive,
 			"name": map[string]any{

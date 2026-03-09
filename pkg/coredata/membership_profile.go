@@ -44,6 +44,8 @@ type (
 		ContractStartDate        *time.Time             `db:"contract_start_date"`
 		ContractEndDate          *time.Time             `db:"contract_end_date"`
 		OrganizationName         string                 `db:"organization_name"`
+		UserName                 *string                `db:"user_name"`
+		ExternalID               *string                `db:"external_id"`
 		CreatedAt                time.Time              `db:"created_at"`
 		UpdatedAt                time.Time              `db:"updated_at"`
 	}
@@ -107,6 +109,8 @@ SELECT
     p.contract_start_date,
     p.contract_end_date,
     '' AS organization_name,
+    p.user_name,
+    p.external_id,
     p.created_at,
     p.updated_at
 FROM
@@ -165,6 +169,8 @@ SELECT
     p.contract_start_date,
     p.contract_end_date,
     '' AS organization_name,
+    p.user_name,
+    p.external_id,
     p.created_at,
     p.updated_at
 FROM
@@ -226,6 +232,8 @@ SELECT
     p.contract_start_date,
     p.contract_end_date,
     '' AS organization_name,
+    p.user_name,
+    p.external_id,
     p.created_at,
     p.updated_at
 FROM
@@ -280,6 +288,8 @@ WITH profiles AS (
         p.position,
         p.contract_start_date,
         p.contract_end_date,
+        p.user_name,
+        p.external_id,
         p.created_at,
         p.updated_at
     FROM
@@ -304,6 +314,8 @@ SELECT
     contract_start_date,
     contract_end_date,
     '' AS organization_name,
+    user_name,
+    external_id,
     created_at,
     updated_at
 FROM profiles
@@ -355,6 +367,8 @@ WITH profiles AS (
         p.position,
         p.contract_start_date,
         p.contract_end_date,
+        p.user_name,
+        p.external_id,
         p.created_at,
         p.updated_at
     FROM
@@ -378,6 +392,8 @@ SELECT
     p.contract_start_date,
     p.contract_end_date,
     o.name AS organization_name,
+    p.user_name,
+    p.external_id,
     p.created_at,
     p.updated_at
 FROM profiles p
@@ -428,6 +444,8 @@ WITH profiles AS (
         mp.position,
         mp.contract_start_date,
         mp.contract_end_date,
+        mp.user_name,
+        mp.external_id,
         mp.created_at,
         mp.updated_at
     FROM
@@ -455,6 +473,8 @@ SELECT
     p.contract_start_date,
     p.contract_end_date,
     '' AS organization_name,
+    p.user_name,
+    p.external_id,
     p.created_at,
     p.updated_at
 FROM profiles p
@@ -534,6 +554,8 @@ WITH profiles AS (
         mp.position,
         mp.contract_start_date,
         mp.contract_end_date,
+        mp.user_name,
+        mp.external_id,
         mp.created_at,
         mp.updated_at
     FROM
@@ -561,6 +583,8 @@ SELECT
     p.contract_start_date,
     p.contract_end_date,
     '' AS organization_name,
+    p.user_name,
+    p.external_id,
     p.created_at,
     p.updated_at
 FROM profiles p
@@ -641,6 +665,8 @@ WITH attendees AS (
         p.position,
         p.contract_start_date,
         p.contract_end_date,
+        p.user_name,
+        p.external_id,
         p.created_at,
         p.updated_at,
         ma.created_at AS attendee_created_at
@@ -667,6 +693,8 @@ SELECT
     contract_start_date,
     contract_end_date,
     '' AS organization_name,
+    user_name,
+    external_id,
     created_at,
     updated_at
 FROM
@@ -728,6 +756,8 @@ SELECT
     p.contract_start_date,
     p.contract_end_date,
     '' AS organization_name,
+    p.user_name,
+    p.external_id,
     p.created_at,
     p.updated_at
 FROM
@@ -881,6 +911,8 @@ INSERT INTO
         position,
         contract_start_date,
         contract_end_date,
+        user_name,
+        external_id,
         created_at,
         updated_at
     )
@@ -897,6 +929,8 @@ VALUES (
     @position,
     @contract_start_date,
     @contract_end_date,
+    @user_name,
+    @external_id,
     @created_at,
     @updated_at
 )
@@ -915,6 +949,8 @@ VALUES (
 		"position":                   p.Position,
 		"contract_start_date":        p.ContractStartDate,
 		"contract_end_date":          p.ContractEndDate,
+		"user_name":                  p.UserName,
+		"external_id":               p.ExternalID,
 		"created_at":                 p.CreatedAt,
 		"updated_at":                 p.UpdatedAt,
 	}
@@ -949,6 +985,8 @@ SET
     position = @position,
     contract_start_date = @contract_start_date,
     contract_end_date = @contract_end_date,
+    user_name = @user_name,
+    external_id = @external_id,
     updated_at = @updated_at
 WHERE
     id = @id
@@ -967,6 +1005,8 @@ WHERE
 		"position":                   p.Position,
 		"contract_start_date":        p.ContractStartDate,
 		"contract_end_date":          p.ContractEndDate,
+		"user_name":                  p.UserName,
+		"external_id":               p.ExternalID,
 		"updated_at":                 p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
