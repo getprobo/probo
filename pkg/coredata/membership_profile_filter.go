@@ -30,6 +30,7 @@ type (
 		email                 *mail.Addr
 		state                 *ProfileState
 		source                *ProfileSource
+		query                 *string
 	}
 )
 
@@ -64,17 +65,14 @@ func (f *MembershipProfileFilter) WithState(state ProfileState) *MembershipProfi
 	return f
 }
 
-func (f *MembershipProfileFilter) State() *ProfileState {
-	return f.state
-}
-
 func (f *MembershipProfileFilter) WithSource(source ProfileSource) *MembershipProfileFilter {
 	f.source = &source
 	return f
 }
 
-func (f *MembershipProfileFilter) Source() *ProfileSource {
-	return f.source
+func (f *MembershipProfileFilter) WithQuery(query string) *MembershipProfileFilter {
+	f.query = &query
+	return f
 }
 
 func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
@@ -86,12 +84,28 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 		"current_date":             f.currentDate,
 		"filter_state":             f.state,
 		"filter_source":            f.source,
+		"query":                    f.query,
 	}
 }
 
 func (f *MembershipProfileFilter) SQLFragment() string {
 	return `
 (
+	CASE
+		WHEN @query IS NOT NULL THEN
+			p.search_vector @@ (
+				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
+				FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+			)
+			OR
+			i.search_vector @@ (
+				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
+				FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+			)
+		ELSE TRUE
+	END
+)
+AND (
 	CASE
 		WHEN @with_trust_center_access::boolean IS NOT NULL AND @with_trust_center_access::boolean = TRUE THEN
 			EXISTS (SELECT 1 FROM trust_center_accesses WHERE identity_id = p.identity_id AND organization_id = p.organization_id)
