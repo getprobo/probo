@@ -336,7 +336,10 @@ func (w *SendingWorker) sendMail(ctx context.Context, to []string, msg []byte) e
 	}
 
 	if deadline, ok := ctx.Deadline(); ok {
-		conn.SetDeadline(deadline)
+		if err := conn.SetDeadline(deadline); err != nil {
+			_ = conn.Close()
+			return fmt.Errorf("cannot set connection deadline: %w", err)
+		}
 	}
 
 	c, err := smtp.NewClient(conn, host)
