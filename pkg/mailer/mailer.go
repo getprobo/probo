@@ -334,17 +334,16 @@ func (w *SendingWorker) sendMail(ctx context.Context, to []string, msg []byte) e
 	if err != nil {
 		return fmt.Errorf("connection error: %w", err)
 	}
+	defer func() { _ = conn.Close() }()
 
 	if deadline, ok := ctx.Deadline(); ok {
 		if err := conn.SetDeadline(deadline); err != nil {
-			_ = conn.Close()
 			return fmt.Errorf("cannot set connection deadline: %w", err)
 		}
 	}
 
 	c, err := smtp.NewClient(conn, host)
 	if err != nil {
-		_ = conn.Close()
 		return fmt.Errorf("SMTP client creation error: %w", err)
 	}
 	defer func() { _ = c.Quit() }()
