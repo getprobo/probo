@@ -514,25 +514,25 @@ func (impl *Implm) Run(
 	)
 
 	mailerCtx, stopMailer := context.WithCancel(context.Background())
-	mailer := mailer.NewMailer(
+	sendingWorker := mailer.NewSendingWorker(
 		pgClient,
 		fileManagerService,
-		l,
-		mailer.Config{
-			SenderEmail: impl.cfg.Notifications.Mailer.SenderEmail,
-			SenderName:  impl.cfg.Notifications.Mailer.SenderName,
+		impl.cfg.Notifications.Mailer.SenderName,
+		impl.cfg.Notifications.Mailer.SenderEmail,
+		mailer.SMTPConfig{
 			Addr:        impl.cfg.Notifications.Mailer.SMTP.Addr,
 			User:        impl.cfg.Notifications.Mailer.SMTP.User,
 			Password:    impl.cfg.Notifications.Mailer.SMTP.Password,
 			TLSRequired: impl.cfg.Notifications.Mailer.SMTP.TLSRequired,
-			Timeout:     time.Second * 10,
-			Interval:    time.Duration(impl.cfg.Notifications.Mailer.MailerInterval) * time.Second,
 		},
+		l.Named("sending-worker"),
+		mailer.WithSendingWorkerSMTPTimeout(time.Second*10),
+		mailer.WithSendingWorkerInterval(time.Duration(impl.cfg.Notifications.Mailer.MailerInterval)*time.Second),
 	)
 	wg.Go(
 		func() {
-			if err := mailer.Run(mailerCtx); err != nil {
-				cancel(fmt.Errorf("mailer crashed: %w", err))
+			if err := sendingWorker.Run(mailerCtx); err != nil {
+				cancel(fmt.Errorf("sending worker crashed: %w", err))
 			}
 		},
 	)
