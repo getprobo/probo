@@ -557,28 +557,36 @@ func (s *Service) updateUser(
 func (s *Service) DeleteUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
-	membershipID gid.GID,
+	profileID gid.GID,
 ) error {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return scimerrors.ScimErrorResourceNotFound(profileID.String())
+				}
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.OrganizationID != config.OrganizationID {
+				return scimerrors.ScimErrorResourceNotFound(profileID.String())
+			}
+
 			membership := &coredata.Membership{}
-			err := membership.LoadByID(ctx, tx, scope, membershipID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return scimerrors.ScimErrorResourceNotFound(membershipID.String())
+			if err := membership.LoadByIdentityIDAndOrganizationID(
+				ctx, tx, scope, profile.IdentityID, config.OrganizationID,
+			); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			if membership.OrganizationID != config.OrganizationID {
-				return scimerrors.ScimErrorResourceNotFound(membershipID.String())
-			}
-
-			err = membership.Delete(ctx, tx, scope, membershipID)
-			if err != nil {
+			if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
 				return fmt.Errorf("cannot delete membership: %w", err)
 			}
 
