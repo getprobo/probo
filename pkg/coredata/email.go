@@ -28,15 +28,21 @@ import (
 
 type (
 	Email struct {
-		ID             gid.GID    `db:"id"`
-		RecipientEmail string     `db:"recipient_email"`
-		RecipientName  string     `db:"recipient_name"`
-		Subject        string     `db:"subject"`
-		TextBody       string     `db:"text_body"`
-		HtmlBody       *string    `db:"html_body"`
-		CreatedAt      time.Time  `db:"created_at"`
-		UpdatedAt      time.Time  `db:"updated_at"`
-		SentAt         *time.Time `db:"sent_at"`
+		ID                  gid.GID     `db:"id"`
+		RecipientEmail      string      `db:"recipient_email"`
+		RecipientName       string      `db:"recipient_name"`
+		Subject             string      `db:"subject"`
+		TextBody            string      `db:"text_body"`
+		HtmlBody            *string     `db:"html_body"`
+		Status              EmailStatus `db:"status"`
+		ProcessingStartedAt *time.Time  `db:"processing_started_at"`
+		AttemptCount        int         `db:"attempt_count"`
+		MaxAttempts         int         `db:"max_attempts"`
+		LastAttemptedAt     *time.Time  `db:"last_attempted_at"`
+		LastError           *string     `db:"last_error"`
+		CreatedAt           time.Time   `db:"created_at"`
+		UpdatedAt           time.Time   `db:"updated_at"`
+		SentAt              *time.Time  `db:"sent_at"`
 	}
 )
 
@@ -65,6 +71,9 @@ func NewEmail(
 		Subject:        subject,
 		TextBody:       textBody,
 		HtmlBody:       htmlBody,
+		Status:         EmailStatusPending,
+		AttemptCount:   0,
+		MaxAttempts:    10,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -75,8 +84,14 @@ func (e *Email) Insert(
 	conn pg.Conn,
 ) error {
 	q := `
-INSERT INTO emails (id, recipient_email, recipient_name, subject, text_body, html_body, created_at, updated_at)
-VALUES (@id, @recipient_email, @recipient_name, @subject, @text_body, @html_body, @created_at, @updated_at)
+INSERT INTO emails (
+	id, recipient_email, recipient_name, subject, text_body, html_body,
+	status, attempt_count, max_attempts, created_at, updated_at
+)
+VALUES (
+	@id, @recipient_email, @recipient_name, @subject, @text_body, @html_body,
+	@status, @attempt_count, @max_attempts, @created_at, @updated_at
+)
 	`
 
 	args := pgx.StrictNamedArgs{
@@ -86,6 +101,9 @@ VALUES (@id, @recipient_email, @recipient_name, @subject, @text_body, @html_body
 		"subject":         e.Subject,
 		"text_body":       e.TextBody,
 		"html_body":       e.HtmlBody,
+		"status":          e.Status,
+		"attempt_count":   e.AttemptCount,
+		"max_attempts":    e.MaxAttempts,
 		"created_at":      e.CreatedAt,
 		"updated_at":      e.UpdatedAt,
 	}
@@ -94,17 +112,20 @@ VALUES (@id, @recipient_email, @recipient_name, @subject, @text_body, @html_body
 	return err
 }
 
-func (e *Email) LoadNextUnsentForUpdate(
+func (e *Email) LoadNextPendingForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Conn,
 ) error {
 	q := `
-SELECT id, recipient_email, recipient_name, subject, text_body, html_body, created_at, updated_at, sent_at
+SELECT
+	id, recipient_email, recipient_name, subject, text_body, html_body,
+	status, processing_started_at, attempt_count, max_attempts,
+	last_attempted_at, last_error, created_at, updated_at, sent_at
 FROM emails
-WHERE sent_at IS NULL
+WHERE status = 'PENDING' AND attempt_count < max_attempts
 ORDER BY created_at ASC
 LIMIT 1
-FOR UPDATE
+FOR UPDATE SKIP LOCKED
 	`
 
 	rows, err := conn.Query(ctx, q)
@@ -132,16 +153,47 @@ func (e *Email) Update(
 ) error {
 	q := `
 UPDATE emails
-SET sent_at = @sent_at, updated_at = @updated_at
+SET
+	status = @status,
+	processing_started_at = @processing_started_at,
+	attempt_count = @attempt_count,
+	last_attempted_at = @last_attempted_at,
+	last_error = @last_error,
+	sent_at = @sent_at,
+	updated_at = @updated_at
 WHERE id = @id
 	`
 
 	args := pgx.StrictNamedArgs{
-		"id":         e.ID,
-		"sent_at":    e.SentAt,
-		"updated_at": e.UpdatedAt,
+		"id":                    e.ID,
+		"status":                e.Status,
+		"processing_started_at": e.ProcessingStartedAt,
+		"attempt_count":         e.AttemptCount,
+		"last_attempted_at":     e.LastAttemptedAt,
+		"last_error":            e.LastError,
+		"sent_at":               e.SentAt,
+		"updated_at":            e.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
+}
+
+func ResetStaleProcessingEmails(
+	ctx context.Context,
+	conn pg.Conn,
+	staleAfter time.Duration,
+) error {
+	q := `
+UPDATE emails
+SET status = 'PENDING', processing_started_at = NULL, updated_at = NOW()
+WHERE status = 'PROCESSING'
+	AND processing_started_at < NOW() - $1::interval
+`
+	_, err := conn.Exec(ctx, q, staleAfter)
+	if err != nil {
+		return fmt.Errorf("cannot reset stale processing emails: %w", err)
+	}
+
+	return nil
 }
