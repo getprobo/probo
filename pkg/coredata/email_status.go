@@ -58,12 +58,14 @@ func (s EmailStatus) String() string {
 }
 
 func (s *EmailStatus) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for EmailStatus, expected string got %T", value)
+	switch v := value.(type) {
+	case string:
+		return s.UnmarshalText([]byte(v))
+	case []byte:
+		return s.UnmarshalText(v)
+	default:
+		return fmt.Errorf("invalid scan source for EmailStatus, expected string or []byte got %T", value)
 	}
-
-	return s.UnmarshalText([]byte(val))
 }
 
 func (s EmailStatus) Value() (driver.Value, error) {
