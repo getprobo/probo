@@ -120,13 +120,6 @@ const routes = [
     ],
   },
   {
-    path: "documents/signing-requests",
-    ErrorBoundary: RootErrorBoundary,
-    Component: lazy(
-      () => import("./pages/DocumentSigningRequestsPage"),
-    ),
-  },
-  {
     path: "/organizations/:organizationId",
     children: [
       {
