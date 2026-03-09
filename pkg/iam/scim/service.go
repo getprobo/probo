@@ -296,10 +296,7 @@ func (s *Service) GetUser(
 ) (scim.Resource, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	var (
-		profile    *coredata.MembershipProfile
-		membership *coredata.Membership
-	)
+	var profile *coredata.MembershipProfile
 
 	err := s.pg.WithConn(
 		ctx,
@@ -309,22 +306,11 @@ func (s *Service) GetUser(
 				if err == coredata.ErrResourceNotFound {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
-				return fmt.Errorf("cannot load membership: %w", err)
+				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
 			if profile.OrganizationID != config.OrganizationID {
 				return scimerrors.ScimErrorResourceNotFound(profileID.String())
-			}
-
-			membership = &coredata.Membership{}
-			if err := membership.LoadByIdentityIDAndOrganizationID(
-				ctx,
-				conn,
-				scope,
-				profile.IdentityID,
-				profile.OrganizationID,
-			); err != nil {
-				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
 			return nil
@@ -580,18 +566,37 @@ func (s *Service) DeleteUser(
 				return scimerrors.ScimErrorResourceNotFound(profileID.String())
 			}
 
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				scope,
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
 			membership := &coredata.Membership{}
 			if err := membership.LoadByIdentityIDAndOrganizationID(
 				ctx, tx, scope, profile.IdentityID, config.OrganizationID,
 			); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return scimerrors.ScimErrorResourceNotFound(profileID.String())
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load membership: %w", err)
 				}
-				return fmt.Errorf("cannot load membership: %w", err)
+			} else {
+				if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
+					return fmt.Errorf("cannot delete membership: %w", err)
+				}
 			}
 
-			if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
-				return fmt.Errorf("cannot delete membership: %w", err)
+			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
+				return fmt.Errorf("cannot delete profile: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil
