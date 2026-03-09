@@ -28,6 +28,8 @@ type (
 		excludeContractEnded  *bool
 		currentDate           time.Time
 		email                 *mail.Addr
+		userName              *string
+		externalID            *string
 		state                 *ProfileState
 		source                *ProfileSource
 	}
@@ -59,6 +61,16 @@ func (f *MembershipProfileFilter) Email() *mail.Addr {
 	return f.email
 }
 
+func (f *MembershipProfileFilter) WithUserName(userName string) *MembershipProfileFilter {
+	f.userName = &userName
+	return f
+}
+
+func (f *MembershipProfileFilter) WithExternalID(externalID string) *MembershipProfileFilter {
+	f.externalID = &externalID
+	return f
+}
+
 func (f *MembershipProfileFilter) WithState(state ProfileState) *MembershipProfileFilter {
 	f.state = &state
 	return f
@@ -80,6 +92,8 @@ func (f *MembershipProfileFilter) Source() *ProfileSource {
 func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
 		"filter_email":             f.email,
+		"filter_user_name":         f.userName,
+		"filter_external_id":       f.externalID,
 		"with_membership":          f.withMembership,
 		"with_trust_center_access": f.withTrustCenterAccess,
 		"exclude_contract_ended":   f.excludeContractEnded,
@@ -134,6 +148,20 @@ AND (
 	CASE
 		WHEN @filter_source::text IS NOT NULL THEN
 			p.source = @filter_source::text
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_user_name::text IS NOT NULL THEN
+			p.user_name = @filter_user_name::text
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_external_id::text IS NOT NULL THEN
+			p.external_id = @filter_external_id::text
 		ELSE TRUE
 	END
 )
