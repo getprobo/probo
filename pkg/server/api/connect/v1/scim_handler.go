@@ -23,6 +23,7 @@ import (
 	"github.com/elimity-com/scim"
 	scimerrors "github.com/elimity-com/scim/errors"
 	"github.com/elimity-com/scim/optional"
+	"github.com/elimity-com/scim/schema"
 	scimfilter "github.com/scim2/filter-parser/v2"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -71,6 +72,8 @@ func scimConfigFromContext(ctx context.Context) *coredata.SCIMConfiguration {
 
 // NewSCIMServer creates a new SCIM server using elimity-com/scim
 func NewSCIMServer(h *SCIMHandler) http.Handler {
+	schema.SetAllowStringValues(true)
+
 	resourceTypes := []scim.ResourceType{
 		{
 			ID:          optional.NewString("User"),
@@ -78,7 +81,10 @@ func NewSCIMServer(h *SCIMHandler) http.Handler {
 			Endpoint:    "/Users",
 			Description: optional.NewString("User Account"),
 			Schema:      scimservice.UserSchema(),
-			Handler:     &scimResourceHandler{handler: h},
+			SchemaExtensions: []scim.SchemaExtension{
+				{Schema: scimservice.EnterpriseUserSchema()},
+			},
+			Handler: &scimResourceHandler{handler: h},
 		},
 	}
 

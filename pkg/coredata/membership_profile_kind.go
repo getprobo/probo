@@ -20,13 +20,13 @@ import (
 )
 
 type (
-	MembershipProfileKind uint8
+	MembershipProfileKind string
 )
 
 const (
-	MembershipProfileKindEmployee MembershipProfileKind = iota
-	MembershipProfileKindContractor
-	MembershipProfileKindServiceAccount
+	MembershipProfileKindEmployee       MembershipProfileKind = "EMPLOYEE"
+	MembershipProfileKindContractor     MembershipProfileKind = "CONTRACTOR"
+	MembershipProfileKindServiceAccount MembershipProfileKind = "SERVICE_ACCOUNT"
 )
 
 func MembershipProfileKinds() []MembershipProfileKind {
@@ -38,55 +38,30 @@ func MembershipProfileKinds() []MembershipProfileKind {
 }
 
 func (mpk MembershipProfileKind) MarshalText() ([]byte, error) {
-	return []byte(mpk.String()), nil
+	return []byte(mpk), nil
 }
 
 func (mpk *MembershipProfileKind) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case MembershipProfileKindEmployee.String():
-		*mpk = MembershipProfileKindEmployee
-	case MembershipProfileKindContractor.String():
-		*mpk = MembershipProfileKindContractor
-	case MembershipProfileKindServiceAccount.String():
-		*mpk = MembershipProfileKindServiceAccount
-	default:
-		return fmt.Errorf("invalid MembershipProfileKind value: %q", val)
-	}
-
+	*mpk = MembershipProfileKind(data)
 	return nil
 }
 
 func (mpk MembershipProfileKind) String() string {
-	var val string
-
-	switch mpk {
-	case MembershipProfileKindEmployee:
-		val = "EMPLOYEE"
-	case MembershipProfileKindContractor:
-		val = "CONTRACTOR"
-	case MembershipProfileKindServiceAccount:
-		val = "SERVICE_ACCOUNT"
-	}
-
-	return val
+	return string(mpk)
 }
 
 func (mpk *MembershipProfileKind) Scan(value any) error {
-	var val string
 	switch v := value.(type) {
 	case string:
-		val = v
+		*mpk = MembershipProfileKind(v)
 	case []byte:
-		val = string(v)
+		*mpk = MembershipProfileKind(v)
 	default:
 		return fmt.Errorf("unsupported type for MembershipProfileKind: %T", value)
 	}
-
-	return mpk.UnmarshalText([]byte(val))
+	return nil
 }
 
 func (mpk MembershipProfileKind) Value() (driver.Value, error) {
-	return mpk.String(), nil
+	return string(mpk), nil
 }

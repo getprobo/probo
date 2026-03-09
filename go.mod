@@ -14,7 +14,6 @@ require (
 	github.com/chromedp/chromedp v0.14.2
 	github.com/crewjam/saml v0.5.1
 	github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea
-	github.com/elimity-com/scim v0.0.0-20240320110924-172bf2aee9c8
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
 	github.com/jackc/pgx/v5 v5.8.0
@@ -70,6 +69,7 @@ require (
 	github.com/di-wu/xsd-datetime v1.0.0 // indirect
 	github.com/digitorus/pkcs7 v0.0.0-20230713084857-e76b763bdc49 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
+	github.com/elimity-com/scim v0.0.0-20240320110924-172bf2aee9c8
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
@@ -155,3 +155,5 @@ tool (
 )
 
 replace github.com/olekukonko/tablewriter => github.com/olekukonko/tablewriter v0.0.5
+
+replace github.com/elimity-com/scim => github.com/getprobo/scim v0.0.0-20260309220528-a952b258e8d3

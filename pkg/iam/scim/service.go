@@ -32,6 +32,7 @@ import (
 	scimfilter "github.com/scim2/filter-parser/v2"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
@@ -130,28 +131,28 @@ func (s *Service) CreateUser(
 	config *coredata.SCIMConfiguration,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	userName, email, fullName, active, title, externalId := ParseUserFromAttributes(attributes)
-	if userName == "" {
+	attrs := ParseUserFromAttributes(attributes)
+	if attrs.UserName == "" {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("userName is required")
 	}
-	if email == "" {
+	if attrs.Email == "" {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("a valid email is required (via emails array or userName)")
 	}
 
-	emailAddr, err := mail.ParseAddr(email)
+	emailAddr, err := mail.ParseAddr(attrs.Email)
 	if err != nil {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("invalid email format")
 	}
 	now := time.Now()
 
 	profileState := coredata.ProfileStateActive
-	if !active {
+	if !attrs.Active {
 		profileState = coredata.ProfileStateInactive
 	}
 
 	var externalIdPtr *string
-	if externalId != "" {
-		externalIdPtr = &externalId
+	if attrs.ExternalID != "" {
+		externalIdPtr = &attrs.ExternalID
 	}
 
 	var membership *coredata.Membership
@@ -166,7 +167,7 @@ func (s *Service) CreateUser(
 				identity = &coredata.Identity{
 					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 					EmailAddress:         emailAddr,
-					FullName:             fullName,
+					FullName:             attrs.FullName,
 					HashedPassword:       nil,
 					EmailAddressVerified: false,
 					CreatedAt:            now,
@@ -192,18 +193,39 @@ func (s *Service) CreateUser(
 		); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				profile = &coredata.MembershipProfile{
-					ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
-					IdentityID:     identity.ID,
-					OrganizationID: config.OrganizationID,
-					EmailAddress:   emailAddr,
-					Source:         coredata.ProfileSourceSCIM,
-					State:          profileState,
-					FullName:       fullName,
-					Position:       &title,
-					UserName:       &userName,
-					ExternalID:     externalIdPtr,
-					CreatedAt:      now,
-					UpdatedAt:      now,
+					ID:                     gid.New(config.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
+					IdentityID:             identity.ID,
+					OrganizationID:         config.OrganizationID,
+					EmailAddress:           emailAddr,
+					Source:                 coredata.ProfileSourceSCIM,
+					State:                  profileState,
+					FullName:               attrs.FullName,
+					Position:               &attrs.Title,
+					UserName:               &attrs.UserName,
+					ExternalID:             externalIdPtr,
+					NickName:               ref.RefOrNil(attrs.NickName),
+					Locale:                 ref.RefOrNil(attrs.Locale),
+					Timezone:               ref.RefOrNil(attrs.Timezone),
+					ProfileUrl:             ref.RefOrNil(attrs.ProfileUrl),
+					PreferredLanguage:      ref.RefOrNil(attrs.PreferredLanguage),
+					GivenName:              ref.RefOrNil(attrs.GivenName),
+					FamilyName:             ref.RefOrNil(attrs.FamilyName),
+					FormattedName:          ref.RefOrNil(attrs.FormattedName),
+					MiddleName:             ref.RefOrNil(attrs.MiddleName),
+					HonorificPrefix:        ref.RefOrNil(attrs.HonorificPrefix),
+					HonorificSuffix:        ref.RefOrNil(attrs.HonorificSuffix),
+					EmployeeNumber:         ref.RefOrNil(attrs.EmployeeNumber),
+					Department:             ref.RefOrNil(attrs.Department),
+					CostCenter:             ref.RefOrNil(attrs.CostCenter),
+					EnterpriseOrganization: ref.RefOrNil(attrs.EnterpriseOrganization),
+					Division:               ref.RefOrNil(attrs.Division),
+					ManagerValue:           ref.RefOrNil(attrs.ManagerValue),
+					CreatedAt:              now,
+					UpdatedAt:              now,
+				}
+				if attrs.UserType != "" {
+					kind := coredata.MembershipProfileKind(attrs.UserType)
+					profile.Kind = &kind
 				}
 
 				err = profile.Insert(ctx, tx)
@@ -224,17 +246,38 @@ func (s *Service) CreateUser(
 
 			profile.Source = coredata.ProfileSourceSCIM
 			profile.State = profileState
-			profile.FullName = fullName
-			profile.Position = &title
-			profile.UserName = &userName
+			profile.FullName = attrs.FullName
+			profile.Position = &attrs.Title
+			profile.UserName = &attrs.UserName
 			profile.ExternalID = externalIdPtr
+			profile.NickName = ref.RefOrNil(attrs.NickName)
+			profile.Locale = ref.RefOrNil(attrs.Locale)
+			profile.Timezone = ref.RefOrNil(attrs.Timezone)
+			profile.ProfileUrl = ref.RefOrNil(attrs.ProfileUrl)
+			profile.PreferredLanguage = ref.RefOrNil(attrs.PreferredLanguage)
+			profile.GivenName = ref.RefOrNil(attrs.GivenName)
+			profile.FamilyName = ref.RefOrNil(attrs.FamilyName)
+			profile.FormattedName = ref.RefOrNil(attrs.FormattedName)
+			profile.MiddleName = ref.RefOrNil(attrs.MiddleName)
+			profile.HonorificPrefix = ref.RefOrNil(attrs.HonorificPrefix)
+			profile.HonorificSuffix = ref.RefOrNil(attrs.HonorificSuffix)
+			profile.EmployeeNumber = ref.RefOrNil(attrs.EmployeeNumber)
+			profile.Department = ref.RefOrNil(attrs.Department)
+			profile.CostCenter = ref.RefOrNil(attrs.CostCenter)
+			profile.EnterpriseOrganization = ref.RefOrNil(attrs.EnterpriseOrganization)
+			profile.Division = ref.RefOrNil(attrs.Division)
+			profile.ManagerValue = ref.RefOrNil(attrs.ManagerValue)
 			profile.UpdatedAt = now
+			if attrs.UserType != "" {
+				kind := coredata.MembershipProfileKind(attrs.UserType)
+				profile.Kind = &kind
+			}
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 		}
 
-		if !active {
+		if !attrs.Active {
 			invitations := &coredata.Invitations{}
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 			if err := invitations.ExpireByUserID(
@@ -390,8 +433,8 @@ func (s *Service) ReplaceUser(
 	profileID gid.GID,
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
-	fullName, active, title, userName, externalId := ParseUserFromReplaceAttributes(attributes)
-	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title, userName, externalId)
+	attrs := ParseUserFromReplaceAttributes(attributes)
+	profile, err := s.updateUser(ctx, config, profileID, attrs)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -405,8 +448,31 @@ func (s *Service) PatchUser(
 	profileID gid.GID,
 	operations []scim.PatchOperation,
 ) (scim.Resource, error) {
-	fullName, active, title, userName, externalId := ParseUserFromPatchOperations(operations)
-	profile, err := s.updateUser(ctx, config, profileID, fullName, active, title, userName, externalId)
+	for i, op := range operations {
+		path := "<nil>"
+		if op.Path != nil {
+			path = op.Path.String()
+		}
+		s.logger.InfoCtx(ctx, "SCIM PATCH operation",
+			log.String("op_index", fmt.Sprintf("%d", i)),
+			log.String("op", op.Op),
+			log.String("path", path),
+			log.String("value_type", fmt.Sprintf("%T", op.Value)),
+			log.String("value", fmt.Sprintf("%v", op.Value)),
+		)
+	}
+
+	attrs := ParseUserFromPatchOperations(operations)
+
+	s.logger.InfoCtx(ctx, "SCIM PATCH parsed attributes",
+		log.String("given_name", fmt.Sprintf("%v", attrs.GivenName)),
+		log.String("family_name", fmt.Sprintf("%v", attrs.FamilyName)),
+		log.String("formatted_name", fmt.Sprintf("%v", attrs.FormattedName)),
+		log.String("employee_number", fmt.Sprintf("%v", attrs.EmployeeNumber)),
+		log.String("department", fmt.Sprintf("%v", attrs.Department)),
+	)
+
+	profile, err := s.updateUser(ctx, config, profileID, attrs)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -418,11 +484,7 @@ func (s *Service) updateUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
 	profileID gid.GID,
-	fullName string,
-	active *bool,
-	title string,
-	userName *string,
-	externalId *string,
+	attrs scimReplaceAttributes,
 ) (*coredata.MembershipProfile, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
@@ -453,29 +515,198 @@ func (s *Service) updateUser(
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			shouldReactivate := active != nil && *active && profile.State == coredata.ProfileStateInactive
-			shouldDeactivate := active != nil && !*active && profile.State == coredata.ProfileStateActive
+			shouldReactivate := attrs.Active != nil && *attrs.Active && profile.State == coredata.ProfileStateInactive
+			shouldDeactivate := attrs.Active != nil && !*attrs.Active && profile.State == coredata.ProfileStateActive
 
-			if fullName != "" {
-				profile.FullName = fullName
+			if attrs.FullName != "" {
+				profile.FullName = attrs.FullName
 				profile.UpdatedAt = now
 			}
 
-			if title == "" {
+		if attrs.Title != nil {
+			if *attrs.Title == "" {
 				profile.Position = nil
 			} else {
-				profile.Position = &title
+				profile.Position = attrs.Title
 			}
+		}
 
-			if userName != nil {
-				profile.UserName = userName
+			if attrs.UserName != nil {
+				profile.UserName = attrs.UserName
 				profile.UpdatedAt = now
 			}
 
-			if externalId != nil {
-				profile.ExternalID = externalId
-				profile.UpdatedAt = now
+		if attrs.ExternalID != nil {
+			if *attrs.ExternalID == "" {
+				profile.ExternalID = nil
+			} else {
+				profile.ExternalID = attrs.ExternalID
 			}
+			profile.UpdatedAt = now
+		}
+
+		if attrs.UserType != nil {
+			if *attrs.UserType == "" {
+				profile.Kind = nil
+			} else {
+				kind := coredata.MembershipProfileKind(*attrs.UserType)
+				profile.Kind = &kind
+			}
+			profile.UpdatedAt = now
+		}
+
+		if attrs.NickName != nil {
+			if *attrs.NickName == "" {
+				profile.NickName = nil
+			} else {
+				profile.NickName = attrs.NickName
+			}
+			profile.UpdatedAt = now
+		}
+
+		if attrs.Locale != nil {
+			if *attrs.Locale == "" {
+				profile.Locale = nil
+			} else {
+				profile.Locale = attrs.Locale
+			}
+			profile.UpdatedAt = now
+		}
+
+		if attrs.Timezone != nil {
+			if *attrs.Timezone == "" {
+				profile.Timezone = nil
+			} else {
+				profile.Timezone = attrs.Timezone
+			}
+			profile.UpdatedAt = now
+		}
+
+	if attrs.ProfileUrl != nil {
+		if *attrs.ProfileUrl == "" {
+			profile.ProfileUrl = nil
+		} else {
+			profile.ProfileUrl = attrs.ProfileUrl
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.PreferredLanguage != nil {
+		if *attrs.PreferredLanguage == "" {
+			profile.PreferredLanguage = nil
+		} else {
+			profile.PreferredLanguage = attrs.PreferredLanguage
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.GivenName != nil {
+		if *attrs.GivenName == "" {
+			profile.GivenName = nil
+		} else {
+			profile.GivenName = attrs.GivenName
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.FamilyName != nil {
+		if *attrs.FamilyName == "" {
+			profile.FamilyName = nil
+		} else {
+			profile.FamilyName = attrs.FamilyName
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.FormattedName != nil {
+		if *attrs.FormattedName == "" {
+			profile.FormattedName = nil
+		} else {
+			profile.FormattedName = attrs.FormattedName
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.MiddleName != nil {
+		if *attrs.MiddleName == "" {
+			profile.MiddleName = nil
+		} else {
+			profile.MiddleName = attrs.MiddleName
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.HonorificPrefix != nil {
+		if *attrs.HonorificPrefix == "" {
+			profile.HonorificPrefix = nil
+		} else {
+			profile.HonorificPrefix = attrs.HonorificPrefix
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.HonorificSuffix != nil {
+		if *attrs.HonorificSuffix == "" {
+			profile.HonorificSuffix = nil
+		} else {
+			profile.HonorificSuffix = attrs.HonorificSuffix
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.EmployeeNumber != nil {
+		if *attrs.EmployeeNumber == "" {
+			profile.EmployeeNumber = nil
+		} else {
+			profile.EmployeeNumber = attrs.EmployeeNumber
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.Department != nil {
+		if *attrs.Department == "" {
+			profile.Department = nil
+		} else {
+			profile.Department = attrs.Department
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.CostCenter != nil {
+		if *attrs.CostCenter == "" {
+			profile.CostCenter = nil
+		} else {
+			profile.CostCenter = attrs.CostCenter
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.EnterpriseOrganization != nil {
+		if *attrs.EnterpriseOrganization == "" {
+			profile.EnterpriseOrganization = nil
+		} else {
+			profile.EnterpriseOrganization = attrs.EnterpriseOrganization
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.Division != nil {
+		if *attrs.Division == "" {
+			profile.Division = nil
+		} else {
+			profile.Division = attrs.Division
+		}
+		profile.UpdatedAt = now
+	}
+
+	if attrs.ManagerValue != nil {
+		if *attrs.ManagerValue == "" {
+			profile.ManagerValue = nil
+		} else {
+			profile.ManagerValue = attrs.ManagerValue
+		}
+		profile.UpdatedAt = now
+	}
 
 			if shouldReactivate {
 				profile.State = coredata.ProfileStateActive
@@ -495,7 +726,6 @@ func (s *Service) updateUser(
 			}
 
 			if shouldDeactivate {
-				// Expire pending invitations for user
 				invitations := &coredata.Invitations{}
 				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 				if err := invitations.ExpireByUserID(
@@ -511,7 +741,7 @@ func (s *Service) updateUser(
 
 			needsUpdate := shouldReactivate || shouldDeactivate
 
-			if active != nil {
+			if attrs.Active != nil {
 				identity := &coredata.Identity{}
 				if err := identity.LoadByID(ctx, tx, membership.IdentityID); err != nil {
 					return fmt.Errorf("cannot load identity: %w", err)
@@ -659,103 +889,302 @@ func (s *Service) createEvent(
 	return event
 }
 
-func ParseUserFromAttributes(attributes scim.ResourceAttributes) (userName, email, fullName string, active bool, title, externalId string) {
-	userName, _ = attributes["userName"].(string)
-	displayName, _ := attributes["displayName"].(string)
-	externalId, _ = attributes["externalId"].(string)
+type scimUserAttributes struct {
+	UserName               string
+	Email                  string
+	FullName               string
+	Active                 bool
+	Title                  string
+	ExternalID             string
+	UserType               string
+	NickName               string
+	Locale                 string
+	Timezone               string
+	ProfileUrl             string
+	PreferredLanguage      string
+	GivenName              string
+	FamilyName             string
+	FormattedName          string
+	MiddleName             string
+	HonorificPrefix        string
+	HonorificSuffix        string
+	EmployeeNumber         string
+	Department             string
+	CostCenter             string
+	EnterpriseOrganization string
+	Division               string
+	ManagerValue           string
+}
 
-	active = true
+func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttributes {
+	var attrs scimUserAttributes
+
+	attrs.UserName, _ = attributes["userName"].(string)
+	displayName, _ := attributes["displayName"].(string)
+	attrs.ExternalID, _ = attributes["externalId"].(string)
+
+	attrs.Active = true
 	if a, ok := attributes["active"].(bool); ok {
-		active = a
+		attrs.Active = a
 	}
 
 	var givenName, familyName string
 	if name, ok := attributes["name"].(map[string]any); ok {
 		givenName, _ = name["givenName"].(string)
 		familyName, _ = name["familyName"].(string)
+		attrs.FormattedName, _ = name["formatted"].(string)
+		attrs.MiddleName, _ = name["middleName"].(string)
+		attrs.HonorificPrefix, _ = name["honorificPrefix"].(string)
+		attrs.HonorificSuffix, _ = name["honorificSuffix"].(string)
 	}
+	attrs.GivenName = givenName
+	attrs.FamilyName = familyName
 
-	// Get email from emails array first
 	if emails, ok := attributes["emails"].([]any); ok && len(emails) > 0 {
 		for _, e := range emails {
 			if emailMap, ok := e.(map[string]any); ok {
 				if primary, _ := emailMap["primary"].(bool); primary {
 					if value, ok := emailMap["value"].(string); ok {
-						email = value
+						attrs.Email = value
 						break
 					}
 				}
 			}
 		}
-		if email == "" {
+		if attrs.Email == "" {
 			if emailMap, ok := emails[0].(map[string]any); ok {
 				if value, ok := emailMap["value"].(string); ok {
-					email = value
+					attrs.Email = value
 				}
 			}
 		}
 	}
 
-	// Fall back to userName only if it parses as a valid email
-	if email == "" {
-		if _, err := mail.ParseAddr(userName); err == nil {
-			email = userName
+	if attrs.Email == "" {
+		if _, err := mail.ParseAddr(attrs.UserName); err == nil {
+			attrs.Email = attrs.UserName
 		}
 	}
 
-	fullName = displayName
-	if fullName == "" {
-		fullName = strings.TrimSpace(givenName + " " + familyName)
+	attrs.FullName = displayName
+	if attrs.FullName == "" {
+		attrs.FullName = strings.TrimSpace(givenName + " " + familyName)
 	}
-	if fullName == "" {
-		fullName = userName
-	}
-
-	if t, ok := attributes["title"].(string); ok {
-		title = t
+	if attrs.FullName == "" {
+		attrs.FullName = attrs.UserName
 	}
 
-	return userName, email, fullName, active, title, externalId
+	attrs.Title, _ = attributes["title"].(string)
+	attrs.UserType, _ = attributes["userType"].(string)
+	attrs.NickName, _ = attributes["nickName"].(string)
+	attrs.Locale, _ = attributes["locale"].(string)
+	attrs.Timezone, _ = attributes["timezone"].(string)
+	attrs.ProfileUrl, _ = attributes["profileUrl"].(string)
+	attrs.PreferredLanguage, _ = attributes["preferredLanguage"].(string)
+
+	if enterprise, ok := attributes["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].(map[string]any); ok {
+		attrs.EmployeeNumber, _ = enterprise["employeeNumber"].(string)
+		attrs.Department, _ = enterprise["department"].(string)
+		attrs.CostCenter, _ = enterprise["costCenter"].(string)
+		attrs.EnterpriseOrganization, _ = enterprise["organization"].(string)
+		attrs.Division, _ = enterprise["division"].(string)
+		if manager, ok := enterprise["manager"].(map[string]any); ok {
+			attrs.ManagerValue, _ = manager["value"].(string)
+		}
+	}
+
+	return attrs
 }
 
-func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool, title string, userName *string, externalId *string) {
+type scimReplaceAttributes struct {
+	FullName               string
+	Active                 *bool
+	Title                  *string
+	UserName               *string
+	ExternalID             *string
+	UserType               *string
+	NickName               *string
+	Locale                 *string
+	Timezone               *string
+	ProfileUrl             *string
+	PreferredLanguage      *string
+	GivenName              *string
+	FamilyName             *string
+	FormattedName          *string
+	MiddleName             *string
+	HonorificPrefix        *string
+	HonorificSuffix        *string
+	EmployeeNumber         *string
+	Department             *string
+	CostCenter             *string
+	EnterpriseOrganization *string
+	Division               *string
+	ManagerValue           *string
+}
+
+func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimReplaceAttributes {
+	var attrs scimReplaceAttributes
 	displayName, _ := attributes["displayName"].(string)
 
 	var givenName, familyName string
 	if name, ok := attributes["name"].(map[string]any); ok {
 		givenName, _ = name["givenName"].(string)
 		familyName, _ = name["familyName"].(string)
+		if fn, ok := name["formatted"].(string); ok {
+			attrs.FormattedName = &fn
+		}
+		if mn, ok := name["middleName"].(string); ok {
+			attrs.MiddleName = &mn
+		}
+		if hp, ok := name["honorificPrefix"].(string); ok {
+			attrs.HonorificPrefix = &hp
+		}
+		if hs, ok := name["honorificSuffix"].(string); ok {
+			attrs.HonorificSuffix = &hs
+		}
 	}
+	attrs.GivenName = &givenName
+	attrs.FamilyName = &familyName
 
-	fullName = displayName
-	if fullName == "" {
-		fullName = strings.TrimSpace(givenName + " " + familyName)
+	attrs.FullName = displayName
+	if attrs.FullName == "" {
+		attrs.FullName = strings.TrimSpace(givenName + " " + familyName)
 	}
 
 	activeVal := true
 	if a, ok := attributes["active"].(bool); ok {
 		activeVal = a
 	}
+	attrs.Active = &activeVal
 
-	if t, ok := attributes["title"].(string); ok {
-		title = t
-	}
+	t, _ := attributes["title"].(string)
+	attrs.Title = &t
 
 	if un, ok := attributes["userName"].(string); ok && un != "" {
-		userName = &un
+		attrs.UserName = &un
 	}
 
 	if eid, ok := attributes["externalId"].(string); ok && eid != "" {
-		externalId = &eid
+		attrs.ExternalID = &eid
 	}
 
-	return fullName, &activeVal, title, userName, externalId
+	if ut, ok := attributes["userType"].(string); ok {
+		attrs.UserType = &ut
+	}
+	if nn, ok := attributes["nickName"].(string); ok {
+		attrs.NickName = &nn
+	}
+	if l, ok := attributes["locale"].(string); ok {
+		attrs.Locale = &l
+	}
+	if tz, ok := attributes["timezone"].(string); ok {
+		attrs.Timezone = &tz
+	}
+	if pu, ok := attributes["profileUrl"].(string); ok {
+		attrs.ProfileUrl = &pu
+	}
+	if pl, ok := attributes["preferredLanguage"].(string); ok {
+		attrs.PreferredLanguage = &pl
+	}
+
+	if enterprise, ok := attributes["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].(map[string]any); ok {
+		if en, ok := enterprise["employeeNumber"].(string); ok {
+			attrs.EmployeeNumber = &en
+		}
+		if dept, ok := enterprise["department"].(string); ok {
+			attrs.Department = &dept
+		}
+		if cc, ok := enterprise["costCenter"].(string); ok {
+			attrs.CostCenter = &cc
+		}
+		if org, ok := enterprise["organization"].(string); ok {
+			attrs.EnterpriseOrganization = &org
+		}
+		if div, ok := enterprise["division"].(string); ok {
+			attrs.Division = &div
+		}
+		if manager, ok := enterprise["manager"].(map[string]any); ok {
+			if mv, ok := manager["value"].(string); ok {
+				attrs.ManagerValue = &mv
+			}
+		}
+	}
+
+	return attrs
 }
 
-func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool, title string, userName *string, externalId *string) {
+func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceAttributes {
+	var attrs scimReplaceAttributes
 	var givenName, familyName string
+	empty := ""
 
 	for _, op := range operations {
+		if strings.EqualFold(op.Op, "remove") {
+			path := ""
+			if op.Path != nil {
+				path = op.Path.String()
+			}
+
+			switch strings.ToLower(path) {
+			case "title":
+				attrs.Title = &empty
+			case "usertype":
+				attrs.UserType = &empty
+			case "nickname":
+				attrs.NickName = &empty
+			case "locale":
+				attrs.Locale = &empty
+			case "timezone":
+				attrs.Timezone = &empty
+			case "profileurl":
+				attrs.ProfileUrl = &empty
+			case "externalid":
+				attrs.ExternalID = &empty
+			case "preferredlanguage":
+				attrs.PreferredLanguage = &empty
+			case "name":
+				attrs.GivenName = &empty
+				attrs.FamilyName = &empty
+				attrs.FormattedName = &empty
+				attrs.MiddleName = &empty
+				attrs.HonorificPrefix = &empty
+				attrs.HonorificSuffix = &empty
+			case "name.givenname":
+				attrs.GivenName = &empty
+			case "name.familyname":
+				attrs.FamilyName = &empty
+			case "name.formatted":
+				attrs.FormattedName = &empty
+			case "name.middlename":
+				attrs.MiddleName = &empty
+			case "name.honorificprefix":
+				attrs.HonorificPrefix = &empty
+			case "name.honorificsuffix":
+				attrs.HonorificSuffix = &empty
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user":
+				attrs.EmployeeNumber = &empty
+				attrs.Department = &empty
+				attrs.CostCenter = &empty
+				attrs.EnterpriseOrganization = &empty
+				attrs.Division = &empty
+				attrs.ManagerValue = &empty
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:employeenumber":
+				attrs.EmployeeNumber = &empty
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:department":
+				attrs.Department = &empty
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:costcenter":
+				attrs.CostCenter = &empty
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:organization":
+				attrs.EnterpriseOrganization = &empty
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:division":
+				attrs.Division = &empty
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:manager",
+				"urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:manager.value":
+				attrs.ManagerValue = &empty
+			}
+			continue
+		}
+
 		if strings.EqualFold(op.Op, "replace") || strings.EqualFold(op.Op, "add") {
 			path := ""
 			if op.Path != nil {
@@ -765,10 +1194,10 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 			if path == "" {
 				if valueMap, ok := op.Value.(map[string]any); ok {
 					if a, ok := valueMap["active"].(bool); ok {
-						active = &a
+						attrs.Active = &a
 					}
 					if name, ok := valueMap["displayName"].(string); ok {
-						fullName = name
+						attrs.FullName = name
 					}
 					if nameMap, ok := valueMap["name"].(map[string]any); ok {
 						if gn, ok := nameMap["givenName"].(string); ok {
@@ -777,12 +1206,122 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 						if fn, ok := nameMap["familyName"].(string); ok {
 							familyName = fn
 						}
+						if fm, ok := nameMap["formatted"].(string); ok {
+							attrs.FormattedName = &fm
+						}
+						if mn, ok := nameMap["middleName"].(string); ok {
+							attrs.MiddleName = &mn
+						}
+						if hp, ok := nameMap["honorificPrefix"].(string); ok {
+							attrs.HonorificPrefix = &hp
+						}
+						if hs, ok := nameMap["honorificSuffix"].(string); ok {
+							attrs.HonorificSuffix = &hs
+						}
 					}
 					if un, ok := valueMap["userName"].(string); ok && un != "" {
-						userName = &un
+						attrs.UserName = &un
 					}
 					if eid, ok := valueMap["externalId"].(string); ok && eid != "" {
-						externalId = &eid
+						attrs.ExternalID = &eid
+					}
+					if t, ok := valueMap["title"].(string); ok {
+						attrs.Title = &t
+					}
+					if ut, ok := valueMap["userType"].(string); ok {
+						attrs.UserType = &ut
+					}
+					if nn, ok := valueMap["nickName"].(string); ok {
+						attrs.NickName = &nn
+					}
+					if l, ok := valueMap["locale"].(string); ok {
+						attrs.Locale = &l
+					}
+					if tz, ok := valueMap["timezone"].(string); ok {
+						attrs.Timezone = &tz
+					}
+					if pu, ok := valueMap["profileUrl"].(string); ok {
+						attrs.ProfileUrl = &pu
+					}
+					if pl, ok := valueMap["preferredLanguage"].(string); ok {
+						attrs.PreferredLanguage = &pl
+					}
+					if enterprise, ok := valueMap["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].(map[string]any); ok {
+						if en, ok := enterprise["employeeNumber"].(string); ok {
+							attrs.EmployeeNumber = &en
+						}
+						if dept, ok := enterprise["department"].(string); ok {
+							attrs.Department = &dept
+						}
+						if cc, ok := enterprise["costCenter"].(string); ok {
+							attrs.CostCenter = &cc
+						}
+						if org, ok := enterprise["organization"].(string); ok {
+							attrs.EnterpriseOrganization = &org
+						}
+						if div, ok := enterprise["division"].(string); ok {
+							attrs.Division = &div
+						}
+						if manager, ok := enterprise["manager"].(map[string]any); ok {
+							if mv, ok := manager["value"].(string); ok {
+								attrs.ManagerValue = &mv
+							}
+						}
+					}
+
+					for key, val := range valueMap {
+						switch strings.ToLower(key) {
+						case "name.givenname":
+							if s, ok := val.(string); ok {
+								givenName = s
+								attrs.GivenName = &givenName
+							}
+						case "name.familyname":
+							if s, ok := val.(string); ok {
+								familyName = s
+								attrs.FamilyName = &familyName
+							}
+						case "name.formatted":
+							if s, ok := val.(string); ok {
+								attrs.FormattedName = &s
+							}
+						case "name.middlename":
+							if s, ok := val.(string); ok {
+								attrs.MiddleName = &s
+							}
+						case "name.honorificprefix":
+							if s, ok := val.(string); ok {
+								attrs.HonorificPrefix = &s
+							}
+						case "name.honorificsuffix":
+							if s, ok := val.(string); ok {
+								attrs.HonorificSuffix = &s
+							}
+						case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:employeenumber":
+							if s, ok := val.(string); ok {
+								attrs.EmployeeNumber = &s
+							}
+						case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:department":
+							if s, ok := val.(string); ok {
+								attrs.Department = &s
+							}
+						case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:costcenter":
+							if s, ok := val.(string); ok {
+								attrs.CostCenter = &s
+							}
+						case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:organization":
+							if s, ok := val.(string); ok {
+								attrs.EnterpriseOrganization = &s
+							}
+						case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:division":
+							if s, ok := val.(string); ok {
+								attrs.Division = &s
+							}
+						case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:manager.value":
+							if s, ok := val.(string); ok {
+								attrs.ManagerValue = &s
+							}
+						}
 					}
 				}
 				continue
@@ -791,47 +1330,199 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 			switch strings.ToLower(path) {
 			case "active":
 				if a, ok := op.Value.(bool); ok {
-					active = &a
+					attrs.Active = &a
 				}
 			case "displayname":
 				if name, ok := op.Value.(string); ok {
-					fullName = name
+					attrs.FullName = name
+				}
+			case "name":
+				if nameMap, ok := op.Value.(map[string]any); ok {
+					if gn, ok := nameMap["givenName"].(string); ok {
+						givenName = gn
+						attrs.GivenName = &givenName
+					}
+					if fn, ok := nameMap["familyName"].(string); ok {
+						familyName = fn
+						attrs.FamilyName = &familyName
+					}
+					if fm, ok := nameMap["formatted"].(string); ok {
+						attrs.FormattedName = &fm
+					}
+					if mn, ok := nameMap["middleName"].(string); ok {
+						attrs.MiddleName = &mn
+					}
+					if hp, ok := nameMap["honorificPrefix"].(string); ok {
+						attrs.HonorificPrefix = &hp
+					}
+					if hs, ok := nameMap["honorificSuffix"].(string); ok {
+						attrs.HonorificSuffix = &hs
+					}
 				}
 			case "name.givenname":
 				if name, ok := op.Value.(string); ok {
 					givenName = name
+					attrs.GivenName = &givenName
 				}
 			case "name.familyname":
 				if name, ok := op.Value.(string); ok {
 					familyName = name
+					attrs.FamilyName = &familyName
+				}
+			case "name.formatted":
+				if fm, ok := op.Value.(string); ok {
+					attrs.FormattedName = &fm
+				}
+			case "name.middlename":
+				if mn, ok := op.Value.(string); ok {
+					attrs.MiddleName = &mn
+				}
+			case "name.honorificprefix":
+				if hp, ok := op.Value.(string); ok {
+					attrs.HonorificPrefix = &hp
+				}
+			case "name.honorificsuffix":
+				if hs, ok := op.Value.(string); ok {
+					attrs.HonorificSuffix = &hs
 				}
 			case "title":
 				if t, ok := op.Value.(string); ok {
-					title = t
+					attrs.Title = &t
 				}
 			case "username":
 				if un, ok := op.Value.(string); ok && un != "" {
-					userName = &un
+					attrs.UserName = &un
 				}
 			case "externalid":
 				if eid, ok := op.Value.(string); ok && eid != "" {
-					externalId = &eid
+					attrs.ExternalID = &eid
+				}
+			case "usertype":
+				if ut, ok := op.Value.(string); ok {
+					attrs.UserType = &ut
+				}
+			case "nickname":
+				if nn, ok := op.Value.(string); ok {
+					attrs.NickName = &nn
+				}
+			case "locale":
+				if l, ok := op.Value.(string); ok {
+					attrs.Locale = &l
+				}
+			case "timezone":
+				if tz, ok := op.Value.(string); ok {
+					attrs.Timezone = &tz
+				}
+			case "profileurl":
+				if pu, ok := op.Value.(string); ok {
+					attrs.ProfileUrl = &pu
+				}
+			case "preferredlanguage":
+				if pl, ok := op.Value.(string); ok {
+					attrs.PreferredLanguage = &pl
+				}
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user":
+				if enterprise, ok := op.Value.(map[string]any); ok {
+					if en, ok := enterprise["employeeNumber"].(string); ok {
+						attrs.EmployeeNumber = &en
+					}
+					if dept, ok := enterprise["department"].(string); ok {
+						attrs.Department = &dept
+					}
+					if cc, ok := enterprise["costCenter"].(string); ok {
+						attrs.CostCenter = &cc
+					}
+					if org, ok := enterprise["organization"].(string); ok {
+						attrs.EnterpriseOrganization = &org
+					}
+					if div, ok := enterprise["division"].(string); ok {
+						attrs.Division = &div
+					}
+					if manager, ok := enterprise["manager"].(map[string]any); ok {
+						if mv, ok := manager["value"].(string); ok {
+							attrs.ManagerValue = &mv
+						}
+					}
+				}
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:employeenumber":
+				if en, ok := op.Value.(string); ok {
+					attrs.EmployeeNumber = &en
+				}
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:department":
+				if dept, ok := op.Value.(string); ok {
+					attrs.Department = &dept
+				}
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:costcenter":
+				if cc, ok := op.Value.(string); ok {
+					attrs.CostCenter = &cc
+				}
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:organization":
+				if org, ok := op.Value.(string); ok {
+					attrs.EnterpriseOrganization = &org
+				}
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:division":
+				if div, ok := op.Value.(string); ok {
+					attrs.Division = &div
+				}
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:manager":
+				if manager, ok := op.Value.(map[string]any); ok {
+					if mv, ok := manager["value"].(string); ok {
+						attrs.ManagerValue = &mv
+					}
+				} else if mv, ok := op.Value.(string); ok {
+					attrs.ManagerValue = &mv
+				}
+			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:manager.value":
+				if mv, ok := op.Value.(string); ok {
+					attrs.ManagerValue = &mv
 				}
 			}
 		}
 	}
 
-	if fullName == "" && (givenName != "" || familyName != "") {
-		fullName = strings.TrimSpace(givenName + " " + familyName)
+	if attrs.FullName == "" && (givenName != "" || familyName != "") {
+		attrs.FullName = strings.TrimSpace(givenName + " " + familyName)
 	}
 
-	return fullName, active, title, userName, externalId
+	if givenName != "" && attrs.GivenName == nil {
+		attrs.GivenName = &givenName
+	}
+	if familyName != "" && attrs.FamilyName == nil {
+		attrs.FamilyName = &familyName
+	}
+
+	return attrs
 }
 
 func userToResource(p *coredata.MembershipProfile) scim.Resource {
 	externalID := optional.NewString(p.ID.String())
 	if p.ExternalID != nil {
 		externalID = optional.NewString(*p.ExternalID)
+	}
+
+	formattedName := p.FullName
+	if p.FormattedName != nil {
+		formattedName = *p.FormattedName
+	}
+
+	nameMap := map[string]any{
+		"formatted":       formattedName,
+		"givenName":       ref.UnrefOrZero(p.GivenName),
+		"familyName":      ref.UnrefOrZero(p.FamilyName),
+		"middleName":      ref.UnrefOrZero(p.MiddleName),
+		"honorificPrefix": ref.UnrefOrZero(p.HonorificPrefix),
+		"honorificSuffix": ref.UnrefOrZero(p.HonorificSuffix),
+	}
+
+	enterpriseAttrs := map[string]any{
+		"employeeNumber": ref.UnrefOrZero(p.EmployeeNumber),
+		"department":     ref.UnrefOrZero(p.Department),
+		"costCenter":     ref.UnrefOrZero(p.CostCenter),
+		"organization":   ref.UnrefOrZero(p.EnterpriseOrganization),
+		"division":       ref.UnrefOrZero(p.Division),
+		"manager": map[string]any{
+			"value": ref.UnrefOrZero(p.ManagerValue),
+		},
 	}
 
 	return scim.Resource{
@@ -841,9 +1532,7 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 			"userName":    *p.UserName,
 			"displayName": p.FullName,
 			"active":      p.State == coredata.ProfileStateActive,
-			"name": map[string]any{
-				"formatted": p.FullName,
-			},
+			"name":        nameMap,
 			"emails": []map[string]any{
 				{
 					"value":   p.EmailAddress.String(),
@@ -851,7 +1540,14 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 					"primary": true,
 				},
 			},
-			"title": p.Position,
+			"title":             p.Position,
+			"userType":          string(ref.UnrefOrZero(p.Kind)),
+			"nickName":          ref.UnrefOrZero(p.NickName),
+			"locale":            ref.UnrefOrZero(p.Locale),
+			"timezone":          ref.UnrefOrZero(p.Timezone),
+			"profileUrl":        ref.UnrefOrZero(p.ProfileUrl),
+			"preferredLanguage": ref.UnrefOrZero(p.PreferredLanguage),
+			"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterpriseAttrs,
 		},
 		Meta: scim.Meta{
 			Created:      &p.CreatedAt,
