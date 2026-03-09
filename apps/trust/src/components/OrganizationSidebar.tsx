@@ -1,4 +1,4 @@
-import { formatError } from "@probo/helpers";
+import { detectSocialName, externalLinkProps, formatError } from "@probo/helpers";
 import { useSystemTheme } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { UnAuthenticatedError } from "@probo/relay";
@@ -8,6 +8,7 @@ import {
   IconBlock,
   IconLock,
   IconMedal,
+  SocialIcon,
   useToast,
 } from "@probo/ui";
 import { type PropsWithChildren } from "react";
@@ -125,11 +126,7 @@ export function OrganizationSidebar({
         </h2>
         {trustCenter.organization.websiteUrl && (
           <BusinessInfo label={__("Website")}>
-            <a
-              href={trustCenter.organization.websiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a {...externalLinkProps(trustCenter.organization.websiteUrl)}>
               <span className="text-txt-info hover:underline ">
                 {new URL(trustCenter.organization.websiteUrl).host}
               </span>
@@ -149,6 +146,20 @@ export function OrganizationSidebar({
           <BusinessInfo label={__("HQ address")}>
             {trustCenter.organization.headquarterAddress}
           </BusinessInfo>
+        )}
+        {trustCenter.externalUrls.edges.length > 0 && (
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {trustCenter.externalUrls.edges.map(({ node }) => (
+              <a
+                key={node.id}
+                {...externalLinkProps(node.url)}
+                className="flex items-center gap-1.5 text-sm text-txt-secondary hover:text-txt-primary transition-colors"
+              >
+                <SocialIcon socialName={detectSocialName(node.url)} size={14} className="shrink-0" />
+                <span>{node.name}</span>
+              </a>
+            ))}
+          </div>
         )}
 
         <hr className="my-6 -mx-6 h-px bg-border-low border-none" />

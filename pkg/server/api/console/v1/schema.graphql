@@ -1227,6 +1227,20 @@ enum TrustCenterReferenceOrderField
         )
 }
 
+enum ComplianceExternalURLOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderFieldCreatedAt"
+        )
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderFieldRank"
+        )
+}
+
 enum ComplianceFrameworkOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderField"
@@ -1491,6 +1505,14 @@ input TrustCenterFileOrder
     field: TrustCenterFileOrderField!
 }
 
+input ComplianceExternalURLOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceExternalURLOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ComplianceExternalURLOrderField!
+}
+
 input ComplianceFrameworkOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFrameworkOrderBy"
@@ -1657,6 +1679,14 @@ type TrustCenter implements Node {
         before: CursorKey
         orderBy: ComplianceFrameworkOrder
     ): ComplianceFrameworkConnection! @goField(forceResolver: true)
+
+    externalUrls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ComplianceExternalURLOrder
+    ): ComplianceExternalURLConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -2882,6 +2912,30 @@ type ComplianceFrameworkEdge {
     node: ComplianceFramework!
 }
 
+type ComplianceExternalURL implements Node {
+    id: ID!
+    name: String!
+    url: String!
+    rank: Int!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ComplianceExternalURLConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceExternalURLConnection"
+    ) {
+    edges: [ComplianceExternalURLEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ComplianceExternalURLEdge {
+    cursor: CursorKey!
+    node: ComplianceExternalURL!
+}
+
 type TrustCenterFile implements Node {
     id: ID!
     name: String!
@@ -3330,6 +3384,15 @@ type Mutation {
     deleteComplianceFramework(
         input: DeleteComplianceFrameworkInput!
     ): DeleteComplianceFrameworkPayload!
+    createComplianceExternalURL(
+        input: CreateComplianceExternalURLInput!
+    ): CreateComplianceExternalURLPayload!
+    updateComplianceExternalURL(
+        input: UpdateComplianceExternalURLInput!
+    ): UpdateComplianceExternalURLPayload!
+    deleteComplianceExternalURL(
+        input: DeleteComplianceExternalURLInput!
+    ): DeleteComplianceExternalURLPayload!
     # Trust Center File mutations
     createTrustCenterFile(
         input: CreateTrustCenterFileInput!
@@ -3735,6 +3798,23 @@ input UpdateComplianceFrameworkInput {
 }
 
 input DeleteComplianceFrameworkInput {
+    id: ID!
+}
+
+input CreateComplianceExternalURLInput {
+    trustCenterId: ID!
+    name: String!
+    url: String!
+}
+
+input UpdateComplianceExternalURLInput {
+    id: ID!
+    name: String!
+    url: String!
+    rank: Int
+}
+
+input DeleteComplianceExternalURLInput {
     id: ID!
 }
 
@@ -4559,6 +4639,18 @@ type UpdateComplianceFrameworkPayload {
 
 type DeleteComplianceFrameworkPayload {
     deletedComplianceFrameworkId: ID!
+}
+
+type CreateComplianceExternalURLPayload {
+    complianceExternalUrlEdge: ComplianceExternalURLEdge!
+}
+
+type UpdateComplianceExternalURLPayload {
+    complianceExternalUrl: ComplianceExternalURL!
+}
+
+type DeleteComplianceExternalURLPayload {
+    deletedComplianceExternalUrlId: ID!
 }
 
 type CreateTrustCenterFilePayload {

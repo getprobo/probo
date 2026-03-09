@@ -324,6 +324,11 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 	return count, nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *complianceExternalURLResolver) Permission(ctx context.Context, obj *types.ComplianceExternalURL, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Framework is the resolver for the framework field.
 func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.ComplianceFramework) (*types.Framework, error) {
 	if err := r.authorize(ctx, obj.FrameworkID, probo.ActionFrameworkGet); err != nil {
@@ -2138,6 +2143,74 @@ func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input 
 
 	return &types.DeleteComplianceFrameworkPayload{
 		DeletedComplianceFrameworkID: input.ID,
+	}, nil
+}
+
+// CreateComplianceExternalURL is the resolver for the createComplianceExternalURL field.
+func (r *mutationResolver) CreateComplianceExternalURL(ctx context.Context, input types.CreateComplianceExternalURLInput) (*types.CreateComplianceExternalURLPayload, error) {
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionComplianceExternalURLCreate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	item, err := prb.ComplianceExternalURLs.Create(
+		ctx,
+		&probo.CreateComplianceExternalURLRequest{
+			TrustCenterID: input.TrustCenterID,
+			Name:          input.Name,
+			URL:           input.URL,
+		},
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create compliance external URL", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateComplianceExternalURLPayload{
+		ComplianceExternalURLEdge: types.NewComplianceExternalURLEdge(item, coredata.ComplianceExternalURLOrderFieldRank),
+	}, nil
+}
+
+// UpdateComplianceExternalURL is the resolver for the updateComplianceExternalURL field.
+func (r *mutationResolver) UpdateComplianceExternalURL(ctx context.Context, input types.UpdateComplianceExternalURLInput) (*types.UpdateComplianceExternalURLPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionComplianceExternalURLUpdate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	item, err := prb.ComplianceExternalURLs.Update(ctx, &probo.UpdateComplianceExternalURLRequest{
+		ID:   input.ID,
+		Name: input.Name,
+		URL:  input.URL,
+		Rank: input.Rank,
+	})
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update compliance external URL", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateComplianceExternalURLPayload{
+		ComplianceExternalURL: types.NewComplianceExternalURL(item),
+	}, nil
+}
+
+// DeleteComplianceExternalURL is the resolver for the deleteComplianceExternalURL field.
+func (r *mutationResolver) DeleteComplianceExternalURL(ctx context.Context, input types.DeleteComplianceExternalURLInput) (*types.DeleteComplianceExternalURLPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionComplianceExternalURLDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	if err := prb.ComplianceExternalURLs.Delete(ctx, &probo.DeleteComplianceExternalURLRequest{ID: input.ID}); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete compliance external URL", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteComplianceExternalURLPayload{
+		DeletedComplianceExternalURLID: input.ID,
 	}, nil
 }
 
@@ -7887,6 +7960,36 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 	return types.NewComplianceFrameworkConnection(result), nil
 }
 
+// ExternalUrls is the resolver for the externalUrls field.
+func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceExternalURLOrderField]) (*types.ComplianceExternalURLConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionComplianceExternalURLList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceExternalURLOrderField]{
+		Field:     coredata.ComplianceExternalURLOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ComplianceExternalURLOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.ComplianceExternalURLs.List(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance external URLs", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceExternalURLConnection(result), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -8868,6 +8971,11 @@ func (r *Resolver) AuditConnection() schema.AuditConnectionResolver {
 	return &auditConnectionResolver{r}
 }
 
+// ComplianceExternalURL returns schema.ComplianceExternalURLResolver implementation.
+func (r *Resolver) ComplianceExternalURL() schema.ComplianceExternalURLResolver {
+	return &complianceExternalURLResolver{r}
+}
+
 // ComplianceFramework returns schema.ComplianceFrameworkResolver implementation.
 func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
 	return &complianceFrameworkResolver{r}
@@ -9175,6 +9283,7 @@ type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
 type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
+type complianceExternalURLResolver struct{ *Resolver }
 type complianceFrameworkResolver struct{ *Resolver }
 type continualImprovementResolver struct{ *Resolver }
 type continualImprovementConnectionResolver struct{ *Resolver }

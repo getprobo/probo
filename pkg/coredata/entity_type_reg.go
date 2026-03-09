@@ -86,6 +86,7 @@ const (
 	ElectronicSignatureEventEntityType         uint16 = 60
 	EmailAttachmentEntityType                  uint16 = 61
 	ComplianceFrameworkEntityType              uint16 = 62
+	ComplianceExternalURLEntityType            uint16 = 63
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -212,6 +213,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &EmailAttachment{ID: id}, true
 	case ComplianceFrameworkEntityType:
 		return &ComplianceFramework{ID: id}, true
+	case ComplianceExternalURLEntityType:
+		return &ComplianceExternalURL{ID: id}, true
 	default:
 		return nil, false
 	}

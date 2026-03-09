@@ -1108,6 +1108,25 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 	return types.NewComplianceFrameworkConnection(cfPage), nil
 }
 
+// ExternalUrls is the resolver for the externalUrls field.
+func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceExternalURLConnection, error) {
+	trustService := r.TrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ComplianceExternalURLOrderField]{
+		Field:     coredata.ComplianceExternalURLOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := trustService.ComplianceExternalURLs.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance external URLs", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewComplianceExternalURLConnection(result), nil
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())

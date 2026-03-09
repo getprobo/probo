@@ -178,7 +178,6 @@ func (s TrustCenterService) Update(
 			if req.Slug != nil {
 				trustCenter.Slug = *req.Slug
 			}
-
 			trustCenter.UpdatedAt = time.Now()
 
 			if err := trustCenter.Update(ctx, conn, s.svc.scope); err != nil {

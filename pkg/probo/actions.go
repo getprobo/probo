@@ -53,6 +53,12 @@ const (
 	ActionComplianceFrameworkDelete     = "core:compliance-framework:delete"
 	ActionComplianceFrameworkUpdateRank = "core:compliance-framework:update-rank"
 
+	// ComplianceExternalURL actions
+	ActionComplianceExternalURLList   = "core:compliance-external-url:list"
+	ActionComplianceExternalURLCreate = "core:compliance-external-url:create"
+	ActionComplianceExternalURLUpdate = "core:compliance-external-url:update"
+	ActionComplianceExternalURLDelete = "core:compliance-external-url:delete"
+
 	// TrustCenterFile actions
 	ActionTrustCenterFileGet        = "core:trust-center-file:get"
 	ActionTrustCenterFileList       = "core:trust-center-file:list"

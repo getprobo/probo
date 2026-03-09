@@ -17,6 +17,9 @@ import type { CompliancePageBrandPage_updateMutation } from "#/__generated__/cor
 import type { CompliancePageBrandPageQuery } from "#/__generated__/core/CompliancePageBrandPageQuery.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
+import { CompliancePageExternalUrlsSection } from "../overview/_components/CompliancePageExternalUrlsSection";
+import { CompliancePageFrameworkList } from "../overview/_components/CompliancePageFrameworkList";
+
 export const compliancePageBrandPageQuery = graphql`
   query CompliancePageBrandPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
@@ -27,6 +30,8 @@ export const compliancePageBrandPageQuery = graphql`
           logoFileUrl
           darkLogoFileUrl
           canUpdate: permission(action: "core:trust-center:update")
+          ...CompliancePageFrameworkList_compliancePageFragment
+          ...CompliancePageExternalUrlsSection_trustCenterFragment
         }
       }
     }
@@ -218,116 +223,130 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
   const currentDarkLogoUrl = darkLogoPreview || darkLogoFileUrl;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium">{__("Branding")}</h2>
-        {isUpdating && <Spinner />}
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-medium">{__("Branding")}</h2>
+          {isUpdating && <Spinner />}
+        </div>
+
+        <Card padded className="space-y-4">
+          <div className="flex gap-6 items-start">
+            <div className="flex-1">
+              <Label>{__("Logo")}</Label>
+              <p className="text-sm text-txt-tertiary mb-3">
+                {__("This logo will be displayed on your public compliance page.")}
+              </p>
+
+              {currentLogoUrl
+                ? (
+                    <div className="flex items-center gap-4">
+                      <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
+                        <img
+                          src={currentLogoUrl}
+                          alt={__("Compliance page logo")}
+                          className="h-16 max-w-xs object-contain"
+                        />
+                      </div>
+                      <FileButton
+                        disabled={disabled}
+                        onChange={handleLogoChange}
+                        variant="secondary"
+                        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                      >
+                        {isUpdating ? __("Uploading...") : __("Change logo")}
+                      </FileButton>
+                      <Button
+                        type="button"
+                        variant="quaternary"
+                        icon={IconTrashCan}
+                        onClick={() => void handleRemoveLogo()}
+                        disabled={disabled}
+                        aria-label={__("Remove logo")}
+                        className="text-red-600 hover:text-red-700"
+                      />
+                    </div>
+                  )
+                : (
+                    <Dropzone
+                      description={__("Upload logo image (PNG, JPG, SVG, WEBP up to 5MB)")}
+                      isUploading={isUpdating}
+                      onDrop={handleLogoDrop}
+                      accept={{
+                        "image/png": [".png"],
+                        "image/jpeg": [".jpg", ".jpeg"],
+                        "image/svg+xml": [".svg"],
+                        "image/webp": [".webp"],
+                      }}
+                      maxSize={5}
+                    />
+                  )}
+            </div>
+            <div className="flex-1">
+              <Label>{__("Dark mode logo")}</Label>
+              <p className="text-sm text-txt-tertiary mb-3">
+                {__("This logo will be used when dark mode is enabled.")}
+              </p>
+
+              {currentDarkLogoUrl
+                ? (
+                    <div className="flex items-center gap-4">
+                      <div className="border border-border-solid rounded-md p-4 bg-gray-900">
+                        <img
+                          src={currentDarkLogoUrl}
+                          alt={__("Compliance page dark logo")}
+                          className="h-16 max-w-xs object-contain"
+                        />
+                      </div>
+                      <FileButton
+                        disabled={disabled}
+                        onChange={handleDarkLogoChange}
+                        variant="secondary"
+                        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                      >
+                        {isUpdating ? __("Uploading...") : __("Change dark logo")}
+                      </FileButton>
+                      <Button
+                        type="button"
+                        variant="quaternary"
+                        icon={IconTrashCan}
+                        onClick={() => void handleRemoveDarkLogo()}
+                        disabled={disabled}
+                        aria-label={__("Remove dark logo")}
+                        className="text-red-600 hover:text-red-700"
+                      />
+                    </div>
+                  )
+                : (
+                    <Dropzone
+                      description={__("Upload dark logo image (PNG, JPG, SVG, WEBP up to 5MB)")}
+                      isUploading={isUpdating}
+                      onDrop={handleDarkLogoDrop}
+                      accept={{
+                        "image/png": [".png"],
+                        "image/jpeg": [".jpg", ".jpeg"],
+                        "image/svg+xml": [".svg"],
+                        "image/webp": [".webp"],
+                      }}
+                      maxSize={5}
+                    />
+                  )}
+            </div>
+          </div>
+        </Card>
       </div>
 
-      <Card padded className="space-y-4">
-        <div className="flex gap-6 items-start">
-          <div className="flex-1">
-            <Label>{__("Logo")}</Label>
-            <p className="text-sm text-txt-tertiary mb-3">
-              {__("This logo will be displayed on your public compliance page.")}
-            </p>
-
-            {currentLogoUrl
-              ? (
-                  <div className="flex items-center gap-4">
-                    <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
-                      <img
-                        src={currentLogoUrl}
-                        alt={__("Compliance page logo")}
-                        className="h-16 max-w-xs object-contain"
-                      />
-                    </div>
-                    <FileButton
-                      disabled={disabled}
-                      onChange={handleLogoChange}
-                      variant="secondary"
-                      accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
-                    >
-                      {isUpdating ? __("Uploading...") : __("Change logo")}
-                    </FileButton>
-                    <Button
-                      type="button"
-                      variant="quaternary"
-                      icon={IconTrashCan}
-                      onClick={() => void handleRemoveLogo()}
-                      disabled={disabled}
-                      aria-label={__("Remove logo")}
-                      className="text-red-600 hover:text-red-700"
-                    />
-                  </div>
-                )
-              : (
-                  <Dropzone
-                    description={__("Upload logo image (PNG, JPG, SVG, WEBP up to 5MB)")}
-                    isUploading={isUpdating}
-                    onDrop={handleLogoDrop}
-                    accept={{
-                      "image/png": [".png"],
-                      "image/jpeg": [".jpg", ".jpeg"],
-                      "image/svg+xml": [".svg"],
-                      "image/webp": [".webp"],
-                    }}
-                    maxSize={5}
-                  />
-                )}
-          </div>
-          <div className="flex-1">
-            <Label>{__("Dark mode logo")}</Label>
-            <p className="text-sm text-txt-tertiary mb-3">
-              {__("This logo will be used when dark mode is enabled.")}
-            </p>
-
-            {currentDarkLogoUrl
-              ? (
-                  <div className="flex items-center gap-4">
-                    <div className="border border-border-solid rounded-md p-4 bg-gray-900">
-                      <img
-                        src={currentDarkLogoUrl}
-                        alt={__("Compliance page dark logo")}
-                        className="h-16 max-w-xs object-contain"
-                      />
-                    </div>
-                    <FileButton
-                      disabled={disabled}
-                      onChange={handleDarkLogoChange}
-                      variant="secondary"
-                      accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
-                    >
-                      {isUpdating ? __("Uploading...") : __("Change dark logo")}
-                    </FileButton>
-                    <Button
-                      type="button"
-                      variant="quaternary"
-                      icon={IconTrashCan}
-                      onClick={() => void handleRemoveDarkLogo()}
-                      disabled={disabled}
-                      aria-label={__("Remove dark logo")}
-                      className="text-red-600 hover:text-red-700"
-                    />
-                  </div>
-                )
-              : (
-                  <Dropzone
-                    description={__("Upload dark logo image (PNG, JPG, SVG, WEBP up to 5MB)")}
-                    isUploading={isUpdating}
-                    onDrop={handleDarkLogoDrop}
-                    accept={{
-                      "image/png": [".png"],
-                      "image/jpeg": [".jpg", ".jpeg"],
-                      "image/svg+xml": [".svg"],
-                      "image/webp": [".webp"],
-                    }}
-                    maxSize={5}
-                  />
-                )}
-          </div>
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-base font-medium">{__("Frameworks")}</h3>
+          <p className="text-sm text-txt-tertiary">
+            {__("Select which frameworks to display as badges on your compliance page")}
+          </p>
         </div>
-      </Card>
+        <CompliancePageFrameworkList compliancePageRef={organization.compliancePage} />
+      </div>
+
+      <CompliancePageExternalUrlsSection trustCenterRef={organization.compliancePage} />
     </div>
   );
 }

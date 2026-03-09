@@ -22,6 +22,15 @@ export const currentTrustGraphQuery = graphql`
         email
         headquarterAddress
       }
+      externalUrls(first: 20) {
+        edges {
+          node {
+            id
+            name
+            url
+          }
+        }
+      }
       ...OverviewPageFragment
       vendorInfo: vendors(first: 0) {
         totalCount

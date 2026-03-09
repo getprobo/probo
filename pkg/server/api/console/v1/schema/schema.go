@@ -42,6 +42,7 @@ type ResolverRoot interface {
 	AssetConnection() AssetConnectionResolver
 	Audit() AuditResolver
 	AuditConnection() AuditConnectionResolver
+	ComplianceExternalURL() ComplianceExternalURLResolver
 	ComplianceFramework() ComplianceFrameworkResolver
 	ContinualImprovement() ContinualImprovementResolver
 	ContinualImprovementConnection() ContinualImprovementConnectionResolver
@@ -220,6 +221,26 @@ type ComplexityRoot struct {
 		DeletedDocumentVersionSignatureID func(childComplexity int) int
 	}
 
+	ComplianceExternalURL struct {
+		CreatedAt  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
+		Rank       func(childComplexity int) int
+		URL        func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+	}
+
+	ComplianceExternalURLConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	ComplianceExternalURLEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	ComplianceFramework struct {
 		CreatedAt  func(childComplexity int) int
 		Framework  func(childComplexity int) int
@@ -309,6 +330,10 @@ type ComplexityRoot struct {
 
 	CreateAuditPayload struct {
 		AuditEdge func(childComplexity int) int
+	}
+
+	CreateComplianceExternalURLPayload struct {
+		ComplianceExternalURLEdge func(childComplexity int) int
 	}
 
 	CreateComplianceFrameworkPayload struct {
@@ -543,6 +568,10 @@ type ComplexityRoot struct {
 
 	DeleteAuditReportPayload struct {
 		Audit func(childComplexity int) int
+	}
+
+	DeleteComplianceExternalURLPayload struct {
+		DeletedComplianceExternalURLID func(childComplexity int) int
 	}
 
 	DeleteComplianceFrameworkPayload struct {
@@ -980,6 +1009,7 @@ type ComplexityRoot struct {
 		CreateApplicabilityStatement             func(childComplexity int, input types.CreateApplicabilityStatementInput) int
 		CreateAsset                              func(childComplexity int, input types.CreateAssetInput) int
 		CreateAudit                              func(childComplexity int, input types.CreateAuditInput) int
+		CreateComplianceExternalURL              func(childComplexity int, input types.CreateComplianceExternalURLInput) int
 		CreateComplianceFramework                func(childComplexity int, input types.CreateComplianceFrameworkInput) int
 		CreateContinualImprovement               func(childComplexity int, input types.CreateContinualImprovementInput) int
 		CreateControl                            func(childComplexity int, input types.CreateControlInput) int
@@ -1019,6 +1049,7 @@ type ComplexityRoot struct {
 		DeleteAsset                              func(childComplexity int, input types.DeleteAssetInput) int
 		DeleteAudit                              func(childComplexity int, input types.DeleteAuditInput) int
 		DeleteAuditReport                        func(childComplexity int, input types.DeleteAuditReportInput) int
+		DeleteComplianceExternalURL              func(childComplexity int, input types.DeleteComplianceExternalURLInput) int
 		DeleteComplianceFramework                func(childComplexity int, input types.DeleteComplianceFrameworkInput) int
 		DeleteContinualImprovement               func(childComplexity int, input types.DeleteContinualImprovementInput) int
 		DeleteControl                            func(childComplexity int, input types.DeleteControlInput) int
@@ -1077,6 +1108,7 @@ type ComplexityRoot struct {
 		UpdateApplicabilityStatement             func(childComplexity int, input types.UpdateApplicabilityStatementInput) int
 		UpdateAsset                              func(childComplexity int, input types.UpdateAssetInput) int
 		UpdateAudit                              func(childComplexity int, input types.UpdateAuditInput) int
+		UpdateComplianceExternalURL              func(childComplexity int, input types.UpdateComplianceExternalURLInput) int
 		UpdateComplianceFramework                func(childComplexity int, input types.UpdateComplianceFrameworkInput) int
 		UpdateContinualImprovement               func(childComplexity int, input types.UpdateContinualImprovementInput) int
 		UpdateControl                            func(childComplexity int, input types.UpdateControlInput) int
@@ -1539,6 +1571,7 @@ type ComplexityRoot struct {
 		ComplianceFrameworks func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceFrameworkOrderField]) int
 		CreatedAt            func(childComplexity int) int
 		DarkLogoFileURL      func(childComplexity int) int
+		ExternalUrls         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceExternalURLOrderField]) int
 		ID                   func(childComplexity int) int
 		LogoFileURL          func(childComplexity int) int
 		NdaFileName          func(childComplexity int) int
@@ -1658,6 +1691,10 @@ type ComplexityRoot struct {
 
 	UpdateAuditPayload struct {
 		Audit func(childComplexity int) int
+	}
+
+	UpdateComplianceExternalURLPayload struct {
+		ComplianceExternalURL func(childComplexity int) int
 	}
 
 	UpdateComplianceFrameworkPayload struct {
@@ -2045,6 +2082,9 @@ type AuditResolver interface {
 type AuditConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error)
 }
+type ComplianceExternalURLResolver interface {
+	Permission(ctx context.Context, obj *types.ComplianceExternalURL, action string) (bool, error)
+}
 type ComplianceFrameworkResolver interface {
 	Framework(ctx context.Context, obj *types.ComplianceFramework) (*types.Framework, error)
 }
@@ -2194,6 +2234,9 @@ type MutationResolver interface {
 	CreateComplianceFramework(ctx context.Context, input types.CreateComplianceFrameworkInput) (*types.CreateComplianceFrameworkPayload, error)
 	UpdateComplianceFramework(ctx context.Context, input types.UpdateComplianceFrameworkInput) (*types.UpdateComplianceFrameworkPayload, error)
 	DeleteComplianceFramework(ctx context.Context, input types.DeleteComplianceFrameworkInput) (*types.DeleteComplianceFrameworkPayload, error)
+	CreateComplianceExternalURL(ctx context.Context, input types.CreateComplianceExternalURLInput) (*types.CreateComplianceExternalURLPayload, error)
+	UpdateComplianceExternalURL(ctx context.Context, input types.UpdateComplianceExternalURLInput) (*types.UpdateComplianceExternalURLPayload, error)
+	DeleteComplianceExternalURL(ctx context.Context, input types.DeleteComplianceExternalURLInput) (*types.DeleteComplianceExternalURLPayload, error)
 	CreateTrustCenterFile(ctx context.Context, input types.CreateTrustCenterFileInput) (*types.CreateTrustCenterFilePayload, error)
 	UpdateTrustCenterFile(ctx context.Context, input types.UpdateTrustCenterFileInput) (*types.UpdateTrustCenterFilePayload, error)
 	GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error)
@@ -2484,6 +2527,7 @@ type TrustCenterResolver interface {
 	Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error)
 	References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error)
 	ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceFrameworkOrderField]) (*types.ComplianceFrameworkConnection, error)
+	ExternalUrls(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceExternalURLOrderField]) (*types.ComplianceExternalURLConnection, error)
 	Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error)
 }
 type TrustCenterAccessResolver interface {
@@ -2982,6 +3026,80 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.CancelSignatureRequestPayload.DeletedDocumentVersionSignatureID(childComplexity), true
 
+	case "ComplianceExternalURL.createdAt":
+		if e.ComplexityRoot.ComplianceExternalURL.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURL.CreatedAt(childComplexity), true
+	case "ComplianceExternalURL.id":
+		if e.ComplexityRoot.ComplianceExternalURL.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURL.ID(childComplexity), true
+	case "ComplianceExternalURL.name":
+		if e.ComplexityRoot.ComplianceExternalURL.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURL.Name(childComplexity), true
+	case "ComplianceExternalURL.permission":
+		if e.ComplexityRoot.ComplianceExternalURL.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_ComplianceExternalURL_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURL.Permission(childComplexity, args["action"].(string)), true
+	case "ComplianceExternalURL.rank":
+		if e.ComplexityRoot.ComplianceExternalURL.Rank == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURL.Rank(childComplexity), true
+	case "ComplianceExternalURL.url":
+		if e.ComplexityRoot.ComplianceExternalURL.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURL.URL(childComplexity), true
+	case "ComplianceExternalURL.updatedAt":
+		if e.ComplexityRoot.ComplianceExternalURL.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURL.UpdatedAt(childComplexity), true
+
+	case "ComplianceExternalURLConnection.edges":
+		if e.ComplexityRoot.ComplianceExternalURLConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURLConnection.Edges(childComplexity), true
+	case "ComplianceExternalURLConnection.pageInfo":
+		if e.ComplexityRoot.ComplianceExternalURLConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURLConnection.PageInfo(childComplexity), true
+
+	case "ComplianceExternalURLEdge.cursor":
+		if e.ComplexityRoot.ComplianceExternalURLEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURLEdge.Cursor(childComplexity), true
+	case "ComplianceExternalURLEdge.node":
+		if e.ComplexityRoot.ComplianceExternalURLEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ComplianceExternalURLEdge.Node(childComplexity), true
+
 	case "ComplianceFramework.createdAt":
 		if e.ComplexityRoot.ComplianceFramework.CreatedAt == nil {
 			break
@@ -3358,6 +3476,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CreateAuditPayload.AuditEdge(childComplexity), true
+
+	case "CreateComplianceExternalURLPayload.complianceExternalUrlEdge":
+		if e.ComplexityRoot.CreateComplianceExternalURLPayload.ComplianceExternalURLEdge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreateComplianceExternalURLPayload.ComplianceExternalURLEdge(childComplexity), true
 
 	case "CreateComplianceFrameworkPayload.complianceFrameworkEdge":
 		if e.ComplexityRoot.CreateComplianceFrameworkPayload.ComplianceFrameworkEdge == nil {
@@ -3983,6 +4108,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DeleteAuditReportPayload.Audit(childComplexity), true
+
+	case "DeleteComplianceExternalURLPayload.deletedComplianceExternalUrlId":
+		if e.ComplexityRoot.DeleteComplianceExternalURLPayload.DeletedComplianceExternalURLID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DeleteComplianceExternalURLPayload.DeletedComplianceExternalURLID(childComplexity), true
 
 	case "DeleteComplianceFrameworkPayload.deletedComplianceFrameworkId":
 		if e.ComplexityRoot.DeleteComplianceFrameworkPayload.DeletedComplianceFrameworkID == nil {
@@ -5443,6 +5575,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateAudit(childComplexity, args["input"].(types.CreateAuditInput)), true
+	case "Mutation.createComplianceExternalURL":
+		if e.ComplexityRoot.Mutation.CreateComplianceExternalURL == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createComplianceExternalURL_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateComplianceExternalURL(childComplexity, args["input"].(types.CreateComplianceExternalURLInput)), true
 	case "Mutation.createComplianceFramework":
 		if e.ComplexityRoot.Mutation.CreateComplianceFramework == nil {
 			break
@@ -5872,6 +6015,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteAuditReport(childComplexity, args["input"].(types.DeleteAuditReportInput)), true
+	case "Mutation.deleteComplianceExternalURL":
+		if e.ComplexityRoot.Mutation.DeleteComplianceExternalURL == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteComplianceExternalURL_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteComplianceExternalURL(childComplexity, args["input"].(types.DeleteComplianceExternalURLInput)), true
 	case "Mutation.deleteComplianceFramework":
 		if e.ComplexityRoot.Mutation.DeleteComplianceFramework == nil {
 			break
@@ -6510,6 +6664,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateAudit(childComplexity, args["input"].(types.UpdateAuditInput)), true
+	case "Mutation.updateComplianceExternalURL":
+		if e.ComplexityRoot.Mutation.UpdateComplianceExternalURL == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateComplianceExternalURL_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateComplianceExternalURL(childComplexity, args["input"].(types.UpdateComplianceExternalURLInput)), true
 	case "Mutation.updateComplianceFramework":
 		if e.ComplexityRoot.Mutation.UpdateComplianceFramework == nil {
 			break
@@ -8920,6 +9085,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TrustCenter.DarkLogoFileURL(childComplexity), true
+	case "TrustCenter.externalUrls":
+		if e.ComplexityRoot.TrustCenter.ExternalUrls == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenter_externalUrls_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.TrustCenter.ExternalUrls(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.OrderBy[coredata.ComplianceExternalURLOrderField])), true
 	case "TrustCenter.id":
 		if e.ComplexityRoot.TrustCenter.ID == nil {
 			break
@@ -9375,6 +9551,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.UpdateAuditPayload.Audit(childComplexity), true
+
+	case "UpdateComplianceExternalURLPayload.complianceExternalUrl":
+		if e.ComplexityRoot.UpdateComplianceExternalURLPayload.ComplianceExternalURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UpdateComplianceExternalURLPayload.ComplianceExternalURL(childComplexity), true
 
 	case "UpdateComplianceFrameworkPayload.complianceFramework":
 		if e.ComplexityRoot.UpdateComplianceFrameworkPayload.ComplianceFramework == nil {
@@ -10550,6 +10733,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkPublishDocumentVersionsInput,
 		ec.unmarshalInputBulkRequestSignaturesInput,
 		ec.unmarshalInputCancelSignatureRequestInput,
+		ec.unmarshalInputComplianceExternalURLOrder,
 		ec.unmarshalInputComplianceFrameworkOrder,
 		ec.unmarshalInputContinualImprovementFilter,
 		ec.unmarshalInputContinualImprovementOrder,
@@ -10558,6 +10742,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateApplicabilityStatementInput,
 		ec.unmarshalInputCreateAssetInput,
 		ec.unmarshalInputCreateAuditInput,
+		ec.unmarshalInputCreateComplianceExternalURLInput,
 		ec.unmarshalInputCreateComplianceFrameworkInput,
 		ec.unmarshalInputCreateContinualImprovementInput,
 		ec.unmarshalInputCreateControlAuditMappingInput,
@@ -10601,6 +10786,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteAssetInput,
 		ec.unmarshalInputDeleteAuditInput,
 		ec.unmarshalInputDeleteAuditReportInput,
+		ec.unmarshalInputDeleteComplianceExternalURLInput,
 		ec.unmarshalInputDeleteComplianceFrameworkInput,
 		ec.unmarshalInputDeleteContinualImprovementInput,
 		ec.unmarshalInputDeleteControlAuditMappingInput,
@@ -10692,6 +10878,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateApplicabilityStatementInput,
 		ec.unmarshalInputUpdateAssetInput,
 		ec.unmarshalInputUpdateAuditInput,
+		ec.unmarshalInputUpdateComplianceExternalURLInput,
 		ec.unmarshalInputUpdateComplianceFrameworkInput,
 		ec.unmarshalInputUpdateContinualImprovementInput,
 		ec.unmarshalInputUpdateControlInput,
@@ -12040,6 +12227,20 @@ enum TrustCenterReferenceOrderField
         )
 }
 
+enum ComplianceExternalURLOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderFieldCreatedAt"
+        )
+    RANK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ComplianceExternalURLOrderFieldRank"
+        )
+}
+
 enum ComplianceFrameworkOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.ComplianceFrameworkOrderField"
@@ -12304,6 +12505,14 @@ input TrustCenterFileOrder
     field: TrustCenterFileOrderField!
 }
 
+input ComplianceExternalURLOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceExternalURLOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ComplianceExternalURLOrderField!
+}
+
 input ComplianceFrameworkOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFrameworkOrderBy"
@@ -12470,6 +12679,14 @@ type TrustCenter implements Node {
         before: CursorKey
         orderBy: ComplianceFrameworkOrder
     ): ComplianceFrameworkConnection! @goField(forceResolver: true)
+
+    externalUrls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ComplianceExternalURLOrder
+    ): ComplianceExternalURLConnection! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -13695,6 +13912,30 @@ type ComplianceFrameworkEdge {
     node: ComplianceFramework!
 }
 
+type ComplianceExternalURL implements Node {
+    id: ID!
+    name: String!
+    url: String!
+    rank: Int!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type ComplianceExternalURLConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceExternalURLConnection"
+    ) {
+    edges: [ComplianceExternalURLEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ComplianceExternalURLEdge {
+    cursor: CursorKey!
+    node: ComplianceExternalURL!
+}
+
 type TrustCenterFile implements Node {
     id: ID!
     name: String!
@@ -14143,6 +14384,15 @@ type Mutation {
     deleteComplianceFramework(
         input: DeleteComplianceFrameworkInput!
     ): DeleteComplianceFrameworkPayload!
+    createComplianceExternalURL(
+        input: CreateComplianceExternalURLInput!
+    ): CreateComplianceExternalURLPayload!
+    updateComplianceExternalURL(
+        input: UpdateComplianceExternalURLInput!
+    ): UpdateComplianceExternalURLPayload!
+    deleteComplianceExternalURL(
+        input: DeleteComplianceExternalURLInput!
+    ): DeleteComplianceExternalURLPayload!
     # Trust Center File mutations
     createTrustCenterFile(
         input: CreateTrustCenterFileInput!
@@ -14548,6 +14798,23 @@ input UpdateComplianceFrameworkInput {
 }
 
 input DeleteComplianceFrameworkInput {
+    id: ID!
+}
+
+input CreateComplianceExternalURLInput {
+    trustCenterId: ID!
+    name: String!
+    url: String!
+}
+
+input UpdateComplianceExternalURLInput {
+    id: ID!
+    name: String!
+    url: String!
+    rank: Int
+}
+
+input DeleteComplianceExternalURLInput {
     id: ID!
 }
 
@@ -15372,6 +15639,18 @@ type UpdateComplianceFrameworkPayload {
 
 type DeleteComplianceFrameworkPayload {
     deletedComplianceFrameworkId: ID!
+}
+
+type CreateComplianceExternalURLPayload {
+    complianceExternalUrlEdge: ComplianceExternalURLEdge!
+}
+
+type UpdateComplianceExternalURLPayload {
+    complianceExternalUrl: ComplianceExternalURL!
+}
+
+type DeleteComplianceExternalURLPayload {
+    deletedComplianceExternalUrlId: ID!
 }
 
 type CreateTrustCenterFilePayload {
@@ -16566,6 +16845,17 @@ func (ec *executionContext) field_Audit_permission_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_ComplianceExternalURL_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_ContinualImprovement_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17338,6 +17628,17 @@ func (ec *executionContext) field_Mutation_createAudit_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createComplianceExternalURL_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateComplianceExternalURLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceExternalURLInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createComplianceFramework_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17760,6 +18061,17 @@ func (ec *executionContext) field_Mutation_deleteAudit_args(ctx context.Context,
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteAuditInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAuditInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteComplianceExternalURL_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteComplianceExternalURLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceExternalURLInput)
 	if err != nil {
 		return nil, err
 	}
@@ -18398,6 +18710,17 @@ func (ec *executionContext) field_Mutation_updateAudit_args(ctx context.Context,
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateAuditInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAuditInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateComplianceExternalURL_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateComplianceExternalURLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceExternalURLInput)
 	if err != nil {
 		return nil, err
 	}
@@ -20197,6 +20520,37 @@ func (ec *executionContext) field_TrustCenter_complianceFrameworks_args(ctx cont
 	}
 	args["before"] = arg3
 	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOComplianceFrameworkOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_TrustCenter_externalUrls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOComplianceExternalURLOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrderBy)
 	if err != nil {
 		return nil, err
 	}
@@ -22780,6 +23134,369 @@ func (ec *executionContext) fieldContext_CancelSignatureRequestPayload_deletedDo
 	return fc, nil
 }
 
+func (ec *executionContext) _ComplianceExternalURL_id(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURL_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURL_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURL_name(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURL_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURL_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURL_url(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURL_url,
+		func(ctx context.Context) (any, error) {
+			return obj.URL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURL_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURL_rank(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURL_rank,
+		func(ctx context.Context) (any, error) {
+			return obj.Rank, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURL_rank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURL_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURL_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURL_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURL_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURL_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURL_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURL_permission(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURL_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.ComplianceExternalURL().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURL_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURL",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_ComplianceExternalURL_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURLConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURLConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURLConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNComplianceExternalURLEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURLConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURLConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ComplianceExternalURLEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ComplianceExternalURLEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceExternalURLEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURLConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURLConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURLConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURLConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURLConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURLEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURLEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURLEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURLEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURLEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceExternalURLEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURLEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ComplianceExternalURLEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNComplianceExternalURL2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURL,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ComplianceExternalURLEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceExternalURLEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ComplianceExternalURL_id(ctx, field)
+			case "name":
+				return ec.fieldContext_ComplianceExternalURL_name(ctx, field)
+			case "url":
+				return ec.fieldContext_ComplianceExternalURL_url(ctx, field)
+			case "rank":
+				return ec.fieldContext_ComplianceExternalURL_rank(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ComplianceExternalURL_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ComplianceExternalURL_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_ComplianceExternalURL_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceExternalURL", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ComplianceFramework_id(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceFramework) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -24868,6 +25585,41 @@ func (ec *executionContext) fieldContext_CreateAuditPayload_auditEdge(_ context.
 				return ec.fieldContext_AuditEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AuditEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateComplianceExternalURLPayload_complianceExternalUrlEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateComplianceExternalURLPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateComplianceExternalURLPayload_complianceExternalUrlEdge,
+		func(ctx context.Context) (any, error) {
+			return obj.ComplianceExternalURLEdge, nil
+		},
+		nil,
+		ec.marshalNComplianceExternalURLEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdge,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateComplianceExternalURLPayload_complianceExternalUrlEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateComplianceExternalURLPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ComplianceExternalURLEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ComplianceExternalURLEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceExternalURLEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -28380,6 +29132,35 @@ func (ec *executionContext) fieldContext_DeleteAuditReportPayload_audit(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteComplianceExternalURLPayload_deletedComplianceExternalUrlId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteComplianceExternalURLPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteComplianceExternalURLPayload_deletedComplianceExternalUrlId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedComplianceExternalURLID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteComplianceExternalURLPayload_deletedComplianceExternalUrlId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteComplianceExternalURLPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteComplianceFrameworkPayload_deletedComplianceFrameworkId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteComplianceFrameworkPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -29559,6 +30340,8 @@ func (ec *executionContext) fieldContext_DeleteTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_references(ctx, field)
 			case "complianceFrameworks":
 				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
+			case "externalUrls":
+				return ec.fieldContext_TrustCenter_externalUrls(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -35827,6 +36610,141 @@ func (ec *executionContext) fieldContext_Mutation_deleteComplianceFramework(ctx 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteComplianceFramework_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createComplianceExternalURL(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createComplianceExternalURL,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateComplianceExternalURL(ctx, fc.Args["input"].(types.CreateComplianceExternalURLInput))
+		},
+		nil,
+		ec.marshalNCreateComplianceExternalURLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceExternalURLPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createComplianceExternalURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "complianceExternalUrlEdge":
+				return ec.fieldContext_CreateComplianceExternalURLPayload_complianceExternalUrlEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateComplianceExternalURLPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createComplianceExternalURL_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateComplianceExternalURL(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateComplianceExternalURL,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateComplianceExternalURL(ctx, fc.Args["input"].(types.UpdateComplianceExternalURLInput))
+		},
+		nil,
+		ec.marshalNUpdateComplianceExternalURLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceExternalURLPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateComplianceExternalURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "complianceExternalUrl":
+				return ec.fieldContext_UpdateComplianceExternalURLPayload_complianceExternalUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateComplianceExternalURLPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateComplianceExternalURL_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteComplianceExternalURL(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteComplianceExternalURL,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteComplianceExternalURL(ctx, fc.Args["input"].(types.DeleteComplianceExternalURLInput))
+		},
+		nil,
+		ec.marshalNDeleteComplianceExternalURLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceExternalURLPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteComplianceExternalURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedComplianceExternalUrlId":
+				return ec.fieldContext_DeleteComplianceExternalURLPayload_deletedComplianceExternalUrlId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteComplianceExternalURLPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteComplianceExternalURL_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -44727,6 +45645,8 @@ func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_references(ctx, field)
 			case "complianceFrameworks":
 				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
+			case "externalUrls":
+				return ec.fieldContext_TrustCenter_externalUrls(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -53033,6 +53953,53 @@ func (ec *executionContext) fieldContext_TrustCenter_complianceFrameworks(ctx co
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenter_externalUrls(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_externalUrls,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.TrustCenter().ExternalUrls(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.OrderBy[coredata.ComplianceExternalURLOrderField]))
+		},
+		nil,
+		ec.marshalNComplianceExternalURLConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_externalUrls(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_ComplianceExternalURLConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ComplianceExternalURLConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceExternalURLConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TrustCenter_externalUrls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenter_permission(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -54170,6 +55137,8 @@ func (ec *executionContext) fieldContext_TrustCenterEdge_node(_ context.Context,
 				return ec.fieldContext_TrustCenter_references(ctx, field)
 			case "complianceFrameworks":
 				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
+			case "externalUrls":
+				return ec.fieldContext_TrustCenter_externalUrls(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -55321,6 +56290,51 @@ func (ec *executionContext) fieldContext_UpdateAuditPayload_audit(_ context.Cont
 				return ec.fieldContext_Audit_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateComplianceExternalURLPayload_complianceExternalUrl(ctx context.Context, field graphql.CollectedField, obj *types.UpdateComplianceExternalURLPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateComplianceExternalURLPayload_complianceExternalUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.ComplianceExternalURL, nil
+		},
+		nil,
+		ec.marshalNComplianceExternalURL2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURL,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateComplianceExternalURLPayload_complianceExternalUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateComplianceExternalURLPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ComplianceExternalURL_id(ctx, field)
+			case "name":
+				return ec.fieldContext_ComplianceExternalURL_name(ctx, field)
+			case "url":
+				return ec.fieldContext_ComplianceExternalURL_url(ctx, field)
+			case "rank":
+				return ec.fieldContext_ComplianceExternalURL_rank(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ComplianceExternalURL_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ComplianceExternalURL_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_ComplianceExternalURL_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ComplianceExternalURL", field.Name)
 		},
 	}
 	return fc, nil
@@ -56518,6 +57532,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterBrandPayload_trustCent
 				return ec.fieldContext_TrustCenter_references(ctx, field)
 			case "complianceFrameworks":
 				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
+			case "externalUrls":
+				return ec.fieldContext_TrustCenter_externalUrls(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -56624,6 +57640,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterPayload_trustCenter(_ 
 				return ec.fieldContext_TrustCenter_references(ctx, field)
 			case "complianceFrameworks":
 				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
+			case "externalUrls":
+				return ec.fieldContext_TrustCenter_externalUrls(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -57164,6 +58182,8 @@ func (ec *executionContext) fieldContext_UploadTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_references(ctx, field)
 			case "complianceFrameworks":
 				return ec.fieldContext_TrustCenter_complianceFrameworks(ctx, field)
+			case "externalUrls":
+				return ec.fieldContext_TrustCenter_externalUrls(ctx, field)
 			case "permission":
 				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
@@ -64193,6 +65213,39 @@ func (ec *executionContext) unmarshalInputCancelSignatureRequestInput(ctx contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputComplianceExternalURLOrder(ctx context.Context, obj any) (types.OrderBy[coredata.ComplianceExternalURLOrderField], error) {
+	var it types.OrderBy[coredata.ComplianceExternalURLOrderField]
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputComplianceFrameworkOrder(ctx context.Context, obj any) (types.OrderBy[coredata.ComplianceFrameworkOrderField], error) {
 	var it types.OrderBy[coredata.ComplianceFrameworkOrderField]
 	asMap := map[string]any{}
@@ -64522,6 +65575,46 @@ func (ec *executionContext) unmarshalInputCreateAuditInput(ctx context.Context, 
 				return it, err
 			}
 			it.TrustCenterVisibility = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateComplianceExternalURLInput(ctx context.Context, obj any) (types.CreateComplianceExternalURLInput, error) {
+	var it types.CreateComplianceExternalURLInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"trustCenterId", "name", "url"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "trustCenterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "url":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.URL = data
 		}
 	}
 	return it, nil
@@ -66767,6 +67860,32 @@ func (ec *executionContext) unmarshalInputDeleteAuditReportInput(ctx context.Con
 				return it, err
 			}
 			it.AuditID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteComplianceExternalURLInput(ctx context.Context, obj any) (types.DeleteComplianceExternalURLInput, error) {
+	var it types.DeleteComplianceExternalURLInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
 		}
 	}
 	return it, nil
@@ -69530,6 +70649,53 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateComplianceExternalURLInput(ctx context.Context, obj any) (types.UpdateComplianceExternalURLInput, error) {
+	var it types.UpdateComplianceExternalURLInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "name", "url", "rank"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "url":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.URL = data
+		case "rank":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rank"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rank = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateComplianceFrameworkInput(ctx context.Context, obj any) (types.UpdateComplianceFrameworkInput, error) {
 	var it types.UpdateComplianceFrameworkInput
 	asMap := map[string]any{}
@@ -72236,6 +73402,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._ComplianceFramework(ctx, sel, obj)
+	case types.ComplianceExternalURL:
+		return ec._ComplianceExternalURL(ctx, sel, &obj)
+	case *types.ComplianceExternalURL:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ComplianceExternalURL(ctx, sel, obj)
 	case types.Audit:
 		return ec._Audit(ctx, sel, &obj)
 	case *types.Audit:
@@ -73538,6 +74711,194 @@ func (ec *executionContext) _CancelSignatureRequestPayload(ctx context.Context, 
 	return out
 }
 
+var complianceExternalURLImplementors = []string{"ComplianceExternalURL", "Node"}
+
+func (ec *executionContext) _ComplianceExternalURL(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceExternalURL) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceExternalURLImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceExternalURL")
+		case "id":
+			out.Values[i] = ec._ComplianceExternalURL_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._ComplianceExternalURL_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "url":
+			out.Values[i] = ec._ComplianceExternalURL_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rank":
+			out.Values[i] = ec._ComplianceExternalURL_rank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._ComplianceExternalURL_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ComplianceExternalURL_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ComplianceExternalURL_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceExternalURLConnectionImplementors = []string{"ComplianceExternalURLConnection"}
+
+func (ec *executionContext) _ComplianceExternalURLConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceExternalURLConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceExternalURLConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceExternalURLConnection")
+		case "edges":
+			out.Values[i] = ec._ComplianceExternalURLConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ComplianceExternalURLConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var complianceExternalURLEdgeImplementors = []string{"ComplianceExternalURLEdge"}
+
+func (ec *executionContext) _ComplianceExternalURLEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceExternalURLEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, complianceExternalURLEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ComplianceExternalURLEdge")
+		case "cursor":
+			out.Values[i] = ec._ComplianceExternalURLEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._ComplianceExternalURLEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var complianceFrameworkImplementors = []string{"ComplianceFramework", "Node"}
 
 func (ec *executionContext) _ComplianceFramework(ctx context.Context, sel ast.SelectionSet, obj *types.ComplianceFramework) graphql.Marshaler {
@@ -74701,6 +76062,45 @@ func (ec *executionContext) _CreateAuditPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("CreateAuditPayload")
 		case "auditEdge":
 			out.Values[i] = ec._CreateAuditPayload_auditEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createComplianceExternalURLPayloadImplementors = []string{"CreateComplianceExternalURLPayload"}
+
+func (ec *executionContext) _CreateComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateComplianceExternalURLPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createComplianceExternalURLPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateComplianceExternalURLPayload")
+		case "complianceExternalUrlEdge":
+			out.Values[i] = ec._CreateComplianceExternalURLPayload_complianceExternalUrlEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -77053,6 +78453,45 @@ func (ec *executionContext) _DeleteAuditReportPayload(ctx context.Context, sel a
 			out.Values[i] = graphql.MarshalString("DeleteAuditReportPayload")
 		case "audit":
 			out.Values[i] = ec._DeleteAuditReportPayload_audit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteComplianceExternalURLPayloadImplementors = []string{"DeleteComplianceExternalURLPayload"}
+
+func (ec *executionContext) _DeleteComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteComplianceExternalURLPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteComplianceExternalURLPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteComplianceExternalURLPayload")
+		case "deletedComplianceExternalUrlId":
+			out.Values[i] = ec._DeleteComplianceExternalURLPayload_deletedComplianceExternalUrlId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -81927,6 +83366,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteComplianceFramework":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteComplianceFramework(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createComplianceExternalURL":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createComplianceExternalURL(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateComplianceExternalURL":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateComplianceExternalURL(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteComplianceExternalURL":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteComplianceExternalURL(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -88476,6 +89936,42 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "externalUrls":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_externalUrls(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "permission":
 			field := field
 
@@ -89899,6 +91395,45 @@ func (ec *executionContext) _UpdateAuditPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("UpdateAuditPayload")
 		case "audit":
 			out.Values[i] = ec._UpdateAuditPayload_audit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateComplianceExternalURLPayloadImplementors = []string{"UpdateComplianceExternalURLPayload"}
+
+func (ec *executionContext) _UpdateComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateComplianceExternalURLPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateComplianceExternalURLPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateComplianceExternalURLPayload")
+		case "complianceExternalUrl":
+			out.Values[i] = ec._UpdateComplianceExternalURLPayload_complianceExternalUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -94583,6 +96118,84 @@ func (ec *executionContext) marshalNCancelSignatureRequestPayload2ᚖgoᚗprobo�
 	return ec._CancelSignatureRequestPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNComplianceExternalURL2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURL(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceExternalURL) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceExternalURL(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceExternalURLConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLConnection(ctx context.Context, sel ast.SelectionSet, v types.ComplianceExternalURLConnection) graphql.Marshaler {
+	return ec._ComplianceExternalURLConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNComplianceExternalURLConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLConnection(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceExternalURLConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceExternalURLConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceExternalURLEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ComplianceExternalURLEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNComplianceExternalURLEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNComplianceExternalURLEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdge(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceExternalURLEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ComplianceExternalURLEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField(ctx context.Context, v any) (coredata.ComplianceExternalURLOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ComplianceExternalURLOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField = map[string]coredata.ComplianceExternalURLOrderField{
+		"CREATED_AT": coredata.ComplianceExternalURLOrderFieldCreatedAt,
+		"RANK":       coredata.ComplianceExternalURLOrderFieldRank,
+	}
+	marshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField = map[coredata.ComplianceExternalURLOrderField]string{
+		coredata.ComplianceExternalURLOrderFieldCreatedAt: "CREATED_AT",
+		coredata.ComplianceExternalURLOrderFieldRank:      "RANK",
+	}
+)
+
 func (ec *executionContext) marshalNComplianceFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceFramework(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceFramework) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -95523,6 +97136,25 @@ func (ec *executionContext) marshalNCreateAuditPayload2ᚖgoᚗproboᚗincᚋpro
 		return graphql.Null
 	}
 	return ec._CreateAuditPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreateComplianceExternalURLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceExternalURLInput(ctx context.Context, v any) (types.CreateComplianceExternalURLInput, error) {
+	res, err := ec.unmarshalInputCreateComplianceExternalURLInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateComplianceExternalURLPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateComplianceExternalURLPayload) graphql.Marshaler {
+	return ec._CreateComplianceExternalURLPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateComplianceExternalURLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateComplianceExternalURLPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateComplianceExternalURLPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateComplianceFrameworkInput(ctx context.Context, v any) (types.CreateComplianceFrameworkInput, error) {
@@ -96554,6 +98186,25 @@ func (ec *executionContext) marshalNDeleteAuditReportPayload2ᚖgoᚗproboᚗinc
 		return graphql.Null
 	}
 	return ec._DeleteAuditReportPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteComplianceExternalURLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceExternalURLInput(ctx context.Context, v any) (types.DeleteComplianceExternalURLInput, error) {
+	res, err := ec.unmarshalInputDeleteComplianceExternalURLInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteComplianceExternalURLPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteComplianceExternalURLPayload) graphql.Marshaler {
+	return ec._DeleteComplianceExternalURLPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteComplianceExternalURLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteComplianceExternalURLPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteComplianceExternalURLPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceFrameworkInput(ctx context.Context, v any) (types.DeleteComplianceFrameworkInput, error) {
@@ -100623,6 +102274,25 @@ func (ec *executionContext) marshalNUpdateAuditPayload2ᚖgoᚗproboᚗincᚋpro
 	return ec._UpdateAuditPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateComplianceExternalURLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceExternalURLInput(ctx context.Context, v any) (types.UpdateComplianceExternalURLInput, error) {
+	res, err := ec.unmarshalInputUpdateComplianceExternalURLInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateComplianceExternalURLPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateComplianceExternalURLPayload) graphql.Marshaler {
+	return ec._UpdateComplianceExternalURLPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateComplianceExternalURLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceExternalURLPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateComplianceExternalURLPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateComplianceExternalURLPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNUpdateComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateComplianceFrameworkInput(ctx context.Context, v any) (types.UpdateComplianceFrameworkInput, error) {
 	res, err := ec.unmarshalInputUpdateComplianceFrameworkInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -102358,6 +104028,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOComplianceExternalURLOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrderBy(ctx context.Context, v any) (*types.OrderBy[coredata.ComplianceExternalURLOrderField], error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputComplianceExternalURLOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOComplianceFrameworkOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrderBy(ctx context.Context, v any) (*types.OrderBy[coredata.ComplianceFrameworkOrderField], error) {

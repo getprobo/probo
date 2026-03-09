@@ -149,6 +149,24 @@ type CancelSignatureRequestPayload struct {
 	DeletedDocumentVersionSignatureID gid.GID `json:"deletedDocumentVersionSignatureId"`
 }
 
+type ComplianceExternalURL struct {
+	ID         gid.GID   `json:"id"`
+	Name       string    `json:"name"`
+	URL        string    `json:"url"`
+	Rank       int       `json:"rank"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	Permission bool      `json:"permission"`
+}
+
+func (ComplianceExternalURL) IsNode()             {}
+func (this ComplianceExternalURL) GetID() gid.GID { return this.ID }
+
+type ComplianceExternalURLEdge struct {
+	Cursor page.CursorKey         `json:"cursor"`
+	Node   *ComplianceExternalURL `json:"node"`
+}
+
 type ComplianceFrameworkEdge struct {
 	Cursor page.CursorKey       `json:"cursor"`
 	Node   *ComplianceFramework `json:"node"`
@@ -253,6 +271,16 @@ type CreateAuditInput struct {
 
 type CreateAuditPayload struct {
 	AuditEdge *AuditEdge `json:"auditEdge"`
+}
+
+type CreateComplianceExternalURLInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	Name          string  `json:"name"`
+	URL           string  `json:"url"`
+}
+
+type CreateComplianceExternalURLPayload struct {
+	ComplianceExternalURLEdge *ComplianceExternalURLEdge `json:"complianceExternalUrlEdge"`
 }
 
 type CreateComplianceFrameworkInput struct {
@@ -791,6 +819,14 @@ type DeleteAuditReportInput struct {
 
 type DeleteAuditReportPayload struct {
 	Audit *Audit `json:"audit"`
+}
+
+type DeleteComplianceExternalURLInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteComplianceExternalURLPayload struct {
+	DeletedComplianceExternalURLID gid.GID `json:"deletedComplianceExternalUrlId"`
 }
 
 type DeleteComplianceFrameworkInput struct {
@@ -1864,19 +1900,20 @@ type TransferImpactAssessmentFilter struct {
 }
 
 type TrustCenter struct {
-	ID                   gid.GID                         `json:"id"`
-	Active               bool                            `json:"active"`
-	LogoFileURL          *string                         `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL      *string                         `json:"darkLogoFileUrl,omitempty"`
-	NdaFileName          *string                         `json:"ndaFileName,omitempty"`
-	NdaFileURL           *string                         `json:"ndaFileUrl,omitempty"`
-	CreatedAt            time.Time                       `json:"createdAt"`
-	UpdatedAt            time.Time                       `json:"updatedAt"`
-	Organization         *Organization                   `json:"organization"`
-	Accesses             *TrustCenterAccessConnection    `json:"accesses"`
-	References           *TrustCenterReferenceConnection `json:"references"`
-	ComplianceFrameworks *ComplianceFrameworkConnection  `json:"complianceFrameworks"`
-	Permission           bool                            `json:"permission"`
+	ID                   gid.GID                          `json:"id"`
+	Active               bool                             `json:"active"`
+	LogoFileURL          *string                          `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL      *string                          `json:"darkLogoFileUrl,omitempty"`
+	NdaFileName          *string                          `json:"ndaFileName,omitempty"`
+	NdaFileURL           *string                          `json:"ndaFileUrl,omitempty"`
+	CreatedAt            time.Time                        `json:"createdAt"`
+	UpdatedAt            time.Time                        `json:"updatedAt"`
+	Organization         *Organization                    `json:"organization"`
+	Accesses             *TrustCenterAccessConnection     `json:"accesses"`
+	References           *TrustCenterReferenceConnection  `json:"references"`
+	ComplianceFrameworks *ComplianceFrameworkConnection   `json:"complianceFrameworks"`
+	ExternalUrls         *ComplianceExternalURLConnection `json:"externalUrls"`
+	Permission           bool                             `json:"permission"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -2004,6 +2041,17 @@ type UpdateAuditInput struct {
 
 type UpdateAuditPayload struct {
 	Audit *Audit `json:"audit"`
+}
+
+type UpdateComplianceExternalURLInput struct {
+	ID   gid.GID `json:"id"`
+	Name string  `json:"name"`
+	URL  string  `json:"url"`
+	Rank *int    `json:"rank,omitempty"`
+}
+
+type UpdateComplianceExternalURLPayload struct {
+	ComplianceExternalURL *ComplianceExternalURL `json:"complianceExternalUrl"`
 }
 
 type UpdateComplianceFrameworkInput struct {

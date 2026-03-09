@@ -101,6 +101,7 @@ type (
 		TrustCenterReferences             *TrustCenterReferenceService
 		TrustCenterFiles                  *TrustCenterFileService
 		ComplianceFrameworks              *ComplianceFrameworkService
+		ComplianceExternalURLs            *ComplianceExternalURLService
 		Nonconformities                   *NonconformityService
 		Obligations                       *ObligationService
 		Snapshots                         *SnapshotService
@@ -226,6 +227,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.ComplianceFrameworks = &ComplianceFrameworkService{svc: tenantService}
+	tenantService.ComplianceExternalURLs = &ComplianceExternalURLService{svc: tenantService}
 	tenantService.TrustCenterFiles = &TrustCenterFileService{
 		svc: tenantService,
 		fileValidator: filevalidation.NewValidator(

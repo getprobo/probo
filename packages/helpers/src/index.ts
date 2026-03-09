@@ -13,6 +13,7 @@ export {
 export {
   withViewTransition,
   downloadFile,
+  externalLinkProps,
   safeOpenUrl,
   focusSiblingElement,
 } from "./dom";
@@ -78,6 +79,7 @@ export {
   parseDate,
 } from "./date";
 export { getTrustCenterUrl } from "./trustCenter";
+export { detectSocialName } from "./socialUrl";
 export { formatError, type GraphQLError } from "./error";
 export { Role, roles, getAssignableRoles } from "./roles";
 export {

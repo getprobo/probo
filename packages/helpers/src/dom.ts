@@ -21,6 +21,25 @@ export function downloadFile(url: string | undefined | null, filename: string) {
     document.body.removeChild(link);
 }
 
+export function externalLinkProps(url: string): {
+    href: string | undefined;
+    target: "_blank";
+    rel: "noopener noreferrer";
+} {
+    let safeHref: string | undefined;
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+            safeHref = url;
+        } else {
+            console.error("Invalid URL protocol. Only HTTP and HTTPS URLs are allowed:", url);
+        }
+    } catch (error) {
+        console.error("Invalid URL format:", url, error);
+    }
+    return { href: safeHref, target: "_blank", rel: "noopener noreferrer" };
+}
+
 export function safeOpenUrl(url: string) {
     try {
         const parsedUrl = new URL(url);

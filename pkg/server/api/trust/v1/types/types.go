@@ -44,6 +44,26 @@ type AuditEdge struct {
 	Node   *Audit         `json:"node"`
 }
 
+type ComplianceExternalURL struct {
+	ID   gid.GID `json:"id"`
+	Name string  `json:"name"`
+	URL  string  `json:"url"`
+	Rank int     `json:"rank"`
+}
+
+func (ComplianceExternalURL) IsNode()             {}
+func (this ComplianceExternalURL) GetID() gid.GID { return this.ID }
+
+type ComplianceExternalURLConnection struct {
+	Edges    []*ComplianceExternalURLEdge `json:"edges"`
+	PageInfo *PageInfo                    `json:"pageInfo"`
+}
+
+type ComplianceExternalURLEdge struct {
+	Cursor page.CursorKey         `json:"cursor"`
+	Node   *ComplianceExternalURL `json:"node"`
+}
+
 type Document struct {
 	ID               gid.GID               `json:"id"`
 	Title            string                `json:"title"`
@@ -222,19 +242,20 @@ type SendMagicLinkPayload struct {
 }
 
 type TrustCenter struct {
-	ID                     gid.GID                         `json:"id"`
-	Active                 bool                            `json:"active"`
-	Slug                   string                          `json:"slug"`
-	LogoFileURL            *string                         `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL        *string                         `json:"darkLogoFileUrl,omitempty"`
-	NonDisclosureAgreement *NonDisclosureAgreement         `json:"nonDisclosureAgreement,omitempty"`
-	Organization           *Organization                   `json:"organization"`
-	Documents              *DocumentConnection             `json:"documents"`
-	Audits                 *AuditConnection                `json:"audits"`
-	Vendors                *VendorConnection               `json:"vendors"`
-	References             *TrustCenterReferenceConnection `json:"references"`
-	TrustCenterFiles       *TrustCenterFileConnection      `json:"trustCenterFiles"`
-	ComplianceFrameworks   *ComplianceFrameworkConnection  `json:"complianceFrameworks"`
+	ID                     gid.GID                          `json:"id"`
+	Active                 bool                             `json:"active"`
+	Slug                   string                           `json:"slug"`
+	LogoFileURL            *string                          `json:"logoFileUrl,omitempty"`
+	DarkLogoFileURL        *string                          `json:"darkLogoFileUrl,omitempty"`
+	NonDisclosureAgreement *NonDisclosureAgreement          `json:"nonDisclosureAgreement,omitempty"`
+	Organization           *Organization                    `json:"organization"`
+	Documents              *DocumentConnection              `json:"documents"`
+	Audits                 *AuditConnection                 `json:"audits"`
+	Vendors                *VendorConnection                `json:"vendors"`
+	References             *TrustCenterReferenceConnection  `json:"references"`
+	TrustCenterFiles       *TrustCenterFileConnection       `json:"trustCenterFiles"`
+	ComplianceFrameworks   *ComplianceFrameworkConnection   `json:"complianceFrameworks"`
+	ExternalUrls           *ComplianceExternalURLConnection `json:"externalUrls"`
 }
 
 func (TrustCenter) IsNode()             {}
