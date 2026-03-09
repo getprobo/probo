@@ -124,10 +124,8 @@ export function PersonForm(props: {
     },
   );
   const handleSubmit = handleSubmitWrapper(async (data: z.infer<typeof schema>) => {
-    const input = {
+    const sharedInput = {
       fullName: data.fullName,
-      emailAddress: data.emailAddress,
-      role: data.role,
       additionalEmailAddresses: data.additionalEmailAddresses,
       kind: data.kind,
       position: data.position,
@@ -137,7 +135,7 @@ export function PersonForm(props: {
 
     if (id) {
       await updatePerson({
-        variables: { input: { ...input, id } },
+        variables: { input: { ...sharedInput, id } },
         onCompleted: () => {
           reset(data);
           onSubmit?.();
@@ -146,7 +144,12 @@ export function PersonForm(props: {
     } else {
       await createPerson({
         variables: {
-          input: { ...input, organizationId },
+          input: {
+            ...sharedInput,
+            emailAddress: data.emailAddress,
+            role: data.role,
+            organizationId,
+          },
           connections: [connectionId],
         },
         onCompleted: () => {
