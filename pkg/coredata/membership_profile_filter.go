@@ -153,8 +153,8 @@ AND (
 )
 AND (
 	CASE
-		WHEN @filter_user_name::text IS NOT NULL THEN
-			p.user_name = @filter_user_name::text
+		WHEN @filter_user_name::citext IS NOT NULL THEN
+			p.user_name = @filter_user_name::citext
 		ELSE TRUE
 	END
 )
