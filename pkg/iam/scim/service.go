@@ -218,6 +218,10 @@ func (s *Service) CreateUser(
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 		} else {
+			if profile.Source == coredata.ProfileSourceSCIM {
+				return scimerrors.ScimErrorUniqueness
+			}
+
 			profile.Source = coredata.ProfileSourceSCIM
 			profile.State = profileState
 			profile.FullName = fullName
