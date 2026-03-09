@@ -26,10 +26,14 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	gmhtml "github.com/yuin/goldmark/renderer/html"
+	"go.abhg.dev/goldmark/mermaid"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 var (
+	//go:embed mermaid.min.js
+	mermaidJSSource string
+
 	//go:embed template.html
 	htmlTemplateContent string
 
@@ -72,7 +76,13 @@ var (
 		},
 		"formatContent": func(content string) template.HTML {
 			md := goldmark.New(
-				goldmark.WithExtensions(extension.Table),
+				goldmark.WithExtensions(
+					extension.Table,
+					&mermaid.Extender{
+						RenderMode: mermaid.RenderModeClient,
+						NoScript:   true,
+					},
+				),
 				goldmark.WithRendererOptions(
 					gmhtml.WithUnsafe(),
 				),
@@ -209,6 +219,7 @@ type (
 		PublishedAt                 *time.Time
 		Signatures                  []SignatureData
 		CompanyHorizontalLogoBase64 string
+		MermaidJS                   template.JS
 	}
 
 	SignatureData struct {
@@ -321,6 +332,8 @@ const (
 )
 
 func RenderHTML(data DocumentData) ([]byte, error) {
+	data.MermaidJS = template.JS(mermaidJSSource)
+
 	var buf bytes.Buffer
 	if err := documentTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("cannot execute template: %w", err)

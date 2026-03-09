@@ -1,6 +1,9 @@
+import { isValidElement } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
+
+import { MermaidDiagram } from "./MermaidDiagram";
 
 type Props = {
   content: string;
@@ -23,19 +26,31 @@ export function Markdown({ content }: Props) {
               {children}
             </a>
           ),
-          pre: ({ children, ...props }) => (
-            <pre
-              className="border border-border-solid rounded p-4 bg-transparent font-mono text-sm overflow-x-auto text-inherit"
-              {...props}
-            >
-              {children}
-            </pre>
-          ),
-          code: ({ children, ...props }) => (
-            <code className="font-mono text-sm text-inherit" {...props}>
-              {children}
-            </code>
-          ),
+          pre: ({ children, ...props }) => {
+            const child = isValidElement<{
+              className?: string;
+              children?: string;
+            }>(children)
+              ? children
+              : null;
+
+            if (
+              child?.type === "code"
+              && child.props.className === "language-mermaid"
+              && typeof child.props.children === "string"
+            ) {
+              return <MermaidDiagram chart={child.props.children} />;
+            }
+
+            return (
+              <pre
+                className="border border-border-solid rounded p-4 bg-transparent font-mono text-sm overflow-x-auto text-inherit"
+                {...props}
+              >
+                {children}
+              </pre>
+            );
+          },
         }}
       >
         {content}

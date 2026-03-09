@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
@@ -41,14 +42,16 @@ var (
 
 type (
 	RenderConfig struct {
-		PageFormat      PageFormat
-		Orientation     Orientation
-		MarginTop       Margin
-		MarginBottom    Margin
-		MarginLeft      Margin
-		MarginRight     Margin
-		PrintBackground bool
-		Scale           float64 // Print scale (0.1 to 2.0)
+		PageFormat               PageFormat
+		Orientation              Orientation
+		MarginTop                Margin
+		MarginBottom             Margin
+		MarginLeft               Margin
+		MarginRight              Margin
+		PrintBackground          bool
+		Scale                    float64       // Print scale (0.1 to 2.0)
+		WaitForExpression        string        // Optional JS expression polled until true before printing
+		WaitForExpressionTimeout time.Duration // Max time to wait (default 15s)
 	}
 
 	Option func(*Converter)
@@ -162,6 +165,30 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 
 	htmlContent := string(htmlDocument)
 
+	waitTimeout := cfg.WaitForExpressionTimeout
+	if waitTimeout <= 0 {
+		waitTimeout = 15 * time.Second
+	}
+
+	waitForExpr := chromedp.ActionFunc(func(ctx context.Context) error {
+		if cfg.WaitForExpression == "" {
+			return nil
+		}
+		deadline := time.Now().Add(waitTimeout)
+		for time.Now().Before(deadline) {
+			var ready bool
+			if err := chromedp.Evaluate(cfg.WaitForExpression, &ready).Do(ctx); err != nil {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			if ready {
+				return nil
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		return nil // proceed even on timeout
+	})
+
 	err := chromedp.Run(
 		ctx,
 		chromedp.Navigate("about:blank"),
@@ -178,6 +205,7 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 			}),
 		chromedp.WaitReady("body"),
 		chromedp.ActionFunc(waitUntilDocumentReady),
+		waitForExpr,
 		chromedp.ActionFunc(
 			func(ctx context.Context) (err error) {
 				pdfBytes, _, err = page.PrintToPDF().

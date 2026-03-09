@@ -1884,14 +1884,15 @@ func exportDocumentPDF(
 	}
 
 	cfg := html2pdf.RenderConfig{
-		PageFormat:      html2pdf.PageFormatA4,
-		Orientation:     html2pdf.OrientationPortrait,
-		MarginTop:       html2pdf.NewMarginInches(1.0),
-		MarginBottom:    html2pdf.NewMarginInches(1.0),
-		MarginLeft:      html2pdf.NewMarginInches(1.0),
-		MarginRight:     html2pdf.NewMarginInches(1.0),
-		PrintBackground: true,
-		Scale:           1.0,
+		PageFormat:        html2pdf.PageFormatA4,
+		Orientation:       html2pdf.OrientationPortrait,
+		MarginTop:         html2pdf.NewMarginInches(1.0),
+		MarginBottom:      html2pdf.NewMarginInches(1.0),
+		MarginLeft:        html2pdf.NewMarginInches(1.0),
+		MarginRight:       html2pdf.NewMarginInches(1.0),
+		PrintBackground:   true,
+		Scale:             1.0,
+		WaitForExpression: "window.__mermaidReady === true",
 	}
 
 	pdfReader, err := html2pdfConverter.GeneratePDF(ctx, htmlContent, cfg)

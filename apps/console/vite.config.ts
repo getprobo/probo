@@ -1,8 +1,11 @@
+import { createRequire } from "node:module";
 import { fileURLToPath, URL } from "node:url";
 
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+
+const require = createRequire(import.meta.url);
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -54,6 +57,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "#": fileURLToPath(new URL("./src", import.meta.url)),
+      "mermaid": require.resolve("mermaid/dist/mermaid.esm.min.mjs"),
     },
   },
 });

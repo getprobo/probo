@@ -341,7 +341,31 @@
             background: transparent;
             border: none;
         }
+
+        .document-content pre.mermaid {
+            border: none;
+            padding: 0;
+            background: transparent;
+            text-align: center;
+        }
+
+        .document-content pre.mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
+    <script>{{.MermaidJS}}</script>
+    <script>
+        window.__mermaidReady = false;
+        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        document.addEventListener('DOMContentLoaded', function () {
+            mermaid.run().then(function () {
+                window.__mermaidReady = true;
+            }).catch(function () {
+                window.__mermaidReady = true;
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="document-container">
