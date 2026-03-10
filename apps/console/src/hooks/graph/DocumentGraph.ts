@@ -11,9 +11,12 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 export const DocumentsConnectionKey = "DocumentsListQuery_documents";
 
 const deleteDocumentMutation = graphql`
-  mutation DocumentGraphDeleteMutation($input: DeleteDocumentInput!) {
+  mutation DocumentGraphDeleteMutation(
+    $input: DeleteDocumentInput!
+    $connections: [ID!]!
+  ) {
     deleteDocument(input: $input) {
-      deletedDocumentId @deleteRecord
+      deletedDocumentId @deleteEdge(connections: $connections)
     }
   }
 `;

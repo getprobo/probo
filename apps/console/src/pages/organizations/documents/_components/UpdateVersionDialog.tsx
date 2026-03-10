@@ -12,6 +12,7 @@ import {
 } from "@probo/ui";
 import { type RefObject, useEffect } from "react";
 import { useFragment, useMutation } from "react-relay";
+import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -92,6 +93,7 @@ export default function UpdateVersionDialog(props: UpdateVersionDialogProps) {
   const { fKey, ref } = props;
 
   const organizationId = useOrganizationId();
+  const navigate = useNavigate();
   const { __ } = useTranslate();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
@@ -174,11 +176,12 @@ export default function UpdateVersionDialog(props: UpdateVersionDialogProps) {
               },
               onSuccess: () => {
                 dialogRef.current?.close();
-                window.location.href = `/organizations/${organizationId}/documents/${document.id}`;
+                void navigate(`/organizations/${organizationId}/documents/${document.id}/versions/${newVersionId}`);
               },
             });
           } else {
             dialogRef.current?.close();
+            void navigate(`/organizations/${organizationId}/documents/${document.id}/versions/${newVersionId}`);
           }
         },
       });

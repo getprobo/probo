@@ -4429,8 +4429,16 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 		},
 	)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update document version: %w", err))
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errNotDraft, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotDraft)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update document version", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.UpdateDocumentVersionPayload{

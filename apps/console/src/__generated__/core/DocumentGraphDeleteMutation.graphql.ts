@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6b7916e6ff46a629bf97a7b072db2d8b>>
+ * @generated SignedSource<<64c2c92a2a0806f34243f8fc9904167c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,6 +13,7 @@ export type DeleteDocumentInput = {
   documentId: string;
 };
 export type DocumentGraphDeleteMutation$variables = {
+  connections: ReadonlyArray<string>;
   input: DeleteDocumentInput;
 };
 export type DocumentGraphDeleteMutation$data = {
@@ -26,21 +27,24 @@ export type DocumentGraphDeleteMutation = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "input"
-  }
-],
-v1 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "connections"
+},
+v1 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "input"
+},
+v2 = [
   {
     "kind": "Variable",
     "name": "input",
     "variableName": "input"
   }
 ],
-v2 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -49,20 +53,23 @@ v2 = {
 };
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
     "name": "DocumentGraphDeleteMutation",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": (v2/*: any*/),
         "concreteType": "DeleteDocumentPayload",
         "kind": "LinkedField",
         "name": "deleteDocument",
         "plural": false,
         "selections": [
-          (v2/*: any*/)
+          (v3/*: any*/)
         ],
         "storageKey": null
       }
@@ -72,27 +79,37 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v1/*: any*/),
+      (v0/*: any*/)
+    ],
     "kind": "Operation",
     "name": "DocumentGraphDeleteMutation",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": (v2/*: any*/),
         "concreteType": "DeleteDocumentPayload",
         "kind": "LinkedField",
         "name": "deleteDocument",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
+          (v3/*: any*/),
           {
             "alias": null,
             "args": null,
             "filters": null,
-            "handle": "deleteRecord",
+            "handle": "deleteEdge",
             "key": "",
             "kind": "ScalarHandle",
-            "name": "deletedDocumentId"
+            "name": "deletedDocumentId",
+            "handleArgs": [
+              {
+                "kind": "Variable",
+                "name": "connections",
+                "variableName": "connections"
+              }
+            ]
           }
         ],
         "storageKey": null
@@ -110,6 +127,6 @@ return {
 };
 })();
 
-(node as any).hash = "471020248ed9d398ab80655e04cb823d";
+(node as any).hash = "355f3a70caecabb2146075657665633e";
 
 export default node;

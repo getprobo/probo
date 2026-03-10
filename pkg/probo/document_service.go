@@ -46,6 +46,9 @@ type (
 	ErrDocumentVersionNoChanges struct {
 	}
 
+	ErrDocumentVersionNotDraft struct {
+	}
+
 	ErrDocumentVersionSignatureAlreadySigned struct {
 	}
 
@@ -152,6 +155,10 @@ func (e ErrSignatureNotCancellable) Error() string {
 
 func (e ErrDocumentVersionNoChanges) Error() string {
 	return "no changes detected"
+}
+
+func (e ErrDocumentVersionNotDraft) Error() string {
+	return "cannot update a published document version"
 }
 
 func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
@@ -781,7 +788,7 @@ func (s *DocumentService) UpdateVersion(
 			}
 
 			if documentVersion.Status != coredata.DocumentStatusDraft {
-				return fmt.Errorf("cannot update published version")
+				return &ErrDocumentVersionNotDraft{}
 			}
 
 			documentVersion.Title = document.Title

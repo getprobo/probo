@@ -77,8 +77,8 @@ const publishDocumentVersionMutation = graphql`
   }
 `;
 
-export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQuery> }) {
-  const { queryRef } = props;
+export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQuery>; onRefetch: () => void }) {
+  const { queryRef, onRefetch } = props;
 
   const organizationId = useOrganizationId();
   const { versionId } = useParams();
@@ -112,6 +112,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
       variables: {
         input: { documentId: document.id },
       },
+      onSuccess: onRefetch,
     });
   };
 
@@ -146,7 +147,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
               </Button>
             )}
             <DocumentVersionsDropdown />
-            <DocumentActionsDropdownn documentFragmentRef={document} versionFragmentRef={currentVersion} />
+            <DocumentActionsDropdownn documentFragmentRef={document} versionFragmentRef={currentVersion} onRefetch={onRefetch} />
           </div>
         </div>
 

@@ -3,14 +3,14 @@ import { useTranslate } from "@probo/i18n";
 import { ActionDropdown, DropdownItem, IconArrowDown, IconPencil, IconTrashCan, useConfirm } from "@probo/ui";
 import { use, useRef } from "react";
 import { useFragment } from "react-relay";
-import { useNavigate } from "react-router";
-import { graphql } from "relay-runtime";
+import { useNavigate, useParams } from "react-router";
+import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { DocumentActionsDropdown_documentFragment$key } from "#/__generated__/core/DocumentActionsDropdown_documentFragment.graphql";
 import type { DocumentActionsDropdown_versionFragment$key } from "#/__generated__/core/DocumentActionsDropdown_versionFragment.graphql";
 import type { DocumentActionsDropdownn_exportVersionMutation } from "#/__generated__/core/DocumentActionsDropdownn_exportVersionMutation.graphql";
 import { PdfDownloadDialog, type PdfDownloadDialogRef } from "#/components/documents/PdfDownloadDialog";
-import { useDeleteDocumentMutation, useDeleteDraftDocumentVersionMutation } from "#/hooks/graph/DocumentGraph";
+import { DocumentsConnectionKey, useDeleteDocumentMutation, useDeleteDraftDocumentVersionMutation } from "#/hooks/graph/DocumentGraph";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
@@ -53,11 +53,13 @@ const exportDocumentVersionMutation = graphql`
 export function DocumentActionsDropdownn(props: {
   documentFragmentRef: DocumentActionsDropdown_documentFragment$key;
   versionFragmentRef: DocumentActionsDropdown_versionFragment$key;
+  onRefetch: () => void;
 }) {
-  const { documentFragmentRef, versionFragmentRef } = props;
+  const { documentFragmentRef, versionFragmentRef, onRefetch } = props;
 
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const { versionId } = useParams();
   const { __ } = useTranslate();
   const { email: defaultEmail } = use(CurrentUser);
   const updateDialogRef = useRef<{ open: () => void }>(null);
@@ -82,11 +84,17 @@ export function DocumentActionsDropdownn(props: {
     );
 
   const handleDelete = () => {
+    const connectionId = ConnectionHandler.getConnectionID(
+      organizationId,
+      DocumentsConnectionKey,
+      { orderBy: { direction: "ASC", field: "TITLE" } },
+    );
     confirm(
       () =>
         deleteDocument({
           variables: {
             input: { documentId: document.id },
+            connections: [connectionId],
           },
           onSuccess() {
             void navigate(`/organizations/${organizationId}/documents`);
@@ -104,15 +112,23 @@ export function DocumentActionsDropdownn(props: {
   };
 
   const handleDeleteDraft = () => {
+    const versionsConnectionId = ConnectionHandler.getConnectionID(
+      document.id,
+      "DocumentLayout_versions",
+    );
     confirm(
       () =>
         deleteDraftDocumentVersion({
           variables: {
             input: { documentVersionId: version.id },
-            connections: [document.versions.__id],
+            connections: [document.versions.__id, versionsConnectionId],
           },
           onSuccess() {
-            window.location.href = `/organizations/${organizationId}/documents/${document.id}`;
+            if (versionId) {
+              void navigate(`/organizations/${organizationId}/documents/${document.id}`);
+            } else {
+              onRefetch();
+            }
           },
         }),
       {

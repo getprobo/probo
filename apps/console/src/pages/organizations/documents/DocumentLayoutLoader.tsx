@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
@@ -25,9 +25,16 @@ function DocumentLayoutQueryLoader() {
     }
   });
 
+  const onRefetch = useCallback(() => {
+    loadQuery(
+      { documentId, versionId: versionId ?? "", versionSpecified: !!versionId },
+      { fetchPolicy: "network-only" },
+    );
+  }, [documentId, versionId, loadQuery]);
+
   if (!queryRef) return <PageSkeleton />;
 
-  return <DocumentLayout queryRef={queryRef} />;
+  return <DocumentLayout queryRef={queryRef} onRefetch={onRefetch} />;
 }
 
 export default function DocumentLayoutLoader() {
