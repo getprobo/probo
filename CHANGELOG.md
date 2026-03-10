@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.138.0] - 2026-03-10
+
+### Changed
+
+- Improve mailer performance
+
+### Fixed
+
+- Display empty state for soa control assessment
+- Fix compliance report
+
 ## [0.137.3] - 2026-03-05
 
 ### Fixed
