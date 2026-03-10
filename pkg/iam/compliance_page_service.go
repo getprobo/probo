@@ -114,7 +114,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 			}
 
 			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, s.encryptionKey, organization.ID); err != nil {
+			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load custom domain: %w", err)
 				}

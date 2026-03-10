@@ -617,7 +617,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 			}
 
 			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, s.svc.encryptionKey, organization.ID); err != nil {
+			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load custom domain: %w", err)
 				}

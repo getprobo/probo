@@ -422,7 +422,6 @@ func (impl *Implm) Run(
 		pgClient,
 		impl.cfg.GetSlackSigningSecret(),
 		baseURL.String(),
-		encryptionKey,
 		impl.cfg.Auth.Cookie.Secret,
 		l.Named("slack"),
 	)
@@ -462,7 +461,6 @@ func (impl *Implm) Run(
 		s3Client,
 		impl.cfg.AWS.Bucket,
 		baseURL.String(),
-		encryptionKey,
 		impl.cfg.GetSlackSigningSecret(),
 		iamService,
 		esignService,
@@ -817,7 +815,6 @@ func (impl *Implm) runTrustCenterServer(
 
 	httpACMEHandler := certmanager.NewACMEChallengeHandler(
 		pgClient,
-		encryptionKey,
 		l.Named("http_acme_handler"),
 	)
 
@@ -863,7 +860,6 @@ func (impl *Implm) runTrustCenterServer(
 
 	acmeHandler := certmanager.NewACMEChallengeHandler(
 		pgClient,
-		encryptionKey,
 		l.Named("acme_handler"),
 	)
 

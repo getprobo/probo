@@ -122,7 +122,7 @@ func (s *CustomDomainService) DeleteCustomDomain(
 			}
 
 			domain := &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, tx, s.svc.scope, s.encryptionKey, *org.CustomDomainID); err != nil {
+			if err := domain.LoadByID(ctx, tx, s.svc.scope, *org.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load domain: %w", err)
 			}
 
@@ -159,7 +159,7 @@ func (s *CustomDomainService) GetOrganizationCustomDomain(
 			}
 
 			domain = &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, conn, s.svc.scope, s.encryptionKey, *org.CustomDomainID); err != nil {
+			if err := domain.LoadByID(ctx, conn, s.svc.scope, *org.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 

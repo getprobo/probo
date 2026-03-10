@@ -28,7 +28,6 @@ type (
 		pg                         *pg.Client
 		fm                         *filemanager.Service
 		hp                         *passwdhash.Profile
-		encryptionKey              cipher.EncryptionKey
 		baseURL                    string
 		tokenSecret                string
 		disableSignup              bool
@@ -127,7 +126,7 @@ func NewService(
 	svc.Authorizer = NewAuthorizer(pgClient)
 	svc.Authorizer.RegisterPolicySet(IAMPolicySet())
 
-	samlService, err := saml.NewService(svc.pg, svc.encryptionKey, svc.baseURL, svc.certificate, svc.privateKey, cfg.Logger)
+	samlService, err := saml.NewService(svc.pg, svc.baseURL, svc.certificate, svc.privateKey, cfg.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create SAML service: %w", err)
 	}

@@ -7,7 +7,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -16,7 +15,6 @@ type Service struct {
 	logger             *log.Logger
 	slackSigningSecret string
 	baseURL            string
-	encryptionKey      cipher.EncryptionKey
 	tokenSecret        string
 }
 
@@ -25,7 +23,6 @@ type TenantService struct {
 	scope         coredata.Scoper
 	logger        *log.Logger
 	baseURL       string
-	encryptionKey cipher.EncryptionKey
 	tokenSecret   string
 	SlackMessages *SlackMessageService
 }
@@ -34,7 +31,6 @@ func NewService(
 	pg *pg.Client,
 	slackSigningSecret string,
 	baseURL string,
-	encryptionKey cipher.EncryptionKey,
 	tokenSecret string,
 	logger *log.Logger,
 ) *Service {
@@ -43,19 +39,17 @@ func NewService(
 		logger:             logger,
 		slackSigningSecret: slackSigningSecret,
 		baseURL:            baseURL,
-		encryptionKey:      encryptionKey,
 		tokenSecret:        tokenSecret,
 	}
 }
 
 func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService := &TenantService{
-		pg:            s.pg,
-		scope:         coredata.NewScope(tenantID),
-		logger:        s.logger,
-		baseURL:       s.baseURL,
-		encryptionKey: s.encryptionKey,
-		tokenSecret:   s.tokenSecret,
+		pg:          s.pg,
+		scope:       coredata.NewScope(tenantID),
+		logger:      s.logger,
+		baseURL:     s.baseURL,
+		tokenSecret: s.tokenSecret,
 	}
 	tenantService.SlackMessages = &SlackMessageService{svc: tenantService}
 

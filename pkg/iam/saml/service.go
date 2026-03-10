@@ -31,18 +31,16 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	Service struct {
-		pg            *pg.Client
-		encryptionKey cipher.EncryptionKey
-		baseURL       string
-		certificate   *x509.Certificate
-		privateKey    *rsa.PrivateKey
-		logger        *log.Logger
+		pg          *pg.Client
+		baseURL     string
+		certificate *x509.Certificate
+		privateKey  *rsa.PrivateKey
+		logger      *log.Logger
 	}
 
 	UserInfo struct {
@@ -57,19 +55,17 @@ type (
 
 func NewService(
 	pg *pg.Client,
-	encryptionKey cipher.EncryptionKey,
 	baseURL string,
 	certificate *x509.Certificate,
 	privateKey *rsa.PrivateKey,
 	logger *log.Logger,
 ) (*Service, error) {
 	return &Service{
-		pg:            pg,
-		encryptionKey: encryptionKey,
-		baseURL:       baseURL,
-		certificate:   certificate,
-		privateKey:    privateKey,
-		logger:        logger,
+		pg:          pg,
+		baseURL:     baseURL,
+		certificate: certificate,
+		privateKey:  privateKey,
+		logger:      logger,
 	}, nil
 }
 

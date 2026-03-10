@@ -224,7 +224,7 @@ func (p *Provisioner) resetStaleDomain(
 	domain *coredata.CustomDomain,
 ) error {
 	fullDomain := &coredata.CustomDomain{}
-	if err := fullDomain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
+	if err := fullDomain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), domain.ID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
@@ -260,7 +260,7 @@ func (p *Provisioner) resetStaleDomain(
 		fullDomain.SSLLastAttemptAt = nil
 	}
 
-	if err := fullDomain.Update(ctx, tx, coredata.NewNoScope(), p.encryptionKey); err != nil {
+	if err := fullDomain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 		return fmt.Errorf("cannot update stale domain: %w", err)
 	}
 
@@ -273,7 +273,7 @@ func (p *Provisioner) provisionDomainCertificate(
 	domainID gid.GID,
 ) error {
 	domain := &coredata.CustomDomain{}
-	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), p.encryptionKey, domainID); err != nil {
+	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), domainID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
@@ -312,7 +312,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		domain.HTTPOrderURL = &challenge.OrderURL
 		domain.SSLStatus = coredata.CustomDomainSSLStatusProvisioning
 
-		if err := domain.Update(ctx, tx, coredata.NewNoScope(), p.encryptionKey); err != nil {
+		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 			return fmt.Errorf("cannot update domain with challenge: %w", err)
 		}
 
@@ -362,7 +362,7 @@ func (p *Provisioner) provisionDomainCertificate(
 			domain.HTTPOrderURL = nil
 		}
 
-		if err := domain.Update(ctx, tx, coredata.NewNoScope(), p.encryptionKey); err != nil {
+		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 			return fmt.Errorf("cannot update domain: %w", err)
 		}
 
@@ -393,7 +393,7 @@ func (p *Provisioner) provisionDomainCertificate(
 	domain.HTTPChallengeURL = nil
 	domain.HTTPOrderURL = nil
 
-	if err := domain.Update(ctx, tx, coredata.NewNoScope(), p.encryptionKey); err != nil {
+	if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 		return fmt.Errorf("cannot update domain: %w", err)
 	}
 

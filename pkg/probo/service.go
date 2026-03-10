@@ -399,7 +399,7 @@ func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (
 		ctx,
 		func(conn pg.Conn) error {
 			var customDomain coredata.CustomDomain
-			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), s.encryptionKey, domain); err != nil {
+			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 

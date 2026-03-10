@@ -153,7 +153,6 @@ func (cd *CustomDomain) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
 	domainID gid.GID,
 ) error {
 	q := `
@@ -210,7 +209,6 @@ func (cd *CustomDomain) LoadByIDForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
 	domainID gid.GID,
 ) error {
 	q := `
@@ -267,7 +265,6 @@ func (cd *CustomDomain) LoadByDomain(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
 	domain string,
 ) error {
 	q := `
@@ -324,7 +321,6 @@ func (cd *CustomDomain) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -468,7 +464,6 @@ func (cd *CustomDomain) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
 ) error {
 	var encryptedKey []byte
 	if len(cd.EncryptedSSLPrivateKey) > 0 {
@@ -554,7 +549,6 @@ func (cd *CustomDomain) LoadByHTTPChallengeToken(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
 	token string,
 ) error {
 	q := `
@@ -714,7 +708,6 @@ func (domains *CustomDomains) LoadActiveCertificates(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
 ) error {
 	q := `
 SELECT

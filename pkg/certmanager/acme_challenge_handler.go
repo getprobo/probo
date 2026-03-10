@@ -22,24 +22,20 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 )
 
 type ACMEChallengeHandler struct {
-	pg            *pg.Client
-	encryptionKey cipher.EncryptionKey
-	logger        *log.Logger
+	pg     *pg.Client
+	logger *log.Logger
 }
 
 func NewACMEChallengeHandler(
 	pg *pg.Client,
-	encryptionKey cipher.EncryptionKey,
 	logger *log.Logger,
 ) *ACMEChallengeHandler {
 	return &ACMEChallengeHandler{
-		pg:            pg,
-		encryptionKey: encryptionKey,
-		logger:        logger.Named("certmanager.acme-challenge-handler"),
+		pg:     pg,
+		logger: logger.Named("certmanager.acme-challenge-handler"),
 	}
 }
 
@@ -82,7 +78,7 @@ func (h *ACMEChallengeHandler) getKeyAuthForToken(ctx context.Context, token str
 		ctx,
 		func(conn pg.Conn) error {
 			domain := &coredata.CustomDomain{}
-			if err := domain.LoadByHTTPChallengeToken(ctx, conn, coredata.NewNoScope(), h.encryptionKey, token); err != nil {
+			if err := domain.LoadByHTTPChallengeToken(ctx, conn, coredata.NewNoScope(), token); err != nil {
 				return err
 			}
 

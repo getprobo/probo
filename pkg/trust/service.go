@@ -24,7 +24,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
@@ -40,7 +39,6 @@ type (
 		s3                 *s3.Client
 		bucket             string
 		proboSvc           *probo.Service
-		encryptionKey      cipher.EncryptionKey
 		slackSigningSecret string
 		baseURL            string
 		iam                *iam.Service
@@ -57,7 +55,6 @@ type (
 		bucket                string
 		scope                 coredata.Scoper
 		proboSvc              *probo.Service
-		encryptionKey         cipher.EncryptionKey
 		baseURL               string
 		iam                   *iam.Service
 		esign                 *esign.Service
@@ -84,7 +81,6 @@ func NewService(
 	s3Client *s3.Client,
 	bucket string,
 	baseURL string,
-	encryptionKey cipher.EncryptionKey,
 	slackSigningSecret string,
 	iam *iam.Service,
 	esignSvc *esign.Service,
@@ -97,7 +93,6 @@ func NewService(
 		pg:                 pgClient,
 		s3:                 s3Client,
 		bucket:             bucket,
-		encryptionKey:      encryptionKey,
 		slackSigningSecret: slackSigningSecret,
 		baseURL:            baseURL,
 		iam:                iam,
@@ -116,7 +111,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		bucket:            s.bucket,
 		scope:             coredata.NewScope(tenantID),
 		proboSvc:          s.proboSvc,
-		encryptionKey:     s.encryptionKey,
 		baseURL:           s.baseURL,
 		iam:               s.iam,
 		esign:             s.esign,
@@ -204,7 +198,7 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 		ctx,
 		func(conn pg.Conn) error {
 			var customDomain coredata.CustomDomain
-			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), s.encryptionKey, domain); err != nil {
+			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
@@ -247,7 +241,7 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return customDomain.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), s.encryptionKey, organizationID)
+			return customDomain.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), organizationID)
 		},
 	)
 	if err != nil {

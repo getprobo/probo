@@ -130,7 +130,7 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 
 func (r *Renewer) renewDomain(ctx context.Context, tx pg.Conn, domainID gid.GID) error {
 	domain := &coredata.CustomDomain{}
-	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), r.encryptionKey, domainID); err != nil {
+	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), domainID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
@@ -149,7 +149,7 @@ func (r *Renewer) renewDomain(ctx context.Context, tx pg.Conn, domainID gid.GID)
 	}
 
 	domain.SSLStatus = coredata.CustomDomainSSLStatusRenewing
-	if err := domain.Update(ctx, tx, coredata.NewNoScope(), r.encryptionKey); err != nil {
+	if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 		return fmt.Errorf("cannot update domain status: %w", err)
 	}
 

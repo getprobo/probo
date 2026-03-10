@@ -53,7 +53,7 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 		ctx,
 		func(conn pg.Conn) error {
 			domains := coredata.CustomDomains{}
-			if err := domains.LoadActiveCertificates(ctx, conn, coredata.NewNoScope(), w.encryptionKey); err != nil {
+			if err := domains.LoadActiveCertificates(ctx, conn, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot load active certificates: %w", err)
 			}
 
@@ -95,7 +95,7 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 
 func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
 	var loadedDomain coredata.CustomDomain
-	if err := loadedDomain.LoadByID(ctx, conn, coredata.NewNoScope(), w.encryptionKey, domain.ID); err != nil {
+	if err := loadedDomain.LoadByID(ctx, conn, coredata.NewNoScope(), domain.ID); err != nil {
 		return fmt.Errorf("cannot load domain with decrypted values: %w", err)
 	}
 
@@ -162,7 +162,7 @@ func (w *CacheStore) WarmSingleDomain(ctx context.Context, domainName string) er
 		ctx,
 		func(conn pg.Conn) error {
 			var domain coredata.CustomDomain
-			if err := domain.LoadByDomain(ctx, conn, coredata.NewNoScope(), w.encryptionKey, domainName); err != nil {
+			if err := domain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domainName); err != nil {
 				return fmt.Errorf("cannot load domain: %w", err)
 			}
 

@@ -1900,35 +1900,6 @@ func (s OrganizationService) GetSCIMBridgeByID(ctx context.Context, bridgeID gid
 	return bridge, nil
 }
 
-func (s OrganizationService) GetConnectorByID(ctx context.Context, connectorID gid.GID) (*coredata.Connector, error) {
-	var (
-		scope     = coredata.NewScopeFromObjectID(connectorID)
-		connector = &coredata.Connector{}
-	)
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := connector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewConnectorNotFoundError(connectorID)
-				}
-
-				return fmt.Errorf("cannot load connector: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return connector, nil
-}
-
 // GetConnectorMetadataByID returns connector metadata without decrypting the connection.
 // Use this when you only need provider, organization, or other metadata fields.
 func (s OrganizationService) GetConnectorMetadataByID(ctx context.Context, connectorID gid.GID) (*coredata.Connector, error) {
