@@ -80,6 +80,7 @@ func (vcs *VendorComplianceReports) LoadForVendorID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	vendor_id,
 	report_date,
 	valid_until,
@@ -127,6 +128,7 @@ func (vcr *VendorComplianceReport) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	vendor_id,
 	report_date,
 	valid_until,
