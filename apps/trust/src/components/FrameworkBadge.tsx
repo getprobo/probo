@@ -24,7 +24,7 @@ export function FrameworkBadge(props: { framework: FrameworkBadgeFragment$key })
         darkLogoURL={framework.darkLogoURL}
         name={framework.name}
       />
-      <div className="txt-primary text-sm max-w-19 overflow-hidden min-w-0 whitespace-nowrap text-ellipsis">
+      <div className="txt-primary text-xs max-w-19 min-w-0 text-center">
         {framework.name}
       </div>
     </div>
