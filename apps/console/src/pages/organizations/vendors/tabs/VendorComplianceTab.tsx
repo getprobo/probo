@@ -25,8 +25,10 @@ import type { ComplianceReportListQuery } from "#/__generated__/core/ComplianceR
 import type { VendorComplianceTabFragment$key } from "#/__generated__/core/VendorComplianceTabFragment.graphql";
 import type { VendorComplianceTabFragment_report$key } from "#/__generated__/core/VendorComplianceTabFragment_report.graphql";
 import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { UploadComplianceReportDialog } from "../dialogs/UploadComplianceReportDialog";
 
 import { UploadComplianceReportDialog } from "../dialogs/UploadComplianceReportDialog";
 
