@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.138.2] - 2026-03-10
+
+### Fixed
+
+- Profiles filter should filter user with console/employee membership by default in console/employee APIs
+
 ## [0.138.1] - 2026-03-10
 
 ### Changed
