@@ -73,6 +73,7 @@ export {
   formatDatetime,
   formatDate,
   toDateInput,
+  todayAsDateInput,
   formatDuration,
   parseDate,
 } from "./date";

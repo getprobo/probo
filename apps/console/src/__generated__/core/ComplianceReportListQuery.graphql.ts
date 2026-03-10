@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8f9e37a76c35d572a81006be1c54b685>>
+ * @generated SignedSource<<1fe3ef3e802ded7a9cea3f34400b708b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -275,6 +275,13 @@ return {
                                 "name": "size",
                                 "storageKey": null
                               },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "downloadUrl",
+                                "storageKey": null
+                              },
                               (v12/*: any*/)
                             ],
                             "storageKey": null
@@ -368,12 +375,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0301f89298e5a1d39beac8f822095c6d",
+    "cacheID": "dd0036455bf80553156a719888535131",
     "id": null,
     "metadata": {},
     "name": "ComplianceReportListQuery",
     "operationKind": "query",
-    "text": "query ComplianceReportListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorComplianceReportOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorComplianceTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment_16fISc on Vendor {\n  complianceReports(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n}\n"
+    "text": "query ComplianceReportListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorComplianceReportOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorComplianceTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment_16fISc on Vendor {\n  complianceReports(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    downloadUrl\n    id\n  }\n  canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n}\n"
   }
 };
 })();

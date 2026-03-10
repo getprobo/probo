@@ -1,11 +1,14 @@
-import { fileSize, formatDate, sprintf } from "@probo/helpers";
+import { downloadFile, fileSize, formatDate, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
+  Button,
   DropdownItem,
-  Dropzone,
+  IconArrowDown,
+  IconPlusLarge,
   IconTrashCan,
+  PageHeader,
   Tbody,
   Td,
   Th,
@@ -14,7 +17,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import type { ComponentProps } from "react";
-import { useFragment, useMutation, useRefetchableFragment } from "react-relay";
+import { useFragment, useRefetchableFragment } from "react-relay";
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
@@ -22,8 +25,10 @@ import type { ComplianceReportListQuery } from "#/__generated__/core/ComplianceR
 import type { VendorComplianceTabFragment$key } from "#/__generated__/core/VendorComplianceTabFragment.graphql";
 import type { VendorComplianceTabFragment_report$key } from "#/__generated__/core/VendorComplianceTabFragment_report.graphql";
 import type { VendorGraphNodeQuery$data } from "#/__generated__/core/VendorGraphNodeQuery.graphql";
+
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { UploadComplianceReportDialog } from "../dialogs/UploadComplianceReportDialog";
 
 export const complianceReportsFragment = graphql`
   fragment VendorComplianceTabFragment on Vendor
@@ -64,24 +69,9 @@ const complianceReportFragment = graphql`
       fileName
       mimeType
       size
+      downloadUrl
     }
     canDelete: permission(action: "core:vendor-compliance-report:delete")
-  }
-`;
-
-const uploadReportMutation = graphql`
-  mutation VendorComplianceTabUploadReportMutation(
-    $input: UploadVendorComplianceReportInput!
-    $connections: [ID!]!
-  ) {
-    uploadVendorComplianceReport(input: $input) {
-      vendorComplianceReportEdge @appendEdge(connections: $connections) {
-        node {
-          id
-          ...VendorComplianceTabFragment_report
-        }
-      }
-    }
   }
 `;
 
@@ -109,45 +99,24 @@ export default function VendorComplianceTab() {
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const canDeleteSomeReport = reports.some(({ canDelete }) => canDelete);
-
   usePageTitle(vendor.name + " - " + __("Compliance reports"));
-
-  const [mutate, isMutating] = useMutation(uploadReportMutation);
-
-  const handleDrop = (files: File[]) => {
-    const reportDate = new Date().toISOString();
-    for (const file of files) {
-      mutate({
-        variables: {
-          connections: [connectionId],
-          input: {
-            vendorId: vendor.id,
-            reportDate,
-            reportName: file.name,
-            file: null,
-          },
-        },
-        uploadables: {
-          "input.file": file,
-        },
-      });
-    }
-  };
 
   return (
     <div className="space-y-6">
-      {!isSnapshotMode && vendor.canUploadComplianceReport && (
-        <Dropzone
-          description={__("Only PDF files up to 10MB are allowed")}
-          isUploading={isMutating}
-          onDrop={handleDrop}
-          accept={{
-            "application/pdf": [".pdf"],
-          }}
-          maxSize={10}
-        />
-      )}
+      <PageHeader
+        title={__("Compliance reports")}
+        description={__("Track vendor compliance certifications and reports.")}
+      >
+        {!isSnapshotMode && vendor.canUploadComplianceReport && (
+          <UploadComplianceReportDialog
+            vendorId={vendor.id}
+            connectionId={connectionId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add report")}</Button>
+          </UploadComplianceReportDialog>
+        )}
+      </PageHeader>
+
       <SortableTable
         refetch={refetch as ComponentProps<typeof SortableTable>["refetch"]}
       >
@@ -157,7 +126,7 @@ export default function VendorComplianceTab() {
             <SortableTh field="REPORT_DATE">{__("Report date")}</SortableTh>
             <Th>{__("Valid until")}</Th>
             <Th>{__("File size")}</Th>
-            {!isSnapshotMode && canDeleteSomeReport && <Th>{__("Actions")}</Th>}
+            {!isSnapshotMode && reports.length > 0 && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -221,16 +190,30 @@ function ReportRow(props: ReportRowProps) {
       <Td>{formatDate(report.reportDate)}</Td>
       <Td>{formatDate(report.validUntil)}</Td>
       <Td>{fileSize(__, report.file?.size ?? 0)}</Td>
-      {!props.isSnapshotMode && report.canDelete && (
+      {!props.isSnapshotMode && (
         <Td width={50} className="text-end">
           <ActionDropdown>
-            <DropdownItem
-              icon={IconTrashCan}
-              onClick={handleDelete}
-              variant="danger"
-            >
-              {__("Delete")}
-            </DropdownItem>
+            {report.file?.downloadUrl && (
+              <DropdownItem
+                icon={IconArrowDown}
+                onClick={() =>
+                  downloadFile(
+                    report.file!.downloadUrl,
+                    report.file!.fileName,
+                  )}
+              >
+                {__("Download")}
+              </DropdownItem>
+            )}
+            {report.canDelete && (
+              <DropdownItem
+                icon={IconTrashCan}
+                onClick={handleDelete}
+                variant="danger"
+              >
+                {__("Delete")}
+              </DropdownItem>
+            )}
           </ActionDropdown>
         </Td>
       )}

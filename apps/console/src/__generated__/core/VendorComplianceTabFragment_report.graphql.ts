@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ecb2f1b1e2f7614af9a86484fa5940bf>>
+ * @generated SignedSource<<9c8e97bf0858bdac532273c8a3620731>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,6 +13,7 @@ import { FragmentRefs } from "relay-runtime";
 export type VendorComplianceTabFragment_report$data = {
   readonly canDelete: boolean;
   readonly file: {
+    readonly downloadUrl: string;
     readonly fileName: string;
     readonly mimeType: string;
     readonly size: number;
@@ -90,6 +91,13 @@ const node: ReaderFragment = {
           "kind": "ScalarField",
           "name": "size",
           "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "downloadUrl",
+          "storageKey": null
         }
       ],
       "storageKey": null
@@ -112,6 +120,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "7676d7b6379940339458e259707c222e";
+(node as any).hash = "9d29871990edb54a36915fab64eaea3a";
 
 export default node;
