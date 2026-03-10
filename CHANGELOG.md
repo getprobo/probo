@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.138.1] - 2026-03-10
+
+### Changed
+
+- CP framework badges name display
+
 ## [0.138.0] - 2026-03-10
 
 ### Changed
