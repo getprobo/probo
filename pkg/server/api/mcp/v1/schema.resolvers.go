@@ -2754,9 +2754,9 @@ func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	filter := coredata.NewMembershipProfileFilter(nil)
+	filter := coredata.NewMembershipProfileFilter(nil).WithMembership()
 	if input.Filter != nil {
-		filter = coredata.NewMembershipProfileFilter(input.Filter.ExcludeContractEnded)
+		filter = coredata.NewMembershipProfileFilter(input.Filter.ExcludeContractEnded).WithMembership()
 	}
 
 	pageResult, err := r.iamSvc.OrganizationService.ListProfiles(ctx, input.OrganizationID, cursor, filter)

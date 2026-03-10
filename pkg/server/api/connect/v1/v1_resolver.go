@@ -38,9 +38,9 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 		return nil, err
 	}
 
-	filters := coredata.NewMembershipProfileFilter(nil)
+	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
 	if filter != nil {
-		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded)
+		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded).WithMembership()
 		if filter.State != nil {
 			filters.WithState(*filter.State)
 		}
@@ -1184,8 +1184,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 		return nil, err
 	}
 
-	filter := coredata.NewMembershipProfileFilter(nil)
-	filter = filter.WithMembership()
+	filter := coredata.NewMembershipProfileFilter(nil).WithMembership()
 
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{

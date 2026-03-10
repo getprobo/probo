@@ -5674,9 +5674,9 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 		}, nil
 	}
 
-	filters := coredata.NewMembershipProfileFilter(nil)
+	filters := coredata.NewMembershipProfileFilter(nil).WithMembership()
 	if filter != nil {
-		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded)
+		filters = coredata.NewMembershipProfileFilter(filter.ExcludeContractEnded).WithMembership()
 	}
 
 	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{

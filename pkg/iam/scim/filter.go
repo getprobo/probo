@@ -25,7 +25,7 @@ import (
 )
 
 func ParseUserFilter(expr scimfilter.Expression) (*coredata.MembershipProfileFilter, error) {
-	filter := coredata.NewMembershipProfileFilter(nil)
+	filter := coredata.NewMembershipProfileFilter(nil).WithMembership()
 
 	if expr == nil {
 		return filter, nil
