@@ -105078,7 +105078,6 @@ func (ec *executionContext) unmarshalOProfileFilter2ᚖgoᚗproboᚗincᚋprobo�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-
 func (ec *executionContext) unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProfileOrderBy(ctx context.Context, v any) (*types.ProfileOrderBy, error) {
 	if v == nil {
 		return nil, nil
