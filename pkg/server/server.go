@@ -22,7 +22,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/esign"
@@ -52,7 +51,6 @@ type Config struct {
 	Cookie            securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
-	Agent             *agents.Agent
 	CustomDomainCname string
 	Logger            *log.Logger
 }

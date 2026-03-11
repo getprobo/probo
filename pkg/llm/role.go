@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,13 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package llm
 
-type LLMConfig struct {
-	Provider    string  `json:"provider"` // "openai", "anthropic", "bedrock"
-	APIKey      string  `json:"api-key"`  // for OpenAI and Anthropic
-	ModelName   string  `json:"model-name"`
-	Temperature float64 `json:"temperature"`
-}
+type Role string
 
-type OpenAIConfig = LLMConfig
+const (
+	RoleSystem    Role = "system"
+	RoleUser      Role = "user"
+	RoleAssistant Role = "assistant"
+	RoleTool      Role = "tool"
+)

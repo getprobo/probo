@@ -18,8 +18,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/packages/param"
+	"go.probo.inc/probo/pkg/llm"
 )
 
 const (
@@ -49,23 +48,19 @@ const (
 )
 
 func (a *Agent) GenerateChangelog(ctx context.Context, oldContent string, newContent string) (*string, error) {
-	model := openai.ChatModel(a.cfg.ModelName)
-	chatCompletion, err := a.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(changelogGeneratorSystemPrompt),
-			openai.UserMessage(fmt.Sprintf(`Old content: %s`, oldContent)),
-			openai.UserMessage(fmt.Sprintf(`New content: %s`, newContent)),
+	resp, err := a.client.ChatCompletion(ctx, &llm.ChatCompletionRequest{
+		Model: a.model,
+		Messages: []llm.Message{
+			{Role: llm.RoleSystem, Parts: []llm.Part{llm.TextPart{Text: changelogGeneratorSystemPrompt}}},
+			{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: fmt.Sprintf(`Old content: %s`, oldContent)}}},
+			{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: fmt.Sprintf(`New content: %s`, newContent)}}},
 		},
-		Model:       model,
-		Temperature: param.NewOpt(a.cfg.Temperature),
+		Temperature: &a.temp,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse vendor info: %w", err)
+		return nil, fmt.Errorf("cannot generate changelog: %w", err)
 	}
 
-	if len(chatCompletion.Choices) == 0 {
-		return nil, fmt.Errorf("no completion choices returned from API")
-	}
-
-	return &chatCompletion.Choices[0].Message.Content, nil
+	text := resp.Message.Text()
+	return &text, nil
 }

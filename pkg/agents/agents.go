@@ -15,27 +15,17 @@
 package agents
 
 import (
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/llm"
 )
 
-type (
-	Agent struct {
-		l      *log.Logger
-		cfg    Config
-		client *openai.Client
-	}
+type Agent struct {
+	l      *log.Logger
+	client *llm.Client
+	model  string
+	temp   float64
+}
 
-	Config struct {
-		OpenAIAPIKey string
-		Temperature  float64
-		ModelName    string
-	}
-)
-
-func NewAgent(l *log.Logger, cfg Config) *Agent {
-	client := openai.NewClient(option.WithAPIKey(cfg.OpenAIAPIKey))
-
-	return &Agent{l: l, cfg: cfg, client: &client}
+func NewAgent(l *log.Logger, client *llm.Client, model string, temp float64) *Agent {
+	return &Agent{l: l, client: client, model: model, temp: temp}
 }

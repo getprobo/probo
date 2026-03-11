@@ -42,7 +42,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
 	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -315,13 +314,10 @@ func (impl *Implm) Run(
 		}
 	}
 
-	agentConfig := agents.Config{
-		OpenAIAPIKey: impl.cfg.OpenAI.APIKey,
-		Temperature:  impl.cfg.OpenAI.Temperature,
-		ModelName:    impl.cfg.OpenAI.ModelName,
+	llmClient, err := buildLLMClient(impl.cfg.OpenAI, l.Named("llm"), tp, r)
+	if err != nil {
+		return fmt.Errorf("cannot create LLM client: %w", err)
 	}
-
-	agent := agents.NewAgent(l.Named("agent"), agentConfig)
 
 	fileManagerService := filemanager.NewService(s3Client)
 
@@ -446,7 +442,9 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		baseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
-		agentConfig,
+		llmClient,
+		impl.cfg.OpenAI.ModelName,
+		impl.cfg.OpenAI.Temperature,
 		html2pdfConverter,
 		acmeService,
 		fileManagerService,
@@ -486,7 +484,7 @@ func (impl *Implm) Run(
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			BaseURL:           baseURL,
-			Agent:             agent,
+
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
 			Logger:            l.Named("http.server"),

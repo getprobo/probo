@@ -24,6 +24,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
+	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
@@ -55,7 +56,9 @@ type (
 		encryptionKey           cipher.EncryptionKey
 		baseURL                 string
 		tokenSecret             string
-		agentConfig             agents.Config
+		llmClient               *llm.Client
+		llmModel                string
+		llmTemperature          float64
 		html2pdfConverter       *html2pdf.Converter
 		acmeService             *certmanager.ACMEService
 		fileManager             *filemanager.Service
@@ -126,7 +129,9 @@ func NewService(
 	bucket string,
 	baseURL string,
 	tokenSecret string,
-	agentConfig agents.Config,
+	llmClient *llm.Client,
+	llmModel string,
+	llmTemperature float64,
 	html2pdfConverter *html2pdf.Converter,
 	acmeService *certmanager.ACMEService,
 	fileManagerService *filemanager.Service,
@@ -149,7 +154,9 @@ func NewService(
 		encryptionKey:           encryptionKey,
 		baseURL:                 baseURL,
 		tokenSecret:             tokenSecret,
-		agentConfig:             agentConfig,
+		llmClient:               llmClient,
+		llmModel:                llmModel,
+		llmTemperature:          llmTemperature,
 		html2pdfConverter:       html2pdfConverter,
 		acmeService:             acmeService,
 		fileManager:             fileManagerService,
@@ -171,7 +178,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		baseURL:       s.baseURL,
 		scope:         coredata.NewScope(tenantID),
 		tokenSecret:   s.tokenSecret,
-		agent:         agents.NewAgent(nil, s.agentConfig),
+		agent:         agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature),
 		fileManager:   s.fileManager,
 		esign:         s.esign,
 	}

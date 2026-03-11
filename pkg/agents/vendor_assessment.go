@@ -19,8 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/packages/param"
+	"go.probo.inc/probo/pkg/llm"
 )
 
 type (
@@ -123,28 +122,25 @@ const (
 )
 
 func (a *Agent) AssessVendor(ctx context.Context, websiteURL string) (*vendorInfo, error) {
-	model := openai.ChatModel(a.cfg.ModelName)
-	chatCompletion, err := a.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(assessVendorSystemPrompt),
-			openai.UserMessage(websiteURL),
+	resp, err := a.client.ChatCompletion(
+		ctx,
+		&llm.ChatCompletionRequest{
+			Model: a.model,
+			Messages: []llm.Message{
+				{Role: llm.RoleSystem, Parts: []llm.Part{llm.TextPart{Text: assessVendorSystemPrompt}}},
+				{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: websiteURL}}},
+			},
+			Temperature: &a.temp,
 		},
-		Model:       model,
-		Temperature: param.NewOpt(a.cfg.Temperature),
-	})
+	)
 	if err != nil {
+		return nil, fmt.Errorf("cannot assess vendor: %w", err)
+	}
+
+	var info vendorInfo
+	if err := json.Unmarshal([]byte(resp.Message.Text()), &info); err != nil {
 		return nil, fmt.Errorf("cannot parse vendor info: %w", err)
 	}
 
-	if len(chatCompletion.Choices) == 0 {
-		return nil, fmt.Errorf("no completion choices returned from API")
-	}
-
-	var vendorInfo vendorInfo
-	err = json.Unmarshal([]byte(chatCompletion.Choices[0].Message.Content), &vendorInfo)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse vendor info: %w", err)
-	}
-
-	return &vendorInfo, nil
+	return &info, nil
 }
