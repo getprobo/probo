@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<426a1227dea8949a1d77d75edf05437a>>
+ * @generated SignedSource<<ad7907a1de226f5486fd309c3d17e40e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,6 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 import { FragmentRefs } from "relay-runtime";
 export type PeopleGraphPaginatedFragment$data = {
   readonly canCreatePeople: boolean;
@@ -26,7 +25,7 @@ export type PeopleGraphPaginatedFragment$data = {
         readonly emailAddress: string;
         readonly fullName: string;
         readonly id: string;
-        readonly kind: ProfileKind | null | undefined;
+        readonly kind: string | null | undefined;
         readonly position: string | null | undefined;
       };
     }>;

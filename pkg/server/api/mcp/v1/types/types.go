@@ -1343,7 +1343,7 @@ type CreateUserInput struct {
 	// Full name
 	FullName string `json:"full_name"`
 	// User kind
-	Kind *coredata.MembershipProfileKind `json:"kind"`
+	Kind *string `json:"kind"`
 	// Organization ID
 	OrganizationID gid.GID `json:"organization_id"`
 	// Position
@@ -2919,7 +2919,7 @@ type Profile struct {
 	// Profile ID
 	ID gid.GID `json:"id"`
 	// Profile kind
-	Kind *coredata.MembershipProfileKind `json:"kind"`
+	Kind *string `json:"kind"`
 	// Organization ID
 	OrganizationID gid.GID `json:"organization_id"`
 	// Position
@@ -3533,7 +3533,7 @@ type UpdateProfileInput struct {
 	// Profile ID
 	ID gid.GID `json:"id"`
 	// Profile kind
-	Kind *coredata.MembershipProfileKind `json:"kind,omitempty"`
+	Kind *string `json:"kind,omitempty"`
 	// Position
 	Position mcp.Omittable[*string] `json:"position,omitempty"`
 }
@@ -3642,7 +3642,7 @@ type UpdateUserInput struct {
 	// User (profile) ID
 	ID gid.GID `json:"id"`
 	// User kind
-	Kind *coredata.MembershipProfileKind `json:"kind"`
+	Kind *string `json:"kind"`
 	// Position
 	Position mcp.Omittable[*string] `json:"position,omitempty"`
 }

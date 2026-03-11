@@ -38,7 +38,7 @@ type (
 		Source                   ProfileSource          `db:"source"`
 		State                    ProfileState           `db:"state"`
 		FullName                 string                 `db:"full_name"`
-		Kind                     *MembershipProfileKind `db:"kind"`
+		Kind                     *string                `db:"kind"`
 		AdditionalEmailAddresses mail.Addrs             `db:"additional_email_addresses"`
 		Position                 *string                `db:"position"`
 		ContractStartDate        *time.Time             `db:"contract_start_date"`

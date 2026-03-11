@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8ef1dc9de9a669636884e4f60f7f39fc>>
+ * @generated SignedSource<<4dd6dcfde0f1afbc5a3245929bd8fcd9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,14 +11,13 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 export type CreateUserInput = {
   additionalEmailAddresses?: ReadonlyArray<string> | null | undefined;
   contractEndDate?: string | null | undefined;
   contractStartDate?: string | null | undefined;
   emailAddress: string;
   fullName: string;
-  kind?: ProfileKind | null | undefined;
+  kind?: string | null | undefined;
   organizationId: string;
   position?: string | null | undefined;
   role: MembershipRole;

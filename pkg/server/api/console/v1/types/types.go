@@ -1651,7 +1651,7 @@ type Profile struct {
 	EmailAddress             mail.Addr                       `json:"emailAddress"`
 	State                    coredata.ProfileState           `json:"state"`
 	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses"`
-	Kind                     *coredata.MembershipProfileKind `json:"kind,omitempty"`
+	Kind                     *string                         `json:"kind,omitempty"`
 	Position                 *string                         `json:"position,omitempty"`
 	ContractStartDate        *time.Time                      `json:"contractStartDate,omitempty"`
 	ContractEndDate          *time.Time                      `json:"contractEndDate,omitempty"`

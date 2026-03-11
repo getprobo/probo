@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e88375170021c3387ee6a5491bc60e52>>
+ * @generated SignedSource<<113726f3e57dbdd5c0f20352a44deca9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,6 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 import { FragmentRefs } from "relay-runtime";
 export type PersonFormFragment$data = {
   readonly additionalEmailAddresses: ReadonlyArray<string>;
@@ -20,7 +19,7 @@ export type PersonFormFragment$data = {
   readonly emailAddress: string;
   readonly fullName: string;
   readonly id: string;
-  readonly kind: ProfileKind | null | undefined;
+  readonly kind: string | null | undefined;
   readonly membership: {
     readonly role: MembershipRole;
   };

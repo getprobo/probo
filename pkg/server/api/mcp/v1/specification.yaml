@@ -105,11 +105,6 @@ components:
 
     ProfileKind:
       type: string
-      enum:
-        - EMPLOYEE
-        - CONTRACTOR
-        - SERVICE_ACCOUNT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileKind
 
     MembershipRole:
       type: string

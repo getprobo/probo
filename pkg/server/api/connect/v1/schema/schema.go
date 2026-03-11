@@ -2594,7 +2594,7 @@ type Profile implements Node {
   source: String!
   state: ProfileState!
   additionalEmailAddresses: [EmailAddr!]!
-  kind: ProfileKind
+  kind: String
   position: String
   contractStartDate: Datetime
   contractEndDate: Datetime
@@ -2630,17 +2630,6 @@ enum ProfileSource
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceManual")
   SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSAML")
   SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSCIM")
-}
-
-enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
-  EMPLOYEE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
-  CONTRACTOR
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
-  SERVICE_ACCOUNT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
-    )
 }
 
 type Organization implements Node {
@@ -3127,7 +3116,7 @@ input CreateUserInput {
   emailAddress: EmailAddr!
   role: MembershipRole!
   additionalEmailAddresses: [EmailAddr!]
-  kind: ProfileKind
+  kind: String
   position: String
   contractStartDate: Datetime @goField(omittable: true)
   contractEndDate: Datetime @goField(omittable: true)
@@ -3152,7 +3141,7 @@ input UpdateUserInput {
   id: ID!
   fullName: String!
   additionalEmailAddresses: [EmailAddr!]
-  kind: ProfileKind
+  kind: String
   position: String
   contractStartDate: Datetime @goField(omittable: true)
   contractEndDate: Datetime @goField(omittable: true)
@@ -9404,7 +9393,7 @@ func (ec *executionContext) _Profile_kind(ctx context.Context, field graphql.Col
 			return obj.Kind, nil
 		},
 		nil,
-		ec.marshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind,
+		ec.marshalOString2ᚖstring,
 		true,
 		false,
 	)
@@ -9417,7 +9406,7 @@ func (ec *executionContext) fieldContext_Profile_kind(_ context.Context, field g
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ProfileKind does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15295,7 +15284,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			it.AdditionalEmailAddresses = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := ec.unmarshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16246,7 +16235,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			it.AdditionalEmailAddresses = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := ec.unmarshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22685,37 +22674,6 @@ func (ec *executionContext) unmarshalOProfileFilter2ᚖgoᚗproboᚗincᚋprobo�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, v any) (*coredata.MembershipProfileKind, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind(ctx context.Context, sel ast.SelectionSet, v *coredata.MembershipProfileKind) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	_ = ctx
-	res := graphql.MarshalString(marshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind[*v])
-	return res
-}
-
-var (
-	unmarshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[string]coredata.MembershipProfileKind{
-		"EMPLOYEE":        coredata.MembershipProfileKindEmployee,
-		"CONTRACTOR":      coredata.MembershipProfileKindContractor,
-		"SERVICE_ACCOUNT": coredata.MembershipProfileKindServiceAccount,
-	}
-	marshalOProfileKind2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipProfileKind = map[coredata.MembershipProfileKind]string{
-		coredata.MembershipProfileKindEmployee:       "EMPLOYEE",
-		coredata.MembershipProfileKindContractor:     "CONTRACTOR",
-		coredata.MembershipProfileKindServiceAccount: "SERVICE_ACCOUNT",
-	}
-)
 
 func (ec *executionContext) unmarshalOProfileOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐProfileOrderBy(ctx context.Context, v any) (*types.ProfileOrderBy, error) {
 	if v == nil {

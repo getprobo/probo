@@ -333,7 +333,7 @@ func (c *Client) createUser(email, fullName string, role coredata.MembershipRole
 			"emailAddress":             email,
 			"fullName":                 fullName,
 			"role":                     string(role),
-			"kind":                     coredata.MembershipProfileKindEmployee,
+			"kind":                     "EMPLOYEE",
 			"additionalEmailAddresses": []string{},
 		},
 	}, &result)

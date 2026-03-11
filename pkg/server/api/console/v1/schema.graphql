@@ -69,17 +69,6 @@ enum EvidenceState
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested")
 }
 
-enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
-    EMPLOYEE
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
-    CONTRACTOR
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
-    SERVICE_ACCOUNT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
-        )
-}
-
 enum DocumentStatus
     @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
     DRAFT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusDraft")
@@ -1943,7 +1932,7 @@ type Profile implements Node {
     emailAddress: EmailAddr!
     state: ProfileState!
     additionalEmailAddresses: [EmailAddr!]!
-    kind: ProfileKind
+    kind: String
     position: String
     contractStartDate: Datetime
     contractEndDate: Datetime
