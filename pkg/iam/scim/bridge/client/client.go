@@ -46,6 +46,7 @@ type (
 		EnterpriseOrganization string `json:"-"`
 		Division               string `json:"-"`
 		EmployeeNumber         string `json:"-"`
+		UserType               string `json:"-"`
 		ManagerValue           string `json:"-"`
 		PreferredLanguage      string `json:"-"`
 	}
@@ -228,6 +229,9 @@ func buildUserPayload(user *User) map[string]any {
 
 	if user.ExternalID != "" {
 		payload["externalId"] = user.ExternalID
+	}
+	if user.UserType != "" {
+		payload["userType"] = user.UserType
 	}
 	if user.PreferredLanguage != "" {
 		payload["preferredLanguage"] = user.PreferredLanguage
