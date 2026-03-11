@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.141.0] - 2026-03-11
+
+### Added
+
+- Add compliance page mailing list
+
 ## [0.140.0] - 2026-03-11
 
 ### Added
