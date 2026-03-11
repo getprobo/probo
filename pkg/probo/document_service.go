@@ -615,7 +615,7 @@ func (s *DocumentService) SendSigningNotifications(
 				var (
 					employeeDocumentsURLPath = "/organizations/" + organizationID.String() + "/employee"
 					emailLinkURLPath         = employeeDocumentsURLPath
-					query                    url.Values
+					query                    = make(url.Values)
 				)
 				if signatory.State != coredata.ProfileStateActive {
 					if signatory.Source != coredata.ProfileSourceSCIM {
