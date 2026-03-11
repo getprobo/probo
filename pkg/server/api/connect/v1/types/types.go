@@ -129,7 +129,7 @@ type CreateUserInput struct {
 	EmailAddress             mail.Addr                       `json:"emailAddress"`
 	Role                     coredata.MembershipRole         `json:"role"`
 	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses,omitempty"`
-	Kind                     *coredata.MembershipProfileKind `json:"kind,omitempty"`
+	Kind                     *string                         `json:"kind,omitempty"`
 	Position                 *string                         `json:"position,omitempty"`
 	ContractStartDate        graphql.Omittable[*time.Time]   `json:"contractStartDate,omitempty"`
 	ContractEndDate          graphql.Omittable[*time.Time]   `json:"contractEndDate,omitempty"`
@@ -313,7 +313,7 @@ type Profile struct {
 	Source                   string                          `json:"source"`
 	State                    coredata.ProfileState           `json:"state"`
 	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses"`
-	Kind                     *coredata.MembershipProfileKind `json:"kind,omitempty"`
+	Kind                     *string                         `json:"kind,omitempty"`
 	Position                 *string                         `json:"position,omitempty"`
 	ContractStartDate        *time.Time                      `json:"contractStartDate,omitempty"`
 	ContractEndDate          *time.Time                      `json:"contractEndDate,omitempty"`
@@ -589,7 +589,7 @@ type UpdateUserInput struct {
 	ID                       gid.GID                         `json:"id"`
 	FullName                 string                          `json:"fullName"`
 	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses,omitempty"`
-	Kind                     *coredata.MembershipProfileKind `json:"kind,omitempty"`
+	Kind                     *string                         `json:"kind,omitempty"`
 	Position                 *string                         `json:"position,omitempty"`
 	ContractStartDate        graphql.Omittable[*time.Time]   `json:"contractStartDate,omitempty"`
 	ContractEndDate          graphql.Omittable[*time.Time]   `json:"contractEndDate,omitempty"`

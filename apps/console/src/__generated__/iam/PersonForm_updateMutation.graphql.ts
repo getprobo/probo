@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dc04e9218150e42554925f8c39d83b41>>
+ * @generated SignedSource<<87d07de57247f129b66225595215a2b4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,14 +9,13 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ProfileKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 export type UpdateUserInput = {
   additionalEmailAddresses?: ReadonlyArray<string> | null | undefined;
   contractEndDate?: string | null | undefined;
   contractStartDate?: string | null | undefined;
   fullName: string;
   id: string;
-  kind?: ProfileKind | null | undefined;
+  kind?: string | null | undefined;
   position?: string | null | undefined;
 };
 export type PersonForm_updateMutation$variables = {

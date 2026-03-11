@@ -223,12 +223,12 @@ func (s *Service) CreateUser(
 					CreatedAt:              now,
 					UpdatedAt:              now,
 				}
-				if attrs.UserType != "" {
-					kind := coredata.MembershipProfileKind(attrs.UserType)
-					profile.Kind = &kind
-				}
+			if attrs.UserType != "" {
+				kind := attrs.UserType
+				profile.Kind = &kind
+			}
 
-				err = profile.Insert(ctx, tx)
+			err = profile.Insert(ctx, tx)
 				if err != nil {
 					if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 						return scimerrors.ScimErrorUniqueness
@@ -268,11 +268,11 @@ func (s *Service) CreateUser(
 			profile.Division = ref.RefOrNil(attrs.Division)
 			profile.ManagerValue = ref.RefOrNil(attrs.ManagerValue)
 			profile.UpdatedAt = now
-			if attrs.UserType != "" {
-				kind := coredata.MembershipProfileKind(attrs.UserType)
-				profile.Kind = &kind
-			}
-			if err := profile.Update(ctx, tx, scope); err != nil {
+		if attrs.UserType != "" {
+			kind := attrs.UserType
+			profile.Kind = &kind
+		}
+		if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 		}
@@ -524,14 +524,13 @@ func (s *Service) updateUser(
 		}
 
 		if attrs.UserType != nil {
-			if *attrs.UserType == "" {
-				profile.Kind = nil
-			} else {
-				kind := coredata.MembershipProfileKind(*attrs.UserType)
-				profile.Kind = &kind
-			}
-			profile.UpdatedAt = now
+		if *attrs.UserType == "" {
+			profile.Kind = nil
+		} else {
+			profile.Kind = attrs.UserType
 		}
+		profile.UpdatedAt = now
+	}
 
 		if attrs.NickName != nil {
 			if *attrs.NickName == "" {

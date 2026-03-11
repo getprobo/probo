@@ -176,7 +176,7 @@ type Profile implements Node {
   source: String!
   state: ProfileState!
   additionalEmailAddresses: [EmailAddr!]!
-  kind: ProfileKind
+  kind: String
   position: String
   contractStartDate: Datetime
   contractEndDate: Datetime
@@ -212,17 +212,6 @@ enum ProfileSource
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceManual")
   SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSAML")
   SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileSourceSCIM")
-}
-
-enum ProfileKind @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipProfileKind") {
-  EMPLOYEE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindEmployee")
-  CONTRACTOR
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindContractor")
-  SERVICE_ACCOUNT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileKindServiceAccount"
-    )
 }
 
 type Organization implements Node {
@@ -709,7 +698,7 @@ input CreateUserInput {
   emailAddress: EmailAddr!
   role: MembershipRole!
   additionalEmailAddresses: [EmailAddr!]
-  kind: ProfileKind
+  kind: String
   position: String
   contractStartDate: Datetime @goField(omittable: true)
   contractEndDate: Datetime @goField(omittable: true)
@@ -734,7 +723,7 @@ input UpdateUserInput {
   id: ID!
   fullName: String!
   additionalEmailAddresses: [EmailAddr!]
-  kind: ProfileKind
+  kind: String
   position: String
   contractStartDate: Datetime @goField(omittable: true)
   contractEndDate: Datetime @goField(omittable: true)

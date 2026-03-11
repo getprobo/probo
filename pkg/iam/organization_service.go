@@ -105,7 +105,7 @@ type (
 		Role                     coredata.MembershipRole
 		FullName                 string
 		AdditionalEmailAddresses mail.Addrs
-		Kind                     *coredata.MembershipProfileKind
+		Kind                     *string
 		Position                 *string
 		ContractStartDate        **time.Time
 		ContractEndDate          **time.Time
@@ -115,7 +115,7 @@ type (
 		ID                       gid.GID
 		FullName                 string
 		AdditionalEmailAddresses mail.Addrs
-		Kind                     *coredata.MembershipProfileKind
+		Kind                     *string
 		Position                 *string
 		ContractStartDate        **time.Time
 		ContractEndDate          **time.Time
@@ -209,7 +209,6 @@ func (cur *CreateUserRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cur.OrganizationID, "id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(cur.Kind, "kind", validator.OneOfSlice(coredata.MembershipProfileKinds()))
 	v.Check(cur.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.CheckEach(cur.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())
@@ -225,7 +224,6 @@ func (upr *UpdateUserRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(upr.Kind, "kind", validator.OneOfSlice(coredata.MembershipProfileKinds()))
 	v.Check(upr.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.CheckEach(upr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())

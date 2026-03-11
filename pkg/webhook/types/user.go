@@ -27,7 +27,7 @@ type User struct {
 	OrganizationID           gid.GID                         `json:"organizationId"`
 	EmailAddress             mail.Addr                       `json:"emailAddress"`
 	FullName                 string                          `json:"fullName"`
-	Kind                     *coredata.MembershipProfileKind `json:"kind"`
+	Kind                     *string                         `json:"kind"`
 	Source                   coredata.ProfileSource          `json:"source"`
 	State                    coredata.ProfileState           `json:"state"`
 	AdditionalEmailAddresses mail.Addrs                      `json:"additionalEmailAddresses"`

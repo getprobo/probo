@@ -22,7 +22,6 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 func SafeName(prefix string) string {
@@ -116,7 +115,7 @@ func CreateUser(c *testutil.Client, attrs ...Attrs) string {
 		"emailAddress":             a.getString("emailAddress", SafeEmail()),
 		"fullName":                 a.getString("fullName", SafeName("User")),
 		"role":                     a.getString("role", "EMPLOYEE"),
-		"kind":                     coredata.MembershipProfileKindEmployee.String(),
+		"kind":                     "EMPLOYEE",
 		"additionalEmailAddresses": []string{},
 	}
 	if position := a.getStringPtr("position"); position != nil {
