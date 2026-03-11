@@ -225,27 +225,19 @@ LIMIT 1;
 func (i *Identity) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
 	q := `
 SELECT
-    ident.id,
-    ident.email_address,
-    COALESCE(string_agg(inv.organization_id::text, ','), '') AS pending_invitation_organization_ids
+    id,
+    email_address
 FROM
-    identities ident
-LEFT JOIN
-    iam_invitations inv ON inv.email = ident.email_address
-        AND inv.accepted_at IS NULL
-        AND inv.expires_at > NOW()
+    identities
 WHERE
-    ident.id = $1
-GROUP BY
-    ident.id, ident.email_address
+    id = $1
 `
 
 	var (
-		id                      gid.GID
-		emailAddress            string
-		pendingInvitationOrgIDs string
+		id           gid.GID
+		emailAddress string
 	)
-	if err := conn.QueryRow(ctx, q, i.ID).Scan(&id, &emailAddress, &pendingInvitationOrgIDs); err != nil {
+	if err := conn.QueryRow(ctx, q, i.ID).Scan(&id, &emailAddress); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
@@ -253,9 +245,8 @@ GROUP BY
 	}
 
 	return map[string]string{
-		"identity_id":                         id.String(),
-		"email":                               emailAddress,
-		"pending_invitation_organization_ids": pendingInvitationOrgIDs,
+		"identity_id": id.String(),
+		"email":       emailAddress,
 	}, nil
 }
 
