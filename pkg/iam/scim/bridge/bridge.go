@@ -104,17 +104,20 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 			}
 			created++
 		} else {
-			needsUpdate := s.forceUpdate
-
-			if existingSCIM.Active != pu.Active {
-				needsUpdate = true
-			}
-			if existingSCIM.DisplayName != pu.DisplayName {
-				needsUpdate = true
-			}
-			if existingSCIM.Title != pu.Title {
-				needsUpdate = true
-			}
+			needsUpdate := s.forceUpdate ||
+				existingSCIM.Active != pu.Active ||
+				existingSCIM.DisplayName != pu.DisplayName ||
+				existingSCIM.Title != pu.Title ||
+				existingSCIM.GivenName != pu.GivenName ||
+				existingSCIM.FamilyName != pu.FamilyName ||
+				existingSCIM.ExternalID != pu.ExternalID ||
+				existingSCIM.Department != pu.Department ||
+				existingSCIM.CostCenter != pu.CostCenter ||
+				existingSCIM.EnterpriseOrganization != pu.EnterpriseOrganization ||
+				existingSCIM.Division != pu.Division ||
+				existingSCIM.EmployeeNumber != pu.EmployeeNumber ||
+				existingSCIM.ManagerValue != pu.ManagerValue ||
+				existingSCIM.PreferredLanguage != pu.PreferredLanguage
 
 			if needsUpdate {
 				if !s.dryRun {
