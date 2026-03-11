@@ -83,47 +83,20 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 				continue
 			}
 
-			var title string
-
-			if u.Organizations == nil {
-				title = ""
+			user := scimclient.User{
+				UserName:    u.PrimaryEmail,
+				DisplayName: u.Name.FullName,
+				GivenName:   u.Name.GivenName,
+				FamilyName:  u.Name.FamilyName,
+				Active:      !u.Suspended && !u.Archived,
 			}
 
-			data, err := json.Marshal(u.Organizations)
-			if err != nil {
-				title = ""
-			}
+			p.extractOrganizationFields(u.Organizations, &user)
+			p.extractExternalID(u.ExternalIds, &user)
+			p.extractRelations(u.Relations, &user)
+			p.extractPreferredLanguage(u.Languages, &user)
 
-			var orgs []admin.UserOrganization
-			if err := json.Unmarshal(data, &orgs); err != nil {
-				title = ""
-			}
-
-			// Prefer the primary organization's title
-			for _, org := range orgs {
-				if org.Primary && org.Title != "" {
-					title = org.Title
-				}
-			}
-
-			// Fall back to the first organization with a title
-			for _, org := range orgs {
-				if org.Title != "" {
-					title = org.Title
-				}
-			}
-
-			allUsers = append(
-				allUsers,
-				scimclient.User{
-					UserName:    u.PrimaryEmail,
-					DisplayName: u.Name.FullName,
-					GivenName:   u.Name.GivenName,
-					FamilyName:  u.Name.FamilyName,
-					Active:      !u.Suspended && !u.Archived,
-					Title:       title,
-				},
-			)
+			allUsers = append(allUsers, user)
 		}
 
 		pageToken = resp.NextPageToken
@@ -133,4 +106,123 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	}
 
 	return allUsers, nil
+}
+
+func (p *Provider) extractOrganizationFields(raw interface{}, user *scimclient.User) {
+	if raw == nil {
+		return
+	}
+
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return
+	}
+
+	var orgs []admin.UserOrganization
+	if err := json.Unmarshal(data, &orgs); err != nil {
+		return
+	}
+
+	var primary *admin.UserOrganization
+	var first *admin.UserOrganization
+	for i := range orgs {
+		if first == nil {
+			first = &orgs[i]
+		}
+		if orgs[i].Primary {
+			primary = &orgs[i]
+			break
+		}
+	}
+
+	org := primary
+	if org == nil {
+		org = first
+	}
+	if org == nil {
+		return
+	}
+
+	user.Title = org.Title
+	user.Department = org.Department
+	user.CostCenter = org.CostCenter
+	user.EnterpriseOrganization = org.Name
+	user.Division = org.Description
+}
+
+func (p *Provider) extractExternalID(raw interface{}, user *scimclient.User) {
+	if raw == nil {
+		return
+	}
+
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return
+	}
+
+	var ids []admin.UserExternalId
+	if err := json.Unmarshal(data, &ids); err != nil {
+		return
+	}
+
+	for _, id := range ids {
+		if id.Type == "organization" && id.Value != "" {
+			user.ExternalID = id.Value
+			return
+		}
+	}
+
+	if len(ids) > 0 && ids[0].Value != "" {
+		user.ExternalID = ids[0].Value
+	}
+}
+
+func (p *Provider) extractRelations(raw interface{}, user *scimclient.User) {
+	if raw == nil {
+		return
+	}
+
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return
+	}
+
+	var relations []admin.UserRelation
+	if err := json.Unmarshal(data, &relations); err != nil {
+		return
+	}
+
+	for _, rel := range relations {
+		if rel.Type == "manager" && rel.Value != "" {
+			user.ManagerValue = rel.Value
+			return
+		}
+	}
+}
+
+func (p *Provider) extractPreferredLanguage(raw interface{}, user *scimclient.User) {
+	if raw == nil {
+		return
+	}
+
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return
+	}
+
+	var languages []admin.UserLanguage
+	if err := json.Unmarshal(data, &languages); err != nil {
+		return
+	}
+
+	for _, lang := range languages {
+		if lang.Preference == "preferred" && lang.LanguageCode != "" {
+			user.PreferredLanguage = lang.LanguageCode
+			return
+		}
+	}
+
+	if len(languages) > 0 && languages[0].LanguageCode != "" {
+		user.PreferredLanguage = languages[0].LanguageCode
+	}
 }

@@ -33,13 +33,21 @@ type (
 	}
 
 	User struct {
-		ID          string `json:"id,omitempty"`
-		UserName    string `json:"userName"`
-		DisplayName string `json:"displayName"`
-		GivenName   string `json:"-"`
-		FamilyName  string `json:"-"`
-		Active      bool   `json:"active"`
-		Title       string `json:"title"`
+		ID                     string `json:"id,omitempty"`
+		UserName               string `json:"userName"`
+		DisplayName            string `json:"displayName"`
+		GivenName              string `json:"-"`
+		FamilyName             string `json:"-"`
+		Active                 bool   `json:"active"`
+		Title                  string `json:"title"`
+		ExternalID             string `json:"-"`
+		Department             string `json:"-"`
+		CostCenter             string `json:"-"`
+		EnterpriseOrganization string `json:"-"`
+		Division               string `json:"-"`
+		EmployeeNumber         string `json:"-"`
+		ManagerValue           string `json:"-"`
+		PreferredLanguage      string `json:"-"`
 	}
 
 	Users []User
@@ -114,25 +122,7 @@ func (c *Client) listUsersPage(ctx context.Context, startIndex, count int) (User
 }
 
 func (c *Client) CreateUser(ctx context.Context, user *User) error {
-	payload := map[string]any{
-		"schemas":  []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-		"userName": user.UserName,
-		"name": map[string]string{
-			"givenName":  user.GivenName,
-			"familyName": user.FamilyName,
-			"formatted":  user.DisplayName,
-		},
-		"displayName": user.DisplayName,
-		"active":      user.Active,
-		"emails": []map[string]any{
-			{
-				"value":   user.UserName,
-				"type":    "work",
-				"primary": true,
-			},
-		},
-		"title": user.Title,
-	}
+	payload := buildUserPayload(user)
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -163,25 +153,7 @@ func (c *Client) CreateUser(ctx context.Context, user *User) error {
 }
 
 func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) error {
-	payload := map[string]any{
-		"schemas":  []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-		"userName": user.UserName,
-		"name": map[string]string{
-			"givenName":  user.GivenName,
-			"familyName": user.FamilyName,
-			"formatted":  user.DisplayName,
-		},
-		"displayName": user.DisplayName,
-		"active":      user.Active,
-		"emails": []map[string]any{
-			{
-				"value":   user.UserName,
-				"type":    "work",
-				"primary": true,
-			},
-		},
-		"title": user.Title,
-	}
+	payload := buildUserPayload(user)
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -209,6 +181,65 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 	}
 
 	return nil
+}
+
+func buildUserPayload(user *User) map[string]any {
+	schemas := []string{"urn:ietf:params:scim:schemas:core:2.0:User"}
+
+	enterprise := map[string]any{}
+	if user.EmployeeNumber != "" {
+		enterprise["employeeNumber"] = user.EmployeeNumber
+	}
+	if user.Department != "" {
+		enterprise["department"] = user.Department
+	}
+	if user.CostCenter != "" {
+		enterprise["costCenter"] = user.CostCenter
+	}
+	if user.EnterpriseOrganization != "" {
+		enterprise["organization"] = user.EnterpriseOrganization
+	}
+	if user.Division != "" {
+		enterprise["division"] = user.Division
+	}
+	if user.ManagerValue != "" {
+		enterprise["manager"] = map[string]string{"value": user.ManagerValue}
+	}
+
+	payload := map[string]any{
+		"schemas":  schemas,
+		"userName": user.UserName,
+		"name": map[string]string{
+			"givenName":  user.GivenName,
+			"familyName": user.FamilyName,
+			"formatted":  user.DisplayName,
+		},
+		"displayName": user.DisplayName,
+		"active":      user.Active,
+		"emails": []map[string]any{
+			{
+				"value":   user.UserName,
+				"type":    "work",
+				"primary": true,
+			},
+		},
+		"title": user.Title,
+	}
+
+	if user.ExternalID != "" {
+		payload["externalId"] = user.ExternalID
+	}
+	if user.PreferredLanguage != "" {
+		payload["preferredLanguage"] = user.PreferredLanguage
+	}
+
+	if len(enterprise) > 0 {
+		schemas = append(schemas, "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User")
+		payload["schemas"] = schemas
+		payload["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"] = enterprise
+	}
+
+	return payload
 }
 
 func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
