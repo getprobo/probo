@@ -89,10 +89,11 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 				GivenName:   u.Name.GivenName,
 				FamilyName:  u.Name.FamilyName,
 				Active:      !u.Suspended && !u.Archived,
+				ExternalID:  u.Id,
 			}
 
 			p.extractOrganizationFields(u.Organizations, &user)
-			p.extractExternalID(u.ExternalIds, &user)
+			p.extractEmployeeNumber(u.ExternalIds, &user)
 			p.extractRelations(u.Relations, &user)
 			p.extractPreferredLanguage(u.Languages, &user)
 
@@ -147,10 +148,10 @@ func (p *Provider) extractOrganizationFields(raw interface{}, user *scimclient.U
 	user.Department = org.Department
 	user.CostCenter = org.CostCenter
 	user.EnterpriseOrganization = org.Name
-	user.Division = org.Description
+	user.UserType = org.Description
 }
 
-func (p *Provider) extractExternalID(raw interface{}, user *scimclient.User) {
+func (p *Provider) extractEmployeeNumber(raw interface{}, user *scimclient.User) {
 	if raw == nil {
 		return
 	}
@@ -167,13 +168,13 @@ func (p *Provider) extractExternalID(raw interface{}, user *scimclient.User) {
 
 	for _, id := range ids {
 		if id.Type == "organization" && id.Value != "" {
-			user.ExternalID = id.Value
+			user.EmployeeNumber = id.Value
 			return
 		}
 	}
 
 	if len(ids) > 0 && ids[0].Value != "" {
-		user.ExternalID = ids[0].Value
+		user.EmployeeNumber = ids[0].Value
 	}
 }
 
