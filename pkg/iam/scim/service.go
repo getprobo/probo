@@ -448,29 +448,7 @@ func (s *Service) PatchUser(
 	profileID gid.GID,
 	operations []scim.PatchOperation,
 ) (scim.Resource, error) {
-	for i, op := range operations {
-		path := "<nil>"
-		if op.Path != nil {
-			path = op.Path.String()
-		}
-		s.logger.InfoCtx(ctx, "SCIM PATCH operation",
-			log.String("op_index", fmt.Sprintf("%d", i)),
-			log.String("op", op.Op),
-			log.String("path", path),
-			log.String("value_type", fmt.Sprintf("%T", op.Value)),
-			log.String("value", fmt.Sprintf("%v", op.Value)),
-		)
-	}
-
 	attrs := ParseUserFromPatchOperations(operations)
-
-	s.logger.InfoCtx(ctx, "SCIM PATCH parsed attributes",
-		log.String("given_name", fmt.Sprintf("%v", attrs.GivenName)),
-		log.String("family_name", fmt.Sprintf("%v", attrs.FamilyName)),
-		log.String("formatted_name", fmt.Sprintf("%v", attrs.FormattedName)),
-		log.String("employee_number", fmt.Sprintf("%v", attrs.EmployeeNumber)),
-		log.String("department", fmt.Sprintf("%v", attrs.Department)),
-	)
 
 	profile, err := s.updateUser(ctx, config, profileID, attrs)
 	if err != nil {
