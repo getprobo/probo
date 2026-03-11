@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.140.0] - 2026-03-11
+
+### Added
+
+- Support for MS SCIM and Google bridge update
+- Account activation flow from document signing request email link
+
+### Changed
+
+- CI improvements
+- Removal of unused table and columns
+- Removed adhoc token authentication for document signing and related pages
+
 ## [0.139.0] - 2026-03-11
 
 ### Added
