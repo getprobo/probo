@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.139.0] - 2026-03-11
+
+### Added
+
+- Add social links on compliance page
+
+### Changed
+
+- Fix person update
+
+### Fixed
+
+- Update vendor compliance report UI
+
 ## [0.138.2] - 2026-03-10
 
 ### Fixed
