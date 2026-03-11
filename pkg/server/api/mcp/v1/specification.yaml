@@ -103,9 +103,6 @@ components:
         - KIND
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField
 
-    ProfileKind:
-      type: string
-
     MembershipRole:
       type: string
       enum:
@@ -146,9 +143,9 @@ components:
             $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
-          anyOf:
-            - $ref: "#/components/schemas/ProfileKind"
-            - type: "null"
+          type:
+            - string
+            - "null"
           description: Profile kind
         position:
           type:
@@ -825,9 +822,9 @@ components:
             $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
-          anyOf:
-            - $ref: "#/components/schemas/ProfileKind"
-            - type: "null"
+          type:
+            - string
+            - "null"
           description: User kind
         position:
           type: ["string", "null"]
@@ -892,9 +889,9 @@ components:
             - type: "null"
           description: Additional email addresses
         kind:
-          anyOf:
-            - $ref: "#/components/schemas/ProfileKind"
-            - type: "null"
+          type:
+            - string
+            - "null"
           description: User kind
         position:
           type: ["string", "null"]
@@ -1021,7 +1018,9 @@ components:
               description: No additional email addresses
           description: Additional email addresses
         kind:
-          $ref: "#/components/schemas/ProfileKind"
+          anyOf:
+            - type: string
+            - type: "null"
           description: Profile kind
         position:
           type: ["string", "null"]
