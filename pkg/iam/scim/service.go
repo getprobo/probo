@@ -203,7 +203,7 @@ func (s *Service) CreateUser(
 					Position:               &attrs.Title,
 					UserName:               &attrs.UserName,
 					ExternalID:             externalIdPtr,
-					NickName:               ref.RefOrNil(attrs.NickName),
+					Nickname:               ref.RefOrNil(attrs.Nickname),
 					Locale:                 ref.RefOrNil(attrs.Locale),
 					Timezone:               ref.RefOrNil(attrs.Timezone),
 					ProfileUrl:             ref.RefOrNil(attrs.ProfileUrl),
@@ -250,7 +250,7 @@ func (s *Service) CreateUser(
 			profile.Position = &attrs.Title
 			profile.UserName = &attrs.UserName
 			profile.ExternalID = externalIdPtr
-			profile.NickName = ref.RefOrNil(attrs.NickName)
+			profile.Nickname = ref.RefOrNil(attrs.Nickname)
 			profile.Locale = ref.RefOrNil(attrs.Locale)
 			profile.Timezone = ref.RefOrNil(attrs.Timezone)
 			profile.ProfileUrl = ref.RefOrNil(attrs.ProfileUrl)
@@ -532,11 +532,11 @@ func (s *Service) updateUser(
 		profile.UpdatedAt = now
 	}
 
-		if attrs.NickName != nil {
-			if *attrs.NickName == "" {
-				profile.NickName = nil
+		if attrs.Nickname != nil {
+			if *attrs.Nickname == "" {
+				profile.Nickname = nil
 			} else {
-				profile.NickName = attrs.NickName
+				profile.Nickname = attrs.Nickname
 			}
 			profile.UpdatedAt = now
 		}
@@ -874,7 +874,7 @@ type scimUserAttributes struct {
 	Title                  string
 	ExternalID             string
 	UserType               string
-	NickName               string
+	Nickname               string
 	Locale                 string
 	Timezone               string
 	ProfileUrl             string
@@ -953,7 +953,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttribu
 
 	attrs.Title, _ = attributes["title"].(string)
 	attrs.UserType, _ = attributes["userType"].(string)
-	attrs.NickName, _ = attributes["nickName"].(string)
+	attrs.Nickname, _ = attributes["nickName"].(string)
 	attrs.Locale, _ = attributes["locale"].(string)
 	attrs.Timezone, _ = attributes["timezone"].(string)
 	attrs.ProfileUrl, _ = attributes["profileUrl"].(string)
@@ -980,7 +980,7 @@ type scimReplaceAttributes struct {
 	UserName               *string
 	ExternalID             *string
 	UserType               *string
-	NickName               *string
+	Nickname               *string
 	Locale                 *string
 	Timezone               *string
 	ProfileUrl             *string
@@ -1049,7 +1049,7 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimRepl
 		attrs.UserType = &ut
 	}
 	if nn, ok := attributes["nickName"].(string); ok {
-		attrs.NickName = &nn
+		attrs.Nickname = &nn
 	}
 	if l, ok := attributes["locale"].(string); ok {
 		attrs.Locale = &l
@@ -1108,7 +1108,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 			case "usertype":
 				attrs.UserType = &empty
 			case "nickname":
-				attrs.NickName = &empty
+				attrs.Nickname = &empty
 			case "locale":
 				attrs.Locale = &empty
 			case "timezone":
@@ -1209,7 +1209,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 						attrs.UserType = &ut
 					}
 					if nn, ok := valueMap["nickName"].(string); ok {
-						attrs.NickName = &nn
+						attrs.Nickname = &nn
 					}
 					if l, ok := valueMap["locale"].(string); ok {
 						attrs.Locale = &l
@@ -1380,7 +1380,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 				}
 			case "nickname":
 				if nn, ok := op.Value.(string); ok {
-					attrs.NickName = &nn
+					attrs.Nickname = &nn
 				}
 			case "locale":
 				if l, ok := op.Value.(string); ok {
@@ -1519,7 +1519,7 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 			},
 			"title":             p.Position,
 			"userType":          string(ref.UnrefOrZero(p.Kind)),
-			"nickName":          ref.UnrefOrZero(p.NickName),
+			"nickName":          ref.UnrefOrZero(p.Nickname),
 			"locale":            ref.UnrefOrZero(p.Locale),
 			"timezone":          ref.UnrefOrZero(p.Timezone),
 			"profileUrl":        ref.UnrefOrZero(p.ProfileUrl),
