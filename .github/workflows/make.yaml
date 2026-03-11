@@ -89,8 +89,39 @@ jobs:
           severity-cutoff: critical
           output-format: table
 
+  build:
+    name: "build"
+    runs-on: "ubuntu-22.04"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@v6"
+        with:
+          submodules: recursive
+      - uses: "actions/setup-go@v6"
+        with:
+          go-version: "1.26.1"
+          cache: true
+      - uses: "actions/setup-node@v6"
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+      - run: "npm i -g npm@11.8.0"
+      - run: "npm ci"
+      - run: "make build"
+      - uses: "actions/upload-artifact@v6"
+        with:
+          name: "build-artifacts"
+          path: |
+            bin/probod
+            apps/console/dist/
+            apps/trust/dist/
+            packages/emails/dist/
+          retention-days: 1
+
   lint:
     name: "lint"
+    needs: [build]
     runs-on: "ubuntu-22.04"
     permissions:
       contents: "read"
@@ -111,11 +142,15 @@ jobs:
           install-only: true
       - run: "npm i -g npm@11.8.0"
       - run: "npm ci"
-      - run: "make build"
+      - uses: "actions/download-artifact@v6"
+        with:
+          name: "build-artifacts"
+      - run: "chmod +x bin/probod"
       - run: "make lint"
 
   test:
     name: "test"
+    needs: [build]
     runs-on: "ubuntu-22.04"
     permissions:
       contents: "read"
@@ -127,13 +162,10 @@ jobs:
         with:
           go-version: "1.26.1"
           cache: true
-      - uses: "actions/setup-node@v6"
+      - uses: "actions/download-artifact@v6"
         with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-      - run: "npm i -g npm@11.8.0"
-      - run: "npm ci"
-      - run: "make build"
+          name: "build-artifacts"
+      - run: "chmod +x bin/probod"
       - run: "make test"
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"
