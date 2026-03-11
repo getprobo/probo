@@ -124,15 +124,15 @@ type CreateSCIMConfigurationPayload struct {
 }
 
 type CreateUserInput struct {
-	OrganizationID           gid.GID                         `json:"organizationId"`
-	FullName                 string                          `json:"fullName"`
-	EmailAddress             mail.Addr                       `json:"emailAddress"`
-	Role                     coredata.MembershipRole         `json:"role"`
-	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses,omitempty"`
-	Kind                     *string                         `json:"kind,omitempty"`
-	Position                 *string                         `json:"position,omitempty"`
-	ContractStartDate        graphql.Omittable[*time.Time]   `json:"contractStartDate,omitempty"`
-	ContractEndDate          graphql.Omittable[*time.Time]   `json:"contractEndDate,omitempty"`
+	OrganizationID           gid.GID                       `json:"organizationId"`
+	FullName                 string                        `json:"fullName"`
+	EmailAddress             mail.Addr                     `json:"emailAddress"`
+	Role                     coredata.MembershipRole       `json:"role"`
+	AdditionalEmailAddresses []mail.Addr                   `json:"additionalEmailAddresses,omitempty"`
+	Kind                     *string                       `json:"kind,omitempty"`
+	Position                 *string                       `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time] `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time] `json:"contractEndDate,omitempty"`
 }
 
 type CreateUserPayload struct {
@@ -307,23 +307,23 @@ type PersonalAPIKeyEdge struct {
 }
 
 type Profile struct {
-	ID                       gid.GID                         `json:"id"`
-	FullName                 string                          `json:"fullName"`
-	EmailAddress             mail.Addr                       `json:"emailAddress"`
-	Source                   string                          `json:"source"`
-	State                    coredata.ProfileState           `json:"state"`
-	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses"`
-	Kind                     *string                         `json:"kind,omitempty"`
-	Position                 *string                         `json:"position,omitempty"`
-	ContractStartDate        *time.Time                      `json:"contractStartDate,omitempty"`
-	ContractEndDate          *time.Time                      `json:"contractEndDate,omitempty"`
-	CreatedAt                time.Time                       `json:"createdAt"`
-	UpdatedAt                time.Time                       `json:"updatedAt"`
-	Identity                 *Identity                       `json:"identity,omitempty"`
-	Organization             *Organization                   `json:"organization,omitempty"`
-	Membership               *Membership                     `json:"membership,omitempty"`
-	PendingInvitations       *InvitationConnection           `json:"pendingInvitations,omitempty"`
-	Permission               bool                            `json:"permission"`
+	ID                       gid.GID               `json:"id"`
+	FullName                 string                `json:"fullName"`
+	EmailAddress             mail.Addr             `json:"emailAddress"`
+	Source                   string                `json:"source"`
+	State                    coredata.ProfileState `json:"state"`
+	AdditionalEmailAddresses []mail.Addr           `json:"additionalEmailAddresses"`
+	Kind                     *string               `json:"kind,omitempty"`
+	Position                 *string               `json:"position,omitempty"`
+	ContractStartDate        *time.Time            `json:"contractStartDate,omitempty"`
+	ContractEndDate          *time.Time            `json:"contractEndDate,omitempty"`
+	CreatedAt                time.Time             `json:"createdAt"`
+	UpdatedAt                time.Time             `json:"updatedAt"`
+	Identity                 *Identity             `json:"identity,omitempty"`
+	Organization             *Organization         `json:"organization,omitempty"`
+	Membership               *Membership           `json:"membership,omitempty"`
+	PendingInvitations       *InvitationConnection `json:"pendingInvitations,omitempty"`
+	Permission               bool                  `json:"permission"`
 }
 
 func (Profile) IsNode()             {}
@@ -586,13 +586,13 @@ type UpdateSCIMBridgePayload struct {
 }
 
 type UpdateUserInput struct {
-	ID                       gid.GID                         `json:"id"`
-	FullName                 string                          `json:"fullName"`
-	AdditionalEmailAddresses []mail.Addr                     `json:"additionalEmailAddresses,omitempty"`
-	Kind                     *string                         `json:"kind,omitempty"`
-	Position                 *string                         `json:"position,omitempty"`
-	ContractStartDate        graphql.Omittable[*time.Time]   `json:"contractStartDate,omitempty"`
-	ContractEndDate          graphql.Omittable[*time.Time]   `json:"contractEndDate,omitempty"`
+	ID                       gid.GID                       `json:"id"`
+	FullName                 string                        `json:"fullName"`
+	AdditionalEmailAddresses []mail.Addr                   `json:"additionalEmailAddresses,omitempty"`
+	Kind                     *string                       `json:"kind,omitempty"`
+	Position                 *string                       `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time] `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time] `json:"contractEndDate,omitempty"`
 }
 
 type UpdateUserPayload struct {
