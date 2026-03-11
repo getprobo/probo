@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -16,20 +17,25 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/watermarkpdf"
 )
 
 type (
 	DocumentService struct {
-		svc               *TenantService
-		html2pdfConverter *html2pdf.Converter
+		svc                     *TenantService
+		html2pdfConverter       *html2pdf.Converter
+		invitationTokenValidity time.Duration
+		tokenSecret             string
 	}
 
 	ErrSignatureNotCancellable struct {
@@ -588,6 +594,8 @@ func (s *DocumentService) SendSigningNotifications(
 	ctx context.Context,
 	organizationID gid.GID,
 ) error {
+	now := time.Now()
+
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -604,9 +612,46 @@ func (s *DocumentService) SendSigningNotifications(
 			for _, signatory := range signatories {
 				emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, signatory.FullName)
 
+				var (
+					employeeDocumentsURLPath = "/organizations/" + organizationID.String() + "/employee"
+					emailLinkURLPath         = employeeDocumentsURLPath
+					query                    url.Values
+				)
+				if signatory.State != coredata.ProfileStateActive {
+					if signatory.Source != coredata.ProfileSourceSCIM {
+						invitation := &coredata.Invitation{
+							ID:             gid.New(organizationID.TenantID(), coredata.InvitationEntityType),
+							OrganizationID: organizationID,
+							UserID:         signatory.ID,
+							Status:         coredata.InvitationStatusPending,
+							ExpiresAt:      now.Add(s.invitationTokenValidity),
+							CreatedAt:      now,
+						}
+						if err := invitation.Insert(ctx, tx, coredata.NewScopeFromObjectID(organizationID)); err != nil {
+							return fmt.Errorf("cannot insert invitation: %w", err)
+						}
+
+						invitationToken, err := statelesstoken.NewToken(
+							s.tokenSecret,
+							iam.TokenTypeOrganizationInvitation,
+							s.invitationTokenValidity,
+							iam.InvitationTokenData{InvitationID: invitation.ID},
+						)
+						if err != nil {
+							return fmt.Errorf("cannot generate invitation token: %w", err)
+						}
+
+						emailLinkURLPath = "/auth/activate-account"
+						continueURL := baseurl.MustParse(s.svc.baseURL).AppendPath(employeeDocumentsURLPath).MustString()
+						query.Add("token", invitationToken)
+						query.Add("continue", continueURL)
+					}
+				}
+
 				subject, textBody, htmlBody, err := emailPresenter.RenderDocumentSigning(
 					ctx,
-					"/organizations/"+organizationID.String()+"/employee",
+					emailLinkURLPath,
+					query,
 					organization.Name,
 				)
 				if err != nil {

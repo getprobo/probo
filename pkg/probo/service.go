@@ -49,19 +49,20 @@ type ExportService interface {
 
 type (
 	Service struct {
-		pg                *pg.Client
-		s3                *s3.Client
-		bucket            string
-		encryptionKey     cipher.EncryptionKey
-		baseURL           string
-		tokenSecret       string
-		agentConfig       agents.Config
-		html2pdfConverter *html2pdf.Converter
-		acmeService       *certmanager.ACMEService
-		fileManager       *filemanager.Service
-		logger            *log.Logger
-		slack             *slack.Service
-		esign             *esign.Service
+		pg                      *pg.Client
+		s3                      *s3.Client
+		bucket                  string
+		encryptionKey           cipher.EncryptionKey
+		baseURL                 string
+		tokenSecret             string
+		agentConfig             agents.Config
+		html2pdfConverter       *html2pdf.Converter
+		acmeService             *certmanager.ACMEService
+		fileManager             *filemanager.Service
+		logger                  *log.Logger
+		slack                   *slack.Service
+		esign                   *esign.Service
+		invitationTokenValidity time.Duration
 	}
 
 	TenantService struct {
@@ -133,6 +134,7 @@ func NewService(
 	slackService *slack.Service,
 	iamService *iam.Service,
 	esignService *esign.Service,
+	invitationTokenValidity time.Duration,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -141,19 +143,20 @@ func NewService(
 	iamService.Authorizer.RegisterPolicySet(ProboPolicySet())
 
 	svc := &Service{
-		pg:                pgClient,
-		s3:                s3Client,
-		bucket:            bucket,
-		encryptionKey:     encryptionKey,
-		baseURL:           baseURL,
-		tokenSecret:       tokenSecret,
-		agentConfig:       agentConfig,
-		html2pdfConverter: html2pdfConverter,
-		acmeService:       acmeService,
-		fileManager:       fileManagerService,
-		logger:            logger,
-		slack:             slackService,
-		esign:             esignService,
+		pg:                      pgClient,
+		s3:                      s3Client,
+		bucket:                  bucket,
+		encryptionKey:           encryptionKey,
+		baseURL:                 baseURL,
+		tokenSecret:             tokenSecret,
+		agentConfig:             agentConfig,
+		html2pdfConverter:       html2pdfConverter,
+		acmeService:             acmeService,
+		fileManager:             fileManagerService,
+		logger:                  logger,
+		slack:                   slackService,
+		esign:                   esignService,
+		invitationTokenValidity: invitationTokenValidity,
 	}
 
 	return svc, nil
@@ -195,8 +198,10 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Documents = &DocumentService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
+		svc:                     tenantService,
+		html2pdfConverter:       s.html2pdfConverter,
+		invitationTokenValidity: s.invitationTokenValidity,
+		tokenSecret:             s.tokenSecret,
 	}
 	tenantService.Organizations = &OrganizationService{
 		svc: tenantService,

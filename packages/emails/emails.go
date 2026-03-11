@@ -23,6 +23,7 @@ import (
 	htmltemplate "html/template"
 	"io/fs"
 	"mime"
+	"net/url"
 	"path/filepath"
 	texttemplate "text/template"
 	"time"
@@ -338,14 +339,20 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
 }
 
-func (p *Presenter) RenderDocumentSigning(ctx context.Context, signinURLPath string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
+func (p *Presenter) RenderDocumentSigning(
+	ctx context.Context,
+	signingURLPath string,
+	signingURLQuery url.Values,
+	organizationName string,
+) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables(ctx)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
 	signingURL := baseurl.MustParse(vars.BaseURL).
-		AppendPath(signinURLPath).
+		AppendPath(signingURLPath).
+		WithQueryValues(signingURLQuery).
 		MustString()
 
 	data := struct {

@@ -451,6 +451,7 @@ func (impl *Implm) Run(
 		slackService,
 		iamService,
 		esignService,
+		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)

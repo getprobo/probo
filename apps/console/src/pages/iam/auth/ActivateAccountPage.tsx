@@ -8,6 +8,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { ActivateAccountPageMutation$data, ActivateAccountPageMutation } from "#/__generated__/iam/ActivateAccountPageMutation.graphql";
+import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 
 const activateAccountMutation = graphql`
   mutation ActivateAccountPageMutation(
@@ -22,9 +23,10 @@ const activateAccountMutation = graphql`
 export default function ActivateAccountPage() {
   const { __ } = useTranslate();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const submittedRef = useRef<boolean>(false);
+  const safeContinueUrl = useSafeContinueUrl();
 
   usePageTitle(__("Activate Account"));
 
@@ -44,6 +46,7 @@ export default function ActivateAccountPage() {
               window.location.href = "/";
               return;
             }
+            // FIXME: If already activated redirect too
           }
           toast({
             title: __("Activation failed"),
@@ -69,12 +72,22 @@ export default function ActivateAccountPage() {
         }
 
         if (activateAccount.createPasswordToken) {
+          const search = new URLSearchParams([
+            ["token", activateAccount.createPasswordToken],
+            ["continue", safeContinueUrl.toString()],
+          ]);
           void navigate(
-            { pathname: "/auth/create-password", search: `?token=${activateAccount.createPasswordToken}` },
+            {
+              pathname: "/auth/create-password",
+              search: "?" + search.toString(),
+            },
             { replace: true },
           );
         } else {
-          void navigate("/", { replace: true });
+          void navigate({
+            pathname: safeContinueUrl.pathname,
+            search: safeContinueUrl.search,
+          }, { replace: true });
         }
       },
       onError: (e) => {
@@ -85,7 +98,7 @@ export default function ActivateAccountPage() {
         });
       },
     });
-  }, [__, toast, activateAccount, navigate]);
+  }, [__, toast, activateAccount, navigate, safeContinueUrl]);
 
   useEffect(() => {
     const token = searchParams.get("token");

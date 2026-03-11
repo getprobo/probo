@@ -3,7 +3,7 @@ import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, useToast } from "@probo/ui";
 import { useMutation } from "react-relay";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -27,6 +27,7 @@ export default function CreatePasswordPage() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   usePageTitle(__("Create Password"));
 
@@ -61,7 +62,12 @@ export default function CreatePasswordPage() {
           description: __("Account created successfully"),
           variant: "success",
         });
-        void navigate("/auth/login", { replace: true });
+        void navigate({
+          pathname: "/auth/login",
+          search: location.search,
+        }, {
+          replace: true,
+        });
       },
       onError: (e) => {
         toast({

@@ -3,10 +3,11 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
-import { Link, matchPath, useLocation, useSearchParams } from "react-router";
+import { Link, matchPath, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
+import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 
 const signInMutation = graphql`
   mutation PasswordSignInPageMutation($input: SignInInput!) {
@@ -20,7 +21,7 @@ const signInMutation = graphql`
 
 export default function PasswordSignInPage() {
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const safeContinueUrl = useSafeContinueUrl();
 
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -35,20 +36,6 @@ export default function PasswordSignInPage() {
     const passwordValue = formData.get("password") ? (formData.get("password") as string).toString() : "";
 
     if (!emailValue || !passwordValue) return;
-
-    const continueUrlParam = searchParams.get("continue");
-    let safeContinueUrl: URL;
-    if (continueUrlParam) {
-      let continueUrl: URL;
-      try {
-        continueUrl = new URL(continueUrlParam, window.location.origin);
-      } catch {
-        continueUrl = new URL(window.location.origin);
-      }
-      safeContinueUrl = new URL(continueUrl.pathname + continueUrl.search, window.location.origin);
-    } else {
-      safeContinueUrl = new URL(window.location.origin);
-    }
 
     const match = matchPath(
       { path: "/organizations/:organizationId", caseSensitive: false, end: false },

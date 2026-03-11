@@ -8,6 +8,7 @@ import { graphql } from "relay-runtime";
 import type { AssumePageMutation } from "#/__generated__/iam/AssumePageMutation.graphql";
 import type { AssumePageQuery } from "#/__generated__/iam/AssumePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 
 import AuthLayout from "../auth/AuthLayout";
 
@@ -48,28 +49,23 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
   const [searchParams] = useSearchParams();
   const { __ } = useTranslate();
 
+  const safeContinueUrl = useSafeContinueUrl(
+    new URL(window.location.origin + `/organizations/${organizationId}`),
+  );
+
   const { viewer } = usePreloadedQuery<AssumePageQuery>(assumePageQuery, queryRef);
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
-
-  const continueUrlParam = searchParams.get("continue");
-  let safeContinueUrl: string;
-  if (continueUrlParam) {
-    const continueUrl = new URL(continueUrlParam);
-    safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
-  } else {
-    safeContinueUrl = window.location.origin + `/organizations/${organizationId}`;
-  }
 
   useEffect(() => {
     assumeOrganizationSession({
       variables: {
-        input: { organizationId, continue: safeContinueUrl },
+        input: { organizationId, continue: safeContinueUrl.toString() },
       },
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
           const search = new URLSearchParams([
             ["organization-id", organizationId],
-            ["continue", safeContinueUrl],
+            ["continue", safeContinueUrl.toString()],
           ]);
 
           void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
@@ -88,7 +84,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
         switch (result.__typename) {
           case "PasswordRequired":
             search.set("organization-id", organizationId);
-            search.set("continue", safeContinueUrl);
+            search.set("continue", safeContinueUrl.toString());
 
             void navigate({ pathname: "/auth/password-login", search: "?" + search.toString() });
             break;
@@ -102,7 +98,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
             window.location.href = samlSSOLoginURL.toString();
             break;
           default:
-            window.location.href = safeContinueUrl;
+            window.location.href = safeContinueUrl.toString();
         }
       },
     });

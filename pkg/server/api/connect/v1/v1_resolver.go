@@ -351,7 +351,7 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 	return &types.SignOutPayload{Success: true}, nil
 }
 
-// ActivateAccount is the resolver for the signUpFromInvitation field.
+// ActivateAccount is the resolver for the activateAccount field.
 func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.ActivateAccountInput) (*types.ActivateAccountPayload, error) {
 	session := authn.SessionFromContext(ctx)
 
