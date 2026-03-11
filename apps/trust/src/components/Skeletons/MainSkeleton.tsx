@@ -16,6 +16,7 @@ export function MainSkeleton() {
           <TabLink to={getTrustCenterUrl("subprocessors")}>
             {__("Subprocessors")}
           </TabLink>
+          <TabLink to={getTrustCenterUrl("updates")}>{__("Updates")}</TabLink>
         </Tabs>
         <TabSkeleton />
       </main>

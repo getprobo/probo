@@ -4,6 +4,7 @@ import { useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import { Rows } from "#/components/Rows";
 import type { UpdatesPageQuery } from "#/pages/__generated__/UpdatesPageQuery.graphql";
 
 export const currentTrustUpdatesQuery = graphql`
@@ -41,14 +42,26 @@ export function UpdatesPage({ queryRef }: Props) {
   return (
     <div>
       <h2 className="font-medium mb-1">{__("Updates")}</h2>
-      <p className="text-sm text-txt-secondary mb-4">
-        {__("Latest compliance and security updates:")}
-      </p>
-      <div className="space-y-0">
-        {items.map(item => (
-          <UpdateItem key={item.id} item={item} />
-        ))}
-      </div>
+      {items.length === 0
+        ? (
+            <Rows>
+              <div className="text-sm text-txt-tertiary text-center py-5">
+                {__("No updates have been published yet.")}
+              </div>
+            </Rows>
+          )
+        : (
+            <>
+              <p className="text-sm text-txt-secondary mb-4">
+                {__("Latest compliance and security updates")}
+              </p>
+              <div className="space-y-0">
+                {items.map(item => (
+                  <UpdateItem key={item.id} item={item} />
+                ))}
+              </div>
+            </>
+          )}
     </div>
   );
 }
