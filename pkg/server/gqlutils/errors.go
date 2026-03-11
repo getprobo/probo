@@ -94,6 +94,20 @@ func NDASignatureRequiredf(ctx context.Context, format string, a ...any) *gqlerr
 	return NDASignatureRequired(ctx, fmt.Errorf(format, a...))
 }
 
+func AccountAlreadyActivated(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "ACCOUNT_ALREADY_ACTIVATED",
+		},
+	}
+}
+
+func AccountAlreadyActivatedf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return AccountAlreadyActivated(ctx, fmt.Errorf(format, a...))
+}
+
 func Forbidden(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),

@@ -42,11 +42,13 @@ export default function ActivateAccountPage() {
       onCompleted: (response: ActivateAccountPageMutation$data, errors: GraphQLError[] | null) => {
         if (errors) {
           for (const err of errors) {
-            if (err.extensions?.code === "ALREADY_AUTHENTICATED") {
-              window.location.href = "/";
+            if (err.extensions?.code === "ACCOUNT_ALREADY_ACTIVATED") {
+              void navigate({
+                pathname: safeContinueUrl.pathname,
+                search: safeContinueUrl.search,
+              }, { replace: true });
               return;
             }
-            // FIXME: If already activated redirect too
           }
           toast({
             title: __("Activation failed"),

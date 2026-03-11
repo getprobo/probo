@@ -379,19 +379,21 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 	)
 	if err != nil {
 		var (
-			errInvalidToken              *iam.ErrInvalidToken
-			errInvitationNotFound        *iam.ErrInvitationNotFound
-			errInvitationAlreadyAccepted *iam.ErrInvitationAlreadyAccepted
-			errInvitationExpired         *iam.ErrInvitationExpired
+			errInvalidToken       *iam.ErrInvalidToken
+			errInvitationNotFound *iam.ErrInvitationNotFound
+			errInvitationExpired  *iam.ErrInvitationExpired
 
 			isInvalidErr = errors.As(err, &errInvalidToken) ||
 				errors.As(err, &errInvitationNotFound) ||
-				errors.As(err, &errInvitationAlreadyAccepted) ||
 				errors.As(err, &errInvitationExpired)
 		)
 
 		if isInvalidErr {
 			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrInvitationAlreadyAccepted](err); ok {
+			return nil, gqlutils.AccountAlreadyActivated(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot activate account from invitation", log.Error(err))
