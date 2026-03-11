@@ -64,7 +64,7 @@ export default function CreatePasswordPage() {
 
         searchParams.delete("token");
         void navigate({
-          pathname: "/auth/login",
+          pathname: "/auth/password-login",
           search: "?" + searchParams.toString(),
         }, {
           replace: true,
