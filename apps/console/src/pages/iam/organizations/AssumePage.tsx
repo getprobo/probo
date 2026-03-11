@@ -49,9 +49,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
   const [searchParams] = useSearchParams();
   const { __ } = useTranslate();
 
-  const safeContinueUrl = useSafeContinueUrl(
-    new URL(window.location.origin + `/organizations/${organizationId}`),
-  );
+  const safeContinueUrl = useSafeContinueUrl(`/organizations/${organizationId}`);
 
   const { viewer } = usePreloadedQuery<AssumePageQuery>(assumePageQuery, queryRef);
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
