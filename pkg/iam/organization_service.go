@@ -213,7 +213,8 @@ func (cur *CreateUserRequest) Validate() error {
 	v.CheckEach(cur.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())
 	})
-	v.Check(cur.Position, "position", validator.SafeText(TitleMaxLength))
+	v.Check(cur.Kind, "kind", validator.SafeTextNoNewLine(NameMaxLength))
+	v.Check(cur.Position, "position", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cur.ContractStartDate, "contract_start_date", validator.Before(cur.ContractEndDate))
 	v.Check(cur.ContractEndDate, "contract_end_date", validator.After(cur.ContractStartDate))
 
@@ -228,7 +229,8 @@ func (upr *UpdateUserRequest) Validate() error {
 	v.CheckEach(upr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())
 	})
-	v.Check(upr.Position, "position", validator.SafeText(TitleMaxLength))
+	v.Check(upr.Kind, "kind", validator.SafeTextNoNewLine(NameMaxLength))
+	v.Check(upr.Position, "position", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(upr.ContractStartDate, "contract_start_date", validator.Before(upr.ContractEndDate))
 	v.Check(upr.ContractEndDate, "contract_end_date", validator.After(upr.ContractStartDate))
 
