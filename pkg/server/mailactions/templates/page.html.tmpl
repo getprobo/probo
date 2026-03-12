@@ -88,11 +88,14 @@
       <h1>{{.Heading}}</h1>
       <p>{{.Body}}</p>
       {{- if .Form}}
-      <form method="POST" action="{{.Form.ActionURL}}">
+      <form id="action-form" method="POST" action="{{.Form.ActionURL}}">
         <button type="submit" class="{{if .Form.Danger}}danger{{else}}primary{{end}}">
           {{.Form.Button}}
         </button>
       </form>
+      {{- if .Form.AutoSubmit}}
+      <script>document.getElementById("action-form").submit();</script>
+      {{- end}}
       {{- end}}
     </div>
   </body>

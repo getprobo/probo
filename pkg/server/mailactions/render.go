@@ -24,9 +24,10 @@ import (
 var pageTmplHTML string
 
 type form struct {
-	ActionURL template.URL
-	Button    string
-	Danger    bool
+	ActionURL  template.URL
+	Button     string
+	Danger     bool
+	AutoSubmit bool
 }
 
 type page struct {
