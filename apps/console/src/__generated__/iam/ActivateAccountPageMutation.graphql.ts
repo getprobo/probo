@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<852ecee082c322aba273f04575353fbd>>
+ * @generated SignedSource<<e2bdaf924ff82d11f3c2ef4a8353c8e8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,6 +18,7 @@ export type ActivateAccountPageMutation$variables = {
 export type ActivateAccountPageMutation$data = {
   readonly activateAccount: {
     readonly createPasswordToken: string | null | undefined;
+    readonly ssoLoginUrl: string | null | undefined;
   } | null | undefined;
 };
 export type ActivateAccountPageMutation = {
@@ -54,6 +55,13 @@ v1 = [
         "kind": "ScalarField",
         "name": "createPasswordToken",
         "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "ssoLoginUrl",
+        "storageKey": null
       }
     ],
     "storageKey": null
@@ -77,16 +85,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "388c90522ecf3a3365e171a623fb2d2e",
+    "cacheID": "ab62d7332fce4af79b46c8627e551370",
     "id": null,
     "metadata": {},
     "name": "ActivateAccountPageMutation",
     "operationKind": "mutation",
-    "text": "mutation ActivateAccountPageMutation(\n  $input: ActivateAccountInput!\n) {\n  activateAccount(input: $input) {\n    createPasswordToken\n  }\n}\n"
+    "text": "mutation ActivateAccountPageMutation(\n  $input: ActivateAccountInput!\n) {\n  activateAccount(input: $input) {\n    createPasswordToken\n    ssoLoginUrl\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c27b723383934423bf92926820426653";
+(node as any).hash = "fd91da524bb46256a9d8e1ae31590dc2";
 
 export default node;

@@ -31,6 +31,7 @@ type ActivateAccountInput struct {
 
 type ActivateAccountPayload struct {
 	CreatePasswordToken *string  `json:"createPasswordToken,omitempty"`
+	SsoLoginURL         *string  `json:"ssoLoginUrl,omitempty"`
 	Profile             *Profile `json:"profile,omitempty"`
 }
 

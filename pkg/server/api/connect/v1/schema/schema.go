@@ -65,6 +65,7 @@ type ComplexityRoot struct {
 	ActivateAccountPayload struct {
 		CreatePasswordToken func(childComplexity int) int
 		Profile             func(childComplexity int) int
+		SsoLoginURL         func(childComplexity int) int
 	}
 
 	AssumeOrganizationSessionPayload struct {
@@ -623,6 +624,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ActivateAccountPayload.Profile(childComplexity), true
+	case "ActivateAccountPayload.ssoLoginUrl":
+		if e.ComplexityRoot.ActivateAccountPayload.SsoLoginURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ActivateAccountPayload.SsoLoginURL(childComplexity), true
 
 	case "AssumeOrganizationSessionPayload.result":
 		if e.ComplexityRoot.AssumeOrganizationSessionPayload.Result == nil {
@@ -3206,6 +3213,7 @@ type SignOutPayload {
 
 type ActivateAccountPayload {
   createPasswordToken: String
+  ssoLoginUrl: String
   profile: Profile
 }
 
@@ -4183,6 +4191,35 @@ func (ec *executionContext) _ActivateAccountPayload_createPasswordToken(ctx cont
 }
 
 func (ec *executionContext) fieldContext_ActivateAccountPayload_createPasswordToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActivateAccountPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActivateAccountPayload_ssoLoginUrl(ctx context.Context, field graphql.CollectedField, obj *types.ActivateAccountPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ActivateAccountPayload_ssoLoginUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.SsoLoginURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ActivateAccountPayload_ssoLoginUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ActivateAccountPayload",
 		Field:      field,
@@ -6342,6 +6379,8 @@ func (ec *executionContext) fieldContext_Mutation_activateAccount(ctx context.Co
 			switch field.Name {
 			case "createPasswordToken":
 				return ec.fieldContext_ActivateAccountPayload_createPasswordToken(ctx, field)
+			case "ssoLoginUrl":
+				return ec.fieldContext_ActivateAccountPayload_ssoLoginUrl(ctx, field)
 			case "profile":
 				return ec.fieldContext_ActivateAccountPayload_profile(ctx, field)
 			}
@@ -16444,6 +16483,8 @@ func (ec *executionContext) _ActivateAccountPayload(ctx context.Context, sel ast
 			out.Values[i] = graphql.MarshalString("ActivateAccountPayload")
 		case "createPasswordToken":
 			out.Values[i] = ec._ActivateAccountPayload_createPasswordToken(ctx, field, obj)
+		case "ssoLoginUrl":
+			out.Values[i] = ec._ActivateAccountPayload_ssoLoginUrl(ctx, field, obj)
 		case "profile":
 			out.Values[i] = ec._ActivateAccountPayload_profile(ctx, field, obj)
 		default:

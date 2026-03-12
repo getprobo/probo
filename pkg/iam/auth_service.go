@@ -135,7 +135,7 @@ func (req CreateIdentityWithPasswordRequest) Validate() error {
 func (s *AuthService) ActivateAccount(
 	ctx context.Context,
 	req *ActivateAccountRequest,
-) (*coredata.MembershipProfile, *string, error) {
+) (*coredata.Identity, *coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -146,15 +146,14 @@ func (s *AuthService) ActivateAccount(
 	}
 
 	var (
-		scope               = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
-		invitation          = &coredata.Invitation{}
-		profile             *coredata.MembershipProfile
-		identity            *coredata.Identity
-		now                 = time.Now()
-		createPasswordToken *string
+		scope      = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
+		invitation = &coredata.Invitation{}
+		profile    *coredata.MembershipProfile
+		identity   *coredata.Identity
+		now        = time.Now()
 	)
 
-	err = s.pg.WithTx(
+	if err = s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
 			err := invitation.LoadByID(ctx, tx, scope, payload.Data.InvitationID)
@@ -229,36 +228,25 @@ func (s *AuthService) ActivateAccount(
 
 			return nil
 		},
-	)
-
-	if err != nil {
+	); err != nil {
 		return nil, nil, err
 	}
 
-	count, err := s.AccountService.CountSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
+	return identity, profile, nil
+}
+
+func (s AuthService) GetResetPasswordToken(ctx context.Context, email mail.Addr) (string, error) {
+	token, err := statelesstoken.NewToken(
+		s.tokenSecret,
+		TokenTypePasswordReset,
+		s.passwordResetTokenValidity,
+		PasswordResetData{Email: email},
+	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot count SAML configurations: %w", err)
+		return "", fmt.Errorf("cannot generate password create token: %w", err)
 	}
 
-	if count > 0 {
-		return profile, nil, nil
-	}
-
-	if identity.HashedPassword == nil {
-		token, err := statelesstoken.NewToken(
-			s.tokenSecret,
-			TokenTypePasswordReset,
-			s.passwordResetTokenValidity,
-			PasswordResetData{Email: identity.EmailAddress},
-		)
-		if err != nil {
-			return nil, nil, fmt.Errorf("cannot generate password create token: %w", err)
-		}
-
-		createPasswordToken = &token
-	}
-
-	return profile, createPasswordToken, nil
+	return token, nil
 }
 
 func (s AuthService) ResetPassword(
@@ -313,12 +301,7 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 	ctx context.Context,
 	email mail.Addr,
 ) error {
-	token, err := statelesstoken.NewToken(
-		s.tokenSecret,
-		TokenTypePasswordReset,
-		s.passwordResetTokenValidity,
-		PasswordResetData{Email: email},
-	)
+	token, err := s.GetResetPasswordToken(ctx, email)
 	if err != nil {
 		return fmt.Errorf("cannot generate password reset token: %w", err)
 	}

@@ -16,6 +16,7 @@ const activateAccountMutation = graphql`
   ) {
     activateAccount(input: $input) {
       createPasswordToken
+      ssoLoginUrl
     }
   }
 `;
@@ -73,6 +74,14 @@ export default function ActivateAccountPage() {
           throw new Error("mutation data missing");
         }
 
+        if (activateAccount.ssoLoginUrl) {
+          const url = new URL(activateAccount.ssoLoginUrl);
+          url.search = searchParams.toString();
+
+          window.location.href = url.toString();
+          return;
+        }
+
         if (activateAccount.createPasswordToken) {
           const search = new URLSearchParams([
             ["token", activateAccount.createPasswordToken],
@@ -85,12 +94,14 @@ export default function ActivateAccountPage() {
             },
             { replace: true },
           );
-        } else {
-          void navigate({
-            pathname: safeContinueUrl.pathname,
-            search: safeContinueUrl.search,
-          }, { replace: true });
+          return;
         }
+
+        const search = new URLSearchParams([["continue", safeContinueUrl.toString()]]);
+        void navigate({
+          pathname: "/auth/password-login",
+          search: "?" + search.toString(),
+        }, { replace: true });
       },
       onError: (e) => {
         toast({
@@ -100,7 +111,7 @@ export default function ActivateAccountPage() {
         });
       },
     });
-  }, [__, toast, activateAccount, navigate, safeContinueUrl]);
+  }, [__, toast, activateAccount, navigate, safeContinueUrl, searchParams]);
 
   useEffect(() => {
     const token = searchParams.get("token");
