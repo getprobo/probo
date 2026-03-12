@@ -397,7 +397,7 @@
   {
     "category": "Health",
     "name": "Data retention risk via inconsistent retention policies",
-    "description": "Retaining ePHI longer than necessary — or deleting it prematurely — can violate regulations or impair patient services"
+    "description": "Retaining ePHI longer than necessary \u2014 or deleting it prematurely \u2014 can violate regulations or impair patient services"
   },
   {
     "category": "Health",
@@ -408,5 +408,50 @@
     "category": "Health",
     "name": "Security drift via outdated risk analysis",
     "description": "Not regularly updating your HIPAA security risk assessment may result in blind spots in new systems, vendors, or workflows"
+  },
+  {
+    "category": "Human capital",
+    "name": "Security awareness gap due to lack of employee training",
+    "description": "Employees without proper security training become the weakest link, increasing risk of phishing, social engineering and data breaches."
+  },
+  {
+    "category": "Human capital",
+    "name": "Insider threat due to disgruntled employee",
+    "description": "Employees with malicious intent or grievances can deliberately leak sensitive data or sabotage systems causing significant business harm."
+  },
+  {
+    "category": "Human capital",
+    "name": "Compliance violation due to inadequate role-based training",
+    "description": "Staff unaware of compliance obligations such as GDPR or HIPAA may unknowingly violate regulations leading to penalties."
+  },
+  {
+    "category": "Operations",
+    "name": "Data loss due to absence of backup and recovery procedures",
+    "description": "Without tested backup and recovery processes, a system failure or ransomware attack can cause permanent data loss and business disruption."
+  },
+  {
+    "category": "Operations",
+    "name": "Compliance failure due to untracked third party vendors",
+    "description": "Unmonitored vendors with access to company systems or data can introduce security and compliance risks that go undetected until an incident occurs."
+  },
+  {
+    "category": "Operations",
+    "name": "Service disruption due to missing incident response plan",
+    "description": "Without a formal incident response plan, organizations take longer to detect and recover from security incidents increasing operational and reputational damage."
+  },
+  {
+    "category": "Strategic",
+    "name": "Regulatory risk due to expansion into new markets",
+    "description": "Entering new geographies without understanding local compliance requirements such as data residency or industry regulations exposes the company to legal and financial risk."
+  },
+  {
+    "category": "Strategic",
+    "name": "Security posture weakness due to rapid product scaling",
+    "description": "Scaling product features and infrastructure faster than security controls can keep up with creates exploitable vulnerabilities and compliance gaps."
+  },
+  {
+    "category": "Strategic",
+    "name": "Loss of enterprise deals due to missing security certifications",
+    "description": "Enterprise customers require SOC 2, ISO 27001 or HIPAA compliance before signing contracts. Absence of certifications directly blocks revenue growth."
   }
 ]
