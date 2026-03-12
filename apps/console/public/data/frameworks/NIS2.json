@@ -73,6 +73,62 @@
     {
       "id": "Art. 28(1)",
       "name": "Maintenance of domain name registration data (TLDs/registrars)"
+    },
+    {
+      "id": "Art. 21(3)",
+      "name": "Technical implementation of cybersecurity measures"
+    },
+    {
+      "id": "Art. 21(4)",
+      "name": "Proportionality of security measures to risk exposure"
+    },
+    {
+      "id": "Art. 23(3)",
+      "name": "Early warning notification within 24 hours of incident"
+    },
+    {
+      "id": "Art. 23(4)",
+      "name": "Incident notification update within 72 hours"
+    },
+    {
+      "id": "Art. 23(5)",
+      "name": "Final incident report submission within one month"
+    },
+    {
+      "id": "Art. 24(1)",
+      "name": "Use of European cybersecurity certified products and services"
+    },
+    {
+      "id": "Art. 25(1)",
+      "name": "Adherence to EU cybersecurity standards and specifications"
+    },
+    {
+      "id": "Art. 27(1)",
+      "name": "Registration of essential and important entities"
+    },
+    {
+      "id": "Art. 27(2)",
+      "name": "Submission of entity information to national authority"
+    },
+    {
+      "id": "Art. 32(1)",
+      "name": "Supervisory measures for essential entities"
+    },
+    {
+      "id": "Art. 32(2)",
+      "name": "On-site and off-site supervision and audits"
+    },
+    {
+      "id": "Art. 33(1)",
+      "name": "Supervisory measures for important entities"
+    },
+    {
+      "id": "Art. 34(1)",
+      "name": "Administrative fines for essential entities"
+    },
+    {
+      "id": "Art. 34(2)",
+      "name": "Administrative fines for important entities"
     }
   ]
 }
