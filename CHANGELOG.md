@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.142.0] - 2026-03-12
+
+### Added
+
+- Support for mermaid in markdown
+
+### Fixed
+
+- Account activation redirection flow improved
+- Compliance updates improvements: display, public
+
 ## [0.141.0] - 2026-03-11
 
 ### Added
