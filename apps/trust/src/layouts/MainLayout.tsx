@@ -39,8 +39,7 @@ export function MainLayout(props: Props) {
             <TabLink to="/documents">{__("Documents")}</TabLink>
             {trustCenter.vendorInfo.totalCount > 0
               && <TabLink to="/subprocessors">{__("Subprocessors")}</TabLink>}
-            {isAuthenticated
-              && <TabLink to="/updates">{__("Updates")}</TabLink>}
+            <TabLink to="/updates">{__("Updates")}</TabLink>
           </Tabs>
           <Outlet context={{ trustCenter }} />
         </main>

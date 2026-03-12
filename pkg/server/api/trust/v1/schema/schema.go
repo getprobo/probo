@@ -1832,19 +1832,19 @@ type ComplianceFrameworkEdge
   node: ComplianceFramework!
 }
 
-type MailingListUpdate implements Node @nda {
+type MailingListUpdate implements Node {
   id: ID!
   title: String!
   body: String!
   updatedAt: Datetime!
 }
 
-type MailingListUpdateConnection @nda {
+type MailingListUpdateConnection {
   edges: [MailingListUpdateEdge!]!
   pageInfo: PageInfo!
 }
 
-type MailingListUpdateEdge @nda {
+type MailingListUpdateEdge {
   cursor: CursorKey!
   node: MailingListUpdate!
 }
@@ -5259,20 +5259,7 @@ func (ec *executionContext) _MailingListUpdateConnection_edges(ctx context.Conte
 		func(ctx context.Context) (any, error) {
 			return obj.Edges, nil
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.Directives.Nda == nil {
-					var zeroVal []*types.MailingListUpdateEdge
-					return zeroVal, errors.New("directive nda is not implemented")
-				}
-				return ec.Directives.Nda(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalNMailingListUpdateEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐMailingListUpdateEdgeᚄ,
 		true,
 		true,
@@ -5375,20 +5362,7 @@ func (ec *executionContext) _MailingListUpdateEdge_node(ctx context.Context, fie
 		func(ctx context.Context) (any, error) {
 			return obj.Node, nil
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.Directives.Nda == nil {
-					var zeroVal *types.MailingListUpdate
-					return zeroVal, errors.New("directive nda is not implemented")
-				}
-				return ec.Directives.Nda(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalNMailingListUpdate2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐMailingListUpdate,
 		true,
 		true,
@@ -8092,20 +8066,7 @@ func (ec *executionContext) _TrustCenter_updates(ctx context.Context, field grap
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.TrustCenter().Updates(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.Directives.Nda == nil {
-					var zeroVal *types.MailingListUpdateConnection
-					return zeroVal, errors.New("directive nda is not implemented")
-				}
-				return ec.Directives.Nda(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalNMailingListUpdateConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐMailingListUpdateConnection,
 		true,
 		true,

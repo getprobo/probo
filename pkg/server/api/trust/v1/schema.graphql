@@ -131,19 +131,19 @@ type ComplianceFrameworkEdge
   node: ComplianceFramework!
 }
 
-type MailingListUpdate implements Node @nda {
+type MailingListUpdate implements Node {
   id: ID!
   title: String!
   body: String!
   updatedAt: Datetime!
 }
 
-type MailingListUpdateConnection @nda {
+type MailingListUpdateConnection {
   edges: [MailingListUpdateEdge!]!
   pageInfo: PageInfo!
 }
 
-type MailingListUpdateEdge @nda {
+type MailingListUpdateEdge {
   cursor: CursorKey!
   node: MailingListUpdate!
 }
