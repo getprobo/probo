@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, Field, Spinner, Textarea } from "@probo/ui";
+import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, Field, IconCircleInfo, Spinner, Textarea } from "@probo/ui";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
@@ -76,6 +76,12 @@ export function NewComplianceUpdateDialog(props: {
     <Dialog ref={ref} title={__("Add Update")}>
       <form onSubmit={e => void form.handleSubmit(handleSubmit)(e)}>
         <DialogContent padded className="space-y-6">
+          <div className="flex gap-2.5 rounded-lg bg-surface-secondary p-3 text-sm text-txt-secondary">
+            <IconCircleInfo size={16} className="mt-0.5 shrink-0 text-txt-tertiary" />
+            <p>
+              {__("Do not include confidential or sensitive information in this update. Any content that requires protection should be placed behind your NDA-gated documents instead.")}
+            </p>
+          </div>
           <Field
             label={__("Title")}
             required
