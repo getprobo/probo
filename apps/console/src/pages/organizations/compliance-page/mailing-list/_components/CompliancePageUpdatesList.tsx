@@ -1,13 +1,15 @@
 import { useTranslate } from "@probo/i18n";
-import { Badge, Button, IconChevronDown, IconPencil, IconSend, IconTrashCan, Spinner, Table, Tbody, Td, Th, Thead, Tr, useConfirm } from "@probo/ui";
+import { Badge, Button, IconChevronDown, IconPageTextLine, IconPencil, IconSend, IconTrashCan, Spinner, Table, Tbody, Td, Th, Thead, Tr, useDialogRef } from "@probo/ui";
+import { useState } from "react";
 import { usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageUpdatesListDeleteMutation } from "#/__generated__/core/CompliancePageUpdatesListDeleteMutation.graphql";
 import type { CompliancePageUpdatesListFragment$data, CompliancePageUpdatesListFragment$key } from "#/__generated__/core/CompliancePageUpdatesListFragment.graphql";
 import type { CompliancePageUpdatesListQuery } from "#/__generated__/core/CompliancePageUpdatesListQuery.graphql";
-import type { CompliancePageUpdatesListSendMutation } from "#/__generated__/core/CompliancePageUpdatesListSendMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+
+import { SendUpdateDialog } from "./SendUpdateDialog";
 
 const deleteMutation = graphql`
   mutation CompliancePageUpdatesListDeleteMutation(
@@ -16,20 +18,6 @@ const deleteMutation = graphql`
   ) {
     deleteMailingListUpdate(input: $input) {
       deletedMailingListUpdateId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
-const sendMutation = graphql`
-  mutation CompliancePageUpdatesListSendMutation($input: SendMailingListUpdateInput!) {
-    sendMailingListUpdate(input: $input) {
-      mailingListUpdate {
-        id
-        title
-        body
-        status
-        updatedAt
-      }
     }
   }
 `;
@@ -72,7 +60,9 @@ export function CompliancePageUpdatesList(props: {
 }) {
   const { fragmentRef, onEdit } = props;
   const { __ } = useTranslate();
-  const confirm = useConfirm();
+
+  const sendDialogRef = useDialogRef();
+  const [updateToSend, setUpdateToSend] = useState<UpdateNode | null>(null);
 
   const { data, hasNext, loadNext, isLoadingNext } = usePaginationFragment<
     CompliancePageUpdatesListQuery,
@@ -87,12 +77,6 @@ export function CompliancePageUpdatesList(props: {
       errorMessage: __("Failed to delete update"),
     });
 
-  const [sendUpdate, isSending]
-    = useMutationWithToasts<CompliancePageUpdatesListSendMutation>(sendMutation, {
-      successMessage: __("Update enqueued for delivery"),
-      errorMessage: __("Failed to enqueue update for delivery"),
-    });
-
   const handleDelete = (id: string) => {
     void deleteUpdate({
       variables: {
@@ -103,26 +87,13 @@ export function CompliancePageUpdatesList(props: {
   };
 
   const handleSend = (node: UpdateNode) => {
-    confirm(
-      () =>
-        sendUpdate({
-          variables: {
-            input: {
-              id: node.id,
-            },
-          },
-        }),
-      {
-        title: __("Send this update to all subscribers?"),
-        message: `"${node.title}" — ${node.body.length > 120 ? node.body.slice(0, 120) + "…" : node.body}`,
-        label: __("Send"),
-        variant: "primary",
-      },
-    );
+    setUpdateToSend(node);
+    sendDialogRef.current?.open();
   };
 
   return (
     <>
+      <SendUpdateDialog ref={sendDialogRef} update={updateToSend} />
       {connection.edges.length === 0
         ? (
             <Table>
@@ -159,26 +130,25 @@ export function CompliancePageUpdatesList(props: {
                         {new Date(node.createdAt).toLocaleDateString()}
                       </Td>
                       <Td className="w-auto">
-                        <div className="flex gap-1 justify-end">
+                        <div className="flex gap-2 justify-end">
                           {node.status === "DRAFT" && (
                             <Button
+                              variant="secondary"
                               icon={IconSend}
-                              disabled={isSending}
                               onClick={() => handleSend(node)}
-                              className="bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-none"
                               aria-label={__("Send")}
                             >
                               {__("Send")}
                             </Button>
                           )}
                           <Button
-                            variant="tertiary"
-                            icon={IconPencil}
+                            variant="secondary"
+                            icon={node.status === "DRAFT" ? IconPencil : IconPageTextLine}
                             onClick={() => onEdit(node)}
-                            aria-label={__("Edit update")}
+                            aria-label={node.status === "DRAFT" ? __("Edit update") : __("View update")}
                           />
                           <Button
-                            variant="tertiary"
+                            variant="danger"
                             icon={IconTrashCan}
                             disabled={isDeleting}
                             onClick={() => handleDelete(node.id)}

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f5323e8e7bd73882c9169eb01318a21c>>
+ * @generated SignedSource<<7eced414e0638e806b52e86afcb6cca4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,10 +13,10 @@ export type MailingListUpdateStatus = "DRAFT" | "ENQUEUED" | "PROCESSING" | "SEN
 export type SendMailingListUpdateInput = {
   id: string;
 };
-export type CompliancePageUpdatesListSendMutation$variables = {
+export type SendUpdateDialogMutation$variables = {
   input: SendMailingListUpdateInput;
 };
-export type CompliancePageUpdatesListSendMutation$data = {
+export type SendUpdateDialogMutation$data = {
   readonly sendMailingListUpdate: {
     readonly mailingListUpdate: {
       readonly body: string;
@@ -27,9 +27,9 @@ export type CompliancePageUpdatesListSendMutation$data = {
     };
   };
 };
-export type CompliancePageUpdatesListSendMutation = {
-  response: CompliancePageUpdatesListSendMutation$data;
-  variables: CompliancePageUpdatesListSendMutation$variables;
+export type SendUpdateDialogMutation = {
+  response: SendUpdateDialogMutation$data;
+  variables: SendUpdateDialogMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -110,7 +110,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "CompliancePageUpdatesListSendMutation",
+    "name": "SendUpdateDialogMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -119,20 +119,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "CompliancePageUpdatesListSendMutation",
+    "name": "SendUpdateDialogMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "23fee99a4999d2c9cbeecd6fa9863b67",
+    "cacheID": "714c7cc9cdb06cb384690e17cdaa9958",
     "id": null,
     "metadata": {},
-    "name": "CompliancePageUpdatesListSendMutation",
+    "name": "SendUpdateDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CompliancePageUpdatesListSendMutation(\n  $input: SendMailingListUpdateInput!\n) {\n  sendMailingListUpdate(input: $input) {\n    mailingListUpdate {\n      id\n      title\n      body\n      status\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation SendUpdateDialogMutation(\n  $input: SendMailingListUpdateInput!\n) {\n  sendMailingListUpdate(input: $input) {\n    mailingListUpdate {\n      id\n      title\n      body\n      status\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "37c68b46d761280e2ff16f5bff08b249";
+(node as any).hash = "9ec6f363395b934616b97fe50b83d328";
 
 export default node;

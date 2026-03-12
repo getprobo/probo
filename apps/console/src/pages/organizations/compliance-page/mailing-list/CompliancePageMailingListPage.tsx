@@ -10,9 +10,8 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 import { CompliancePageMailingList } from "./_components/CompliancePageMailingList";
 import { CompliancePageUpdatesList, type UpdateNode } from "./_components/CompliancePageUpdatesList";
-import { EditComplianceUpdateDialog } from "./_components/EditComplianceUpdateDialog";
+import { ComplianceUpdateFormDialog } from "./_components/ComplianceUpdateFormDialog";
 import { NewCompliancePageSubscriberDialog } from "./_components/NewCompliancePageSubscriberDialog";
-import { NewComplianceUpdateDialog } from "./_components/NewComplianceUpdateDialog";
 
 export const compliancePageMailingListPageQuery = graphql`
   query CompliancePageMailingListPageQuery($organizationId: ID!) {
@@ -174,14 +173,14 @@ export function CompliancePageMailingListPage(props: {
       </div>
 
       {mailingListId && updatesConnectionId && (
-        <NewComplianceUpdateDialog
+        <ComplianceUpdateFormDialog
           ref={newUpdateDialogRef}
           mailingListId={mailingListId}
           connectionId={updatesConnectionId}
         />
       )}
 
-      <EditComplianceUpdateDialog
+      <ComplianceUpdateFormDialog
         ref={editUpdateDialogRef}
         update={selectedUpdate}
       />
