@@ -61,7 +61,6 @@ export default function PasswordSignInPage() {
             ),
             variant: "error",
           });
-          window.location.href = "/";
           return;
         }
 
@@ -73,7 +72,6 @@ export default function PasswordSignInPage() {
           description: e.message,
           variant: "error",
         });
-        window.location.href = "/";
       },
     });
   };

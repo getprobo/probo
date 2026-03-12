@@ -56,8 +56,8 @@ export default function SignUpPage() {
       onCompleted: (_, e) => {
         if (e) {
           toast({
-            title: __("Registration failed"),
-            description: formatError(__("Registration failed"), e),
+            title: __("Sign up failed"),
+            description: formatError(__("Sign up failed"), e),
             variant: "error",
           });
           return;
@@ -72,7 +72,7 @@ export default function SignUpPage() {
       },
       onError: (e) => {
         toast({
-          title: __("Registration failed"),
+          title: __("Sign up failed"),
           description: e.message,
           variant: "error",
         });
