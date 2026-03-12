@@ -76,7 +76,7 @@ export default function ActivateAccountPage() {
 
         if (activateAccount.ssoLoginUrl) {
           const url = new URL(activateAccount.ssoLoginUrl);
-          url.search = searchParams.toString();
+          url.searchParams.set("continue", safeContinueUrl.toString());
 
           window.location.href = url.toString();
           return;

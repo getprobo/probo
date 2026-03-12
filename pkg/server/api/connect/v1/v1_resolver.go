@@ -427,7 +427,8 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 	if identity.HashedPassword == nil {
 		token, err := r.iam.AuthService.GetResetPasswordToken(ctx, identity.EmailAddress)
 		if err != nil {
-			return nil, fmt.Errorf("cannot generate password create token: %w", err)
+			r.logger.ErrorCtx(ctx, "cannot generate password create token", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
 		}
 
 		createPasswordToken = &token
