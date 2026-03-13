@@ -261,7 +261,7 @@ func buildResponseFormat(rf *llm.ResponseFormat) openai.ChatCompletionNewParamsR
 		if rf.JSONSchema != nil {
 			schema := shared.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:   rf.JSONSchema.Name,
-				Strict: param.NewOpt(true),
+				Strict: param.NewOpt(rf.JSONSchema.Strict),
 			}
 			if rf.JSONSchema.Description != "" {
 				schema.Description = param.NewOpt(rf.JSONSchema.Description)
