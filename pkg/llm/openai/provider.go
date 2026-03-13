@@ -140,6 +140,12 @@ func buildParams(req *llm.ChatCompletionRequest) openai.ChatCompletionNewParams 
 	if req.TopP != nil {
 		params.TopP = param.NewOpt(*req.TopP)
 	}
+	if req.FrequencyPenalty != nil {
+		params.FrequencyPenalty = param.NewOpt(*req.FrequencyPenalty)
+	}
+	if req.PresencePenalty != nil {
+		params.PresencePenalty = param.NewOpt(*req.PresencePenalty)
+	}
 	if len(req.StopSequences) > 0 {
 		params.Stop = openai.ChatCompletionNewParamsStopUnion{
 			OfStringArray: req.StopSequences,
@@ -150,6 +156,9 @@ func buildParams(req *llm.ChatCompletionRequest) openai.ChatCompletionNewParams 
 	}
 	if req.ToolChoice != nil {
 		params.ToolChoice = buildToolChoice(req.ToolChoice)
+	}
+	if req.ParallelToolCalls != nil {
+		params.ParallelToolCalls = param.NewOpt(*req.ParallelToolCalls)
 	}
 	if req.ResponseFormat != nil {
 		params.ResponseFormat = buildResponseFormat(req.ResponseFormat)
