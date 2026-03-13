@@ -2227,8 +2227,8 @@ type UpdateMailingListPayload struct {
 
 type UpdateMailingListUpdateInput struct {
 	ID    gid.GID `json:"id"`
-	Title string  `json:"title"`
-	Body  string  `json:"body"`
+	Title *string `json:"title,omitempty"`
+	Body  *string `json:"body,omitempty"`
 }
 
 type UpdateMailingListUpdatePayload struct {
