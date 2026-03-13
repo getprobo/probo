@@ -1,5 +1,28 @@
 # AGENTS.md
 
+## Build & Development
+
+| Command | Purpose |
+|---|---|
+| `make build` | Build `bin/probod` (includes frontend apps and codegen) |
+| `SKIP_APPS=1 make build` | Build `bin/probod` without frontend apps (faster for backend-only work) |
+| `make test` | Run tests with race detection and coverage |
+| `make test MODULE=./pkg/foo` | Run tests for a single module |
+| `make test-verbose` | Tests with verbose output |
+| `make lint` | Vet + Go lint + npm lint |
+| `make fmt` | Format Go code |
+| `make dev` | Start dev server (Go + console hot-reload) |
+| `make test-e2e` | Run console end-to-end tests (requires `bin/probod`) |
+| `make deadcode` | Detect dead code — run after removing or renaming exported functions |
+| `make stack-up` / `make stack-down` | Start / stop Docker compose infra |
+| `make psql` | Open psql shell to dev database |
+
+GraphQL and MCP codegen is triggered by `go generate`:
+- `go generate ./pkg/server/api/console/v1`
+- `go generate ./pkg/server/api/connect/v1`
+- `go generate ./pkg/server/api/trust/v1`
+- `go generate ./pkg/server/api/mcp/v1`
+
 ## Project
 
 - Module: `go.probo.inc/probo`
