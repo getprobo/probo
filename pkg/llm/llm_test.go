@@ -91,7 +91,7 @@ func spanAttrMap(recorder *tracetest.SpanRecorder) map[string]any {
 	return m
 }
 
-func ptr[T any](v T) *T { return &v }
+//go:fix inline
 
 // ---------------------------------------------------------------------------
 // Message.Text
@@ -357,7 +357,7 @@ func TestChatCompletionStream(t *testing.T) {
 			{Delta: llm.MessageDelta{Content: "Hello"}},
 			{Delta: llm.MessageDelta{Content: " world"}},
 			{
-				FinishReason: ptr(llm.FinishReasonStop),
+				FinishReason: new(llm.FinishReasonStop),
 				Usage:        &llm.Usage{InputTokens: 8, OutputTokens: 4},
 			},
 		}
@@ -493,7 +493,7 @@ func TestChatCompletionStream(t *testing.T) {
 		events := []llm.ChatCompletionStreamEvent{
 			{Delta: llm.MessageDelta{Content: "done"}},
 			{
-				FinishReason: ptr(llm.FinishReasonLength),
+				FinishReason: new(llm.FinishReasonLength),
 				Usage:        &llm.Usage{InputTokens: 100, OutputTokens: 50},
 			},
 		}
@@ -554,7 +554,7 @@ func TestStreamAccumulator(t *testing.T) {
 				},
 			}},
 			{
-				FinishReason: ptr(llm.FinishReasonToolCalls),
+				FinishReason: new(llm.FinishReasonToolCalls),
 				Usage:        &llm.Usage{InputTokens: 20, OutputTokens: 15},
 			},
 		}
@@ -604,7 +604,7 @@ func TestStreamAccumulator(t *testing.T) {
 				},
 			}},
 			{
-				FinishReason: ptr(llm.FinishReasonToolCalls),
+				FinishReason: new(llm.FinishReasonToolCalls),
 				Usage:        &llm.Usage{InputTokens: 30, OutputTokens: 10},
 			},
 		}
@@ -632,7 +632,7 @@ func TestStreamAccumulator(t *testing.T) {
 		events := []llm.ChatCompletionStreamEvent{
 			{Delta: llm.MessageDelta{Content: "Just text."}},
 			{
-				FinishReason: ptr(llm.FinishReasonStop),
+				FinishReason: new(llm.FinishReasonStop),
 				Usage:        &llm.Usage{InputTokens: 5, OutputTokens: 3},
 			},
 		}
@@ -654,7 +654,7 @@ func TestStreamAccumulator(t *testing.T) {
 		events := []llm.ChatCompletionStreamEvent{
 			{Delta: llm.MessageDelta{Content: "a"}},
 			{Delta: llm.MessageDelta{Content: "b"}},
-			{FinishReason: ptr(llm.FinishReasonStop)},
+			{FinishReason: new(llm.FinishReasonStop)},
 		}
 
 		acc := llm.NewStreamAccumulator(&mockStream{events: events})

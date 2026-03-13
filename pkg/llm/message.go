@@ -14,6 +14,8 @@
 
 package llm
 
+import "strings"
+
 import "encoding/json"
 
 type (
@@ -42,11 +44,11 @@ type (
 )
 
 func (m Message) Text() string {
-	var s string
+	var s strings.Builder
 	for _, p := range m.Parts {
 		if tp, ok := p.(TextPart); ok {
-			s += tp.Text
+			s.WriteString(tp.Text)
 		}
 	}
-	return s
+	return s.String()
 }

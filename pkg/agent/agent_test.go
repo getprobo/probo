@@ -246,10 +246,12 @@ type errorChatStream struct {
 	err error
 }
 
-func (s *errorChatStream) Next() bool                          { return false }
-func (s *errorChatStream) Event() llm.ChatCompletionStreamEvent { return llm.ChatCompletionStreamEvent{} }
-func (s *errorChatStream) Err() error                          { return s.err }
-func (s *errorChatStream) Close() error                        { return nil }
+func (s *errorChatStream) Next() bool { return false }
+func (s *errorChatStream) Event() llm.ChatCompletionStreamEvent {
+	return llm.ChatCompletionStreamEvent{}
+}
+func (s *errorChatStream) Err() error   { return s.err }
+func (s *errorChatStream) Close() error { return nil }
 
 type errorStreamProvider struct {
 	err error
@@ -305,9 +307,6 @@ func toolCallResponse(toolCalls ...llm.ToolCall) *llm.ChatCompletionResponse {
 	}
 }
 
-func finishReasonPtr(r llm.FinishReason) *llm.FinishReason {
-	return &r
-}
 
 func TestRun(t *testing.T) {
 	t.Parallel()
@@ -353,14 +352,14 @@ func TestRun(t *testing.T) {
 				City string `json:"city"`
 			}
 
-		weatherTool, err := agent.FunctionTool[Params](
-			"get_weather",
-			"Get weather for a city",
-			func(_ context.Context, p Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "Sunny, 22°C in " + p.City}, nil
-			},
-		)
-		require.NoError(t, err)
+			weatherTool, err := agent.FunctionTool[Params](
+				"get_weather",
+				"Get weather for a city",
+				func(_ context.Context, p Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "Sunny, 22°C in " + p.City}, nil
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -412,31 +411,31 @@ func TestRun(t *testing.T) {
 				},
 			}
 
-		type Params struct{}
-		noopTool, err := agent.FunctionTool[Params](
-			"noop",
-			"No-op",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "ok"}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			noopTool, err := agent.FunctionTool[Params](
+				"noop",
+				"No-op",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "ok"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		ag := agent.New(
-			"assistant",
-			newTestClient(provider),
-			agent.WithModel("test-model"),
-			agent.WithTools(noopTool),
-			agent.WithMaxTurns(2),
+			ag := agent.New(
+				"assistant",
+				newTestClient(provider),
+				agent.WithModel("test-model"),
+				agent.WithTools(noopTool),
+				agent.WithMaxTurns(2),
 			)
 
-		_, err = ag.Run(
-			context.Background(),
-			[]llm.Message{userMessage("loop")},
-		)
+			_, err = ag.Run(
+				context.Background(),
+				[]llm.Message{userMessage("loop")},
+			)
 
-		require.Error(t, err)
-		var maxTurnsErr *agent.MaxTurnsExceededError
+			require.Error(t, err)
+			var maxTurnsErr *agent.MaxTurnsExceededError
 			require.ErrorAs(t, err, &maxTurnsErr)
 			assert.Equal(t, 2, maxTurnsErr.MaxTurns)
 		},
@@ -447,18 +446,18 @@ func TestRun(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		makeTool := func(name string) agent.Tool {
-			tool, err := agent.FunctionTool[Params](
-				name,
-				"desc",
-				func(_ context.Context, _ Params) (agent.ToolResult, error) {
-					return agent.ToolResult{Content: "ok"}, nil
-				},
-			)
-			require.NoError(t, err)
-			return tool
-		}
+			type Params struct{}
+			makeTool := func(name string) agent.Tool {
+				tool, err := agent.FunctionTool[Params](
+					name,
+					"desc",
+					func(_ context.Context, _ Params) (agent.ToolResult, error) {
+						return agent.ToolResult{Content: "ok"}, nil
+					},
+				)
+				require.NoError(t, err)
+				return tool
+			}
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -555,22 +554,22 @@ func TestRun(t *testing.T) {
 
 			type Params struct{}
 
-		tool1, err := agent.FunctionTool[Params](
-			"first",
-			"First tool",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "result_1"}, nil
-			},
-		)
-		require.NoError(t, err)
-		tool2, err := agent.FunctionTool[Params](
-			"second",
-			"Second tool",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "result_2"}, nil
-			},
-		)
-		require.NoError(t, err)
+			tool1, err := agent.FunctionTool[Params](
+				"first",
+				"First tool",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "result_1"}, nil
+				},
+			)
+			require.NoError(t, err)
+			tool2, err := agent.FunctionTool[Params](
+				"second",
+				"Second tool",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "result_2"}, nil
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -624,22 +623,22 @@ func TestRun(t *testing.T) {
 
 			type Params struct{}
 
-		successTool, err := agent.FunctionTool[Params](
-			"succeed",
-			"Always succeeds",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "success_result"}, nil
-			},
-		)
-		require.NoError(t, err)
-		failTool, err := agent.FunctionTool[Params](
-			"fail",
-			"Always fails",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{}, errors.New("tool exploded")
-			},
-		)
-		require.NoError(t, err)
+			successTool, err := agent.FunctionTool[Params](
+				"succeed",
+				"Always succeeds",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "success_result"}, nil
+				},
+			)
+			require.NoError(t, err)
+			failTool, err := agent.FunctionTool[Params](
+				"fail",
+				"Always fails",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{}, errors.New("tool exploded")
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -697,17 +696,17 @@ func TestRun(t *testing.T) {
 
 			var capturedTenantID string
 
-		type Params struct{}
-		tool, err := agent.FunctionTool[Params](
-			"check_tenant",
-			"Check current tenant",
-			func(ctx context.Context, _ Params) (agent.ToolResult, error) {
-				rc := agent.RunContextFrom[*RequestContext](ctx)
-				capturedTenantID = rc.TenantID
-				return agent.ToolResult{Content: "tenant: " + rc.TenantID}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			tool, err := agent.FunctionTool[Params](
+				"check_tenant",
+				"Check current tenant",
+				func(ctx context.Context, _ Params) (agent.ToolResult, error) {
+					rc := agent.RunContextFrom[*RequestContext](ctx)
+					capturedTenantID = rc.TenantID
+					return agent.ToolResult{Content: "tenant: " + rc.TenantID}, nil
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1070,27 +1069,27 @@ func TestRun_Hooks(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		noopTool, err := agent.FunctionTool[Params](
-			"noop",
-			"No-op",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "ok"}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			noopTool, err := agent.FunctionTool[Params](
+				"noop",
+				"No-op",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "ok"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		provider := &mockProvider{
-			responses: []*llm.ChatCompletionResponse{
-				toolCallResponse(llm.ToolCall{
-					ID:       "tc_1",
-					Function: llm.FunctionCall{Name: "noop", Arguments: `{}`},
-				}),
-				stopResponse("done"),
-			},
-		}
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc_1",
+						Function: llm.FunctionCall{Name: "noop", Arguments: `{}`},
+					}),
+					stopResponse("done"),
+				},
+			}
 
-		hook := &recordingHook{}
+			hook := &recordingHook{}
 
 			ag := agent.New(
 				"assistant",
@@ -1355,31 +1354,31 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		tool, err := agent.FunctionTool[Params](
-			"compute",
-			"Compute something",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "computed_result"}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			tool, err := agent.FunctionTool[Params](
+				"compute",
+				"Compute something",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "computed_result"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		provider := &mockProvider{
-			responses: []*llm.ChatCompletionResponse{
-				toolCallResponse(llm.ToolCall{
-					ID:       "tc_1",
-					Function: llm.FunctionCall{Name: "compute", Arguments: `{}`},
-				}),
-			},
-		}
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc_1",
+						Function: llm.FunctionCall{Name: "compute", Arguments: `{}`},
+					}),
+				},
+			}
 
-		ag := agent.New(
-			"assistant",
-			newTestClient(provider),
-			agent.WithModel("test-model"),
-			agent.WithTools(tool),
-			agent.WithToolUseBehavior(agent.StopOnFirstTool()),
+			ag := agent.New(
+				"assistant",
+				newTestClient(provider),
+				agent.WithModel("test-model"),
+				agent.WithTools(tool),
+				agent.WithToolUseBehavior(agent.StopOnFirstTool()),
 			)
 
 			result, err := ag.Run(
@@ -1401,22 +1400,22 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 
 			type Params struct{}
 
-		tool1, err := agent.FunctionTool[Params](
-			"search",
-			"Search",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "search_result"}, nil
-			},
-		)
-		require.NoError(t, err)
-		tool2, err := agent.FunctionTool[Params](
-			"submit",
-			"Submit",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "submitted"}, nil
-			},
-		)
-		require.NoError(t, err)
+			tool1, err := agent.FunctionTool[Params](
+				"search",
+				"Search",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "search_result"}, nil
+				},
+			)
+			require.NoError(t, err)
+			tool2, err := agent.FunctionTool[Params](
+				"submit",
+				"Submit",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "submitted"}, nil
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1450,23 +1449,23 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		tool, err := agent.FunctionTool[Params](
-			"noop",
-			"No-op",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "ok"}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			tool, err := agent.FunctionTool[Params](
+				"noop",
+				"No-op",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "ok"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		provider := &mockProvider{
-			responses: []*llm.ChatCompletionResponse{
-				toolCallResponse(llm.ToolCall{
-					ID:       "tc_1",
-					Function: llm.FunctionCall{Name: "noop", Arguments: `{}`},
-				}),
-				stopResponse("Final answer."),
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc_1",
+						Function: llm.FunctionCall{Name: "noop", Arguments: `{}`},
+					}),
+					stopResponse("Final answer."),
 				},
 			}
 
@@ -1493,42 +1492,42 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		tool, err := agent.FunctionTool[Params](
-			"compute",
-			"Compute something",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "result"}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			tool, err := agent.FunctionTool[Params](
+				"compute",
+				"Compute something",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "result"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		provider := &mockProvider{
-			responses: []*llm.ChatCompletionResponse{
-				toolCallResponse(llm.ToolCall{
-					ID:       "tc_1",
-					Function: llm.FunctionCall{Name: "compute", Arguments: `{}`},
-				}),
-			},
-		}
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc_1",
+						Function: llm.FunctionCall{Name: "compute", Arguments: `{}`},
+					}),
+				},
+			}
 
-		ag := agent.New(
-			"assistant",
-			newTestClient(provider),
-			agent.WithModel("test-model"),
-			agent.WithTools(tool),
-			agent.WithToolUseBehavior(agent.ToolUseBehavior(func(_ context.Context, _ []agent.ToolCallResult) (string, bool, error) {
+			ag := agent.New(
+				"assistant",
+				newTestClient(provider),
+				agent.WithModel("test-model"),
+				agent.WithTools(tool),
+				agent.WithToolUseBehavior(agent.ToolUseBehavior(func(_ context.Context, _ []agent.ToolCallResult) (string, bool, error) {
 					return "", false, errors.New("custom behavior failed")
 				})),
 			)
 
-		_, err = ag.Run(
-			context.Background(),
-			[]llm.Message{userMessage("compute")},
-		)
+			_, err = ag.Run(
+				context.Background(),
+				[]llm.Message{userMessage("compute")},
+			)
 
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "custom behavior failed")
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "custom behavior failed")
 		},
 	)
 }
@@ -1583,38 +1582,38 @@ func TestRun_Approval(t *testing.T) {
 				},
 			}
 
-		deleteTool, err := agent.FunctionTool[struct{}](
-			"delete_account",
-			"Deletes the user account",
-			func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "deleted"}, nil
-			},
-		)
-		require.NoError(t, err)
+			deleteTool, err := agent.FunctionTool[struct{}](
+				"delete_account",
+				"Deletes the user account",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "deleted"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		ag := agent.New(
-			"assistant",
-			newTestClient(provider),
-			agent.WithModel("test-model"),
-			agent.WithTools(deleteTool),
-			agent.WithApproval(agent.ApprovalConfig{
-				ToolNames: []string{"delete_account"},
-			}),
-		)
+			ag := agent.New(
+				"assistant",
+				newTestClient(provider),
+				agent.WithModel("test-model"),
+				agent.WithTools(deleteTool),
+				agent.WithApproval(agent.ApprovalConfig{
+					ToolNames: []string{"delete_account"},
+				}),
+			)
 
-		_, err = ag.Run(
-			context.Background(),
-			[]llm.Message{userMessage("Delete my account")},
-		)
+			_, err = ag.Run(
+				context.Background(),
+				[]llm.Message{userMessage("Delete my account")},
+			)
 
-		require.Error(t, err)
-		var interrupted *agent.InterruptedError
-		require.ErrorAs(t, err, &interrupted)
-		assert.Len(t, interrupted.ToolCalls, 1)
-		assert.Equal(t, "delete_account", interrupted.ToolCalls[0].Function.Name)
-		assert.Len(t, interrupted.PendingApprovals, 1)
-		assert.Equal(t, "delete_account", interrupted.PendingApprovals[0].Function.Name)
-		assert.Equal(t, 1, interrupted.Turns)
+			require.Error(t, err)
+			var interrupted *agent.InterruptedError
+			require.ErrorAs(t, err, &interrupted)
+			assert.Len(t, interrupted.ToolCalls, 1)
+			assert.Equal(t, "delete_account", interrupted.ToolCalls[0].Function.Name)
+			assert.Len(t, interrupted.PendingApprovals, 1)
+			assert.Equal(t, "delete_account", interrupted.PendingApprovals[0].Function.Name)
+			assert.Equal(t, 1, interrupted.Turns)
 		},
 	)
 
@@ -1623,19 +1622,19 @@ func TestRun_Approval(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		var toolExecuted bool
+			var toolExecuted bool
 
-		deleteTool, err := agent.FunctionTool[struct{}](
-			"delete_account",
-			"Deletes the user account",
-			func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-				toolExecuted = true
-				return agent.ToolResult{Content: "account deleted"}, nil
-			},
-		)
-		require.NoError(t, err)
+			deleteTool, err := agent.FunctionTool[struct{}](
+				"delete_account",
+				"Deletes the user account",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					toolExecuted = true
+					return agent.ToolResult{Content: "account deleted"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		provider := &mockProvider{
+			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "tc1",
@@ -1655,14 +1654,14 @@ func TestRun_Approval(t *testing.T) {
 				}),
 			)
 
-		_, err = ag.Run(
-			context.Background(),
-			[]llm.Message{userMessage("Delete my account")},
-		)
+			_, err = ag.Run(
+				context.Background(),
+				[]llm.Message{userMessage("Delete my account")},
+			)
 
-		var interrupted *agent.InterruptedError
-		require.ErrorAs(t, err, &interrupted)
-		assert.False(t, toolExecuted)
+			var interrupted *agent.InterruptedError
+			require.ErrorAs(t, err, &interrupted)
+			assert.False(t, toolExecuted)
 
 			result, err := agent.Resume(
 				context.Background(),
@@ -1685,23 +1684,23 @@ func TestRun_Approval(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		deleteTool, err := agent.FunctionTool[struct{}](
-			"delete_account",
-			"Deletes the user account",
-			func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-				t.Fatal("tool should not be executed")
-				return agent.ToolResult{}, nil
-			},
-		)
-		require.NoError(t, err)
+			deleteTool, err := agent.FunctionTool[struct{}](
+				"delete_account",
+				"Deletes the user account",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					t.Fatal("tool should not be executed")
+					return agent.ToolResult{}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		provider := &mockProvider{
-			responses: []*llm.ChatCompletionResponse{
-				toolCallResponse(llm.ToolCall{
-					ID:       "tc1",
-					Function: llm.FunctionCall{Name: "delete_account", Arguments: `{}`},
-				}),
-				stopResponse("OK, I won't delete your account."),
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc1",
+						Function: llm.FunctionCall{Name: "delete_account", Arguments: `{}`},
+					}),
+					stopResponse("OK, I won't delete your account."),
 				},
 			}
 
@@ -1753,22 +1752,22 @@ func TestRun_Approval(t *testing.T) {
 				},
 			}
 
-		safeTool, err := agent.FunctionTool[struct{}](
-			"safe_tool",
-			"A safe tool",
-			func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "safe result"}, nil
-			},
-		)
-		require.NoError(t, err)
+			safeTool, err := agent.FunctionTool[struct{}](
+				"safe_tool",
+				"A safe tool",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "safe result"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		ag := agent.New(
-			"assistant",
-			newTestClient(provider),
-			agent.WithModel("test-model"),
-			agent.WithTools(safeTool),
-			agent.WithApproval(agent.ApprovalConfig{
-				ShouldApprove: func(_ context.Context, tc llm.ToolCall) bool {
+			ag := agent.New(
+				"assistant",
+				newTestClient(provider),
+				agent.WithModel("test-model"),
+				agent.WithTools(safeTool),
+				agent.WithApproval(agent.ApprovalConfig{
+					ShouldApprove: func(_ context.Context, tc llm.ToolCall) bool {
 						return tc.Function.Name == "dangerous_tool"
 					},
 				}),
@@ -1791,25 +1790,25 @@ func TestRun_Approval(t *testing.T) {
 
 			var safeExecuted, dangerExecuted bool
 
-		safeTool, err := agent.FunctionTool[struct{}](
-			"safe_action",
-			"A safe action",
-			func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-				safeExecuted = true
-				return agent.ToolResult{Content: "safe done"}, nil
-			},
-		)
-		require.NoError(t, err)
+			safeTool, err := agent.FunctionTool[struct{}](
+				"safe_action",
+				"A safe action",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					safeExecuted = true
+					return agent.ToolResult{Content: "safe done"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		dangerTool, err := agent.FunctionTool[struct{}](
-			"danger_action",
-			"A dangerous action",
-			func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-				dangerExecuted = true
-				return agent.ToolResult{Content: "danger done"}, nil
-			},
-		)
-		require.NoError(t, err)
+			dangerTool, err := agent.FunctionTool[struct{}](
+				"danger_action",
+				"A dangerous action",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					dangerExecuted = true
+					return agent.ToolResult{Content: "danger done"}, nil
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -1945,22 +1944,22 @@ func TestResume(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		deleteTool, err := agent.FunctionTool[struct{}](
-			"delete_account",
-			"Deletes the user account",
-			func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "deleted"}, nil
-			},
-		)
-		require.NoError(t, err)
+			deleteTool, err := agent.FunctionTool[struct{}](
+				"delete_account",
+				"Deletes the user account",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "deleted"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		provider := &mockProvider{
-			responses: []*llm.ChatCompletionResponse{
-				toolCallResponse(llm.ToolCall{
-					ID:       "tc1",
-					Function: llm.FunctionCall{Name: "delete_account", Arguments: `{}`},
-				}),
-				stopResponse("Account deleted."),
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc1",
+						Function: llm.FunctionCall{Name: "delete_account", Arguments: `{}`},
+					}),
+					stopResponse("Account deleted."),
 				},
 			}
 
@@ -2107,7 +2106,7 @@ func TestRunStreamed(t *testing.T) {
 					{
 						Delta:        llm.MessageDelta{Content: "!"},
 						Usage:        &llm.Usage{InputTokens: 10, OutputTokens: 3},
-						FinishReason: finishReasonPtr(llm.FinishReasonStop),
+						FinishReason: new(llm.FinishReasonStop),
 					},
 				},
 			}
@@ -2153,17 +2152,17 @@ func TestRunStreamed(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		tool, err := agent.FunctionTool[Params](
-			"noop",
-			"No-op",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "ok"}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			tool, err := agent.FunctionTool[Params](
+				"noop",
+				"No-op",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "ok"}, nil
+				},
+			)
+			require.NoError(t, err)
 
-		stream1 := &mockChatStream{
+			stream1 := &mockChatStream{
 				events: []llm.ChatCompletionStreamEvent{
 					{
 						Delta: llm.MessageDelta{
@@ -2172,7 +2171,7 @@ func TestRunStreamed(t *testing.T) {
 							},
 						},
 						Usage:        &llm.Usage{InputTokens: 10, OutputTokens: 5},
-						FinishReason: finishReasonPtr(llm.FinishReasonToolCalls),
+						FinishReason: new(llm.FinishReasonToolCalls),
 					},
 				},
 			}
@@ -2183,7 +2182,7 @@ func TestRunStreamed(t *testing.T) {
 					{
 						Delta:        llm.MessageDelta{},
 						Usage:        &llm.Usage{InputTokens: 15, OutputTokens: 3},
-						FinishReason: finishReasonPtr(llm.FinishReasonStop),
+						FinishReason: new(llm.FinishReasonStop),
 					},
 				},
 			}
@@ -2239,7 +2238,7 @@ func TestRunStreamed(t *testing.T) {
 					{
 						Delta:        llm.MessageDelta{Content: "!"},
 						Usage:        &llm.Usage{InputTokens: 10, OutputTokens: 2},
-						FinishReason: finishReasonPtr(llm.FinishReasonStop),
+						FinishReason: new(llm.FinishReasonStop),
 					},
 				},
 			}
@@ -2288,7 +2287,7 @@ func TestRunStreamed(t *testing.T) {
 					{
 						Delta:        llm.MessageDelta{Content: "!"},
 						Usage:        &llm.Usage{InputTokens: 10, OutputTokens: 3},
-						FinishReason: finishReasonPtr(llm.FinishReasonStop),
+						FinishReason: new(llm.FinishReasonStop),
 					},
 				},
 			}
@@ -2379,23 +2378,23 @@ func TestClone(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		tool1, err := agent.FunctionTool[Params](
-			"t1",
-			"desc",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "ok"}, nil
-			},
-		)
-		require.NoError(t, err)
-		tool2, err := agent.FunctionTool[Params](
-			"t2",
-			"desc",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "ok"}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			tool1, err := agent.FunctionTool[Params](
+				"t1",
+				"desc",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "ok"}, nil
+				},
+			)
+			require.NoError(t, err)
+			tool2, err := agent.FunctionTool[Params](
+				"t2",
+				"desc",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "ok"}, nil
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -2796,16 +2795,16 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 
 			var executionOrder []string
 
-		type Params struct{}
-		tool1, err := agent.FunctionTool[Params](
-			"prepare",
-			"Prepare data",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				executionOrder = append(executionOrder, "prepare")
-				return agent.ToolResult{Content: "prepared"}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			tool1, err := agent.FunctionTool[Params](
+				"prepare",
+				"Prepare data",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					executionOrder = append(executionOrder, "prepare")
+					return agent.ToolResult{Content: "prepared"}, nil
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -2856,24 +2855,24 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		tool1, err := agent.FunctionTool[Params](
-			"prepare",
-			"Prepare data",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "prepared"}, nil
-			},
-		)
-		require.NoError(t, err)
-		tool2, err := agent.FunctionTool[Params](
-			"finalize",
-			"Finalize data",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				t.Fatal("tool after handoff should not be executed")
-				return agent.ToolResult{}, nil
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			tool1, err := agent.FunctionTool[Params](
+				"prepare",
+				"Prepare data",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "prepared"}, nil
+				},
+			)
+			require.NoError(t, err)
+			tool2, err := agent.FunctionTool[Params](
+				"finalize",
+				"Finalize data",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					t.Fatal("tool after handoff should not be executed")
+					return agent.ToolResult{}, nil
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
@@ -2942,15 +2941,15 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-		type Params struct{}
-		failingTool, err := agent.FunctionTool[Params](
-			"prepare",
-			"Prepare data",
-			func(_ context.Context, _ Params) (agent.ToolResult, error) {
-				return agent.ToolResult{}, errors.New("preparation failed")
-			},
-		)
-		require.NoError(t, err)
+			type Params struct{}
+			failingTool, err := agent.FunctionTool[Params](
+				"prepare",
+				"Prepare data",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{}, errors.New("preparation failed")
+				},
+			)
+			require.NoError(t, err)
 
 			provider := &mockProvider{
 				responses: []*llm.ChatCompletionResponse{
