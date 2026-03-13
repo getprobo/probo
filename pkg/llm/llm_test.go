@@ -48,11 +48,12 @@ func (m *mockProvider) ChatCompletionStream(_ context.Context, _ *llm.ChatComple
 }
 
 type mockStream struct {
-	events  []llm.ChatCompletionStreamEvent
-	idx     int
-	current llm.ChatCompletionStreamEvent
-	err     error
-	closed  bool
+	events   []llm.ChatCompletionStreamEvent
+	idx      int
+	current  llm.ChatCompletionStreamEvent
+	err      error
+	closeErr error
+	closed   bool
 }
 
 func (s *mockStream) Next() bool {
@@ -66,7 +67,7 @@ func (s *mockStream) Next() bool {
 
 func (s *mockStream) Event() llm.ChatCompletionStreamEvent { return s.current }
 func (s *mockStream) Err() error                           { return s.err }
-func (s *mockStream) Close() error                         { s.closed = true; return nil }
+func (s *mockStream) Close() error                         { s.closed = true; return s.closeErr }
 
 func newTestClient(provider llm.Provider) (*llm.Client, *tracetest.SpanRecorder) {
 	recorder := tracetest.NewSpanRecorder()
@@ -457,6 +458,33 @@ func TestChatCompletionStream(t *testing.T) {
 
 		spans := recorder.Ended()
 		require.Len(t, spans, 1, "span should be ended by Close even without exhausting stream")
+	})
+
+	t.Run("close error traced on span", func(t *testing.T) {
+		t.Parallel()
+
+		ms := &mockStream{
+			events: []llm.ChatCompletionStreamEvent{
+				{Delta: llm.MessageDelta{Content: "partial"}},
+			},
+			closeErr: errors.New("broken pipe"),
+		}
+
+		client, recorder := newTestClient(&mockProvider{streamResp: ms})
+		stream, err := client.ChatCompletionStream(context.Background(), &llm.ChatCompletionRequest{
+			Model:    "test-model",
+			Messages: []llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "Hi"}}}},
+		})
+		require.NoError(t, err)
+
+		require.True(t, stream.Next())
+		closeErr := stream.Close()
+		require.ErrorContains(t, closeErr, "broken pipe")
+
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		assert.Equal(t, codes.Error, spans[0].Status().Code)
+		assert.Contains(t, spans[0].Status().Description, "broken pipe")
 	})
 
 	t.Run("stream span records usage and finish reason", func(t *testing.T) {

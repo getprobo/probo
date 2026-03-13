@@ -112,8 +112,13 @@ func (s *tracedStream) Err() error {
 }
 
 func (s *tracedStream) Close() error {
+	err := s.inner.Close()
+	if err != nil {
+		s.span.RecordError(err)
+		s.span.SetStatus(codes.Error, err.Error())
+	}
 	s.finalizeSpan()
-	return s.inner.Close()
+	return err
 }
 
 func (s *tracedStream) finalizeSpan() {
