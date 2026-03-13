@@ -347,6 +347,7 @@ type bedrockStream struct {
 	current     llm.ChatCompletionStreamEvent
 	err         error
 	toolIndex   int
+	inToolUse   bool
 }
 
 func newBedrockStream(eventStream *bedrockruntime.ConverseStreamEventStream) *bedrockStream {
@@ -387,6 +388,7 @@ func (s *bedrockStream) mapEvent(event types.ConverseStreamOutput) (llm.ChatComp
 	switch e := event.(type) {
 	case *types.ConverseStreamOutputMemberContentBlockStart:
 		if start, ok := e.Value.Start.(*types.ContentBlockStartMemberToolUse); ok {
+			s.inToolUse = true
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{
 					ToolCalls: []llm.ToolCallDelta{{
@@ -397,6 +399,7 @@ func (s *bedrockStream) mapEvent(event types.ConverseStreamOutput) (llm.ChatComp
 				},
 			}, true
 		}
+		s.inToolUse = false
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case *types.ConverseStreamOutputMemberContentBlockDelta:
@@ -418,7 +421,10 @@ func (s *bedrockStream) mapEvent(event types.ConverseStreamOutput) (llm.ChatComp
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case *types.ConverseStreamOutputMemberContentBlockStop:
-		s.toolIndex++
+		if s.inToolUse {
+			s.toolIndex++
+			s.inToolUse = false
+		}
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case *types.ConverseStreamOutputMemberMessageStop:
