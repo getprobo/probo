@@ -88,7 +88,7 @@ func NewMux(
 
 	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
 	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(compliancepage.NewMembershipProvisioningMiddleware(trustSvc, logger))
+	r.Use(compliancepage.NewMemberProvisioningMiddleware(trustSvc, logger))
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
 	r.Handle("/graphql", graphqlHandler)

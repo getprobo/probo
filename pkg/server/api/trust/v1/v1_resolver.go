@@ -259,10 +259,10 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 	}
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
-	if _, err := trustService.TrustCenterAccesses.EnsureAccess(ctx, trustCenter.ID, identity.ID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot ensure trust center access", log.Error(err))
+	if _, err := r.trust.ProvisionMember(ctx, trustCenter.ID, identity.ID); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot provision member", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)

@@ -24,7 +24,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
@@ -49,126 +48,6 @@ type (
 const (
 	TrustCenterAccessURLFormat = "https://%s/organizations/%s/trust-center/access"
 )
-
-func (s TrustCenterAccessService) ensureAccessInTx(
-	ctx context.Context,
-	tx pg.Conn,
-	trustCenterID gid.GID,
-	identityID gid.GID,
-) (*coredata.TrustCenterAccess, *coredata.TrustCenter, error) {
-	now := time.Now()
-
-	trustCenter := &coredata.TrustCenter{}
-	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, trustCenterID); err != nil {
-		return nil, nil, fmt.Errorf("cannot load trust center: %w", err)
-	}
-
-	identity := &coredata.Identity{}
-	if err := identity.LoadByID(ctx, tx, identityID); err != nil {
-		return nil, nil, fmt.Errorf("cannot load identity: %w", err)
-	}
-
-	existingAccess := &coredata.TrustCenterAccess{}
-	err := existingAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, s.svc.scope, trustCenterID, identityID)
-	if err == nil {
-		return existingAccess, trustCenter, nil
-	}
-
-	if !errors.Is(err, coredata.ErrResourceNotFound) {
-		return nil, nil, fmt.Errorf("cannot load trust center access: %w", err)
-	}
-
-	access := &coredata.TrustCenterAccess{
-		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-		OrganizationID: trustCenter.OrganizationID,
-		TenantID:       s.svc.scope.GetTenantID(),
-		IdentityID:     identityID,
-		TrustCenterID:  trustCenterID,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	if trustCenter.NonDisclosureAgreementFileID != nil && s.svc.esign != nil {
-		sig, err := s.svc.esign.CreateSignature(
-			ctx,
-			tx,
-			&esign.CreateSignatureRequest{
-				OrganizationID: access.OrganizationID,
-				DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
-				FileID:         *trustCenter.NonDisclosureAgreementFileID,
-				SignerEmail:    identity.EmailAddress,
-			},
-		)
-		if err != nil {
-			return nil, nil, fmt.Errorf("cannot create pending signature: %w", err)
-		}
-		access.ElectronicSignatureID = &sig.ID
-	}
-
-	if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
-		return nil, nil, fmt.Errorf("cannot insert trust center access: %w", err)
-	}
-
-	return access, trustCenter, nil
-}
-
-func (s TrustCenterAccessService) EnsureAccess(
-	ctx context.Context,
-	trustCenterID gid.GID,
-	identityID gid.GID,
-) (*coredata.TrustCenterAccess, error) {
-	var access *coredata.TrustCenterAccess
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			now := time.Now()
-
-			access, _, err := s.ensureAccessInTx(ctx, tx, trustCenterID, identityID)
-			if err != nil {
-				return fmt.Errorf("cannot ensure access presence: %w", err)
-			}
-
-			identity := &coredata.Identity{}
-			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
-				return fmt.Errorf("cannot load identity: %w", err)
-			}
-
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(access.ID),
-				identityID,
-				access.OrganizationID,
-			); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load profile: %w", err)
-				}
-
-				profile = &coredata.MembershipProfile{
-					ID:             gid.New(access.TenantID, coredata.MembershipProfileEntityType),
-					IdentityID:     identityID,
-					OrganizationID: access.OrganizationID,
-					EmailAddress:   identity.EmailAddress,
-					Source:         coredata.ProfileSourceManual,
-					State:          coredata.ProfileStateActive,
-					FullName:       identity.FullName,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				if err := profile.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert profile: %w", err)
-				}
-			}
-
-			return err
-		},
-	)
-
-	return access, err
-}
 
 func (s TrustCenterAccessService) Request(
 	ctx context.Context,

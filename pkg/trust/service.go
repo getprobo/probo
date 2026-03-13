@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
@@ -336,4 +337,107 @@ func (s *Service) GetNDAFile(
 	}
 
 	return file, nil
+}
+
+func (s *Service) ProvisionMember(
+	ctx context.Context,
+	compliancePageID gid.GID,
+	identityID gid.GID,
+) (*coredata.TrustCenterAccess, error) {
+	var (
+		access *coredata.TrustCenterAccess
+		now    = time.Now()
+		scope  = coredata.NewScopeFromObjectID(compliancePageID)
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			compliancePage := &coredata.TrustCenter{}
+			if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			identity := &coredata.Identity{}
+			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			access := &coredata.TrustCenterAccess{}
+			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePageID, identityID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load trust center access: %w", err)
+				}
+
+				access = &coredata.TrustCenterAccess{
+					ID:             gid.New(scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+					OrganizationID: compliancePage.OrganizationID,
+					TenantID:       scope.GetTenantID(),
+					IdentityID:     identityID,
+					TrustCenterID:  compliancePageID,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				var sig *coredata.ElectronicSignature
+				if compliancePage.NonDisclosureAgreementFileID != nil && s.esign != nil {
+					var err error
+					sig, err = s.esign.CreateSignature(
+						ctx,
+						tx,
+						&esign.CreateSignatureRequest{
+							OrganizationID: access.OrganizationID,
+							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
+							FileID:         *compliancePage.NonDisclosureAgreementFileID,
+							SignerEmail:    identity.EmailAddress,
+						},
+					)
+					if err != nil {
+						return fmt.Errorf("cannot create pending signature: %w", err)
+					}
+				}
+
+				if sig != nil {
+					access.ElectronicSignatureID = &sig.ID
+				}
+
+				if err := access.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert trust center access: %w", err)
+				}
+			}
+
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(access.ID),
+				identityID,
+				access.OrganizationID,
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load profile: %w", err)
+				}
+
+				profile = &coredata.MembershipProfile{
+					ID:             gid.New(access.TenantID, coredata.MembershipProfileEntityType),
+					IdentityID:     identityID,
+					OrganizationID: access.OrganizationID,
+					EmailAddress:   identity.EmailAddress,
+					Source:         coredata.ProfileSourceManual,
+					State:          coredata.ProfileStateActive,
+					FullName:       identity.FullName,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if err := profile.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert profile: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	return access, err
 }

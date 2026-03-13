@@ -26,7 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/trust"
 )
 
-func NewMembershipProvisioningMiddleware(trustSvc *trust.Service, logger *log.Logger) func(next http.Handler) http.Handler {
+func NewMemberProvisioningMiddleware(trustSvc *trust.Service, logger *log.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -40,11 +40,7 @@ func NewMembershipProvisioningMiddleware(trustSvc *trust.Service, logger *log.Lo
 
 				compliancePage := CompliancePageFromContext(r.Context())
 
-				if _, err := trustSvc.
-					WithTenant(compliancePage.TenantID).
-					TrustCenterAccesses.
-					EnsureAccess(ctx, compliancePage.ID, identity.ID); err != nil {
-
+				if _, err := trustSvc.ProvisionMember(ctx, compliancePage.ID, identity.ID); err != nil {
 					httpserver.RenderJSON(
 						w,
 						http.StatusInternalServerError,
