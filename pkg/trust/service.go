@@ -363,7 +363,7 @@ func (s *Service) ProvisionMember(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			access := &coredata.TrustCenterAccess{}
+			access = &coredata.TrustCenterAccess{}
 			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePageID, identityID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load trust center access: %w", err)
