@@ -39,6 +39,7 @@ type (
 		handoffs           []*Handoff
 		mcpServers         []*MCPServer
 		maxTurns           int
+		maxToolDepth       int
 		client             *llm.Client
 		logger             *log.Logger
 		hooks              []RunHooks
@@ -60,6 +61,7 @@ func New(name string, client *llm.Client, opts ...Option) *Agent {
 		name:            name,
 		client:          client,
 		maxTurns:        DefaultMaxTurns,
+		maxToolDepth:    DefaultMaxToolDepth,
 		toolUseBehavior: RunLLMAgain(),
 		resetToolChoice: true,
 		logger:          log.NewLogger(log.WithOutput(io.Discard)),
@@ -193,6 +195,15 @@ func WithMaxTurns(n int) Option {
 			n = 1
 		}
 		a.maxTurns = n
+	}
+}
+
+func WithMaxToolDepth(n int) Option {
+	return func(a *Agent) {
+		if n < 1 {
+			n = 1
+		}
+		a.maxToolDepth = n
 	}
 }
 

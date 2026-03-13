@@ -25,6 +25,10 @@ type (
 		MaxTurns int
 	}
 
+	MaxToolDepthExceededError struct {
+		MaxDepth int
+	}
+
 	InputGuardrailTrippedError struct {
 		Guardrail string
 		Message   string
@@ -77,6 +81,10 @@ type (
 
 func (e *MaxTurnsExceededError) Error() string {
 	return fmt.Sprintf("agent exceeded maximum number of turns (%d)", e.MaxTurns)
+}
+
+func (e *MaxToolDepthExceededError) Error() string {
+	return fmt.Sprintf("agent-tool delegation exceeded maximum depth (%d)", e.MaxDepth)
 }
 
 func (e *InputGuardrailTrippedError) Error() string {

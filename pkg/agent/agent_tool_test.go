@@ -789,6 +789,115 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 	)
 }
 
+func TestAgentTool_Execute_DepthLimit(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"deep agent-tool chain stops at depth limit",
+		func(t *testing.T) {
+			t.Parallel()
+
+			innerProvider := &mockProvider{}
+
+			innerAgent := agent.New(
+				"inner",
+				newTestClient(innerProvider),
+				agent.WithModel("test-model"),
+				agent.WithMaxToolDepth(1),
+			)
+
+			middleProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc_mid",
+						Function: llm.FunctionCall{Name: "call_inner", Arguments: `{"input":"ping"}`},
+					}),
+					stopResponse("inner was unreachable"),
+				},
+			}
+
+			middleAgent := agent.New(
+				"middle",
+				newTestClient(middleProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(innerAgent.AsTool("call_inner", "Call inner")),
+			)
+
+			outerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc_out",
+						Function: llm.FunctionCall{Name: "call_middle", Arguments: `{"input":"start"}`},
+					}),
+					stopResponse("outer done"),
+				},
+			}
+
+			outerAgent := agent.New(
+				"outer",
+				newTestClient(outerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(middleAgent.AsTool("call_middle", "Call middle")),
+			)
+
+			result, err := outerAgent.Run(
+				context.Background(),
+				[]llm.Message{userMessage("go")},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "outer done", result.FinalMessage().Text())
+			assert.Equal(t, 0, innerProvider.calls, "inner agent should never be called")
+		},
+	)
+
+	t.Run(
+		"delegation within depth limit succeeds",
+		func(t *testing.T) {
+			t.Parallel()
+
+			innerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					stopResponse("inner result"),
+				},
+			}
+
+			innerAgent := agent.New(
+				"inner",
+				newTestClient(innerProvider),
+				agent.WithModel("test-model"),
+				agent.WithMaxToolDepth(2),
+			)
+
+			outerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "tc_1",
+						Function: llm.FunctionCall{Name: "call_inner", Arguments: `{"input":"hello"}`},
+					}),
+					stopResponse("outer result"),
+				},
+			}
+
+			outerAgent := agent.New(
+				"outer",
+				newTestClient(outerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(innerAgent.AsTool("call_inner", "Call inner")),
+			)
+
+			result, err := outerAgent.Run(
+				context.Background(),
+				[]llm.Message{userMessage("go")},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "outer result", result.FinalMessage().Text())
+			assert.Equal(t, 1, innerProvider.calls, "inner agent should be called once")
+		},
+	)
+}
+
 func TestAgentTool_InterfaceSatisfaction(t *testing.T) {
 	t.Parallel()
 

@@ -22,6 +22,8 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
+const DefaultMaxToolDepth = 16
+
 type (
 	agentTool struct {
 		agent       *Agent
@@ -33,11 +35,20 @@ type (
 	agentToolParams struct {
 		Input string `json:"input" jsonschema:"The input to send to the agent"`
 	}
+
+	agentToolDepthKey struct{}
 )
 
 var (
 	agentToolParamsSchema = jsonSchemaFor[agentToolParams]()
 )
+
+func agentToolDepth(ctx context.Context) int {
+	if v, ok := ctx.Value(agentToolDepthKey{}).(int); ok {
+		return v
+	}
+	return 0
+}
 
 func newAgentTool(agent *Agent, name, description string) *agentTool {
 	return &agentTool{
@@ -59,6 +70,11 @@ func (t *agentTool) Definition() llm.Tool {
 }
 
 func (t *agentTool) Execute(ctx context.Context, arguments string) (ToolResult, error) {
+	depth := agentToolDepth(ctx)
+	if depth >= t.agent.maxToolDepth {
+		return ToolResult{}, &MaxToolDepthExceededError{MaxDepth: t.agent.maxToolDepth}
+	}
+
 	var params agentToolParams
 
 	if err := json.Unmarshal([]byte(arguments), &params); err != nil {
@@ -67,6 +83,8 @@ func (t *agentTool) Execute(ctx context.Context, arguments string) (ToolResult, 
 			IsError: true,
 		}, nil
 	}
+
+	ctx = context.WithValue(ctx, agentToolDepthKey{}, depth+1)
 
 	result, err := t.agent.Run(
 		ctx,
