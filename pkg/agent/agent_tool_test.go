@@ -394,6 +394,67 @@ func TestAgentTool_Execute(t *testing.T) {
 	)
 }
 
+type nestedApprovalFixture struct {
+	innerProvider *mockProvider
+	outerProvider *mockProvider
+	outerAgent    *agent.Agent
+}
+
+func noopDeleteFile(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+	return agent.ToolResult{Content: "file deleted"}, nil
+}
+
+func newNestedApprovalFixture(
+	t *testing.T,
+	deleteFunc func(context.Context, struct{}) (agent.ToolResult, error),
+	innerResponses []*llm.ChatCompletionResponse,
+	outerResponses []*llm.ChatCompletionResponse,
+	outerOpts ...agent.Option,
+) nestedApprovalFixture {
+	t.Helper()
+
+	deleteTool, err := agent.FunctionTool[struct{}](
+		"delete_file",
+		"Delete a file",
+		deleteFunc,
+	)
+	require.NoError(t, err)
+
+	innerProvider := &mockProvider{responses: innerResponses}
+
+	innerAgent := agent.New(
+		"file_manager",
+		newTestClient(innerProvider),
+		agent.WithModel("test-model"),
+		agent.WithTools(deleteTool),
+		agent.WithApproval(agent.ApprovalConfig{
+			ToolNames: []string{"delete_file"},
+		}),
+	)
+
+	outerProvider := &mockProvider{responses: outerResponses}
+
+	opts := append(
+		[]agent.Option{
+			agent.WithModel("test-model"),
+			agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
+		},
+		outerOpts...,
+	)
+
+	outerAgent := agent.New(
+		"assistant",
+		newTestClient(outerProvider),
+		opts...,
+	)
+
+	return nestedApprovalFixture{
+		innerProvider: innerProvider,
+		outerProvider: outerProvider,
+		outerAgent:    outerAgent,
+	}
+}
+
 func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 	t.Parallel()
 
@@ -402,51 +463,24 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			deleteTool, err := agent.FunctionTool[struct{}](
-				"delete_file",
-				"Delete a file",
-				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-					return agent.ToolResult{Content: "file deleted"}, nil
-				},
-			)
-			require.NoError(t, err)
-
-			innerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+			f := newNestedApprovalFixture(
+				t,
+				noopDeleteFile,
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "inner_tc1",
 						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
 					}),
 				},
-			}
-
-			innerAgent := agent.New(
-				"file_manager",
-				newTestClient(innerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(deleteTool),
-				agent.WithApproval(agent.ApprovalConfig{
-					ToolNames: []string{"delete_file"},
-				}),
-			)
-
-			outerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "outer_tc1",
 						Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
 					}),
 				},
-			}
-
-			outerAgent := agent.New(
-				"assistant",
-				newTestClient(outerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
 			)
 
-			_, err = outerAgent.Run(
+			_, err := f.outerAgent.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Delete the file")},
 			)
@@ -467,54 +501,29 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 
 			var toolExecuted bool
 
-			deleteTool, err := agent.FunctionTool[struct{}](
-				"delete_file",
-				"Delete a file",
+			f := newNestedApprovalFixture(
+				t,
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 					toolExecuted = true
 					return agent.ToolResult{Content: "file deleted"}, nil
 				},
-			)
-			require.NoError(t, err)
-
-			innerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "inner_tc1",
 						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
 					}),
 					stopResponse("File has been deleted."),
 				},
-			}
-
-			innerAgent := agent.New(
-				"file_manager",
-				newTestClient(innerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(deleteTool),
-				agent.WithApproval(agent.ApprovalConfig{
-					ToolNames: []string{"delete_file"},
-				}),
-			)
-
-			outerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "outer_tc1",
 						Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
 					}),
 					stopResponse("Done, the file has been deleted."),
 				},
-			}
-
-			outerAgent := agent.New(
-				"assistant",
-				newTestClient(outerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
 			)
 
-			_, err = outerAgent.Run(
+			_, err := f.outerAgent.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Delete the file")},
 			)
@@ -545,54 +554,29 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			deleteTool, err := agent.FunctionTool[struct{}](
-				"delete_file",
-				"Delete a file",
+			f := newNestedApprovalFixture(
+				t,
 				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 					t.Fatal("tool should not be called")
 					return agent.ToolResult{}, nil
 				},
-			)
-			require.NoError(t, err)
-
-			innerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "inner_tc1",
 						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
 					}),
 					stopResponse("OK, I won't delete the file."),
 				},
-			}
-
-			innerAgent := agent.New(
-				"file_manager",
-				newTestClient(innerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(deleteTool),
-				agent.WithApproval(agent.ApprovalConfig{
-					ToolNames: []string{"delete_file"},
-				}),
-			)
-
-			outerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "outer_tc1",
 						Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
 					}),
 					stopResponse("The file manager declined."),
 				},
-			}
-
-			outerAgent := agent.New(
-				"assistant",
-				newTestClient(outerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
 			)
 
-			_, err = outerAgent.Run(
+			_, err := f.outerAgent.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Delete the file")},
 			)
@@ -634,37 +618,17 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			deleteTool, err := agent.FunctionTool[struct{}](
-				"delete_file",
-				"Delete a file",
-				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-					return agent.ToolResult{Content: "file deleted"}, nil
-				},
-			)
-			require.NoError(t, err)
-
-			innerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+			f := newNestedApprovalFixture(
+				t,
+				noopDeleteFile,
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "inner_tc1",
 						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
 					}),
 					stopResponse("File has been deleted."),
 				},
-			}
-
-			innerAgent := agent.New(
-				"file_manager",
-				newTestClient(innerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(deleteTool),
-				agent.WithApproval(agent.ApprovalConfig{
-					ToolNames: []string{"delete_file"},
-				}),
-			)
-
-			outerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(
 						llm.ToolCall{
 							ID:       "outer_tc1",
@@ -677,19 +641,10 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 					),
 					stopResponse("Files listed and deleted."),
 				},
-			}
-
-			outerAgent := agent.New(
-				"assistant",
-				newTestClient(outerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(
-					siblingTool,
-					innerAgent.AsTool("file_expert", "Manage files"),
-				),
+				agent.WithTools(siblingTool),
 			)
 
-			_, err = outerAgent.Run(
+			_, err = f.outerAgent.Run(
 				context.Background(),
 				[]llm.Message{userMessage("List and delete files")},
 			)
@@ -818,54 +773,27 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			deleteTool, err := agent.FunctionTool[struct{}](
-				"delete_file",
-				"Delete a file",
-				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-					return agent.ToolResult{Content: "file deleted"}, nil
-				},
-			)
-			require.NoError(t, err)
+			hook := &recordingHook{}
 
-			innerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+			f := newNestedApprovalFixture(
+				t,
+				noopDeleteFile,
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "inner_tc1",
 						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
 					}),
 				},
-			}
-
-			innerAgent := agent.New(
-				"file_manager",
-				newTestClient(innerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(deleteTool),
-				agent.WithApproval(agent.ApprovalConfig{
-					ToolNames: []string{"delete_file"},
-				}),
-			)
-
-			outerProvider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
+				[]*llm.ChatCompletionResponse{
 					toolCallResponse(llm.ToolCall{
 						ID:       "outer_tc1",
 						Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
 					}),
 				},
-			}
-
-			hook := &recordingHook{}
-
-			outerAgent := agent.New(
-				"assistant",
-				newTestClient(outerProvider),
-				agent.WithModel("test-model"),
-				agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
 				agent.WithHooks(hook),
 			)
 
-			_, err = outerAgent.Run(
+			_, err := f.outerAgent.Run(
 				context.Background(),
 				[]llm.Message{userMessage("Delete the file")},
 			)
