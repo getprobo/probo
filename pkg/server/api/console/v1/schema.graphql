@@ -3902,8 +3902,8 @@ input CreateMailingListUpdateInput {
 
 input UpdateMailingListUpdateInput {
     id: ID!
-    title: String!
-    body: String!
+    title: String
+    body: String
 }
 
 input SendMailingListUpdateInput {

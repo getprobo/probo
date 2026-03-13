@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // Framework is the resolver for the framework field.
@@ -706,11 +707,16 @@ func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.S
 
 	subscriber, err := r.mailman.CreateSubscriber(
 		ctx,
-		*trustCenter.MailingListID,
-		identity.EmailAddress,
-		identity.FullName,
+		&mailman.CreateSubscriberRequest{
+			MailingListID: *trustCenter.MailingListID,
+			Email:         identity.EmailAddress,
+			FullName:      identity.FullName,
+		},
 	)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
 		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
 			return nil, gqlutils.Conflictf(ctx, "already subscribed to this mailing list")
 		}
