@@ -170,6 +170,14 @@ func Invalidf(ctx context.Context, format string, a ...any) *gqlerror.Error {
 	return Invalid(ctx, fmt.Errorf(format, a...))
 }
 
+func InvalidValidationErrors(ctx context.Context, errs validator.ValidationErrors) gqlerror.List {
+	gqlErrors := make(gqlerror.List, 0, len(errs))
+	for _, ve := range errs {
+		gqlErrors = append(gqlErrors, Invalid(ctx, ve))
+	}
+	return gqlErrors
+}
+
 func Internal(ctx context.Context) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: "An internal server error occurred. Please try again later.",

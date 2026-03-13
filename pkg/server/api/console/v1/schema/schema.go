@@ -15318,8 +15318,8 @@ input CreateMailingListUpdateInput {
 
 input UpdateMailingListUpdateInput {
     id: ID!
-    title: String!
-    body: String!
+    title: String
+    body: String
 }
 
 input SendMailingListUpdateInput {
@@ -73536,14 +73536,14 @@ func (ec *executionContext) unmarshalInputUpdateMailingListUpdateInput(ctx conte
 			it.ID = data
 		case "title":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Title = data
 		case "body":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
