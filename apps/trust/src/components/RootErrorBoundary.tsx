@@ -11,7 +11,7 @@ export function RootErrorBoundary() {
 
   const search = new URLSearchParams();
 
-  if (location.pathname !== getPathPrefix() || location.search !== "") {
+  if (location.pathname !== `${getPathPrefix()}/` || location.search !== "") {
     search.set("continue", window.location.href);
   }
 

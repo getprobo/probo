@@ -68,13 +68,13 @@ export function ConnectPage(props: {
       if (continueUrl.origin === window.location.origin && continueUrl.pathname.startsWith(`${getPathPrefix()}/`)) {
         safeContinueUrl = window.location.origin + continueUrl.pathname + continueUrl.search;
       } else {
-        safeContinueUrl = window.location.origin + (getPathPrefix() || "/");
+        safeContinueUrl = window.location.origin + getPathPrefix();
       }
     } catch {
-      safeContinueUrl = window.location.origin + (getPathPrefix() || "/");
+      safeContinueUrl = window.location.origin + getPathPrefix();
     }
   } else {
-    safeContinueUrl = window.location.origin + (getPathPrefix() || "/");
+    safeContinueUrl = window.location.origin + getPathPrefix();
   }
 
   useEffect(() => {

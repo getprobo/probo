@@ -42,7 +42,7 @@ export default function VerifyMagicLinkPagePageMutation() {
         if (errors) {
           for (const err of errors) {
             if (err.extensions?.code === "ALREADY_AUTHENTICATED") {
-              window.location.href = getPathPrefix() || "/";
+              window.location.href = window.location.origin + getPathPrefix();
               return;
             }
           }
@@ -67,10 +67,10 @@ export default function VerifyMagicLinkPagePageMutation() {
             const continueUrl = new URL(verifyMagicLink.continue, window.location.origin);
             window.location.href = window.location.origin + continueUrl.pathname + continueUrl.search;
           } catch {
-            window.location.href = getPathPrefix() || "/";
+            window.location.href = window.location.origin + getPathPrefix();
           }
         } else {
-          window.location.href = getPathPrefix() || "/";
+          window.location.href = window.location.origin + getPathPrefix();
         }
       },
       onError: (err) => {
