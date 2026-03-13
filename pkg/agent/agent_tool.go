@@ -83,7 +83,8 @@ func (t *agentTool) Execute(ctx context.Context, arguments string) (ToolResult, 
 		}, nil
 	}
 
-	if _, ok := fields["input"]; !ok {
+	raw, ok := fields["input"]
+	if !ok || string(raw) == "null" {
 		return ToolResult{
 			Content: "Missing required parameters: input",
 			IsError: true,

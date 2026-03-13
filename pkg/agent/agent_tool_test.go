@@ -216,6 +216,27 @@ func TestAgentTool_Execute(t *testing.T) {
 	)
 
 	t.Run(
+		"null input returns tool error for missing input",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ag := agent.New(
+				"sub",
+				newTestClient(&mockProvider{}),
+				agent.WithModel("test-model"),
+			)
+
+			tool := ag.AsTool("sub_tool", "A sub-agent tool.")
+			result, err := tool.Execute(context.Background(), `{"input":null}`)
+
+			require.NoError(t, err)
+			assert.True(t, result.IsError)
+			assert.Contains(t, result.Content, "Missing required parameters")
+			assert.Contains(t, result.Content, "input")
+		},
+	)
+
+	t.Run(
 		"sub-agent error propagates as Go error",
 		func(t *testing.T) {
 			t.Parallel()
