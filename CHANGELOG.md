@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.142.2] - 2026-03-13
+
+### Fixed
+
+- Compliance page member provisioning for already signed in identities
+- Compliage page request all callback redirection
+
 ## [0.142.1] - 2026-03-13
 
 ### Fixed
