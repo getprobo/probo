@@ -107,16 +107,6 @@ func NewTrustCenterDocumentAccessConnection(
 	}
 }
 
-func NewTrustCenterDocumentAccessEdges(accesses []*coredata.TrustCenterDocumentAccess, orderBy coredata.TrustCenterDocumentAccessOrderField) []*TrustCenterDocumentAccessEdge {
-	edges := make([]*TrustCenterDocumentAccessEdge, len(accesses))
-
-	for i := range edges {
-		edges[i] = NewTrustCenterDocumentAccessEdge(accesses[i], orderBy)
-	}
-
-	return edges
-}
-
 func NewTrustCenterDocumentAccessEdge(access *coredata.TrustCenterDocumentAccess, orderBy coredata.TrustCenterDocumentAccessOrderField) *TrustCenterDocumentAccessEdge {
 	return &TrustCenterDocumentAccessEdge{
 		Cursor: access.CursorKey(orderBy),

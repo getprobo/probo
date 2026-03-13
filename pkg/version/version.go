@@ -100,29 +100,3 @@ func UserAgent(component string) string {
 	return strings.Join(parts, " ")
 }
 
-// Version returns the version string
-func Version() string {
-	info := GetBuildInfo()
-	return info.Version
-}
-
-// FullVersion returns a detailed version string with all build information
-func FullVersion() string {
-	info := GetBuildInfo()
-
-	parts := []string{
-		fmt.Sprintf("Version: %s", info.Version),
-	}
-
-	if info.Commit != "unknown" {
-		parts = append(parts, fmt.Sprintf("Commit: %s", info.Commit))
-	}
-
-	if info.BuildDate != "unknown" {
-		parts = append(parts, fmt.Sprintf("Built: %s", info.BuildDate))
-	}
-
-	parts = append(parts, fmt.Sprintf("Go: %s", info.GoVersion))
-
-	return strings.Join(parts, "\n")
-}

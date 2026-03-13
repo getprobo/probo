@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"strings"
 	"time"
 
@@ -52,84 +51,6 @@ func (i Identity) CursorKey(orderBy IdentityOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
-}
-
-func (i *Identities) LoadByOrganizationID(
-	ctx context.Context,
-	conn pg.Conn,
-	organizationID gid.GID,
-	cursor *page.Cursor[IdentityOrderField],
-) error {
-	q := `
-SELECT
-    id,
-    email_address,
-    full_name,
-    hashed_password,
-    email_address_verified,
-    saml_subject,
-    created_at,
-    updated_at
-FROM
-	identities
-WHERE
-	id IN (
-		SELECT identity_id FROM iam_memberships WHERE organization_id = @organization_id
-	)
-	AND %s
-`
-
-	q = fmt.Sprintf(q, cursor.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query identities: %w", err)
-	}
-
-	identities, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Identity])
-	if err != nil {
-		return fmt.Errorf("cannot collect identities: %w", err)
-	}
-
-	*i = identities
-
-	return nil
-}
-
-func (i *Identities) CountByOrganizationID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-) (int, error) {
-	q := `
-SELECT
-	COUNT(*)
-FROM
-	identities
-WHERE
-	id IN (
-		SELECT identity_id FROM iam_memberships WHERE organization_id = @organization_id AND %s
-	)
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-	err := row.Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot count identities: %w", err)
-	}
-
-	return count, nil
 }
 
 // Tenant id scope is not applied because we want to access identities across all tenants for authentication purposes.

@@ -56,24 +56,6 @@ type (
 	}
 )
 
-type ctxKey struct{ name string }
-
-var (
-	trustCenterIDKey = &ctxKey{name: "trust_center_id"}
-)
-
-func TrustCenterIDFromContext(ctx context.Context) gid.GID {
-	if trustCenterID, ok := ctx.Value(trustCenterIDKey).(gid.GID); ok {
-		return trustCenterID
-	}
-
-	return gid.Nil
-}
-
-func ContextWithTrustCenterID(ctx context.Context, trustCenterID gid.GID) context.Context {
-	return context.WithValue(ctx, trustCenterIDKey, trustCenterID)
-}
-
 func NewMux(
 	logger *log.Logger,
 	iamSvc *iam.Service,

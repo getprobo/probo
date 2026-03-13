@@ -32,6 +32,7 @@ GO_BUILD=	$(GO_BASE) build $(LDFLAGS) $(GCFLAGS)
 GO_GENERATE=	$(GO_BASE) generate
 GO_TEST=	$(GO_BASE) tool gotestsum -- $(TEST_FLAGS)
 GO_VET=	$(GO_BASE) vet
+GO_TOOL=	$(GO_BASE) tool
 
 TEST_FLAGS?=	-race -cover -coverprofile=coverage.out
 
@@ -281,3 +282,8 @@ compose/keycloak/probo-realm.json: compose/keycloak/probo-realm.json.tmpl compos
 apps/console/dist/index.html apps/trust/dist/index.html:
 	$(MKDIR) $(dir $@)
 	$(ECHO) dev-server > $@
+
+
+.PHONY: deadcode
+deadcode:
+	$(GO_TOOL) deadcode ./... | grep -v "With" | grep -v "UnmarshalBigIntScalar" | grep -v "^e2e/"

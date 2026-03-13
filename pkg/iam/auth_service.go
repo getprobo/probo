@@ -49,11 +49,6 @@ type (
 		InvitationToken string
 	}
 
-	LoadOrCreateIdentityRequest struct {
-		Email    mail.Addr
-		FullName string
-	}
-
 	CreateIdentityWithPasswordRequest struct {
 		Email    mail.Addr
 		Password string
@@ -112,14 +107,6 @@ func (req ChangePasswordRequest) Validate() error {
 	v.Check(req.CurrentPassword, "currentPassword", validator.NotEmpty(), validator.MaxLen(255))
 
 	v.Check(req.NewPassword, "newPassword", PasswordValidator())
-	return v.Error()
-}
-
-func (req LoadOrCreateIdentityRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(req.FullName, "fullName", validator.NotEmpty(), validator.MinLen(1), validator.MaxLen(255))
-
 	return v.Error()
 }
 

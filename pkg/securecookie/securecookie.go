@@ -58,24 +58,6 @@ type Config struct {
 	SameSite http.SameSite
 }
 
-// DefaultConfig returns a default secure cookie configuration
-func DefaultConfig(name, secret string, secure bool) Config {
-	sameSite := http.SameSiteNoneMode // None mode required for SAML (cross-site POST from IdP)
-	if !secure {
-		sameSite = http.SameSiteLaxMode
-	}
-
-	return Config{
-		Name:     name,
-		Secret:   secret,
-		Path:     "/",
-		MaxAge:   86400 * 30, // 30 days
-		Secure:   secure,
-		HTTPOnly: true,
-		SameSite: sameSite,
-	}
-}
-
 // Set creates and sets a secure cookie with the given value
 func Set(w http.ResponseWriter, config Config, value string) error {
 	signedValue, err := Sign(value, config.Secret)

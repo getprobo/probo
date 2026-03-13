@@ -36,10 +36,6 @@ type (
 		fileValidator *filevalidation.FileValidator
 	}
 
-	CreateOrganizationRequest struct {
-		Name string
-	}
-
 	UpdateOrganizationRequest struct {
 		ID                 gid.GID
 		Name               *string
@@ -56,14 +52,6 @@ type (
 		Summary        **string
 	}
 )
-
-func (cor *CreateOrganizationRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(cor.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
-
-	return v.Error()
-}
 
 func (uor *UpdateOrganizationRequest) Validate() error {
 	v := validator.New()

@@ -107,27 +107,3 @@ func NotEquals(key string, values ...string) Condition {
 	}
 }
 
-// In creates an In condition.
-func In(key string, values ...string) Condition {
-	return Condition{
-		Operator: ConditionIn,
-		Key:      key,
-		Values:   values,
-	}
-}
-
-// NotIn creates a NotIn condition.
-func NotIn(key string, values ...string) Condition {
-	return Condition{
-		Operator: ConditionNotIn,
-		Key:      key,
-		Values:   values,
-	}
-}
-
-// ForEntityType creates a resource pattern for a specific entity type.
-func ForEntityType(entityType uint16) ResourcePattern {
-	return ResourcePattern{
-		EntityType: &entityType,
-	}
-}

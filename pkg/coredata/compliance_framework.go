@@ -397,32 +397,3 @@ WHERE %s
 	return nil
 }
 
-func (c *ComplianceFrameworks) CountByTrustCenterID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	trustCenterID gid.GID,
-) (int, error) {
-	q := `
-SELECT
-    COUNT(*)
-FROM
-    compliance_frameworks
-WHERE
-    %s
-    AND trust_center_id = @trust_center_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
-	maps.Copy(args, scope.SQLArguments())
-
-	var count int
-	err := conn.QueryRow(ctx, q, args).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot count compliance frameworks: %w", err)
-	}
-
-	return count, nil
-}

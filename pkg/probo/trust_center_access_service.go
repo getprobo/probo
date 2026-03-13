@@ -58,14 +58,6 @@ type (
 	}
 )
 
-func (ctcar *CreateTrustCenterAccessRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(ctcar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
-
-	return v.Error()
-}
-
 func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 	v := validator.New()
 

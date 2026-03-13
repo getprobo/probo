@@ -24,18 +24,12 @@ type ctxKey struct{ name string }
 
 var (
 	compliancePageKey        = &ctxKey{name: "compliance_page"}
-	complianceMembershipKey  = &ctxKey{name: "compliance_membership"}
 	compliancePageBaseURLKey = &ctxKey{name: "compliance_page_base_url"}
 )
 
 func CompliancePageFromContext(ctx context.Context) *coredata.TrustCenter {
 	page, _ := ctx.Value(compliancePageKey).(*coredata.TrustCenter)
 	return page
-}
-
-func ComplianceMembershipFromContext(ctx context.Context) *coredata.TrustCenterAccess {
-	membership, _ := ctx.Value(complianceMembershipKey).(*coredata.TrustCenterAccess)
-	return membership
 }
 
 func CompliancePageBaseURLFromContext(ctx context.Context) *string {

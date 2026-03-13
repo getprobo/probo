@@ -28,17 +28,6 @@ type (
 	EncryptionKey [32]byte
 )
 
-func NewEncryptionKey(key string) (EncryptionKey, error) {
-	if len(key) != 32 {
-		return EncryptionKey{}, fmt.Errorf("key must be 32 bytes for AES-256")
-	}
-
-	var encryptionKey EncryptionKey
-	copy(encryptionKey[:], key)
-
-	return encryptionKey, nil
-}
-
 func (k EncryptionKey) Bytes() []byte {
 	return k[:]
 }

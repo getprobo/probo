@@ -70,7 +70,3 @@ func (sr *SafeRedirect) Redirect(w http.ResponseWriter, r *http.Request, redirec
 	http.Redirect(w, r, safeURL, statusCode)
 }
 
-func (sr *SafeRedirect) RedirectFromQuery(w http.ResponseWriter, r *http.Request, paramName, fallbackURL string, statusCode int) {
-	redirectURL := r.URL.Query().Get(paramName)
-	sr.Redirect(w, r, redirectURL, fallbackURL, statusCode)
-}

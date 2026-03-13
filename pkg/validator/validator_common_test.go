@@ -23,8 +23,8 @@ func TestOptionalByDefault(t *testing.T) {
 		v := New()
 		v.Check(nil, "field", MinLen(5))
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors for nil (optional by default), got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors for nil (optional by default), got: %v", v.Error())
 		}
 	})
 
@@ -33,8 +33,8 @@ func TestOptionalByDefault(t *testing.T) {
 		var str *string
 		v.Check(str, "field", MinLen(5))
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors for nil pointer (optional by default), got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors for nil pointer (optional by default), got: %v", v.Error())
 		}
 	})
 
@@ -43,8 +43,8 @@ func TestOptionalByDefault(t *testing.T) {
 		str := "hello world"
 		v.Check(&str, "field", MinLen(5))
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors, got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors, got: %v", v.Error())
 		}
 	})
 
@@ -53,7 +53,7 @@ func TestOptionalByDefault(t *testing.T) {
 		str := "hi"
 		v.Check(&str, "field", MinLen(5))
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected validation error")
 		}
 	})
@@ -63,8 +63,8 @@ func TestOptionalByDefault(t *testing.T) {
 		str := "hello"
 		v.Check(&str, "field", MinLen(3), MaxLen(10))
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors, got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors, got: %v", v.Error())
 		}
 	})
 
@@ -73,7 +73,7 @@ func TestOptionalByDefault(t *testing.T) {
 		str := ""
 		v.Check(&str, "field", MinLen(5))
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected validation error for empty string")
 		}
 	})
@@ -83,7 +83,7 @@ func TestOptionalByDefault(t *testing.T) {
 		var str *string
 		v.Check(str, "field", Required())
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected validation error for nil with Required()")
 		}
 	})

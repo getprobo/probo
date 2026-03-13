@@ -55,63 +55,6 @@ VALUES (@id, @organization_id, @created_at, @expires_at)
 	return nil
 }
 
-func (s *SAMLRequest) Load(
-	ctx context.Context,
-	conn pg.Conn,
-	requestID string,
-	organizationID gid.GID,
-) error {
-	query := `
-SELECT id, organization_id, created_at, expires_at
-FROM iam_saml_requests
-WHERE id = @id AND organization_id = @organization_id
-LIMIT 1
-`
-
-	args := pgx.NamedArgs{
-		"id":              requestID,
-		"organization_id": organizationID,
-	}
-
-	rows, err := conn.Query(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot query saml_requests: %w", err)
-	}
-
-	req, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[SAMLRequest])
-	if err == pgx.ErrNoRows {
-		return ErrResourceNotFound
-	}
-
-	if err != nil {
-		return fmt.Errorf("cannot collect saml_request: %w", err)
-	}
-
-	*s = req
-	return nil
-}
-
-func (s *SAMLRequest) IsExpired(now time.Time) bool {
-	return now.After(s.ExpiresAt) || now.Equal(s.ExpiresAt)
-}
-
-func (s *SAMLRequest) Delete(
-	ctx context.Context,
-	conn pg.Conn,
-) error {
-	query := `
-DELETE FROM iam_saml_requests
-WHERE id = @id
-`
-
-	_, err := conn.Exec(ctx, query, pgx.NamedArgs{"id": s.ID})
-	if err != nil {
-		return fmt.Errorf("cannot delete saml_request: %w", err)
-	}
-
-	return nil
-}
-
 func LoadValidRequestIDsForOrganization(
 	ctx context.Context,
 	conn pg.Conn,

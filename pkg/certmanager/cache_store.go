@@ -141,32 +141,3 @@ func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Conn, domain *cored
 	return nil
 }
 
-func (w *CacheStore) RefreshCache(ctx context.Context) error {
-	w.logger.InfoCtx(ctx, "refreshing certificate cache")
-
-	return w.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			cachedCertificates := coredata.CachedCertificates{}
-			if err := cachedCertificates.CleanExpired(ctx, conn); err != nil {
-				w.logger.ErrorCtx(ctx, "cannot clean expired cache", log.Error(err))
-			}
-
-			return w.WarmCache(ctx)
-		},
-	)
-}
-
-func (w *CacheStore) WarmSingleDomain(ctx context.Context, domainName string) error {
-	return w.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			var domain coredata.CustomDomain
-			if err := domain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domainName); err != nil {
-				return fmt.Errorf("cannot load domain: %w", err)
-			}
-
-			return w.warmDomain(ctx, conn, &domain)
-		},
-	)
-}

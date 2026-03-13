@@ -298,8 +298,8 @@ func TestNoHTML(t *testing.T) {
 		title := "Product Title 2024"
 		v.Check(&title, "title", Required(), NoHTML(), MinLen(3), MaxLen(100))
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors, got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors, got: %v", v.Error())
 		}
 	})
 
@@ -308,8 +308,8 @@ func TestNoHTML(t *testing.T) {
 		title := "José García-O'Brien"
 		v.Check(&title, "title", Required(), NoHTML(), PrintableText(), MinLen(3), MaxLen(100))
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors, got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors, got: %v", v.Error())
 		}
 	})
 
@@ -318,12 +318,12 @@ func TestNoHTML(t *testing.T) {
 		malicious := "<script>alert('xss')</script>"
 		v.Check(&malicious, "content", Required(), NoHTML(), PrintableText())
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected validation errors")
 		}
 
 		// Should have error from NoHTML
-		errors := v.Errors()
+		errors := v.Error().(ValidationErrors)
 		found := false
 		for _, err := range errors {
 			if strings.Contains(err.Message, "HTML tags") {
@@ -341,12 +341,12 @@ func TestNoHTML(t *testing.T) {
 		malicious := "<b>test\x00text</b>"
 		v.Check(&malicious, "content", NoHTML(), PrintableText())
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected validation errors")
 		}
 
 		// Should have at least one error (NoHTML will catch it first)
-		if len(v.Errors()) < 1 {
+		if ve := v.Error(); ve == nil || len(ve.(ValidationErrors)) < 1 {
 			t.Error("expected at least one validation error")
 		}
 	})
@@ -635,8 +635,8 @@ func TestPrintableText(t *testing.T) {
 		title := "Product Title 2024"
 		v.Check(&title, "title", Required(), PrintableText(), MinLen(3), MaxLen(100))
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors, got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors, got: %v", v.Error())
 		}
 	})
 
@@ -840,8 +840,8 @@ func TestSafeText(t *testing.T) {
 		title := "Product Title 2024"
 		v.Check(&title, "title", SafeText(100))
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors, got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors, got: %v", v.Error())
 		}
 	})
 
@@ -850,11 +850,11 @@ func TestSafeText(t *testing.T) {
 		malicious := "<script>alert('xss')</script>"
 		v.Check(&malicious, "content", SafeText(100))
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected validation errors")
 		}
 
-		errors := v.Errors()
+		errors := v.Error().(ValidationErrors)
 		found := false
 		for _, err := range errors {
 			if strings.Contains(err.Message, "HTML tags") {

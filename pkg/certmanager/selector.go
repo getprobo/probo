@@ -160,11 +160,3 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 	return nil
 }
 
-func (s *Selector) ClearCache() {
-	s.cache.Range(
-		func(key, _ any) bool {
-			s.cache.Delete(key)
-			return true
-		},
-	)
-}

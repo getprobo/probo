@@ -20,60 +20,6 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
-func Example_definingActions() {
-	// Create an action registry
-	registry := policy.NewActionRegistry()
-
-	// Register actions for the IAM service
-	registry.MustRegister(policy.ActionDefinition{
-		Action:      "iam:identity:get",
-		Service:     "iam",
-		Resource:    "identity",
-		Operation:   "get",
-		Description: "Get identity details",
-	})
-
-	registry.MustRegister(policy.ActionDefinition{
-		Action:      "iam:identity:update",
-		Service:     "iam",
-		Resource:    "identity",
-		Operation:   "update",
-		Description: "Update identity",
-	})
-
-	// Register actions for the documents service
-	registry.MustRegister(policy.ActionDefinition{
-		Action:      "documents:document:read",
-		Service:     "documents",
-		Resource:    "document",
-		Operation:   "read",
-		Description: "Read a document",
-	})
-
-	registry.MustRegister(policy.ActionDefinition{
-		Action:      "documents:document:write",
-		Service:     "documents",
-		Resource:    "document",
-		Operation:   "write",
-		Description: "Create or update a document",
-	})
-
-	registry.MustRegister(policy.ActionDefinition{
-		Action:      "documents:document:delete",
-		Service:     "documents",
-		Resource:    "document",
-		Operation:   "delete",
-		Description: "Delete a document",
-	})
-
-	// List all actions for a service
-	docActions := registry.ByService("documents")
-	fmt.Printf("Documents service has %d actions\n", len(docActions))
-
-	// Output:
-	// Documents service has 3 actions
-}
-
 func Example_definingPolicies() {
 	// Define a viewer policy - can read everything
 	viewerPolicy := policy.NewPolicy("viewer", "Viewer Policy",

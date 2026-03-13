@@ -53,16 +53,6 @@ func NewMeetingConnection(
 	}
 }
 
-func NewMeetingEdges(meetings []*coredata.Meeting, orderBy coredata.MeetingOrderField) []*MeetingEdge {
-	edges := make([]*MeetingEdge, len(meetings))
-
-	for i := range edges {
-		edges[i] = NewMeetingEdge(meetings[i], orderBy)
-	}
-
-	return edges
-}
-
 func NewMeetingEdge(meeting *coredata.Meeting, orderBy coredata.MeetingOrderField) *MeetingEdge {
 	return &MeetingEdge{
 		Cursor: meeting.CursorKey(orderBy),

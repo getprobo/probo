@@ -32,13 +32,6 @@ type GzipOptions struct {
 	FileTypes           []string
 }
 
-func DefaultGzipOptions() GzipOptions {
-	return GzipOptions{
-		EnableFileTypeCheck: true,
-		FileTypes:           []string{".js", ".css", ".html"},
-	}
-}
-
 type Server struct {
 	spaFS        http.FileSystem
 	etags        map[string]string

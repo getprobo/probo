@@ -696,52 +696,6 @@ LIMIT 1;
 	return nil
 }
 
-func (c *Controls) LoadByIDs(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	controlIDs []gid.GID,
-) error {
-	if len(controlIDs) == 0 {
-		*c = Controls{}
-		return nil
-	}
-
-	q := `
-SELECT
-    id,
-    section_title,
-    framework_id,
-    organization_id,
-    name,
-    description,
-    best_practice,
-    created_at,
-    updated_at
-FROM
-    controls
-WHERE
-    %s
-    AND id = ANY(@control_ids)
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"control_ids": controlIDs}
-	maps.Copy(args, scope.SQLArguments())
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query controls: %w", err)
-	}
-
-	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Control])
-	if err != nil {
-		return fmt.Errorf("cannot collect controls: %w", err)
-	}
-
-	*c = controls
-	return nil
-}
-
 func (c Control) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -866,49 +820,6 @@ WHERE %s
 	return nil
 }
 
-func (c *Controls) CountByAuditID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	auditID gid.GID,
-	filter *ControlFilter,
-) (int, error) {
-	q := `
-WITH ctrl AS (
-		SELECT
-			c.id,
-			c.tenant_id,
-			c.search_vector
-		FROM
-			controls c
-		INNER JOIN
-			controls_audits ca ON c.id = ca.control_id
-		WHERE
-			ca.audit_id = @audit_id
-	)
-	SELECT
-		COUNT(id)
-	FROM
-		ctrl
-	WHERE %s
-		AND %s
-	`
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.NamedArgs{"audit_id": auditID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot scan count: %w", err)
-	}
-
-	return count, nil
-}
-
 func (c *Controls) LoadByAuditID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -974,49 +885,6 @@ WHERE %s
 	*c = controls
 
 	return nil
-}
-
-func (c *Controls) CountBySnapshotID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	snapshotID gid.GID,
-	filter *ControlFilter,
-) (int, error) {
-	q := `
-WITH ctrl AS (
-	SELECT
-		c.id,
-		c.tenant_id,
-		c.search_vector
-	FROM
-		controls c
-	INNER JOIN
-		controls_snapshots cs ON c.id = cs.control_id
-	WHERE
-		cs.snapshot_id = @snapshot_id
-)
-SELECT
-	COUNT(id)
-FROM
-	ctrl
-WHERE %s
-	AND %s
-`
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.NamedArgs{"snapshot_id": snapshotID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot scan count: %w", err)
-	}
-
-	return count, nil
 }
 
 func (c *Controls) LoadBySnapshotID(

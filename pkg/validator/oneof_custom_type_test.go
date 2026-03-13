@@ -69,11 +69,11 @@ func TestOneOf_CustomStringType(t *testing.T) {
 			v.Check(tt.value, "asset_type", OneOfSlice(tt.allowed))
 
 			if tt.expectError {
-				if !v.HasErrors() {
+				if v.Error() == nil {
 					t.Error("expected error but got none")
 				}
 			} else {
-				if v.HasErrors() {
+				if v.Error() != nil {
 					t.Errorf("unexpected error: %v", v.Error())
 				}
 			}

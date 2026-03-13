@@ -299,15 +299,12 @@ func TestConditionHelpers(t *testing.T) {
 		}
 	})
 
-	t.Run("In helper", func(t *testing.T) {
-		c := In("principal.role", "admin", "owner")
-		if c.Operator != ConditionIn {
-			t.Errorf("Expected ConditionIn, got %v", c.Operator)
+	t.Run("NotIn condition", func(t *testing.T) {
+		c := Condition{
+			Operator: ConditionNotIn,
+			Key:      "principal.role",
+			Values:   []string{"guest"},
 		}
-	})
-
-	t.Run("NotIn helper", func(t *testing.T) {
-		c := NotIn("principal.role", "guest")
 		if c.Operator != ConditionNotIn {
 			t.Errorf("Expected ConditionNotIn, got %v", c.Operator)
 		}

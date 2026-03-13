@@ -30,21 +30,12 @@ type SnapshotService struct {
 	svc *TenantService
 }
 
-type (
-	CreateSnapshotRequest struct {
-		OrganizationID gid.GID
-		Name           string
-		Description    *string
-		Type           coredata.SnapshotsType
-	}
-
-	UpdateSnapshotRequest struct {
-		ID          gid.GID
-		Name        *string
-		Description **string
-		Type        *coredata.SnapshotsType
-	}
-)
+type CreateSnapshotRequest struct {
+	OrganizationID gid.GID
+	Name           string
+	Description    *string
+	Type           coredata.SnapshotsType
+}
 
 func (csr *CreateSnapshotRequest) Validate() error {
 	v := validator.New()
@@ -53,17 +44,6 @@ func (csr *CreateSnapshotRequest) Validate() error {
 	v.Check(csr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(csr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(csr.Type, "type", validator.Required(), validator.OneOfSlice(coredata.SnapshotsTypes()))
-
-	return v.Error()
-}
-
-func (usr *UpdateSnapshotRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(usr.ID, "id", validator.Required(), validator.GID(coredata.SnapshotEntityType))
-	v.Check(usr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(usr.Description, "description", validator.SafeText(ContentMaxLength))
-	v.Check(usr.Type, "type", validator.OneOfSlice(coredata.SnapshotsTypes()))
 
 	return v.Error()
 }

@@ -66,28 +66,3 @@ func TestMax(t *testing.T) {
 		})
 	}
 }
-
-func TestRange(t *testing.T) {
-	tests := []struct {
-		name      string
-		value     any
-		min       int
-		max       int
-		wantError bool
-	}{
-		{"in range", 5, 1, 10, false},
-		{"at min", 1, 1, 10, false},
-		{"at max", 10, 1, 10, false},
-		{"below range", 0, 1, 10, true},
-		{"above range", 11, 1, 10, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := Range(tt.min, tt.max)(tt.value)
-			if (err != nil) != tt.wantError {
-				t.Errorf("Range() error = %v, wantError %v", err, tt.wantError)
-			}
-		})
-	}
-}

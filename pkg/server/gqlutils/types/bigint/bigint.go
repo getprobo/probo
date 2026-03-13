@@ -58,3 +58,4 @@ func UnmarshalBigIntScalar(v any) (int64, error) {
 		return 0, fmt.Errorf("cannot unmarshal %T into BigInt", v)
 	}
 }
+

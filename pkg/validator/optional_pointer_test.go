@@ -56,11 +56,11 @@ func TestOptional_WithGIDPointer(t *testing.T) {
 			v.Check(tt.value, "owner_id", GID(100))
 
 			if tt.expectError {
-				if !v.HasErrors() {
+				if v.Error() == nil {
 					t.Error("expected error but got none")
 				}
 			} else {
-				if v.HasErrors() {
+				if v.Error() != nil {
 					t.Errorf("unexpected error: %v", v.Error())
 				}
 			}
@@ -100,14 +100,14 @@ func TestOptional_WithCustomTypePointer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			v.Check(tt.value, "asset_type", OneOf("VALID", "ANOTHER"))
+			v.Check(tt.value, "asset_type", OneOfSlice([]string{"VALID", "ANOTHER"}))
 
 			if tt.expectError {
-				if !v.HasErrors() {
+				if v.Error() == nil {
 					t.Error("expected error but got none")
 				}
 			} else {
-				if v.HasErrors() {
+				if v.Error() != nil {
 					t.Errorf("unexpected error: %v", v.Error())
 				}
 			}

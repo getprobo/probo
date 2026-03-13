@@ -50,20 +50,6 @@ func (ccdr *CreateCustomDomainRequest) Validate() error {
 	return v.Error()
 }
 
-func NewCustomDomainService(
-	svc *TenantService,
-	acmeService *certmanager.ACMEService,
-	encryptionKey cipher.EncryptionKey,
-	logger *log.Logger,
-) *CustomDomainService {
-	return &CustomDomainService{
-		svc:           svc,
-		acmeService:   acmeService,
-		encryptionKey: encryptionKey,
-		logger:        logger.Named("custom_domain"),
-	}
-}
-
 func (s *CustomDomainService) CreateCustomDomain(
 	ctx context.Context,
 	req CreateCustomDomainRequest,

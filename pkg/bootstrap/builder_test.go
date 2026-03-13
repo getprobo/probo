@@ -92,7 +92,8 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 
 func TestBuilder_Build_Defaults(t *testing.T) {
 	b := NewBuilder(mockEnv(requiredEnv()))
-	b.SetSAMLCredentials("test-cert", "test-key")
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -243,7 +244,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["ESIGN_TSA_URL"] = "http://custom.tsa.example.com"
 
 	b := NewBuilder(mockEnv(env))
-	b.SetSAMLCredentials("test-cert", "test-key")
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -313,7 +315,8 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	env["CONNECTOR_SLACK_REDIRECT_URI"] = "https://app.example.com/api/console/v1/connectors/complete"
 
 	b := NewBuilder(mockEnv(env))
-	b.SetSAMLCredentials("test-cert", "test-key")
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -343,7 +346,8 @@ func TestBuilder_Build_SlackConnector_CustomURLs(t *testing.T) {
 	env["CONNECTOR_SLACK_TOKEN_URL"] = "https://custom.slack.com/oauth/token"
 
 	b := NewBuilder(mockEnv(env))
-	b.SetSAMLCredentials("test-cert", "test-key")
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -382,7 +386,8 @@ func TestBuilder_Build_SAMLFromEnv(t *testing.T) {
 
 func TestBuilder_Build_SAMLPreset(t *testing.T) {
 	b := NewBuilder(mockEnv(requiredEnv()))
-	b.SetSAMLCredentials("preset-cert", "preset-key")
+	b.samlCertificate = "preset-cert"
+	b.samlPrivateKey = "preset-key"
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -396,7 +401,8 @@ func TestBuilder_Build_PgCABundleFromEnv(t *testing.T) {
 	env["PG_CA_BUNDLE"] = "test-ca-bundle-content"
 
 	b := NewBuilder(mockEnv(env))
-	b.SetSAMLCredentials("test-cert", "test-key")
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -414,7 +420,8 @@ func TestBuilder_Build_PgCABundleFromFile(t *testing.T) {
 	env["PG_CA_BUNDLE_PATH"] = caFile
 
 	b := NewBuilder(mockEnv(env))
-	b.SetSAMLCredentials("test-cert", "test-key")
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
 
 	cfg, err := b.Build()
 	require.NoError(t, err)

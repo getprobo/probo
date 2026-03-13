@@ -39,15 +39,6 @@ type (
 	CachedCertificates []*CachedCertificate
 )
 
-func NewCachedCertificate(domain string, domainID gid.GID) *CachedCertificate {
-	now := time.Now()
-	return &CachedCertificate{
-		Domain:         domain,
-		CustomDomainID: domainID,
-		CachedAt:       now,
-	}
-}
-
 func (cc *CachedCertificate) LoadByDomain(ctx context.Context, conn pg.Conn, domain string) error {
 	q := `
 SELECT

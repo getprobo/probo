@@ -23,7 +23,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -34,18 +33,6 @@ type (
 
 func NewSessionService(svc *Service) *SessionService {
 	return &SessionService{Service: svc}
-}
-
-type (
-	RevokeAllSessionsRequest struct {
-		CurrentSessionID gid.GID
-	}
-)
-
-func (req RevokeAllSessionsRequest) Validate() error {
-	v := validator.New()
-	v.Check(req.CurrentSessionID, "current_session_id", validator.GID(coredata.SessionEntityType))
-	return v.Error()
 }
 
 func (s SessionService) GetSession(ctx context.Context, sessionID gid.GID) (*coredata.Session, error) {

@@ -32,7 +32,7 @@ func TestCheckEach_EmptyTypedSlice(t *testing.T) {
 		t.Error("callback should not be called for empty slice")
 	})
 
-	if v.HasErrors() {
+	if v.Error() != nil {
 		t.Errorf("unexpected error for empty slice: %v", v.Error())
 	}
 }
@@ -63,7 +63,7 @@ func TestCheckEach_NonEmptyTypedSlice(t *testing.T) {
 		t.Errorf("expected callback to be called 2 times, got %d", callCount)
 	}
 
-	if v.HasErrors() {
+	if v.Error() != nil {
 		t.Errorf("unexpected error: %v", v.Error())
 	}
 }
@@ -79,7 +79,7 @@ func TestCheckEach_NilTypedSlice(t *testing.T) {
 		t.Error("callback should not be called for nil slice")
 	})
 
-	if v.HasErrors() {
+	if v.Error() != nil {
 		t.Errorf("unexpected error for nil slice: %v", v.Error())
 	}
 }
@@ -108,7 +108,7 @@ func TestCheckEach_PointerToNonEmptySlice(t *testing.T) {
 		t.Errorf("expected callback to be called 3 times, got %d", callCount)
 	}
 
-	if v.HasErrors() {
+	if v.Error() != nil {
 		t.Errorf("unexpected error for pointer to slice: %v", v.Error())
 	}
 }
@@ -124,7 +124,7 @@ func TestCheckEach_PointerToEmptySlice(t *testing.T) {
 		t.Error("callback should not be called for empty slice")
 	})
 
-	if v.HasErrors() {
+	if v.Error() != nil {
 		t.Errorf("unexpected error for pointer to empty slice: %v", v.Error())
 	}
 }
@@ -139,7 +139,7 @@ func TestCheckEach_NilPointerToSlice(t *testing.T) {
 		t.Error("callback should not be called for nil pointer to slice")
 	})
 
-	if v.HasErrors() {
+	if v.Error() != nil {
 		t.Errorf("unexpected error for nil pointer to slice: %v", v.Error())
 	}
 }
@@ -169,7 +169,7 @@ func TestCheckEach_DoublePointerToSlice(t *testing.T) {
 		t.Errorf("expected callback to be called 2 times, got %d", callCount)
 	}
 
-	if v.HasErrors() {
+	if v.Error() != nil {
 		t.Errorf("unexpected error for double pointer to slice: %v", v.Error())
 	}
 }
@@ -184,11 +184,11 @@ func TestCheckEach_NonSliceValue(t *testing.T) {
 		t.Error("callback should not be called for non-slice value")
 	})
 
-	if !v.HasErrors() {
+	if v.Error() == nil {
 		t.Error("expected error for non-slice value")
 	}
 
-	errors := v.Errors()
+	errors := v.Error().(ValidationErrors)
 	if len(errors) != 1 {
 		t.Errorf("expected 1 error, got %d", len(errors))
 	}

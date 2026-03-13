@@ -29,7 +29,7 @@ func TestDoublePointerValidation(t *testing.T) {
 
 		v.Check(doublePtr, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000))
 
-		if v.HasErrors() {
+		if v.Error() != nil {
 			t.Errorf("expected no errors, got: %v", v.Error())
 		}
 	})
@@ -42,7 +42,7 @@ func TestDoublePointerValidation(t *testing.T) {
 
 		v.Check(doublePtr, "name", validator.Required(), validator.NotEmpty())
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected errors for empty string")
 		}
 	})
@@ -55,7 +55,7 @@ func TestDoublePointerValidation(t *testing.T) {
 
 		v.Check(doublePtr, "name", validator.Required(), validator.MaxLen(10))
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected errors for string exceeding max length")
 		}
 	})
@@ -66,7 +66,7 @@ func TestDoublePointerValidation(t *testing.T) {
 
 		v.Check(doublePtr, "name", validator.NotEmpty(), validator.MaxLen(1000))
 
-		if v.HasErrors() {
+		if v.Error() != nil {
 			t.Errorf("expected no errors for nil optional field, got: %v", v.Error())
 		}
 	})
@@ -78,7 +78,7 @@ func TestDoublePointerValidation(t *testing.T) {
 
 		v.Check(doublePtr, "name", validator.NotEmpty(), validator.MaxLen(1000))
 
-		if v.HasErrors() {
+		if v.Error() != nil {
 			t.Errorf("expected no errors for nil optional field, got: %v", v.Error())
 		}
 	})
@@ -91,7 +91,7 @@ func TestDoublePointerValidation(t *testing.T) {
 
 		v.Check(doublePtr, "name", validator.NotEmpty(), validator.MaxLen(1000))
 
-		if v.HasErrors() {
+		if v.Error() != nil {
 			t.Errorf("expected no errors, got: %v", v.Error())
 		}
 	})

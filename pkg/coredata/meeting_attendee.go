@@ -17,7 +17,6 @@ package coredata
 import (
 	"context"
 	"fmt"
-	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -35,46 +34,6 @@ type (
 
 	MeetingAttendees []*MeetingAttendee
 )
-
-func (ma *MeetingAttendees) LoadByMeetingID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	meetingID gid.GID,
-) error {
-	q := `
-SELECT
-    meeting_id,
-    attendee_profile_id,
-    organization_id,
-    created_at
-FROM
-    meeting_attendees
-WHERE
-    %s
-    AND meeting_id = @meeting_id
-ORDER BY
-    created_at ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.NamedArgs{"meeting_id": meetingID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query meeting attendees: %w", err)
-	}
-
-	attendees, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MeetingAttendee])
-	if err != nil {
-		return fmt.Errorf("cannot collect meeting attendees: %w", err)
-	}
-
-	*ma = attendees
-	return nil
-}
 
 func (ma *MeetingAttendees) Merge(
 	ctx context.Context,

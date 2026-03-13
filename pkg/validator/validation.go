@@ -15,7 +15,6 @@
 package validator
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -95,29 +94,6 @@ func (v *Validator) CheckEach(items any, field string, fn func(index int, item a
 	for i := 0; i < val.Len(); i++ {
 		fn(i, val.Index(i).Interface())
 	}
-}
-
-func (v *Validator) CheckNested(field string, fn func(v *Validator)) {
-	nestedValidator := New()
-	fn(nestedValidator)
-
-	for _, err := range nestedValidator.errors {
-		prefixedErr := &ValidationError{
-			Field:   fmt.Sprintf("%s.%s", field, err.Field),
-			Code:    err.Code,
-			Message: err.Message,
-			Value:   err.Value,
-		}
-		v.errors = append(v.errors, prefixedErr)
-	}
-}
-
-func (v *Validator) HasErrors() bool {
-	return len(v.errors) > 0
-}
-
-func (v *Validator) Errors() ValidationErrors {
-	return v.errors
 }
 
 func (v *Validator) Error() error {

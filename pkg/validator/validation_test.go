@@ -15,7 +15,6 @@
 package validator
 
 import (
-	"fmt"
 	"testing"
 
 	"go.probo.inc/probo/pkg/mail"
@@ -28,8 +27,8 @@ func TestValidator_Validate(t *testing.T) {
 
 		v.Check(&email, "email", Required(), NotEmpty())
 
-		if v.HasErrors() {
-			t.Errorf("expected no errors, got: %v", v.Errors())
+		if v.Error() != nil {
+			t.Errorf("expected no errors, got: %v", v.Error().(ValidationErrors))
 		}
 	})
 
@@ -41,11 +40,11 @@ func TestValidator_Validate(t *testing.T) {
 		v.Check(email, "email", NotEmpty())
 		v.Check(&password, "password", Required(), MinLen(8))
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected validation errors")
 		}
 
-		errors := v.Errors()
+		errors := v.Error().(ValidationErrors)
 		// email: 1 error (Required), password: 1 error (MinLen - Required passes because it's not empty)
 		if len(errors) != 2 {
 			t.Errorf("expected 2 errors, got %d: %v", len(errors), errors)
@@ -58,47 +57,12 @@ func TestValidator_Validate(t *testing.T) {
 
 		v.Check(&value, "password", MinLen(8), MaxLen(5))
 
-		errors := v.Errors()
+		errors := v.Error().(ValidationErrors)
 		// Both MinLen and MaxLen will fail (too short and somehow conflicts, but logically MinLen will fail)
 		if len(errors) < 1 {
 			t.Errorf("expected at least 1 error, got %d", len(errors))
 		}
 	})
-}
-
-func TestValidator_CheckNested(t *testing.T) {
-	v := New()
-
-	v.CheckNested("user", func(nv *Validator) {
-		email := mail.Nil
-		nv.Check(&email, "email", NotEmpty())
-
-		nv.CheckNested("address", func(av *Validator) {
-			city := ""
-			av.Check(&city, "city", Required())
-		})
-	})
-
-	if !v.HasErrors() {
-		t.Error("expected validation errors")
-	}
-
-	errors := v.Errors()
-	if len(errors) != 2 {
-		t.Errorf("expected 2 errors, got %d", len(errors))
-	}
-
-	// Check field paths
-	expectedFields := map[string]bool{
-		"user.email":        true,
-		"user.address.city": true,
-	}
-
-	for _, err := range errors {
-		if !expectedFields[err.Field] {
-			t.Errorf("unexpected field path: %s", err.Field)
-		}
-	}
 }
 
 func TestValidator_Error(t *testing.T) {
@@ -192,11 +156,11 @@ func TestOptionalFieldExample(t *testing.T) {
 	v.Check(req.PhoneNumber, "phoneNumber", MinLen(10))
 	v.Check(req.Age, "age", Min(18), Max(120))
 
-	if !v.HasErrors() {
+	if v.Error() == nil {
 		t.Fatal("expected validation errors")
 	}
 
-	errors := v.Errors()
+	errors := v.Error().(ValidationErrors)
 
 	websiteErr := errors.ByField("website")
 	if len(websiteErr) != 1 {
@@ -216,140 +180,17 @@ func TestOptionalFieldExample(t *testing.T) {
 	t.Logf("Optional field validation errors: %s", errors.Error())
 }
 
-func TestRealWorldExample(t *testing.T) {
-	// Simulate a user registration form
-	type Address struct {
-		City    string
-		ZipCode string
-	}
-
-	type User struct {
-		Email    string
-		Password string
-		Age      int
-		Website  *string
-		Address  Address
-	}
-
-	user := User{
-		Email:    "",
-		Password: "123",
-		Age:      15,
-		Website:  new("not-a-url"),
-		Address: Address{
-			City:    "",
-			ZipCode: "12345",
-		},
-	}
-
-	v := New()
-
-	// Validate user fields
-	v.Check(&user.Email, "email", Required(), NotEmpty())
-	v.Check(&user.Password, "password", Required(), MinLen(8))
-	v.Check(&user.Age, "age", Min(18), Max(120))
-	v.Check(user.Website, "website", URL())
-
-	// Validate nested address
-	v.CheckNested("address", func(av *Validator) {
-		av.Check(&user.Address.City, "city", Required())
-		av.Check(&user.Address.ZipCode, "zipCode", Pattern(`^\d{5}$`, "must be 5 digits"))
-	})
-
-	if !v.HasErrors() {
-		t.Fatal("expected validation errors")
-	}
-
-	errors := v.Errors()
-	expectedErrors := map[string]ErrorCode{
-		"email":        ErrorCodeRequired,
-		"password":     ErrorCodeTooShort,
-		"age":          ErrorCodeOutOfRange,
-		"website":      ErrorCodeInvalidURL,
-		"address.city": ErrorCodeRequired,
-	}
-
-	// Check that we have the expected errors
-	for field, expectedCode := range expectedErrors {
-		found := false
-		for _, err := range errors {
-			if err.Field == field && err.Code == expectedCode {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("expected error for field '%s' with code '%s'", field, expectedCode)
-		}
-	}
-
-	// Print errors for debugging
-	t.Logf("Validation errors: %s", errors.Error())
-}
-
-func TestArrayValidation(t *testing.T) {
-	type Item struct {
-		Name  string
-		Price int
-	}
-
-	items := []Item{
-		{Name: "", Price: -10},
-		{Name: "Valid", Price: 100},
-		{Name: "X", Price: 10},
-	}
-
-	v := New()
-
-	// Validate each item
-	for i, item := range items {
-		field := fmt.Sprintf("items[%d]", i)
-		v.CheckNested(field, func(iv *Validator) {
-			iv.Check(&item.Name, "name", Required(), MinLen(2))
-			iv.Check(&item.Price, "price", Min(0))
-		})
-	}
-
-	if !v.HasErrors() {
-		t.Fatal("expected validation errors")
-	}
-
-	errors := v.Errors()
-
-	// Check for specific field paths
-	expectedFields := []string{
-		"items[0].name",
-		"items[0].price",
-		"items[2].name",
-	}
-
-	for _, expectedField := range expectedFields {
-		found := false
-		for _, err := range errors {
-			if err.Field == expectedField {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("expected error for field '%s'", expectedField)
-		}
-	}
-
-	t.Logf("Array validation errors: %s", errors.Error())
-}
-
 func TestDuplicateValidators(t *testing.T) {
 	t.Run("duplicate MinLen creates two errors", func(t *testing.T) {
 		v := New()
 		name := "abc"
 		v.Check(&name, "name", MinLen(5), MinLen(5))
 
-		if !v.HasErrors() {
+		if v.Error() == nil {
 			t.Error("expected validation errors")
 		}
 
-		errors := v.Errors()
+		errors := v.Error().(ValidationErrors)
 		if len(errors) != 2 {
 			t.Errorf("expected 2 errors (one per MinLen), got %d", len(errors))
 		}
@@ -367,7 +208,7 @@ func TestDuplicateValidators(t *testing.T) {
 		name := ""
 		v.Check(&name, "name", Required(), Required())
 
-		errors := v.Errors()
+		errors := v.Error().(ValidationErrors)
 		if len(errors) != 2 {
 			t.Errorf("expected 2 errors, got %d", len(errors))
 		}
@@ -378,7 +219,7 @@ func TestDuplicateValidators(t *testing.T) {
 		email := mail.Nil
 		v.Check(&email, "email", NotEmpty(), NotEmpty())
 
-		errors := v.Errors()
+		errors := v.Error().(ValidationErrors)
 		if len(errors) != 2 {
 			t.Errorf("expected 2 errors, got %d", len(errors))
 		}
@@ -389,7 +230,7 @@ func TestDuplicateValidators(t *testing.T) {
 		name := "test"
 		v.Check(&name, "name", MinLen(5), MinLen(10))
 
-		errors := v.Errors()
+		errors := v.Error().(ValidationErrors)
 		if len(errors) != 2 {
 			t.Errorf("expected 2 errors, got %d", len(errors))
 		}

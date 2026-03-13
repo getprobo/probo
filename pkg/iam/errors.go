@@ -313,19 +313,6 @@ func (e ErrInvalidCredentials) Error() string {
 	return e.message
 }
 
-type ErrInvitationNotDeleted struct {
-	InvitationID gid.GID
-	Status       string
-}
-
-func NewInvitationNotDeletedError(invitationID gid.GID, status string) error {
-	return &ErrInvitationNotDeleted{InvitationID: invitationID, Status: status}
-}
-
-func (e ErrInvitationNotDeleted) Error() string {
-	return fmt.Sprintf("cannot delete invitation %q in %q status", e.InvitationID, e.Status)
-}
-
 type ErrPasswordAuthenticationRequired struct {
 	Reason string
 }

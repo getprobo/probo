@@ -62,10 +62,6 @@ func AssumptionRequired(ctx context.Context, err error) *gqlerror.Error {
 	}
 }
 
-func AssumptionRequiredf(ctx context.Context, format string, a ...any) *gqlerror.Error {
-	return AssumptionRequired(ctx, fmt.Errorf(format, a...))
-}
-
 func FullNameRequired(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),
@@ -102,10 +98,6 @@ func AccountAlreadyActivated(ctx context.Context, err error) *gqlerror.Error {
 			"code": "ACCOUNT_ALREADY_ACTIVATED",
 		},
 	}
-}
-
-func AccountAlreadyActivatedf(ctx context.Context, format string, a ...any) *gqlerror.Error {
-	return AccountAlreadyActivated(ctx, fmt.Errorf(format, a...))
 }
 
 func Forbidden(ctx context.Context, err error) *gqlerror.Error {

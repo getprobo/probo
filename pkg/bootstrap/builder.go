@@ -38,11 +38,6 @@ func NewBuilder(getEnv EnvGetter) *Builder {
 	return &Builder{getEnv: getEnv}
 }
 
-func (b *Builder) SetSAMLCredentials(certificate, privateKey string) {
-	b.samlCertificate = certificate
-	b.samlPrivateKey = privateKey
-}
-
 func (b *Builder) Build() (*probod.FullConfig, error) {
 	if err := b.validateRequired(); err != nil {
 		return nil, err

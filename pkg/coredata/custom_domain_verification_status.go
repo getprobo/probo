@@ -14,11 +14,6 @@
 
 package coredata
 
-import (
-	"database/sql/driver"
-	"fmt"
-)
-
 type CustomDomainVerificationStatus string
 
 const (
@@ -26,41 +21,3 @@ const (
 	CustomDomainVerificationStatusVerified CustomDomainVerificationStatus = "VERIFIED"
 	CustomDomainVerificationStatusFailed   CustomDomainVerificationStatus = "FAILED"
 )
-
-func (s CustomDomainVerificationStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
-}
-
-func (s *CustomDomainVerificationStatus) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case CustomDomainVerificationStatusPending.String():
-		*s = CustomDomainVerificationStatusPending
-	case CustomDomainVerificationStatusVerified.String():
-		*s = CustomDomainVerificationStatusVerified
-	case CustomDomainVerificationStatusFailed.String():
-		*s = CustomDomainVerificationStatusFailed
-	default:
-		return fmt.Errorf("invalid CustomDomainVerificationStatus value: %q", val)
-	}
-
-	return nil
-}
-
-func (s CustomDomainVerificationStatus) String() string {
-	return string(s)
-}
-
-func (s *CustomDomainVerificationStatus) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for CustomDomainVerificationStatus, expected string got %T", value)
-	}
-
-	return s.UnmarshalText([]byte(val))
-}
-
-func (s CustomDomainVerificationStatus) Value() (driver.Value, error) {
-	return s.String(), nil
-}

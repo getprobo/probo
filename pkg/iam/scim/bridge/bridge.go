@@ -31,24 +31,10 @@ type (
 		provider          provider.Provider
 		scimClient        *scimclient.Client
 		excludedUserNames []string
-		forceUpdate       bool
-		dryRun            bool
 	}
 
 	Option func(*Bridge)
 )
-
-func WithDryRun(dryRun bool) Option {
-	return func(s *Bridge) {
-		s.dryRun = dryRun
-	}
-}
-
-func WithForceUpdate(forceUpdate bool) Option {
-	return func(s *Bridge) {
-		s.forceUpdate = forceUpdate
-	}
-}
 
 func WithExcludedUserNames(excludedUserNames []string) Option {
 	return func(s *Bridge) {
@@ -96,16 +82,13 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 
 		existingSCIM, exists := scimUsersByEmail[email]
 		if !exists {
-			if !s.dryRun {
-				if err := s.scimClient.CreateUser(ctx, &pu); err != nil {
-					errs = append(errs, fmt.Errorf("cannot create user %q: %w", pu.UserName, err))
-					continue
-				}
+			if err := s.scimClient.CreateUser(ctx, &pu); err != nil {
+				errs = append(errs, fmt.Errorf("cannot create user %q: %w", pu.UserName, err))
+				continue
 			}
 			created++
 		} else {
-			needsUpdate := s.forceUpdate ||
-				existingSCIM.Active != pu.Active ||
+			needsUpdate := existingSCIM.Active != pu.Active ||
 				existingSCIM.DisplayName != pu.DisplayName ||
 				existingSCIM.Title != pu.Title ||
 				existingSCIM.GivenName != pu.GivenName ||
@@ -120,11 +103,9 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 				existingSCIM.PreferredLanguage != pu.PreferredLanguage
 
 			if needsUpdate {
-				if !s.dryRun {
-					if err := s.scimClient.UpdateUser(ctx, existingSCIM.ID, &pu); err != nil {
-						errs = append(errs, fmt.Errorf("cannot update user %q: %w", pu.UserName, err))
-						continue
-					}
+				if err := s.scimClient.UpdateUser(ctx, existingSCIM.ID, &pu); err != nil {
+					errs = append(errs, fmt.Errorf("cannot update user %q: %w", pu.UserName, err))
+					continue
 				}
 				updated++
 			} else {
@@ -139,11 +120,9 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 		}
 
 		if s.isExcluded(email) {
-			if !s.dryRun {
-				if err := s.scimClient.DeleteUser(ctx, scimUser.ID); err != nil {
-					errs = append(errs, fmt.Errorf("cannot delete user %q: %w", email, err))
-					continue
-				}
+			if err := s.scimClient.DeleteUser(ctx, scimUser.ID); err != nil {
+				errs = append(errs, fmt.Errorf("cannot delete user %q: %w", email, err))
+				continue
 			}
 			deleted++
 			continue
@@ -153,11 +132,9 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 			continue
 		}
 
-		if !s.dryRun {
-			if err := s.scimClient.DeactivateUser(ctx, scimUser.ID); err != nil {
-				errs = append(errs, fmt.Errorf("cannot deactivate user %q: %w", email, err))
-				continue
-			}
+		if err := s.scimClient.DeactivateUser(ctx, scimUser.ID); err != nil {
+			errs = append(errs, fmt.Errorf("cannot deactivate user %q: %w", email, err))
+			continue
 		}
 		deactivated++
 	}

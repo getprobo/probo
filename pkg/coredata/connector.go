@@ -72,44 +72,6 @@ func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (
 	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
-func (c *Connectors) LoadByOrganizationID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	cursor *page.Cursor[ConnectorOrderField],
-	encryptionKey cipher.EncryptionKey,
-	filter *ConnectorFilter,
-) error {
-	if err := c.loadByOrganizationIDWithPagination(ctx, conn, scope, organizationID, cursor, filter); err != nil {
-		return fmt.Errorf("cannot load connectors by organization ID: %w", err)
-	}
-
-	if err := c.decryptConnections(encryptionKey); err != nil {
-		return fmt.Errorf("cannot decrypt connections: %w", err)
-	}
-
-	return nil
-}
-
-func (c *Connectors) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	encryptionKey cipher.EncryptionKey,
-) error {
-	if err := c.loadAllByOrganizationID(ctx, conn, scope, organizationID); err != nil {
-		return fmt.Errorf("cannot load all connectors by organization ID: %w", err)
-	}
-
-	if err := c.decryptConnections(encryptionKey); err != nil {
-		return fmt.Errorf("cannot decrypt connections: %w", err)
-	}
-
-	return nil
-}
-
 func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 	ctx context.Context,
 	conn pg.Conn,

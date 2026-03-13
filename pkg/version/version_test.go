@@ -91,24 +91,6 @@ func TestUserAgent(t *testing.T) {
 	}
 }
 
-func TestVersion(t *testing.T) {
-	v := version.Version()
-	assert.NotEmpty(t, v, "Version should not be empty")
-}
-
-func TestFullVersion(t *testing.T) {
-	fv := version.FullVersion()
-	require.NotEmpty(t, fv, "Full version should not be empty")
-
-	// Check that it contains expected fields
-	assert.Contains(t, fv, "Version:", "Full version should contain Version field")
-	assert.Contains(t, fv, "Go:", "Full version should contain Go field")
-
-	// Check it's multiline
-	lines := strings.Split(fv, "\n")
-	assert.GreaterOrEqual(t, len(lines), 2, "Full version should have at least 2 lines")
-}
-
 func TestUserAgentConsistency(t *testing.T) {
 	// Test that multiple calls return consistent results
 	ua1 := version.UserAgent("test")

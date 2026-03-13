@@ -34,22 +34,6 @@ func NewTenantID() TenantID {
 	return defaultTenantGenerator.NewTenantID()
 }
 
-// ParseTenantID parses a string representation into a TenantID
-func ParseTenantID(s string) (TenantID, error) {
-	var id TenantID
-	decoded, err := base64.RawURLEncoding.DecodeString(s)
-	if err != nil {
-		return NilTenant, fmt.Errorf("invalid tenant ID encoding: %w", err)
-	}
-
-	if len(decoded) != len(id) {
-		return NilTenant, fmt.Errorf("invalid tenant ID length: got %d, want %d", len(decoded), len(id))
-	}
-
-	copy(id[:], decoded)
-	return id, nil
-}
-
 // newTenantGenerator creates a new generator with machine-specific components
 func newTenantGenerator() *tenantGenerator {
 	g := &tenantGenerator{

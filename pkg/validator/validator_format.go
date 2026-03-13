@@ -23,7 +23,6 @@ import (
 )
 
 var (
-	uuidRegex   = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 	domainRegex = regexp.MustCompile(`^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
 )
 
@@ -51,40 +50,6 @@ func URL() ValidatorFunc {
 
 		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 			return newValidationError(ErrorCodeInvalidURL, "URL must use http or https scheme")
-		}
-
-		if parsedURL.Host == "" {
-			return newValidationError(ErrorCodeInvalidURL, "URL must have a host")
-		}
-
-		return nil
-	}
-}
-
-// HTTPUrl validates that a string is a valid HTTP URL (not HTTPS).
-func HTTPUrl() ValidatorFunc {
-	return func(value any) *ValidationError {
-		actualValue, isNil := dereferenceValue(value)
-		if isNil {
-			return nil
-		}
-
-		str, ok := actualValue.(string)
-		if !ok {
-			return newValidationError(ErrorCodeInvalidURL, "value must be a string")
-		}
-
-		if str == "" {
-			return nil
-		}
-
-		parsedURL, err := url.Parse(str)
-		if err != nil {
-			return newValidationError(ErrorCodeInvalidURL, "invalid URL format")
-		}
-
-		if parsedURL.Scheme != "http" {
-			return newValidationError(ErrorCodeInvalidURL, "URL must use http scheme")
 		}
 
 		if parsedURL.Host == "" {
@@ -123,31 +88,6 @@ func HTTPSUrl() ValidatorFunc {
 
 		if parsedURL.Host == "" {
 			return newValidationError(ErrorCodeInvalidURL, "URL must have a host")
-		}
-
-		return nil
-	}
-}
-
-// UUID validates that a string is a valid UUID.
-func UUID() ValidatorFunc {
-	return func(value any) *ValidationError {
-		actualValue, isNil := dereferenceValue(value)
-		if isNil {
-			return nil
-		}
-
-		str, ok := actualValue.(string)
-		if !ok {
-			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
-		}
-
-		if str == "" {
-			return nil
-		}
-
-		if !uuidRegex.MatchString(str) {
-			return newValidationError(ErrorCodeInvalidFormat, "invalid UUID format")
 		}
 
 		return nil
