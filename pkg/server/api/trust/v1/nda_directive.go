@@ -16,7 +16,6 @@ package trust_v1
 
 import (
 	"context"
-	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
@@ -47,10 +46,6 @@ func newNDADirective(
 
 		membership, err := trustSvc.GetMembershipByCompliancePageIDAndIdentityID(ctx, compliancePage.ID, identity.ID)
 		if err != nil {
-			if errors.Is(err, trust.ErrMembershipNotFound) {
-				return nil, gqlutils.Unauthenticatedf(ctx, "authentication needed")
-			}
-
 			logger.ErrorCtx(ctx, "cannot get compliance page membership", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
