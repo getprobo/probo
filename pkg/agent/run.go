@@ -645,6 +645,19 @@ func executeWithHandoff(
 		},
 	)
 
+	for i := handoffIdx + 1; i < len(toolCalls); i++ {
+		msgs = append(
+			msgs,
+			llm.Message{
+				Role:       llm.RoleTool,
+				ToolCallID: toolCalls[i].ID,
+				Parts: []llm.Part{
+					llm.TextPart{Text: "Tool call was not executed because a handoff occurred."},
+				},
+			},
+		)
+	}
+
 	return ht.handoff, results, msgs, nil
 }
 

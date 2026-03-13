@@ -2747,6 +2747,90 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 	)
 
 	t.Run(
+		"tools after handoff get tool-result messages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			type Params struct{}
+			tool1 := agent.FunctionTool[Params](
+				"prepare",
+				"Prepare data",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "prepared"}, nil
+				},
+			)
+			tool2 := agent.FunctionTool[Params](
+				"finalize",
+				"Finalize data",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					t.Fatal("tool after handoff should not be executed")
+					return agent.ToolResult{}, nil
+				},
+			)
+
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(
+						llm.ToolCall{
+							ID:       "tc_1",
+							Function: llm.FunctionCall{Name: "prepare", Arguments: `{}`},
+						},
+						llm.ToolCall{
+							ID:       "tc_2",
+							Function: llm.FunctionCall{Name: "transfer_to_specialist", Arguments: `{}`},
+						},
+						llm.ToolCall{
+							ID:       "tc_3",
+							Function: llm.FunctionCall{Name: "finalize", Arguments: `{}`},
+						},
+					),
+					stopResponse("Specialist here."),
+				},
+			}
+
+			client := newTestClient(provider)
+
+			specialist := agent.New(
+				"specialist",
+				client,
+				agent.WithModel("test-model"),
+			)
+
+			router := agent.New(
+				"router",
+				client,
+				agent.WithModel("test-model"),
+				agent.WithTools(tool1, tool2),
+				agent.WithHandoffs(specialist),
+			)
+
+			result, err := router.Run(
+				context.Background(),
+				[]llm.Message{userMessage("prepare, transfer, and finalize")},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "Specialist here.", result.FinalMessage().Text())
+			assert.Equal(t, "specialist", result.LastAgent.Name())
+
+			var toolMsgs []llm.Message
+			for _, m := range result.Messages {
+				if m.Role == llm.RoleTool {
+					toolMsgs = append(toolMsgs, m)
+				}
+			}
+
+			require.Len(t, toolMsgs, 3)
+			assert.Equal(t, "tc_1", toolMsgs[0].ToolCallID)
+			assert.Equal(t, "prepared", toolMsgs[0].Text())
+			assert.Equal(t, "tc_2", toolMsgs[1].ToolCallID)
+			assert.Contains(t, toolMsgs[1].Text(), "Transferred to specialist")
+			assert.Equal(t, "tc_3", toolMsgs[2].ToolCallID)
+			assert.Contains(t, toolMsgs[2].Text(), "not executed")
+		},
+	)
+
+	t.Run(
 		"pre-handoff tool error aborts handoff",
 		func(t *testing.T) {
 			t.Parallel()
