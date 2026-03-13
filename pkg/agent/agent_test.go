@@ -3103,3 +3103,113 @@ func TestResume_HandoffWithInputFilter(t *testing.T) {
 	assert.Equal(t, "Filtered specialist here.", result.FinalMessage().Text())
 	assert.Equal(t, "specialist", result.LastAgent.Name())
 }
+
+func TestRun_NilHandoffsAreSkipped(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"nil agent in WithHandoffs",
+		func(t *testing.T) {
+			t.Parallel()
+
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					stopResponse("Hello."),
+				},
+			}
+
+			client := newTestClient(provider)
+
+			billing := agent.New(
+				"billing",
+				client,
+				agent.WithModel("test-model"),
+			)
+
+			a := agent.New(
+				"triage",
+				client,
+				agent.WithModel("test-model"),
+				agent.WithHandoffs(nil, billing, nil),
+			)
+
+			result, err := a.Run(
+				context.Background(),
+				[]llm.Message{userMessage("hi")},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "Hello.", result.FinalMessage().Text())
+		},
+	)
+
+	t.Run(
+		"nil handoff in WithHandoffConfigs",
+		func(t *testing.T) {
+			t.Parallel()
+
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					stopResponse("Hello."),
+				},
+			}
+
+			client := newTestClient(provider)
+
+			billing := agent.New(
+				"billing",
+				client,
+				agent.WithModel("test-model"),
+			)
+
+			a := agent.New(
+				"triage",
+				client,
+				agent.WithModel("test-model"),
+				agent.WithHandoffConfigs(
+					nil,
+					agent.HandoffTo(billing),
+					nil,
+				),
+			)
+
+			result, err := a.Run(
+				context.Background(),
+				[]llm.Message{userMessage("hi")},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "Hello.", result.FinalMessage().Text())
+		},
+	)
+
+	t.Run(
+		"HandoffTo with nil agent in WithHandoffConfigs",
+		func(t *testing.T) {
+			t.Parallel()
+
+			provider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					stopResponse("Hello."),
+				},
+			}
+
+			client := newTestClient(provider)
+
+			a := agent.New(
+				"triage",
+				client,
+				agent.WithModel("test-model"),
+				agent.WithHandoffConfigs(agent.HandoffTo(nil)),
+			)
+
+			result, err := a.Run(
+				context.Background(),
+				[]llm.Message{userMessage("hi")},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "Hello.", result.FinalMessage().Text())
+		},
+	)
+}

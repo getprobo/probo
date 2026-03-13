@@ -178,14 +178,20 @@ func WithTools(tools ...Tool) Option {
 func WithHandoffs(agents ...*Agent) Option {
 	return func(a *Agent) {
 		for _, ag := range agents {
-			a.handoffs = append(a.handoffs, &Handoff{Agent: ag})
+			if ag != nil {
+				a.handoffs = append(a.handoffs, &Handoff{Agent: ag})
+			}
 		}
 	}
 }
 
 func WithHandoffConfigs(handoffs ...*Handoff) Option {
 	return func(a *Agent) {
-		a.handoffs = append(a.handoffs, handoffs...)
+		for _, h := range handoffs {
+			if h != nil && h.Agent != nil {
+				a.handoffs = append(a.handoffs, h)
+			}
+		}
 	}
 }
 
