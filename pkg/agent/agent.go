@@ -306,7 +306,11 @@ func WithResetToolChoice(reset bool) Option {
 
 func WithMCPServers(servers ...*MCPServer) Option {
 	return func(a *Agent) {
-		a.mcpServers = append(a.mcpServers, servers...)
+		for _, s := range servers {
+			if s != nil {
+				a.mcpServers = append(a.mcpServers, s)
+			}
+		}
 	}
 }
 

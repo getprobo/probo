@@ -26,6 +26,19 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
+func TestWithMCPServers_SkipsNilEntries(t *testing.T) {
+	t.Parallel()
+
+	valid := NewMCPServer("valid", nil)
+	a := &Agent{}
+
+	opt := WithMCPServers(nil, valid, nil)
+	opt(a)
+
+	require.Len(t, a.mcpServers, 1)
+	assert.Equal(t, "valid", a.mcpServers[0].Name())
+}
+
 func TestNewMCPServer(t *testing.T) {
 	t.Parallel()
 
