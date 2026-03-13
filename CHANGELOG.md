@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.142.1] - 2026-03-13
+
+### Fixed
+
+- Fix documents UI
+- Fix refetch after publication
+- Add nda warning to new compliance update modal
+- Autosubmit mailing list confirmation
+
 ## [0.142.0] - 2026-03-12
 
 ### Added
