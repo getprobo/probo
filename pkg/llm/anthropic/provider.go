@@ -189,8 +189,9 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 			}
 			out = append(out, anthropic.NewUserMessage(blocks...))
 		case llm.RoleAssistant:
-			blocks := []anthropic.ContentBlockParamUnion{
-				anthropic.NewTextBlock(msg.Text()),
+			var blocks []anthropic.ContentBlockParamUnion
+			if text := msg.Text(); text != "" {
+				blocks = append(blocks, anthropic.NewTextBlock(text))
 			}
 			for _, tc := range msg.ToolCalls {
 				var input any
