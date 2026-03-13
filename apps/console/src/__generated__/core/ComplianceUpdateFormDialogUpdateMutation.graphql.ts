@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<160a29eaaba4b3db2c1b7aca34164dd7>>
+ * @generated SignedSource<<44dade2df63778a95d78ef9aaf6c8fa2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,9 +11,9 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type MailingListUpdateStatus = "DRAFT" | "ENQUEUED" | "PROCESSING" | "SENT";
 export type UpdateMailingListUpdateInput = {
-  body: string;
+  body?: string | null | undefined;
   id: string;
-  title: string;
+  title?: string | null | undefined;
 };
 export type ComplianceUpdateFormDialogUpdateMutation$variables = {
   input: UpdateMailingListUpdateInput;
