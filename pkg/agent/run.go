@@ -396,6 +396,42 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 						},
 					)
 				}
+
+				if nie, ok := errors.AsType[*nestedInterruptionError](err); ok {
+					s.logger.InfoCtx(
+						ctx,
+						"nested agent interrupted, approval required",
+						log.Int("pending_count", len(nie.inner.PendingApprovals)),
+						log.String("nested_agent", nie.inner.Agent.name),
+					)
+
+					msgsCopy := make([]llm.Message, len(s.messages))
+					copy(msgsCopy, s.messages)
+
+					return s.finishRun(
+						ctx,
+						nil,
+						&InterruptedError{
+							ToolCalls:        nie.inner.ToolCalls,
+							PendingApprovals: nie.inner.PendingApprovals,
+							Agent:            nie.inner.Agent,
+							Messages:         nie.inner.Messages,
+							Usage:            nie.inner.Usage,
+							Turns:            nie.inner.Turns,
+							outerState: &outerLoopState{
+								agent:          s.agent,
+								messages:       msgsCopy,
+								usage:          s.totalUsage,
+								turns:          s.turns,
+								allToolCalls:   nie.allToolCalls,
+								toolCallID:     nie.toolCallID,
+								completedCalls: nie.completedCalls,
+								innerInterrupt: nie.inner,
+							},
+						},
+					)
+				}
+
 				return s.finishRun(ctx, nil, err)
 			}
 
@@ -553,6 +589,24 @@ func executeWithHandoff(
 
 		tr, err := executeSingleTool(ctx, tracer, agent, toolCalls[i], descriptors[i].(Tool), onEvent, logger)
 		if err != nil {
+			if ie, ok := errors.AsType[*InterruptedError](err); ok {
+				var completed []completedCall
+				for j := range results {
+					completed = append(
+						completed,
+						completedCall{
+							toolCallID: toolCalls[j].ID,
+							result:     results[j].Result,
+						},
+					)
+				}
+				return nil, nil, msgs, &nestedInterruptionError{
+					inner:          ie,
+					toolCallID:     toolCalls[i].ID,
+					allToolCalls:   toolCalls,
+					completedCalls: completed,
+				}
+			}
 			return nil, nil, msgs, err
 		}
 
@@ -621,6 +675,44 @@ func executeParallel(
 	}
 
 	wg.Wait()
+
+	for i, entry := range entries {
+		var ie *InterruptedError
+		if entry.err != nil && errors.As(entry.err, &ie) {
+			var completed []completedCall
+			for j, other := range entries {
+				if j == i {
+					continue
+				}
+				if other.err != nil {
+					completed = append(
+						completed,
+						completedCall{
+							toolCallID: toolCalls[j].ID,
+							result: ToolResult{
+								Content: fmt.Sprintf("Error: %s", other.err.Error()),
+								IsError: true,
+							},
+						},
+					)
+					continue
+				}
+				completed = append(
+					completed,
+					completedCall{
+						toolCallID: toolCalls[j].ID,
+						result:     other.result,
+					},
+				)
+			}
+			return nil, nil, &nestedInterruptionError{
+				inner:          ie,
+				toolCallID:     toolCalls[i].ID,
+				allToolCalls:   toolCalls,
+				completedCalls: completed,
+			}
+		}
+	}
 
 	var (
 		results []ToolCallResult
@@ -710,6 +802,12 @@ func executeSingleTool(
 
 	result, err := tool.Execute(toolCtx, tc.Function.Arguments)
 	if err != nil {
+		if _, ok := errors.AsType[*InterruptedError](err); ok {
+			toolSpan.SetAttributes(attribute.Bool("tool.interrupted", true))
+			toolSpan.End()
+			return ToolResult{}, err
+		}
+
 		toolSpan.RecordError(err)
 		toolSpan.SetStatus(codes.Error, err.Error())
 		toolSpan.End()
@@ -812,6 +910,10 @@ func runOutputGuardrails(ctx context.Context, agent *Agent, message llm.Message)
 // are not re-evaluated because the messages were already validated in the
 // original Run call.
 func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInput) (*Result, error) {
+	if interrupted.outerState != nil {
+		return resumeNested(ctx, interrupted, input)
+	}
+
 	tracer := otel.GetTracerProvider().Tracer(tracerName)
 	logger := interrupted.Agent.logger
 
@@ -961,6 +1063,86 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 			skipSessionLoad:     true,
 			initialUsage:        interrupted.Usage,
 			initialTurns:        interrupted.Turns,
+		},
+	)
+}
+
+func resumeNested(ctx context.Context, interrupted *InterruptedError, input ResumeInput) (*Result, error) {
+	outer := interrupted.outerState
+	logger := outer.agent.logger
+
+	logger.InfoCtx(
+		ctx,
+		"resuming nested agent interruption",
+		log.String("outer_agent", outer.agent.name),
+		log.String("inner_agent", interrupted.Agent.name),
+	)
+
+	innerResult, err := Resume(ctx, outer.innerInterrupt, input)
+	if err != nil {
+		var innerIE *InterruptedError
+		if errors.As(err, &innerIE) {
+			return nil, &InterruptedError{
+				ToolCalls:        innerIE.ToolCalls,
+				PendingApprovals: innerIE.PendingApprovals,
+				Agent:            innerIE.Agent,
+				Messages:         innerIE.Messages,
+				Usage:            innerIE.Usage,
+				Turns:            innerIE.Turns,
+				outerState: &outerLoopState{
+					agent:          outer.agent,
+					messages:       outer.messages,
+					usage:          outer.usage,
+					turns:          outer.turns,
+					allToolCalls:   outer.allToolCalls,
+					toolCallID:     outer.toolCallID,
+					completedCalls: outer.completedCalls,
+					innerInterrupt: innerIE,
+				},
+			}
+		}
+		return nil, fmt.Errorf("cannot resume nested agent: %w", err)
+	}
+
+	completedMap := make(map[string]ToolResult, len(outer.completedCalls))
+	for _, cc := range outer.completedCalls {
+		completedMap[cc.toolCallID] = cc.result
+	}
+
+	messages := make([]llm.Message, len(outer.messages))
+	copy(messages, outer.messages)
+
+	for _, tc := range outer.allToolCalls {
+		var content string
+		if tc.ID == outer.toolCallID {
+			content = innerResult.FinalMessage().Text()
+		} else if cr, ok := completedMap[tc.ID]; ok {
+			content = cr.Content
+		} else {
+			content = "Error: tool execution was interrupted"
+		}
+
+		messages = append(
+			messages,
+			llm.Message{
+				Role:       llm.RoleTool,
+				ToolCallID: tc.ID,
+				Parts:      []llm.Part{llm.TextPart{Text: content}},
+			},
+		)
+	}
+
+	return coreLoop(
+		ctx,
+		outer.agent,
+		messages,
+		runOpts{
+			callLLM:             blockingCallLLM,
+			onEvent:             noopEvent,
+			skipInputGuardrails: true,
+			skipSessionLoad:     true,
+			initialUsage:        outer.usage,
+			initialTurns:        outer.turns,
 		},
 	)
 }

@@ -42,11 +42,36 @@ type (
 		Messages         []llm.Message
 		Usage            llm.Usage
 		Turns            int
+
+		outerState *outerLoopState
 	}
 
 	needsApprovalError struct {
 		allToolCalls     []llm.ToolCall
 		pendingApprovals []llm.ToolCall
+	}
+
+	nestedInterruptionError struct {
+		inner          *InterruptedError
+		toolCallID     string
+		allToolCalls   []llm.ToolCall
+		completedCalls []completedCall
+	}
+
+	outerLoopState struct {
+		agent          *Agent
+		messages       []llm.Message
+		usage          llm.Usage
+		turns          int
+		allToolCalls   []llm.ToolCall
+		toolCallID     string
+		completedCalls []completedCall
+		innerInterrupt *InterruptedError
+	}
+
+	completedCall struct {
+		toolCallID string
+		result     ToolResult
 	}
 )
 
@@ -68,4 +93,8 @@ func (e *InterruptedError) Error() string {
 
 func (e *needsApprovalError) Error() string {
 	return fmt.Sprintf("%d tool call(s) require approval", len(e.pendingApprovals))
+}
+
+func (e *nestedInterruptionError) Error() string {
+	return fmt.Sprintf("nested agent interrupted: %s", e.inner.Error())
 }

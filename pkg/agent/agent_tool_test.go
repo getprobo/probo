@@ -375,6 +375,420 @@ func TestAgentTool_Execute(t *testing.T) {
 	)
 }
 
+func TestAgentTool_Execute_NestedApproval(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"nested agent approval surfaces as InterruptedError",
+		func(t *testing.T) {
+			t.Parallel()
+
+			deleteTool := agent.FunctionTool[struct{}](
+				"delete_file",
+				"Delete a file",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "file deleted"}, nil
+				},
+			)
+
+			innerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "inner_tc1",
+						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
+					}),
+				},
+			}
+
+			innerAgent := agent.New(
+				"file_manager",
+				newTestClient(innerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(deleteTool),
+				agent.WithApproval(agent.ApprovalConfig{
+					ToolNames: []string{"delete_file"},
+				}),
+			)
+
+			outerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "outer_tc1",
+						Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
+					}),
+				},
+			}
+
+			outerAgent := agent.New(
+				"assistant",
+				newTestClient(outerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
+			)
+
+			_, err := outerAgent.Run(
+				context.Background(),
+				[]llm.Message{userMessage("Delete the file")},
+			)
+
+			require.Error(t, err)
+			var interrupted *agent.InterruptedError
+			require.ErrorAs(t, err, &interrupted)
+			assert.Len(t, interrupted.PendingApprovals, 1)
+			assert.Equal(t, "delete_file", interrupted.PendingApprovals[0].Function.Name)
+			assert.Equal(t, "file_manager", interrupted.Agent.Name())
+		},
+	)
+
+	t.Run(
+		"nested agent approval can be resumed with approve",
+		func(t *testing.T) {
+			t.Parallel()
+
+			var toolExecuted bool
+
+			deleteTool := agent.FunctionTool[struct{}](
+				"delete_file",
+				"Delete a file",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					toolExecuted = true
+					return agent.ToolResult{Content: "file deleted"}, nil
+				},
+			)
+
+			innerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "inner_tc1",
+						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
+					}),
+					stopResponse("File has been deleted."),
+				},
+			}
+
+			innerAgent := agent.New(
+				"file_manager",
+				newTestClient(innerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(deleteTool),
+				agent.WithApproval(agent.ApprovalConfig{
+					ToolNames: []string{"delete_file"},
+				}),
+			)
+
+			outerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "outer_tc1",
+						Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
+					}),
+					stopResponse("Done, the file has been deleted."),
+				},
+			}
+
+			outerAgent := agent.New(
+				"assistant",
+				newTestClient(outerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
+			)
+
+			_, err := outerAgent.Run(
+				context.Background(),
+				[]llm.Message{userMessage("Delete the file")},
+			)
+
+			var interrupted *agent.InterruptedError
+			require.ErrorAs(t, err, &interrupted)
+			assert.False(t, toolExecuted)
+
+			result, err := agent.Resume(
+				context.Background(),
+				interrupted,
+				agent.ResumeInput{
+					Approvals: map[string]agent.ApprovalResult{
+						"inner_tc1": {Approved: true},
+					},
+				},
+			)
+
+			require.NoError(t, err)
+			assert.True(t, toolExecuted)
+			assert.Equal(t, "Done, the file has been deleted.", result.FinalMessage().Text())
+			assert.Equal(t, "assistant", result.LastAgent.Name())
+		},
+	)
+
+	t.Run(
+		"nested agent rejection resumes outer agent",
+		func(t *testing.T) {
+			t.Parallel()
+
+			deleteTool := agent.FunctionTool[struct{}](
+				"delete_file",
+				"Delete a file",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					t.Fatal("tool should not be called")
+					return agent.ToolResult{}, nil
+				},
+			)
+
+			innerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "inner_tc1",
+						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
+					}),
+					stopResponse("OK, I won't delete the file."),
+				},
+			}
+
+			innerAgent := agent.New(
+				"file_manager",
+				newTestClient(innerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(deleteTool),
+				agent.WithApproval(agent.ApprovalConfig{
+					ToolNames: []string{"delete_file"},
+				}),
+			)
+
+			outerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "outer_tc1",
+						Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
+					}),
+					stopResponse("The file manager declined."),
+				},
+			}
+
+			outerAgent := agent.New(
+				"assistant",
+				newTestClient(outerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
+			)
+
+			_, err := outerAgent.Run(
+				context.Background(),
+				[]llm.Message{userMessage("Delete the file")},
+			)
+
+			var interrupted *agent.InterruptedError
+			require.ErrorAs(t, err, &interrupted)
+
+			result, err := agent.Resume(
+				context.Background(),
+				interrupted,
+				agent.ResumeInput{
+					Approvals: map[string]agent.ApprovalResult{
+						"inner_tc1": {Approved: false, Message: "User denied deletion."},
+					},
+				},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "The file manager declined.", result.FinalMessage().Text())
+			assert.Equal(t, "assistant", result.LastAgent.Name())
+		},
+	)
+
+	t.Run(
+		"nested agent approval with parallel sibling tools",
+		func(t *testing.T) {
+			t.Parallel()
+
+			var siblingCalled bool
+
+			type Params struct{}
+			siblingTool := agent.FunctionTool[Params](
+				"list_files",
+				"List files",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					siblingCalled = true
+					return agent.ToolResult{Content: "file1.txt, file2.txt"}, nil
+				},
+			)
+
+			deleteTool := agent.FunctionTool[struct{}](
+				"delete_file",
+				"Delete a file",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "file deleted"}, nil
+				},
+			)
+
+			innerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "inner_tc1",
+						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
+					}),
+					stopResponse("File has been deleted."),
+				},
+			}
+
+			innerAgent := agent.New(
+				"file_manager",
+				newTestClient(innerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(deleteTool),
+				agent.WithApproval(agent.ApprovalConfig{
+					ToolNames: []string{"delete_file"},
+				}),
+			)
+
+			outerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(
+						llm.ToolCall{
+							ID:       "outer_tc1",
+							Function: llm.FunctionCall{Name: "list_files", Arguments: `{}`},
+						},
+						llm.ToolCall{
+							ID:       "outer_tc2",
+							Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
+						},
+					),
+					stopResponse("Files listed and deleted."),
+				},
+			}
+
+			outerAgent := agent.New(
+				"assistant",
+				newTestClient(outerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(
+					siblingTool,
+					innerAgent.AsTool("file_expert", "Manage files"),
+				),
+			)
+
+			_, err := outerAgent.Run(
+				context.Background(),
+				[]llm.Message{userMessage("List and delete files")},
+			)
+
+			var interrupted *agent.InterruptedError
+			require.ErrorAs(t, err, &interrupted)
+			assert.True(t, siblingCalled)
+
+			result, err := agent.Resume(
+				context.Background(),
+				interrupted,
+				agent.ResumeInput{
+					Approvals: map[string]agent.ApprovalResult{
+						"inner_tc1": {Approved: true},
+					},
+				},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "Files listed and deleted.", result.FinalMessage().Text())
+		},
+	)
+
+	t.Run(
+		"three-level nesting A to B to C preserves full chain",
+		func(t *testing.T) {
+			t.Parallel()
+
+			var toolExecuted bool
+
+			dangerTool := agent.FunctionTool[struct{}](
+				"danger",
+				"Dangerous operation",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					toolExecuted = true
+					return agent.ToolResult{Content: "danger executed"}, nil
+				},
+			)
+
+			cProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "c_tc1",
+						Function: llm.FunctionCall{Name: "danger", Arguments: `{}`},
+					}),
+					stopResponse("C done."),
+				},
+			}
+
+			agentC := agent.New(
+				"agent_c",
+				newTestClient(cProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(dangerTool),
+				agent.WithApproval(agent.ApprovalConfig{
+					ToolNames: []string{"danger"},
+				}),
+			)
+
+			bProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "b_tc1",
+						Function: llm.FunctionCall{Name: "call_c", Arguments: `{"input":"do danger"}`},
+					}),
+					stopResponse("B done."),
+				},
+			}
+
+			agentB := agent.New(
+				"agent_b",
+				newTestClient(bProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(agentC.AsTool("call_c", "Call agent C")),
+			)
+
+			aProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "a_tc1",
+						Function: llm.FunctionCall{Name: "call_b", Arguments: `{"input":"delegate to C"}`},
+					}),
+					stopResponse("A done."),
+				},
+			}
+
+			agentA := agent.New(
+				"agent_a",
+				newTestClient(aProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(agentB.AsTool("call_b", "Call agent B")),
+			)
+
+			_, err := agentA.Run(
+				context.Background(),
+				[]llm.Message{userMessage("start")},
+			)
+
+			require.Error(t, err)
+			var interrupted *agent.InterruptedError
+			require.ErrorAs(t, err, &interrupted)
+			assert.Equal(t, "agent_c", interrupted.Agent.Name())
+			assert.Equal(t, "danger", interrupted.PendingApprovals[0].Function.Name)
+			assert.False(t, toolExecuted)
+
+			result, err := agent.Resume(
+				context.Background(),
+				interrupted,
+				agent.ResumeInput{
+					Approvals: map[string]agent.ApprovalResult{
+						"c_tc1": {Approved: true},
+					},
+				},
+			)
+
+			require.NoError(t, err)
+			assert.True(t, toolExecuted)
+			assert.Equal(t, "A done.", result.FinalMessage().Text())
+			assert.Equal(t, "agent_a", result.LastAgent.Name())
+		},
+	)
+}
+
 func TestAgentTool_InterfaceSatisfaction(t *testing.T) {
 	t.Parallel()
 
