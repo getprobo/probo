@@ -32,7 +32,8 @@ func TestGenerateSchema_PointerFieldsStripNull(t *testing.T) {
 		Done  *bool    `json:"done"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -65,7 +66,8 @@ func TestGenerateSchema_IntegerBoundsStripped(t *testing.T) {
 		Uint16 uint16 `json:"uint16"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -85,7 +87,8 @@ func TestGenerateSchema_EmptyStruct(t *testing.T) {
 
 	type Params struct{}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -104,7 +107,8 @@ func TestGenerateSchema_MapField(t *testing.T) {
 		Metadata map[string]string `json:"metadata"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -129,7 +133,8 @@ func TestGenerateSchema_NestedPointerStruct(t *testing.T) {
 		Inner *Inner `json:"inner"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -153,7 +158,8 @@ func TestGenerateSchema_SliceOfPointers(t *testing.T) {
 		Names []*string `json:"names"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -175,7 +181,8 @@ func TestGenerateSchema_MapWithPointerValues(t *testing.T) {
 		Scores map[string]*int `json:"scores"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -200,7 +207,8 @@ func TestGenerateSchema_DescriptionFromJsonschemaTag(t *testing.T) {
 		Limit int    `json:"limit" jsonschema:"Maximum number of results to return"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -224,7 +232,8 @@ func TestGenerateSchema_RequiredVsOptional(t *testing.T) {
 		AlsoNeeded int     `json:"also_needed"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -252,7 +261,8 @@ func TestGenerateSchema_DeeplyNestedStructure(t *testing.T) {
 		Root Level1 `json:"root"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
@@ -293,7 +303,8 @@ func TestGenerateSchema_SliceOfStructs(t *testing.T) {
 		Items []Item `json:"items"`
 	}
 
-	raw := jsonSchemaFor[Params]()
+	raw, err := jsonSchemaFor[Params]()
+	require.NoError(t, err)
 
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))

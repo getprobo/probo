@@ -30,13 +30,14 @@ func TestFunctionTool_Name(t *testing.T) {
 
 	type Params struct{}
 
-	tool := agent.FunctionTool(
+	tool, err := agent.FunctionTool(
 		"my_tool",
 		"does things",
 		func(_ context.Context, _ Params) (agent.ToolResult, error) {
 			return agent.ToolResult{}, nil
 		},
 	)
+	require.NoError(t, err)
 
 	assert.Equal(t, "my_tool", tool.Name())
 }
@@ -53,13 +54,14 @@ func TestFunctionTool_Definition(t *testing.T) {
 				Query string `json:"query"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"search",
 				"Search for items",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			def := tool.Definition()
 			assert.Equal(t, "search", def.Name)
@@ -77,13 +79,14 @@ func TestFunctionTool_Definition(t *testing.T) {
 				Count int    `json:"count"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"create",
 				"Create items",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			def := tool.Definition()
 			require.NotNil(t, def.Parameters)
@@ -113,13 +116,14 @@ func TestFunctionTool_Definition(t *testing.T) {
 
 			type Params struct{}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"noop",
 				"No-op",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			var schema map[string]any
 			require.NoError(t, json.Unmarshal(tool.Definition().Parameters, &schema))
@@ -136,13 +140,14 @@ func TestFunctionTool_Definition(t *testing.T) {
 				Title *string `json:"title,omitempty"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"update",
 				"Update",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			var schema map[string]any
 			require.NoError(t, json.Unmarshal(tool.Definition().Parameters, &schema))
@@ -168,13 +173,14 @@ func TestFunctionTool_Execute(t *testing.T) {
 				Y int `json:"y"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"add",
 				"Add two numbers",
 				func(_ context.Context, p Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "42"}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{"x": 1, "y": 2}`)
 			require.NoError(t, err)
@@ -193,7 +199,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 			}
 
 			var received string
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"weather",
 				"Get weather",
 				func(_ context.Context, p Params) (agent.ToolResult, error) {
@@ -201,8 +207,9 @@ func TestFunctionTool_Execute(t *testing.T) {
 					return agent.ToolResult{Content: "sunny"}, nil
 				},
 			)
+			require.NoError(t, err)
 
-			_, err := tool.Execute(context.Background(), `{"city":"Paris"}`)
+			_, err = tool.Execute(context.Background(), `{"city":"Paris"}`)
 			require.NoError(t, err)
 			assert.Equal(t, "Paris", received)
 		},
@@ -215,13 +222,14 @@ func TestFunctionTool_Execute(t *testing.T) {
 
 			type Params struct{}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"noop",
 				"No-op",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "ok"}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{invalid`)
 			require.NoError(t, err)
@@ -237,15 +245,16 @@ func TestFunctionTool_Execute(t *testing.T) {
 
 			type Params struct{}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"fail",
 				"Always fails",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{}, errors.New("db down")
 				},
 			)
+			require.NoError(t, err)
 
-			_, err := tool.Execute(context.Background(), `{}`)
+			_, err = tool.Execute(context.Background(), `{}`)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "db down")
 		},
@@ -259,7 +268,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 			type ctxKey struct{}
 			type Params struct{}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"ctx_check",
 				"Check context",
 				func(ctx context.Context, _ Params) (agent.ToolResult, error) {
@@ -267,6 +276,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 					return agent.ToolResult{Content: val}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			ctx := context.WithValue(context.Background(), ctxKey{}, "hello")
 			result, err := tool.Execute(ctx, `{}`)
@@ -284,7 +294,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 				City string `json:"city"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"weather",
 				"Get weather",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
@@ -292,6 +302,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 					return agent.ToolResult{}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{}`)
 			require.NoError(t, err)
@@ -310,7 +321,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 				Country string `json:"country"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"weather",
 				"Get weather",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
@@ -318,6 +329,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 					return agent.ToolResult{}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{}`)
 			require.NoError(t, err)
@@ -337,7 +349,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 				Country string `json:"country"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"weather",
 				"Get weather",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
@@ -345,6 +357,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 					return agent.ToolResult{}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{"city":"Paris"}`)
 			require.NoError(t, err)
@@ -363,13 +376,14 @@ func TestFunctionTool_Execute(t *testing.T) {
 				Units *string `json:"units,omitempty"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"weather",
 				"Get weather",
 				func(_ context.Context, p Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "sunny in " + p.City}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{"city":"Paris"}`)
 			require.NoError(t, err)
@@ -387,13 +401,14 @@ func TestFunctionTool_Execute(t *testing.T) {
 				Name string `json:"name"`
 			}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"greet",
 				"Greet",
 				func(_ context.Context, p Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "hi " + p.Name}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{"name":"Alice","extra":"ignored"}`)
 			require.NoError(t, err)
@@ -409,13 +424,14 @@ func TestFunctionTool_Execute(t *testing.T) {
 
 			type Params struct{}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"ping",
 				"Ping",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "pong"}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{}`)
 			require.NoError(t, err)
@@ -430,13 +446,14 @@ func TestFunctionTool_Execute(t *testing.T) {
 
 			type Params struct{}
 
-			tool := agent.FunctionTool(
+			tool, err := agent.FunctionTool(
 				"validate",
 				"Validate input",
 				func(_ context.Context, _ Params) (agent.ToolResult, error) {
 					return agent.ToolResult{Content: "validation failed", IsError: true}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			result, err := tool.Execute(context.Background(), `{}`)
 			require.NoError(t, err)
@@ -451,13 +468,14 @@ func TestFunctionTool_InterfaceSatisfaction(t *testing.T) {
 
 	type Params struct{}
 
-	tool := agent.FunctionTool(
+	tool, err := agent.FunctionTool(
 		"test",
 		"test tool",
 		func(_ context.Context, _ Params) (agent.ToolResult, error) {
 			return agent.ToolResult{}, nil
 		},
 	)
+	require.NoError(t, err)
 
 	assert.Implements(t, (*agent.Tool)(nil), tool)
 	assert.Implements(t, (*agent.ToolDescriptor)(nil), tool)

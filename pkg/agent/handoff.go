@@ -45,7 +45,7 @@ type (
 )
 
 var (
-	handoffParamsSchema = jsonSchemaFor[handoffParams]()
+	handoffParamsSchema = mustJSONSchemaFor[handoffParams]()
 )
 
 func HandoffTo(agent *Agent, opts ...HandoffOption) *Handoff {

@@ -52,8 +52,11 @@ func FunctionTool[P any](
 	name string,
 	description string,
 	fn func(ctx context.Context, params P) (ToolResult, error),
-) Tool {
-	schema := jsonSchemaFor[P]()
+) (Tool, error) {
+	schema, err := jsonSchemaFor[P]()
+	if err != nil {
+		return nil, fmt.Errorf("cannot create tool %q: %w", name, err)
+	}
 
 	var parsed struct {
 		Required []string `json:"required"`
@@ -66,7 +69,7 @@ func FunctionTool[P any](
 		fn:             fn,
 		schema:         schema,
 		requiredFields: parsed.Required,
-	}
+	}, nil
 }
 
 func (t *functionTool[P]) Name() string { return t.name }

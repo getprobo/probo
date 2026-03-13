@@ -16,6 +16,7 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"go.probo.inc/probo/pkg/llm"
 )
@@ -27,11 +28,16 @@ type OutputType struct {
 	Schema json.RawMessage
 }
 
-func NewOutputType[T any](name string) *OutputType {
+func NewOutputType[T any](name string) (*OutputType, error) {
+	schema, err := jsonSchemaFor[T]()
+	if err != nil {
+		return nil, fmt.Errorf("cannot create output type %q: %w", name, err)
+	}
+
 	return &OutputType{
 		Name:   name,
-		Schema: jsonSchemaFor[T](),
-	}
+		Schema: schema,
+	}, nil
 }
 
 func (o *OutputType) responseFormat() *llm.ResponseFormat {

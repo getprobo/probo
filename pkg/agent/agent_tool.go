@@ -40,7 +40,7 @@ type (
 )
 
 var (
-	agentToolParamsSchema = jsonSchemaFor[agentToolParams]()
+	agentToolParamsSchema = mustJSONSchemaFor[agentToolParams]()
 )
 
 func agentToolDepth(ctx context.Context) int {

@@ -22,22 +22,30 @@ import (
 	"github.com/google/jsonschema-go/jsonschema"
 )
 
-func jsonSchemaFor[T any]() json.RawMessage {
+func jsonSchemaFor[T any]() (json.RawMessage, error) {
 	t := reflect.TypeFor[T]()
 
 	schema, err := jsonschema.ForType(t, nil)
 	if err != nil {
-		panic(fmt.Sprintf("cannot generate schema for %s: %v", t, err))
+		return nil, fmt.Errorf("cannot generate schema for %s: %w", t, err)
 	}
 
 	stripNullTypes(schema)
 
 	data, err := json.Marshal(schema)
 	if err != nil {
-		panic(fmt.Sprintf("cannot marshal schema for %s: %v", t, err))
+		return nil, fmt.Errorf("cannot marshal schema for %s: %w", t, err)
 	}
 
-	return json.RawMessage(data)
+	return json.RawMessage(data), nil
+}
+
+func mustJSONSchemaFor[T any]() json.RawMessage {
+	schema, err := jsonSchemaFor[T]()
+	if err != nil {
+		panic(err)
+	}
+	return schema
 }
 
 // stripNullTypes removes "null" from union types produced by pointer fields

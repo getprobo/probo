@@ -36,11 +36,16 @@ func RunTyped[T any](
 ) (*TypedResult[T], error) {
 	typed := a.clone()
 
+	schema, err := jsonSchemaFor[T]()
+	if err != nil {
+		return nil, fmt.Errorf("cannot create typed runner: %w", err)
+	}
+
 	typed.responseFormat = &llm.ResponseFormat{
 		Type: llm.ResponseFormatJSONSchema,
 		JSONSchema: &llm.JSONSchema{
 			Name:   typeName[T](),
-			Schema: jsonSchemaFor[T](),
+			Schema: schema,
 			Strict: true,
 		},
 	}

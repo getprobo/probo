@@ -31,7 +31,8 @@ func TestNewOutputType_SetsNameAndSchema(t *testing.T) {
 		Score  int    `json:"score"`
 	}
 
-	ot := NewOutputType[Result]("test_result")
+	ot, err := NewOutputType[Result]("test_result")
+	require.NoError(t, err)
 
 	assert.Equal(t, "test_result", ot.Name)
 	require.NotNil(t, ot.Schema)
@@ -50,7 +51,8 @@ func TestNewOutputType_EmptyStruct(t *testing.T) {
 
 	type Empty struct{}
 
-	ot := NewOutputType[Empty]("empty")
+	ot, err := NewOutputType[Empty]("empty")
+	require.NoError(t, err)
 
 	assert.Equal(t, "empty", ot.Name)
 
@@ -71,7 +73,8 @@ func TestOutputType_responseFormat(t *testing.T) {
 		Reason   string `json:"reason"`
 	}
 
-	ot := NewOutputType[Verdict]("verdict")
+	ot, err := NewOutputType[Verdict]("verdict")
+	require.NoError(t, err)
 	rf := ot.responseFormat()
 
 	require.NotNil(t, rf)
@@ -91,7 +94,8 @@ func TestOutputType_responseFormat_SchemaMatchesOutputType(t *testing.T) {
 		Priority *int     `json:"priority,omitempty"`
 	}
 
-	ot := NewOutputType[Analysis]("analysis")
+	ot, err := NewOutputType[Analysis]("analysis")
+	require.NoError(t, err)
 	rf := ot.responseFormat()
 
 	var schema map[string]any

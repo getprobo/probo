@@ -404,13 +404,14 @@ func TestRunTyped(t *testing.T) {
 				City string `json:"city"`
 			}
 
-			weatherTool := FunctionTool[Params](
+			weatherTool, err := FunctionTool[Params](
 				"get_weather",
 				"Get weather for a city",
 				func(_ context.Context, p Params) (ToolResult, error) {
 					return ToolResult{Content: "Sunny, 22°C in " + p.City}, nil
 				},
 			)
+			require.NoError(t, err)
 
 			provider := &typedMockProvider{
 				responses: []*llm.ChatCompletionResponse{
