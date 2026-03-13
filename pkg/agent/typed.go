@@ -69,8 +69,7 @@ func RunTyped[T any](
 }
 
 func typeName[T any]() string {
-	var zero T
-	t := reflect.TypeOf(zero)
+	t := reflect.TypeFor[T]()
 	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}

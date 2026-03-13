@@ -120,6 +120,24 @@ func TestTypeName(t *testing.T) {
 			assert.Equal(t, "status", typeName[Status]())
 		},
 	)
+
+	t.Run(
+		"any interface returns output",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, "output", typeName[any]())
+		},
+	)
+
+	t.Run(
+		"named interface returns lowercased name",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, "error", typeName[error]())
+		},
+	)
 }
 
 func TestRunTyped(t *testing.T) {
