@@ -16,9 +16,9 @@ package agents
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
+	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
 )
 
@@ -122,25 +122,27 @@ const (
 )
 
 func (a *Agent) AssessVendor(ctx context.Context, websiteURL string) (*vendorInfo, error) {
-	resp, err := a.client.ChatCompletion(
+	ag := agent.New(
+		"vendor_assessor",
+		a.client,
+		agent.WithInstructions(assessVendorSystemPrompt),
+		agent.WithModel(a.model),
+		agent.WithTemperature(a.temp),
+	)
+
+	typedResult, err := agent.RunTyped[vendorInfo](
 		ctx,
-		&llm.ChatCompletionRequest{
-			Model: a.model,
-			Messages: []llm.Message{
-				{Role: llm.RoleSystem, Parts: []llm.Part{llm.TextPart{Text: assessVendorSystemPrompt}}},
-				{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: websiteURL}}},
+		ag,
+		[]llm.Message{
+			{
+				Role:  llm.RoleUser,
+				Parts: []llm.Part{llm.TextPart{Text: websiteURL}},
 			},
-			Temperature: &a.temp,
 		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot assess vendor: %w", err)
 	}
 
-	var info vendorInfo
-	if err := json.Unmarshal([]byte(resp.Message.Text()), &info); err != nil {
-		return nil, fmt.Errorf("cannot parse vendor info: %w", err)
-	}
-
-	return &info, nil
+	return &typedResult.Output, nil
 }

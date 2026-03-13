@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/llm"
 )
 
@@ -48,19 +49,30 @@ const (
 )
 
 func (a *Agent) GenerateChangelog(ctx context.Context, oldContent string, newContent string) (*string, error) {
-	resp, err := a.client.ChatCompletion(ctx, &llm.ChatCompletionRequest{
-		Model: a.model,
-		Messages: []llm.Message{
-			{Role: llm.RoleSystem, Parts: []llm.Part{llm.TextPart{Text: changelogGeneratorSystemPrompt}}},
-			{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: fmt.Sprintf(`Old content: %s`, oldContent)}}},
-			{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: fmt.Sprintf(`New content: %s`, newContent)}}},
+	ag := agent.New(
+		"changelog_generator",
+		a.client,
+		agent.WithInstructions(changelogGeneratorSystemPrompt),
+		agent.WithModel(a.model),
+		agent.WithTemperature(a.temp),
+	)
+
+	result, err := ag.Run(
+		ctx,
+		[]llm.Message{
+			{
+				Role: llm.RoleUser,
+				Parts: []llm.Part{
+					llm.TextPart{Text: fmt.Sprintf("Old content: %s", oldContent)},
+					llm.TextPart{Text: fmt.Sprintf("New content: %s", newContent)},
+				},
+			},
 		},
-		Temperature: &a.temp,
-	})
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate changelog: %w", err)
 	}
 
-	text := resp.Message.Text()
+	text := result.FinalMessage().Text()
 	return &text, nil
 }
