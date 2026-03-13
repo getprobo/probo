@@ -235,10 +235,24 @@ func buildTools(tools []llm.Tool) []anthropic.ToolUnionParam {
 						reqStrings = append(reqStrings, s)
 					}
 				}
-				tool.InputSchema = anthropic.ToolInputSchemaParam{
+
+				extra := make(map[string]any)
+				for k, v := range schema {
+					switch k {
+					case "type", "properties", "required":
+					default:
+						extra[k] = v
+					}
+				}
+
+				inputSchema := anthropic.ToolInputSchemaParam{
 					Properties: props,
 					Required:   reqStrings,
 				}
+				if len(extra) > 0 {
+					inputSchema.ExtraFields = extra
+				}
+				tool.InputSchema = inputSchema
 			}
 		}
 
