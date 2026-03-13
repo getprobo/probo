@@ -83,7 +83,7 @@ func (p *Provider) ChatCompletionStream(ctx context.Context, req *llm.ChatComple
 		return nil, mapError(err)
 	}
 
-	return newBedrockStream(output.GetStream()), nil
+	return newBedrockStream(output.GetStream(), req.Model), nil
 }
 
 func buildInput(req *llm.ChatCompletionRequest) *bedrockruntime.ConverseInput {
@@ -346,14 +346,17 @@ type bedrockStream struct {
 	events      <-chan types.ConverseStreamOutput
 	current     llm.ChatCompletionStreamEvent
 	err         error
+	model       string
+	modelSent   bool
 	toolIndex   int
 	inToolUse   bool
 }
 
-func newBedrockStream(eventStream *bedrockruntime.ConverseStreamEventStream) *bedrockStream {
+func newBedrockStream(eventStream *bedrockruntime.ConverseStreamEventStream, model string) *bedrockStream {
 	return &bedrockStream{
 		eventStream: eventStream,
 		events:      eventStream.Events(),
+		model:       model,
 	}
 }
 
@@ -361,6 +364,10 @@ func (s *bedrockStream) Next() bool {
 	for event := range s.events {
 		mapped, ok := s.mapEvent(event)
 		if ok {
+			if !s.modelSent {
+				mapped.Model = s.model
+				s.modelSent = true
+			}
 			s.current = mapped
 			return true
 		}

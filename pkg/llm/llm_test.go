@@ -508,7 +508,7 @@ func TestStreamAccumulator(t *testing.T) {
 		t.Parallel()
 
 		events := []llm.ChatCompletionStreamEvent{
-			{Delta: llm.MessageDelta{Content: "Hello"}},
+			{Model: "gpt-4o", Delta: llm.MessageDelta{Content: "Hello"}},
 			{Delta: llm.MessageDelta{Content: " world"}},
 			{Delta: llm.MessageDelta{
 				ToolCalls: []llm.ToolCallDelta{
@@ -537,6 +537,7 @@ func TestStreamAccumulator(t *testing.T) {
 		require.NoError(t, acc.Err())
 
 		resp := acc.Response()
+		assert.Equal(t, "gpt-4o", resp.Model)
 		assert.Equal(t, "Hello world", resp.Message.Text())
 		assert.Equal(t, llm.RoleAssistant, resp.Message.Role)
 		assert.Equal(t, llm.FinishReasonToolCalls, resp.FinishReason)

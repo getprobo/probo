@@ -90,6 +90,7 @@ type (
 	}
 
 	ChatCompletionStreamEvent struct {
+		Model        string        // present on first event if provider supports it
 		Delta        MessageDelta
 		Usage        *Usage        // present on final event if provider supports it
 		FinishReason *FinishReason // present on final event
@@ -206,6 +207,10 @@ func (a *StreamAccumulator) Response() *ChatCompletionResponse {
 }
 
 func (a *StreamAccumulator) accumulate(event ChatCompletionStreamEvent) {
+	if a.model == "" && event.Model != "" {
+		a.model = event.Model
+	}
+
 	a.content.WriteString(event.Delta.Content)
 
 	for _, tcd := range event.Delta.ToolCalls {

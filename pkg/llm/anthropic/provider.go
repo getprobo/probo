@@ -431,15 +431,16 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 		return evt, true
 
 	case "message_start":
-		if event.Message.Usage.InputTokens > 0 {
-			return llm.ChatCompletionStreamEvent{
-				Usage: &llm.Usage{
-					InputTokens:  int(event.Message.Usage.InputTokens),
-					OutputTokens: int(event.Message.Usage.OutputTokens),
-				},
-			}, true
+		evt := llm.ChatCompletionStreamEvent{
+			Model: string(event.Message.Model),
 		}
-		return llm.ChatCompletionStreamEvent{}, false
+		if event.Message.Usage.InputTokens > 0 || event.Message.Usage.OutputTokens > 0 {
+			evt.Usage = &llm.Usage{
+				InputTokens:  int(event.Message.Usage.InputTokens),
+				OutputTokens: int(event.Message.Usage.OutputTokens),
+			}
+		}
+		return evt, true
 
 	default:
 		return llm.ChatCompletionStreamEvent{}, false

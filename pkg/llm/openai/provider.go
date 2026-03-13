@@ -181,9 +181,13 @@ func buildMessages(messages []llm.Message) []openai.ChatCompletionMessageParamUn
 				case llm.TextPart:
 					parts = append(parts, openai.TextContentPart(p.Text))
 				case llm.ImagePart:
-					parts = append(parts, openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
-						URL: p.URL,
-					}))
+					parts = append(
+						parts,
+						openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
+							URL: p.URL,
+						},
+						),
+					)
 				}
 			}
 			out = append(out, openai.UserMessage(parts))
@@ -408,7 +412,9 @@ func (s *openaiStream) Close() error {
 }
 
 func mapChunkToEvent(chunk *openai.ChatCompletionChunk) llm.ChatCompletionStreamEvent {
-	event := llm.ChatCompletionStreamEvent{}
+	event := llm.ChatCompletionStreamEvent{
+		Model: chunk.Model,
+	}
 
 	if chunk.Usage.PromptTokens > 0 || chunk.Usage.CompletionTokens > 0 {
 		usage := llm.Usage{
