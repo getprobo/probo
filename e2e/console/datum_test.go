@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"testing"
 	"time"
@@ -104,9 +105,7 @@ func TestDatum_Create(t *testing.T) {
 				"organizationId": owner.GetOrganizationID().String(),
 				"ownerId":        profileID,
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			var result struct {
 				CreateDatum struct {
@@ -253,9 +252,7 @@ func TestDatum_Create_Validation(t *testing.T) {
 			if !tt.skipOwner {
 				input["ownerId"] = profileID
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
 			require.Error(t, err)
@@ -1103,7 +1100,7 @@ func TestDatum_Pagination(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	profileID := factory.CreateUser(owner)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		factory.NewDatum(owner, profileID).
 			WithName(fmt.Sprintf("Pagination Datum %d", i)).
 			Create()

@@ -38,7 +38,7 @@ func (dc DocumentClassification) String() string {
 }
 
 // Scan implements the sql.Scanner interface for database deserialization.
-func (dc *DocumentClassification) Scan(value interface{}) error {
+func (dc *DocumentClassification) Scan(value any) error {
 	if value == nil {
 		return nil
 	}

@@ -359,7 +359,7 @@ func TestDocumentVersionSignatureStates(t *testing.T) {
 func TestLargeContent(t *testing.T) {
 	// Create a large markdown content
 	var largeContent strings.Builder
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		largeContent.WriteString("# Section ")
 		largeContent.WriteString(string(rune('A' + i%26)))
 		largeContent.WriteString("\n\nThis is a paragraph with **bold** and *italic* text.\n\n")

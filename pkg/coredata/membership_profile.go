@@ -31,40 +31,40 @@ import (
 
 type (
 	MembershipProfile struct {
-		ID                       gid.GID                `db:"id"`
-		IdentityID               gid.GID                `db:"identity_id"`
-		OrganizationID           gid.GID                `db:"organization_id"`
-		EmailAddress             mail.Addr              `db:"email_address"`
-		Source                   ProfileSource          `db:"source"`
-		State                    ProfileState           `db:"state"`
-		FullName                 string                 `db:"full_name"`
-		Kind                     *string                `db:"kind"`
-		AdditionalEmailAddresses mail.Addrs             `db:"additional_email_addresses"`
-		Position                 *string                `db:"position"`
-		ContractStartDate        *time.Time             `db:"contract_start_date"`
-		ContractEndDate          *time.Time             `db:"contract_end_date"`
-		OrganizationName         string                 `db:"organization_name"`
-		UserName                 *string                `db:"user_name"`
-		ExternalID               *string                `db:"external_id"`
-		Nickname                 *string                `db:"nickname"`
-		Locale                   *string                `db:"locale"`
-		Timezone                 *string                `db:"timezone"`
-		ProfileUrl               *string                `db:"profile_url"`
-		PreferredLanguage        *string                `db:"preferred_language"`
-		GivenName                *string                `db:"given_name"`
-		FamilyName               *string                `db:"family_name"`
-		FormattedName            *string                `db:"formatted_name"`
-		MiddleName               *string                `db:"middle_name"`
-		HonorificPrefix          *string                `db:"honorific_prefix"`
-		HonorificSuffix          *string                `db:"honorific_suffix"`
-		EmployeeNumber           *string                `db:"employee_number"`
-		Department               *string                `db:"department"`
-		CostCenter               *string                `db:"cost_center"`
-		EnterpriseOrganization   *string                `db:"enterprise_organization"`
-		Division                 *string                `db:"division"`
-		ManagerValue             *string                `db:"manager_value"`
-		CreatedAt                time.Time              `db:"created_at"`
-		UpdatedAt                time.Time              `db:"updated_at"`
+		ID                       gid.GID       `db:"id"`
+		IdentityID               gid.GID       `db:"identity_id"`
+		OrganizationID           gid.GID       `db:"organization_id"`
+		EmailAddress             mail.Addr     `db:"email_address"`
+		Source                   ProfileSource `db:"source"`
+		State                    ProfileState  `db:"state"`
+		FullName                 string        `db:"full_name"`
+		Kind                     *string       `db:"kind"`
+		AdditionalEmailAddresses mail.Addrs    `db:"additional_email_addresses"`
+		Position                 *string       `db:"position"`
+		ContractStartDate        *time.Time    `db:"contract_start_date"`
+		ContractEndDate          *time.Time    `db:"contract_end_date"`
+		OrganizationName         string        `db:"organization_name"`
+		UserName                 *string       `db:"user_name"`
+		ExternalID               *string       `db:"external_id"`
+		Nickname                 *string       `db:"nickname"`
+		Locale                   *string       `db:"locale"`
+		Timezone                 *string       `db:"timezone"`
+		ProfileUrl               *string       `db:"profile_url"`
+		PreferredLanguage        *string       `db:"preferred_language"`
+		GivenName                *string       `db:"given_name"`
+		FamilyName               *string       `db:"family_name"`
+		FormattedName            *string       `db:"formatted_name"`
+		MiddleName               *string       `db:"middle_name"`
+		HonorificPrefix          *string       `db:"honorific_prefix"`
+		HonorificSuffix          *string       `db:"honorific_suffix"`
+		EmployeeNumber           *string       `db:"employee_number"`
+		Department               *string       `db:"department"`
+		CostCenter               *string       `db:"cost_center"`
+		EnterpriseOrganization   *string       `db:"enterprise_organization"`
+		Division                 *string       `db:"division"`
+		ManagerValue             *string       `db:"manager_value"`
+		CreatedAt                time.Time     `db:"created_at"`
+		UpdatedAt                time.Time     `db:"updated_at"`
 	}
 
 	MembershipProfiles []*MembershipProfile
@@ -1240,7 +1240,7 @@ VALUES (
 		"contract_end_date":          p.ContractEndDate,
 		"user_name":                  p.UserName,
 		"external_id":                p.ExternalID,
-		"nickname":                  p.Nickname,
+		"nickname":                   p.Nickname,
 		"locale":                     p.Locale,
 		"timezone":                   p.Timezone,
 		"profile_url":                p.ProfileUrl,
@@ -1330,7 +1330,7 @@ WHERE
 		"contract_end_date":          p.ContractEndDate,
 		"user_name":                  p.UserName,
 		"external_id":                p.ExternalID,
-		"nickname":                  p.Nickname,
+		"nickname":                   p.Nickname,
 		"locale":                     p.Locale,
 		"timezone":                   p.Timezone,
 		"profile_url":                p.ProfileUrl,

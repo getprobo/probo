@@ -44,7 +44,7 @@ func (i DataSensitivity) String() string {
 	return string(i)
 }
 
-func (i *DataSensitivity) Scan(value interface{}) error {
+func (i *DataSensitivity) Scan(value any) error {
 	switch v := value.(type) {
 	case string:
 		switch v {

@@ -103,7 +103,7 @@ func (id TenantID) Value() (driver.Value, error) {
 }
 
 // Scan implements the database/sql.Scanner interface
-func (id *TenantID) Scan(value interface{}) error {
+func (id *TenantID) Scan(value any) error {
 	switch v := value.(type) {
 	case string:
 		decoded, err := base64.RawURLEncoding.DecodeString(v)

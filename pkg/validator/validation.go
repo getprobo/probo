@@ -39,12 +39,12 @@ func (v *Validator) Check(value any, field string, validators ...ValidatorFunc) 
 	if value != nil {
 		val := reflect.ValueOf(value)
 		// Dereference all pointer levels
-		for val.Kind() == reflect.Ptr && !val.IsNil() {
+		for val.Kind() == reflect.Pointer && !val.IsNil() {
 			val = val.Elem()
 			actualValue = val.Interface()
 		}
 		// If we ended up with a nil pointer at any level, set actualValue to nil
-		if val.Kind() == reflect.Ptr && val.IsNil() {
+		if val.Kind() == reflect.Pointer && val.IsNil() {
 			actualValue = nil
 		}
 	}
@@ -75,7 +75,7 @@ func (v *Validator) CheckEach(items any, field string, fn func(index int, item a
 
 	val := reflect.ValueOf(items)
 	// Dereference pointer levels to get to the actual slice
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return
 		}
@@ -138,7 +138,7 @@ func dereferenceValue(value any) (any, bool) {
 
 	val := reflect.ValueOf(value)
 	// Dereference all pointer levels
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return nil, true
 		}

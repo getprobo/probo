@@ -33,7 +33,7 @@ func MarshalAddrScalar(a mail.Addr) graphql.Marshaler {
 	)
 }
 
-func UnmarshalAddrScalar(v interface{}) (mail.Addr, error) {
+func UnmarshalAddrScalar(v any) (mail.Addr, error) {
 	s, ok := v.(string)
 	if !ok {
 		return mail.Nil, errors.New("must be a string")

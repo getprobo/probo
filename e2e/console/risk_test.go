@@ -15,6 +15,7 @@
 package console_test
 
 import (
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -401,9 +402,7 @@ func TestRisk_RequiredFields(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
 			require.Error(t, err)

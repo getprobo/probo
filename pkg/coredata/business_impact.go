@@ -42,7 +42,7 @@ func (i BusinessImpact) String() string {
 	return string(i)
 }
 
-func (i *BusinessImpact) Scan(value interface{}) error {
+func (i *BusinessImpact) Scan(value any) error {
 	switch v := value.(type) {
 	case string:
 		switch v {

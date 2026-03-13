@@ -126,7 +126,7 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 						ClientSecret: "client-secret",
 						Scopes:       []string{"chat:write"},
 					},
-					RawSettings: map[string]interface{}{
+					RawSettings: map[string]any{
 						"signing-secret": "secret",
 					},
 				},

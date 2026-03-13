@@ -30,13 +30,13 @@ func TestGenerate(t *testing.T) {
 	tests := []struct {
 		name        string
 		keyType     keys.Type
-		checkFunc   func(t *testing.T, key interface{})
+		checkFunc   func(t *testing.T, key any)
 		expectError bool
 	}{
 		{
 			name:    "EC256",
 			keyType: keys.TypeEC256,
-			checkFunc: func(t *testing.T, key interface{}) {
+			checkFunc: func(t *testing.T, key any) {
 				ecKey, ok := key.(*ecdsa.PrivateKey)
 				require.True(t, ok, "expected *ecdsa.PrivateKey, got %T", key)
 				assert.Equal(t, elliptic.P256(), ecKey.Curve, "expected P256 curve")
@@ -45,7 +45,7 @@ func TestGenerate(t *testing.T) {
 		{
 			name:    "EC384",
 			keyType: keys.TypeEC384,
-			checkFunc: func(t *testing.T, key interface{}) {
+			checkFunc: func(t *testing.T, key any) {
 				ecKey, ok := key.(*ecdsa.PrivateKey)
 				require.True(t, ok, "expected *ecdsa.PrivateKey, got %T", key)
 				assert.Equal(t, elliptic.P384(), ecKey.Curve, "expected P384 curve")
@@ -54,7 +54,7 @@ func TestGenerate(t *testing.T) {
 		{
 			name:    "RSA2048",
 			keyType: keys.TypeRSA2048,
-			checkFunc: func(t *testing.T, key interface{}) {
+			checkFunc: func(t *testing.T, key any) {
 				rsaKey, ok := key.(*rsa.PrivateKey)
 				require.True(t, ok, "expected *rsa.PrivateKey, got %T", key)
 				bitSize := rsaKey.N.BitLen()
@@ -65,7 +65,7 @@ func TestGenerate(t *testing.T) {
 		{
 			name:    "RSA4096",
 			keyType: keys.TypeRSA4096,
-			checkFunc: func(t *testing.T, key interface{}) {
+			checkFunc: func(t *testing.T, key any) {
 				rsaKey, ok := key.(*rsa.PrivateKey)
 				require.True(t, ok, "expected *rsa.PrivateKey, got %T", key)
 				bitSize := rsaKey.N.BitLen()
@@ -118,7 +118,7 @@ func TestGenerateConcurrency(t *testing.T) {
 			const numGoroutines = 10
 			errorsChan := make(chan error, numGoroutines)
 
-			for i := 0; i < numGoroutines; i++ {
+			for range numGoroutines {
 				go func() {
 					key, err := keys.Generate(keyType)
 					if err != nil {
@@ -133,7 +133,7 @@ func TestGenerateConcurrency(t *testing.T) {
 				}()
 			}
 
-			for i := 0; i < numGoroutines; i++ {
+			for range numGoroutines {
 				err := <-errorsChan
 				assert.NoError(t, err, "concurrent generation failed")
 			}

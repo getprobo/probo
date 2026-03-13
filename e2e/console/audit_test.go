@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"testing"
 	"time"
@@ -114,9 +115,7 @@ func TestAudit_Create(t *testing.T) {
 				"organizationId": owner.GetOrganizationID().String(),
 				"frameworkId":    frameworkID,
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			var result struct {
 				CreateAudit struct {
@@ -254,9 +253,7 @@ func TestAudit_Create_Validation(t *testing.T) {
 			if !tt.skipFramework {
 				input["frameworkId"] = frameworkID
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
 			require.Error(t, err)
@@ -1132,7 +1129,7 @@ func TestAudit_Pagination(t *testing.T) {
 
 	frameworkID := factory.NewFramework(owner).WithName("Framework for Pagination").Create()
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		factory.NewAudit(owner, frameworkID).
 			WithName(fmt.Sprintf("Pagination Audit %d", i)).
 			Create()

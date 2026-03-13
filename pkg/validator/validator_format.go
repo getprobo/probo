@@ -17,6 +17,7 @@ package validator
 import (
 	"net/url"
 	"regexp"
+	"slices"
 
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -182,13 +183,7 @@ func GID(entityTypes ...uint16) ValidatorFunc {
 
 		if len(entityTypes) > 0 {
 			parsedEntityType := gidValue.EntityType()
-			valid := false
-			for _, expected := range entityTypes {
-				if parsedEntityType == expected {
-					valid = true
-					break
-				}
-			}
+			valid := slices.Contains(entityTypes, parsedEntityType)
 			if !valid {
 				return newValidationError(ErrorCodeInvalidGID, "GID has invalid entity type")
 			}

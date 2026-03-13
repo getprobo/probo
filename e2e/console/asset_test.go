@@ -237,7 +237,7 @@ func TestAsset_List(t *testing.T) {
 	profileID := factory.CreateUser(owner)
 
 	// Create multiple assets
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		const query = `
 			mutation($input: CreateAssetInput!) {
 				createAsset(input: $input) {

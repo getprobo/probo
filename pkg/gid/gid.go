@@ -95,7 +95,7 @@ func (gid GID) Timestamp() time.Time {
 }
 
 // Scan implements the database/sql/driver.Scanner interface
-func (gid *GID) Scan(value interface{}) error {
+func (gid *GID) Scan(value any) error {
 	var str string
 	switch v := value.(type) {
 	case string:

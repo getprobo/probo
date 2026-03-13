@@ -329,7 +329,7 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	assert.Equal(t, "https://slack.com/oauth/v2/authorize", rawConfig.AuthURL)
 	assert.Equal(t, "https://slack.com/api/oauth.v2.access", rawConfig.TokenURL)
 	assert.Equal(t, []string{"chat:write", "channels:join", "incoming-webhook"}, rawConfig.Scopes)
-	rawSettings := connector.RawSettings.(map[string]interface{})
+	rawSettings := connector.RawSettings.(map[string]any)
 	assert.Equal(t, "slack-signing-secret", rawSettings["signing-secret"])
 }
 

@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"fmt"
+	"maps"
 	"testing"
 	"time"
 
@@ -114,9 +115,7 @@ func TestProcessingActivity_Create(t *testing.T) {
 			input := map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			var result struct {
 				CreateProcessingActivity struct {
@@ -193,9 +192,7 @@ func TestProcessingActivity_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
 			require.Error(t, err)
@@ -898,7 +895,7 @@ func TestProcessingActivity_Pagination(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		factory.NewProcessingActivity(owner).
 			WithName(fmt.Sprintf("Pagination PA %d", i)).
 			Create()

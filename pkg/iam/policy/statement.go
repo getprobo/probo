@@ -148,7 +148,7 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 			// Support a comma-separated "set" value, e.g.
 			// principal.organization_ids = "org_1,org_2"
 			if strings.Contains(resolved, ",") {
-				for _, item := range strings.Split(resolved, ",") {
+				for item := range strings.SplitSeq(resolved, ",") {
 					if value == strings.TrimSpace(item) {
 						return true
 					}
@@ -170,7 +170,7 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 			}
 
 			if strings.Contains(resolved, ",") {
-				for _, item := range strings.Split(resolved, ",") {
+				for item := range strings.SplitSeq(resolved, ",") {
 					if value == strings.TrimSpace(item) {
 						return false
 					}

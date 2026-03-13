@@ -202,7 +202,6 @@ func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *pro
 	return r.probo.WithTenant(tenantID)
 }
 
-
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
 	return r.authorize(ctx, obj.GetID(), action) == nil, nil
 }

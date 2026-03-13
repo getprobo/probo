@@ -242,7 +242,7 @@ func TestContinualImprovement_List(t *testing.T) {
 		}
 	`
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),

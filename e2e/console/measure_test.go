@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"testing"
 	"time"
@@ -113,9 +114,7 @@ func TestMeasure_Create(t *testing.T) {
 			input := map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			var result struct {
 				CreateMeasure struct {
@@ -301,9 +300,7 @@ func TestMeasure_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
 			require.Error(t, err)
@@ -875,9 +872,7 @@ func TestMeasure_OmittableDescription(t *testing.T) {
 			`
 
 			input := map[string]any{"id": measureID}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			var result struct {
 				UpdateMeasure struct {
@@ -1246,9 +1241,7 @@ func TestMeasure_MaxLength_Validation(t *testing.T) {
 				input := map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
 				}
-				for k, v := range tt.input {
-					input[k] = v
-				}
+				maps.Copy(input, tt.input)
 
 				_, err := owner.Do(query, map[string]any{"input": input})
 				require.Error(t, err)
@@ -1293,9 +1286,7 @@ func TestMeasure_MaxLength_Validation(t *testing.T) {
 				`
 
 				input := map[string]any{"id": measureID}
-				for k, v := range tt.input {
-					input[k] = v
-				}
+				maps.Copy(input, tt.input)
 
 				_, err := owner.Do(query, map[string]any{"input": input})
 				require.Error(t, err)
@@ -1496,7 +1487,7 @@ func TestMeasure_Pagination(t *testing.T) {
 
 	// Create multiple measures for pagination testing
 	measureIDs := make([]string, 5)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		measureIDs[i] = factory.NewMeasure(owner).
 			WithName(fmt.Sprintf("Pagination Measure %d", i)).
 			Create()

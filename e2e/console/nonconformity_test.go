@@ -323,7 +323,7 @@ func TestNonconformity_List(t *testing.T) {
 		}
 	`
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		var createResult struct {
 			CreateNonconformity struct {
 				NonconformityEdge struct {

@@ -26,7 +26,7 @@ type ComplianceFramework struct {
 	FrameworkID gid.GID    `json:"-"`
 }
 
-func (ComplianceFramework) IsNode()             {}
+func (ComplianceFramework) IsNode()           {}
 func (cf ComplianceFramework) GetID() gid.GID { return cf.ID }
 
 type ComplianceFrameworkConnection struct {

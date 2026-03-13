@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"testing"
 	"time"
@@ -115,9 +116,7 @@ func TestDocument_Create(t *testing.T) {
 				"organizationId": owner.GetOrganizationID().String(),
 				"approverIds":    []string{approverProfileID},
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			var result struct {
 				CreateDocument struct {
@@ -285,9 +284,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			if !tt.skipApprover {
 				input["approverIds"] = []string{approverProfileID}
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
 			require.Error(t, err)
@@ -1120,7 +1117,7 @@ func TestDocument_Pagination(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	approverProfileID := factory.CreateUser(owner)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		factory.NewDocument(owner, approverProfileID).
 			WithTitle(fmt.Sprintf("Pagination Document %d", i)).
 			Create()

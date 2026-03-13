@@ -42,7 +42,7 @@ func (t TracingExtension) Validate(schema graphql.ExecutableSchema) error {
 	return nil
 }
 
-func (t TracingExtension) InterceptField(ctx context.Context, next graphql.Resolver) (interface{}, error) {
+func (t TracingExtension) InterceptField(ctx context.Context, next graphql.Resolver) (any, error) {
 	rootSpan := trace.SpanFromContext(ctx)
 
 	if rootSpan.IsRecording() {

@@ -23,7 +23,7 @@ import (
 func MinItems(min int) ValidatorFunc {
 	return func(value any) *ValidationError {
 		v := reflect.ValueOf(value)
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			if v.IsNil() {
 				return nil
 			}
@@ -49,7 +49,7 @@ func MinItems(min int) ValidatorFunc {
 func MaxItems(max int) ValidatorFunc {
 	return func(value any) *ValidationError {
 		v := reflect.ValueOf(value)
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			if v.IsNil() {
 				return nil
 			}
@@ -75,7 +75,7 @@ func MaxItems(max int) ValidatorFunc {
 func UniqueItems() ValidatorFunc {
 	return func(value any) *ValidationError {
 		v := reflect.ValueOf(value)
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			if v.IsNil() {
 				return nil
 			}

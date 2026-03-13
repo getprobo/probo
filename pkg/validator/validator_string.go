@@ -197,7 +197,7 @@ func OneOfSlice[T any](allowed []T) ValidatorFunc {
 		// Dereference all pointer levels
 		actualValue := value
 		val := reflect.ValueOf(value)
-		for val.Kind() == reflect.Ptr {
+		for val.Kind() == reflect.Pointer {
 			if val.IsNil() {
 				return nil
 			}
@@ -247,7 +247,7 @@ func NotOneOfSlice[T any](disallowed []T) ValidatorFunc {
 		// Dereference all pointer levels
 		actualValue := value
 		val := reflect.ValueOf(value)
-		for val.Kind() == reflect.Ptr {
+		for val.Kind() == reflect.Pointer {
 			if val.IsNil() {
 				return nil
 			}

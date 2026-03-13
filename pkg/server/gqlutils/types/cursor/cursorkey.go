@@ -57,7 +57,7 @@ func MarshalCursorKeyScalar(ck page.CursorKey) graphql.Marshaler {
 	})
 }
 
-func UnmarshalCursorKeyScalar(v interface{}) (page.CursorKey, error) {
+func UnmarshalCursorKeyScalar(v any) (page.CursorKey, error) {
 	s, ok := v.(string)
 	if !ok {
 		return page.CursorKeyNil, errors.New("must be a string")

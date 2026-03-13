@@ -33,7 +33,7 @@ func MarshalGIDScalar(id gid.GID) graphql.Marshaler {
 	)
 }
 
-func UnmarshalGIDScalar(v interface{}) (gid.GID, error) {
+func UnmarshalGIDScalar(v any) (gid.GID, error) {
 	s, ok := v.(string)
 	if !ok {
 		return gid.Nil, errors.New("must be a string")

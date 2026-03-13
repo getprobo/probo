@@ -223,12 +223,12 @@ func (s *Service) CreateUser(
 					CreatedAt:              now,
 					UpdatedAt:              now,
 				}
-			if attrs.UserType != "" {
-				kind := attrs.UserType
-				profile.Kind = &kind
-			}
+				if attrs.UserType != "" {
+					kind := attrs.UserType
+					profile.Kind = &kind
+				}
 
-			err = profile.Insert(ctx, tx)
+				err = profile.Insert(ctx, tx)
 				if err != nil {
 					if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 						return scimerrors.ScimErrorUniqueness
@@ -268,11 +268,11 @@ func (s *Service) CreateUser(
 			profile.Division = ref.RefOrNil(attrs.Division)
 			profile.ManagerValue = ref.RefOrNil(attrs.ManagerValue)
 			profile.UpdatedAt = now
-		if attrs.UserType != "" {
-			kind := attrs.UserType
-			profile.Kind = &kind
-		}
-		if err := profile.Update(ctx, tx, scope); err != nil {
+			if attrs.UserType != "" {
+				kind := attrs.UserType
+				profile.Kind = &kind
+			}
+			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 		}
@@ -501,189 +501,189 @@ func (s *Service) updateUser(
 				profile.UpdatedAt = now
 			}
 
-		if attrs.Title != nil {
-			if *attrs.Title == "" {
-				profile.Position = nil
-			} else {
-				profile.Position = attrs.Title
+			if attrs.Title != nil {
+				if *attrs.Title == "" {
+					profile.Position = nil
+				} else {
+					profile.Position = attrs.Title
+				}
 			}
-		}
 
 			if attrs.UserName != nil {
 				profile.UserName = attrs.UserName
 				profile.UpdatedAt = now
 			}
 
-		if attrs.ExternalID != nil {
-			if *attrs.ExternalID == "" {
-				profile.ExternalID = nil
-			} else {
-				profile.ExternalID = attrs.ExternalID
+			if attrs.ExternalID != nil {
+				if *attrs.ExternalID == "" {
+					profile.ExternalID = nil
+				} else {
+					profile.ExternalID = attrs.ExternalID
+				}
+				profile.UpdatedAt = now
 			}
-			profile.UpdatedAt = now
-		}
 
-		if attrs.UserType != nil {
-		if *attrs.UserType == "" {
-			profile.Kind = nil
-		} else {
-			profile.Kind = attrs.UserType
-		}
-		profile.UpdatedAt = now
-	}
-
-		if attrs.Nickname != nil {
-			if *attrs.Nickname == "" {
-				profile.Nickname = nil
-			} else {
-				profile.Nickname = attrs.Nickname
+			if attrs.UserType != nil {
+				if *attrs.UserType == "" {
+					profile.Kind = nil
+				} else {
+					profile.Kind = attrs.UserType
+				}
+				profile.UpdatedAt = now
 			}
-			profile.UpdatedAt = now
-		}
 
-		if attrs.Locale != nil {
-			if *attrs.Locale == "" {
-				profile.Locale = nil
-			} else {
-				profile.Locale = attrs.Locale
+			if attrs.Nickname != nil {
+				if *attrs.Nickname == "" {
+					profile.Nickname = nil
+				} else {
+					profile.Nickname = attrs.Nickname
+				}
+				profile.UpdatedAt = now
 			}
-			profile.UpdatedAt = now
-		}
 
-		if attrs.Timezone != nil {
-			if *attrs.Timezone == "" {
-				profile.Timezone = nil
-			} else {
-				profile.Timezone = attrs.Timezone
+			if attrs.Locale != nil {
+				if *attrs.Locale == "" {
+					profile.Locale = nil
+				} else {
+					profile.Locale = attrs.Locale
+				}
+				profile.UpdatedAt = now
 			}
-			profile.UpdatedAt = now
-		}
 
-	if attrs.ProfileUrl != nil {
-		if *attrs.ProfileUrl == "" {
-			profile.ProfileUrl = nil
-		} else {
-			profile.ProfileUrl = attrs.ProfileUrl
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.Timezone != nil {
+				if *attrs.Timezone == "" {
+					profile.Timezone = nil
+				} else {
+					profile.Timezone = attrs.Timezone
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.PreferredLanguage != nil {
-		if *attrs.PreferredLanguage == "" {
-			profile.PreferredLanguage = nil
-		} else {
-			profile.PreferredLanguage = attrs.PreferredLanguage
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.ProfileUrl != nil {
+				if *attrs.ProfileUrl == "" {
+					profile.ProfileUrl = nil
+				} else {
+					profile.ProfileUrl = attrs.ProfileUrl
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.GivenName != nil {
-		if *attrs.GivenName == "" {
-			profile.GivenName = nil
-		} else {
-			profile.GivenName = attrs.GivenName
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.PreferredLanguage != nil {
+				if *attrs.PreferredLanguage == "" {
+					profile.PreferredLanguage = nil
+				} else {
+					profile.PreferredLanguage = attrs.PreferredLanguage
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.FamilyName != nil {
-		if *attrs.FamilyName == "" {
-			profile.FamilyName = nil
-		} else {
-			profile.FamilyName = attrs.FamilyName
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.GivenName != nil {
+				if *attrs.GivenName == "" {
+					profile.GivenName = nil
+				} else {
+					profile.GivenName = attrs.GivenName
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.FormattedName != nil {
-		if *attrs.FormattedName == "" {
-			profile.FormattedName = nil
-		} else {
-			profile.FormattedName = attrs.FormattedName
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.FamilyName != nil {
+				if *attrs.FamilyName == "" {
+					profile.FamilyName = nil
+				} else {
+					profile.FamilyName = attrs.FamilyName
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.MiddleName != nil {
-		if *attrs.MiddleName == "" {
-			profile.MiddleName = nil
-		} else {
-			profile.MiddleName = attrs.MiddleName
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.FormattedName != nil {
+				if *attrs.FormattedName == "" {
+					profile.FormattedName = nil
+				} else {
+					profile.FormattedName = attrs.FormattedName
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.HonorificPrefix != nil {
-		if *attrs.HonorificPrefix == "" {
-			profile.HonorificPrefix = nil
-		} else {
-			profile.HonorificPrefix = attrs.HonorificPrefix
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.MiddleName != nil {
+				if *attrs.MiddleName == "" {
+					profile.MiddleName = nil
+				} else {
+					profile.MiddleName = attrs.MiddleName
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.HonorificSuffix != nil {
-		if *attrs.HonorificSuffix == "" {
-			profile.HonorificSuffix = nil
-		} else {
-			profile.HonorificSuffix = attrs.HonorificSuffix
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.HonorificPrefix != nil {
+				if *attrs.HonorificPrefix == "" {
+					profile.HonorificPrefix = nil
+				} else {
+					profile.HonorificPrefix = attrs.HonorificPrefix
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.EmployeeNumber != nil {
-		if *attrs.EmployeeNumber == "" {
-			profile.EmployeeNumber = nil
-		} else {
-			profile.EmployeeNumber = attrs.EmployeeNumber
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.HonorificSuffix != nil {
+				if *attrs.HonorificSuffix == "" {
+					profile.HonorificSuffix = nil
+				} else {
+					profile.HonorificSuffix = attrs.HonorificSuffix
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.Department != nil {
-		if *attrs.Department == "" {
-			profile.Department = nil
-		} else {
-			profile.Department = attrs.Department
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.EmployeeNumber != nil {
+				if *attrs.EmployeeNumber == "" {
+					profile.EmployeeNumber = nil
+				} else {
+					profile.EmployeeNumber = attrs.EmployeeNumber
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.CostCenter != nil {
-		if *attrs.CostCenter == "" {
-			profile.CostCenter = nil
-		} else {
-			profile.CostCenter = attrs.CostCenter
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.Department != nil {
+				if *attrs.Department == "" {
+					profile.Department = nil
+				} else {
+					profile.Department = attrs.Department
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.EnterpriseOrganization != nil {
-		if *attrs.EnterpriseOrganization == "" {
-			profile.EnterpriseOrganization = nil
-		} else {
-			profile.EnterpriseOrganization = attrs.EnterpriseOrganization
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.CostCenter != nil {
+				if *attrs.CostCenter == "" {
+					profile.CostCenter = nil
+				} else {
+					profile.CostCenter = attrs.CostCenter
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.Division != nil {
-		if *attrs.Division == "" {
-			profile.Division = nil
-		} else {
-			profile.Division = attrs.Division
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.EnterpriseOrganization != nil {
+				if *attrs.EnterpriseOrganization == "" {
+					profile.EnterpriseOrganization = nil
+				} else {
+					profile.EnterpriseOrganization = attrs.EnterpriseOrganization
+				}
+				profile.UpdatedAt = now
+			}
 
-	if attrs.ManagerValue != nil {
-		if *attrs.ManagerValue == "" {
-			profile.ManagerValue = nil
-		} else {
-			profile.ManagerValue = attrs.ManagerValue
-		}
-		profile.UpdatedAt = now
-	}
+			if attrs.Division != nil {
+				if *attrs.Division == "" {
+					profile.Division = nil
+				} else {
+					profile.Division = attrs.Division
+				}
+				profile.UpdatedAt = now
+			}
+
+			if attrs.ManagerValue != nil {
+				if *attrs.ManagerValue == "" {
+					profile.ManagerValue = nil
+				} else {
+					profile.ManagerValue = attrs.ManagerValue
+				}
+				profile.UpdatedAt = now
+			}
 
 			if shouldReactivate {
 				profile.State = coredata.ProfileStateActive

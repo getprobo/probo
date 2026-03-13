@@ -109,7 +109,7 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	return allUsers, nil
 }
 
-func (p *Provider) extractOrganizationFields(raw interface{}, user *scimclient.User) {
+func (p *Provider) extractOrganizationFields(raw any, user *scimclient.User) {
 	if raw == nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (p *Provider) extractOrganizationFields(raw interface{}, user *scimclient.U
 	user.UserType = org.Description
 }
 
-func (p *Provider) extractEmployeeNumber(raw interface{}, user *scimclient.User) {
+func (p *Provider) extractEmployeeNumber(raw any, user *scimclient.User) {
 	if raw == nil {
 		return
 	}
@@ -178,7 +178,7 @@ func (p *Provider) extractEmployeeNumber(raw interface{}, user *scimclient.User)
 	}
 }
 
-func (p *Provider) extractRelations(raw interface{}, user *scimclient.User) {
+func (p *Provider) extractRelations(raw any, user *scimclient.User) {
 	if raw == nil {
 		return
 	}
@@ -201,7 +201,7 @@ func (p *Provider) extractRelations(raw interface{}, user *scimclient.User) {
 	}
 }
 
-func (p *Provider) extractPreferredLanguage(raw interface{}, user *scimclient.User) {
+func (p *Provider) extractPreferredLanguage(raw any, user *scimclient.User) {
 	if raw == nil {
 		return
 	}

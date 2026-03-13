@@ -78,7 +78,7 @@ func (i VendorCategory) String() string {
 	return string(i)
 }
 
-func (i *VendorCategory) Scan(value interface{}) error {
+func (i *VendorCategory) Scan(value any) error {
 	switch v := value.(type) {
 	case string:
 		switch v {

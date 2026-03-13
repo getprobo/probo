@@ -193,7 +193,7 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 					TokenURL:     b.getEnvOrDefault("CONNECTOR_SLACK_TOKEN_URL", "https://slack.com/api/oauth.v2.access"),
 					Scopes:       []string{"chat:write", "channels:join", "incoming-webhook"},
 				},
-				RawSettings: map[string]interface{}{
+				RawSettings: map[string]any{
 					"signing-secret": b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
 				},
 			},
@@ -311,7 +311,7 @@ func (b *Builder) parseOriginsList(s string) []string {
 	}
 
 	var result []string
-	for _, part := range strings.Split(s, ",") {
+	for part := range strings.SplitSeq(s, ",") {
 		part = strings.TrimSpace(part)
 		part = strings.Trim(part, "\"")
 		if part != "" {

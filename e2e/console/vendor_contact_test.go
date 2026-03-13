@@ -230,7 +230,7 @@ func TestVendorContact_List(t *testing.T) {
 	vendorID := factory.NewVendor(owner).WithName("List Contacts Vendor").Create()
 
 	// Create multiple contacts
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		query := `
 			mutation CreateVendorContact($input: CreateVendorContactInput!) {
 				createVendorContact(input: $input) {

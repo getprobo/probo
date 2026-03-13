@@ -70,20 +70,20 @@ func ParseMargin(margin string) Margin {
 	margin = strings.TrimSpace(margin)
 
 	// Handle different units
-	if strings.HasSuffix(margin, "in") {
-		if val, err := strconv.ParseFloat(strings.TrimSuffix(margin, "in"), 64); err == nil {
+	if before, ok := strings.CutSuffix(margin, "in"); ok {
+		if val, err := strconv.ParseFloat(before, 64); err == nil {
 			return NewMarginInches(val)
 		}
-	} else if strings.HasSuffix(margin, "mm") {
-		if val, err := strconv.ParseFloat(strings.TrimSuffix(margin, "mm"), 64); err == nil {
+	} else if before, ok := strings.CutSuffix(margin, "mm"); ok {
+		if val, err := strconv.ParseFloat(before, 64); err == nil {
 			return NewMarginMillimeters(val)
 		}
-	} else if strings.HasSuffix(margin, "cm") {
-		if val, err := strconv.ParseFloat(strings.TrimSuffix(margin, "cm"), 64); err == nil {
+	} else if before, ok := strings.CutSuffix(margin, "cm"); ok {
+		if val, err := strconv.ParseFloat(before, 64); err == nil {
 			return NewMarginCentimeters(val)
 		}
-	} else if strings.HasSuffix(margin, "pt") {
-		if val, err := strconv.ParseFloat(strings.TrimSuffix(margin, "pt"), 64); err == nil {
+	} else if before, ok := strings.CutSuffix(margin, "pt"); ok {
+		if val, err := strconv.ParseFloat(before, 64); err == nil {
 			return NewMarginPoints(val)
 		}
 	} else {

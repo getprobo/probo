@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"testing"
 	"time"
@@ -74,9 +75,7 @@ func TestFramework_Create(t *testing.T) {
 			input := map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			var result struct {
 				CreateFramework struct {
@@ -216,9 +215,7 @@ func TestFramework_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
 			require.Error(t, err)
@@ -753,9 +750,7 @@ func TestFramework_OmittableDescription(t *testing.T) {
 			`
 
 			input := map[string]any{"id": frameworkID}
-			for k, v := range tt.input {
-				input[k] = v
-			}
+			maps.Copy(input, tt.input)
 
 			var result struct {
 				UpdateFramework struct {
@@ -1121,9 +1116,7 @@ func TestFramework_MaxLength_Validation(t *testing.T) {
 				input := map[string]any{
 					"organizationId": owner.GetOrganizationID().String(),
 				}
-				for k, v := range tt.input {
-					input[k] = v
-				}
+				maps.Copy(input, tt.input)
 
 				_, err := owner.Do(query, map[string]any{"input": input})
 				require.Error(t, err)
@@ -1163,9 +1156,7 @@ func TestFramework_MaxLength_Validation(t *testing.T) {
 				`
 
 				input := map[string]any{"id": frameworkID}
-				for k, v := range tt.input {
-					input[k] = v
-				}
+				maps.Copy(input, tt.input)
 
 				_, err := owner.Do(query, map[string]any{"input": input})
 				require.Error(t, err)
@@ -1236,7 +1227,7 @@ func TestFramework_Pagination(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create exactly 5 frameworks for pagination testing
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		factory.NewFramework(owner).
 			WithName(fmt.Sprintf("Pagination Framework %d", i)).
 			Create()

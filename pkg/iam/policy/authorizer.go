@@ -17,6 +17,7 @@ package policy
 import (
 	"errors"
 	"fmt"
+	"maps"
 
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -108,9 +109,7 @@ func (a *Authorizer) Authorize(params AuthorizeParams) error {
 	}
 
 	// Add resource attributes to context
-	for k, v := range params.ResourceAttributes {
-		conditionCtx.Resource[k] = v
-	}
+	maps.Copy(conditionCtx.Resource, params.ResourceAttributes)
 
 	// Build authorization request
 	req := AuthorizationRequest{
