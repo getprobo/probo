@@ -134,10 +134,11 @@ func (g *outputBlocker) Check(_ context.Context, message llm.Message) (*agent.Gu
 
 type recordingHook struct {
 	agent.NoOpHooks
-	runStarted bool
-	runEnded   bool
-	toolNames  []string
-	handoffs   []string
+	runStarted     bool
+	runEnded       bool
+	toolStartNames []string
+	toolNames      []string
+	handoffs       []string
 }
 
 func (h *recordingHook) OnRunStart(_ context.Context, _ *agent.Agent, _ []llm.Message) {
@@ -146,6 +147,10 @@ func (h *recordingHook) OnRunStart(_ context.Context, _ *agent.Agent, _ []llm.Me
 
 func (h *recordingHook) OnRunEnd(_ context.Context, _ *agent.Agent, _ *agent.Result, _ error) {
 	h.runEnded = true
+}
+
+func (h *recordingHook) OnToolStart(_ context.Context, _ *agent.Agent, tool agent.Tool, _ string) {
+	h.toolStartNames = append(h.toolStartNames, tool.Name())
 }
 
 func (h *recordingHook) OnToolEnd(_ context.Context, _ *agent.Agent, tool agent.Tool, _ agent.ToolResult, _ error) {

@@ -818,6 +818,11 @@ func executeSingleTool(
 		if _, ok := errors.AsType[*InterruptedError](err); ok {
 			toolSpan.SetAttributes(attribute.Bool("tool.interrupted", true))
 			toolSpan.End()
+
+			onEvent(ctx, StreamEvent{Type: StreamEventToolEnd, Agent: agent, Tool: tool})
+			emitHook(agent, func(h RunHooks) { h.OnToolEnd(ctx, agent, tool, ToolResult{}, err) })
+			emitAgentHook(agent, func(h AgentHooks) { h.OnToolEnd(ctx, agent, tool, ToolResult{}) })
+
 			return ToolResult{}, err
 		}
 
@@ -825,7 +830,9 @@ func executeSingleTool(
 		toolSpan.SetStatus(codes.Error, err.Error())
 		toolSpan.End()
 
+		onEvent(ctx, StreamEvent{Type: StreamEventToolEnd, Agent: agent, Tool: tool, Err: err})
 		emitHook(agent, func(h RunHooks) { h.OnToolEnd(ctx, agent, tool, result, err) })
+		emitAgentHook(agent, func(h AgentHooks) { h.OnToolEnd(ctx, agent, tool, result) })
 
 		logger.ErrorCtx(
 			ctx,

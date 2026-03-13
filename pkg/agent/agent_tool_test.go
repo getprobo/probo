@@ -791,6 +791,70 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 			assert.Equal(t, "agent_a", result.LastAgent.Name())
 		},
 	)
+
+	t.Run(
+		"nested interruption emits paired OnToolStart and OnToolEnd on outer agent",
+		func(t *testing.T) {
+			t.Parallel()
+
+			deleteTool, err := agent.FunctionTool[struct{}](
+				"delete_file",
+				"Delete a file",
+				func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "file deleted"}, nil
+				},
+			)
+			require.NoError(t, err)
+
+			innerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "inner_tc1",
+						Function: llm.FunctionCall{Name: "delete_file", Arguments: `{}`},
+					}),
+				},
+			}
+
+			innerAgent := agent.New(
+				"file_manager",
+				newTestClient(innerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(deleteTool),
+				agent.WithApproval(agent.ApprovalConfig{
+					ToolNames: []string{"delete_file"},
+				}),
+			)
+
+			outerProvider := &mockProvider{
+				responses: []*llm.ChatCompletionResponse{
+					toolCallResponse(llm.ToolCall{
+						ID:       "outer_tc1",
+						Function: llm.FunctionCall{Name: "file_expert", Arguments: `{"input":"delete the file"}`},
+					}),
+				},
+			}
+
+			hook := &recordingHook{}
+
+			outerAgent := agent.New(
+				"assistant",
+				newTestClient(outerProvider),
+				agent.WithModel("test-model"),
+				agent.WithTools(innerAgent.AsTool("file_expert", "Manage files")),
+				agent.WithHooks(hook),
+			)
+
+			_, err = outerAgent.Run(
+				context.Background(),
+				[]llm.Message{userMessage("Delete the file")},
+			)
+
+			var interrupted *agent.InterruptedError
+			require.ErrorAs(t, err, &interrupted)
+			require.Len(t, hook.toolStartNames, 1)
+			assert.Equal(t, hook.toolStartNames, hook.toolNames, "every OnToolStart must have a matching OnToolEnd")
+		},
+	)
 }
 
 func TestAgentTool_Execute_DepthLimit(t *testing.T) {
