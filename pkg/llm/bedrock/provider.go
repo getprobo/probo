@@ -74,9 +74,8 @@ func (p *Provider) ChatCompletionStream(ctx context.Context, req *llm.ChatComple
 		input.System = system
 	}
 
-	if len(req.Tools) > 0 {
-		toolConfig := buildToolConfig(req)
-		input.ToolConfig = toolConfig
+	if len(req.Tools) > 0 && (req.ToolChoice == nil || req.ToolChoice.Type != llm.ToolChoiceNone) {
+		input.ToolConfig = buildToolConfig(req)
 	}
 
 	output, err := p.client.ConverseStream(ctx, input)
@@ -99,9 +98,8 @@ func buildInput(req *llm.ChatCompletionRequest) *bedrockruntime.ConverseInput {
 		input.System = system
 	}
 
-	if len(req.Tools) > 0 {
-		toolConfig := buildToolConfig(req)
-		input.ToolConfig = toolConfig
+	if len(req.Tools) > 0 && (req.ToolChoice == nil || req.ToolChoice.Type != llm.ToolChoiceNone) {
+		input.ToolConfig = buildToolConfig(req)
 	}
 
 	return input
