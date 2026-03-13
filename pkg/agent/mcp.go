@@ -167,7 +167,7 @@ func (t *mcpTool) Execute(ctx context.Context, arguments string) (ToolResult, er
 }
 
 func extractMCPContent(result *mcp.CallToolResult) string {
-	if result == nil || len(result.Content) == 0 {
+	if result == nil {
 		return ""
 	}
 
@@ -178,5 +178,16 @@ func extractMCPContent(result *mcp.CallToolResult) string {
 		}
 	}
 
-	return strings.Join(parts, "\n")
+	if len(parts) > 0 {
+		return strings.Join(parts, "\n")
+	}
+
+	if result.StructuredContent != nil {
+		data, err := json.Marshal(result.StructuredContent)
+		if err == nil {
+			return string(data)
+		}
+	}
+
+	return ""
 }

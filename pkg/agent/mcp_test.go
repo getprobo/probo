@@ -379,4 +379,48 @@ func TestExtractMCPContent(t *testing.T) {
 			assert.Equal(t, "", extractMCPContent(result))
 		},
 	)
+
+	t.Run(
+		"falls back to structured content when no text content",
+		func(t *testing.T) {
+			t.Parallel()
+			result := &mcp.CallToolResult{
+				StructuredContent: map[string]any{
+					"status": "ok",
+					"count":  float64(42),
+				},
+			}
+			got := extractMCPContent(result)
+			assert.Contains(t, got, `"status":"ok"`)
+			assert.Contains(t, got, `"count":42`)
+		},
+	)
+
+	t.Run(
+		"text content takes precedence over structured content",
+		func(t *testing.T) {
+			t.Parallel()
+			result := &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.TextContent{Text: "text wins"},
+				},
+				StructuredContent: map[string]any{"key": "value"},
+			}
+			assert.Equal(t, "text wins", extractMCPContent(result))
+		},
+	)
+
+	t.Run(
+		"structured content used when content has only non-text",
+		func(t *testing.T) {
+			t.Parallel()
+			result := &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.ImageContent{Data: []byte("img"), MIMEType: "image/png"},
+				},
+				StructuredContent: map[string]any{"fallback": true},
+			}
+			assert.Equal(t, `{"fallback":true}`, extractMCPContent(result))
+		},
+	)
 }
