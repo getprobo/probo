@@ -215,12 +215,12 @@ jobs:
       - run: "sudo apt-get install -y mkcert libnss3-tools"
       - name: "Create browser certificate databases"
         run: |
-          # Create Chrome/Chromium NSS database
-          mkdir -p "$HOME/.pki/nssdb"
-          certutil -d sql:"$HOME/.pki/nssdb" -N --empty-password
-          # Create Firefox NSS database
-          mkdir -p "$HOME/.mozilla/firefox/default"
-          certutil -d sql:"$HOME/.mozilla/firefox/default" -N --empty-password
+          # Create Chrome/Chromium NSS database for root (mkcert runs with sudo)
+          sudo mkdir -p /root/.pki/nssdb
+          sudo certutil -d sql:/root/.pki/nssdb -N --empty-password
+          # Create Firefox NSS database for root
+          sudo mkdir -p /root/.mozilla/firefox/default
+          sudo certutil -d sql:/root/.mozilla/firefox/default -N --empty-password
       - run: "sudo mkcert -install"
       - uses: "docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130" # v3.7.0
       - uses: "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f" # v3.12.0
