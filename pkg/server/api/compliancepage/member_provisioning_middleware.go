@@ -41,6 +41,7 @@ func NewMemberProvisioningMiddleware(trustSvc *trust.Service, logger *log.Logger
 				compliancePage := CompliancePageFromContext(r.Context())
 
 				if _, err := trustSvc.ProvisionMember(ctx, compliancePage.ID, identity.ID); err != nil {
+					logger.ErrorCtx(ctx, "cannot provision member", log.Error(err))
 					httpserver.RenderJSON(
 						w,
 						http.StatusInternalServerError,
