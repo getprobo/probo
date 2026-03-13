@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"go.probo.inc/probo/pkg/llm"
 )
@@ -39,10 +40,11 @@ type (
 	}
 
 	functionTool[P any] struct {
-		name        string
-		description string
-		fn          func(ctx context.Context, params P) (ToolResult, error)
-		schema      json.RawMessage
+		name           string
+		description    string
+		fn             func(ctx context.Context, params P) (ToolResult, error)
+		schema         json.RawMessage
+		requiredFields []string
 	}
 )
 
@@ -53,11 +55,17 @@ func FunctionTool[P any](
 ) Tool {
 	schema := jsonSchemaFor[P]()
 
+	var parsed struct {
+		Required []string `json:"required"`
+	}
+	_ = json.Unmarshal(schema, &parsed)
+
 	return &functionTool[P]{
-		name:        name,
-		description: description,
-		fn:          fn,
-		schema:      schema,
+		name:           name,
+		description:    description,
+		fn:             fn,
+		schema:         schema,
+		requiredFields: parsed.Required,
 	}
 }
 
@@ -72,6 +80,33 @@ func (t *functionTool[P]) Definition() llm.Tool {
 }
 
 func (t *functionTool[P]) Execute(ctx context.Context, arguments string) (ToolResult, error) {
+	if len(t.requiredFields) > 0 {
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal([]byte(arguments), &fields); err != nil {
+			return ToolResult{
+				Content: fmt.Sprintf("Invalid parameters: %s", err.Error()),
+				IsError: true,
+			}, nil
+		}
+
+		var missing []string
+		for _, f := range t.requiredFields {
+			if _, ok := fields[f]; !ok {
+				missing = append(missing, f)
+			}
+		}
+
+		if len(missing) > 0 {
+			return ToolResult{
+				Content: fmt.Sprintf(
+					"Missing required parameters: %s",
+					strings.Join(missing, ", "),
+				),
+				IsError: true,
+			}, nil
+		}
+	}
+
 	var params P
 	if err := json.Unmarshal([]byte(arguments), &params); err != nil {
 		return ToolResult{

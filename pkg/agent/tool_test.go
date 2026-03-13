@@ -276,6 +276,109 @@ func TestFunctionTool_Execute(t *testing.T) {
 	)
 
 	t.Run(
+		"missing single required field returns tool error",
+		func(t *testing.T) {
+			t.Parallel()
+
+			type Params struct {
+				City string `json:"city"`
+			}
+
+			tool := agent.FunctionTool(
+				"weather",
+				"Get weather",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					t.Fatal("function should not be called")
+					return agent.ToolResult{}, nil
+				},
+			)
+
+			result, err := tool.Execute(context.Background(), `{}`)
+			require.NoError(t, err)
+			assert.True(t, result.IsError)
+			assert.Contains(t, result.Content, "city")
+		},
+	)
+
+	t.Run(
+		"missing multiple required fields lists all of them",
+		func(t *testing.T) {
+			t.Parallel()
+
+			type Params struct {
+				City    string `json:"city"`
+				Country string `json:"country"`
+			}
+
+			tool := agent.FunctionTool(
+				"weather",
+				"Get weather",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					t.Fatal("function should not be called")
+					return agent.ToolResult{}, nil
+				},
+			)
+
+			result, err := tool.Execute(context.Background(), `{}`)
+			require.NoError(t, err)
+			assert.True(t, result.IsError)
+			assert.Contains(t, result.Content, "city")
+			assert.Contains(t, result.Content, "country")
+		},
+	)
+
+	t.Run(
+		"partially missing required fields detected",
+		func(t *testing.T) {
+			t.Parallel()
+
+			type Params struct {
+				City    string `json:"city"`
+				Country string `json:"country"`
+			}
+
+			tool := agent.FunctionTool(
+				"weather",
+				"Get weather",
+				func(_ context.Context, _ Params) (agent.ToolResult, error) {
+					t.Fatal("function should not be called")
+					return agent.ToolResult{}, nil
+				},
+			)
+
+			result, err := tool.Execute(context.Background(), `{"city":"Paris"}`)
+			require.NoError(t, err)
+			assert.True(t, result.IsError)
+			assert.Contains(t, result.Content, "country")
+		},
+	)
+
+	t.Run(
+		"optional fields can be omitted",
+		func(t *testing.T) {
+			t.Parallel()
+
+			type Params struct {
+				City  string  `json:"city"`
+				Units *string `json:"units,omitempty"`
+			}
+
+			tool := agent.FunctionTool(
+				"weather",
+				"Get weather",
+				func(_ context.Context, p Params) (agent.ToolResult, error) {
+					return agent.ToolResult{Content: "sunny in " + p.City}, nil
+				},
+			)
+
+			result, err := tool.Execute(context.Background(), `{"city":"Paris"}`)
+			require.NoError(t, err)
+			assert.False(t, result.IsError)
+			assert.Equal(t, "sunny in Paris", result.Content)
+		},
+	)
+
+	t.Run(
 		"extra JSON fields are ignored",
 		func(t *testing.T) {
 			t.Parallel()
