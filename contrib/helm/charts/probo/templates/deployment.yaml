@@ -217,6 +217,8 @@ spec:
               value: {{ .Values.probo.openai.temperature | quote }}
             - name: OPENAI_MODEL_NAME
               value: {{ .Values.probo.openai.modelName | quote }}
+            - name: OPENAI_MAX_TOKENS
+              value: {{ .Values.probo.openai.maxTokens | quote }}
             {{- end }}
             # Custom Domains
             {{- if .Values.probo.customDomains.enabled }}

@@ -252,6 +252,7 @@ probo:
     apiKey: ""
     temperature: 0.1
     modelName: "gpt-4o"
+    maxTokens: 4096
 
   # Custom domains configuration (optional)
   customDomains:

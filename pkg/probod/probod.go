@@ -445,6 +445,7 @@ func (impl *Implm) Run(
 		llmClient,
 		impl.cfg.OpenAI.ModelName,
 		impl.cfg.OpenAI.Temperature,
+		impl.cfg.OpenAI.MaxTokens,
 		html2pdfConverter,
 		acmeService,
 		fileManagerService,

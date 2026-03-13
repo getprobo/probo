@@ -157,6 +157,7 @@ probo:
     apiKey: "CHANGE_ME_OPENAI_API_KEY"
     temperature: 0.1
     modelName: "gpt-4o"
+    maxTokens: 4096
 
   # OpenTelemetry tracing (optional)
   tracing:

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -128,6 +128,7 @@ func (a *Agent) AssessVendor(ctx context.Context, websiteURL string) (*vendorInf
 		agent.WithInstructions(assessVendorSystemPrompt),
 		agent.WithModel(a.model),
 		agent.WithTemperature(a.temp),
+		agent.WithMaxTokens(a.maxTokens),
 	)
 
 	typedResult, err := agent.RunTyped[vendorInfo](

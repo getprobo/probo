@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,12 +20,13 @@ import (
 )
 
 type Agent struct {
-	l      *log.Logger
-	client *llm.Client
-	model  string
-	temp   float64
+	l         *log.Logger
+	client    *llm.Client
+	model     string
+	temp      float64
+	maxTokens int
 }
 
-func NewAgent(l *log.Logger, client *llm.Client, model string, temp float64) *Agent {
-	return &Agent{l: l, client: client, model: model, temp: temp}
+func NewAgent(l *log.Logger, client *llm.Client, model string, temp float64, maxTokens int) *Agent {
+	return &Agent{l: l, client: client, model: model, temp: temp, maxTokens: maxTokens}
 }

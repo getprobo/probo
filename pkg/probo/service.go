@@ -59,6 +59,7 @@ type (
 		llmClient               *llm.Client
 		llmModel                string
 		llmTemperature          float64
+		llmMaxTokens            int
 		html2pdfConverter       *html2pdf.Converter
 		acmeService             *certmanager.ACMEService
 		fileManager             *filemanager.Service
@@ -132,6 +133,7 @@ func NewService(
 	llmClient *llm.Client,
 	llmModel string,
 	llmTemperature float64,
+	llmMaxTokens int,
 	html2pdfConverter *html2pdf.Converter,
 	acmeService *certmanager.ACMEService,
 	fileManagerService *filemanager.Service,
@@ -157,6 +159,7 @@ func NewService(
 		llmClient:               llmClient,
 		llmModel:                llmModel,
 		llmTemperature:          llmTemperature,
+		llmMaxTokens:            llmMaxTokens,
 		html2pdfConverter:       html2pdfConverter,
 		acmeService:             acmeService,
 		fileManager:             fileManagerService,
@@ -178,7 +181,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		baseURL:       s.baseURL,
 		scope:         coredata.NewScope(tenantID),
 		tokenSecret:   s.tokenSecret,
-		agent:         agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature),
+		agent:         agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
 		fileManager:   s.fileManager,
 		esign:         s.esign,
 	}

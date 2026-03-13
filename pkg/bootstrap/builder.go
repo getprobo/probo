@@ -151,6 +151,7 @@ func (b *Builder) Build() (*probod.FullConfig, error) {
 				APIKey:      b.getEnv("OPENAI_API_KEY"),
 				Temperature: b.getEnvFloatOrDefault("OPENAI_TEMPERATURE", 0.1),
 				ModelName:   b.getEnvOrDefault("OPENAI_MODEL_NAME", "gpt-4o"),
+				MaxTokens:   b.getEnvIntOrDefault("OPENAI_MAX_TOKENS", 4096),
 			},
 			CustomDomains: probod.CustomDomainsConfig{
 				RenewalInterval:   b.getEnvIntOrDefault("CUSTOM_DOMAINS_RENEWAL_INTERVAL", 3600),

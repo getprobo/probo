@@ -19,6 +19,7 @@ type LLMConfig struct {
 	APIKey      string  `json:"api-key"`  // for OpenAI and Anthropic
 	ModelName   string  `json:"model-name"`
 	Temperature float64 `json:"temperature"`
+	MaxTokens   int     `json:"max-tokens"`
 }
 
 type OpenAIConfig = LLMConfig

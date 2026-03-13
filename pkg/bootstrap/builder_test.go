@@ -164,6 +164,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	// OpenAI config
 	assert.Equal(t, 0.1, cfg.Probod.OpenAI.Temperature)
 	assert.Equal(t, "gpt-4o", cfg.Probod.OpenAI.ModelName)
+	assert.Equal(t, 4096, cfg.Probod.OpenAI.MaxTokens)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
@@ -234,6 +235,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["OPENAI_API_KEY"] = "sk-test-key"
 	env["OPENAI_TEMPERATURE"] = "0.5"
 	env["OPENAI_MODEL_NAME"] = "gpt-4-turbo"
+	env["OPENAI_MAX_TOKENS"] = "8192"
 	// Custom domains
 	env["CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
 	env["ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
@@ -297,6 +299,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "sk-test-key", cfg.Probod.OpenAI.APIKey)
 	assert.Equal(t, 0.5, cfg.Probod.OpenAI.Temperature)
 	assert.Equal(t, "gpt-4-turbo", cfg.Probod.OpenAI.ModelName)
+	assert.Equal(t, 8192, cfg.Probod.OpenAI.MaxTokens)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)
