@@ -2270,6 +2270,74 @@ func TestRunStreamed(t *testing.T) {
 			assert.True(t, gotError, "StreamEventError should be emitted when session save fails")
 		},
 	)
+
+	t.Run(
+		"concurrent consumer receives all events before Wait returns",
+		func(t *testing.T) {
+			t.Parallel()
+
+			mockStream := &mockChatStream{
+				events: []llm.ChatCompletionStreamEvent{
+					{Delta: llm.MessageDelta{Content: "Hello"}},
+					{Delta: llm.MessageDelta{Content: " world"}},
+					{
+						Delta:        llm.MessageDelta{Content: "!"},
+						Usage:        &llm.Usage{InputTokens: 10, OutputTokens: 3},
+						FinishReason: finishReasonPtr(llm.FinishReasonStop),
+					},
+				},
+			}
+
+			streamProvider := &mockStreamProvider{stream: mockStream}
+			client := llm.NewClient(streamProvider, "test")
+
+			ag := agent.New(
+				"assistant",
+				client,
+				agent.WithModel("test-model"),
+			)
+
+			sr := ag.RunStreamed(
+				context.Background(),
+				[]llm.Message{userMessage("Hi")},
+			)
+
+			var collected []agent.StreamEvent
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				for ev := range sr.Events {
+					collected = append(collected, ev)
+				}
+			}()
+
+			result, err := sr.Wait()
+			<-done
+
+			require.NoError(t, err)
+			assert.Equal(t, "Hello world!", result.FinalMessage().Text())
+
+			var deltaCount int
+			var gotAgentStart, gotAgentEnd, gotComplete bool
+			for _, ev := range collected {
+				switch ev.Type {
+				case agent.StreamEventLLMDelta:
+					deltaCount++
+				case agent.StreamEventAgentStart:
+					gotAgentStart = true
+				case agent.StreamEventAgentEnd:
+					gotAgentEnd = true
+				case agent.StreamEventComplete:
+					gotComplete = true
+				}
+			}
+
+			assert.Equal(t, 3, deltaCount, "all delta events should reach the consumer")
+			assert.True(t, gotAgentStart, "agent_start event should reach the consumer")
+			assert.True(t, gotAgentEnd, "agent_end event should reach the consumer")
+			assert.True(t, gotComplete, "complete event should reach the consumer")
+		},
+	)
 }
 
 func TestClone(t *testing.T) {

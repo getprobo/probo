@@ -53,9 +53,8 @@ const (
 )
 
 func (sr *StreamedRun) Wait() (*Result, error) {
-	for range sr.Events {
-	}
 	<-sr.done
+
 	return sr.result, sr.err
 }
 
