@@ -75,8 +75,22 @@ func (t *agentTool) Execute(ctx context.Context, arguments string) (ToolResult, 
 		return ToolResult{}, &MaxToolDepthExceededError{MaxDepth: t.agent.maxToolDepth}
 	}
 
-	var params agentToolParams
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(arguments), &fields); err != nil {
+		return ToolResult{
+			Content: fmt.Sprintf("Invalid parameters: %s", err.Error()),
+			IsError: true,
+		}, nil
+	}
 
+	if _, ok := fields["input"]; !ok {
+		return ToolResult{
+			Content: "Missing required parameters: input",
+			IsError: true,
+		}, nil
+	}
+
+	var params agentToolParams
 	if err := json.Unmarshal([]byte(arguments), &params); err != nil {
 		return ToolResult{
 			Content: fmt.Sprintf("Invalid parameters: %s", err.Error()),

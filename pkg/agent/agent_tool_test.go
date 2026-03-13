@@ -195,19 +195,13 @@ func TestAgentTool_Execute(t *testing.T) {
 	)
 
 	t.Run(
-		"empty JSON object returns tool error",
+		"empty JSON object returns tool error for missing input",
 		func(t *testing.T) {
 			t.Parallel()
 
-			provider := &mockProvider{
-				responses: []*llm.ChatCompletionResponse{
-					stopResponse("ok"),
-				},
-			}
-
 			ag := agent.New(
 				"sub",
-				newTestClient(provider),
+				newTestClient(&mockProvider{}),
 				agent.WithModel("test-model"),
 			)
 
@@ -215,7 +209,9 @@ func TestAgentTool_Execute(t *testing.T) {
 			result, err := tool.Execute(context.Background(), `{}`)
 
 			require.NoError(t, err)
-			assert.False(t, result.IsError)
+			assert.True(t, result.IsError)
+			assert.Contains(t, result.Content, "Missing required parameters")
+			assert.Contains(t, result.Content, "input")
 		},
 	)
 
