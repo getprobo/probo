@@ -93,38 +93,38 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			bold := lipgloss.NewStyle().Bold(true)
 			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
 
-			fmt.Fprintf(out, "%s\n\n", bold.Render(p.FullName))
+			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(p.FullName))
 
-			fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), p.ID)
-			fmt.Fprintf(out, "%s%s\n", label.Render("Email:"), p.EmailAddress)
-			fmt.Fprintf(out, "%s%s\n", label.Render("State:"), p.State)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), p.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Email:"), p.EmailAddress)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), p.State)
 
 			if p.Kind != nil && *p.Kind != "" {
-				fmt.Fprintf(out, "%s%s\n", label.Render("Kind:"), *p.Kind)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Kind:"), *p.Kind)
 			}
 
 			if p.Position != nil && *p.Position != "" {
-				fmt.Fprintf(out, "%s%s\n", label.Render("Position:"), *p.Position)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Position:"), *p.Position)
 			}
 
 			if len(p.AdditionalEmailAddresses) > 0 {
-				fmt.Fprintln(out)
-				fmt.Fprintf(out, "%s\n", bold.Render("Additional Emails"))
+				_, _ = fmt.Fprintln(out)
+				_, _ = fmt.Fprintf(out, "%s\n", bold.Render("Additional Emails"))
 				for _, email := range p.AdditionalEmailAddresses {
-					fmt.Fprintf(out, "  %s\n", email)
+					_, _ = fmt.Fprintf(out, "  %s\n", email)
 				}
 			}
 
-			fmt.Fprintln(out)
+			_, _ = fmt.Fprintln(out)
 			if p.ContractStartDate != nil {
-				fmt.Fprintf(out, "%s%s\n", label.Render("Contract Start:"), *p.ContractStartDate)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Contract Start:"), *p.ContractStartDate)
 			}
 			if p.ContractEndDate != nil {
-				fmt.Fprintf(out, "%s%s\n", label.Render("Contract End:"), *p.ContractEndDate)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Contract End:"), *p.ContractEndDate)
 			}
 
-			fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), p.CreatedAt)
-			fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), p.UpdatedAt)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), p.CreatedAt)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), p.UpdatedAt)
 
 			return nil
 		},

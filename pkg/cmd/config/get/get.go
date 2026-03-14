@@ -39,7 +39,7 @@ func NewCmdConfigGet(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if val != "" {
-				fmt.Fprintln(f.IOStreams.Out, val)
+				_, _ = fmt.Fprintln(f.IOStreams.Out, val)
 			}
 
 			return nil

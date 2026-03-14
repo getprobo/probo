@@ -78,10 +78,10 @@ func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
 
 			var indented bytes.Buffer
 			if err := json.Indent(&indented, raw, "", "  "); err != nil {
-				f.IOStreams.Out.Write(raw)
+				_, _ = f.IOStreams.Out.Write(raw)
 			} else {
 				indented.WriteByte('\n')
-				indented.WriteTo(f.IOStreams.Out)
+				_, _ = indented.WriteTo(f.IOStreams.Out)
 			}
 
 			return nil
