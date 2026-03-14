@@ -7,5 +7,28 @@ Rules:
 - Use an empty array for data_locations if none are found
 - For data_locations, list the countries or regions where data is processed or stored (e.g. "United States", "EU", "Germany")
 - For bug_bounty_url, extract the URL of the vendor's bug bounty or responsible disclosure program if mentioned
-- For category, use one of: ANALYTICS, CLOUD_MONITORING, CLOUD_PROVIDER, COLLABORATION, CUSTOMER_SUPPORT, DATA_STORAGE_AND_PROCESSING, DOCUMENT_MANAGEMENT, EMPLOYEE_MANAGEMENT, ENGINEERING, FINANCE, IDENTITY_PROVIDER, IT, MARKETING, OFFICE_OPERATIONS, OTHER, PASSWORD_MANAGEMENT, PRODUCT_AND_DESIGN, PROFESSIONAL_SERVICES, RECRUITING, SALES, SECURITY, VERSION_CONTROL
 - If the category cannot be determined, use OTHER
+
+Category reference (pick the best match):
+- ANALYTICS: analytics and product intelligence (e.g. Mixpanel, Amplitude, Segment)
+- CLOUD_MONITORING: observability and monitoring (e.g. Datadog, New Relic, PagerDuty)
+- CLOUD_PROVIDER: infrastructure and cloud platforms (e.g. AWS, GCP, Azure, DigitalOcean)
+- COLLABORATION: team communication and collaboration (e.g. Slack, Microsoft Teams, Zoom)
+- CUSTOMER_SUPPORT: helpdesk and customer service (e.g. Zendesk, Intercom, Freshdesk)
+- DATA_STORAGE_AND_PROCESSING: databases and data pipelines (e.g. Snowflake, MongoDB, Redis)
+- DOCUMENT_MANAGEMENT: document storage and signing (e.g. Google Drive, Dropbox, DocuSign)
+- EMPLOYEE_MANAGEMENT: HR and people management (e.g. BambooHR, Workday, Gusto)
+- ENGINEERING: developer tools and platforms (e.g. CircleCI, Vercel, Terraform)
+- FINANCE: billing, accounting, and payments (e.g. Stripe, QuickBooks, Brex)
+- IDENTITY_PROVIDER: authentication and identity (e.g. Okta, Auth0, OneLogin)
+- IT: IT management and device management (e.g. Jamf, Kandji, ServiceNow)
+- MARKETING: marketing automation and CMS (e.g. HubSpot, Mailchimp, Webflow)
+- OFFICE_OPERATIONS: office and facilities management
+- OTHER: does not fit any other category
+- PASSWORD_MANAGEMENT: credential and secret management (e.g. 1Password, LastPass, Vault)
+- PRODUCT_AND_DESIGN: design and product tools (e.g. Figma, Notion, Jira)
+- PROFESSIONAL_SERVICES: consulting and advisory firms
+- RECRUITING: hiring and applicant tracking (e.g. Lever, Greenhouse, LinkedIn)
+- SALES: CRM and sales tools (e.g. Salesforce, Gong, Outreach)
+- SECURITY: security tools and services (e.g. CrowdStrike, Snyk, Vanta)
+- VERSION_CONTROL: source code management (e.g. GitHub, GitLab, Bitbucket)
