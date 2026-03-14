@@ -19,13 +19,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/agent"
 )
 
 type headersParams struct {
-	URL string `json:"url" jsonschema:"description=The URL to check security headers for"`
+	URL string `json:"url" jsonschema:"description=The URL to check security headers for (e.g. https://example.com)"`
 }
 
 type headerCheck struct {
@@ -34,16 +35,17 @@ type headerCheck struct {
 }
 
 type headersResult struct {
-	HSTS                    headerCheck `json:"strict_transport_security"`
-	CSP                     headerCheck `json:"content_security_policy"`
-	XFrameOptions           headerCheck `json:"x_frame_options"`
-	XContentTypeOptions     headerCheck `json:"x_content_type_options"`
-	ReferrerPolicy          headerCheck `json:"referrer_policy"`
-	PermissionsPolicy       headerCheck `json:"permissions_policy"`
+	HSTS                      headerCheck `json:"strict_transport_security"`
+	CSP                       headerCheck `json:"content_security_policy"`
+	XFrameOptions             headerCheck `json:"x_frame_options"`
+	XContentTypeOptions       headerCheck `json:"x_content_type_options"`
+	ReferrerPolicy            headerCheck `json:"referrer_policy"`
+	PermissionsPolicy         headerCheck `json:"permissions_policy"`
 	CrossOriginOpenerPolicy   headerCheck `json:"cross_origin_opener_policy"`
 	CrossOriginEmbedderPolicy headerCheck `json:"cross_origin_embedder_policy"`
 	CrossOriginResourcePolicy headerCheck `json:"cross_origin_resource_policy"`
-	ErrorDetail             string      `json:"error_detail,omitempty"`
+	RedirectsToHTTPS          bool        `json:"redirects_to_https"`
+	ErrorDetail               string      `json:"error_detail,omitempty"`
 }
 
 func checkHeader(h http.Header, name string) headerCheck {
@@ -54,33 +56,68 @@ func checkHeader(h http.Header, name string) headerCheck {
 	}
 }
 
+func headersFromResponse(resp *http.Response) headersResult {
+	return headersResult{
+		HSTS:                      checkHeader(resp.Header, "Strict-Transport-Security"),
+		CSP:                       checkHeader(resp.Header, "Content-Security-Policy"),
+		XFrameOptions:             checkHeader(resp.Header, "X-Frame-Options"),
+		XContentTypeOptions:       checkHeader(resp.Header, "X-Content-Type-Options"),
+		ReferrerPolicy:            checkHeader(resp.Header, "Referrer-Policy"),
+		PermissionsPolicy:         checkHeader(resp.Header, "Permissions-Policy"),
+		CrossOriginOpenerPolicy:   checkHeader(resp.Header, "Cross-Origin-Opener-Policy"),
+		CrossOriginEmbedderPolicy: checkHeader(resp.Header, "Cross-Origin-Embedder-Policy"),
+		CrossOriginResourcePolicy: checkHeader(resp.Header, "Cross-Origin-Resource-Policy"),
+	}
+}
+
 func CheckSecurityHeadersTool() (agent.Tool, error) {
 	return agent.FunctionTool[headersParams](
 		"check_security_headers",
-		"Check security-related HTTP headers for a URL (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cross-Origin-*-Policy).",
+		"Check security-related HTTP headers for a URL (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cross-Origin-*-Policy). Also checks if HTTP redirects to HTTPS.",
 		func(ctx context.Context, p headersParams) (agent.ToolResult, error) {
-			client := &http.Client{Timeout: 10 * time.Second}
+			client := &http.Client{
+				Timeout: 10 * time.Second,
+				CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+					return http.ErrUseLastResponse
+				},
+			}
 
-			resp, err := client.Get(p.URL)
+			// First check the HTTP version to detect HTTP→HTTPS redirect.
+			redirectsToHTTPS := false
+			httpURL := p.URL
+			if strings.HasPrefix(httpURL, "https://") {
+				httpURL = "http://" + strings.TrimPrefix(httpURL, "https://")
+			}
+
+			httpResp, err := client.Get(httpURL)
+			if err == nil {
+				httpResp.Body.Close()
+				if httpResp.StatusCode >= 300 && httpResp.StatusCode < 400 {
+					loc := httpResp.Header.Get("Location")
+					if strings.HasPrefix(loc, "https://") {
+						redirectsToHTTPS = true
+					}
+				}
+			}
+
+			// Now check the HTTPS version for the actual security headers.
+			httpsURL := p.URL
+			if strings.HasPrefix(httpsURL, "http://") {
+				httpsURL = "https://" + strings.TrimPrefix(httpsURL, "http://")
+			}
+
+			followClient := &http.Client{Timeout: 10 * time.Second}
+			resp, err := followClient.Get(httpsURL)
 			if err != nil {
 				data, _ := json.Marshal(headersResult{
-					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", p.URL, err),
+					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", httpsURL, err),
 				})
 				return agent.ToolResult{Content: string(data)}, nil
 			}
 			defer resp.Body.Close()
 
-			result := headersResult{
-				HSTS:                      checkHeader(resp.Header, "Strict-Transport-Security"),
-				CSP:                       checkHeader(resp.Header, "Content-Security-Policy"),
-				XFrameOptions:             checkHeader(resp.Header, "X-Frame-Options"),
-				XContentTypeOptions:       checkHeader(resp.Header, "X-Content-Type-Options"),
-				ReferrerPolicy:            checkHeader(resp.Header, "Referrer-Policy"),
-				PermissionsPolicy:         checkHeader(resp.Header, "Permissions-Policy"),
-				CrossOriginOpenerPolicy:   checkHeader(resp.Header, "Cross-Origin-Opener-Policy"),
-				CrossOriginEmbedderPolicy: checkHeader(resp.Header, "Cross-Origin-Embedder-Policy"),
-				CrossOriginResourcePolicy: checkHeader(resp.Header, "Cross-Origin-Resource-Policy"),
-			}
+			result := headersFromResponse(resp)
+			result.RedirectsToHTTPS = redirectsToHTTPS
 
 			data, _ := json.Marshal(result)
 
