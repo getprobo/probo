@@ -16,8 +16,10 @@ package config
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -173,19 +175,22 @@ func (c *Config) DefaultHost() (string, *HostConfig, error) {
 		return host, &HostConfig{Token: token}, nil
 	}
 
+	hosts := slices.Sorted(maps.Keys(c.Hosts))
+
 	if token := os.Getenv("PROBO_TOKEN"); token != "" {
-		for host, hc := range c.Hosts {
-			_ = hc
-			return host, &HostConfig{
-				Token:        token,
-				Organization: c.Hosts[host].Organization,
-			}, nil
+		if len(hosts) == 0 {
+			return "", nil, fmt.Errorf("PROBO_TOKEN is set but no host configured; run 'proboctl auth login' first")
 		}
-		return "", nil, fmt.Errorf("PROBO_TOKEN is set but no host configured; run 'proboctl auth login' first")
+		host := hosts[0]
+		return host, &HostConfig{
+			Token:        token,
+			Organization: c.Hosts[host].Organization,
+		}, nil
 	}
 
-	for host, hc := range c.Hosts {
-		return host, hc, nil
+	if len(hosts) > 0 {
+		host := hosts[0]
+		return host, c.Hosts[host], nil
 	}
 
 	return "", nil, fmt.Errorf("not logged in; run 'proboctl auth login' first")
