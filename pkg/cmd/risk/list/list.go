@@ -51,26 +51,13 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
 }
 `
 
-type listResponse struct {
-	Node struct {
-		Risks struct {
-			TotalCount int `json:"totalCount"`
-			Edges      []struct {
-				Node struct {
-					ID                 string `json:"id"`
-					Name               string `json:"name"`
-					Category           string `json:"category"`
-					Treatment          string `json:"treatment"`
-					InherentRiskScore  int    `json:"inherentRiskScore"`
-					ResidualRiskScore  int    `json:"residualRiskScore"`
-				} `json:"node"`
-			} `json:"edges"`
-			PageInfo struct {
-				HasNextPage bool    `json:"hasNextPage"`
-				EndCursor   *string `json:"endCursor"`
-			} `json:"pageInfo"`
-		} `json:"risks"`
-	} `json:"node"`
+type risk struct {
+	ID                string `json:"id"`
+	Name              string `json:"name"`
+	Category          string `json:"category"`
+	Treatment         string `json:"treatment"`
+	InherentRiskScore int    `json:"inherentRiskScore"`
+	ResidualRiskScore int    `json:"residualRiskScore"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -82,8 +69,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List risks in an organization",
+		Use:     "list",
+		Short:   "List risks in an organization",
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -111,8 +98,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			variables := map[string]any{
-				"id":    flagOrg,
-				"first": flagLimit,
+				"id": flagOrg,
 			}
 
 			if flagOrderBy != "" {
@@ -128,17 +114,28 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			data, err := client.Do(listQuery, variables)
+			risks, totalCount, err := api.Paginate(
+				client,
+				listQuery,
+				variables,
+				flagLimit,
+				func(data json.RawMessage) (*api.Connection[risk], error) {
+					var resp struct {
+						Node struct {
+							Risks api.Connection[risk] `json:"risks"`
+						} `json:"node"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return nil, err
+					}
+					return &resp.Node.Risks, nil
+				},
+			)
 			if err != nil {
 				return err
 			}
 
-			var resp listResponse
-			if err := json.Unmarshal(data, &resp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if len(resp.Node.Risks.Edges) == 0 {
+			if len(risks) == 0 {
 				fmt.Fprintln(f.IOStreams.Out, "No risks found.")
 				return nil
 			}
@@ -146,9 +143,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			headerStyle := lipgloss.NewStyle().Bold(true).Padding(0, 1)
 			cellStyle := lipgloss.NewStyle().Padding(0, 1)
 
-			rows := make([][]string, 0, len(resp.Node.Risks.Edges))
-			for _, edge := range resp.Node.Risks.Edges {
-				r := edge.Node
+			rows := make([][]string, 0, len(risks))
+			for _, r := range risks {
 				rows = append(rows, []string{
 					r.ID,
 					r.Name,
@@ -173,12 +169,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			fmt.Fprintln(f.IOStreams.Out, t)
 
-			if resp.Node.Risks.TotalCount > len(resp.Node.Risks.Edges) {
+			if totalCount > len(risks) {
 				fmt.Fprintf(
 					f.IOStreams.ErrOut,
 					"\nShowing %d of %d risks\n",
-					len(resp.Node.Risks.Edges),
-					resp.Node.Risks.TotalCount,
+					len(risks),
+					totalCount,
 				)
 			}
 

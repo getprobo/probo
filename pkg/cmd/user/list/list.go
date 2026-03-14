@@ -51,26 +51,13 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter:
 }
 `
 
-type listResponse struct {
-	Node struct {
-		Profiles struct {
-			TotalCount int `json:"totalCount"`
-			Edges      []struct {
-				Node struct {
-					ID           string  `json:"id"`
-					FullName     string  `json:"fullName"`
-					EmailAddress string  `json:"emailAddress"`
-					State        string  `json:"state"`
-					Kind         *string `json:"kind"`
-					Position     *string `json:"position"`
-				} `json:"node"`
-			} `json:"edges"`
-			PageInfo struct {
-				HasNextPage bool    `json:"hasNextPage"`
-				EndCursor   *string `json:"endCursor"`
-			} `json:"pageInfo"`
-		} `json:"profiles"`
-	} `json:"node"`
+type profile struct {
+	ID           string  `json:"id"`
+	FullName     string  `json:"fullName"`
+	EmailAddress string  `json:"emailAddress"`
+	State        string  `json:"state"`
+	Kind         *string `json:"kind"`
+	Position     *string `json:"position"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -111,8 +98,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			variables := map[string]any{
-				"id":    flagOrg,
-				"first": flagLimit,
+				"id": flagOrg,
 			}
 
 			if flagOrder != "" {
@@ -128,17 +114,28 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			data, err := client.Do(listQuery, variables)
+			profiles, totalCount, err := api.Paginate(
+				client,
+				listQuery,
+				variables,
+				flagLimit,
+				func(data json.RawMessage) (*api.Connection[profile], error) {
+					var resp struct {
+						Node struct {
+							Profiles api.Connection[profile] `json:"profiles"`
+						} `json:"node"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return nil, err
+					}
+					return &resp.Node.Profiles, nil
+				},
+			)
 			if err != nil {
 				return err
 			}
 
-			var resp listResponse
-			if err := json.Unmarshal(data, &resp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if len(resp.Node.Profiles.Edges) == 0 {
+			if len(profiles) == 0 {
 				fmt.Fprintln(f.IOStreams.Out, "No users found.")
 				return nil
 			}
@@ -146,10 +143,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			headerStyle := lipgloss.NewStyle().Bold(true).Padding(0, 1)
 			cellStyle := lipgloss.NewStyle().Padding(0, 1)
 
-			rows := make([][]string, 0, len(resp.Node.Profiles.Edges))
-			for _, edge := range resp.Node.Profiles.Edges {
-				p := edge.Node
-
+			rows := make([][]string, 0, len(profiles))
+			for _, p := range profiles {
 				kind := ""
 				if p.Kind != nil {
 					kind = *p.Kind
@@ -184,12 +179,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			fmt.Fprintln(f.IOStreams.Out, t)
 
-			if resp.Node.Profiles.TotalCount > len(resp.Node.Profiles.Edges) {
+			if totalCount > len(profiles) {
 				fmt.Fprintf(
 					f.IOStreams.ErrOut,
 					"\nShowing %d of %d users\n",
-					len(resp.Node.Profiles.Edges),
-					resp.Node.Profiles.TotalCount,
+					len(profiles),
+					totalCount,
 				)
 			}
 
