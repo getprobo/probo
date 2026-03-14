@@ -22,7 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/agent"
 )
 
-const maxTextLength = 8000
+const maxTextLength = 32000
 
 type extractTextParams struct {
 	URL string `json:"url" jsonschema:"description=The URL to extract text from"`
@@ -31,7 +31,7 @@ type extractTextParams struct {
 func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
 	return agent.FunctionTool[extractTextParams](
 		"extract_page_text",
-		"Navigate to a URL and extract the visible text content of the page, truncated to 8000 characters.",
+		"Navigate to a URL and extract the visible text content of the page, truncated to 32000 characters.",
 		func(ctx context.Context, p extractTextParams) (agent.ToolResult, error) {
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
