@@ -73,7 +73,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Deleted risk %s\n",
 				args[0],

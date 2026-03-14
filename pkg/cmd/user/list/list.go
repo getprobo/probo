@@ -181,7 +181,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(profiles) {
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					f.IOStreams.ErrOut,
 					"\nShowing %d of %d users\n",
 					len(profiles),
