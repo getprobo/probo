@@ -16,42 +16,128 @@ package vendor_assessment
 
 import (
 	"context"
+	"sync"
 
 	"go.probo.inc/probo/pkg/agent"
 )
 
-var toolMessages = map[string]string{
+var toolMessages = map[string][]string{
 	// Orchestrator tools (top-level steps).
-	"crawl_vendor_website": "Crawling vendor website to discover security and compliance pages",
-	"assess_security":      "Running technical security checks",
-	"analyze_document":     "Analyzing document provisions",
-	"assess_compliance":    "Identifying certifications and compliance frameworks",
+	"crawl_vendor_website": {
+		"Exploring vendor website for security and compliance pages",
+		"Discovering key pages on the vendor website",
+		"Mapping out the vendor's online presence",
+	},
+	"assess_security": {
+		"Running technical security checks on the domain",
+		"Evaluating the vendor's security posture",
+		"Performing infrastructure security analysis",
+	},
+	"analyze_document": {
+		"Reviewing document for key provisions",
+		"Analyzing policy details and obligations",
+		"Extracting important clauses from the document",
+	},
+	"assess_compliance": {
+		"Identifying certifications and compliance frameworks",
+		"Reviewing the vendor's compliance posture",
+		"Checking for recognized security certifications",
+	},
 
 	// Security sub-agent tools.
-	"check_ssl_certificate":  "Checking SSL certificate",
-	"check_security_headers": "Checking security headers",
-	"check_dmarc":            "Checking DMARC record",
-	"check_breaches":         "Checking for known data breaches",
-	"check_dnssec":           "Checking DNSSEC configuration",
-	"analyze_csp":            "Analyzing Content Security Policy",
-	"check_cors":             "Checking CORS configuration",
+	"check_ssl_certificate": {
+		"Inspecting SSL/TLS certificate",
+		"Verifying certificate validity and configuration",
+		"Checking SSL certificate details",
+	},
+	"check_security_headers": {
+		"Analyzing HTTP security headers",
+		"Reviewing response headers for security best practices",
+		"Checking for missing security headers",
+	},
+	"check_dmarc": {
+		"Looking up DMARC email authentication record",
+		"Checking DMARC policy configuration",
+		"Verifying email spoofing protections",
+	},
+	"check_breaches": {
+		"Searching for known data breaches",
+		"Checking breach databases for past incidents",
+		"Looking up the domain in breach records",
+	},
+	"check_dnssec": {
+		"Verifying DNSSEC configuration",
+		"Checking DNS security extensions",
+		"Inspecting DNSSEC chain of trust",
+	},
+	"analyze_csp": {
+		"Evaluating Content Security Policy",
+		"Analyzing CSP directives for weaknesses",
+		"Reviewing content security rules",
+	},
+	"check_cors": {
+		"Checking CORS configuration",
+		"Inspecting cross-origin resource sharing policy",
+		"Reviewing CORS headers",
+	},
 
 	// Browser tools used by crawler, analyzer, and compliance sub-agents.
-	"navigate_to_url":     "Navigating to page",
-	"extract_page_text":   "Extracting page content",
-	"extract_links":       "Extracting links from page",
-	"find_links_matching": "Searching for matching links",
+	"navigate_to_url": {
+		"Opening page",
+		"Loading page content",
+		"Navigating to the page",
+		"Visiting the page",
+	},
+	"extract_page_text": {
+		"Reading page content",
+		"Extracting text from the page",
+		"Pulling content from the page",
+		"Scanning page text",
+	},
+	"extract_links": {
+		"Collecting links from the page",
+		"Gathering all page links",
+		"Discovering outgoing links",
+	},
+	"find_links_matching": {
+		"Searching for relevant links",
+		"Looking for links matching the pattern",
+		"Filtering page links by keyword",
+	},
 }
 
 // progressHooks translates orchestrator-level tool events into progress events.
 type progressHooks struct {
 	agent.NoOpHooks
 	reporter agent.ProgressReporter
+	mu       sync.Mutex
+	counts   map[string]int
+}
+
+func newProgressHooks(reporter agent.ProgressReporter) *progressHooks {
+	return &progressHooks{
+		reporter: reporter,
+		counts:   make(map[string]int),
+	}
+}
+
+func (h *progressHooks) nextMessage(tool string) string {
+	msgs, ok := toolMessages[tool]
+	if !ok {
+		return ""
+	}
+
+	h.mu.Lock()
+	n := h.counts[tool]
+	h.counts[tool] = n + 1
+	h.mu.Unlock()
+
+	return msgs[n%len(msgs)]
 }
 
 func (h *progressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ string) {
-	msg, ok := toolMessages[tool.Name()]
-	if !ok {
+	msg := h.nextMessage(tool.Name())
+	if msg == "" {
 		return
 	}
 
@@ -66,8 +152,7 @@ func (h *progressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool ag
 }
 
 func (h *progressHooks) OnToolEnd(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ agent.ToolResult, err error) {
-	msg, ok := toolMessages[tool.Name()]
-	if !ok {
+	if _, ok := toolMessages[tool.Name()]; !ok {
 		return
 	}
 
@@ -79,9 +164,8 @@ func (h *progressHooks) OnToolEnd(ctx context.Context, _ *agent.Agent, tool agen
 	h.reporter(
 		ctx,
 		agent.ProgressEvent{
-			Type:    eventType,
-			Step:    tool.Name(),
-			Message: msg,
+			Type: eventType,
+			Step: tool.Name(),
 		},
 	)
 }
@@ -92,11 +176,35 @@ type subProgressHooks struct {
 	agent.NoOpHooks
 	reporter   agent.ProgressReporter
 	parentStep string
+	mu         sync.Mutex
+	counts     map[string]int
+}
+
+func newSubProgressHooks(reporter agent.ProgressReporter, parentStep string) *subProgressHooks {
+	return &subProgressHooks{
+		reporter:   reporter,
+		parentStep: parentStep,
+		counts:     make(map[string]int),
+	}
+}
+
+func (h *subProgressHooks) nextMessage(tool string) string {
+	msgs, ok := toolMessages[tool]
+	if !ok {
+		return ""
+	}
+
+	h.mu.Lock()
+	n := h.counts[tool]
+	h.counts[tool] = n + 1
+	h.mu.Unlock()
+
+	return msgs[n%len(msgs)]
 }
 
 func (h *subProgressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ string) {
-	msg, ok := toolMessages[tool.Name()]
-	if !ok {
+	msg := h.nextMessage(tool.Name())
+	if msg == "" {
 		return
 	}
 
@@ -112,8 +220,7 @@ func (h *subProgressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool
 }
 
 func (h *subProgressHooks) OnToolEnd(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ agent.ToolResult, err error) {
-	msg, ok := toolMessages[tool.Name()]
-	if !ok {
+	if _, ok := toolMessages[tool.Name()]; !ok {
 		return
 	}
 
@@ -128,7 +235,6 @@ func (h *subProgressHooks) OnToolEnd(ctx context.Context, _ *agent.Agent, tool a
 			Type:       eventType,
 			Step:       tool.Name(),
 			ParentStep: h.parentStep,
-			Message:    msg,
 		},
 	)
 }
