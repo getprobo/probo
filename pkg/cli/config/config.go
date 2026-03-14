@@ -188,7 +188,14 @@ func (c *Config) DefaultHost() (string, *HostConfig, error) {
 		if len(hosts) == 0 {
 			return "", nil, fmt.Errorf("PROBO_TOKEN is set but no host configured; run 'proboctl auth login' first")
 		}
+
 		host := hosts[0]
+		if c.ActiveHost != "" {
+			if _, ok := c.Hosts[c.ActiveHost]; ok {
+				host = c.ActiveHost
+			}
+		}
+
 		return host, &HostConfig{
 			Token:        token,
 			Organization: c.Hosts[host].Organization,
