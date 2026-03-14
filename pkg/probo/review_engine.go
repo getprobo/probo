@@ -597,6 +597,12 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("1password connector requires scim_bridge_url in settings")
 		}
 		return accesssource.NewOnePasswordDriver(httpClient, baseURL), nil
+	case coredata.ConnectorProviderHubSpot:
+		httpClient, err := dbConnector.Connection.Client(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create HTTP client for hubspot connector: %w", err)
+		}
+		return accesssource.NewHubSpotDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}
