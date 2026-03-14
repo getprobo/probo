@@ -1396,6 +1396,42 @@ WHERE
 	return nil
 }
 
+func (p *MembershipProfile) ClearExternalID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	externalID string,
+	organizationID gid.GID,
+) error {
+	q := `
+UPDATE iam_membership_profiles
+SET
+    external_id = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND external_id = @external_id
+    AND organization_id = @organization_id
+    AND id != @exclude_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{
+		"external_id":     externalID,
+		"organization_id": organizationID,
+		"exclude_id":      p.ID,
+		"updated_at":      time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot clear external id: %w", err)
+	}
+
+	return nil
+}
+
 func (p *MembershipProfile) Delete(
 	ctx context.Context,
 	conn pg.Conn,

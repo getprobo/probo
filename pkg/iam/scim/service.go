@@ -244,6 +244,18 @@ func (s *Service) CreateUser(
 				return scimerrors.ScimErrorUniqueness
 			}
 
+			if externalIdPtr != nil {
+				if err := profile.ClearExternalID(
+					ctx,
+					tx,
+					scope,
+					*externalIdPtr,
+					config.OrganizationID,
+				); err != nil {
+					return fmt.Errorf("cannot clear conflicting external id: %w", err)
+				}
+			}
+
 			profile.Source = coredata.ProfileSourceSCIM
 			profile.State = profileState
 			profile.FullName = attrs.FullName
