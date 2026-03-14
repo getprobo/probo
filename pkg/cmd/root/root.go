@@ -38,6 +38,10 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 			if noInteractive, _ := cmd.Flags().GetBool("no-interactive"); noInteractive {
 				f.IOStreams.ForceNonInteractive = true
 			}
+			if noColor, _ := cmd.Flags().GetBool("no-color"); noColor {
+				f.IOStreams.ForceNoColor = true
+			}
+			f.IOStreams.ApplyColorProfile()
 		},
 	}
 
@@ -45,6 +49,12 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 		"no-interactive",
 		false,
 		"Disable interactive prompts (also set via PROBO_NO_INTERACTIVE=1, CI=true, or TERM=dumb)",
+	)
+
+	cmd.PersistentFlags().Bool(
+		"no-color",
+		false,
+		"Disable ANSI color output (also set via NO_COLOR or TERM=dumb)",
 	)
 
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))

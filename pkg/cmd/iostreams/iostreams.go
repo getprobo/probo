@@ -19,6 +19,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	"golang.org/x/term"
 )
 
@@ -30,6 +32,10 @@ type IOStreams struct {
 	// ForceNonInteractive disables all interactive prompts. Set by the
 	// --no-interactive global flag or the PROBO_NO_INTERACTIVE env var.
 	ForceNonInteractive bool
+
+	// ForceNoColor disables ANSI color output. Set by the --no-color
+	// global flag, the NO_COLOR env var, or TERM=dumb.
+	ForceNoColor bool
 }
 
 func (s *IOStreams) IsInteractive() bool {
@@ -58,6 +64,21 @@ func (s *IOStreams) IsStdoutTTY() bool {
 		return false
 	}
 	return s.isStdoutTTY()
+}
+
+func (s *IOStreams) ColorEnabled() bool {
+	if s.ForceNoColor {
+		return false
+	}
+	return s.isStdoutTTY()
+}
+
+// ApplyColorProfile configures the lipgloss default renderer based on
+// the current color settings. Call this after ForceNoColor has been set.
+func (s *IOStreams) ApplyColorProfile() {
+	if s.ForceNoColor {
+		lipgloss.SetColorProfile(termenv.Ascii)
+	}
 }
 
 func System() *IOStreams {
