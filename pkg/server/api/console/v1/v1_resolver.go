@@ -6334,7 +6334,12 @@ func (r *mutationResolver) ValidateAccessReviewCampaign(ctx context.Context, inp
 		return nil, fmt.Errorf("no identity in context")
 	}
 
-	validatedByID := &identity.ID
+	var validatedByID *gid.GID
+	organizationID := gid.New(input.AccessReviewCampaignID.TenantID(), coredata.OrganizationEntityType)
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
+	if err == nil {
+		validatedByID = &profile.ID
+	}
 
 	if err := prb.AccessReviewCampaigns.ValidateForClose(ctx, input.AccessReviewCampaignID, validatedByID, input.Note); err != nil {
 		panic(fmt.Errorf("cannot validate access review campaign: %w", err))
@@ -6380,8 +6385,8 @@ func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input 
 
 	prb := r.ProboService(ctx, input.AccessEntryID.TenantID())
 
-	// Resolve the people ID from the session's identity email.
-	// The people record may not exist for every identity, in which
+	// Resolve the profile ID from the session's identity.
+	// The profile may not exist for every identity, in which
 	// case decided_by will be left nil.
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
@@ -6394,7 +6399,11 @@ func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input 
 		DecisionNote: input.DecisionNote,
 	}
 
-	req.DecidedByID = &identity.ID
+	organizationID := gid.New(input.AccessEntryID.TenantID(), coredata.OrganizationEntityType)
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
+	if err == nil {
+		req.DecidedByID = &profile.ID
+	}
 
 	entry, err := prb.AccessEntries.RecordDecision(ctx, req)
 	if err != nil {
