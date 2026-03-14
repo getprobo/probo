@@ -59,6 +59,10 @@ func (s *IOStreams) isStdoutTTY() bool {
 	return false
 }
 
+func (s *IOStreams) IsStdinTTY() bool {
+	return s.isStdinTTY()
+}
+
 func (s *IOStreams) IsStdoutTTY() bool {
 	if s.ForceNonInteractive {
 		return false

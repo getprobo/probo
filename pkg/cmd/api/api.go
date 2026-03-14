@@ -52,7 +52,7 @@ func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
 			if len(args) == 1 && args[0] != "-" {
 				query = args[0]
 			} else {
-				if len(args) == 0 && f.IOStreams.IsInteractive() {
+				if len(args) == 0 && f.IOStreams.IsStdinTTY() {
 					return fmt.Errorf("query argument is required when not reading from stdin")
 				}
 				data, err := io.ReadAll(f.IOStreams.In)
