@@ -56,7 +56,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
-	vendor_assessment "go.probo.inc/probo/pkg/agents/vendor_assessment"
+	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
@@ -435,7 +435,7 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
-	vendorAssessor := vendor_assessment.NewAssessor(vendor_assessment.Config{
+	vendorAssessor := vetting.NewAssessor(vetting.Config{
 		Client:     llmClient,
 		Model:      impl.cfg.OpenAI.ModelName,
 		ChromeAddr: impl.cfg.ChromeDPAddr,

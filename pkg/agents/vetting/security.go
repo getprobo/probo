@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package vendor_assessment
+package vetting
 
 import (
 	_ "embed"
@@ -21,22 +21,22 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-//go:embed compliance_prompt.txt
-var complianceSystemPrompt string
+//go:embed security_prompt.txt
+var securitySystemPrompt string
 
-func newComplianceAssessorAgent(
+func newSecurityAssessorAgent(
 	client *llm.Client,
 	model string,
-	browserTools []agent.Tool,
+	securityTools []agent.Tool,
 	extraOpts ...agent.Option,
 ) *agent.Agent {
 	opts := []agent.Option{
-		agent.WithInstructions(complianceSystemPrompt),
+		agent.WithInstructions(securitySystemPrompt),
 		agent.WithModel(model),
-		agent.WithTools(browserTools...),
+		agent.WithTools(securityTools...),
 		agent.WithMaxTurns(5),
 	}
 	opts = append(opts, extraOpts...)
 
-	return agent.New("compliance_assessor", client, opts...)
+	return agent.New("security_assessor", client, opts...)
 }

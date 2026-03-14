@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package vendor_assessment
+package vetting
 
 import (
 	_ "embed"
@@ -21,22 +21,22 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-//go:embed analyzer_prompt.txt
-var analyzerSystemPrompt string
+//go:embed crawler_prompt.txt
+var crawlerSystemPrompt string
 
-func newDocumentAnalyzerAgent(
+func newCrawlerAgent(
 	client *llm.Client,
 	model string,
 	browserTools []agent.Tool,
 	extraOpts ...agent.Option,
 ) *agent.Agent {
 	opts := []agent.Option{
-		agent.WithInstructions(analyzerSystemPrompt),
+		agent.WithInstructions(crawlerSystemPrompt),
 		agent.WithModel(model),
 		agent.WithTools(browserTools...),
-		agent.WithMaxTurns(5),
+		agent.WithMaxTurns(10),
 	}
 	opts = append(opts, extraOpts...)
 
-	return agent.New("document_analyzer", client, opts...)
+	return agent.New("website_crawler", client, opts...)
 }
