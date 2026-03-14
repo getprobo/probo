@@ -581,6 +581,12 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("cannot create HTTP client for slack connector: %w", err)
 		}
 		return accesssource.NewSlackDriver(httpClient), nil
+	case coredata.ConnectorProviderFigma:
+		httpClient, err := dbConnector.Connection.Client(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create HTTP client for figma connector: %w", err)
+		}
+		return accesssource.NewFigmaDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}
