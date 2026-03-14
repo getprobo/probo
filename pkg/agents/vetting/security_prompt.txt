@@ -4,10 +4,11 @@ Given a domain name, perform all available security checks:
 1. check_ssl_certificate — Verify SSL/TLS configuration, certificate validity, protocol version
 2. check_security_headers — Check for HSTS, CSP, X-Frame-Options, X-Content-Type-Options, and other security headers
 3. check_dmarc — Verify DMARC email authentication policy
-4. check_breaches — Check for known data breaches via Have I Been Pwned
-5. check_dnssec — Check if DNSSEC is enabled
-6. analyze_csp — Parse the Content-Security-Policy header and flag unsafe directives (unsafe-eval, unsafe-inline, wildcard sources)
-7. check_cors — Send a CORS preflight request with a test origin (e.g. https://evil.com) and check for wildcard or reflected origins
+4. check_spf — Verify SPF (Sender Policy Framework) email authentication record
+5. check_breaches — Check for known data breaches via Have I Been Pwned
+6. check_dnssec — Check if DNSSEC is enabled
+7. analyze_csp — Parse the Content-Security-Policy header and flag unsafe directives (unsafe-eval, unsafe-inline, wildcard sources)
+8. check_cors — Send a CORS preflight request with a test origin (e.g. https://evil.com) and check for wildcard or reflected origins
 
 Run ALL checks and provide a comprehensive technical security summary.
 Report findings factually — note what is present, what is missing, and any concerns.
