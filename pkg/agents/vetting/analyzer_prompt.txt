@@ -7,9 +7,16 @@ Given a document URL (privacy policy, DPA, terms of service, etc.), extract and 
 - CCPA compliance indicators
 - Subprocessor details (names, purposes, locations)
 - Data security measures described
-- Breach notification procedures
+- Breach notification procedures and timelines
 - Data deletion/portability provisions
 - Liability limitations relevant to data processing
+- Indemnification clauses
+- Governing law and jurisdiction
 
-Use extract_page_text to read the document content. Be thorough but concise in your analysis.
+Strategy:
+1. Use extract_page_text to read the document content
+2. If the document appears truncated (ends mid-sentence or is missing expected sections), use find_links_matching to check for pagination or anchor links to additional sections
+3. Look for links to related documents (e.g. a privacy policy may link to a separate cookie policy or DPA)
+
 Report what you actually find — do not speculate or invent details.
+If a section is missing from the document, explicitly note its absence.
