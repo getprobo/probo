@@ -819,7 +819,7 @@ func executeSingleTool(
 			toolSpan.SetAttributes(attribute.Bool("tool.interrupted", true))
 			toolSpan.End()
 
-			onEvent(ctx, StreamEvent{Type: StreamEventToolEnd, Agent: agent, Tool: tool})
+			onEvent(ctx, StreamEvent{Type: StreamEventToolEnd, Agent: agent, Tool: tool, Err: err})
 			emitHook(agent, func(h RunHooks) { h.OnToolEnd(ctx, agent, tool, ToolResult{}, err) })
 			emitAgentHook(agent, func(h AgentHooks) { h.OnToolEnd(ctx, agent, tool, ToolResult{}) })
 
