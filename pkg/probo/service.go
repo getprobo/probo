@@ -24,7 +24,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
-	"go.probo.inc/probo/pkg/llm"
+	vendor_assessment "go.probo.inc/probo/pkg/agents/vendor_assessment"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
@@ -67,6 +67,7 @@ type (
 		slack                   *slack.Service
 		esign                   *esign.Service
 		invitationTokenValidity time.Duration
+		vendorAssessor         *vendor_assessment.Assessor
 	}
 
 	TenantService struct {
@@ -78,6 +79,7 @@ type (
 		baseURL                           string
 		tokenSecret                       string
 		agent                             *agents.Agent
+		vendorAssessor                    *vendor_assessment.Assessor
 		fileManager                       *filemanager.Service
 		esign                             *esign.Service
 		Frameworks                        *FrameworkService
@@ -142,6 +144,7 @@ func NewService(
 	iamService *iam.Service,
 	esignService *esign.Service,
 	invitationTokenValidity time.Duration,
+	vendorAssessor *vendor_assessment.Assessor,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -167,6 +170,7 @@ func NewService(
 		slack:                   slackService,
 		esign:                   esignService,
 		invitationTokenValidity: invitationTokenValidity,
+		vendorAssessor:         vendorAssessor,
 	}
 
 	return svc, nil
@@ -181,7 +185,8 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		baseURL:       s.baseURL,
 		scope:         coredata.NewScope(tenantID),
 		tokenSecret:   s.tokenSecret,
-		agent:         agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
+		agent:          agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
+		vendorAssessor: s.vendorAssessor,
 		fileManager:   s.fileManager,
 		esign:         s.esign,
 	}
