@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"go.probo.inc/probo/pkg/version"
 )
@@ -34,7 +35,7 @@ func NewClient(host string, token string) *Client {
 	return &Client{
 		host:       host,
 		token:      token,
-		httpClient: &http.Client{},
+		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
