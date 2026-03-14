@@ -17,10 +17,13 @@ package browser
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/chromedp/chromedp"
 	"go.probo.inc/probo/pkg/agent"
 )
+
+const defaultToolTimeout = 30 * time.Second
 
 type Browser struct {
 	addr     string
