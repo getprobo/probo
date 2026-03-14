@@ -1,3 +1,17 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 package accessreview
 
 import (
@@ -14,51 +28,57 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-type SourceFetchWorker struct {
-	pg                    *pg.Client
-	tenantRuntimeProvider TenantRuntimeProvider
-	logger                *log.Logger
-	interval              time.Duration
-	maxConcurrency        int
-}
+type (
+	SourceFetchWorker struct {
+		pg                    *pg.Client
+		tenantRuntimeProvider TenantRuntimeProvider
+		logger                *log.Logger
+		interval              time.Duration
+		staleAfter            time.Duration
+		maxConcurrency        int
+	}
 
-type SourceFetchWorkerOption func(*SourceFetchWorker)
+	SourceFetchWorkerOption func(*SourceFetchWorker)
+)
 
 func WithSourceFetchWorkerInterval(interval time.Duration) SourceFetchWorkerOption {
 	return func(w *SourceFetchWorker) {
-		if interval > 0 {
-			w.interval = interval
-		}
+		w.interval = interval
+	}
+}
+
+func WithSourceFetchWorkerStaleAfter(staleAfter time.Duration) SourceFetchWorkerOption {
+	return func(w *SourceFetchWorker) {
+		w.staleAfter = staleAfter
 	}
 }
 
 func WithSourceFetchWorkerMaxConcurrency(maxConcurrency int) SourceFetchWorkerOption {
 	return func(w *SourceFetchWorker) {
-		if maxConcurrency > 0 {
-			w.maxConcurrency = maxConcurrency
-		}
+		w.maxConcurrency = maxConcurrency
 	}
 }
 
-func newSourceFetchWorker(
+func NewSourceFetchWorker(
 	pgClient *pg.Client,
 	tenantRuntimeProvider TenantRuntimeProvider,
 	logger *log.Logger,
 	opts ...SourceFetchWorkerOption,
 ) *SourceFetchWorker {
-	worker := &SourceFetchWorker{
+	w := &SourceFetchWorker{
 		pg:                    pgClient,
 		tenantRuntimeProvider: tenantRuntimeProvider,
 		logger:                logger,
 		interval:              30 * time.Second,
-		maxConcurrency:        1,
+		staleAfter:            5 * time.Minute,
+		maxConcurrency:        20,
 	}
 
 	for _, opt := range opts {
-		opt(worker)
+		opt(w)
 	}
 
-	return worker
+	return w
 }
 
 func (w *SourceFetchWorker) Run(ctx context.Context) error {
@@ -73,15 +93,16 @@ LOOP:
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-time.After(w.interval):
+		nonCancelableCtx := context.WithoutCancel(ctx)
+		w.recoverStaleRows(nonCancelableCtx)
 		for {
 			if err := w.processNext(ctx, sem, &wg); err != nil {
-				if !errors.Is(err, coredata.ErrNoAccessReviewCampaignSourceFetchAvailable) && !errors.Is(err, context.Canceled) {
-					w.logger.ErrorCtx(ctx, "cannot process access review campaign source fetch", log.Error(err))
+				if !errors.Is(err, coredata.ErrNoAccessReviewCampaignSourceFetchAvailable) {
+					w.logger.ErrorCtx(nonCancelableCtx, "cannot claim item", log.Error(err))
 				}
 				break
 			}
 		}
-
 		goto LOOP
 	}
 }
@@ -97,11 +118,30 @@ func (w *SourceFetchWorker) processNext(
 		return ctx.Err()
 	}
 
-	// Once a source fetch is claimed we should complete the lifecycle updates.
-	nonCancelableCtx := context.WithoutCancel(ctx)
+	var (
+		sourceFetch coredata.AccessReviewCampaignSourceFetch
+		now         = time.Now()
+		nonCancelableCtx = context.WithoutCancel(ctx)
+	)
 
-	sourceFetch, err := w.lockSourceFetch(nonCancelableCtx)
-	if err != nil {
+	if err := w.pg.WithTx(
+		nonCancelableCtx,
+		func(tx pg.Conn) error {
+			if err := sourceFetch.LoadNextQueuedForUpdateSkipLocked(nonCancelableCtx, tx); err != nil {
+				return err
+			}
+
+			sourceFetch.Status = coredata.AccessReviewCampaignSourceFetchStatusFetching
+			sourceFetch.AttemptCount++
+			sourceFetch.LastError = nil
+			sourceFetch.StartedAt = ref.Ref(now)
+			sourceFetch.CompletedAt = nil
+			sourceFetch.UpdatedAt = now
+
+			scope := coredata.NewScope(sourceFetch.TenantID)
+			return sourceFetch.Update(nonCancelableCtx, tx, scope)
+		},
+	); err != nil {
 		<-sem
 		return err
 	}
@@ -111,18 +151,21 @@ func (w *SourceFetchWorker) processNext(
 		defer wg.Done()
 		defer func() { <-sem }()
 
-		if err := w.processSourceFetch(nonCancelableCtx, &sourceFetch); err != nil {
-			w.logger.ErrorCtx(nonCancelableCtx, "cannot process access review campaign source fetch", log.Error(err))
+		if err := w.handle(nonCancelableCtx, &sourceFetch); err != nil {
+			w.logger.ErrorCtx(nonCancelableCtx, "cannot process source fetch", log.Error(err))
 		}
-	}(*sourceFetch)
+	}(sourceFetch)
 
 	return nil
 }
 
-func (w *SourceFetchWorker) processSourceFetch(ctx context.Context, sourceFetch *coredata.AccessReviewCampaignSourceFetch) error {
+func (w *SourceFetchWorker) handle(
+	ctx context.Context,
+	sourceFetch *coredata.AccessReviewCampaignSourceFetch,
+) error {
 	tenantRuntime := w.tenantRuntimeProvider(sourceFetch.TenantID)
 	if tenantRuntime == nil {
-		return fmt.Errorf("tenant runtime provider returned nil for tenant %s", sourceFetch.TenantID)
+		return fmt.Errorf("cannot resolve tenant runtime for tenant %s", sourceFetch.TenantID)
 	}
 
 	campaign, err := tenantRuntime.AccessReviewCampaigns().Get(ctx, sourceFetch.AccessReviewCampaignID)
@@ -162,39 +205,40 @@ func (w *SourceFetchWorker) processSourceFetch(ctx context.Context, sourceFetch 
 	return nil
 }
 
-func (w *SourceFetchWorker) lockSourceFetch(ctx context.Context) (*coredata.AccessReviewCampaignSourceFetch, error) {
-	var (
-		sourceFetch = &coredata.AccessReviewCampaignSourceFetch{}
-	)
+func (w *SourceFetchWorker) recoverStaleRows(ctx context.Context) {
+	now := time.Now()
+	staleThreshold := now.Add(-w.staleAfter)
 
-	err := w.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			if err := sourceFetch.LoadNextQueuedForUpdateSkipLocked(ctx, tx); err != nil {
-				return fmt.Errorf("cannot load next queued source fetch: %w", err)
-			}
+	err := w.pg.WithTx(ctx, func(tx pg.Conn) error {
+		result, err := tx.Exec(ctx, `
+UPDATE access_review_campaign_source_fetches
+SET
+	status = 'QUEUED',
+	last_error = 'recovered from stale FETCHING state',
+	started_at = NULL,
+	completed_at = NULL,
+	updated_at = $1
+WHERE
+	status = 'FETCHING'
+	AND updated_at < $2
+`, now, staleThreshold)
+		if err != nil {
+			return fmt.Errorf("cannot recover stale source fetches: %w", err)
+		}
 
-			now := time.Now()
-			sourceFetch.Status = coredata.AccessReviewCampaignSourceFetchStatusFetching
-			sourceFetch.AttemptCount++
-			sourceFetch.LastError = nil
-			sourceFetch.StartedAt = ref.Ref(now)
-			sourceFetch.CompletedAt = nil
-			sourceFetch.UpdatedAt = now
+		if result.RowsAffected() > 0 {
+			w.logger.InfoCtx(
+				ctx,
+				"recovered stale source fetches",
+				log.Int64("count", result.RowsAffected()),
+			)
+		}
 
-			scope := coredata.NewScope(sourceFetch.TenantID)
-			if err := sourceFetch.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update source fetch to FETCHING: %w", err)
-			}
-
-			return nil
-		},
-	)
+		return nil
+	})
 	if err != nil {
-		return nil, err
+		w.logger.ErrorCtx(ctx, "cannot recover stale rows", log.Error(err))
 	}
-
-	return sourceFetch, nil
 }
 
 func (w *SourceFetchWorker) commitFailedSourceFetch(
@@ -216,11 +260,7 @@ func (w *SourceFetchWorker) commitFailedSourceFetch(
 	return w.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := sourceFetch.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update source fetch as FAILED: %w", err)
-			}
-
-			return nil
+			return sourceFetch.Update(ctx, conn, scope)
 		},
 	)
 }
@@ -244,10 +284,7 @@ func (w *SourceFetchWorker) commitSuccessfulSourceFetch(
 	return w.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := sourceFetch.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update source fetch as SUCCESS: %w", err)
-			}
-			return nil
+			return sourceFetch.Update(ctx, conn, scope)
 		},
 	)
 }
@@ -322,15 +359,15 @@ func (w *SourceFetchWorker) finalizeCampaignFetchLifecycle(
 
 		c.Status = coredata.AccessReviewCampaignStatusPendingActions
 		c.UpdatedAt = time.Now()
-		if err := c.Update(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot set campaign status to pending actions: %w", err)
-		}
-
-		return nil
+		return c.Update(ctx, tx, scope)
 	})
 }
 
-func (w *SourceFetchWorker) markCampaignFailed(ctx context.Context, tenantID gid.TenantID, campaignID gid.GID) error {
+func (w *SourceFetchWorker) markCampaignFailed(
+	ctx context.Context,
+	tenantID gid.TenantID,
+	campaignID gid.GID,
+) error {
 	scope := coredata.NewScope(tenantID)
 
 	return w.pg.WithTx(ctx, func(conn pg.Conn) error {
@@ -340,10 +377,6 @@ func (w *SourceFetchWorker) markCampaignFailed(ctx context.Context, tenantID gid
 		}
 		campaign.Status = coredata.AccessReviewCampaignStatusFailed
 		campaign.UpdatedAt = time.Now()
-		if err := campaign.Update(ctx, conn, scope); err != nil {
-			return fmt.Errorf("cannot mark campaign as failed: %w", err)
-		}
-
-		return nil
+		return campaign.Update(ctx, conn, scope)
 	})
 }
