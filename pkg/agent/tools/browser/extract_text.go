@@ -33,6 +33,9 @@ func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
 		"extract_page_text",
 		"Navigate to a URL and extract the visible text content of the page, truncated to 32000 characters.",
 		func(ctx context.Context, p extractTextParams) (agent.ToolResult, error) {
+			ctx, timeoutCancel := withToolTimeout(ctx)
+			defer timeoutCancel()
+
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
 

@@ -23,6 +23,10 @@ import (
 	"go.probo.inc/probo/pkg/agent"
 )
 
+func withToolTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, defaultToolTimeout)
+}
+
 type navigateParams struct {
 	URL string `json:"url" jsonschema:"description=The URL to navigate to"`
 }
@@ -38,6 +42,9 @@ func NavigateToURLTool(b *Browser) (agent.Tool, error) {
 		"navigate_to_url",
 		"Navigate to a URL and return the page title, meta description, and final URL after redirects.",
 		func(ctx context.Context, p navigateParams) (agent.ToolResult, error) {
+			ctx, timeoutCancel := withToolTimeout(ctx)
+			defer timeoutCancel()
+
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
 
