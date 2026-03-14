@@ -25,11 +25,4 @@ export const accessReviewRoutes = [
       () => import("#/pages/organizations/access-reviews/CreateCsvAccessSourcePageLoader"),
     ),
   },
-  {
-    path: "access-reviews/campaigns/:campaignId",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("#/pages/organizations/access-reviews/AccessReviewCampaignDetailPageLoader"),
-    ),
-  },
 ] satisfies AppRoute[];

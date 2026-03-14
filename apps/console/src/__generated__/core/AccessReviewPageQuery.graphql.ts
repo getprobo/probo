@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<aa0ebb6a0911f903c5dc0483a244b175>>
+ * @generated SignedSource<<231a3969bbdd8de22b2f101de25c2c70>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,14 +17,13 @@ export type AccessReviewPageQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
     readonly accessReview: {
-      readonly canCreateCampaign: boolean;
       readonly canCreateSource: boolean;
       readonly canUpdateAccessReview: boolean;
       readonly id: string;
       readonly identitySource: {
         readonly id: string;
       } | null | undefined;
-      readonly " $fragmentSpreads": FragmentRefs<"AccessReviewPageFragment" | "AccessReviewPageSourcesFragment">;
+      readonly " $fragmentSpreads": FragmentRefs<"AccessReviewPageSourcesFragment">;
     } | null | undefined;
     readonly id: string;
   } | {
@@ -93,19 +92,6 @@ v5 = {
   "storageKey": "permission(action:\"core:access-source:create\")"
 },
 v6 = {
-  "alias": "canCreateCampaign",
-  "args": [
-    {
-      "kind": "Literal",
-      "name": "action",
-      "value": "core:access-review-campaign:create"
-    }
-  ],
-  "kind": "ScalarField",
-  "name": "permission",
-  "storageKey": "permission(action:\"core:access-review-campaign:create\")"
-},
-v7 = {
   "alias": "canUpdateAccessReview",
   "args": [
     {
@@ -118,7 +104,7 @@ v7 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:access-review:update\")"
 },
-v8 = [
+v7 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -132,81 +118,6 @@ v8 = [
       "field": "CREATED_AT"
     }
   }
-],
-v9 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v10 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
-  "storageKey": null
-},
-v11 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "cursor",
-  "storageKey": null
-},
-v12 = {
-  "alias": null,
-  "args": null,
-  "concreteType": "PageInfo",
-  "kind": "LinkedField",
-  "name": "pageInfo",
-  "plural": false,
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "endCursor",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "hasNextPage",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "hasPreviousPage",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "startCursor",
-      "storageKey": null
-    }
-  ],
-  "storageKey": null
-},
-v13 = {
-  "kind": "ClientExtension",
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "__id",
-      "storageKey": null
-    }
-  ]
-},
-v14 = [
-  "orderBy"
 ];
 return {
   "fragment": {
@@ -240,16 +151,10 @@ return {
                   (v4/*: any*/),
                   (v5/*: any*/),
                   (v6/*: any*/),
-                  (v7/*: any*/),
                   {
                     "args": null,
                     "kind": "FragmentSpread",
                     "name": "AccessReviewPageSourcesFragment"
-                  },
-                  {
-                    "args": null,
-                    "kind": "FragmentSpread",
-                    "name": "AccessReviewPageFragment"
                   }
                 ],
                 "storageKey": null
@@ -296,10 +201,9 @@ return {
                   (v4/*: any*/),
                   (v5/*: any*/),
                   (v6/*: any*/),
-                  (v7/*: any*/),
                   {
                     "alias": null,
-                    "args": (v8/*: any*/),
+                    "args": (v7/*: any*/),
                     "concreteType": "AccessSourceConnection",
                     "kind": "LinkedField",
                     "name": "accessSources",
@@ -322,7 +226,13 @@ return {
                             "plural": false,
                             "selections": [
                               (v3/*: any*/),
-                              (v9/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "name",
+                                "storageKey": null
+                              },
                               {
                                 "alias": null,
                                 "args": null,
@@ -349,7 +259,13 @@ return {
                                 ],
                                 "storageKey": null
                               },
-                              (v10/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "createdAt",
+                                "storageKey": null
+                              },
                               {
                                 "alias": "canDelete",
                                 "args": [
@@ -367,92 +283,80 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v11/*: any*/)
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "cursor",
+                            "storageKey": null
+                          }
                         ],
                         "storageKey": null
                       },
-                      (v12/*: any*/),
-                      (v13/*: any*/)
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "PageInfo",
+                        "kind": "LinkedField",
+                        "name": "pageInfo",
+                        "plural": false,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "endCursor",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "hasNextPage",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "hasPreviousPage",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "startCursor",
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      },
+                      {
+                        "kind": "ClientExtension",
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "__id",
+                            "storageKey": null
+                          }
+                        ]
+                      }
                     ],
                     "storageKey": "accessSources(first:50,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                   },
                   {
                     "alias": null,
-                    "args": (v8/*: any*/),
-                    "filters": (v14/*: any*/),
+                    "args": (v7/*: any*/),
+                    "filters": [
+                      "orderBy"
+                    ],
                     "handle": "connection",
                     "key": "AccessReviewPage_accessSources",
                     "kind": "LinkedHandle",
                     "name": "accessSources"
-                  },
-                  {
-                    "alias": null,
-                    "args": (v8/*: any*/),
-                    "concreteType": "AccessReviewCampaignConnection",
-                    "kind": "LinkedField",
-                    "name": "campaigns",
-                    "plural": false,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "AccessReviewCampaignEdge",
-                        "kind": "LinkedField",
-                        "name": "edges",
-                        "plural": true,
-                        "selections": [
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "AccessReviewCampaign",
-                            "kind": "LinkedField",
-                            "name": "node",
-                            "plural": false,
-                            "selections": [
-                              (v3/*: any*/),
-                              (v9/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "status",
-                                "storageKey": null
-                              },
-                              (v10/*: any*/),
-                              {
-                                "alias": "canDelete",
-                                "args": [
-                                  {
-                                    "kind": "Literal",
-                                    "name": "action",
-                                    "value": "core:access-review-campaign:delete"
-                                  }
-                                ],
-                                "kind": "ScalarField",
-                                "name": "permission",
-                                "storageKey": "permission(action:\"core:access-review-campaign:delete\")"
-                              },
-                              (v2/*: any*/)
-                            ],
-                            "storageKey": null
-                          },
-                          (v11/*: any*/)
-                        ],
-                        "storageKey": null
-                      },
-                      (v12/*: any*/),
-                      (v13/*: any*/)
-                    ],
-                    "storageKey": "campaigns(first:50,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
-                  },
-                  {
-                    "alias": null,
-                    "args": (v8/*: any*/),
-                    "filters": (v14/*: any*/),
-                    "handle": "connection",
-                    "key": "AccessReviewPage_campaigns",
-                    "kind": "LinkedHandle",
-                    "name": "campaigns"
                   }
                 ],
                 "storageKey": null
@@ -467,16 +371,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b8bf4fa845016ad52c25746279a79e0f",
+    "cacheID": "a2e41203ede9d2eaf6acb273655e1fa3",
     "id": null,
     "metadata": {},
     "name": "AccessReviewPageQuery",
     "operationKind": "query",
-    "text": "query AccessReviewPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      accessReview {\n        id\n        identitySource {\n          id\n        }\n        canCreateSource: permission(action: \"core:access-source:create\")\n        canCreateCampaign: permission(action: \"core:access-review-campaign:create\")\n        canUpdateAccessReview: permission(action: \"core:access-review:update\")\n        ...AccessReviewPageSourcesFragment\n        ...AccessReviewPageFragment\n      }\n    }\n    id\n  }\n}\n\nfragment AccessReviewCampaignRowFragment on AccessReviewCampaign {\n  id\n  name\n  status\n  createdAt\n  canDelete: permission(action: \"core:access-review-campaign:delete\")\n}\n\nfragment AccessReviewPageFragment on AccessReview {\n  campaigns(first: 50, orderBy: {direction: DESC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        ...AccessReviewCampaignRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment AccessReviewPageSourcesFragment on AccessReview {\n  accessSources(first: 50, orderBy: {direction: DESC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        name\n        connectorId\n        connector {\n          provider\n          id\n        }\n        ...AccessSourceRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment AccessSourceRowFragment on AccessSource {\n  id\n  name\n  connectorId\n  connector {\n    provider\n    id\n  }\n  createdAt\n  canDelete: permission(action: \"core:access-source:delete\")\n}\n"
+    "text": "query AccessReviewPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      accessReview {\n        id\n        identitySource {\n          id\n        }\n        canCreateSource: permission(action: \"core:access-source:create\")\n        canUpdateAccessReview: permission(action: \"core:access-review:update\")\n        ...AccessReviewPageSourcesFragment\n      }\n    }\n    id\n  }\n}\n\nfragment AccessReviewPageSourcesFragment on AccessReview {\n  accessSources(first: 50, orderBy: {direction: DESC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        name\n        connectorId\n        connector {\n          provider\n          id\n        }\n        ...AccessSourceRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment AccessSourceRowFragment on AccessSource {\n  id\n  name\n  connectorId\n  connector {\n    provider\n    id\n  }\n  createdAt\n  canDelete: permission(action: \"core:access-source:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "35582045d055bf703c8eac32c266d8b9";
+(node as any).hash = "ec6dc8fd8e326673dae2979d0709f46a";
 
 export default node;
