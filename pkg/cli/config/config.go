@@ -1,0 +1,122 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package config
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v3"
+)
+
+type (
+	Config struct {
+		Hosts map[string]*HostConfig `yaml:"hosts"`
+	}
+
+	HostConfig struct {
+		Token        string `yaml:"token"`
+		Organization string `yaml:"organization"`
+	}
+)
+
+func configDir() (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("cannot determine config directory: %w", err)
+	}
+	return filepath.Join(dir, "proboctl"), nil
+}
+
+func configPath() (string, error) {
+	dir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "config.yaml"), nil
+}
+
+func Load() (*Config, error) {
+	path, err := configPath()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &Config{Hosts: make(map[string]*HostConfig)}, nil
+		}
+		return nil, fmt.Errorf("cannot read config file: %w", err)
+	}
+
+	var cfg Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("cannot parse config file: %w", err)
+	}
+
+	if cfg.Hosts == nil {
+		cfg.Hosts = make(map[string]*HostConfig)
+	}
+
+	return &cfg, nil
+}
+
+func (c *Config) Save() error {
+	path, err := configPath()
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return fmt.Errorf("cannot create config directory: %w", err)
+	}
+
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("cannot marshal config: %w", err)
+	}
+
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return fmt.Errorf("cannot write config file: %w", err)
+	}
+
+	return nil
+}
+
+func (c *Config) DefaultHost() (string, *HostConfig, error) {
+	if host := os.Getenv("PROBO_HOST"); host != "" {
+		token := os.Getenv("PROBO_TOKEN")
+		return host, &HostConfig{Token: token}, nil
+	}
+
+	if token := os.Getenv("PROBO_TOKEN"); token != "" {
+		for host, hc := range c.Hosts {
+			_ = hc
+			return host, &HostConfig{
+				Token:        token,
+				Organization: c.Hosts[host].Organization,
+			}, nil
+		}
+		return "", nil, fmt.Errorf("PROBO_TOKEN is set but no host configured; run 'proboctl auth login' first")
+	}
+
+	for host, hc := range c.Hosts {
+		return host, hc, nil
+	}
+
+	return "", nil, fmt.Errorf("not logged in; run 'proboctl auth login' first")
+}
