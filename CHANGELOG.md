@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- SCIM provisioning failure when enrolling existing manual users due to stale external_id conflicts
+- SCIM reset not clearing external_id and user_name on profiles
+
 ## [0.142.2] - 2026-03-13
 
 ### Fixed
