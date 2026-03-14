@@ -26,6 +26,7 @@ const (
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
 	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
 	ConnectorProviderFigma           ConnectorProvider = "FIGMA"
+	ConnectorProviderOnePassword     ConnectorProvider = "ONE_PASSWORD"
 )
 
 func ConnectorProviders() []ConnectorProvider {
@@ -34,6 +35,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderGoogleWorkspace,
 		ConnectorProviderLinear,
 		ConnectorProviderFigma,
+		ConnectorProviderOnePassword,
 	}
 }
 
@@ -61,6 +63,8 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderLinear
 	case "FIGMA":
 		*cp = ConnectorProviderFigma
+	case "ONE_PASSWORD":
+		*cp = ConnectorProviderOnePassword
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}

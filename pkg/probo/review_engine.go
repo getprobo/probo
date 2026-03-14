@@ -587,6 +587,16 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("cannot create HTTP client for figma connector: %w", err)
 		}
 		return accesssource.NewFigmaDriver(httpClient), nil
+	case coredata.ConnectorProviderOnePassword:
+		httpClient, err := dbConnector.Connection.Client(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create HTTP client for 1password connector: %w", err)
+		}
+		baseURL, _ := dbConnector.Settings["scim_bridge_url"].(string)
+		if baseURL == "" {
+			return nil, fmt.Errorf("1password connector requires scim_bridge_url in settings")
+		}
+		return accesssource.NewOnePasswordDriver(httpClient, baseURL), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}
