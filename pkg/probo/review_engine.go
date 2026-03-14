@@ -575,6 +575,12 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("cannot create HTTP client for linear connector: %w", err)
 		}
 		return accesssource.NewLinearDriver(httpClient), nil
+	case coredata.ConnectorProviderSlack:
+		httpClient, err := dbConnector.Connection.Client(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create HTTP client for slack connector: %w", err)
+		}
+		return accesssource.NewSlackDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}
