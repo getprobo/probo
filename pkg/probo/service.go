@@ -23,8 +23,8 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
+	"go.probo.inc/probo/pkg/agents/vetting"
 	"go.probo.inc/probo/pkg/certmanager"
-	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -67,6 +68,7 @@ type (
 		slack                   *slack.Service
 		esign                   *esign.Service
 		invitationTokenValidity time.Duration
+		vendorAssessor         *vetting.Assessor
 	}
 
 	TenantService struct {
@@ -78,6 +80,7 @@ type (
 		baseURL                           string
 		tokenSecret                       string
 		agent                             *agents.Agent
+		vendorAssessor                    *vetting.Assessor
 		fileManager                       *filemanager.Service
 		esign                             *esign.Service
 		Frameworks                        *FrameworkService
@@ -142,6 +145,7 @@ func NewService(
 	iamService *iam.Service,
 	esignService *esign.Service,
 	invitationTokenValidity time.Duration,
+	vendorAssessor *vetting.Assessor,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -167,6 +171,7 @@ func NewService(
 		slack:                   slackService,
 		esign:                   esignService,
 		invitationTokenValidity: invitationTokenValidity,
+		vendorAssessor:         vendorAssessor,
 	}
 
 	return svc, nil
@@ -181,7 +186,8 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		baseURL:       s.baseURL,
 		scope:         coredata.NewScope(tenantID),
 		tokenSecret:   s.tokenSecret,
-		agent:         agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
+		agent:          agents.NewAgent(nil, s.llmClient, s.llmModel, s.llmTemperature, s.llmMaxTokens),
+		vendorAssessor: s.vendorAssessor,
 		fileManager:   s.fileManager,
 		esign:         s.esign,
 	}

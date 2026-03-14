@@ -736,31 +736,63 @@ func (s VendorService) Assess(
 	ctx context.Context,
 	req AssessVendorRequest,
 ) (*coredata.Vendor, error) {
-	vendorInfo, err := s.svc.agent.AssessVendor(ctx, req.WebsiteURL)
+	result, err := s.svc.vendorAssessor.Assess(ctx, req.WebsiteURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot assess vendor info: %w", err)
+		return nil, fmt.Errorf("cannot assess vendor: %w", err)
 	}
 
-	vendor := &coredata.Vendor{
-		ID:                            req.ID,
-		Name:                          vendorInfo.Name,
-		WebsiteURL:                    &req.WebsiteURL,
-		Description:                   &vendorInfo.Description,
-		Category:                      coredata.VendorCategory(vendorInfo.Category),
-		HeadquarterAddress:            &vendorInfo.HeadquarterAddress,
-		LegalName:                     &vendorInfo.LegalName,
-		PrivacyPolicyURL:              &vendorInfo.PrivacyPolicyURL,
-		ServiceLevelAgreementURL:      &vendorInfo.ServiceLevelAgreementURL,
-		DataProcessingAgreementURL:    &vendorInfo.DataProcessingAgreementURL,
-		BusinessAssociateAgreementURL: &vendorInfo.BusinessAssociateAgreementURL,
-		SubprocessorsListURL:          &vendorInfo.SubprocessorsListURL,
-		SecurityPageURL:               &vendorInfo.SecurityPageURL,
-		TrustPageURL:                  &vendorInfo.TrustPageURL,
-		TermsOfServiceURL:             &vendorInfo.TermsOfServiceURL,
-		StatusPageURL:                 &vendorInfo.StatusPageURL,
-		Certifications:                vendorInfo.Certifications,
-		UpdatedAt:                     time.Now(),
+	vendor := &coredata.Vendor{}
+
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := vendor.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load vendor %q: %w", req.ID, err)
+			}
+
+			info := result.Info
+
+			if info.Name != "" {
+				vendor.Name = info.Name
+			}
+
+			vendor.WebsiteURL = &req.WebsiteURL
+			vendor.Category = coredata.VendorCategory(info.Category)
+			vendor.UpdatedAt = time.Now()
+
+			setIfNotEmpty(&vendor.Description, info.Description)
+			setIfNotEmpty(&vendor.HeadquarterAddress, info.HeadquarterAddress)
+			setIfNotEmpty(&vendor.LegalName, info.LegalName)
+			setIfNotEmpty(&vendor.PrivacyPolicyURL, info.PrivacyPolicyURL)
+			setIfNotEmpty(&vendor.ServiceLevelAgreementURL, info.ServiceLevelAgreementURL)
+			setIfNotEmpty(&vendor.DataProcessingAgreementURL, info.DataProcessingAgreementURL)
+			setIfNotEmpty(&vendor.BusinessAssociateAgreementURL, info.BusinessAssociateAgreementURL)
+			setIfNotEmpty(&vendor.SubprocessorsListURL, info.SubprocessorsListURL)
+			setIfNotEmpty(&vendor.SecurityPageURL, info.SecurityPageURL)
+			setIfNotEmpty(&vendor.TrustPageURL, info.TrustPageURL)
+			setIfNotEmpty(&vendor.TermsOfServiceURL, info.TermsOfServiceURL)
+			setIfNotEmpty(&vendor.StatusPageURL, info.StatusPageURL)
+
+			if len(info.Certifications) > 0 {
+				vendor.Certifications = info.Certifications
+			}
+
+			if err := vendor.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update vendor: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return vendor, nil
+}
+
+func setIfNotEmpty(dst **string, val string) {
+	if val != "" {
+		*dst = &val
+	}
 }
