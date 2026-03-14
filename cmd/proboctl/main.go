@@ -79,8 +79,5 @@ func isNonInteractiveEnv() bool {
 	if os.Getenv("TERM") == "dumb" {
 		return true
 	}
-	if _, ok := os.LookupEnv("NO_COLOR"); ok {
-		return true
-	}
 	return false
 }
