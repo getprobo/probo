@@ -89,13 +89,16 @@ func CheckSecurityHeadersTool() (agent.Tool, error) {
 				httpURL = "http://" + strings.TrimPrefix(httpURL, "https://")
 			}
 
-			httpResp, err := client.Get(httpURL)
+			httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, httpURL, nil)
 			if err == nil {
-				httpResp.Body.Close()
-				if httpResp.StatusCode >= 300 && httpResp.StatusCode < 400 {
-					loc := httpResp.Header.Get("Location")
-					if strings.HasPrefix(loc, "https://") {
-						redirectsToHTTPS = true
+				httpResp, err := client.Do(httpReq)
+				if err == nil {
+					httpResp.Body.Close()
+					if httpResp.StatusCode >= 300 && httpResp.StatusCode < 400 {
+						loc := httpResp.Header.Get("Location")
+						if strings.HasPrefix(loc, "https://") {
+							redirectsToHTTPS = true
+						}
 					}
 				}
 			}
@@ -107,7 +110,14 @@ func CheckSecurityHeadersTool() (agent.Tool, error) {
 			}
 
 			followClient := &http.Client{Timeout: 10 * time.Second}
-			resp, err := followClient.Get(httpsURL)
+			httpsReq, err := http.NewRequestWithContext(ctx, http.MethodGet, httpsURL, nil)
+			if err != nil {
+				data, _ := json.Marshal(headersResult{
+					ErrorDetail: fmt.Sprintf("cannot create request for %s: %s", httpsURL, err),
+				})
+				return agent.ToolResult{Content: string(data)}, nil
+			}
+			resp, err := followClient.Do(httpsReq)
 			if err != nil {
 				data, _ := json.Marshal(headersResult{
 					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", httpsURL, err),

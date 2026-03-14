@@ -54,8 +54,9 @@ func ExtractPageTextTool(b *Browser) (agent.Tool, error) {
 				}, nil
 			}
 
-			if len(text) > maxTextLength {
-				text = text[:maxTextLength]
+			runes := []rune(text)
+			if len(runes) > maxTextLength {
+				text = string(runes[:maxTextLength])
 			}
 
 			return agent.ToolResult{Content: text}, nil

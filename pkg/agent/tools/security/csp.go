@@ -78,7 +78,15 @@ func AnalyzeCSPTool() (agent.Tool, error) {
 		func(ctx context.Context, p cspParams) (agent.ToolResult, error) {
 			client := &http.Client{Timeout: 10 * time.Second}
 
-			resp, err := client.Get(p.URL)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.URL, nil)
+			if err != nil {
+				data, _ := json.Marshal(cspResult{
+					ErrorDetail: fmt.Sprintf("cannot create request for %s: %s", p.URL, err),
+				})
+				return agent.ToolResult{Content: string(data)}, nil
+			}
+
+			resp, err := client.Do(req)
 			if err != nil {
 				data, _ := json.Marshal(cspResult{
 					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", p.URL, err),

@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/chromedp/chromedp"
 	"go.probo.inc/probo/pkg/agent"
@@ -37,6 +38,14 @@ func ExtractLinksTool(b *Browser) (agent.Tool, error) {
 		"extract_links",
 		"Navigate to a URL and extract all links (<a> elements) with their href and text.",
 		func(ctx context.Context, p extractLinksParams) (agent.ToolResult, error) {
+			u, err := url.Parse(p.URL)
+			if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+				return agent.ToolResult{
+					Content: "invalid URL scheme: only http and https are allowed",
+					IsError: true,
+				}, nil
+			}
+
 			ctx, timeoutCancel := withToolTimeout(ctx)
 			defer timeoutCancel()
 
@@ -45,12 +54,12 @@ func ExtractLinksTool(b *Browser) (agent.Tool, error) {
 
 			var links []link
 
-			err := chromedp.Run(
+			err = chromedp.Run(
 				tabCtx,
 				chromedp.Navigate(p.URL),
 				chromedp.WaitReady("body"),
 				chromedp.Evaluate(
-					`Array.from(document.querySelectorAll("a[href]")).map(a => ({
+					`Array.from(document.querySelectorAll("a[href]")).slice(0, 500).map(a => ({
 						href: a.href,
 						text: a.innerText.trim().substring(0, 200)
 					}))`,

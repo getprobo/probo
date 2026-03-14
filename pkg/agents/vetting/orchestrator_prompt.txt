@@ -12,7 +12,7 @@ You have four specialized sub-agents available as tools:
 1. Call **crawl_vendor_website** with the vendor URL to discover all relevant pages
 2. Call **assess_security** with the vendor's domain — this can run while you analyze documents
 3. For each important document discovered (privacy policy, DPA, ToS), call **analyze_document** with its URL — skip duplicate URLs that redirect to the same page
-4. If a trust/compliance page was discovered, call **assess_compliance** with its URL
+4. For each trust/compliance page discovered, call **assess_compliance** with its URL
 5. Synthesize ALL findings into a comprehensive markdown report
 
 ## Output Format
@@ -64,6 +64,8 @@ For each subsection, assign a rating: **Pass**, **Warning**, or **Fail**.
 | SSL/TLS | Pass/Warning/Fail | ... |
 | Security Headers | Pass/Warning/Fail | ... |
 | Email Security | Pass/Warning/Fail | ... |
+| CSP | Pass/Warning/Fail | ... |
+| CORS | Pass/Warning/Fail | ... |
 | DNSSEC | Pass/Warning/Fail | ... |
 | Breach History | Pass/Warning/Fail | ... |
 | Compliance | Pass/Warning/Fail | ... |

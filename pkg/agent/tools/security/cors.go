@@ -65,7 +65,12 @@ func CheckCORSTool() (agent.Tool, error) {
 		"check_cors",
 		"Send a CORS preflight (OPTIONS) request to a URL with a given Origin and analyze the Access-Control-* response headers, flagging wildcard origins and origin reflection.",
 		func(ctx context.Context, p corsParams) (agent.ToolResult, error) {
-			client := &http.Client{Timeout: 10 * time.Second}
+			client := &http.Client{
+				Timeout: 10 * time.Second,
+				CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+					return http.ErrUseLastResponse
+				},
+			}
 
 			req, err := http.NewRequestWithContext(
 				ctx,
@@ -102,7 +107,7 @@ func CheckCORSTool() (agent.Tool, error) {
 				ExposeHeaders:    splitTrimmed(resp.Header.Get("Access-Control-Expose-Headers"), ","),
 				MaxAge:           resp.Header.Get("Access-Control-Max-Age"),
 				WildcardOrigin:   allowOrigin == "*",
-				ReflectsOrigin:   allowOrigin == p.Origin,
+				ReflectsOrigin:   p.Origin != "" && allowOrigin == p.Origin,
 			}
 
 			data, _ := json.Marshal(result)

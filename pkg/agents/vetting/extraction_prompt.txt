@@ -26,7 +26,7 @@ Category reference (pick the best match):
 - OFFICE_OPERATIONS: office and facilities management
 - OTHER: does not fit any other category
 - PASSWORD_MANAGEMENT: credential and secret management (e.g. 1Password, LastPass, Vault)
-- PRODUCT_AND_DESIGN: design and product tools (e.g. Figma, Notion, Jira)
+- PRODUCT_AND_DESIGN: design and product tools (e.g. Figma, Miro, InVision)
 - PROFESSIONAL_SERVICES: consulting and advisory firms
 - RECRUITING: hiring and applicant tracking (e.g. Lever, Greenhouse, LinkedIn)
 - SALES: CRM and sales tools (e.g. Salesforce, Gong, Outreach)

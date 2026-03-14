@@ -32,7 +32,7 @@ type Browser struct {
 }
 
 func NewBrowser(ctx context.Context, addr string) *Browser {
-	if !strings.HasPrefix(addr, "ws://") {
+	if !strings.HasPrefix(addr, "ws://") && !strings.HasPrefix(addr, "wss://") {
 		addr = "ws://" + addr
 	}
 

@@ -41,6 +41,13 @@ func FindLinksMatchingTool(b *Browser) (agent.Tool, error) {
 
 			var links []link
 
+			if p.Pattern == "" {
+				return agent.ToolResult{
+					Content: "pattern must not be empty",
+					IsError: true,
+				}, nil
+			}
+
 			js := fmt.Sprintf(
 				`(() => {
 					const pattern = %q.toLowerCase();

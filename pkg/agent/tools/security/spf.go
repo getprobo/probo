@@ -96,6 +96,7 @@ func CheckSPFTool() (agent.Tool, error) {
 				return agent.ToolResult{Content: string(data)}, nil
 			}
 
+			var spfRecords []string
 			for _, answer := range resp.Answer {
 				txt, ok := answer.(*dns.TXT)
 				if !ok {
@@ -103,19 +104,30 @@ func CheckSPFTool() (agent.Tool, error) {
 				}
 
 				record := strings.Join(txt.Txt, "")
-				if !strings.HasPrefix(record, "v=spf1") {
+				if !strings.HasPrefix(strings.ToLower(record), "v=spf1") {
 					continue
 				}
 
+				spfRecords = append(spfRecords, record)
+			}
+
+			if len(spfRecords) > 1 {
+				data, _ := json.Marshal(spfResult{
+					Found:       true,
+					ErrorDetail: fmt.Sprintf("multiple SPF records found (%d); this is an invalid configuration per RFC 7208", len(spfRecords)),
+				})
+				return agent.ToolResult{Content: string(data)}, nil
+			}
+
+			if len(spfRecords) == 1 {
+				record := spfRecords[0]
 				result := spfResult{
 					Found:      true,
 					RawRecord:  record,
 					Policy:     parseSPFPolicy(record),
 					Mechanisms: record,
 				}
-
 				data, _ := json.Marshal(result)
-
 				return agent.ToolResult{Content: string(data)}, nil
 			}
 

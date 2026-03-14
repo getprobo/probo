@@ -785,7 +785,9 @@ func (s VendorService) Assess(
 			}
 
 			vendor.WebsiteURL = &req.WebsiteURL
-			vendor.Category = coredata.VendorCategory(info.Category)
+			if info.Category != "" {
+				vendor.Category = coredata.VendorCategory(info.Category)
+			}
 			vendor.UpdatedAt = time.Now()
 
 			setIfNotEmpty(&vendor.Description, info.Description)
@@ -807,6 +809,10 @@ func (s VendorService) Assess(
 
 			if err := vendor.Update(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update vendor: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, conn, s.svc.scope, vendor.OrganizationID, coredata.WebhookEventTypeVendorUpdated, webhooktypes.NewVendor(vendor)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			return nil
