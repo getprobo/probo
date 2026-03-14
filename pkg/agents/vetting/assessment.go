@@ -53,6 +53,8 @@ type (
 		TrustPageURL                  string   `json:"trust_page_url"`
 		TermsOfServiceURL             string   `json:"terms_of_service_url"`
 		StatusPageURL                 string   `json:"status_page_url"`
+		BugBountyURL                  string   `json:"bug_bounty_url"`
+		DataLocations                 []string `json:"data_locations"`
 		Certifications                []string `json:"certifications"`
 	}
 

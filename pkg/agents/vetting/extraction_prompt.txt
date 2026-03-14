@@ -4,5 +4,8 @@ Rules:
 - Extract only information explicitly present in the report
 - Use empty strings for fields not mentioned in the report
 - Use an empty array for certifications if none are found
+- Use an empty array for data_locations if none are found
+- For data_locations, list the countries or regions where data is processed or stored (e.g. "United States", "EU", "Germany")
+- For bug_bounty_url, extract the URL of the vendor's bug bounty or responsible disclosure program if mentioned
 - For category, use one of: ANALYTICS, CLOUD_MONITORING, CLOUD_PROVIDER, COLLABORATION, CUSTOMER_SUPPORT, DATA_STORAGE_AND_PROCESSING, DOCUMENT_MANAGEMENT, EMPLOYEE_MANAGEMENT, ENGINEERING, FINANCE, IDENTITY_PROVIDER, IT, MARKETING, OFFICE_OPERATIONS, OTHER, PASSWORD_MANAGEMENT, PRODUCT_AND_DESIGN, PROFESSIONAL_SERVICES, RECRUITING, SALES, SECURITY, VERSION_CONTROL
 - If the category cannot be determined, use OTHER
