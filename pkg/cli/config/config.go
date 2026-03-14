@@ -24,7 +24,11 @@ import (
 
 type (
 	Config struct {
-		Hosts map[string]*HostConfig `yaml:"hosts"`
+		Editor  string                 `yaml:"editor,omitempty"`
+		Browser string                 `yaml:"browser,omitempty"`
+		Pager   string                 `yaml:"pager,omitempty"`
+		Prompt  string                 `yaml:"prompt,omitempty"`
+		Hosts   map[string]*HostConfig `yaml:"hosts"`
 	}
 
 	HostConfig struct {
@@ -32,6 +36,47 @@ type (
 		Organization string `yaml:"organization"`
 	}
 )
+
+var ValidKeys = []string{
+	"editor",
+	"browser",
+	"pager",
+	"prompt",
+}
+
+func (c *Config) Get(key string) (string, error) {
+	switch key {
+	case "editor":
+		return c.Editor, nil
+	case "browser":
+		return c.Browser, nil
+	case "pager":
+		return c.Pager, nil
+	case "prompt":
+		return c.Prompt, nil
+	default:
+		return "", fmt.Errorf("unknown configuration key: %s", key)
+	}
+}
+
+func (c *Config) Set(key, value string) error {
+	switch key {
+	case "editor":
+		c.Editor = value
+	case "browser":
+		c.Browser = value
+	case "pager":
+		c.Pager = value
+	case "prompt":
+		if value != "enabled" && value != "disabled" {
+			return fmt.Errorf("valid values for prompt are 'enabled' or 'disabled'")
+		}
+		c.Prompt = value
+	default:
+		return fmt.Errorf("unknown configuration key: %s", key)
+	}
+	return nil
+}
 
 func configDir() (string, error) {
 	dir, err := os.UserConfigDir()
