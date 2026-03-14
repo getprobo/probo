@@ -1372,6 +1372,8 @@ func (p *MembershipProfiles) ResetSCIMSources(
 UPDATE iam_membership_profiles
 SET
     source = 'MANUAL',
+    external_id = NULL,
+    user_name = NULL,
     updated_at = @updated_at
 WHERE
     %s
