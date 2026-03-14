@@ -87,7 +87,6 @@ func (s AccessEntryService) RecordDecision(
 			}
 
 			now := time.Now()
-			previousDecision := entry.Decision
 			entry.Decision = req.Decision
 			entry.DecisionNote = req.DecisionNote
 			entry.DecidedBy = req.DecidedByID
@@ -133,89 +132,6 @@ WHERE
 			}
 			if result.RowsAffected() == 0 {
 				return fmt.Errorf("invalid decision transition from pending")
-			}
-
-			decisionEventID := gid.New(s.svc.scope.GetTenantID(), coredata.AccessEntryEntityType)
-			_, err = conn.Exec(ctx, `
-INSERT INTO access_entry_decision_events (
-    id,
-    tenant_id,
-    access_entry_id,
-    access_review_campaign_id,
-    previous_decision,
-    new_decision,
-    decision_note,
-    decided_by,
-    decided_at,
-    created_at
-)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-`,
-				decisionEventID,
-				s.svc.scope.GetTenantID(),
-				entry.ID,
-				entry.AccessReviewCampaignID,
-				previousDecision,
-				entry.Decision,
-				entry.DecisionNote,
-				entry.DecidedBy,
-				entry.DecidedAt,
-				now,
-			)
-			if err != nil {
-				return fmt.Errorf("cannot insert decision event: %w", err)
-			}
-
-			if req.Decision == coredata.AccessEntryDecisionRevoke || req.Decision == coredata.AccessEntryDecisionEscalate {
-				note := ""
-				if entry.DecisionNote != nil {
-					note = *entry.DecisionNote
-				}
-				taskID := gid.New(s.svc.scope.GetTenantID(), coredata.AccessEntryEntityType)
-				_, err = conn.Exec(ctx, `
-INSERT INTO access_review_remediation_tasks (
-    id,
-    tenant_id,
-    access_review_campaign_id,
-    access_entry_id,
-    decided_by,
-    status,
-    status_note,
-    created_at,
-    updated_at
-)
-VALUES ($1,$2,$3,$4,$5,'OPEN',$6,$7,$8)
-ON CONFLICT (access_entry_id) DO NOTHING
-`,
-					taskID,
-					s.svc.scope.GetTenantID(),
-					entry.AccessReviewCampaignID,
-					entry.ID,
-					entry.DecidedBy,
-					note,
-					now,
-					now,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot create remediation task: %w", err)
-				}
-
-				campaignArgs := pgx.StrictNamedArgs{
-					"updated_at":   now,
-					"campaign_id": entry.AccessReviewCampaignID,
-				}
-				for k, v := range s.svc.scope.SQLArguments() {
-					campaignArgs[k] = v
-				}
-				if _, err := conn.Exec(ctx, fmt.Sprintf(`
-UPDATE access_review_campaigns
-SET status = 'PENDING_ACTIONS', updated_at = @updated_at
-WHERE %s
-  AND id = @campaign_id
-  AND status = 'IN_PROGRESS'
-`, s.svc.scope.SQLFragment()), campaignArgs); err != nil {
-					return fmt.Errorf("cannot transition campaign to pending actions: %w", err)
-				}
 			}
 
 			return nil

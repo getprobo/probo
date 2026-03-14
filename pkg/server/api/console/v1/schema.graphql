@@ -3895,12 +3895,6 @@ type Mutation {
     closeAccessReviewCampaign(
         input: CloseAccessReviewCampaignInput!
     ): CloseAccessReviewCampaignPayload!
-    retryStartAccessReviewCampaign(
-        input: RetryStartAccessReviewCampaignInput!
-    ): RetryStartAccessReviewCampaignPayload!
-    validateAccessReviewCampaign(
-        input: ValidateAccessReviewCampaignInput!
-    ): ValidateAccessReviewCampaignPayload!
     cancelAccessReviewCampaign(
         input: CancelAccessReviewCampaignInput!
     ): CancelAccessReviewCampaignPayload!
@@ -3908,9 +3902,6 @@ type Mutation {
     recordAccessEntryDecision(
         input: RecordAccessEntryDecisionInput!
     ): RecordAccessEntryDecisionPayload!
-    exportCampaignEvidence(
-        input: ExportCampaignEvidenceInput!
-    ): ExportCampaignEvidencePayload!
 }
 
 # Input Types
@@ -6464,23 +6455,6 @@ type CloseAccessReviewCampaignPayload {
     accessReviewCampaign: AccessReviewCampaign!
 }
 
-input RetryStartAccessReviewCampaignInput {
-    accessReviewCampaignId: ID!
-}
-
-type RetryStartAccessReviewCampaignPayload {
-    accessReviewCampaign: AccessReviewCampaign!
-}
-
-input ValidateAccessReviewCampaignInput {
-    accessReviewCampaignId: ID!
-    note: String
-}
-
-type ValidateAccessReviewCampaignPayload {
-    accessReviewCampaign: AccessReviewCampaign!
-}
-
 input CancelAccessReviewCampaignInput {
     accessReviewCampaignId: ID!
 }
@@ -6499,11 +6473,4 @@ type RecordAccessEntryDecisionPayload {
     accessEntry: AccessEntry!
 }
 
-input ExportCampaignEvidenceInput {
-    accessReviewCampaignId: ID!
-}
 
-type ExportCampaignEvidencePayload {
-    checksumSha256: String!
-    payload: String!
-}

@@ -1517,15 +1517,6 @@ type EvidenceEdge struct {
 	Node   *Evidence      `json:"node"`
 }
 
-type ExportCampaignEvidenceInput struct {
-	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
-}
-
-type ExportCampaignEvidencePayload struct {
-	ChecksumSha256 string `json:"checksumSha256"`
-	Payload        string `json:"payload"`
-}
-
 type ExportDataProtectionImpactAssessmentsPDFInput struct {
 	OrganizationID gid.GID                               `json:"organizationId"`
 	Filter         *DataProtectionImpactAssessmentFilter `json:"filter,omitempty"`
@@ -1986,14 +1977,6 @@ type RequestSignatureInput struct {
 
 type RequestSignaturePayload struct {
 	DocumentVersionSignatureEdge *DocumentVersionSignatureEdge `json:"documentVersionSignatureEdge"`
-}
-
-type RetryStartAccessReviewCampaignInput struct {
-	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
-}
-
-type RetryStartAccessReviewCampaignPayload struct {
-	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
 }
 
 type RightsRequest struct {
@@ -2848,15 +2831,6 @@ type UploadVendorDataPrivacyAgreementInput struct {
 
 type UploadVendorDataPrivacyAgreementPayload struct {
 	VendorDataPrivacyAgreement *VendorDataPrivacyAgreement `json:"vendorDataPrivacyAgreement"`
-}
-
-type ValidateAccessReviewCampaignInput struct {
-	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
-	Note                   *string `json:"note,omitempty"`
-}
-
-type ValidateAccessReviewCampaignPayload struct {
-	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
 }
 
 type Vendor struct {

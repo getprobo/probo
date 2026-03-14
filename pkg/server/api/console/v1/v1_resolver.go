@@ -6305,56 +6305,6 @@ func (r *mutationResolver) CloseAccessReviewCampaign(ctx context.Context, input 
 	}, nil
 }
 
-// RetryStartAccessReviewCampaign is the resolver for the retryStartAccessReviewCampaign field.
-func (r *mutationResolver) RetryStartAccessReviewCampaign(ctx context.Context, input types.RetryStartAccessReviewCampaignInput) (*types.RetryStartAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignStart); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
-	campaign, err := prb.AccessReviewCampaigns.RetryStart(ctx, input.AccessReviewCampaignID)
-	if err != nil {
-		panic(fmt.Errorf("cannot retry start access review campaign: %w", err))
-	}
-
-	return &types.RetryStartAccessReviewCampaignPayload{
-		AccessReviewCampaign: types.NewAccessReviewCampaign(campaign),
-	}, nil
-}
-
-// ValidateAccessReviewCampaign is the resolver for the validateAccessReviewCampaign field.
-func (r *mutationResolver) ValidateAccessReviewCampaign(ctx context.Context, input types.ValidateAccessReviewCampaignInput) (*types.ValidateAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignClose); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, fmt.Errorf("no identity in context")
-	}
-
-	var validatedByID *gid.GID
-	organizationID := gid.New(input.AccessReviewCampaignID.TenantID(), coredata.OrganizationEntityType)
-	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
-	if err == nil {
-		validatedByID = &profile.ID
-	}
-
-	if err := prb.AccessReviewCampaigns.ValidateForClose(ctx, input.AccessReviewCampaignID, validatedByID, input.Note); err != nil {
-		panic(fmt.Errorf("cannot validate access review campaign: %w", err))
-	}
-
-	campaign, err := prb.AccessReviewCampaigns.Get(ctx, input.AccessReviewCampaignID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load validated access review campaign: %w", err))
-	}
-
-	return &types.ValidateAccessReviewCampaignPayload{
-		AccessReviewCampaign: types.NewAccessReviewCampaign(campaign),
-	}, nil
-}
-
 // CancelAccessReviewCampaign is the resolver for the cancelAccessReviewCampaign field.
 func (r *mutationResolver) CancelAccessReviewCampaign(ctx context.Context, input types.CancelAccessReviewCampaignInput) (*types.CancelAccessReviewCampaignPayload, error) {
 	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignCancel); err != nil {
@@ -6415,24 +6365,6 @@ func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input 
 
 	return &types.RecordAccessEntryDecisionPayload{
 		AccessEntry: types.NewAccessEntry(entry),
-	}, nil
-}
-
-// ExportCampaignEvidence is the resolver for the exportCampaignEvidence field.
-func (r *mutationResolver) ExportCampaignEvidence(ctx context.Context, input types.ExportCampaignEvidenceInput) (*types.ExportCampaignEvidencePayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignClose); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.AccessReviewCampaignID.TenantID())
-	payload, checksum, err := prb.AccessReviewCampaigns.ExportEvidence(ctx, input.AccessReviewCampaignID)
-	if err != nil {
-		panic(fmt.Errorf("cannot export campaign evidence: %w", err))
-	}
-
-	return &types.ExportCampaignEvidencePayload{
-		ChecksumSha256: checksum,
-		Payload:        payload,
 	}, nil
 }
 

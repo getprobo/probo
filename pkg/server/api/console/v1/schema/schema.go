@@ -1041,11 +1041,6 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	ExportCampaignEvidencePayload struct {
-		ChecksumSha256 func(childComplexity int) int
-		Payload        func(childComplexity int) int
-	}
-
 	ExportDataProtectionImpactAssessmentsPDFPayload struct {
 		Data func(childComplexity int) int
 	}
@@ -1322,7 +1317,6 @@ type ComplexityRoot struct {
 		DeleteVendorDataPrivacyAgreement         func(childComplexity int, input types.DeleteVendorDataPrivacyAgreementInput) int
 		DeleteVendorService                      func(childComplexity int, input types.DeleteVendorServiceInput) int
 		DeleteWebhookSubscription                func(childComplexity int, input types.DeleteWebhookSubscriptionInput) int
-		ExportCampaignEvidence                   func(childComplexity int, input types.ExportCampaignEvidenceInput) int
 		ExportDataProtectionImpactAssessmentsPDF func(childComplexity int, input types.ExportDataProtectionImpactAssessmentsPDFInput) int
 		ExportDocumentVersionPDF                 func(childComplexity int, input types.ExportDocumentVersionPDFInput) int
 		ExportFramework                          func(childComplexity int, input types.ExportFrameworkInput) int
@@ -1337,7 +1331,6 @@ type ComplexityRoot struct {
 		PublishDocumentVersion                   func(childComplexity int, input types.PublishDocumentVersionInput) int
 		RecordAccessEntryDecision                func(childComplexity int, input types.RecordAccessEntryDecisionInput) int
 		RequestSignature                         func(childComplexity int, input types.RequestSignatureInput) int
-		RetryStartAccessReviewCampaign           func(childComplexity int, input types.RetryStartAccessReviewCampaignInput) int
 		SendMailingListUpdate                    func(childComplexity int, input types.SendMailingListUpdateInput) int
 		SendSigningNotifications                 func(childComplexity int, input types.SendSigningNotificationsInput) int
 		SignDocument                             func(childComplexity int, input types.SignDocumentInput) int
@@ -1387,7 +1380,6 @@ type ComplexityRoot struct {
 		UploadVendorBusinessAssociateAgreement   func(childComplexity int, input types.UploadVendorBusinessAssociateAgreementInput) int
 		UploadVendorComplianceReport             func(childComplexity int, input types.UploadVendorComplianceReportInput) int
 		UploadVendorDataPrivacyAgreement         func(childComplexity int, input types.UploadVendorDataPrivacyAgreementInput) int
-		ValidateAccessReviewCampaign             func(childComplexity int, input types.ValidateAccessReviewCampaignInput) int
 	}
 
 	Nonconformity struct {
@@ -1604,10 +1596,6 @@ type ComplexityRoot struct {
 
 	RequestSignaturePayload struct {
 		DocumentVersionSignatureEdge func(childComplexity int) int
-	}
-
-	RetryStartAccessReviewCampaignPayload struct {
-		AccessReviewCampaign func(childComplexity int) int
 	}
 
 	RightsRequest struct {
@@ -2121,10 +2109,6 @@ type ComplexityRoot struct {
 
 	UploadVendorDataPrivacyAgreementPayload struct {
 		VendorDataPrivacyAgreement func(childComplexity int) int
-	}
-
-	ValidateAccessReviewCampaignPayload struct {
-		AccessReviewCampaign func(childComplexity int) int
 	}
 
 	Vendor struct {
@@ -2716,11 +2700,8 @@ type MutationResolver interface {
 	DeleteAccessReviewCampaign(ctx context.Context, input types.DeleteAccessReviewCampaignInput) (*types.DeleteAccessReviewCampaignPayload, error)
 	StartAccessReviewCampaign(ctx context.Context, input types.StartAccessReviewCampaignInput) (*types.StartAccessReviewCampaignPayload, error)
 	CloseAccessReviewCampaign(ctx context.Context, input types.CloseAccessReviewCampaignInput) (*types.CloseAccessReviewCampaignPayload, error)
-	RetryStartAccessReviewCampaign(ctx context.Context, input types.RetryStartAccessReviewCampaignInput) (*types.RetryStartAccessReviewCampaignPayload, error)
-	ValidateAccessReviewCampaign(ctx context.Context, input types.ValidateAccessReviewCampaignInput) (*types.ValidateAccessReviewCampaignPayload, error)
 	CancelAccessReviewCampaign(ctx context.Context, input types.CancelAccessReviewCampaignInput) (*types.CancelAccessReviewCampaignPayload, error)
 	RecordAccessEntryDecision(ctx context.Context, input types.RecordAccessEntryDecisionInput) (*types.RecordAccessEntryDecisionPayload, error)
-	ExportCampaignEvidence(ctx context.Context, input types.ExportCampaignEvidenceInput) (*types.ExportCampaignEvidencePayload, error)
 }
 type NonconformityResolver interface {
 	Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error)
@@ -5987,19 +5968,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.EvidenceEdge.Node(childComplexity), true
 
-	case "ExportCampaignEvidencePayload.checksumSha256":
-		if e.ComplexityRoot.ExportCampaignEvidencePayload.ChecksumSha256 == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ExportCampaignEvidencePayload.ChecksumSha256(childComplexity), true
-	case "ExportCampaignEvidencePayload.payload":
-		if e.ComplexityRoot.ExportCampaignEvidencePayload.Payload == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ExportCampaignEvidencePayload.Payload(childComplexity), true
-
 	case "ExportDataProtectionImpactAssessmentsPDFPayload.data":
 		if e.ComplexityRoot.ExportDataProtectionImpactAssessmentsPDFPayload.Data == nil {
 			break
@@ -7729,17 +7697,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteWebhookSubscription(childComplexity, args["input"].(types.DeleteWebhookSubscriptionInput)), true
-	case "Mutation.exportCampaignEvidence":
-		if e.ComplexityRoot.Mutation.ExportCampaignEvidence == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_exportCampaignEvidence_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.ComplexityRoot.Mutation.ExportCampaignEvidence(childComplexity, args["input"].(types.ExportCampaignEvidenceInput)), true
 	case "Mutation.exportDataProtectionImpactAssessmentsPDF":
 		if e.ComplexityRoot.Mutation.ExportDataProtectionImpactAssessmentsPDF == nil {
 			break
@@ -7894,17 +7851,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RequestSignature(childComplexity, args["input"].(types.RequestSignatureInput)), true
-	case "Mutation.retryStartAccessReviewCampaign":
-		if e.ComplexityRoot.Mutation.RetryStartAccessReviewCampaign == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_retryStartAccessReviewCampaign_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.ComplexityRoot.Mutation.RetryStartAccessReviewCampaign(childComplexity, args["input"].(types.RetryStartAccessReviewCampaignInput)), true
 	case "Mutation.sendMailingListUpdate":
 		if e.ComplexityRoot.Mutation.SendMailingListUpdate == nil {
 			break
@@ -8444,17 +8390,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UploadVendorDataPrivacyAgreement(childComplexity, args["input"].(types.UploadVendorDataPrivacyAgreementInput)), true
-	case "Mutation.validateAccessReviewCampaign":
-		if e.ComplexityRoot.Mutation.ValidateAccessReviewCampaign == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_validateAccessReviewCampaign_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.ComplexityRoot.Mutation.ValidateAccessReviewCampaign(childComplexity, args["input"].(types.ValidateAccessReviewCampaignInput)), true
 
 	case "Nonconformity.audit":
 		if e.ComplexityRoot.Nonconformity.Audit == nil {
@@ -9576,13 +9511,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RequestSignaturePayload.DocumentVersionSignatureEdge(childComplexity), true
-
-	case "RetryStartAccessReviewCampaignPayload.accessReviewCampaign":
-		if e.ComplexityRoot.RetryStartAccessReviewCampaignPayload.AccessReviewCampaign == nil {
-			break
-		}
-
-		return e.ComplexityRoot.RetryStartAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "RightsRequest.actionTaken":
 		if e.ComplexityRoot.RightsRequest.ActionTaken == nil {
@@ -11281,13 +11209,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.UploadVendorDataPrivacyAgreementPayload.VendorDataPrivacyAgreement(childComplexity), true
 
-	case "ValidateAccessReviewCampaignPayload.accessReviewCampaign":
-		if e.ComplexityRoot.ValidateAccessReviewCampaignPayload.AccessReviewCampaign == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ValidateAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
-
 	case "Vendor.businessAssociateAgreement":
 		if e.ComplexityRoot.Vendor.BusinessAssociateAgreement == nil {
 			break
@@ -12326,7 +12247,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDocumentVersionSignatureFilter,
 		ec.unmarshalInputDocumentVersionSignatureOrder,
 		ec.unmarshalInputEvidenceOrder,
-		ec.unmarshalInputExportCampaignEvidenceInput,
 		ec.unmarshalInputExportDataProtectionImpactAssessmentsPDFInput,
 		ec.unmarshalInputExportDocumentVersionPDFInput,
 		ec.unmarshalInputExportFrameworkInput,
@@ -12353,7 +12273,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRecordAccessEntryDecisionInput,
 		ec.unmarshalInputRequestSignatureInput,
-		ec.unmarshalInputRetryStartAccessReviewCampaignInput,
 		ec.unmarshalInputRightsRequestOrder,
 		ec.unmarshalInputRiskFilter,
 		ec.unmarshalInputRiskOrder,
@@ -12417,7 +12336,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUploadVendorBusinessAssociateAgreementInput,
 		ec.unmarshalInputUploadVendorComplianceReportInput,
 		ec.unmarshalInputUploadVendorDataPrivacyAgreementInput,
-		ec.unmarshalInputValidateAccessReviewCampaignInput,
 		ec.unmarshalInputVendorComplianceReportOrder,
 		ec.unmarshalInputVendorContactOrder,
 		ec.unmarshalInputVendorFilter,
@@ -16398,12 +16316,6 @@ type Mutation {
     closeAccessReviewCampaign(
         input: CloseAccessReviewCampaignInput!
     ): CloseAccessReviewCampaignPayload!
-    retryStartAccessReviewCampaign(
-        input: RetryStartAccessReviewCampaignInput!
-    ): RetryStartAccessReviewCampaignPayload!
-    validateAccessReviewCampaign(
-        input: ValidateAccessReviewCampaignInput!
-    ): ValidateAccessReviewCampaignPayload!
     cancelAccessReviewCampaign(
         input: CancelAccessReviewCampaignInput!
     ): CancelAccessReviewCampaignPayload!
@@ -16411,9 +16323,6 @@ type Mutation {
     recordAccessEntryDecision(
         input: RecordAccessEntryDecisionInput!
     ): RecordAccessEntryDecisionPayload!
-    exportCampaignEvidence(
-        input: ExportCampaignEvidenceInput!
-    ): ExportCampaignEvidencePayload!
 }
 
 # Input Types
@@ -18967,23 +18876,6 @@ type CloseAccessReviewCampaignPayload {
     accessReviewCampaign: AccessReviewCampaign!
 }
 
-input RetryStartAccessReviewCampaignInput {
-    accessReviewCampaignId: ID!
-}
-
-type RetryStartAccessReviewCampaignPayload {
-    accessReviewCampaign: AccessReviewCampaign!
-}
-
-input ValidateAccessReviewCampaignInput {
-    accessReviewCampaignId: ID!
-    note: String
-}
-
-type ValidateAccessReviewCampaignPayload {
-    accessReviewCampaign: AccessReviewCampaign!
-}
-
 input CancelAccessReviewCampaignInput {
     accessReviewCampaignId: ID!
 }
@@ -19002,14 +18894,7 @@ type RecordAccessEntryDecisionPayload {
     accessEntry: AccessEntry!
 }
 
-input ExportCampaignEvidenceInput {
-    accessReviewCampaignId: ID!
-}
 
-type ExportCampaignEvidencePayload {
-    checksumSha256: String!
-    payload: String!
-}
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -21107,17 +20992,6 @@ func (ec *executionContext) field_Mutation_deleteWebhookSubscription_args(ctx co
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_exportCampaignEvidence_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportCampaignEvidenceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidenceInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_exportDataProtectionImpactAssessmentsPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -21265,17 +21139,6 @@ func (ec *executionContext) field_Mutation_requestSignature_args(ctx context.Con
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRequestSignatureInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRequestSignatureInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_retryStartAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRetryStartAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignInput)
 	if err != nil {
 		return nil, err
 	}
@@ -21815,17 +21678,6 @@ func (ec *executionContext) field_Mutation_uploadVendorDataPrivacyAgreement_args
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUploadVendorDataPrivacyAgreementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUploadVendorDataPrivacyAgreementInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_validateAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNValidateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignInput)
 	if err != nil {
 		return nil, err
 	}
@@ -39657,64 +39509,6 @@ func (ec *executionContext) fieldContext_EvidenceEdge_node(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _ExportCampaignEvidencePayload_checksumSha256(ctx context.Context, field graphql.CollectedField, obj *types.ExportCampaignEvidencePayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExportCampaignEvidencePayload_checksumSha256,
-		func(ctx context.Context) (any, error) {
-			return obj.ChecksumSha256, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExportCampaignEvidencePayload_checksumSha256(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExportCampaignEvidencePayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExportCampaignEvidencePayload_payload(ctx context.Context, field graphql.CollectedField, obj *types.ExportCampaignEvidencePayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExportCampaignEvidencePayload_payload,
-		func(ctx context.Context) (any, error) {
-			return obj.Payload, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExportCampaignEvidencePayload_payload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExportCampaignEvidencePayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ExportDataProtectionImpactAssessmentsPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportDataProtectionImpactAssessmentsPDFPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -50227,96 +50021,6 @@ func (ec *executionContext) fieldContext_Mutation_closeAccessReviewCampaign(ctx 
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_retryStartAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_retryStartAccessReviewCampaign,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().RetryStartAccessReviewCampaign(ctx, fc.Args["input"].(types.RetryStartAccessReviewCampaignInput))
-		},
-		nil,
-		ec.marshalNRetryStartAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_retryStartAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "accessReviewCampaign":
-				return ec.fieldContext_RetryStartAccessReviewCampaignPayload_accessReviewCampaign(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type RetryStartAccessReviewCampaignPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_retryStartAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_validateAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_validateAccessReviewCampaign,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().ValidateAccessReviewCampaign(ctx, fc.Args["input"].(types.ValidateAccessReviewCampaignInput))
-		},
-		nil,
-		ec.marshalNValidateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_validateAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "accessReviewCampaign":
-				return ec.fieldContext_ValidateAccessReviewCampaignPayload_accessReviewCampaign(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ValidateAccessReviewCampaignPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_validateAccessReviewCampaign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_cancelAccessReviewCampaign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -50401,53 +50105,6 @@ func (ec *executionContext) fieldContext_Mutation_recordAccessEntryDecision(ctx 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_recordAccessEntryDecision_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_exportCampaignEvidence(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_exportCampaignEvidence,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().ExportCampaignEvidence(ctx, fc.Args["input"].(types.ExportCampaignEvidenceInput))
-		},
-		nil,
-		ec.marshalNExportCampaignEvidencePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidencePayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_exportCampaignEvidence(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "checksumSha256":
-				return ec.fieldContext_ExportCampaignEvidencePayload_checksumSha256(ctx, field)
-			case "payload":
-				return ec.fieldContext_ExportCampaignEvidencePayload_payload(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExportCampaignEvidencePayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_exportCampaignEvidence_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -56535,61 +56192,6 @@ func (ec *executionContext) fieldContext_RequestSignaturePayload_documentVersion
 				return ec.fieldContext_DocumentVersionSignatureEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _RetryStartAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.RetryStartAccessReviewCampaignPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_RetryStartAccessReviewCampaignPayload_accessReviewCampaign,
-		func(ctx context.Context) (any, error) {
-			return obj.AccessReviewCampaign, nil
-		},
-		nil,
-		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_RetryStartAccessReviewCampaignPayload_accessReviewCampaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "RetryStartAccessReviewCampaignPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
-			case "accessReview":
-				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
-			case "name":
-				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
-			case "status":
-				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
-			case "startedAt":
-				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
-			case "frameworkControls":
-				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
-			case "scopeSources":
-				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
-			case "entries":
-				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
-			case "permission":
-				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
 		},
 	}
 	return fc, nil
@@ -66837,61 +66439,6 @@ func (ec *executionContext) fieldContext_UploadVendorDataPrivacyAgreementPayload
 				return ec.fieldContext_VendorDataPrivacyAgreement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorDataPrivacyAgreement", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ValidateAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.ValidateAccessReviewCampaignPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ValidateAccessReviewCampaignPayload_accessReviewCampaign,
-		func(ctx context.Context) (any, error) {
-			return obj.AccessReviewCampaign, nil
-		},
-		nil,
-		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ValidateAccessReviewCampaignPayload_accessReviewCampaign(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ValidateAccessReviewCampaignPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_AccessReviewCampaign_id(ctx, field)
-			case "accessReview":
-				return ec.fieldContext_AccessReviewCampaign_accessReview(ctx, field)
-			case "name":
-				return ec.fieldContext_AccessReviewCampaign_name(ctx, field)
-			case "status":
-				return ec.fieldContext_AccessReviewCampaign_status(ctx, field)
-			case "startedAt":
-				return ec.fieldContext_AccessReviewCampaign_startedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_AccessReviewCampaign_completedAt(ctx, field)
-			case "frameworkControls":
-				return ec.fieldContext_AccessReviewCampaign_frameworkControls(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_AccessReviewCampaign_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_AccessReviewCampaign_updatedAt(ctx, field)
-			case "scopeSources":
-				return ec.fieldContext_AccessReviewCampaign_scopeSources(ctx, field)
-			case "entries":
-				return ec.fieldContext_AccessReviewCampaign_entries(ctx, field)
-			case "permission":
-				return ec.fieldContext_AccessReviewCampaign_permission(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type AccessReviewCampaign", field.Name)
 		},
 	}
 	return fc, nil
@@ -78253,32 +77800,6 @@ func (ec *executionContext) unmarshalInputEvidenceOrder(ctx context.Context, obj
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputExportCampaignEvidenceInput(ctx context.Context, obj any) (types.ExportCampaignEvidenceInput, error) {
-	var it types.ExportCampaignEvidenceInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"accessReviewCampaignId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "accessReviewCampaignId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AccessReviewCampaignID = data
-		}
-	}
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputExportDataProtectionImpactAssessmentsPDFInput(ctx context.Context, obj any) (types.ExportDataProtectionImpactAssessmentsPDFInput, error) {
 	var it types.ExportDataProtectionImpactAssessmentsPDFInput
 	asMap := map[string]any{}
@@ -79090,32 +78611,6 @@ func (ec *executionContext) unmarshalInputRequestSignatureInput(ctx context.Cont
 				return it, err
 			}
 			it.SignatoryID = data
-		}
-	}
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputRetryStartAccessReviewCampaignInput(ctx context.Context, obj any) (types.RetryStartAccessReviewCampaignInput, error) {
-	var it types.RetryStartAccessReviewCampaignInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"accessReviewCampaignId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "accessReviewCampaignId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AccessReviewCampaignID = data
 		}
 	}
 	return it, nil
@@ -82252,39 +81747,6 @@ func (ec *executionContext) unmarshalInputUploadVendorDataPrivacyAgreementInput(
 				return it, err
 			}
 			it.File = data
-		}
-	}
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputValidateAccessReviewCampaignInput(ctx context.Context, obj any) (types.ValidateAccessReviewCampaignInput, error) {
-	var it types.ValidateAccessReviewCampaignInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"accessReviewCampaignId", "note"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "accessReviewCampaignId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AccessReviewCampaignID = data
-		case "note":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Note = data
 		}
 	}
 	return it, nil
@@ -92931,50 +92393,6 @@ func (ec *executionContext) _EvidenceEdge(ctx context.Context, sel ast.Selection
 	return out
 }
 
-var exportCampaignEvidencePayloadImplementors = []string{"ExportCampaignEvidencePayload"}
-
-func (ec *executionContext) _ExportCampaignEvidencePayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportCampaignEvidencePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, exportCampaignEvidencePayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ExportCampaignEvidencePayload")
-		case "checksumSha256":
-			out.Values[i] = ec._ExportCampaignEvidencePayload_checksumSha256(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "payload":
-			out.Values[i] = ec._ExportCampaignEvidencePayload_payload(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var exportDataProtectionImpactAssessmentsPDFPayloadImplementors = []string{"ExportDataProtectionImpactAssessmentsPDFPayload"}
 
 func (ec *executionContext) _ExportDataProtectionImpactAssessmentsPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportDataProtectionImpactAssessmentsPDFPayload) graphql.Marshaler {
@@ -96163,20 +95581,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "retryStartAccessReviewCampaign":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_retryStartAccessReviewCampaign(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "validateAccessReviewCampaign":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_validateAccessReviewCampaign(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "cancelAccessReviewCampaign":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_cancelAccessReviewCampaign(ctx, field)
@@ -96187,13 +95591,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "recordAccessEntryDecision":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_recordAccessEntryDecision(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "exportCampaignEvidence":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_exportCampaignEvidence(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -99195,45 +98592,6 @@ func (ec *executionContext) _RequestSignaturePayload(ctx context.Context, sel as
 			out.Values[i] = graphql.MarshalString("RequestSignaturePayload")
 		case "documentVersionSignatureEdge":
 			out.Values[i] = ec._RequestSignaturePayload_documentVersionSignatureEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var retryStartAccessReviewCampaignPayloadImplementors = []string{"RetryStartAccessReviewCampaignPayload"}
-
-func (ec *executionContext) _RetryStartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RetryStartAccessReviewCampaignPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, retryStartAccessReviewCampaignPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("RetryStartAccessReviewCampaignPayload")
-		case "accessReviewCampaign":
-			out.Values[i] = ec._RetryStartAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -105195,45 +104553,6 @@ func (ec *executionContext) _UploadVendorDataPrivacyAgreementPayload(ctx context
 			out.Values[i] = graphql.MarshalString("UploadVendorDataPrivacyAgreementPayload")
 		case "vendorDataPrivacyAgreement":
 			out.Values[i] = ec._UploadVendorDataPrivacyAgreementPayload_vendorDataPrivacyAgreement(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var validateAccessReviewCampaignPayloadImplementors = []string{"ValidateAccessReviewCampaignPayload"}
-
-func (ec *executionContext) _ValidateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ValidateAccessReviewCampaignPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, validateAccessReviewCampaignPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ValidateAccessReviewCampaignPayload")
-		case "accessReviewCampaign":
-			out.Values[i] = ec._ValidateAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -112784,25 +112103,6 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNExportCampaignEvidenceInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidenceInput(ctx context.Context, v any) (types.ExportCampaignEvidenceInput, error) {
-	res, err := ec.unmarshalInputExportCampaignEvidenceInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNExportCampaignEvidencePayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidencePayload(ctx context.Context, sel ast.SelectionSet, v types.ExportCampaignEvidencePayload) graphql.Marshaler {
-	return ec._ExportCampaignEvidencePayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNExportCampaignEvidencePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidencePayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportCampaignEvidencePayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ExportCampaignEvidencePayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNExportDataProtectionImpactAssessmentsPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportDataProtectionImpactAssessmentsPDFInput(ctx context.Context, v any) (types.ExportDataProtectionImpactAssessmentsPDFInput, error) {
 	res, err := ec.unmarshalInputExportDataProtectionImpactAssessmentsPDFInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -114293,25 +113593,6 @@ func (ec *executionContext) marshalNRequestSignaturePayload2ᚖgoᚗproboᚗinc�
 		return graphql.Null
 	}
 	return ec._RequestSignaturePayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNRetryStartAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignInput(ctx context.Context, v any) (types.RetryStartAccessReviewCampaignInput, error) {
-	res, err := ec.unmarshalInputRetryStartAccessReviewCampaignInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNRetryStartAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.RetryStartAccessReviewCampaignPayload) graphql.Marshaler {
-	return ec._RetryStartAccessReviewCampaignPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNRetryStartAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.RetryStartAccessReviewCampaignPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._RetryStartAccessReviewCampaignPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRightsRequest2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequest(ctx context.Context, sel ast.SelectionSet, v *types.RightsRequest) graphql.Marshaler {
@@ -116497,25 +115778,6 @@ func (ec *executionContext) marshalNUploadVendorDataPrivacyAgreementPayload2ᚖg
 		return graphql.Null
 	}
 	return ec._UploadVendorDataPrivacyAgreementPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNValidateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignInput(ctx context.Context, v any) (types.ValidateAccessReviewCampaignInput, error) {
-	res, err := ec.unmarshalInputValidateAccessReviewCampaignInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNValidateAccessReviewCampaignPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v types.ValidateAccessReviewCampaignPayload) graphql.Marshaler {
-	return ec._ValidateAccessReviewCampaignPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNValidateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.ValidateAccessReviewCampaignPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ValidateAccessReviewCampaignPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNVendor2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendor(ctx context.Context, sel ast.SelectionSet, v types.Vendor) graphql.Marshaler {

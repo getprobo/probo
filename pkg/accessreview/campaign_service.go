@@ -16,9 +16,6 @@ package accessreview
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -232,15 +229,6 @@ ON CONFLICT (access_review_campaign_id, access_source_id) DO NOTHING
 	return campaign, nil
 }
 
-func (s *CampaignService) RetryStart(
-	ctx context.Context,
-	campaignID gid.GID,
-) (*coredata.AccessReviewCampaign, error) {
-	return s.Start(ctx, StartAccessReviewCampaignRequest{
-		CampaignID: campaignID,
-	})
-}
-
 func (s *CampaignService) Close(
 	ctx context.Context,
 	campaignID gid.GID,
@@ -263,23 +251,6 @@ func (s *CampaignService) Close(
 				return fmt.Errorf("campaign must be IN_PROGRESS or PENDING_ACTIONS to close, current status: %s", campaign.Status)
 			}
 
-			checkpointCount := 0
-			args := pgx.StrictNamedArgs{
-				"campaign_id": campaignID,
-			}
-			maps.Copy(args, s.scope.SQLArguments())
-			if err := conn.QueryRow(ctx, fmt.Sprintf(`
-SELECT COUNT(id)
-FROM access_review_campaign_validation_checkpoints
-WHERE %s
-  AND access_review_campaign_id = @campaign_id
-`, s.scope.SQLFragment()), args).Scan(&checkpointCount); err != nil {
-				return fmt.Errorf("cannot count validation checkpoints: %w", err)
-			}
-			if checkpointCount == 0 {
-				return fmt.Errorf("campaign validation checkpoint is required before close")
-			}
-
 			// Check all entries have been decided
 			entries := coredata.AccessEntries{}
 			pendingCount, err := entries.CountPendingByCampaignID(ctx, conn, s.scope, campaignID)
@@ -289,23 +260,6 @@ WHERE %s
 
 			if pendingCount > 0 {
 				return fmt.Errorf("cannot close campaign: %d entries still pending", pendingCount)
-			}
-
-			openTasks := 0
-			if err := conn.QueryRow(ctx, fmt.Sprintf(`
-SELECT COUNT(id)
-FROM access_review_remediation_tasks
-WHERE %s
-  AND access_review_campaign_id = @campaign_id
-  AND (
-    status = 'OPEN'
-    OR (status = 'CANCELLED' AND (status_note IS NULL OR btrim(status_note) = ''))
-  )
-`, s.scope.SQLFragment()), args).Scan(&openTasks); err != nil {
-				return fmt.Errorf("cannot count blocking remediation tasks: %w", err)
-			}
-			if openTasks > 0 {
-				return fmt.Errorf("cannot close campaign: %d remediation tasks are still open or missing cancellation note", openTasks)
 			}
 
 			campaign.Status = coredata.AccessReviewCampaignStatusCompleted
@@ -324,201 +278,6 @@ WHERE %s
 	}
 
 	return campaign, nil
-}
-
-func (s *CampaignService) ValidateForClose(
-	ctx context.Context,
-	campaignID gid.GID,
-	validatedBy *gid.GID,
-	note *string,
-) error {
-	return s.pg.WithTx(ctx, func(conn pg.Conn) error {
-		if err := s.lockCampaignForUpdate(ctx, conn, campaignID); err != nil {
-			return err
-		}
-
-		campaign := &coredata.AccessReviewCampaign{}
-		if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
-			return fmt.Errorf("cannot load campaign: %w", err)
-		}
-		if campaign.Status != coredata.AccessReviewCampaignStatusInProgress &&
-			campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
-			return fmt.Errorf("campaign must be IN_PROGRESS or PENDING_ACTIONS to validate, current status: %s", campaign.Status)
-		}
-
-		checkpointID := gid.New(s.scope.GetTenantID(), coredata.AccessReviewCampaignEntityType)
-		now := time.Now()
-		if _, err := conn.Exec(ctx, `
-INSERT INTO access_review_campaign_validation_checkpoints (
-    id,
-    tenant_id,
-    access_review_campaign_id,
-    validated_by,
-    note,
-    validated_at,
-    created_at
-)
-VALUES ($1,$2,$3,$4,$5,$6,$7)
-ON CONFLICT (access_review_campaign_id) DO UPDATE SET
-    validated_by = EXCLUDED.validated_by,
-    note = EXCLUDED.note,
-    validated_at = EXCLUDED.validated_at
-`,
-			checkpointID,
-			s.scope.GetTenantID(),
-			campaignID,
-			validatedBy,
-			note,
-			now,
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot create validation checkpoint: %w", err)
-		}
-
-		return nil
-	})
-}
-
-func (s *CampaignService) ExportEvidence(
-	ctx context.Context,
-	campaignID gid.GID,
-) (string, string, error) {
-	type decisionSummaryRow struct {
-		Decision coredata.AccessEntryDecision `json:"decision"`
-		Count    int                          `json:"count"`
-	}
-
-	returnPayload := ""
-	returnChecksum := ""
-	err := s.pg.WithTx(ctx, func(conn pg.Conn) error {
-		if err := s.lockCampaignForUpdate(ctx, conn, campaignID); err != nil {
-			return err
-		}
-
-		campaign := &coredata.AccessReviewCampaign{}
-		if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
-			return fmt.Errorf("cannot load campaign: %w", err)
-		}
-
-		args := pgx.StrictNamedArgs{
-			"campaign_id": campaignID,
-		}
-		maps.Copy(args, s.scope.SQLArguments())
-
-		var validationCount int
-		if err := conn.QueryRow(ctx, fmt.Sprintf(`
-SELECT COUNT(id)
-FROM access_review_campaign_validation_checkpoints
-WHERE %s
-  AND access_review_campaign_id = @campaign_id
-`, s.scope.SQLFragment()), args).Scan(&validationCount); err != nil {
-			return fmt.Errorf("cannot count validation checkpoints: %w", err)
-		}
-		if validationCount == 0 {
-			return fmt.Errorf("campaign validation checkpoint is required before export")
-		}
-
-		total := 0
-		pending := 0
-		if err := conn.QueryRow(ctx, fmt.Sprintf(`
-SELECT COUNT(id)
-FROM access_entries
-WHERE %s
-  AND access_review_campaign_id = @campaign_id
-`, s.scope.SQLFragment()), args).Scan(&total); err != nil {
-			return fmt.Errorf("cannot count entries: %w", err)
-		}
-		if err := conn.QueryRow(ctx, fmt.Sprintf(`
-SELECT COUNT(id)
-FROM access_entries
-WHERE %s
-  AND access_review_campaign_id = @campaign_id
-  AND decision = 'PENDING'
-`, s.scope.SQLFragment()), args).Scan(&pending); err != nil {
-			return fmt.Errorf("cannot count pending entries: %w", err)
-		}
-
-		rows, err := conn.Query(ctx, fmt.Sprintf(`
-SELECT decision, COUNT(id)
-FROM access_entries
-WHERE %s
-  AND access_review_campaign_id = @campaign_id
-GROUP BY decision
-ORDER BY decision
-`, s.scope.SQLFragment()), args)
-		if err != nil {
-			return fmt.Errorf("cannot query decision summary: %w", err)
-		}
-		defer rows.Close()
-
-		decisions := make([]decisionSummaryRow, 0)
-		for rows.Next() {
-			var row decisionSummaryRow
-			if err := rows.Scan(&row.Decision, &row.Count); err != nil {
-				return fmt.Errorf("cannot scan decision summary: %w", err)
-			}
-			decisions = append(decisions, row)
-		}
-		if err := rows.Err(); err != nil {
-			return fmt.Errorf("cannot iterate decision summary rows: %w", err)
-		}
-
-		payloadObj := map[string]any{
-			"campaign_id":     campaign.ID,
-			"campaign_status": campaign.Status,
-			"started_at":      campaign.StartedAt,
-			"completed_at":    campaign.CompletedAt,
-			"generated_at":    time.Now().UTC(),
-			"entry_summary": map[string]any{
-				"total":   total,
-				"pending": pending,
-			},
-			"decision_summary": decisions,
-		}
-
-		payloadBytes, err := json.Marshal(payloadObj)
-		if err != nil {
-			return fmt.Errorf("cannot marshal evidence payload: %w", err)
-		}
-		hash := sha256.Sum256(payloadBytes)
-		checksum := hex.EncodeToString(hash[:])
-
-		snapshotID := gid.New(s.scope.GetTenantID(), coredata.AccessReviewCampaignEntityType)
-		now := time.Now()
-		if _, err := conn.Exec(ctx, `
-INSERT INTO access_review_campaign_evidence_snapshots (
-    id,
-    tenant_id,
-    access_review_campaign_id,
-    payload,
-    checksum_sha256,
-    signature,
-    created_at
-)
-VALUES ($1,$2,$3,$4::jsonb,$5,NULL,$6)
-ON CONFLICT (access_review_campaign_id) DO UPDATE SET
-    payload = EXCLUDED.payload,
-    checksum_sha256 = EXCLUDED.checksum_sha256
-`,
-			snapshotID,
-			s.scope.GetTenantID(),
-			campaignID,
-			string(payloadBytes),
-			checksum,
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot store evidence snapshot: %w", err)
-		}
-
-		returnPayload = string(payloadBytes)
-		returnChecksum = checksum
-		return nil
-	})
-	if err != nil {
-		return "", "", err
-	}
-
-	return returnPayload, returnChecksum, nil
 }
 
 func (s *CampaignService) lockCampaignForUpdate(ctx context.Context, conn pg.Conn, campaignID gid.GID) error {

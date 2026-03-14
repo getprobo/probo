@@ -31,10 +31,7 @@ type AccessReviewCampaignService interface {
 	Update(ctx context.Context, req UpdateAccessReviewCampaignRequest) (*coredata.AccessReviewCampaign, error)
 	Delete(ctx context.Context, campaignID gid.GID) error
 	Start(ctx context.Context, req StartAccessReviewCampaignRequest) (*coredata.AccessReviewCampaign, error)
-	RetryStart(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
 	Close(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
-	ValidateForClose(ctx context.Context, campaignID gid.GID, validatedBy *gid.GID, note *string) error
-	ExportEvidence(ctx context.Context, campaignID gid.GID) (string, string, error)
 	Cancel(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error)
 	ListForAccessReviewID(ctx context.Context, accessReviewID gid.GID, cursor *page.Cursor[coredata.AccessReviewCampaignOrderField]) (*page.Page[*coredata.AccessReviewCampaign, coredata.AccessReviewCampaignOrderField], error)
 	ListSourceFetches(ctx context.Context, campaignID gid.GID) (coredata.AccessReviewCampaignSourceFetches, error)

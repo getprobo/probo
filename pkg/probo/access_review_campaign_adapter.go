@@ -48,20 +48,8 @@ func (a *accessReviewCampaignAdapter) Start(ctx context.Context, req StartAccess
 	})
 }
 
-func (a *accessReviewCampaignAdapter) RetryStart(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error) {
-	return a.svc.RetryStart(ctx, campaignID)
-}
-
 func (a *accessReviewCampaignAdapter) Close(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error) {
 	return a.svc.Close(ctx, campaignID)
-}
-
-func (a *accessReviewCampaignAdapter) ValidateForClose(ctx context.Context, campaignID gid.GID, validatedBy *gid.GID, note *string) error {
-	return a.svc.ValidateForClose(ctx, campaignID, validatedBy, note)
-}
-
-func (a *accessReviewCampaignAdapter) ExportEvidence(ctx context.Context, campaignID gid.GID) (string, string, error) {
-	return a.svc.ExportEvidence(ctx, campaignID)
 }
 
 func (a *accessReviewCampaignAdapter) Cancel(ctx context.Context, campaignID gid.GID) (*coredata.AccessReviewCampaign, error) {
