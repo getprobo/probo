@@ -38,7 +38,11 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 		Short: "Delete a risk",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !flagYes && f.IOStreams.IsInteractive() {
+			if !flagYes {
+				if !f.IOStreams.IsInteractive() {
+					return fmt.Errorf("cannot delete risk: confirmation required, use --yes to confirm")
+				}
+
 				var confirmed bool
 				err := huh.NewConfirm().
 					Title(fmt.Sprintf("Delete risk %s?", args[0])).
