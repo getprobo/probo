@@ -19,6 +19,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
@@ -56,10 +57,22 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			client, err := f.APIClient()
+			cfg, err := f.Config()
 			if err != nil {
 				return err
 			}
+
+			host, hc, err := cfg.DefaultHost()
+			if err != nil {
+				return err
+			}
+
+			client := api.NewClient(
+				host,
+				hc.Token,
+				"/api/console/v1/graphql",
+				cfg.HTTPTimeoutDuration(),
+			)
 
 			_, err = client.Do(
 				deleteMutation,

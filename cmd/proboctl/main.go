@@ -57,7 +57,7 @@ func main() {
 			return api.NewClient(
 				host,
 				hc.Token,
-				"/console/v1/graphql",
+				"/api/connect/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
 			), nil
 		},

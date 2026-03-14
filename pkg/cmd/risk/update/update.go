@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
@@ -69,10 +70,22 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		Short: "Update a risk",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client, err := f.APIClient()
+			cfg, err := f.Config()
 			if err != nil {
 				return err
 			}
+
+			host, hc, err := cfg.DefaultHost()
+			if err != nil {
+				return err
+			}
+
+			client := api.NewClient(
+				host,
+				hc.Token,
+				"/api/console/v1/graphql",
+				cfg.HTTPTimeoutDuration(),
+			)
 
 			input := map[string]any{
 				"id": args[0],
