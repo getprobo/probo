@@ -28,13 +28,15 @@ import (
 type Client struct {
 	host       string
 	token      string
+	endpoint   string
 	httpClient *http.Client
 }
 
-func NewClient(host string, token string, timeout time.Duration) *Client {
+func NewClient(host string, token string, endpoint string, timeout time.Duration) *Client {
 	return &Client{
 		host:       host,
 		token:      token,
+		endpoint:   endpoint,
 		httpClient: &http.Client{Timeout: timeout},
 	}
 }
@@ -88,7 +90,7 @@ func (c *Client) DoRaw(
 		return nil, fmt.Errorf("cannot marshal GraphQL request: %w", err)
 	}
 
-	url := fmt.Sprintf("https://%s/console/v1/graphql", c.host)
+	url := fmt.Sprintf("https://%s%s", c.host, c.endpoint)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create HTTP request: %w", err)

@@ -26,51 +26,56 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFilter) {
-  node(id: $id) {
-    ... on Organization {
-      profiles(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
-        totalCount
-        edges {
-          node {
+query($first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFilter) {
+  viewer {
+    profiles(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+      totalCount
+      edges {
+        node {
+          id
+          state
+          organization {
             id
-            fullName
-            emailAddress
-            state
-            kind
-            position
+            name
+          }
+          membership {
+            role
           }
         }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
 }
 `
 
-type profile struct {
-	ID           string  `json:"id"`
-	FullName     string  `json:"fullName"`
-	EmailAddress string  `json:"emailAddress"`
-	State        string  `json:"state"`
-	Kind         *string `json:"kind"`
-	Position     *string `json:"position"`
-}
+type (
+	organization struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+
+	membership struct {
+		Role string `json:"role"`
+	}
+
+	profile struct {
+		ID           string        `json:"id"`
+		State        string        `json:"state"`
+		Organization *organization `json:"organization"`
+		Membership   *membership   `json:"membership"`
+	}
+)
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
-	var (
-		flagOrg    string
-		flagLimit  int
-		flagOrder  string
-		flagActive bool
-	)
+	var flagLimit int
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List users in an organization",
+		Short:   "List organizations you have access to",
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -86,33 +91,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			client := api.NewClient(
 				host,
 				hc.Token,
-				"/console/v1/graphql",
+				"/connect/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'proboctl auth login'")
-			}
-
 			variables := map[string]any{
-				"id": flagOrg,
-			}
-
-			if flagOrder != "" {
-				variables["orderBy"] = map[string]any{
-					"field":     flagOrder,
-					"direction": "ASC",
-				}
-			}
-
-			if flagActive {
-				variables["filter"] = map[string]any{
-					"excludeContractEnded": true,
-				}
+				"filter": map[string]any{
+					"state": "ACTIVE",
+				},
 			}
 
 			profiles, totalCount, err := api.Paginate(
@@ -122,14 +108,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				flagLimit,
 				func(data json.RawMessage) (*api.Connection[profile], error) {
 					var resp struct {
-						Node struct {
+						Viewer struct {
 							Profiles api.Connection[profile] `json:"profiles"`
-						} `json:"node"`
+						} `json:"viewer"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
-					return &resp.Node.Profiles, nil
+					return &resp.Viewer.Profiles, nil
 				},
 			)
 			if err != nil {
@@ -137,7 +123,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(profiles) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No users found.")
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No organizations found.")
 				return nil
 			}
 
@@ -146,30 +132,29 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(profiles))
 			for _, p := range profiles {
-				kind := ""
-				if p.Kind != nil {
-					kind = *p.Kind
+				orgID := ""
+				orgName := ""
+				if p.Organization != nil {
+					orgID = p.Organization.ID
+					orgName = p.Organization.Name
 				}
 
-				position := ""
-				if p.Position != nil {
-					position = *p.Position
+				role := ""
+				if p.Membership != nil {
+					role = p.Membership.Role
 				}
 
 				rows = append(rows, []string{
-					p.ID,
-					p.FullName,
-					p.EmailAddress,
-					p.State,
-					kind,
-					position,
+					orgID,
+					orgName,
+					role,
 				})
 			}
 
 			t := table.New().
 				Border(lipgloss.NormalBorder()).
 				BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("238"))).
-				Headers("ID", "NAME", "EMAIL", "STATE", "KIND", "POSITION").
+				Headers("ID", "NAME", "ROLE").
 				StyleFunc(func(row, col int) lipgloss.Style {
 					if row == table.HeaderRow {
 						return headerStyle
@@ -183,7 +168,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			if totalCount > len(profiles) {
 				fmt.Fprintf(
 					f.IOStreams.ErrOut,
-					"\nShowing %d of %d users\n",
+					"\nShowing %d of %d organizations\n",
 					len(profiles),
 					totalCount,
 				)
@@ -193,10 +178,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of users to list")
-	cmd.Flags().StringVar(&flagOrder, "order-by", "", "Order by field (FULL_NAME, CREATED_AT, KIND)")
-	cmd.Flags().BoolVar(&flagActive, "active", false, "Exclude users whose contract has ended")
+	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of organizations to list")
 
 	return cmd
 }
