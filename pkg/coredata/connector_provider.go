@@ -24,12 +24,28 @@ type ConnectorProvider string
 const (
 	ConnectorProviderSlack           ConnectorProvider = "SLACK"
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
+	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
+	ConnectorProviderFigma           ConnectorProvider = "FIGMA"
+	ConnectorProviderOnePassword     ConnectorProvider = "ONE_PASSWORD"
+	ConnectorProviderHubSpot         ConnectorProvider = "HUBSPOT"
+	ConnectorProviderDocuSign        ConnectorProvider = "DOCUSIGN"
+	ConnectorProviderNotion          ConnectorProvider = "NOTION"
+	ConnectorProviderBrex            ConnectorProvider = "BREX"
+	ConnectorProviderTally           ConnectorProvider = "TALLY"
 )
 
 func ConnectorProviders() []ConnectorProvider {
 	return []ConnectorProvider{
 		ConnectorProviderSlack,
 		ConnectorProviderGoogleWorkspace,
+		ConnectorProviderLinear,
+		ConnectorProviderFigma,
+		ConnectorProviderOnePassword,
+		ConnectorProviderHubSpot,
+		ConnectorProviderDocuSign,
+		ConnectorProviderNotion,
+		ConnectorProviderBrex,
+		ConnectorProviderTally,
 	}
 }
 
@@ -53,6 +69,22 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderSlack
 	case "GOOGLE_WORKSPACE":
 		*cp = ConnectorProviderGoogleWorkspace
+	case "LINEAR":
+		*cp = ConnectorProviderLinear
+	case "FIGMA":
+		*cp = ConnectorProviderFigma
+	case "ONE_PASSWORD":
+		*cp = ConnectorProviderOnePassword
+	case "HUBSPOT":
+		*cp = ConnectorProviderHubSpot
+	case "DOCUSIGN":
+		*cp = ConnectorProviderDocuSign
+	case "NOTION":
+		*cp = ConnectorProviderNotion
+	case "BREX":
+		*cp = ConnectorProviderBrex
+	case "TALLY":
+		*cp = ConnectorProviderTally
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}

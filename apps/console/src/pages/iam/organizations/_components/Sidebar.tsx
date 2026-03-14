@@ -56,6 +56,7 @@ const fragment = graphql`
         canListStatesOfApplicability: permission(
             action: "core:state-of-applicability:list"
         )
+        canGetAccessReview: permission(action: "core:access-review:get")
     }
 `;
 
@@ -181,6 +182,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("States of Applicability")}
           icon={IconPageCheck}
           to={`${prefix}/states-of-applicability`}
+        />
+      )}
+      {organization.canGetAccessReview && (
+        <SidebarItem
+          label={__("Access Reviews")}
+          icon={IconShield}
+          to={`${prefix}/access-reviews`}
         />
       )}
       {organization.canListRightsRequests && (

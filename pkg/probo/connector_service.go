@@ -94,6 +94,30 @@ func (s *ConnectorService) ListForOrganizationID(
 	return page.NewPage(connectors, cursor), nil
 }
 
+func (s *ConnectorService) ListAllForOrganizationID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (coredata.Connectors, error) {
+	var connectors coredata.Connectors
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return connectors.LoadAllByOrganizationIDWithoutDecryptedConnection(
+				ctx,
+				conn,
+				s.svc.scope,
+				organizationID,
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list all connectors: %w", err)
+	}
+
+	return connectors, nil
+}
+
 func (s *ConnectorService) GetByOrganizationIDAndProvider(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -125,6 +149,25 @@ func (s *ConnectorService) GetByOrganizationIDAndProvider(
 	}
 
 	return connectors[0], nil
+}
+
+func (s *ConnectorService) Get(
+	ctx context.Context,
+	connectorID gid.GID,
+) (*coredata.Connector, error) {
+	connector := &coredata.Connector{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return connector.LoadMetadataByID(ctx, conn, s.svc.scope, connectorID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get connector: %w", err)
+	}
+
+	return connector, nil
 }
 
 func (s *ConnectorService) Delete(

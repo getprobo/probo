@@ -393,6 +393,8 @@ enum ConnectorProvider
   SLACK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSlack")
   GOOGLE_WORKSPACE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace")
+  BREX @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrex")
+  TALLY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTally")
 }
 
 enum SCIMBridgeType
