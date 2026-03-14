@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.probo.inc/probo/pkg/agent"
@@ -61,7 +62,7 @@ func CheckBreachesTool() (agent.Tool, error) {
 			req, err := http.NewRequestWithContext(
 				ctx,
 				http.MethodGet,
-				"https://haveibeenpwned.com/api/v3/breaches?domain="+p.Domain,
+				"https://haveibeenpwned.com/api/v3/breaches?domain="+url.QueryEscape(p.Domain),
 				nil,
 			)
 			if err != nil {

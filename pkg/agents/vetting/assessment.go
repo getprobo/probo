@@ -105,6 +105,16 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, reporter agent
 
 	info, err := a.extractVendorInfo(ctx, document)
 	if err != nil {
+		if reporter != nil {
+			reporter(
+				ctx,
+				agent.ProgressEvent{
+					Type:    agent.ProgressEventStepFailed,
+					Step:    "extract_vendor_info",
+					Message: fmt.Sprintf("Failed to extract vendor information: %s", err),
+				},
+			)
+		}
 		return nil, fmt.Errorf("cannot extract vendor info: %w", err)
 	}
 

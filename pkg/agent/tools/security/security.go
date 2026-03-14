@@ -14,9 +14,20 @@
 
 package security
 
-import "go.probo.inc/probo/pkg/agent"
+import (
+	"os"
 
-const defaultResolverAddr = "8.8.8.8:53"
+	"go.probo.inc/probo/pkg/agent"
+)
+
+var defaultResolverAddr = resolverAddr()
+
+func resolverAddr() string {
+	if addr := os.Getenv("DNS_RESOLVER_ADDR"); addr != "" {
+		return addr
+	}
+	return "8.8.8.8:53"
+}
 
 func BuildTools() ([]agent.Tool, error) {
 	sslTool, err := CheckSSLCertificateTool()

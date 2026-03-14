@@ -62,14 +62,18 @@ func CheckSSLCertificateTool() (agent.Tool, error) {
 		"check_ssl_certificate",
 		"Check the SSL/TLS certificate for a domain, returning issuer, expiry, protocol version, and validity.",
 		func(ctx context.Context, p sslParams) (agent.ToolResult, error) {
-			conn, err := tls.DialWithDialer(
-				&net.Dialer{Timeout: 10 * time.Second},
-				"tcp",
-				p.Domain+":443",
-				&tls.Config{
-					InsecureSkipVerify: false,
+			dialer := &tls.Dialer{
+				NetDialer: &net.Dialer{Timeout: 10 * time.Second},
+				Config: &tls.Config{
+					InsecureSkipVerify: true,
+					ServerName:        p.Domain,
 				},
-			)
+			}
+			netConn, err := dialer.DialContext(ctx, "tcp", p.Domain+":443")
+			var conn *tls.Conn
+			if netConn != nil {
+				conn = netConn.(*tls.Conn)
+			}
 			if err != nil {
 				data, _ := json.Marshal(sslResult{
 					Valid:       false,

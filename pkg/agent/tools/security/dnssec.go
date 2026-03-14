@@ -65,6 +65,9 @@ func CheckDNSSECTool() (agent.Tool, error) {
 
 			client := dns.NewClient()
 			resp, _, err := client.Exchange(ctx, msg, "udp", defaultResolverAddr)
+			if err == nil && resp.Truncated {
+				resp, _, err = client.Exchange(ctx, msg, "tcp", defaultResolverAddr)
+			}
 			if err != nil {
 				data, _ := json.Marshal(dnssecResult{
 					Enabled:     false,
