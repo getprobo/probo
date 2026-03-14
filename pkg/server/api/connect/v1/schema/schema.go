@@ -2819,6 +2819,7 @@ enum ConnectorProvider
   GOOGLE_WORKSPACE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace")
   BREX @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrex")
+  TALLY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTally")
 }
 
 enum SCIMBridgeType
@@ -21285,11 +21286,13 @@ var (
 		"SLACK":            coredata.ConnectorProviderSlack,
 		"GOOGLE_WORKSPACE": coredata.ConnectorProviderGoogleWorkspace,
 		"BREX":             coredata.ConnectorProviderBrex,
+		"TALLY":            coredata.ConnectorProviderTally,
 	}
 	marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider = map[coredata.ConnectorProvider]string{
 		coredata.ConnectorProviderSlack:           "SLACK",
 		coredata.ConnectorProviderGoogleWorkspace: "GOOGLE_WORKSPACE",
 		coredata.ConnectorProviderBrex:            "BREX",
+		coredata.ConnectorProviderTally:           "TALLY",
 	}
 )
 

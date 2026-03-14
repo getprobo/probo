@@ -366,6 +366,16 @@ type ControlFilter struct {
 	Query *string `json:"query,omitempty"`
 }
 
+type CreateAPIKeyConnectorInput struct {
+	OrganizationID gid.GID                    `json:"organizationId"`
+	Provider       coredata.ConnectorProvider `json:"provider"`
+	APIKey         string                     `json:"apiKey"`
+}
+
+type CreateAPIKeyConnectorPayload struct {
+	Connector *Connector `json:"connector"`
+}
+
 type CreateAccessReviewCampaignInput struct {
 	AccessReviewID    gid.GID  `json:"accessReviewId"`
 	Name              string   `json:"name"`
@@ -1032,6 +1042,14 @@ type DeleteComplianceFrameworkInput struct {
 
 type DeleteComplianceFrameworkPayload struct {
 	DeletedComplianceFrameworkID gid.GID `json:"deletedComplianceFrameworkId"`
+}
+
+type DeleteConnectorInput struct {
+	ConnectorID gid.GID `json:"connectorId"`
+}
+
+type DeleteConnectorPayload struct {
+	DeletedConnectorID gid.GID `json:"deletedConnectorId"`
 }
 
 type DeleteContinualImprovementInput struct {

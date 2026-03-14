@@ -2026,6 +2026,7 @@ enum ConnectorProvider
         )
     LINEAR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinear")
     BREX @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrex")
+    TALLY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTally")
 }
 
 input ConnectorFilter {
@@ -3902,6 +3903,11 @@ type Mutation {
     recordAccessEntryDecision(
         input: RecordAccessEntryDecisionInput!
     ): RecordAccessEntryDecisionPayload!
+    # Connector mutations
+    createAPIKeyConnector(
+        input: CreateAPIKeyConnectorInput!
+    ): CreateAPIKeyConnectorPayload!
+    deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
 }
 
 # Input Types
@@ -6473,4 +6479,20 @@ type RecordAccessEntryDecisionPayload {
     accessEntry: AccessEntry!
 }
 
+input CreateAPIKeyConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    apiKey: String!
+}
 
+type CreateAPIKeyConnectorPayload {
+    connector: Connector!
+}
+
+input DeleteConnectorInput {
+    connectorId: ID!
+}
+
+type DeleteConnectorPayload {
+    deletedConnectorId: ID!
+}

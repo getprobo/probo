@@ -453,6 +453,10 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	CreateAPIKeyConnectorPayload struct {
+		Connector func(childComplexity int) int
+	}
+
 	CreateAccessReviewCampaignPayload struct {
 		AccessReviewCampaignEdge func(childComplexity int) int
 	}
@@ -737,6 +741,10 @@ type ComplexityRoot struct {
 
 	DeleteComplianceFrameworkPayload struct {
 		DeletedComplianceFrameworkID func(childComplexity int) int
+	}
+
+	DeleteConnectorPayload struct {
+		DeletedConnectorID func(childComplexity int) int
 	}
 
 	DeleteContinualImprovementPayload struct {
@@ -1224,6 +1232,7 @@ type ComplexityRoot struct {
 		CancelAccessReviewCampaign               func(childComplexity int, input types.CancelAccessReviewCampaignInput) int
 		CancelSignatureRequest                   func(childComplexity int, input types.CancelSignatureRequestInput) int
 		CloseAccessReviewCampaign                func(childComplexity int, input types.CloseAccessReviewCampaignInput) int
+		CreateAPIKeyConnector                    func(childComplexity int, input types.CreateAPIKeyConnectorInput) int
 		CreateAccessReview                       func(childComplexity int, input types.CreateAccessReviewInput) int
 		CreateAccessReviewCampaign               func(childComplexity int, input types.CreateAccessReviewCampaignInput) int
 		CreateAccessSource                       func(childComplexity int, input types.CreateAccessSourceInput) int
@@ -1276,6 +1285,7 @@ type ComplexityRoot struct {
 		DeleteAuditReport                        func(childComplexity int, input types.DeleteAuditReportInput) int
 		DeleteComplianceExternalURL              func(childComplexity int, input types.DeleteComplianceExternalURLInput) int
 		DeleteComplianceFramework                func(childComplexity int, input types.DeleteComplianceFrameworkInput) int
+		DeleteConnector                          func(childComplexity int, input types.DeleteConnectorInput) int
 		DeleteContinualImprovement               func(childComplexity int, input types.DeleteContinualImprovementInput) int
 		DeleteControl                            func(childComplexity int, input types.DeleteControlInput) int
 		DeleteControlAuditMapping                func(childComplexity int, input types.DeleteControlAuditMappingInput) int
@@ -2702,6 +2712,8 @@ type MutationResolver interface {
 	CloseAccessReviewCampaign(ctx context.Context, input types.CloseAccessReviewCampaignInput) (*types.CloseAccessReviewCampaignPayload, error)
 	CancelAccessReviewCampaign(ctx context.Context, input types.CancelAccessReviewCampaignInput) (*types.CancelAccessReviewCampaignPayload, error)
 	RecordAccessEntryDecision(ctx context.Context, input types.RecordAccessEntryDecisionInput) (*types.RecordAccessEntryDecisionPayload, error)
+	CreateAPIKeyConnector(ctx context.Context, input types.CreateAPIKeyConnectorInput) (*types.CreateAPIKeyConnectorPayload, error)
+	DeleteConnector(ctx context.Context, input types.DeleteConnectorInput) (*types.DeleteConnectorPayload, error)
 }
 type NonconformityResolver interface {
 	Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error)
@@ -4330,6 +4342,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ControlEdge.Node(childComplexity), true
 
+	case "CreateAPIKeyConnectorPayload.connector":
+		if e.ComplexityRoot.CreateAPIKeyConnectorPayload.Connector == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreateAPIKeyConnectorPayload.Connector(childComplexity), true
+
 	case "CreateAccessReviewCampaignPayload.accessReviewCampaignEdge":
 		if e.ComplexityRoot.CreateAccessReviewCampaignPayload.AccessReviewCampaignEdge == nil {
 			break
@@ -5045,6 +5064,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DeleteComplianceFrameworkPayload.DeletedComplianceFrameworkID(childComplexity), true
+
+	case "DeleteConnectorPayload.deletedConnectorId":
+		if e.ComplexityRoot.DeleteConnectorPayload.DeletedConnectorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DeleteConnectorPayload.DeletedConnectorID(childComplexity), true
 
 	case "DeleteContinualImprovementPayload.deletedContinualImprovementId":
 		if e.ComplexityRoot.DeleteContinualImprovementPayload.DeletedContinualImprovementID == nil {
@@ -6674,6 +6700,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CloseAccessReviewCampaign(childComplexity, args["input"].(types.CloseAccessReviewCampaignInput)), true
+	case "Mutation.createAPIKeyConnector":
+		if e.ComplexityRoot.Mutation.CreateAPIKeyConnector == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAPIKeyConnector_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateAPIKeyConnector(childComplexity, args["input"].(types.CreateAPIKeyConnectorInput)), true
 	case "Mutation.createAccessReview":
 		if e.ComplexityRoot.Mutation.CreateAccessReview == nil {
 			break
@@ -7246,6 +7283,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteComplianceFramework(childComplexity, args["input"].(types.DeleteComplianceFrameworkInput)), true
+	case "Mutation.deleteConnector":
+		if e.ComplexityRoot.Mutation.DeleteConnector == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteConnector_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteConnector(childComplexity, args["input"].(types.DeleteConnectorInput)), true
 	case "Mutation.deleteContinualImprovement":
 		if e.ComplexityRoot.Mutation.DeleteContinualImprovement == nil {
 			break
@@ -12143,6 +12191,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputContinualImprovementOrder,
 		ec.unmarshalInputControlFilter,
 		ec.unmarshalInputControlOrder,
+		ec.unmarshalInputCreateAPIKeyConnectorInput,
 		ec.unmarshalInputCreateAccessReviewCampaignInput,
 		ec.unmarshalInputCreateAccessReviewInput,
 		ec.unmarshalInputCreateAccessSourceInput,
@@ -12199,6 +12248,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteAuditReportInput,
 		ec.unmarshalInputDeleteComplianceExternalURLInput,
 		ec.unmarshalInputDeleteComplianceFrameworkInput,
+		ec.unmarshalInputDeleteConnectorInput,
 		ec.unmarshalInputDeleteContinualImprovementInput,
 		ec.unmarshalInputDeleteControlAuditMappingInput,
 		ec.unmarshalInputDeleteControlDocumentMappingInput,
@@ -14447,6 +14497,7 @@ enum ConnectorProvider
         )
     LINEAR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinear")
     BREX @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrex")
+    TALLY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTally")
 }
 
 input ConnectorFilter {
@@ -16323,6 +16374,11 @@ type Mutation {
     recordAccessEntryDecision(
         input: RecordAccessEntryDecisionInput!
     ): RecordAccessEntryDecisionPayload!
+    # Connector mutations
+    createAPIKeyConnector(
+        input: CreateAPIKeyConnectorInput!
+    ): CreateAPIKeyConnectorPayload!
+    deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
 }
 
 # Input Types
@@ -18894,7 +18950,23 @@ type RecordAccessEntryDecisionPayload {
     accessEntry: AccessEntry!
 }
 
+input CreateAPIKeyConnectorInput {
+    organizationId: ID!
+    provider: ConnectorProvider!
+    apiKey: String!
+}
 
+type CreateAPIKeyConnectorPayload {
+    connector: Connector!
+}
+
+input DeleteConnectorInput {
+    connectorId: ID!
+}
+
+type DeleteConnectorPayload {
+    deletedConnectorId: ID!
+}
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -19969,6 +20041,17 @@ func (ec *executionContext) field_Mutation_closeAccessReviewCampaign_args(ctx co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createAPIKeyConnector_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateAPIKeyConnectorInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAPIKeyConnectorInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -20534,6 +20617,17 @@ func (ec *executionContext) field_Mutation_deleteComplianceFramework_args(ctx co
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteComplianceFrameworkInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteComplianceFrameworkInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteConnector_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteConnectorInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteConnectorInput)
 	if err != nil {
 		return nil, err
 	}
@@ -30956,6 +31050,43 @@ func (ec *executionContext) fieldContext_ControlEdge_node(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateAPIKeyConnectorPayload_connector(ctx context.Context, field graphql.CollectedField, obj *types.CreateAPIKeyConnectorPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateAPIKeyConnectorPayload_connector,
+		func(ctx context.Context) (any, error) {
+			return obj.Connector, nil
+		},
+		nil,
+		ec.marshalNConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateAPIKeyConnectorPayload_connector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateAPIKeyConnectorPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Connector_id(ctx, field)
+			case "provider":
+				return ec.fieldContext_Connector_provider(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Connector_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Connector", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateAccessReviewCampaignPayload_accessReviewCampaignEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateAccessReviewCampaignPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -34916,6 +35047,35 @@ func (ec *executionContext) _DeleteComplianceFrameworkPayload_deletedComplianceF
 func (ec *executionContext) fieldContext_DeleteComplianceFrameworkPayload_deletedComplianceFrameworkId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteComplianceFrameworkPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteConnectorPayload_deletedConnectorId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteConnectorPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteConnectorPayload_deletedConnectorId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedConnectorID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteConnectorPayload_deletedConnectorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteConnectorPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -50105,6 +50265,96 @@ func (ec *executionContext) fieldContext_Mutation_recordAccessEntryDecision(ctx 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_recordAccessEntryDecision_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createAPIKeyConnector(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createAPIKeyConnector,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateAPIKeyConnector(ctx, fc.Args["input"].(types.CreateAPIKeyConnectorInput))
+		},
+		nil,
+		ec.marshalNCreateAPIKeyConnectorPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAPIKeyConnectorPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createAPIKeyConnector(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "connector":
+				return ec.fieldContext_CreateAPIKeyConnectorPayload_connector(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateAPIKeyConnectorPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createAPIKeyConnector_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteConnector(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteConnector,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteConnector(ctx, fc.Args["input"].(types.DeleteConnectorInput))
+		},
+		nil,
+		ec.marshalNDeleteConnectorPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteConnectorPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteConnector(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedConnectorId":
+				return ec.fieldContext_DeleteConnectorPayload_deletedConnectorId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteConnectorPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteConnector_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -73696,6 +73946,46 @@ func (ec *executionContext) unmarshalInputControlOrder(ctx context.Context, obj 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateAPIKeyConnectorInput(ctx context.Context, obj any) (types.CreateAPIKeyConnectorInput, error) {
+	var it types.CreateAPIKeyConnectorInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "provider", "apiKey"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "provider":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			data, err := ec.unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Provider = data
+		case "apiKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiKey"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIKey = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateAccessReviewCampaignInput(ctx context.Context, obj any) (types.CreateAccessReviewCampaignInput, error) {
 	var it types.CreateAccessReviewCampaignInput
 	asMap := map[string]any{}
@@ -76456,6 +76746,32 @@ func (ec *executionContext) unmarshalInputDeleteComplianceFrameworkInput(ctx con
 				return it, err
 			}
 			it.ID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteConnectorInput(ctx context.Context, obj any) (types.DeleteConnectorInput, error) {
+	var it types.DeleteConnectorInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"connectorId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "connectorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("connectorId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConnectorID = data
 		}
 	}
 	return it, nil
@@ -86299,6 +86615,45 @@ func (ec *executionContext) _ControlEdge(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var createAPIKeyConnectorPayloadImplementors = []string{"CreateAPIKeyConnectorPayload"}
+
+func (ec *executionContext) _CreateAPIKeyConnectorPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateAPIKeyConnectorPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createAPIKeyConnectorPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateAPIKeyConnectorPayload")
+		case "connector":
+			out.Values[i] = ec._CreateAPIKeyConnectorPayload_connector(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createAccessReviewCampaignPayloadImplementors = []string{"CreateAccessReviewCampaignPayload"}
 
 func (ec *executionContext) _CreateAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateAccessReviewCampaignPayload) graphql.Marshaler {
@@ -89132,6 +89487,45 @@ func (ec *executionContext) _DeleteComplianceFrameworkPayload(ctx context.Contex
 			out.Values[i] = graphql.MarshalString("DeleteComplianceFrameworkPayload")
 		case "deletedComplianceFrameworkId":
 			out.Values[i] = ec._DeleteComplianceFrameworkPayload_deletedComplianceFrameworkId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteConnectorPayloadImplementors = []string{"DeleteConnectorPayload"}
+
+func (ec *executionContext) _DeleteConnectorPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteConnectorPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteConnectorPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteConnectorPayload")
+		case "deletedConnectorId":
+			out.Values[i] = ec._DeleteConnectorPayload_deletedConnectorId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -95591,6 +95985,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "recordAccessEntryDecision":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_recordAccessEntryDecision(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createAPIKeyConnector":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createAPIKeyConnector(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteConnector":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteConnector(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -108557,12 +108965,14 @@ var (
 		"GOOGLE_WORKSPACE": coredata.ConnectorProviderGoogleWorkspace,
 		"LINEAR":           coredata.ConnectorProviderLinear,
 		"BREX":             coredata.ConnectorProviderBrex,
+		"TALLY":            coredata.ConnectorProviderTally,
 	}
 	marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider = map[coredata.ConnectorProvider]string{
 		coredata.ConnectorProviderSlack:           "SLACK",
 		coredata.ConnectorProviderGoogleWorkspace: "GOOGLE_WORKSPACE",
 		coredata.ConnectorProviderLinear:          "LINEAR",
 		coredata.ConnectorProviderBrex:            "BREX",
+		coredata.ConnectorProviderTally:           "TALLY",
 	}
 )
 
@@ -109343,6 +109753,25 @@ func (ec *executionContext) marshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpk
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNCreateAPIKeyConnectorInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAPIKeyConnectorInput(ctx context.Context, v any) (types.CreateAPIKeyConnectorInput, error) {
+	res, err := ec.unmarshalInputCreateAPIKeyConnectorInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateAPIKeyConnectorPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAPIKeyConnectorPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateAPIKeyConnectorPayload) graphql.Marshaler {
+	return ec._CreateAPIKeyConnectorPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateAPIKeyConnectorPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAPIKeyConnectorPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateAPIKeyConnectorPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateAPIKeyConnectorPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewCampaignInput(ctx context.Context, v any) (types.CreateAccessReviewCampaignInput, error) {
@@ -110621,6 +111050,25 @@ func (ec *executionContext) marshalNDeleteComplianceFrameworkPayload2ᚖgoᚗpro
 		return graphql.Null
 	}
 	return ec._DeleteComplianceFrameworkPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteConnectorInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteConnectorInput(ctx context.Context, v any) (types.DeleteConnectorInput, error) {
+	res, err := ec.unmarshalInputDeleteConnectorInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteConnectorPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteConnectorPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteConnectorPayload) graphql.Marshaler {
+	return ec._DeleteConnectorPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteConnectorPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteConnectorPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteConnectorPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteConnectorPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteContinualImprovementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteContinualImprovementInput(ctx context.Context, v any) (types.DeleteContinualImprovementInput, error) {

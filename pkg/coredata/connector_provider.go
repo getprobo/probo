@@ -31,6 +31,7 @@ const (
 	ConnectorProviderDocuSign        ConnectorProvider = "DOCUSIGN"
 	ConnectorProviderNotion          ConnectorProvider = "NOTION"
 	ConnectorProviderBrex            ConnectorProvider = "BREX"
+	ConnectorProviderTally           ConnectorProvider = "TALLY"
 )
 
 func ConnectorProviders() []ConnectorProvider {
@@ -44,6 +45,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderDocuSign,
 		ConnectorProviderNotion,
 		ConnectorProviderBrex,
+		ConnectorProviderTally,
 	}
 }
 
@@ -81,6 +83,8 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderNotion
 	case "BREX":
 		*cp = ConnectorProviderBrex
+	case "TALLY":
+		*cp = ConnectorProviderTally
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}

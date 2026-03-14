@@ -300,6 +300,7 @@ const (
 	ActionSlackConnectionList = "core:slack-connection:list"
 
 	// Connector actions (generic)
+	ActionConnectorCreate = "core:connector:create"
 	ActionConnectorList   = "core:connector:list"
 	ActionConnectorDelete = "core:connector:delete"
 

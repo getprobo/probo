@@ -314,6 +314,16 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("cannot create HTTP client for brex connector: %w", err)
 		}
 		return accesssource.NewBrexDriver(httpClient), nil
+	case coredata.ConnectorProviderTally:
+		httpClient, err := dbConnector.Connection.Client(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create HTTP client for tally connector: %w", err)
+		}
+		organizationID, _ := dbConnector.Settings["organization_id"].(string)
+		if organizationID == "" {
+			return nil, fmt.Errorf("tally connector requires organization_id in settings")
+		}
+		return accesssource.NewTallyDriver(httpClient, organizationID), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}

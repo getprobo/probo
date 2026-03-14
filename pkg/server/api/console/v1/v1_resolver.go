@@ -15,6 +15,7 @@ import (
 
 	pgx "github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -6365,6 +6366,53 @@ func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input 
 
 	return &types.RecordAccessEntryDecisionPayload{
 		AccessEntry: types.NewAccessEntry(entry),
+	}, nil
+}
+
+// CreateAPIKeyConnector is the resolver for the createAPIKeyConnector field.
+func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input types.CreateAPIKeyConnectorInput) (*types.CreateAPIKeyConnectorPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	cnnctr, err := prb.Connectors.Create(
+		ctx,
+		probo.CreateConnectorRequest{
+			OrganizationID: input.OrganizationID,
+			Provider:       input.Provider,
+			Protocol:       coredata.ConnectorProtocolAPIKey,
+			Connection:     &connector.APIKeyConnection{APIKey: input.APIKey},
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		panic(fmt.Errorf("cannot create API key connector: %w", err))
+	}
+
+	return &types.CreateAPIKeyConnectorPayload{
+		Connector: types.NewConnector(cnnctr),
+	}, nil
+}
+
+// DeleteConnector is the resolver for the deleteConnector field.
+func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.DeleteConnectorInput) (*types.DeleteConnectorPayload, error) {
+	if err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ConnectorID.TenantID())
+
+	if err := prb.Connectors.Delete(ctx, input.ConnectorID); err != nil {
+		panic(fmt.Errorf("cannot delete connector: %w", err))
+	}
+
+	return &types.DeleteConnectorPayload{
+		DeletedConnectorID: input.ConnectorID,
 	}, nil
 }
 
