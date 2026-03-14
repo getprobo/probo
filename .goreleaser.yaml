@@ -46,6 +46,25 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+  - id: proboctl
+    main: ./cmd/proboctl/main.go
+    binary: proboctl
+    ldflags:
+      - -s -w
+      - -X 'main.version={{.Version}}'
+    gcflags:
+      - -e
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
   # Docker-specific builds for Linux only
   - id: probod-docker
     main: ./cmd/probod/main.go
@@ -77,11 +96,27 @@ builds:
     goarch:
       - amd64
       - arm64
+  - id: proboctl-docker
+    main: ./cmd/proboctl/main.go
+    binary: proboctl
+    ldflags:
+      - -s -w
+      - -X 'main.version={{.Version}}'
+    gcflags:
+      - -e
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
 
 archives:
   - builds:
       - probod
       - probod-bootstrap
+      - proboctl
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
