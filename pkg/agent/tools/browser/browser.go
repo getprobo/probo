@@ -43,7 +43,19 @@ func NewBrowser(ctx context.Context, addr string) *Browser {
 }
 
 func (b *Browser) NewTab(ctx context.Context) (context.Context, context.CancelFunc) {
-	return chromedp.NewContext(b.allocCtx)
+	tabCtx, tabCancel := chromedp.NewContext(b.allocCtx)
+
+	// Propagate the caller's cancellation to the Chrome tab so that
+	// tool-level timeouts and context deadlines actually stop the browser.
+	go func() {
+		select {
+		case <-ctx.Done():
+			tabCancel()
+		case <-tabCtx.Done():
+		}
+	}()
+
+	return tabCtx, tabCancel
 }
 
 func (b *Browser) Close() {
