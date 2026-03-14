@@ -21,6 +21,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
@@ -85,20 +86,23 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Short:   "List users in an organization",
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client, err := f.APIClient()
+			cfg, err := f.Config()
 			if err != nil {
 				return err
 			}
 
+			host, hc, err := cfg.DefaultHost()
+			if err != nil {
+				return err
+			}
+
+			client := api.NewClient(
+				host,
+				hc.Token,
+				cfg.HTTPTimeoutDuration(),
+			)
+
 			if flagOrg == "" {
-				cfg, err := f.Config()
-				if err != nil {
-					return err
-				}
-				_, hc, err := cfg.DefaultHost()
-				if err != nil {
-					return err
-				}
 				flagOrg = hc.Organization
 			}
 
