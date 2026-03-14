@@ -308,6 +308,12 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("cannot create HTTP client for notion connector: %w", err)
 		}
 		return accesssource.NewNotionDriver(httpClient), nil
+	case coredata.ConnectorProviderBrex:
+		httpClient, err := dbConnector.Connection.Client(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create HTTP client for brex connector: %w", err)
+		}
+		return accesssource.NewBrexDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}

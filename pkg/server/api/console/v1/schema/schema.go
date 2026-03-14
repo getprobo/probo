@@ -14528,6 +14528,7 @@ enum ConnectorProvider
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGoogleWorkspace"
         )
     LINEAR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLinear")
+    BREX @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrex")
 }
 
 input ConnectorFilter {
@@ -109236,11 +109237,13 @@ var (
 		"SLACK":            coredata.ConnectorProviderSlack,
 		"GOOGLE_WORKSPACE": coredata.ConnectorProviderGoogleWorkspace,
 		"LINEAR":           coredata.ConnectorProviderLinear,
+		"BREX":             coredata.ConnectorProviderBrex,
 	}
 	marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider = map[coredata.ConnectorProvider]string{
 		coredata.ConnectorProviderSlack:           "SLACK",
 		coredata.ConnectorProviderGoogleWorkspace: "GOOGLE_WORKSPACE",
 		coredata.ConnectorProviderLinear:          "LINEAR",
+		coredata.ConnectorProviderBrex:            "BREX",
 	}
 )
 
