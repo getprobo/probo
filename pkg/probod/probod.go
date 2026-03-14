@@ -59,6 +59,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
+	vendor_assessment "go.probo.inc/probo/pkg/agents/vendor_assessment"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
@@ -462,6 +463,12 @@ func (impl *Implm) Run(
 
 	mailmanService := mailman.NewService(pgClient, fileManagerService, impl.cfg.Auth.Cookie.Secret, baseURL, impl.cfg.AWS.Bucket, encryptionKey, l)
 
+	vendorAssessor := vendor_assessment.NewAssessor(vendor_assessment.Config{
+		Client:     llmClient,
+		Model:      impl.cfg.OpenAI.ModelName,
+		ChromeAddr: impl.cfg.ChromeDPAddr,
+	})
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -482,6 +489,7 @@ func (impl *Implm) Run(
 		iamService,
 		esignService,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		vendorAssessor,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
