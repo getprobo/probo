@@ -41,7 +41,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.PersistentFlags().Bool(
 		"no-interactive",
 		false,
-		"Disable interactive prompts (also set via PROBO_NO_INTERACTIVE=1)",
+		"Disable interactive prompts (also set via PROBO_NO_INTERACTIVE=1, CI=true, TERM=dumb, or NO_COLOR)",
 	)
 
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))

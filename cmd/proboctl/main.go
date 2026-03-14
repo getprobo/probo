@@ -29,7 +29,7 @@ var version string = "unknown"
 
 func main() {
 	ios := iostreams.System()
-	if v := os.Getenv("PROBO_NO_INTERACTIVE"); v == "1" || v == "true" {
+	if isNonInteractiveEnv() {
 		ios.ForceNonInteractive = true
 	}
 
@@ -60,4 +60,23 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
+}
+
+func isNonInteractiveEnv() bool {
+	if v := os.Getenv("PROBO_NO_INTERACTIVE"); v == "1" || v == "true" {
+		return true
+	}
+	if v := os.Getenv("CI"); v == "true" || v == "1" {
+		return true
+	}
+	if os.Getenv("DEBIAN_FRONTEND") == "noninteractive" {
+		return true
+	}
+	if os.Getenv("TERM") == "dumb" {
+		return true
+	}
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		return true
+	}
+	return false
 }
