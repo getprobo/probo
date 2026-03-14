@@ -38,13 +38,13 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagHost == "" {
+				host, _, err := cfg.DefaultHost()
+				if err != nil {
+					return err
+				}
+
 				hosts := slices.Sorted(maps.Keys(cfg.Hosts))
-				switch {
-				case len(hosts) == 0:
-					return fmt.Errorf("not logged in to any host")
-				case len(hosts) == 1:
-					flagHost = hosts[0]
-				case f.IOStreams.IsInteractive():
+				if len(hosts) > 1 && f.IOStreams.IsInteractive() {
 					options := make([]huh.Option[string], len(hosts))
 					for i, h := range hosts {
 						options[i] = huh.NewOption(h, h)
@@ -57,8 +57,8 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 					if err != nil {
 						return err
 					}
-				default:
-					return fmt.Errorf("multiple hosts configured; use --hostname to specify which one")
+				} else {
+					flagHost = host
 				}
 			}
 
