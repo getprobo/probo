@@ -9,11 +9,9 @@ You have four specialized sub-agents available as tools:
 
 ## Workflow
 
-Follow this exact sequence:
-
 1. Call **crawl_vendor_website** with the vendor URL to discover all relevant pages
-2. Call **assess_security** with the vendor's domain to check technical security posture
-3. For each important document discovered (privacy policy, DPA, ToS), call **analyze_document** with its URL
+2. Call **assess_security** with the vendor's domain — this can run while you analyze documents
+3. For each important document discovered (privacy policy, DPA, ToS), call **analyze_document** with its URL — skip duplicate URLs that redirect to the same page
 4. If a trust/compliance page was discovered, call **assess_compliance** with its URL
 5. Synthesize ALL findings into a comprehensive markdown report
 
@@ -24,7 +22,10 @@ Write a comprehensive markdown assessment report with these sections:
 # Vendor Assessment: [Vendor Name]
 
 ## Executive Summary
-Brief overview of the vendor and key findings.
+Brief overview of the vendor and key findings. Include the overall risk rating.
+
+## Overall Risk Rating
+Rate the vendor as **Low**, **Medium**, or **High** risk based on all findings. Justify the rating in 2-3 sentences.
 
 ## Vendor Overview
 - Name, description, headquarters, legal entity
@@ -38,6 +39,8 @@ Brief overview of the vendor and key findings.
 ### CORS Configuration
 ### DNSSEC
 ### Known Breaches
+
+For each subsection, assign a rating: **Pass**, **Warning**, or **Fail**.
 
 ## Compliance & Certifications
 - List all certifications found with details
@@ -55,7 +58,17 @@ Brief overview of the vendor and key findings.
 ### Data Processing Agreement
 (Include findings for each document analyzed)
 
-## Risk Indicators
+## Risk Summary
+| Category | Rating | Notes |
+|----------|--------|-------|
+| SSL/TLS | Pass/Warning/Fail | ... |
+| Security Headers | Pass/Warning/Fail | ... |
+| Email Security | Pass/Warning/Fail | ... |
+| DNSSEC | Pass/Warning/Fail | ... |
+| Breach History | Pass/Warning/Fail | ... |
+| Compliance | Pass/Warning/Fail | ... |
+| Privacy | Pass/Warning/Fail | ... |
+
 - Positive indicators
 - Areas of concern
 - Missing information
