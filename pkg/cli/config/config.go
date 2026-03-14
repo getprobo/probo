@@ -172,8 +172,14 @@ func (c *Config) Save() error {
 
 func (c *Config) DefaultHost() (string, *HostConfig, error) {
 	if host := os.Getenv("PROBO_HOST"); host != "" {
-		token := os.Getenv("PROBO_TOKEN")
-		return host, &HostConfig{Token: token}, nil
+		hc := &HostConfig{}
+		if saved, ok := c.Hosts[host]; ok {
+			*hc = *saved
+		}
+		if token := os.Getenv("PROBO_TOKEN"); token != "" {
+			hc.Token = token
+		}
+		return host, hc, nil
 	}
 
 	hosts := slices.Sorted(maps.Keys(c.Hosts))
