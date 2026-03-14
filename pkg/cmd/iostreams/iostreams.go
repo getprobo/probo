@@ -36,7 +36,18 @@ func (s *IOStreams) IsInteractive() bool {
 	if s.ForceNonInteractive {
 		return false
 	}
+	return s.isStdinTTY() && s.isStdoutTTY()
+}
+
+func (s *IOStreams) isStdinTTY() bool {
 	if f, ok := s.In.(*os.File); ok {
+		return term.IsTerminal(int(f.Fd()))
+	}
+	return false
+}
+
+func (s *IOStreams) isStdoutTTY() bool {
+	if f, ok := s.Out.(*os.File); ok {
 		return term.IsTerminal(int(f.Fd()))
 	}
 	return false
@@ -46,10 +57,7 @@ func (s *IOStreams) IsStdoutTTY() bool {
 	if s.ForceNonInteractive {
 		return false
 	}
-	if f, ok := s.Out.(*os.File); ok {
-		return term.IsTerminal(int(f.Fd()))
-	}
-	return false
+	return s.isStdoutTTY()
 }
 
 func System() *IOStreams {
