@@ -47,14 +47,14 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 					bold.Render(host),
 				)
 
-				tokenDisplay := hc.Token
-				if len(tokenDisplay) > 8 {
-					tokenDisplay = tokenDisplay[:8] + "..."
+				tokenStatus := "not set"
+				if hc.Token != "" {
+					tokenStatus = "set"
 				}
 				fmt.Fprintf(
 					f.IOStreams.Out,
 					"  Token: %s\n",
-					tokenDisplay,
+					tokenStatus,
 				)
 
 				if hc.Organization != "" {
