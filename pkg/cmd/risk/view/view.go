@@ -99,22 +99,22 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			bold := lipgloss.NewStyle().Bold(true)
 			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
 
-			fmt.Fprintf(out, "%s\n\n", bold.Render(r.Name))
+			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(r.Name))
 
-			fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
-			fmt.Fprintf(out, "%s%s\n", label.Render("Category:"), r.Category)
-			fmt.Fprintf(out, "%s%s\n", label.Render("Treatment:"), r.Treatment)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Category:"), r.Category)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Treatment:"), r.Treatment)
 
 			if r.Description != nil && *r.Description != "" {
-				fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *r.Description)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *r.Description)
 			}
 
 			if r.Note != "" {
-				fmt.Fprintf(out, "%s%s\n", label.Render("Note:"), r.Note)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Note:"), r.Note)
 			}
 
-			fmt.Fprintln(out)
-			fmt.Fprintf(
+			_, _ = fmt.Fprintln(out)
+			_, _ = fmt.Fprintf(
 				out,
 				"%s%d (likelihood: %d, impact: %d)\n",
 				label.Render("Inherent Risk Score:"),
@@ -122,7 +122,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				r.InherentLikelihood,
 				r.InherentImpact,
 			)
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				out,
 				"%s%d (likelihood: %d, impact: %d)\n",
 				label.Render("Residual Risk Score:"),
@@ -131,9 +131,9 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				r.ResidualImpact,
 			)
 
-			fmt.Fprintln(out)
-			fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), r.CreatedAt)
-			fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), r.UpdatedAt)
+			_, _ = fmt.Fprintln(out)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), r.CreatedAt)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), r.UpdatedAt)
 
 			return nil
 		},

@@ -72,7 +72,7 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				f.IOStreams.ErrOut,
 				"Logged out of %s\n",
 				flagHost,

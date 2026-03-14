@@ -95,7 +95,7 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				f.IOStreams.ErrOut,
 				"Logged in to %s\n",
 				flagHost,
