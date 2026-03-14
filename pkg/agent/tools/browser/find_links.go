@@ -33,6 +33,9 @@ func FindLinksMatchingTool(b *Browser) (agent.Tool, error) {
 		"find_links_matching",
 		"Navigate to a URL and extract links whose href or text matches a keyword (case-insensitive).",
 		func(ctx context.Context, p findLinksParams) (agent.ToolResult, error) {
+			ctx, timeoutCancel := withToolTimeout(ctx)
+			defer timeoutCancel()
+
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
 

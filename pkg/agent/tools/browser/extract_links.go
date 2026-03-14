@@ -37,6 +37,9 @@ func ExtractLinksTool(b *Browser) (agent.Tool, error) {
 		"extract_links",
 		"Navigate to a URL and extract all links (<a> elements) with their href and text.",
 		func(ctx context.Context, p extractLinksParams) (agent.ToolResult, error) {
+			ctx, timeoutCancel := withToolTimeout(ctx)
+			defer timeoutCancel()
+
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
 
