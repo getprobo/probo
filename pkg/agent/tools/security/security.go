@@ -54,10 +54,16 @@ func BuildTools() ([]agent.Tool, error) {
 		return nil, err
 	}
 
+	spfTool, err := CheckSPFTool()
+	if err != nil {
+		return nil, err
+	}
+
 	return []agent.Tool{
 		sslTool,
 		headersTool,
 		dmarcTool,
+		spfTool,
 		hibpTool,
 		dnssecTool,
 		cspTool,
