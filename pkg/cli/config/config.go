@@ -18,17 +18,21 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
+const DefaultHTTPTimeout = 30 * time.Second
+
 type (
 	Config struct {
-		Editor  string                 `yaml:"editor,omitempty"`
-		Browser string                 `yaml:"browser,omitempty"`
-		Pager   string                 `yaml:"pager,omitempty"`
-		Prompt  string                 `yaml:"prompt,omitempty"`
-		Hosts   map[string]*HostConfig `yaml:"hosts"`
+		Editor      string                 `yaml:"editor,omitempty"`
+		Browser     string                 `yaml:"browser,omitempty"`
+		Pager       string                 `yaml:"pager,omitempty"`
+		Prompt      string                 `yaml:"prompt,omitempty"`
+		HTTPTimeout string                 `yaml:"http_timeout,omitempty"`
+		Hosts       map[string]*HostConfig `yaml:"hosts"`
 	}
 
 	HostConfig struct {
@@ -42,6 +46,7 @@ var ValidKeys = []string{
 	"browser",
 	"pager",
 	"prompt",
+	"http_timeout",
 }
 
 func (c *Config) Get(key string) (string, error) {
@@ -54,6 +59,8 @@ func (c *Config) Get(key string) (string, error) {
 		return c.Pager, nil
 	case "prompt":
 		return c.Prompt, nil
+	case "http_timeout":
+		return c.HTTPTimeout, nil
 	default:
 		return "", fmt.Errorf("unknown configuration key: %s", key)
 	}
@@ -72,10 +79,28 @@ func (c *Config) Set(key, value string) error {
 			return fmt.Errorf("valid values for prompt are 'enabled' or 'disabled'")
 		}
 		c.Prompt = value
+	case "http_timeout":
+		if _, err := time.ParseDuration(value); err != nil {
+			return fmt.Errorf("invalid duration for http_timeout: %w", err)
+		}
+		c.HTTPTimeout = value
 	default:
 		return fmt.Errorf("unknown configuration key: %s", key)
 	}
 	return nil
+}
+
+func (c *Config) HTTPTimeoutDuration() time.Duration {
+	if c.HTTPTimeout == "" {
+		return DefaultHTTPTimeout
+	}
+
+	d, err := time.ParseDuration(c.HTTPTimeout)
+	if err != nil {
+		return DefaultHTTPTimeout
+	}
+
+	return d
 }
 
 func configDir() (string, error) {

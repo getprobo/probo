@@ -31,11 +31,11 @@ type Client struct {
 	httpClient *http.Client
 }
 
-func NewClient(host string, token string) *Client {
+func NewClient(host string, token string, timeout time.Duration) *Client {
 	return &Client{
 		host:       host,
 		token:      token,
-		httpClient: &http.Client{Timeout: 30 * time.Second},
+		httpClient: &http.Client{Timeout: timeout},
 	}
 }
 

@@ -50,7 +50,11 @@ func main() {
 				return nil, err
 			}
 
-			return api.NewClient(host, hc.Token), nil
+			return api.NewClient(
+				host,
+				hc.Token,
+				cfg.HTTPTimeoutDuration(),
+			), nil
 		},
 	}
 
