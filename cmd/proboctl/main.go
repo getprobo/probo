@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 
-	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cli/config"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/iostreams"
@@ -42,24 +41,6 @@ func main() {
 		Version:  version,
 		Config: func() (*config.Config, error) {
 			return config.Load()
-		},
-		APIClient: func() (*api.Client, error) {
-			cfg, err := config.Load()
-			if err != nil {
-				return nil, err
-			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return nil, err
-			}
-
-			return api.NewClient(
-				host,
-				hc.Token,
-				"/api/connect/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-			), nil
 		},
 	}
 

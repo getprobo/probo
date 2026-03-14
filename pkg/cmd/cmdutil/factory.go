@@ -15,14 +15,12 @@
 package cmdutil
 
 import (
-	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cli/config"
 	"go.probo.inc/probo/pkg/cmd/iostreams"
 )
 
 type Factory struct {
-	IOStreams  *iostreams.IOStreams
-	Version   string
-	Config    func() (*config.Config, error)
-	APIClient func() (*api.Client, error)
+	IOStreams *iostreams.IOStreams
+	Version  string
+	Config   func() (*config.Config, error)
 }

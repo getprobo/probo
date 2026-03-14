@@ -22,31 +22,60 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
+var schemaEndpoints = map[string]string{
+	"console": "/api/console/v1/graphql",
+	"connect": "/api/connect/v1/graphql",
+}
+
 func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
-	var flagFields []string
+	var (
+		flagFields []string
+		flagSchema string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "api <query>",
 		Short: "Make an authenticated GraphQL request",
 		Long:  "Send a GraphQL query or mutation to the Probo API and print the response.",
-		Example: `  # Run a query
+		Example: `  # Run a query against the console schema (default)
   proboctl api 'query { viewer { id email } }'
 
   # Run a mutation with variables
   proboctl api 'mutation($input: CreateRiskInput!) { createRisk(input: $input) { riskEdge { node { id } } } }' \
     -f input='{"organizationId":"...","name":"Test","category":"Operational","treatment":"ACCEPTED","inherentLikelihood":3,"inherentImpact":3}'
 
+  # Query the connect schema
+  proboctl api --schema connect 'query { viewer { id email } }'
+
   # Read query from stdin
   echo '{ viewer { id } }' | proboctl api -`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client, err := f.APIClient()
+			endpoint, ok := schemaEndpoints[flagSchema]
+			if !ok {
+				return fmt.Errorf("unknown schema %q: expected console or connect", flagSchema)
+			}
+
+			cfg, err := f.Config()
 			if err != nil {
 				return err
 			}
+
+			host, hc, err := cfg.DefaultHost()
+			if err != nil {
+				return err
+			}
+
+			client := api.NewClient(
+				host,
+				hc.Token,
+				endpoint,
+				cfg.HTTPTimeoutDuration(),
+			)
 
 			var query string
 			if len(args) == 1 && args[0] != "-" {
@@ -94,6 +123,13 @@ func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
 		"f",
 		nil,
 		"GraphQL variable in key=value format",
+	)
+
+	cmd.Flags().StringVar(
+		&flagSchema,
+		"schema",
+		"console",
+		"GraphQL schema to query (console or connect)",
 	)
 
 	return cmd
