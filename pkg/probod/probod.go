@@ -151,10 +151,6 @@ func (r *accessReviewTenantRuntime) SnapshotSource(
 	return r.tenantService.ReviewEngine.SnapshotSource(ctx, campaign, sourceID)
 }
 
-func (r *accessReviewTenantRuntime) Diff(ctx context.Context, campaign *coredata.AccessReviewCampaign) error {
-	return r.tenantService.ReviewEngine.Diff(ctx, campaign)
-}
-
 func New() *Implm {
 	return &Implm{
 		cfg: Config{

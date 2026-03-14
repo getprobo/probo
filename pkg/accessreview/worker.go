@@ -257,18 +257,11 @@ func (w *SourceFetchWorker) finalizeCampaignFetchLifecycle(
 	tenantID gid.TenantID,
 	campaignID gid.GID,
 ) error {
-	var (
-		scope         = coredata.NewScope(tenantID)
-		tenantRuntime = w.tenantRuntimeProvider(tenantID)
-	)
-	if tenantRuntime == nil {
-		return fmt.Errorf("tenant runtime provider returned nil for tenant %s", tenantID)
-	}
+	scope := coredata.NewScope(tenantID)
 
 	var (
 		readyForFinalization bool
 		hasFailure           bool
-		campaign             *coredata.AccessReviewCampaign
 	)
 
 	err := w.pg.WithTx(
@@ -291,7 +284,7 @@ func (w *SourceFetchWorker) finalizeCampaignFetchLifecycle(
 				}
 			}
 
-			campaign = &coredata.AccessReviewCampaign{}
+			campaign := &coredata.AccessReviewCampaign{}
 			if err := campaign.LoadByID(ctx, tx, scope, campaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
@@ -316,13 +309,6 @@ func (w *SourceFetchWorker) finalizeCampaignFetchLifecycle(
 
 	if hasFailure {
 		return w.markCampaignFailed(ctx, tenantID, campaignID)
-	}
-
-	if err := tenantRuntime.Diff(ctx, campaign); err != nil {
-		if failErr := w.markCampaignFailed(ctx, tenantID, campaignID); failErr != nil {
-			return fmt.Errorf("cannot diff campaign: %w, and cannot mark campaign failed: %w", err, failErr)
-		}
-		return fmt.Errorf("cannot diff campaign: %w", err)
 	}
 
 	return w.pg.WithTx(ctx, func(tx pg.Conn) error {

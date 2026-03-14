@@ -21,7 +21,6 @@ type CampaignReader interface {
 type TenantRuntime interface {
 	AccessReviewCampaigns() CampaignReader
 	SnapshotSource(ctx context.Context, campaign *coredata.AccessReviewCampaign, sourceID gid.GID) (int, error)
-	Diff(ctx context.Context, campaign *coredata.AccessReviewCampaign) error
 }
 
 type TenantRuntimeProvider func(tenantID gid.TenantID) TenantRuntime
