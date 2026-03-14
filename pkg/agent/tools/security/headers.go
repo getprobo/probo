@@ -34,13 +34,16 @@ type headerCheck struct {
 }
 
 type headersResult struct {
-	HSTS                headerCheck `json:"strict_transport_security"`
-	CSP                 headerCheck `json:"content_security_policy"`
-	XFrameOptions       headerCheck `json:"x_frame_options"`
-	XContentTypeOptions headerCheck `json:"x_content_type_options"`
-	ReferrerPolicy      headerCheck `json:"referrer_policy"`
-	PermissionsPolicy   headerCheck `json:"permissions_policy"`
-	ErrorDetail         string      `json:"error_detail,omitempty"`
+	HSTS                    headerCheck `json:"strict_transport_security"`
+	CSP                     headerCheck `json:"content_security_policy"`
+	XFrameOptions           headerCheck `json:"x_frame_options"`
+	XContentTypeOptions     headerCheck `json:"x_content_type_options"`
+	ReferrerPolicy          headerCheck `json:"referrer_policy"`
+	PermissionsPolicy       headerCheck `json:"permissions_policy"`
+	CrossOriginOpenerPolicy   headerCheck `json:"cross_origin_opener_policy"`
+	CrossOriginEmbedderPolicy headerCheck `json:"cross_origin_embedder_policy"`
+	CrossOriginResourcePolicy headerCheck `json:"cross_origin_resource_policy"`
+	ErrorDetail             string      `json:"error_detail,omitempty"`
 }
 
 func checkHeader(h http.Header, name string) headerCheck {
@@ -54,7 +57,7 @@ func checkHeader(h http.Header, name string) headerCheck {
 func CheckSecurityHeadersTool() (agent.Tool, error) {
 	return agent.FunctionTool[headersParams](
 		"check_security_headers",
-		"Check security-related HTTP headers for a URL (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy).",
+		"Check security-related HTTP headers for a URL (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cross-Origin-*-Policy).",
 		func(ctx context.Context, p headersParams) (agent.ToolResult, error) {
 			client := &http.Client{Timeout: 10 * time.Second}
 
@@ -68,12 +71,15 @@ func CheckSecurityHeadersTool() (agent.Tool, error) {
 			defer resp.Body.Close()
 
 			result := headersResult{
-				HSTS:                checkHeader(resp.Header, "Strict-Transport-Security"),
-				CSP:                 checkHeader(resp.Header, "Content-Security-Policy"),
-				XFrameOptions:       checkHeader(resp.Header, "X-Frame-Options"),
-				XContentTypeOptions: checkHeader(resp.Header, "X-Content-Type-Options"),
-				ReferrerPolicy:      checkHeader(resp.Header, "Referrer-Policy"),
-				PermissionsPolicy:   checkHeader(resp.Header, "Permissions-Policy"),
+				HSTS:                      checkHeader(resp.Header, "Strict-Transport-Security"),
+				CSP:                       checkHeader(resp.Header, "Content-Security-Policy"),
+				XFrameOptions:             checkHeader(resp.Header, "X-Frame-Options"),
+				XContentTypeOptions:       checkHeader(resp.Header, "X-Content-Type-Options"),
+				ReferrerPolicy:            checkHeader(resp.Header, "Referrer-Policy"),
+				PermissionsPolicy:         checkHeader(resp.Header, "Permissions-Policy"),
+				CrossOriginOpenerPolicy:   checkHeader(resp.Header, "Cross-Origin-Opener-Policy"),
+				CrossOriginEmbedderPolicy: checkHeader(resp.Header, "Cross-Origin-Embedder-Policy"),
+				CrossOriginResourcePolicy: checkHeader(resp.Header, "Cross-Origin-Resource-Policy"),
 			}
 
 			data, _ := json.Marshal(result)
