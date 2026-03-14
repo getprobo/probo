@@ -603,6 +603,12 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("cannot create HTTP client for hubspot connector: %w", err)
 		}
 		return accesssource.NewHubSpotDriver(httpClient), nil
+	case coredata.ConnectorProviderDocuSign:
+		httpClient, err := dbConnector.Connection.Client(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create HTTP client for docusign connector: %w", err)
+		}
+		return accesssource.NewDocuSignDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}

@@ -28,6 +28,7 @@ const (
 	ConnectorProviderFigma           ConnectorProvider = "FIGMA"
 	ConnectorProviderOnePassword     ConnectorProvider = "ONE_PASSWORD"
 	ConnectorProviderHubSpot         ConnectorProvider = "HUBSPOT"
+	ConnectorProviderDocuSign        ConnectorProvider = "DOCUSIGN"
 )
 
 func ConnectorProviders() []ConnectorProvider {
@@ -38,6 +39,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderFigma,
 		ConnectorProviderOnePassword,
 		ConnectorProviderHubSpot,
+		ConnectorProviderDocuSign,
 	}
 }
 
@@ -69,6 +71,8 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderOnePassword
 	case "HUBSPOT":
 		*cp = ConnectorProviderHubSpot
+	case "DOCUSIGN":
+		*cp = ConnectorProviderDocuSign
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}
