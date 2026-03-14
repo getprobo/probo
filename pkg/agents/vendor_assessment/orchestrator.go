@@ -47,19 +47,19 @@ func newOrchestratorAgent(
 	if reporter != nil {
 		crawlerOpts = append(
 			crawlerOpts,
-			agent.WithHooks(&subProgressHooks{reporter: reporter, parentStep: "crawl_vendor_website"}),
+			agent.WithHooks(newSubProgressHooks(reporter, "crawl_vendor_website")),
 		)
 		analyzerOpts = append(
 			analyzerOpts,
-			agent.WithHooks(&subProgressHooks{reporter: reporter, parentStep: "analyze_document"}),
+			agent.WithHooks(newSubProgressHooks(reporter, "analyze_document")),
 		)
 		securityOpts = append(
 			securityOpts,
-			agent.WithHooks(&subProgressHooks{reporter: reporter, parentStep: "assess_security"}),
+			agent.WithHooks(newSubProgressHooks(reporter, "assess_security")),
 		)
 		complianceOpts = append(
 			complianceOpts,
-			agent.WithHooks(&subProgressHooks{reporter: reporter, parentStep: "assess_compliance"}),
+			agent.WithHooks(newSubProgressHooks(reporter, "assess_compliance")),
 		)
 	}
 
@@ -93,7 +93,7 @@ func newOrchestratorAgent(
 	}
 
 	if reporter != nil {
-		opts = append(opts, agent.WithHooks(&progressHooks{reporter: reporter}))
+		opts = append(opts, agent.WithHooks(newProgressHooks(reporter)))
 	}
 
 	return agent.New(
