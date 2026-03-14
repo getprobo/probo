@@ -72,6 +72,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Use:     "list",
 		Short:   "List risks in an organization",
 		Aliases: []string{"ls"},
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
