@@ -16,7 +16,10 @@ package logout
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/config"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -35,11 +38,28 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagHost == "" {
-				host, _, err := cfg.DefaultHost()
-				if err != nil {
-					return err
+				hosts := slices.Sorted(maps.Keys(cfg.Hosts))
+				switch {
+				case len(hosts) == 0:
+					return fmt.Errorf("not logged in to any host")
+				case len(hosts) == 1:
+					flagHost = hosts[0]
+				case f.IOStreams.IsInteractive():
+					options := make([]huh.Option[string], len(hosts))
+					for i, h := range hosts {
+						options[i] = huh.NewOption(h, h)
+					}
+					err := huh.NewSelect[string]().
+						Title("Select a host to log out of").
+						Options(options...).
+						Value(&flagHost).
+						Run()
+					if err != nil {
+						return err
+					}
+				default:
+					return fmt.Errorf("multiple hosts configured; use --hostname to specify which one")
 				}
-				flagHost = host
 			}
 
 			if _, ok := cfg.Hosts[flagHost]; !ok {
