@@ -74,6 +74,13 @@ var toolMessages = map[string][]string{
 		"Querying DNS for DMARC policy",
 		"Reviewing email authentication settings",
 	},
+	"check_spf": {
+		"Looking up SPF email authentication record",
+		"Checking SPF policy configuration",
+		"Verifying sender policy framework",
+		"Querying DNS for SPF record",
+		"Reviewing SPF authorization settings",
+	},
 	"check_breaches": {
 		"Searching for known data breaches",
 		"Checking breach databases for past incidents",
