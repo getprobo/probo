@@ -16,7 +16,7 @@ package vendor_assessment
 
 import (
 	"context"
-	"sync"
+	"math/rand/v2"
 
 	"go.probo.inc/probo/pkg/agent"
 )
@@ -106,37 +106,27 @@ var toolMessages = map[string][]string{
 	},
 }
 
-// progressHooks translates orchestrator-level tool events into progress events.
-type progressHooks struct {
-	agent.NoOpHooks
-	reporter agent.ProgressReporter
-	mu       sync.Mutex
-	counts   map[string]int
-}
-
-func newProgressHooks(reporter agent.ProgressReporter) *progressHooks {
-	return &progressHooks{
-		reporter: reporter,
-		counts:   make(map[string]int),
-	}
-}
-
-func (h *progressHooks) nextMessage(tool string) string {
+func randomMessage(tool string) string {
 	msgs, ok := toolMessages[tool]
 	if !ok {
 		return ""
 	}
 
-	h.mu.Lock()
-	n := h.counts[tool]
-	h.counts[tool] = n + 1
-	h.mu.Unlock()
+	return msgs[rand.IntN(len(msgs))]
+}
 
-	return msgs[n%len(msgs)]
+// progressHooks translates orchestrator-level tool events into progress events.
+type progressHooks struct {
+	agent.NoOpHooks
+	reporter agent.ProgressReporter
+}
+
+func newProgressHooks(reporter agent.ProgressReporter) *progressHooks {
+	return &progressHooks{reporter: reporter}
 }
 
 func (h *progressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ string) {
-	msg := h.nextMessage(tool.Name())
+	msg := randomMessage(tool.Name())
 	if msg == "" {
 		return
 	}
@@ -176,34 +166,17 @@ type subProgressHooks struct {
 	agent.NoOpHooks
 	reporter   agent.ProgressReporter
 	parentStep string
-	mu         sync.Mutex
-	counts     map[string]int
 }
 
 func newSubProgressHooks(reporter agent.ProgressReporter, parentStep string) *subProgressHooks {
 	return &subProgressHooks{
 		reporter:   reporter,
 		parentStep: parentStep,
-		counts:     make(map[string]int),
 	}
-}
-
-func (h *subProgressHooks) nextMessage(tool string) string {
-	msgs, ok := toolMessages[tool]
-	if !ok {
-		return ""
-	}
-
-	h.mu.Lock()
-	n := h.counts[tool]
-	h.counts[tool] = n + 1
-	h.mu.Unlock()
-
-	return msgs[n%len(msgs)]
 }
 
 func (h *subProgressHooks) OnToolStart(ctx context.Context, _ *agent.Agent, tool agent.Tool, _ string) {
-	msg := h.nextMessage(tool.Name())
+	msg := randomMessage(tool.Name())
 	if msg == "" {
 		return
 	}
