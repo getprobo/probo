@@ -22,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/llm"
@@ -67,7 +68,6 @@ type (
 		slack                   *slack.Service
 		esign                   *esign.Service
 		invitationTokenValidity time.Duration
-		campaignServiceFactory  func(*pg.Client, coredata.Scoper) AccessReviewCampaignService
 	}
 
 	TenantService struct {
@@ -148,7 +148,6 @@ func NewService(
 	iamService *iam.Service,
 	esignService *esign.Service,
 	invitationTokenValidity time.Duration,
-	campaignServiceFactory func(*pg.Client, coredata.Scoper) AccessReviewCampaignService,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -174,7 +173,6 @@ func NewService(
 		slack:                   slackService,
 		esign:                   esignService,
 		invitationTokenValidity: invitationTokenValidity,
-		campaignServiceFactory:  campaignServiceFactory,
 	}
 
 	return svc, nil

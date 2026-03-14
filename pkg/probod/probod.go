@@ -476,9 +476,6 @@ func (impl *Implm) Run(
 		iamService,
 		esignService,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		func(pgClient *pg.Client, scope coredata.Scoper) probo.AccessReviewCampaignService {
-			return accessreview.NewCampaignService(pgClient, scope)
-		},
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)

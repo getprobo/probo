@@ -344,6 +344,10 @@ type ComplexityRoot struct {
 		DeletedDocumentVersionSignatureID func(childComplexity int) int
 	}
 
+	CloseAccessReviewCampaignPayload struct {
+		AccessReviewCampaign func(childComplexity int) int
+	}
+
 	ComplianceExternalURL struct {
 		CreatedAt  func(childComplexity int) int
 		ID         func(childComplexity int) int
@@ -381,8 +385,6 @@ type ComplexityRoot struct {
 	ComplianceFrameworkEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
-	CloseAccessReviewCampaignPayload struct {
-		AccessReviewCampaign func(childComplexity int) int
 	}
 
 	Connector struct {
@@ -1335,8 +1337,8 @@ type ComplexityRoot struct {
 		PublishDocumentVersion                   func(childComplexity int, input types.PublishDocumentVersionInput) int
 		RecordAccessEntryDecision                func(childComplexity int, input types.RecordAccessEntryDecisionInput) int
 		RequestSignature                         func(childComplexity int, input types.RequestSignatureInput) int
-		SendMailingListUpdate                    func(childComplexity int, input types.SendMailingListUpdateInput) int
 		RetryStartAccessReviewCampaign           func(childComplexity int, input types.RetryStartAccessReviewCampaignInput) int
+		SendMailingListUpdate                    func(childComplexity int, input types.SendMailingListUpdateInput) int
 		SendSigningNotifications                 func(childComplexity int, input types.SendSigningNotificationsInput) int
 		SignDocument                             func(childComplexity int, input types.SignDocumentInput) int
 		StartAccessReviewCampaign                func(childComplexity int, input types.StartAccessReviewCampaignInput) int
@@ -2336,8 +2338,6 @@ type AccessEntryResolver interface {
 	Campaign(ctx context.Context, obj *types.AccessEntry) (*types.AccessReviewCampaign, error)
 	AccessSource(ctx context.Context, obj *types.AccessEntry) (*types.AccessSource, error)
 
-	DecidedBy(ctx context.Context, obj *types.AccessEntry) (*types.People, error)
-
 	Permission(ctx context.Context, obj *types.AccessEntry, action string) (bool, error)
 }
 type AccessEntryConnectionResolver interface {
@@ -3009,127 +3009,127 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	switch typeName + "." + field {
 
 	case "AccessEntry.accessSource":
-		if e.complexity.AccessEntry.AccessSource == nil {
+		if e.ComplexityRoot.AccessEntry.AccessSource == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.AccessSource(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.AccessSource(childComplexity), true
 	case "AccessEntry.accountCreatedAt":
-		if e.complexity.AccessEntry.AccountCreatedAt == nil {
+		if e.ComplexityRoot.AccessEntry.AccountCreatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.AccountCreatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.AccountCreatedAt(childComplexity), true
 	case "AccessEntry.authMethod":
-		if e.complexity.AccessEntry.AuthMethod == nil {
+		if e.ComplexityRoot.AccessEntry.AuthMethod == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.AuthMethod(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.AuthMethod(childComplexity), true
 	case "AccessEntry.campaign":
-		if e.complexity.AccessEntry.Campaign == nil {
+		if e.ComplexityRoot.AccessEntry.Campaign == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.Campaign(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.Campaign(childComplexity), true
 	case "AccessEntry.createdAt":
-		if e.complexity.AccessEntry.CreatedAt == nil {
+		if e.ComplexityRoot.AccessEntry.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.CreatedAt(childComplexity), true
 	case "AccessEntry.decidedAt":
-		if e.complexity.AccessEntry.DecidedAt == nil {
+		if e.ComplexityRoot.AccessEntry.DecidedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.DecidedAt(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.DecidedAt(childComplexity), true
 	case "AccessEntry.decidedBy":
-		if e.complexity.AccessEntry.DecidedBy == nil {
+		if e.ComplexityRoot.AccessEntry.DecidedBy == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.DecidedBy(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.DecidedBy(childComplexity), true
 	case "AccessEntry.decision":
-		if e.complexity.AccessEntry.Decision == nil {
+		if e.ComplexityRoot.AccessEntry.Decision == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.Decision(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.Decision(childComplexity), true
 	case "AccessEntry.decisionNote":
-		if e.complexity.AccessEntry.DecisionNote == nil {
+		if e.ComplexityRoot.AccessEntry.DecisionNote == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.DecisionNote(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.DecisionNote(childComplexity), true
 	case "AccessEntry.email":
-		if e.complexity.AccessEntry.Email == nil {
+		if e.ComplexityRoot.AccessEntry.Email == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.Email(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.Email(childComplexity), true
 	case "AccessEntry.externalId":
-		if e.complexity.AccessEntry.ExternalID == nil {
+		if e.ComplexityRoot.AccessEntry.ExternalID == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.ExternalID(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.ExternalID(childComplexity), true
 	case "AccessEntry.flag":
-		if e.complexity.AccessEntry.Flag == nil {
+		if e.ComplexityRoot.AccessEntry.Flag == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.Flag(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.Flag(childComplexity), true
 	case "AccessEntry.flagReason":
-		if e.complexity.AccessEntry.FlagReason == nil {
+		if e.ComplexityRoot.AccessEntry.FlagReason == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.FlagReason(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.FlagReason(childComplexity), true
 	case "AccessEntry.fullName":
-		if e.complexity.AccessEntry.FullName == nil {
+		if e.ComplexityRoot.AccessEntry.FullName == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.FullName(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.FullName(childComplexity), true
 	case "AccessEntry.id":
-		if e.complexity.AccessEntry.ID == nil {
+		if e.ComplexityRoot.AccessEntry.ID == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.ID(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.ID(childComplexity), true
 	case "AccessEntry.incrementalTag":
-		if e.complexity.AccessEntry.IncrementalTag == nil {
+		if e.ComplexityRoot.AccessEntry.IncrementalTag == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.IncrementalTag(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.IncrementalTag(childComplexity), true
 	case "AccessEntry.isAdmin":
-		if e.complexity.AccessEntry.IsAdmin == nil {
+		if e.ComplexityRoot.AccessEntry.IsAdmin == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.IsAdmin(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.IsAdmin(childComplexity), true
 	case "AccessEntry.jobTitle":
-		if e.complexity.AccessEntry.JobTitle == nil {
+		if e.ComplexityRoot.AccessEntry.JobTitle == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.JobTitle(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.JobTitle(childComplexity), true
 	case "AccessEntry.lastLogin":
-		if e.complexity.AccessEntry.LastLogin == nil {
+		if e.ComplexityRoot.AccessEntry.LastLogin == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.LastLogin(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.LastLogin(childComplexity), true
 	case "AccessEntry.mfaStatus":
-		if e.complexity.AccessEntry.MfaStatus == nil {
+		if e.ComplexityRoot.AccessEntry.MfaStatus == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.MfaStatus(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.MfaStatus(childComplexity), true
 	case "AccessEntry.permission":
-		if e.complexity.AccessEntry.Permission == nil {
+		if e.ComplexityRoot.AccessEntry.Permission == nil {
 			break
 		}
 
@@ -3138,54 +3138,54 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.AccessEntry.Permission(childComplexity, args["action"].(string)), true
+		return e.ComplexityRoot.AccessEntry.Permission(childComplexity, args["action"].(string)), true
 	case "AccessEntry.role":
-		if e.complexity.AccessEntry.Role == nil {
+		if e.ComplexityRoot.AccessEntry.Role == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.Role(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.Role(childComplexity), true
 	case "AccessEntry.updatedAt":
-		if e.complexity.AccessEntry.UpdatedAt == nil {
+		if e.ComplexityRoot.AccessEntry.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessEntry.UpdatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessEntry.UpdatedAt(childComplexity), true
 
 	case "AccessEntryConnection.edges":
-		if e.complexity.AccessEntryConnection.Edges == nil {
+		if e.ComplexityRoot.AccessEntryConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.AccessEntryConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.AccessEntryConnection.Edges(childComplexity), true
 	case "AccessEntryConnection.pageInfo":
-		if e.complexity.AccessEntryConnection.PageInfo == nil {
+		if e.ComplexityRoot.AccessEntryConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.AccessEntryConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.AccessEntryConnection.PageInfo(childComplexity), true
 	case "AccessEntryConnection.totalCount":
-		if e.complexity.AccessEntryConnection.TotalCount == nil {
+		if e.ComplexityRoot.AccessEntryConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.AccessEntryConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.AccessEntryConnection.TotalCount(childComplexity), true
 
 	case "AccessEntryEdge.cursor":
-		if e.complexity.AccessEntryEdge.Cursor == nil {
+		if e.ComplexityRoot.AccessEntryEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.AccessEntryEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.AccessEntryEdge.Cursor(childComplexity), true
 	case "AccessEntryEdge.node":
-		if e.complexity.AccessEntryEdge.Node == nil {
+		if e.ComplexityRoot.AccessEntryEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.AccessEntryEdge.Node(childComplexity), true
+		return e.ComplexityRoot.AccessEntryEdge.Node(childComplexity), true
 
 	case "AccessReview.accessSources":
-		if e.complexity.AccessReview.AccessSources == nil {
+		if e.ComplexityRoot.AccessReview.AccessSources == nil {
 			break
 		}
 
@@ -3194,9 +3194,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.AccessReview.AccessSources(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessSourceOrder)), true
+		return e.ComplexityRoot.AccessReview.AccessSources(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessSourceOrder)), true
 	case "AccessReview.campaigns":
-		if e.complexity.AccessReview.Campaigns == nil {
+		if e.ComplexityRoot.AccessReview.Campaigns == nil {
 			break
 		}
 
@@ -3205,33 +3205,33 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.AccessReview.Campaigns(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessReviewCampaignOrder)), true
+		return e.ComplexityRoot.AccessReview.Campaigns(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessReviewCampaignOrder)), true
 	case "AccessReview.createdAt":
-		if e.complexity.AccessReview.CreatedAt == nil {
+		if e.ComplexityRoot.AccessReview.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessReview.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessReview.CreatedAt(childComplexity), true
 	case "AccessReview.id":
-		if e.complexity.AccessReview.ID == nil {
+		if e.ComplexityRoot.AccessReview.ID == nil {
 			break
 		}
 
-		return e.complexity.AccessReview.ID(childComplexity), true
+		return e.ComplexityRoot.AccessReview.ID(childComplexity), true
 	case "AccessReview.identitySource":
-		if e.complexity.AccessReview.IdentitySource == nil {
+		if e.ComplexityRoot.AccessReview.IdentitySource == nil {
 			break
 		}
 
-		return e.complexity.AccessReview.IdentitySource(childComplexity), true
+		return e.ComplexityRoot.AccessReview.IdentitySource(childComplexity), true
 	case "AccessReview.organization":
-		if e.complexity.AccessReview.Organization == nil {
+		if e.ComplexityRoot.AccessReview.Organization == nil {
 			break
 		}
 
-		return e.complexity.AccessReview.Organization(childComplexity), true
+		return e.ComplexityRoot.AccessReview.Organization(childComplexity), true
 	case "AccessReview.permission":
-		if e.complexity.AccessReview.Permission == nil {
+		if e.ComplexityRoot.AccessReview.Permission == nil {
 			break
 		}
 
@@ -3240,34 +3240,34 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.AccessReview.Permission(childComplexity, args["action"].(string)), true
+		return e.ComplexityRoot.AccessReview.Permission(childComplexity, args["action"].(string)), true
 	case "AccessReview.updatedAt":
-		if e.complexity.AccessReview.UpdatedAt == nil {
+		if e.ComplexityRoot.AccessReview.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessReview.UpdatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessReview.UpdatedAt(childComplexity), true
 
 	case "AccessReviewCampaign.accessReview":
-		if e.complexity.AccessReviewCampaign.AccessReview == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.AccessReview == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.AccessReview(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.AccessReview(childComplexity), true
 	case "AccessReviewCampaign.completedAt":
-		if e.complexity.AccessReviewCampaign.CompletedAt == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.CompletedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.CompletedAt(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.CompletedAt(childComplexity), true
 	case "AccessReviewCampaign.createdAt":
-		if e.complexity.AccessReviewCampaign.CreatedAt == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.CreatedAt(childComplexity), true
 	case "AccessReviewCampaign.entries":
-		if e.complexity.AccessReviewCampaign.Entries == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.Entries == nil {
 			break
 		}
 
@@ -3276,27 +3276,27 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.AccessReviewCampaign.Entries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessEntryOrder), args["accessSourceId"].(*gid.GID)), true
+		return e.ComplexityRoot.AccessReviewCampaign.Entries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AccessEntryOrder), args["accessSourceId"].(*gid.GID)), true
 	case "AccessReviewCampaign.frameworkControls":
-		if e.complexity.AccessReviewCampaign.FrameworkControls == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.FrameworkControls == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.FrameworkControls(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.FrameworkControls(childComplexity), true
 	case "AccessReviewCampaign.id":
-		if e.complexity.AccessReviewCampaign.ID == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.ID == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.ID(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.ID(childComplexity), true
 	case "AccessReviewCampaign.name":
-		if e.complexity.AccessReviewCampaign.Name == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.Name == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.Name(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.Name(childComplexity), true
 	case "AccessReviewCampaign.permission":
-		if e.complexity.AccessReviewCampaign.Permission == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.Permission == nil {
 			break
 		}
 
@@ -3305,163 +3305,163 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.AccessReviewCampaign.Permission(childComplexity, args["action"].(string)), true
+		return e.ComplexityRoot.AccessReviewCampaign.Permission(childComplexity, args["action"].(string)), true
 	case "AccessReviewCampaign.scopeSources":
-		if e.complexity.AccessReviewCampaign.ScopeSources == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.ScopeSources == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.ScopeSources(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.ScopeSources(childComplexity), true
 	case "AccessReviewCampaign.startedAt":
-		if e.complexity.AccessReviewCampaign.StartedAt == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.StartedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.StartedAt(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.StartedAt(childComplexity), true
 	case "AccessReviewCampaign.status":
-		if e.complexity.AccessReviewCampaign.Status == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.Status == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.Status(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.Status(childComplexity), true
 	case "AccessReviewCampaign.updatedAt":
-		if e.complexity.AccessReviewCampaign.UpdatedAt == nil {
+		if e.ComplexityRoot.AccessReviewCampaign.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaign.UpdatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaign.UpdatedAt(childComplexity), true
 
 	case "AccessReviewCampaignConnection.edges":
-		if e.complexity.AccessReviewCampaignConnection.Edges == nil {
+		if e.ComplexityRoot.AccessReviewCampaignConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignConnection.Edges(childComplexity), true
 	case "AccessReviewCampaignConnection.pageInfo":
-		if e.complexity.AccessReviewCampaignConnection.PageInfo == nil {
+		if e.ComplexityRoot.AccessReviewCampaignConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignConnection.PageInfo(childComplexity), true
 	case "AccessReviewCampaignConnection.totalCount":
-		if e.complexity.AccessReviewCampaignConnection.TotalCount == nil {
+		if e.ComplexityRoot.AccessReviewCampaignConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignConnection.TotalCount(childComplexity), true
 
 	case "AccessReviewCampaignEdge.cursor":
-		if e.complexity.AccessReviewCampaignEdge.Cursor == nil {
+		if e.ComplexityRoot.AccessReviewCampaignEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignEdge.Cursor(childComplexity), true
 	case "AccessReviewCampaignEdge.node":
-		if e.complexity.AccessReviewCampaignEdge.Node == nil {
+		if e.ComplexityRoot.AccessReviewCampaignEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignEdge.Node(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignEdge.Node(childComplexity), true
 
 	case "AccessReviewCampaignScopeSource.attemptCount":
-		if e.complexity.AccessReviewCampaignScopeSource.AttemptCount == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.AttemptCount == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.AttemptCount(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.AttemptCount(childComplexity), true
 	case "AccessReviewCampaignScopeSource.fetchCompletedAt":
-		if e.complexity.AccessReviewCampaignScopeSource.FetchCompletedAt == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.FetchCompletedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.FetchCompletedAt(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.FetchCompletedAt(childComplexity), true
 	case "AccessReviewCampaignScopeSource.fetchStartedAt":
-		if e.complexity.AccessReviewCampaignScopeSource.FetchStartedAt == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.FetchStartedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.FetchStartedAt(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.FetchStartedAt(childComplexity), true
 	case "AccessReviewCampaignScopeSource.fetchStatus":
-		if e.complexity.AccessReviewCampaignScopeSource.FetchStatus == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.FetchStatus == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.FetchStatus(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.FetchStatus(childComplexity), true
 	case "AccessReviewCampaignScopeSource.fetchedAccountsCount":
-		if e.complexity.AccessReviewCampaignScopeSource.FetchedAccountsCount == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.FetchedAccountsCount == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.FetchedAccountsCount(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.FetchedAccountsCount(childComplexity), true
 	case "AccessReviewCampaignScopeSource.id":
-		if e.complexity.AccessReviewCampaignScopeSource.ID == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.ID == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.ID(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.ID(childComplexity), true
 	case "AccessReviewCampaignScopeSource.lastError":
-		if e.complexity.AccessReviewCampaignScopeSource.LastError == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.LastError == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.LastError(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.LastError(childComplexity), true
 	case "AccessReviewCampaignScopeSource.name":
-		if e.complexity.AccessReviewCampaignScopeSource.Name == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.Name == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.Name(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.Name(childComplexity), true
 	case "AccessReviewCampaignScopeSource.source":
-		if e.complexity.AccessReviewCampaignScopeSource.Source == nil {
+		if e.ComplexityRoot.AccessReviewCampaignScopeSource.Source == nil {
 			break
 		}
 
-		return e.complexity.AccessReviewCampaignScopeSource.Source(childComplexity), true
+		return e.ComplexityRoot.AccessReviewCampaignScopeSource.Source(childComplexity), true
 
 	case "AccessSource.accessReview":
-		if e.complexity.AccessSource.AccessReview == nil {
+		if e.ComplexityRoot.AccessSource.AccessReview == nil {
 			break
 		}
 
-		return e.complexity.AccessSource.AccessReview(childComplexity), true
+		return e.ComplexityRoot.AccessSource.AccessReview(childComplexity), true
 	case "AccessSource.csvData":
-		if e.complexity.AccessSource.CSVData == nil {
+		if e.ComplexityRoot.AccessSource.CSVData == nil {
 			break
 		}
 
-		return e.complexity.AccessSource.CSVData(childComplexity), true
+		return e.ComplexityRoot.AccessSource.CSVData(childComplexity), true
 	case "AccessSource.connector":
-		if e.complexity.AccessSource.Connector == nil {
+		if e.ComplexityRoot.AccessSource.Connector == nil {
 			break
 		}
 
-		return e.complexity.AccessSource.Connector(childComplexity), true
+		return e.ComplexityRoot.AccessSource.Connector(childComplexity), true
 	case "AccessSource.connectorId":
-		if e.complexity.AccessSource.ConnectorID == nil {
+		if e.ComplexityRoot.AccessSource.ConnectorID == nil {
 			break
 		}
 
-		return e.complexity.AccessSource.ConnectorID(childComplexity), true
+		return e.ComplexityRoot.AccessSource.ConnectorID(childComplexity), true
 	case "AccessSource.createdAt":
-		if e.complexity.AccessSource.CreatedAt == nil {
+		if e.ComplexityRoot.AccessSource.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessSource.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessSource.CreatedAt(childComplexity), true
 	case "AccessSource.id":
-		if e.complexity.AccessSource.ID == nil {
+		if e.ComplexityRoot.AccessSource.ID == nil {
 			break
 		}
 
-		return e.complexity.AccessSource.ID(childComplexity), true
+		return e.ComplexityRoot.AccessSource.ID(childComplexity), true
 	case "AccessSource.name":
-		if e.complexity.AccessSource.Name == nil {
+		if e.ComplexityRoot.AccessSource.Name == nil {
 			break
 		}
 
-		return e.complexity.AccessSource.Name(childComplexity), true
+		return e.ComplexityRoot.AccessSource.Name(childComplexity), true
 	case "AccessSource.permission":
-		if e.complexity.AccessSource.Permission == nil {
+		if e.ComplexityRoot.AccessSource.Permission == nil {
 			break
 		}
 
@@ -3470,45 +3470,45 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.AccessSource.Permission(childComplexity, args["action"].(string)), true
+		return e.ComplexityRoot.AccessSource.Permission(childComplexity, args["action"].(string)), true
 	case "AccessSource.updatedAt":
-		if e.complexity.AccessSource.UpdatedAt == nil {
+		if e.ComplexityRoot.AccessSource.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.AccessSource.UpdatedAt(childComplexity), true
+		return e.ComplexityRoot.AccessSource.UpdatedAt(childComplexity), true
 
 	case "AccessSourceConnection.edges":
-		if e.complexity.AccessSourceConnection.Edges == nil {
+		if e.ComplexityRoot.AccessSourceConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.AccessSourceConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.AccessSourceConnection.Edges(childComplexity), true
 	case "AccessSourceConnection.pageInfo":
-		if e.complexity.AccessSourceConnection.PageInfo == nil {
+		if e.ComplexityRoot.AccessSourceConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.AccessSourceConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.AccessSourceConnection.PageInfo(childComplexity), true
 	case "AccessSourceConnection.totalCount":
-		if e.complexity.AccessSourceConnection.TotalCount == nil {
+		if e.ComplexityRoot.AccessSourceConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.AccessSourceConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.AccessSourceConnection.TotalCount(childComplexity), true
 
 	case "AccessSourceEdge.cursor":
-		if e.complexity.AccessSourceEdge.Cursor == nil {
+		if e.ComplexityRoot.AccessSourceEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.AccessSourceEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.AccessSourceEdge.Cursor(childComplexity), true
 	case "AccessSourceEdge.node":
-		if e.complexity.AccessSourceEdge.Node == nil {
+		if e.ComplexityRoot.AccessSourceEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.AccessSourceEdge.Node(childComplexity), true
+		return e.ComplexityRoot.AccessSourceEdge.Node(childComplexity), true
 
 	case "ApplicabilityStatement.applicability":
 		if e.ComplexityRoot.ApplicabilityStatement.Applicability == nil {
@@ -3880,11 +3880,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.BulkRequestSignaturesPayload.DocumentVersionSignatureEdges(childComplexity), true
 
 	case "CancelAccessReviewCampaignPayload.accessReviewCampaign":
-		if e.complexity.CancelAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+		if e.ComplexityRoot.CancelAccessReviewCampaignPayload.AccessReviewCampaign == nil {
 			break
 		}
 
-		return e.complexity.CancelAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
+		return e.ComplexityRoot.CancelAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "CancelSignatureRequestPayload.deletedDocumentVersionSignatureId":
 		if e.ComplexityRoot.CancelSignatureRequestPayload.DeletedDocumentVersionSignatureID == nil {
@@ -3892,6 +3892,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CancelSignatureRequestPayload.DeletedDocumentVersionSignatureID(childComplexity), true
+
+	case "CloseAccessReviewCampaignPayload.accessReviewCampaign":
+		if e.ComplexityRoot.CloseAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloseAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "ComplianceExternalURL.createdAt":
 		if e.ComplexityRoot.ComplianceExternalURL.CreatedAt == nil {
@@ -4030,31 +4037,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ComplianceFrameworkEdge.Node(childComplexity), true
 
-	case "CloseAccessReviewCampaignPayload.accessReviewCampaign":
-		if e.complexity.CloseAccessReviewCampaignPayload.AccessReviewCampaign == nil {
-			break
-		}
-
-		return e.complexity.CloseAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
-
 	case "Connector.createdAt":
-		if e.complexity.Connector.CreatedAt == nil {
+		if e.ComplexityRoot.Connector.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Connector.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.Connector.CreatedAt(childComplexity), true
 	case "Connector.id":
-		if e.complexity.Connector.ID == nil {
+		if e.ComplexityRoot.Connector.ID == nil {
 			break
 		}
 
-		return e.complexity.Connector.ID(childComplexity), true
+		return e.ComplexityRoot.Connector.ID(childComplexity), true
 	case "Connector.provider":
-		if e.complexity.Connector.Provider == nil {
+		if e.ComplexityRoot.Connector.Provider == nil {
 			break
 		}
 
-		return e.complexity.Connector.Provider(childComplexity), true
+		return e.ComplexityRoot.Connector.Provider(childComplexity), true
 
 	case "ContinualImprovement.createdAt":
 		if e.ComplexityRoot.ContinualImprovement.CreatedAt == nil {
@@ -4350,25 +4350,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.ControlEdge.Node(childComplexity), true
 
 	case "CreateAccessReviewCampaignPayload.accessReviewCampaignEdge":
-		if e.complexity.CreateAccessReviewCampaignPayload.AccessReviewCampaignEdge == nil {
+		if e.ComplexityRoot.CreateAccessReviewCampaignPayload.AccessReviewCampaignEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateAccessReviewCampaignPayload.AccessReviewCampaignEdge(childComplexity), true
+		return e.ComplexityRoot.CreateAccessReviewCampaignPayload.AccessReviewCampaignEdge(childComplexity), true
 
 	case "CreateAccessReviewPayload.accessReview":
-		if e.complexity.CreateAccessReviewPayload.AccessReview == nil {
+		if e.ComplexityRoot.CreateAccessReviewPayload.AccessReview == nil {
 			break
 		}
 
-		return e.complexity.CreateAccessReviewPayload.AccessReview(childComplexity), true
+		return e.ComplexityRoot.CreateAccessReviewPayload.AccessReview(childComplexity), true
 
 	case "CreateAccessSourcePayload.accessSourceEdge":
-		if e.complexity.CreateAccessSourcePayload.AccessSourceEdge == nil {
+		if e.ComplexityRoot.CreateAccessSourcePayload.AccessSourceEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateAccessSourcePayload.AccessSourceEdge(childComplexity), true
+		return e.ComplexityRoot.CreateAccessSourcePayload.AccessSourceEdge(childComplexity), true
 
 	case "CreateApplicabilityStatementPayload.applicabilityStatementEdge":
 		if e.ComplexityRoot.CreateApplicabilityStatementPayload.ApplicabilityStatementEdge == nil {
@@ -5010,18 +5010,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.DatumEdge.Node(childComplexity), true
 
 	case "DeleteAccessReviewCampaignPayload.deletedAccessReviewCampaignId":
-		if e.complexity.DeleteAccessReviewCampaignPayload.DeletedAccessReviewCampaignID == nil {
+		if e.ComplexityRoot.DeleteAccessReviewCampaignPayload.DeletedAccessReviewCampaignID == nil {
 			break
 		}
 
-		return e.complexity.DeleteAccessReviewCampaignPayload.DeletedAccessReviewCampaignID(childComplexity), true
+		return e.ComplexityRoot.DeleteAccessReviewCampaignPayload.DeletedAccessReviewCampaignID(childComplexity), true
 
 	case "DeleteAccessSourcePayload.deletedAccessSourceId":
-		if e.complexity.DeleteAccessSourcePayload.DeletedAccessSourceID == nil {
+		if e.ComplexityRoot.DeleteAccessSourcePayload.DeletedAccessSourceID == nil {
 			break
 		}
 
-		return e.complexity.DeleteAccessSourcePayload.DeletedAccessSourceID(childComplexity), true
+		return e.ComplexityRoot.DeleteAccessSourcePayload.DeletedAccessSourceID(childComplexity), true
 
 	case "DeleteApplicabilityStatementPayload.deletedApplicabilityStatementId":
 		if e.ComplexityRoot.DeleteApplicabilityStatementPayload.DeletedApplicabilityStatementID == nil {
@@ -5988,17 +5988,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.EvidenceEdge.Node(childComplexity), true
 
 	case "ExportCampaignEvidencePayload.checksumSha256":
-		if e.complexity.ExportCampaignEvidencePayload.ChecksumSha256 == nil {
+		if e.ComplexityRoot.ExportCampaignEvidencePayload.ChecksumSha256 == nil {
 			break
 		}
 
-		return e.complexity.ExportCampaignEvidencePayload.ChecksumSha256(childComplexity), true
+		return e.ComplexityRoot.ExportCampaignEvidencePayload.ChecksumSha256(childComplexity), true
 	case "ExportCampaignEvidencePayload.payload":
-		if e.complexity.ExportCampaignEvidencePayload.Payload == nil {
+		if e.ComplexityRoot.ExportCampaignEvidencePayload.Payload == nil {
 			break
 		}
 
-		return e.complexity.ExportCampaignEvidencePayload.Payload(childComplexity), true
+		return e.ComplexityRoot.ExportCampaignEvidencePayload.Payload(childComplexity), true
 
 	case "ExportDataProtectionImpactAssessmentsPDFPayload.data":
 		if e.ComplexityRoot.ExportDataProtectionImpactAssessmentsPDFPayload.Data == nil {
@@ -6673,9 +6673,8 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.BulkRequestSignatures(childComplexity, args["input"].(types.BulkRequestSignaturesInput)), true
-		return e.complexity.Mutation.BulkRequestSignatures(childComplexity, args["input"].(types.BulkRequestSignaturesInput)), true
 	case "Mutation.cancelAccessReviewCampaign":
-		if e.complexity.Mutation.CancelAccessReviewCampaign == nil {
+		if e.ComplexityRoot.Mutation.CancelAccessReviewCampaign == nil {
 			break
 		}
 
@@ -6684,7 +6683,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CancelAccessReviewCampaign(childComplexity, args["input"].(types.CancelAccessReviewCampaignInput)), true
+		return e.ComplexityRoot.Mutation.CancelAccessReviewCampaign(childComplexity, args["input"].(types.CancelAccessReviewCampaignInput)), true
 	case "Mutation.cancelSignatureRequest":
 		if e.ComplexityRoot.Mutation.CancelSignatureRequest == nil {
 			break
@@ -6696,9 +6695,8 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CancelSignatureRequest(childComplexity, args["input"].(types.CancelSignatureRequestInput)), true
-		return e.complexity.Mutation.CancelSignatureRequest(childComplexity, args["input"].(types.CancelSignatureRequestInput)), true
 	case "Mutation.closeAccessReviewCampaign":
-		if e.complexity.Mutation.CloseAccessReviewCampaign == nil {
+		if e.ComplexityRoot.Mutation.CloseAccessReviewCampaign == nil {
 			break
 		}
 
@@ -6707,9 +6705,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CloseAccessReviewCampaign(childComplexity, args["input"].(types.CloseAccessReviewCampaignInput)), true
+		return e.ComplexityRoot.Mutation.CloseAccessReviewCampaign(childComplexity, args["input"].(types.CloseAccessReviewCampaignInput)), true
 	case "Mutation.createAccessReview":
-		if e.complexity.Mutation.CreateAccessReview == nil {
+		if e.ComplexityRoot.Mutation.CreateAccessReview == nil {
 			break
 		}
 
@@ -6718,9 +6716,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateAccessReview(childComplexity, args["input"].(types.CreateAccessReviewInput)), true
+		return e.ComplexityRoot.Mutation.CreateAccessReview(childComplexity, args["input"].(types.CreateAccessReviewInput)), true
 	case "Mutation.createAccessReviewCampaign":
-		if e.complexity.Mutation.CreateAccessReviewCampaign == nil {
+		if e.ComplexityRoot.Mutation.CreateAccessReviewCampaign == nil {
 			break
 		}
 
@@ -6729,9 +6727,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateAccessReviewCampaign(childComplexity, args["input"].(types.CreateAccessReviewCampaignInput)), true
+		return e.ComplexityRoot.Mutation.CreateAccessReviewCampaign(childComplexity, args["input"].(types.CreateAccessReviewCampaignInput)), true
 	case "Mutation.createAccessSource":
-		if e.complexity.Mutation.CreateAccessSource == nil {
+		if e.ComplexityRoot.Mutation.CreateAccessSource == nil {
 			break
 		}
 
@@ -6740,7 +6738,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateAccessSource(childComplexity, args["input"].(types.CreateAccessSourceInput)), true
+		return e.ComplexityRoot.Mutation.CreateAccessSource(childComplexity, args["input"].(types.CreateAccessSourceInput)), true
 	case "Mutation.createApplicabilityStatement":
 		if e.ComplexityRoot.Mutation.CreateApplicabilityStatement == nil {
 			break
@@ -7187,9 +7185,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		args, err := ec.field_Mutation_createWebhookSubscription_args(ctx, rawArgs)
-		return e.complexity.Mutation.CreateVendorService(childComplexity, args["input"].(types.CreateVendorServiceInput)), true
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateWebhookSubscription(childComplexity, args["input"].(types.CreateWebhookSubscriptionInput)), true
 	case "Mutation.deleteAccessReviewCampaign":
-		if e.complexity.Mutation.DeleteAccessReviewCampaign == nil {
+		if e.ComplexityRoot.Mutation.DeleteAccessReviewCampaign == nil {
 			break
 		}
 
@@ -7198,10 +7200,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.CreateWebhookSubscription(childComplexity, args["input"].(types.CreateWebhookSubscriptionInput)), true
-		return e.complexity.Mutation.DeleteAccessReviewCampaign(childComplexity, args["input"].(types.DeleteAccessReviewCampaignInput)), true
+		return e.ComplexityRoot.Mutation.DeleteAccessReviewCampaign(childComplexity, args["input"].(types.DeleteAccessReviewCampaignInput)), true
 	case "Mutation.deleteAccessSource":
-		if e.complexity.Mutation.DeleteAccessSource == nil {
+		if e.ComplexityRoot.Mutation.DeleteAccessSource == nil {
 			break
 		}
 
@@ -7210,7 +7211,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteAccessSource(childComplexity, args["input"].(types.DeleteAccessSourceInput)), true
+		return e.ComplexityRoot.Mutation.DeleteAccessSource(childComplexity, args["input"].(types.DeleteAccessSourceInput)), true
 	case "Mutation.deleteApplicabilityStatement":
 		if e.ComplexityRoot.Mutation.DeleteApplicabilityStatement == nil {
 			break
@@ -7723,9 +7724,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		args, err := ec.field_Mutation_deleteWebhookSubscription_args(ctx, rawArgs)
-		return e.complexity.Mutation.DeleteVendorService(childComplexity, args["input"].(types.DeleteVendorServiceInput)), true
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteWebhookSubscription(childComplexity, args["input"].(types.DeleteWebhookSubscriptionInput)), true
 	case "Mutation.exportCampaignEvidence":
-		if e.complexity.Mutation.ExportCampaignEvidence == nil {
+		if e.ComplexityRoot.Mutation.ExportCampaignEvidence == nil {
 			break
 		}
 
@@ -7734,8 +7739,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.DeleteWebhookSubscription(childComplexity, args["input"].(types.DeleteWebhookSubscriptionInput)), true
-		return e.complexity.Mutation.ExportCampaignEvidence(childComplexity, args["input"].(types.ExportCampaignEvidenceInput)), true
+		return e.ComplexityRoot.Mutation.ExportCampaignEvidence(childComplexity, args["input"].(types.ExportCampaignEvidenceInput)), true
 	case "Mutation.exportDataProtectionImpactAssessmentsPDF":
 		if e.ComplexityRoot.Mutation.ExportDataProtectionImpactAssessmentsPDF == nil {
 			break
@@ -7868,9 +7872,8 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.PublishDocumentVersion(childComplexity, args["input"].(types.PublishDocumentVersionInput)), true
-		return e.complexity.Mutation.PublishDocumentVersion(childComplexity, args["input"].(types.PublishDocumentVersionInput)), true
 	case "Mutation.recordAccessEntryDecision":
-		if e.complexity.Mutation.RecordAccessEntryDecision == nil {
+		if e.ComplexityRoot.Mutation.RecordAccessEntryDecision == nil {
 			break
 		}
 
@@ -7879,7 +7882,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RecordAccessEntryDecision(childComplexity, args["input"].(types.RecordAccessEntryDecisionInput)), true
+		return e.ComplexityRoot.Mutation.RecordAccessEntryDecision(childComplexity, args["input"].(types.RecordAccessEntryDecisionInput)), true
 	case "Mutation.requestSignature":
 		if e.ComplexityRoot.Mutation.RequestSignature == nil {
 			break
@@ -7891,15 +7894,8 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RequestSignature(childComplexity, args["input"].(types.RequestSignatureInput)), true
-	case "Mutation.sendMailingListUpdate":
-		if e.ComplexityRoot.Mutation.SendMailingListUpdate == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_sendMailingListUpdate_args(ctx, rawArgs)
-		return e.complexity.Mutation.RequestSignature(childComplexity, args["input"].(types.RequestSignatureInput)), true
 	case "Mutation.retryStartAccessReviewCampaign":
-		if e.complexity.Mutation.RetryStartAccessReviewCampaign == nil {
+		if e.ComplexityRoot.Mutation.RetryStartAccessReviewCampaign == nil {
 			break
 		}
 
@@ -7908,8 +7904,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
+		return e.ComplexityRoot.Mutation.RetryStartAccessReviewCampaign(childComplexity, args["input"].(types.RetryStartAccessReviewCampaignInput)), true
+	case "Mutation.sendMailingListUpdate":
+		if e.ComplexityRoot.Mutation.SendMailingListUpdate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_sendMailingListUpdate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
 		return e.ComplexityRoot.Mutation.SendMailingListUpdate(childComplexity, args["input"].(types.SendMailingListUpdateInput)), true
-		return e.complexity.Mutation.RetryStartAccessReviewCampaign(childComplexity, args["input"].(types.RetryStartAccessReviewCampaignInput)), true
 	case "Mutation.sendSigningNotifications":
 		if e.ComplexityRoot.Mutation.SendSigningNotifications == nil {
 			break
@@ -7932,9 +7938,8 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SignDocument(childComplexity, args["input"].(types.SignDocumentInput)), true
-		return e.complexity.Mutation.SignDocument(childComplexity, args["input"].(types.SignDocumentInput)), true
 	case "Mutation.startAccessReviewCampaign":
-		if e.complexity.Mutation.StartAccessReviewCampaign == nil {
+		if e.ComplexityRoot.Mutation.StartAccessReviewCampaign == nil {
 			break
 		}
 
@@ -7943,9 +7948,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.StartAccessReviewCampaign(childComplexity, args["input"].(types.StartAccessReviewCampaignInput)), true
+		return e.ComplexityRoot.Mutation.StartAccessReviewCampaign(childComplexity, args["input"].(types.StartAccessReviewCampaignInput)), true
 	case "Mutation.updateAccessReview":
-		if e.complexity.Mutation.UpdateAccessReview == nil {
+		if e.ComplexityRoot.Mutation.UpdateAccessReview == nil {
 			break
 		}
 
@@ -7954,9 +7959,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateAccessReview(childComplexity, args["input"].(types.UpdateAccessReviewInput)), true
+		return e.ComplexityRoot.Mutation.UpdateAccessReview(childComplexity, args["input"].(types.UpdateAccessReviewInput)), true
 	case "Mutation.updateAccessReviewCampaign":
-		if e.complexity.Mutation.UpdateAccessReviewCampaign == nil {
+		if e.ComplexityRoot.Mutation.UpdateAccessReviewCampaign == nil {
 			break
 		}
 
@@ -7965,9 +7970,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateAccessReviewCampaign(childComplexity, args["input"].(types.UpdateAccessReviewCampaignInput)), true
+		return e.ComplexityRoot.Mutation.UpdateAccessReviewCampaign(childComplexity, args["input"].(types.UpdateAccessReviewCampaignInput)), true
 	case "Mutation.updateAccessSource":
-		if e.complexity.Mutation.UpdateAccessSource == nil {
+		if e.ComplexityRoot.Mutation.UpdateAccessSource == nil {
 			break
 		}
 
@@ -7976,7 +7981,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateAccessSource(childComplexity, args["input"].(types.UpdateAccessSourceInput)), true
+		return e.ComplexityRoot.Mutation.UpdateAccessSource(childComplexity, args["input"].(types.UpdateAccessSourceInput)), true
 	case "Mutation.updateApplicabilityStatement":
 		if e.ComplexityRoot.Mutation.UpdateApplicabilityStatement == nil {
 			break
@@ -8439,9 +8444,8 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UploadVendorDataPrivacyAgreement(childComplexity, args["input"].(types.UploadVendorDataPrivacyAgreementInput)), true
-		return e.complexity.Mutation.UploadVendorDataPrivacyAgreement(childComplexity, args["input"].(types.UploadVendorDataPrivacyAgreementInput)), true
 	case "Mutation.validateAccessReviewCampaign":
-		if e.complexity.Mutation.ValidateAccessReviewCampaign == nil {
+		if e.ComplexityRoot.Mutation.ValidateAccessReviewCampaign == nil {
 			break
 		}
 
@@ -8450,7 +8454,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ValidateAccessReviewCampaign(childComplexity, args["input"].(types.ValidateAccessReviewCampaignInput)), true
+		return e.ComplexityRoot.Mutation.ValidateAccessReviewCampaign(childComplexity, args["input"].(types.ValidateAccessReviewCampaignInput)), true
 
 	case "Nonconformity.audit":
 		if e.ComplexityRoot.Nonconformity.Audit == nil {
@@ -8727,11 +8731,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.ObligationEdge.Node(childComplexity), true
 
 	case "Organization.accessReview":
-		if e.complexity.Organization.AccessReview == nil {
+		if e.ComplexityRoot.Organization.AccessReview == nil {
 			break
 		}
 
-		return e.complexity.Organization.AccessReview(childComplexity), true
+		return e.ComplexityRoot.Organization.AccessReview(childComplexity), true
 	case "Organization.assets":
 		if e.ComplexityRoot.Organization.Assets == nil {
 			break
@@ -8754,9 +8758,8 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Organization.Audits(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AuditOrderBy)), true
-		return e.complexity.Organization.Audits(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AuditOrderBy)), true
 	case "Organization.connectors":
-		if e.complexity.Organization.Connectors == nil {
+		if e.ComplexityRoot.Organization.Connectors == nil {
 			break
 		}
 
@@ -8765,7 +8768,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.Connectors(childComplexity, args["filter"].(*types.ConnectorFilter)), true
+		return e.ComplexityRoot.Organization.Connectors(childComplexity, args["filter"].(*types.ConnectorFilter)), true
 	case "Organization.context":
 		if e.ComplexityRoot.Organization.Context == nil {
 			break
@@ -9495,11 +9498,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.Query.Viewer(childComplexity), true
 
 	case "RecordAccessEntryDecisionPayload.accessEntry":
-		if e.complexity.RecordAccessEntryDecisionPayload.AccessEntry == nil {
+		if e.ComplexityRoot.RecordAccessEntryDecisionPayload.AccessEntry == nil {
 			break
 		}
 
-		return e.complexity.RecordAccessEntryDecisionPayload.AccessEntry(childComplexity), true
+		return e.ComplexityRoot.RecordAccessEntryDecisionPayload.AccessEntry(childComplexity), true
 
 	case "Report.audit":
 		if e.ComplexityRoot.Report.Audit == nil {
@@ -9575,11 +9578,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.RequestSignaturePayload.DocumentVersionSignatureEdge(childComplexity), true
 
 	case "RetryStartAccessReviewCampaignPayload.accessReviewCampaign":
-		if e.complexity.RetryStartAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+		if e.ComplexityRoot.RetryStartAccessReviewCampaignPayload.AccessReviewCampaign == nil {
 			break
 		}
 
-		return e.complexity.RetryStartAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
+		return e.ComplexityRoot.RetryStartAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "RightsRequest.actionTaken":
 		if e.ComplexityRoot.RightsRequest.ActionTaken == nil {
@@ -10137,11 +10140,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.SnapshotEdge.Node(childComplexity), true
 
 	case "StartAccessReviewCampaignPayload.accessReviewCampaign":
-		if e.complexity.StartAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+		if e.ComplexityRoot.StartAccessReviewCampaignPayload.AccessReviewCampaign == nil {
 			break
 		}
 
-		return e.complexity.StartAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
+		return e.ComplexityRoot.StartAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "StateOfApplicability.applicabilityStatements":
 		if e.ComplexityRoot.StateOfApplicability.ApplicabilityStatements == nil {
@@ -10964,25 +10967,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.TrustCenterReferenceEdge.Node(childComplexity), true
 
 	case "UpdateAccessReviewCampaignPayload.accessReviewCampaign":
-		if e.complexity.UpdateAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+		if e.ComplexityRoot.UpdateAccessReviewCampaignPayload.AccessReviewCampaign == nil {
 			break
 		}
 
-		return e.complexity.UpdateAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
+		return e.ComplexityRoot.UpdateAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "UpdateAccessReviewPayload.accessReview":
-		if e.complexity.UpdateAccessReviewPayload.AccessReview == nil {
+		if e.ComplexityRoot.UpdateAccessReviewPayload.AccessReview == nil {
 			break
 		}
 
-		return e.complexity.UpdateAccessReviewPayload.AccessReview(childComplexity), true
+		return e.ComplexityRoot.UpdateAccessReviewPayload.AccessReview(childComplexity), true
 
 	case "UpdateAccessSourcePayload.accessSource":
-		if e.complexity.UpdateAccessSourcePayload.AccessSource == nil {
+		if e.ComplexityRoot.UpdateAccessSourcePayload.AccessSource == nil {
 			break
 		}
 
-		return e.complexity.UpdateAccessSourcePayload.AccessSource(childComplexity), true
+		return e.ComplexityRoot.UpdateAccessSourcePayload.AccessSource(childComplexity), true
 
 	case "UpdateApplicabilityStatementPayload.applicabilityStatement":
 		if e.ComplexityRoot.UpdateApplicabilityStatementPayload.ApplicabilityStatement == nil {
@@ -11279,11 +11282,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.ComplexityRoot.UploadVendorDataPrivacyAgreementPayload.VendorDataPrivacyAgreement(childComplexity), true
 
 	case "ValidateAccessReviewCampaignPayload.accessReviewCampaign":
-		if e.complexity.ValidateAccessReviewCampaignPayload.AccessReviewCampaign == nil {
+		if e.ComplexityRoot.ValidateAccessReviewCampaignPayload.AccessReviewCampaign == nil {
 			break
 		}
 
-		return e.complexity.ValidateAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
+		return e.ComplexityRoot.ValidateAccessReviewCampaignPayload.AccessReviewCampaign(childComplexity), true
 
 	case "Vendor.businessAssociateAgreement":
 		if e.ComplexityRoot.Vendor.BusinessAssociateAgreement == nil {
@@ -12211,9 +12214,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkRequestSignaturesInput,
 		ec.unmarshalInputCancelAccessReviewCampaignInput,
 		ec.unmarshalInputCancelSignatureRequestInput,
+		ec.unmarshalInputCloseAccessReviewCampaignInput,
 		ec.unmarshalInputComplianceExternalURLOrder,
 		ec.unmarshalInputComplianceFrameworkOrder,
-		ec.unmarshalInputCloseAccessReviewCampaignInput,
 		ec.unmarshalInputConnectorFilter,
 		ec.unmarshalInputContinualImprovementFilter,
 		ec.unmarshalInputContinualImprovementOrder,
@@ -14508,6 +14511,7 @@ type Organization implements Node {
         before: CursorKey
         orderBy: WebhookSubscriptionOrder
     ): WebhookSubscriptionConnection! @goField(forceResolver: true)
+
     accessReview: AccessReview @goField(forceResolver: true)
 
     createdAt: Datetime!
@@ -18489,6 +18493,8 @@ type ElectronicSignatureEvent {
     actorUserAgent: String!
     occurredAt: Datetime!
     createdAt: Datetime!
+}
+
 # ===== Access Review Types =====
 
 enum AccessReviewCampaignStatus
@@ -18832,7 +18838,7 @@ type AccessEntry implements Node {
     flagReason: String
     decision: AccessEntryDecision!
     decisionNote: String
-    decidedBy: People @goField(forceResolver: true)
+    decidedBy: ID
     decidedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -20554,6 +20560,13 @@ func (ec *executionContext) field_Mutation_createWebhookSubscription_args(ctx co
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateWebhookSubscriptionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateWebhookSubscriptionInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -21086,6 +21099,13 @@ func (ec *executionContext) field_Mutation_deleteWebhookSubscription_args(ctx co
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteWebhookSubscriptionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteWebhookSubscriptionInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_exportCampaignEvidence_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -21251,14 +21271,21 @@ func (ec *executionContext) field_Mutation_requestSignature_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_sendMailingListUpdate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSendMailingListUpdateInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendMailingListUpdateInput)
 func (ec *executionContext) field_Mutation_retryStartAccessReviewCampaign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRetryStartAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_sendMailingListUpdate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSendMailingListUpdateInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendMailingListUpdateInput)
 	if err != nil {
 		return nil, err
 	}
@@ -23670,7 +23697,7 @@ func (ec *executionContext) _AccessEntry_campaign(ctx context.Context, field gra
 		field,
 		ec.fieldContext_AccessEntry_campaign,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessEntry().Campaign(ctx, obj)
+			return ec.Resolvers.AccessEntry().Campaign(ctx, obj)
 		},
 		nil,
 		ec.marshalNAccessReviewCampaign2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaign,
@@ -23725,7 +23752,7 @@ func (ec *executionContext) _AccessEntry_accessSource(ctx context.Context, field
 		field,
 		ec.fieldContext_AccessEntry_accessSource,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessEntry().AccessSource(ctx, obj)
+			return ec.Resolvers.AccessEntry().AccessSource(ctx, obj)
 		},
 		nil,
 		ec.marshalNAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource,
@@ -24209,10 +24236,10 @@ func (ec *executionContext) _AccessEntry_decidedBy(ctx context.Context, field gr
 		field,
 		ec.fieldContext_AccessEntry_decidedBy,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessEntry().DecidedBy(ctx, obj)
+			return obj.DecidedBy, nil
 		},
 		nil,
-		ec.marshalOPeople2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople,
+		ec.marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
 		true,
 		false,
 	)
@@ -24222,34 +24249,10 @@ func (ec *executionContext) fieldContext_AccessEntry_decidedBy(_ context.Context
 	fc = &graphql.FieldContext{
 		Object:     "AccessEntry",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			case "permission":
-				return ec.fieldContext_People_permission(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -24350,7 +24353,7 @@ func (ec *executionContext) _AccessEntry_permission(ctx context.Context, field g
 		ec.fieldContext_AccessEntry_permission,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.AccessEntry().Permission(ctx, obj, fc.Args["action"].(string))
+			return ec.Resolvers.AccessEntry().Permission(ctx, obj, fc.Args["action"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -24390,7 +24393,7 @@ func (ec *executionContext) _AccessEntryConnection_totalCount(ctx context.Contex
 		field,
 		ec.fieldContext_AccessEntryConnection_totalCount,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessEntryConnection().TotalCount(ctx, obj)
+			return ec.Resolvers.AccessEntryConnection().TotalCount(ctx, obj)
 		},
 		nil,
 		ec.marshalNInt2int,
@@ -24628,7 +24631,7 @@ func (ec *executionContext) _AccessReview_organization(ctx context.Context, fiel
 		field,
 		ec.fieldContext_AccessReview_organization,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessReview().Organization(ctx, obj)
+			return ec.Resolvers.AccessReview().Organization(ctx, obj)
 		},
 		nil,
 		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
@@ -24663,6 +24666,8 @@ func (ec *executionContext) fieldContext_AccessReview_organization(_ context.Con
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
+			case "profiles":
+				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "connectors":
@@ -24673,8 +24678,6 @@ func (ec *executionContext) fieldContext_AccessReview_organization(_ context.Con
 				return ec.fieldContext_Organization_controls(ctx, field)
 			case "vendors":
 				return ec.fieldContext_Organization_vendors(ctx, field)
-			case "peoples":
-				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
@@ -24715,6 +24718,8 @@ func (ec *executionContext) fieldContext_AccessReview_organization(_ context.Con
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "webhookSubscriptions":
+				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
 			case "accessReview":
 				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
@@ -24737,7 +24742,7 @@ func (ec *executionContext) _AccessReview_identitySource(ctx context.Context, fi
 		field,
 		ec.fieldContext_AccessReview_identitySource,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessReview().IdentitySource(ctx, obj)
+			return ec.Resolvers.AccessReview().IdentitySource(ctx, obj)
 		},
 		nil,
 		ec.marshalOAccessSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSource,
@@ -24845,7 +24850,7 @@ func (ec *executionContext) _AccessReview_accessSources(ctx context.Context, fie
 		ec.fieldContext_AccessReview_accessSources,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.AccessReview().AccessSources(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessSourceOrder))
+			return ec.Resolvers.AccessReview().AccessSources(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessSourceOrder))
 		},
 		nil,
 		ec.marshalNAccessSourceConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceConnection,
@@ -24894,7 +24899,7 @@ func (ec *executionContext) _AccessReview_campaigns(ctx context.Context, field g
 		ec.fieldContext_AccessReview_campaigns,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.AccessReview().Campaigns(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessReviewCampaignOrder))
+			return ec.Resolvers.AccessReview().Campaigns(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessReviewCampaignOrder))
 		},
 		nil,
 		ec.marshalNAccessReviewCampaignConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignConnection,
@@ -24943,7 +24948,7 @@ func (ec *executionContext) _AccessReview_permission(ctx context.Context, field 
 		ec.fieldContext_AccessReview_permission,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.AccessReview().Permission(ctx, obj, fc.Args["action"].(string))
+			return ec.Resolvers.AccessReview().Permission(ctx, obj, fc.Args["action"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -25012,7 +25017,7 @@ func (ec *executionContext) _AccessReviewCampaign_accessReview(ctx context.Conte
 		field,
 		ec.fieldContext_AccessReviewCampaign_accessReview,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessReviewCampaign().AccessReview(ctx, obj)
+			return ec.Resolvers.AccessReviewCampaign().AccessReview(ctx, obj)
 		},
 		nil,
 		ec.marshalNAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
@@ -25262,7 +25267,7 @@ func (ec *executionContext) _AccessReviewCampaign_scopeSources(ctx context.Conte
 		field,
 		ec.fieldContext_AccessReviewCampaign_scopeSources,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessReviewCampaign().ScopeSources(ctx, obj)
+			return ec.Resolvers.AccessReviewCampaign().ScopeSources(ctx, obj)
 		},
 		nil,
 		ec.marshalNAccessReviewCampaignScopeSource2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignScopeSourceᚄ,
@@ -25312,7 +25317,7 @@ func (ec *executionContext) _AccessReviewCampaign_entries(ctx context.Context, f
 		ec.fieldContext_AccessReviewCampaign_entries,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.AccessReviewCampaign().Entries(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessEntryOrder), fc.Args["accessSourceId"].(*gid.GID))
+			return ec.Resolvers.AccessReviewCampaign().Entries(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AccessEntryOrder), fc.Args["accessSourceId"].(*gid.GID))
 		},
 		nil,
 		ec.marshalNAccessEntryConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryConnection,
@@ -25361,7 +25366,7 @@ func (ec *executionContext) _AccessReviewCampaign_permission(ctx context.Context
 		ec.fieldContext_AccessReviewCampaign_permission,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.AccessReviewCampaign().Permission(ctx, obj, fc.Args["action"].(string))
+			return ec.Resolvers.AccessReviewCampaign().Permission(ctx, obj, fc.Args["action"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -25401,7 +25406,7 @@ func (ec *executionContext) _AccessReviewCampaignConnection_totalCount(ctx conte
 		field,
 		ec.fieldContext_AccessReviewCampaignConnection_totalCount,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessReviewCampaignConnection().TotalCount(ctx, obj)
+			return ec.Resolvers.AccessReviewCampaignConnection().TotalCount(ctx, obj)
 		},
 		nil,
 		ec.marshalNInt2int,
@@ -25898,7 +25903,7 @@ func (ec *executionContext) _AccessSource_accessReview(ctx context.Context, fiel
 		field,
 		ec.fieldContext_AccessSource_accessReview,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessSource().AccessReview(ctx, obj)
+			return ec.Resolvers.AccessSource().AccessReview(ctx, obj)
 		},
 		nil,
 		ec.marshalNAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
@@ -25974,7 +25979,7 @@ func (ec *executionContext) _AccessSource_connector(ctx context.Context, field g
 		field,
 		ec.fieldContext_AccessSource_connector,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessSource().Connector(ctx, obj)
+			return ec.Resolvers.AccessSource().Connector(ctx, obj)
 		},
 		nil,
 		ec.marshalOConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector,
@@ -26128,7 +26133,7 @@ func (ec *executionContext) _AccessSource_permission(ctx context.Context, field 
 		ec.fieldContext_AccessSource_permission,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.AccessSource().Permission(ctx, obj, fc.Args["action"].(string))
+			return ec.Resolvers.AccessSource().Permission(ctx, obj, fc.Args["action"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -26168,7 +26173,7 @@ func (ec *executionContext) _AccessSourceConnection_totalCount(ctx context.Conte
 		field,
 		ec.fieldContext_AccessSourceConnection_totalCount,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AccessSourceConnection().TotalCount(ctx, obj)
+			return ec.Resolvers.AccessSourceConnection().TotalCount(ctx, obj)
 		},
 		nil,
 		ec.marshalNInt2int,
@@ -28597,13 +28602,11 @@ func (ec *executionContext) fieldContext_CancelSignatureRequestPayload_deletedDo
 	return fc, nil
 }
 
-func (ec *executionContext) _ComplianceExternalURL_id(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
 func (ec *executionContext) _CloseAccessReviewCampaignPayload_accessReviewCampaign(ctx context.Context, field graphql.CollectedField, obj *types.CloseAccessReviewCampaignPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_ComplianceExternalURL_id,
 		ec.fieldContext_CloseAccessReviewCampaignPayload_accessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			return obj.AccessReviewCampaign, nil
@@ -28654,12 +28657,12 @@ func (ec *executionContext) fieldContext_CloseAccessReviewCampaignPayload_access
 	return fc, nil
 }
 
-func (ec *executionContext) _Connector_id(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+func (ec *executionContext) _ComplianceExternalURL_id(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Connector_id,
+		ec.fieldContext_ComplianceExternalURL_id,
 		func(ctx context.Context) (any, error) {
 			return obj.ID, nil
 		},
@@ -28673,9 +28676,6 @@ func (ec *executionContext) _Connector_id(ctx context.Context, field graphql.Col
 func (ec *executionContext) fieldContext_ComplianceExternalURL_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ComplianceExternalURL",
-func (ec *executionContext) fieldContext_Connector_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Connector",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -28687,7 +28687,6 @@ func (ec *executionContext) fieldContext_Connector_id(_ context.Context, field g
 }
 
 func (ec *executionContext) _ComplianceExternalURL_name(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
-func (ec *executionContext) _Connector_provider(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -28698,12 +28697,6 @@ func (ec *executionContext) _Connector_provider(ctx context.Context, field graph
 		},
 		nil,
 		ec.marshalNString2string,
-		ec.fieldContext_Connector_provider,
-		func(ctx context.Context) (any, error) {
-			return obj.Provider, nil
-		},
-		nil,
-		ec.marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider,
 		true,
 		true,
 	)
@@ -28712,22 +28705,17 @@ func (ec *executionContext) _Connector_provider(ctx context.Context, field graph
 func (ec *executionContext) fieldContext_ComplianceExternalURL_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ComplianceExternalURL",
-func (ec *executionContext) fieldContext_Connector_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Connector",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-			return nil, errors.New("field of type ConnectorProvider does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
 func (ec *executionContext) _ComplianceExternalURL_url(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceExternalURL) (ret graphql.Marshaler) {
-func (ec *executionContext) _Connector_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -28791,7 +28779,6 @@ func (ec *executionContext) _ComplianceExternalURL_createdAt(ctx context.Context
 		ec.OperationContext,
 		field,
 		ec.fieldContext_ComplianceExternalURL_createdAt,
-		ec.fieldContext_Connector_createdAt,
 		func(ctx context.Context) (any, error) {
 			return obj.CreatedAt, nil
 		},
@@ -28805,9 +28792,6 @@ func (ec *executionContext) _ComplianceExternalURL_createdAt(ctx context.Context
 func (ec *executionContext) fieldContext_ComplianceExternalURL_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ComplianceExternalURL",
-func (ec *executionContext) fieldContext_Connector_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Connector",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -29373,6 +29357,93 @@ func (ec *executionContext) fieldContext_ComplianceFrameworkEdge_node(_ context.
 				return ec.fieldContext_ComplianceFramework_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ComplianceFramework", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Connector_id(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Connector_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Connector_provider(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_provider,
+		func(ctx context.Context) (any, error) {
+			return obj.Provider, nil
+		},
+		nil,
+		ec.marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Connector_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ConnectorProvider does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Connector_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Connector_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Connector_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connector",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -49713,7 +49784,7 @@ func (ec *executionContext) _Mutation_createAccessReview(ctx context.Context, fi
 		ec.fieldContext_Mutation_createAccessReview,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateAccessReview(ctx, fc.Args["input"].(types.CreateAccessReviewInput))
+			return ec.Resolvers.Mutation().CreateAccessReview(ctx, fc.Args["input"].(types.CreateAccessReviewInput))
 		},
 		nil,
 		ec.marshalNCreateAccessReviewPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewPayload,
@@ -49758,7 +49829,7 @@ func (ec *executionContext) _Mutation_updateAccessReview(ctx context.Context, fi
 		ec.fieldContext_Mutation_updateAccessReview,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateAccessReview(ctx, fc.Args["input"].(types.UpdateAccessReviewInput))
+			return ec.Resolvers.Mutation().UpdateAccessReview(ctx, fc.Args["input"].(types.UpdateAccessReviewInput))
 		},
 		nil,
 		ec.marshalNUpdateAccessReviewPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewPayload,
@@ -49803,7 +49874,7 @@ func (ec *executionContext) _Mutation_createAccessSource(ctx context.Context, fi
 		ec.fieldContext_Mutation_createAccessSource,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateAccessSource(ctx, fc.Args["input"].(types.CreateAccessSourceInput))
+			return ec.Resolvers.Mutation().CreateAccessSource(ctx, fc.Args["input"].(types.CreateAccessSourceInput))
 		},
 		nil,
 		ec.marshalNCreateAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessSourcePayload,
@@ -49848,7 +49919,7 @@ func (ec *executionContext) _Mutation_updateAccessSource(ctx context.Context, fi
 		ec.fieldContext_Mutation_updateAccessSource,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateAccessSource(ctx, fc.Args["input"].(types.UpdateAccessSourceInput))
+			return ec.Resolvers.Mutation().UpdateAccessSource(ctx, fc.Args["input"].(types.UpdateAccessSourceInput))
 		},
 		nil,
 		ec.marshalNUpdateAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessSourcePayload,
@@ -49893,7 +49964,7 @@ func (ec *executionContext) _Mutation_deleteAccessSource(ctx context.Context, fi
 		ec.fieldContext_Mutation_deleteAccessSource,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteAccessSource(ctx, fc.Args["input"].(types.DeleteAccessSourceInput))
+			return ec.Resolvers.Mutation().DeleteAccessSource(ctx, fc.Args["input"].(types.DeleteAccessSourceInput))
 		},
 		nil,
 		ec.marshalNDeleteAccessSourcePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessSourcePayload,
@@ -49938,7 +50009,7 @@ func (ec *executionContext) _Mutation_createAccessReviewCampaign(ctx context.Con
 		ec.fieldContext_Mutation_createAccessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateAccessReviewCampaign(ctx, fc.Args["input"].(types.CreateAccessReviewCampaignInput))
+			return ec.Resolvers.Mutation().CreateAccessReviewCampaign(ctx, fc.Args["input"].(types.CreateAccessReviewCampaignInput))
 		},
 		nil,
 		ec.marshalNCreateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateAccessReviewCampaignPayload,
@@ -49983,7 +50054,7 @@ func (ec *executionContext) _Mutation_updateAccessReviewCampaign(ctx context.Con
 		ec.fieldContext_Mutation_updateAccessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateAccessReviewCampaign(ctx, fc.Args["input"].(types.UpdateAccessReviewCampaignInput))
+			return ec.Resolvers.Mutation().UpdateAccessReviewCampaign(ctx, fc.Args["input"].(types.UpdateAccessReviewCampaignInput))
 		},
 		nil,
 		ec.marshalNUpdateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAccessReviewCampaignPayload,
@@ -50028,7 +50099,7 @@ func (ec *executionContext) _Mutation_deleteAccessReviewCampaign(ctx context.Con
 		ec.fieldContext_Mutation_deleteAccessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteAccessReviewCampaign(ctx, fc.Args["input"].(types.DeleteAccessReviewCampaignInput))
+			return ec.Resolvers.Mutation().DeleteAccessReviewCampaign(ctx, fc.Args["input"].(types.DeleteAccessReviewCampaignInput))
 		},
 		nil,
 		ec.marshalNDeleteAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAccessReviewCampaignPayload,
@@ -50073,7 +50144,7 @@ func (ec *executionContext) _Mutation_startAccessReviewCampaign(ctx context.Cont
 		ec.fieldContext_Mutation_startAccessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().StartAccessReviewCampaign(ctx, fc.Args["input"].(types.StartAccessReviewCampaignInput))
+			return ec.Resolvers.Mutation().StartAccessReviewCampaign(ctx, fc.Args["input"].(types.StartAccessReviewCampaignInput))
 		},
 		nil,
 		ec.marshalNStartAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStartAccessReviewCampaignPayload,
@@ -50118,7 +50189,7 @@ func (ec *executionContext) _Mutation_closeAccessReviewCampaign(ctx context.Cont
 		ec.fieldContext_Mutation_closeAccessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CloseAccessReviewCampaign(ctx, fc.Args["input"].(types.CloseAccessReviewCampaignInput))
+			return ec.Resolvers.Mutation().CloseAccessReviewCampaign(ctx, fc.Args["input"].(types.CloseAccessReviewCampaignInput))
 		},
 		nil,
 		ec.marshalNCloseAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCloseAccessReviewCampaignPayload,
@@ -50163,7 +50234,7 @@ func (ec *executionContext) _Mutation_retryStartAccessReviewCampaign(ctx context
 		ec.fieldContext_Mutation_retryStartAccessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RetryStartAccessReviewCampaign(ctx, fc.Args["input"].(types.RetryStartAccessReviewCampaignInput))
+			return ec.Resolvers.Mutation().RetryStartAccessReviewCampaign(ctx, fc.Args["input"].(types.RetryStartAccessReviewCampaignInput))
 		},
 		nil,
 		ec.marshalNRetryStartAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRetryStartAccessReviewCampaignPayload,
@@ -50208,7 +50279,7 @@ func (ec *executionContext) _Mutation_validateAccessReviewCampaign(ctx context.C
 		ec.fieldContext_Mutation_validateAccessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ValidateAccessReviewCampaign(ctx, fc.Args["input"].(types.ValidateAccessReviewCampaignInput))
+			return ec.Resolvers.Mutation().ValidateAccessReviewCampaign(ctx, fc.Args["input"].(types.ValidateAccessReviewCampaignInput))
 		},
 		nil,
 		ec.marshalNValidateAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐValidateAccessReviewCampaignPayload,
@@ -50253,7 +50324,7 @@ func (ec *executionContext) _Mutation_cancelAccessReviewCampaign(ctx context.Con
 		ec.fieldContext_Mutation_cancelAccessReviewCampaign,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CancelAccessReviewCampaign(ctx, fc.Args["input"].(types.CancelAccessReviewCampaignInput))
+			return ec.Resolvers.Mutation().CancelAccessReviewCampaign(ctx, fc.Args["input"].(types.CancelAccessReviewCampaignInput))
 		},
 		nil,
 		ec.marshalNCancelAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelAccessReviewCampaignPayload,
@@ -50298,7 +50369,7 @@ func (ec *executionContext) _Mutation_recordAccessEntryDecision(ctx context.Cont
 		ec.fieldContext_Mutation_recordAccessEntryDecision,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RecordAccessEntryDecision(ctx, fc.Args["input"].(types.RecordAccessEntryDecisionInput))
+			return ec.Resolvers.Mutation().RecordAccessEntryDecision(ctx, fc.Args["input"].(types.RecordAccessEntryDecisionInput))
 		},
 		nil,
 		ec.marshalNRecordAccessEntryDecisionPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRecordAccessEntryDecisionPayload,
@@ -50343,7 +50414,7 @@ func (ec *executionContext) _Mutation_exportCampaignEvidence(ctx context.Context
 		ec.fieldContext_Mutation_exportCampaignEvidence,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ExportCampaignEvidence(ctx, fc.Args["input"].(types.ExportCampaignEvidenceInput))
+			return ec.Resolvers.Mutation().ExportCampaignEvidence(ctx, fc.Args["input"].(types.ExportCampaignEvidenceInput))
 		},
 		nil,
 		ec.marshalNExportCampaignEvidencePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportCampaignEvidencePayload,
@@ -52372,7 +52443,7 @@ func (ec *executionContext) _Organization_connectors(ctx context.Context, field 
 		ec.fieldContext_Organization_connectors,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().Connectors(ctx, obj, fc.Args["filter"].(*types.ConnectorFilter))
+			return ec.Resolvers.Organization().Connectors(ctx, obj, fc.Args["filter"].(*types.ConnectorFilter))
 		},
 		nil,
 		ec.marshalNConnector2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorᚄ,
@@ -53553,7 +53624,6 @@ func (ec *executionContext) fieldContext_Organization_customDomain(_ context.Con
 }
 
 func (ec *executionContext) _Organization_webhookSubscriptions(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-func (ec *executionContext) _Organization_accessReview(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -53571,18 +53641,6 @@ func (ec *executionContext) _Organization_accessReview(ctx context.Context, fiel
 }
 
 func (ec *executionContext) fieldContext_Organization_webhookSubscriptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-		ec.fieldContext_Organization_accessReview,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Organization().AccessReview(ctx, obj)
-		},
-		nil,
-		ec.marshalOAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Organization_accessReview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Organization",
 		Field:      field,
@@ -53611,6 +53669,33 @@ func (ec *executionContext) fieldContext_Organization_accessReview(_ context.Con
 		ec.Error(ctx, err)
 		return fc, err
 	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_accessReview(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_accessReview,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Organization().AccessReview(ctx, obj)
+		},
+		nil,
+		ec.marshalOAccessReview2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReview,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_accessReview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
 			case "id":
 				return ec.fieldContext_AccessReview_id(ctx, field)
 			case "organization":
@@ -71412,6 +71497,8 @@ func (ec *executionContext) fieldContext_WebhookSubscription_organization(_ cont
 				return ec.fieldContext_Organization_profiles(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -71460,6 +71547,8 @@ func (ec *executionContext) fieldContext_WebhookSubscription_organization(_ cont
 				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "webhookSubscriptions":
 				return ec.fieldContext_Organization_webhookSubscriptions(ctx, field)
+			case "accessReview":
+				return ec.fieldContext_Organization_accessReview(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -73365,7 +73454,6 @@ func (ec *executionContext) unmarshalInputAccessEntryOrder(ctx context.Context, 
 			it.Field = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -73399,7 +73487,6 @@ func (ec *executionContext) unmarshalInputAccessReviewCampaignOrder(ctx context.
 			it.Field = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -73433,7 +73520,6 @@ func (ec *executionContext) unmarshalInputAccessSourceOrder(ctx context.Context,
 			it.Field = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -73797,7 +73883,6 @@ func (ec *executionContext) unmarshalInputCancelAccessReviewCampaignInput(ctx co
 			it.AccessReviewCampaignID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -73822,6 +73907,32 @@ func (ec *executionContext) unmarshalInputCancelSignatureRequestInput(ctx contex
 				return it, err
 			}
 			it.DocumentVersionSignatureID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCloseAccessReviewCampaignInput(ctx context.Context, obj any) (types.CloseAccessReviewCampaignInput, error) {
+	var it types.CloseAccessReviewCampaignInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessReviewCampaignId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessReviewCampaignId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessReviewCampaignID = data
 		}
 	}
 	return it, nil
@@ -73893,33 +74004,6 @@ func (ec *executionContext) unmarshalInputComplianceFrameworkOrder(ctx context.C
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCloseAccessReviewCampaignInput(ctx context.Context, obj any) (types.CloseAccessReviewCampaignInput, error) {
-	var it types.CloseAccessReviewCampaignInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"accessReviewCampaignId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "accessReviewCampaignId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessReviewCampaignId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AccessReviewCampaignID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputConnectorFilter(ctx context.Context, obj any) (types.ConnectorFilter, error) {
 	var it types.ConnectorFilter
 	asMap := map[string]any{}
@@ -73943,7 +74027,6 @@ func (ec *executionContext) unmarshalInputConnectorFilter(ctx context.Context, o
 			it.Providers = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -74102,7 +74185,6 @@ func (ec *executionContext) unmarshalInputCreateAccessReviewCampaignInput(ctx co
 			it.FrameworkControls = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -74129,7 +74211,6 @@ func (ec *executionContext) unmarshalInputCreateAccessReviewInput(ctx context.Co
 			it.OrganizationID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -74177,7 +74258,6 @@ func (ec *executionContext) unmarshalInputCreateAccessSourceInput(ctx context.Co
 			it.CSVData = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -76648,7 +76728,6 @@ func (ec *executionContext) unmarshalInputDeleteAccessReviewCampaignInput(ctx co
 			it.AccessReviewCampaignID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -76675,7 +76754,6 @@ func (ec *executionContext) unmarshalInputDeleteAccessSourceInput(ctx context.Co
 			it.AccessSourceID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -78197,7 +78275,6 @@ func (ec *executionContext) unmarshalInputExportCampaignEvidenceInput(ctx contex
 			it.AccessReviewCampaignID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -78981,7 +79058,6 @@ func (ec *executionContext) unmarshalInputRecordAccessEntryDecisionInput(ctx con
 			it.DecisionNote = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -79041,7 +79117,6 @@ func (ec *executionContext) unmarshalInputRetryStartAccessReviewCampaignInput(ct
 			it.AccessReviewCampaignID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -79285,7 +79360,6 @@ func (ec *executionContext) unmarshalInputStartAccessReviewCampaignInput(ctx con
 			it.AccessSourceIds = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -79642,7 +79716,6 @@ func (ec *executionContext) unmarshalInputUpdateAccessReviewCampaignInput(ctx co
 			it.FrameworkControls = graphql.OmittableOf(data)
 		}
 	}
-
 	return it, nil
 }
 
@@ -79676,7 +79749,6 @@ func (ec *executionContext) unmarshalInputUpdateAccessReviewInput(ctx context.Co
 			it.IdentitySourceID = graphql.OmittableOf(data)
 		}
 	}
-
 	return it, nil
 }
 
@@ -79724,7 +79796,6 @@ func (ec *executionContext) unmarshalInputUpdateAccessSourceInput(ctx context.Co
 			it.CSVData = graphql.OmittableOf(data)
 		}
 	}
-
 	return it, nil
 }
 
@@ -82215,7 +82286,6 @@ func (ec *executionContext) unmarshalInputValidateAccessReviewCampaignInput(ctx 
 			it.Note = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -82999,38 +83069,7 @@ func (ec *executionContext) _AccessEntry(ctx context.Context, sel ast.SelectionS
 		case "decisionNote":
 			out.Values[i] = ec._AccessEntry_decisionNote(ctx, field, obj)
 		case "decidedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._AccessEntry_decidedBy(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			out.Values[i] = ec._AccessEntry_decidedBy(ctx, field, obj)
 		case "decidedAt":
 			out.Values[i] = ec._AccessEntry_decidedAt(ctx, field, obj)
 		case "createdAt":
@@ -83088,10 +83127,10 @@ func (ec *executionContext) _AccessEntry(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -83168,10 +83207,10 @@ func (ec *executionContext) _AccessEntryConnection(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -83212,10 +83251,10 @@ func (ec *executionContext) _AccessEntryEdge(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -83438,10 +83477,10 @@ func (ec *executionContext) _AccessReview(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -83647,10 +83686,10 @@ func (ec *executionContext) _AccessReviewCampaign(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -83727,10 +83766,10 @@ func (ec *executionContext) _AccessReviewCampaignConnection(ctx context.Context,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -83771,10 +83810,10 @@ func (ec *executionContext) _AccessReviewCampaignEdge(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -83841,10 +83880,10 @@ func (ec *executionContext) _AccessReviewCampaignScopeSource(ctx context.Context
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -84004,10 +84043,10 @@ func (ec *executionContext) _AccessSource(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -84084,10 +84123,10 @@ func (ec *executionContext) _AccessSourceConnection(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -84128,10 +84167,10 @@ func (ec *executionContext) _AccessSourceEdge(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -85396,10 +85435,10 @@ func (ec *executionContext) _CancelAccessReviewCampaignPayload(ctx context.Conte
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -85423,6 +85462,45 @@ func (ec *executionContext) _CancelSignatureRequestPayload(ctx context.Context, 
 			out.Values[i] = graphql.MarshalString("CancelSignatureRequestPayload")
 		case "deletedDocumentVersionSignatureId":
 			out.Values[i] = ec._CancelSignatureRequestPayload_deletedDocumentVersionSignatureId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var closeAccessReviewCampaignPayloadImplementors = []string{"CloseAccessReviewCampaignPayload"}
+
+func (ec *executionContext) _CloseAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CloseAccessReviewCampaignPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, closeAccessReviewCampaignPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CloseAccessReviewCampaignPayload")
+		case "accessReviewCampaign":
+			out.Values[i] = ec._CloseAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -85820,45 +85898,6 @@ func (ec *executionContext) _ComplianceFrameworkEdge(ctx context.Context, sel as
 	return out
 }
 
-var closeAccessReviewCampaignPayloadImplementors = []string{"CloseAccessReviewCampaignPayload"}
-
-func (ec *executionContext) _CloseAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CloseAccessReviewCampaignPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, closeAccessReviewCampaignPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CloseAccessReviewCampaignPayload")
-		case "accessReviewCampaign":
-			out.Values[i] = ec._CloseAccessReviewCampaignPayload_accessReviewCampaign(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var connectorImplementors = []string{"Connector"}
 
 func (ec *executionContext) _Connector(ctx context.Context, sel ast.SelectionSet, obj *types.Connector) graphql.Marshaler {
@@ -85894,10 +85933,10 @@ func (ec *executionContext) _Connector(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -86822,10 +86861,10 @@ func (ec *executionContext) _CreateAccessReviewCampaignPayload(ctx context.Conte
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -86861,10 +86900,10 @@ func (ec *executionContext) _CreateAccessReviewPayload(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -86900,10 +86939,10 @@ func (ec *executionContext) _CreateAccessSourcePayload(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -89369,10 +89408,10 @@ func (ec *executionContext) _DeleteAccessReviewCampaignPayload(ctx context.Conte
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -89408,10 +89447,10 @@ func (ec *executionContext) _DeleteAccessSourcePayload(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -92921,10 +92960,10 @@ func (ec *executionContext) _ExportCampaignEvidencePayload(ctx context.Context, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -97893,10 +97932,6 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-		case "accessReview":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -97906,6 +97941,38 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "accessReview":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
 				res = ec._Organization_accessReview(ctx, field, obj)
 				return res
 			}
@@ -98929,10 +98996,10 @@ func (ec *executionContext) _RecordAccessEntryDecisionPayload(ctx context.Contex
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -99178,10 +99245,10 @@ func (ec *executionContext) _RetryStartAccessReviewCampaignPayload(ctx context.C
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -100730,10 +100797,10 @@ func (ec *executionContext) _StartAccessReviewCampaignPayload(ctx context.Contex
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -103423,10 +103490,10 @@ func (ec *executionContext) _UpdateAccessReviewCampaignPayload(ctx context.Conte
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -103462,10 +103529,10 @@ func (ec *executionContext) _UpdateAccessReviewPayload(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -103501,10 +103568,10 @@ func (ec *executionContext) _UpdateAccessSourcePayload(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -105178,10 +105245,10 @@ func (ec *executionContext) _ValidateAccessReviewCampaignPayload(ctx context.Con
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -108063,39 +108130,11 @@ var (
 )
 
 func (ec *executionContext) marshalNAccessEntryEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AccessEntryEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAccessEntryEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccessEntryEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessEntryEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -108242,39 +108281,11 @@ func (ec *executionContext) marshalNAccessReviewCampaignConnection2ᚖgoᚗprobo
 }
 
 func (ec *executionContext) marshalNAccessReviewCampaignEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AccessReviewCampaignEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAccessReviewCampaignEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccessReviewCampaignEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -108313,39 +108324,11 @@ func (ec *executionContext) marshalNAccessReviewCampaignOrderField2goᚗproboᚗ
 }
 
 func (ec *executionContext) marshalNAccessReviewCampaignScopeSource2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignScopeSourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AccessReviewCampaignScopeSource) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAccessReviewCampaignScopeSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignScopeSource(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccessReviewCampaignScopeSource2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessReviewCampaignScopeSource(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -108463,39 +108446,11 @@ func (ec *executionContext) marshalNAccessSourceConnection2ᚖgoᚗproboᚗinc�
 }
 
 func (ec *executionContext) marshalNAccessSourceEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AccessSourceEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAccessSourceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccessSourceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAccessSourceEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -109030,7 +108985,6 @@ func (ec *executionContext) marshalNCancelSignatureRequestPayload2ᚖgoᚗprobo�
 	return ec._CancelSignatureRequestPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNComplianceExternalURL2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURL(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceExternalURL) graphql.Marshaler {
 func (ec *executionContext) unmarshalNCloseAccessReviewCampaignInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCloseAccessReviewCampaignInput(ctx context.Context, v any) (types.CloseAccessReviewCampaignInput, error) {
 	res, err := ec.unmarshalInputCloseAccessReviewCampaignInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -109041,6 +108995,16 @@ func (ec *executionContext) marshalNCloseAccessReviewCampaignPayload2goᚗprobo�
 }
 
 func (ec *executionContext) marshalNCloseAccessReviewCampaignPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCloseAccessReviewCampaignPayload(ctx context.Context, sel ast.SelectionSet, v *types.CloseAccessReviewCampaignPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CloseAccessReviewCampaignPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComplianceExternalURL2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURL(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceExternalURL) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -109070,43 +109034,6 @@ func (ec *executionContext) marshalNComplianceExternalURLEdge2ᚕᚖgoᚗprobo�
 		fc.Result = &v[i]
 		return ec.marshalNComplianceExternalURLEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdge(ctx, sel, v[i])
 	})
-	return ec._CloseAccessReviewCampaignPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNConnector2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Connector) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -109118,7 +109045,6 @@ func (ec *executionContext) marshalNConnector2ᚕᚖgoᚗproboᚗincᚋproboᚋp
 }
 
 func (ec *executionContext) marshalNComplianceExternalURLEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceExternalURLEdge(ctx context.Context, sel ast.SelectionSet, v *types.ComplianceExternalURLEdge) graphql.Marshaler {
-func (ec *executionContext) marshalNConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx context.Context, sel ast.SelectionSet, v *types.Connector) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -109137,18 +109063,6 @@ func (ec *executionContext) unmarshalNComplianceExternalURLOrderField2goᚗprobo
 func (ec *executionContext) marshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ComplianceExternalURLOrderField) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(marshalNComplianceExternalURLOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceExternalURLOrderField[v])
-	return ec._Connector(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx context.Context, v any) (coredata.ConnectorProvider, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx context.Context, sel ast.SelectionSet, v coredata.ConnectorProvider) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -109271,6 +109185,53 @@ var (
 	marshalNComplianceFrameworkVisibility2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐComplianceFrameworkVisibility = map[coredata.ComplianceFrameworkVisibility]string{
 		coredata.ComplianceFrameworkVisibilityNone:   "NONE",
 		coredata.ComplianceFrameworkVisibilityPublic: "PUBLIC",
+	}
+)
+
+func (ec *executionContext) marshalNConnector2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Connector) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx context.Context, sel ast.SelectionSet, v *types.Connector) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Connector(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx context.Context, v any) (coredata.ConnectorProvider, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx context.Context, sel ast.SelectionSet, v coredata.ConnectorProvider) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
 	unmarshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider = map[string]coredata.ConnectorProvider{
 		"SLACK":            coredata.ConnectorProviderSlack,
 		"GOOGLE_WORKSPACE": coredata.ConnectorProviderGoogleWorkspace,
@@ -117643,6 +117604,8 @@ func (ec *executionContext) unmarshalOComplianceFrameworkOrder2ᚖgoᚗproboᚗi
 	}
 	res, err := ec.unmarshalInputComplianceFrameworkOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOConnector2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx context.Context, sel ast.SelectionSet, v *types.Connector) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -117680,39 +117643,11 @@ func (ec *executionContext) marshalOConnectorProvider2ᚕgoᚗproboᚗincᚋprob
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNConnectorProvider2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐConnectorProvider(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {

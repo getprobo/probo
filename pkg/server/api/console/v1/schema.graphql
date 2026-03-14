@@ -6335,7 +6335,7 @@ type AccessEntry implements Node {
     flagReason: String
     decision: AccessEntryDecision!
     decisionNote: String
-    decidedBy: People @goField(forceResolver: true)
+    decidedBy: ID
     decidedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!

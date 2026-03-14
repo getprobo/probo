@@ -609,6 +609,12 @@ func (e *ReviewEngine) resolveDriver(
 			return nil, fmt.Errorf("cannot create HTTP client for docusign connector: %w", err)
 		}
 		return accesssource.NewDocuSignDriver(httpClient), nil
+	case coredata.ConnectorProviderNotion:
+		httpClient, err := dbConnector.Connection.Client(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create HTTP client for notion connector: %w", err)
+		}
+		return accesssource.NewNotionDriver(httpClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
 	}

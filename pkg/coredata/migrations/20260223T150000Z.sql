@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS access_entry_decision_events (
     previous_decision access_entry_decision NOT NULL,
     new_decision access_entry_decision NOT NULL,
     decision_note TEXT,
-    decided_by TEXT REFERENCES peoples(id) ON DELETE SET NULL,
+    decided_by TEXT,
     decided_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS access_review_remediation_tasks (
     tenant_id TEXT NOT NULL,
     access_review_campaign_id TEXT NOT NULL REFERENCES access_review_campaigns(id) ON DELETE CASCADE,
     access_entry_id TEXT NOT NULL REFERENCES access_entries(id) ON DELETE CASCADE,
-    decided_by TEXT REFERENCES peoples(id) ON DELETE SET NULL,
+    decided_by TEXT,
     status access_review_remediation_task_status NOT NULL DEFAULT 'OPEN',
     status_note TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,

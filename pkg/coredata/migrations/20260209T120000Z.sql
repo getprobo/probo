@@ -133,7 +133,7 @@ CREATE TABLE access_entries (
     flag_reason TEXT,
     decision access_entry_decision NOT NULL DEFAULT 'PENDING',
     decision_note TEXT,
-    decided_by TEXT REFERENCES peoples(id) ON DELETE SET NULL,
+    decided_by TEXT,
     decided_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL

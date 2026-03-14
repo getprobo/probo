@@ -237,7 +237,7 @@ func NewAccessEntry(e *coredata.AccessEntry) *AccessEntry {
 	}
 
 	if e.DecidedBy != nil {
-		entry.DecidedBy = &People{ID: *e.DecidedBy}
+		entry.DecidedBy = e.DecidedBy
 	}
 
 	return entry

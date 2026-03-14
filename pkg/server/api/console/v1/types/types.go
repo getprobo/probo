@@ -36,7 +36,7 @@ type AccessEntry struct {
 	FlagReason       *string                            `json:"flagReason,omitempty"`
 	Decision         coredata.AccessEntryDecision       `json:"decision"`
 	DecisionNote     *string                            `json:"decisionNote,omitempty"`
-	DecidedBy        *People                            `json:"decidedBy,omitempty"`
+	DecidedBy        *gid.GID                           `json:"decidedBy,omitempty"`
 	DecidedAt        *time.Time                         `json:"decidedAt,omitempty"`
 	CreatedAt        time.Time                          `json:"createdAt"`
 	UpdatedAt        time.Time                          `json:"updatedAt"`
@@ -263,6 +263,14 @@ type CancelSignatureRequestPayload struct {
 	DeletedDocumentVersionSignatureID gid.GID `json:"deletedDocumentVersionSignatureId"`
 }
 
+type CloseAccessReviewCampaignInput struct {
+	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
+}
+
+type CloseAccessReviewCampaignPayload struct {
+	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
+}
+
 type ComplianceExternalURL struct {
 	ID         gid.GID   `json:"id"`
 	Name       string    `json:"name"`
@@ -281,17 +289,19 @@ type ComplianceExternalURLEdge struct {
 	Node   *ComplianceExternalURL `json:"node"`
 }
 
-type CloseAccessReviewCampaignInput struct {
-	AccessReviewCampaignID gid.GID `json:"accessReviewCampaignId"`
-}
-
-type CloseAccessReviewCampaignPayload struct {
-	AccessReviewCampaign *AccessReviewCampaign `json:"accessReviewCampaign"`
-}
-
 type ComplianceFrameworkEdge struct {
 	Cursor page.CursorKey       `json:"cursor"`
 	Node   *ComplianceFramework `json:"node"`
+}
+
+type Connector struct {
+	ID        gid.GID                    `json:"id"`
+	Provider  coredata.ConnectorProvider `json:"provider"`
+	CreatedAt time.Time                  `json:"createdAt"`
+}
+
+type ConnectorFilter struct {
+	Providers []coredata.ConnectorProvider `json:"providers,omitempty"`
 }
 
 type ContinualImprovement struct {

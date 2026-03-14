@@ -66,29 +66,6 @@ func (r *accessEntryResolver) AccessSource(ctx context.Context, obj *types.Acces
 	return types.NewAccessSource(source), nil
 }
 
-// DecidedBy is the resolver for the decidedBy field.
-func (r *accessEntryResolver) DecidedBy(ctx context.Context, obj *types.AccessEntry) (*types.People, error) {
-	if obj.DecidedBy == nil {
-		return nil, nil
-	}
-
-	if err := r.authorize(ctx, obj.DecidedBy.ID, probo.ActionPeopleGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.DecidedBy.ID.TenantID())
-
-	people, err := prb.Peoples.Get(ctx, obj.DecidedBy.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
-	return types.NewPeople(people), nil
-}
-
 // Permission is the resolver for the permission field.
 func (r *accessEntryResolver) Permission(ctx context.Context, obj *types.AccessEntry, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -6357,11 +6334,7 @@ func (r *mutationResolver) ValidateAccessReviewCampaign(ctx context.Context, inp
 		return nil, fmt.Errorf("no identity in context")
 	}
 
-	var validatedByID *gid.GID
-	people, err := prb.Peoples.GetByEmail(ctx, string(identity.EmailAddress))
-	if err == nil {
-		validatedByID = &people.ID
-	}
+	validatedByID := &identity.ID
 
 	if err := prb.AccessReviewCampaigns.ValidateForClose(ctx, input.AccessReviewCampaignID, validatedByID, input.Note); err != nil {
 		panic(fmt.Errorf("cannot validate access review campaign: %w", err))
@@ -6421,10 +6394,7 @@ func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input 
 		DecisionNote: input.DecisionNote,
 	}
 
-	people, err := prb.Peoples.GetByEmail(ctx, string(identity.EmailAddress))
-	if err == nil {
-		req.DecidedByID = &people.ID
-	}
+	req.DecidedByID = &identity.ID
 
 	entry, err := prb.AccessEntries.RecordDecision(ctx, req)
 	if err != nil {

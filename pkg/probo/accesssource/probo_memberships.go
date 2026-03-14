@@ -79,8 +79,7 @@ ORDER BY
 		defer rows.Close()
 
 		for rows.Next() {
-			var email, fullName string
-			var state coredata.MembershipState
+			var email, fullName, state string
 
 			if err := rows.Scan(&email, &fullName, &state); err != nil {
 				return fmt.Errorf("cannot scan membership row: %w", err)
@@ -89,7 +88,7 @@ ORDER BY
 			records = append(records, AccountRecord{
 				Email:    email,
 				FullName: fullName,
-				Active:   state == coredata.MembershipStateActive,
+				Active:   state == "ACTIVE",
 				MFAStatus: coredata.MFAStatusUnknown,
 				AuthMethod: coredata.AccessEntryAuthMethodUnknown,
 			})
