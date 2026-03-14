@@ -47,7 +47,7 @@ query($id: ID!) {
 `
 
 type viewResponse struct {
-	Node struct {
+	Node *struct {
 		ID                  string  `json:"id"`
 		Name                string  `json:"name"`
 		Description         *string `json:"description"`
@@ -87,6 +87,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			var resp viewResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			if resp.Node == nil {
+				return fmt.Errorf("risk %s not found", args[0])
 			}
 
 			r := resp.Node
