@@ -109,6 +109,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["ownerId"] = flagOwner
 			}
 
+			if len(input) == 1 {
+				return fmt.Errorf("at least one field must be specified for update")
+			}
+
 			data, err := client.Do(
 				updateMutation,
 				map[string]any{"input": input},
