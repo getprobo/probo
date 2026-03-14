@@ -91,7 +91,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			client := api.NewClient(
 				host,
 				hc.Token,
-				"/connect/v1/graphql",
+				"/api/connect/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
 			)
 
