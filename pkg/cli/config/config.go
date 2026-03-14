@@ -34,6 +34,7 @@ type (
 		Pager       string                 `yaml:"pager,omitempty"`
 		Prompt      string                 `yaml:"prompt,omitempty"`
 		HTTPTimeout string                 `yaml:"http_timeout,omitempty"`
+		ActiveHost  string                 `yaml:"active_host,omitempty"`
 		Hosts       map[string]*HostConfig `yaml:"hosts"`
 	}
 
@@ -186,6 +187,12 @@ func (c *Config) DefaultHost() (string, *HostConfig, error) {
 			Token:        token,
 			Organization: c.Hosts[host].Organization,
 		}, nil
+	}
+
+	if c.ActiveHost != "" {
+		if hc, ok := c.Hosts[c.ActiveHost]; ok {
+			return c.ActiveHost, hc, nil
+		}
 	}
 
 	if len(hosts) > 0 {

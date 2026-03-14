@@ -89,6 +89,7 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 				Token:        flagToken,
 				Organization: flagOrganization,
 			}
+			cfg.ActiveHost = flagHost
 
 			if err := cfg.Save(); err != nil {
 				return err
