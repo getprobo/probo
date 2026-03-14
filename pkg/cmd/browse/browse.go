@@ -55,13 +55,13 @@ func NewCmdBrowse(f *cmdutil.Factory) *cobra.Command {
 
 			noPrint, _ := cmd.Flags().GetBool("no-browser")
 			if noPrint || f.IOStreams.ForceNonInteractive {
-				fmt.Fprintln(f.IOStreams.Out, url)
+				_, _ = fmt.Fprintln(f.IOStreams.Out, url)
 				return nil
 			}
 
 			browser := cfg.Browser
 			if err := openBrowser(url, browser); err != nil {
-				fmt.Fprintln(f.IOStreams.Out, url)
+				_, _ = fmt.Fprintln(f.IOStreams.Out, url)
 			}
 
 			return nil

@@ -137,7 +137,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(risks) == 0 {
-				fmt.Fprintln(f.IOStreams.Out, "No risks found.")
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No risks found.")
 				return nil
 			}
 
@@ -168,7 +168,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}).
 				Rows(rows...)
 
-			fmt.Fprintln(f.IOStreams.Out, t)
+			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(risks) {
 				fmt.Fprintf(

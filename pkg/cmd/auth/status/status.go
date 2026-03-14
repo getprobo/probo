@@ -41,7 +41,7 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 			bold := lipgloss.NewStyle().Bold(true)
 
 			for host, hc := range cfg.Hosts {
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					f.IOStreams.Out,
 					"%s\n",
 					bold.Render(host),
@@ -51,14 +51,14 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 				if hc.Token != "" {
 					tokenStatus = "set"
 				}
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					f.IOStreams.Out,
 					"  Token: %s\n",
 					tokenStatus,
 				)
 
 				if hc.Organization != "" {
-					fmt.Fprintf(
+					_, _ = fmt.Fprintf(
 						f.IOStreams.Out,
 						"  Organization: %s\n",
 						hc.Organization,
