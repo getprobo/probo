@@ -44,6 +44,8 @@ Every feature must be exposed through **all three interfaces**: GraphQL, MCP, an
 
 If you add a mutation in GraphQL, add the corresponding MCP tool and CLI command. If you rename or change a type, update it everywhere.
 
+Every new Go API endpoint must have end-to-end tests in `e2e/`.
+
 ## Project
 
 - Module: `go.probo.inc/probo`
