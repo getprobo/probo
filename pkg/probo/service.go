@@ -22,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/coredata"
@@ -119,6 +120,11 @@ type (
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
 		SlackMessages                     *slack.SlackMessageService
+		AccessReviews                     *AccessReviewService
+		AccessSources                     *AccessSourceService
+		AccessReviewCampaigns             AccessReviewCampaignService
+		AccessEntries                     *AccessEntryService
+		ReviewEngine                      *ReviewEngine
 	}
 )
 
@@ -286,6 +292,11 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		logger:        s.logger.Named("custom_domains"),
 	}
 	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
+	tenantService.AccessReviews = &AccessReviewService{svc: tenantService}
+	tenantService.AccessSources = &AccessSourceService{svc: tenantService}
+	tenantService.AccessReviewCampaigns = newAccessReviewCampaignAdapter(accessreview.NewCampaignService(s.pg, tenantService.scope))
+	tenantService.AccessEntries = &AccessEntryService{svc: tenantService}
+	tenantService.ReviewEngine = NewReviewEngine(s.pg, tenantService.scope, s.encryptionKey)
 
 	return tenantService
 }
