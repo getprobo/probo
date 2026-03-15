@@ -26,6 +26,7 @@ import (
 const listQuery = `
 query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: RiskFilter) {
   node(id: $id) {
+    __typename
     ... on Organization {
       risks(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
@@ -138,12 +139,19 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				flagLimit,
 				func(data json.RawMessage) (*api.Connection[risk], error) {
 					var resp struct {
-						Node struct {
-							Risks api.Connection[risk] `json:"risks"`
+						Node *struct {
+							Typename string                `json:"__typename"`
+							Risks    api.Connection[risk] `json:"risks"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
+					}
+					if resp.Node == nil {
+						return nil, fmt.Errorf("organization %s not found", flagOrg)
+					}
+					if resp.Node.Typename != "Organization" {
+						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
 					return &resp.Node.Risks, nil
 				},

@@ -24,7 +24,9 @@ import (
 	"go.probo.inc/probo/pkg/cmd/root"
 )
 
-var version string = "unknown"
+var (
+	version string = "unknown"
+)
 
 func main() {
 	ios := iostreams.System()

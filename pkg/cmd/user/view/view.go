@@ -27,6 +27,7 @@ import (
 const viewQuery = `
 query($id: ID!) {
   node(id: $id) {
+    __typename
     ... on Profile {
       id
       fullName
@@ -46,6 +47,7 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
+		Typename                 string   `json:"__typename"`
 		ID                       string   `json:"id"`
 		FullName                 string   `json:"fullName"`
 		EmailAddress             string   `json:"emailAddress"`
@@ -104,6 +106,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if resp.Node == nil {
 				return fmt.Errorf("user %s not found", args[0])
+			}
+
+			if resp.Node.Typename != "Profile" {
+				return fmt.Errorf("expected Profile node, got %s", resp.Node.Typename)
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {

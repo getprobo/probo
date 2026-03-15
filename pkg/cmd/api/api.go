@@ -26,10 +26,12 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-var schemaEndpoints = map[string]string{
-	"console": "/api/console/v1/graphql",
-	"connect": "/api/connect/v1/graphql",
-}
+var (
+	schemaEndpoints = map[string]string{
+		"console": "/api/console/v1/graphql",
+		"connect": "/api/connect/v1/graphql",
+	}
+)
 
 func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
 	var (
