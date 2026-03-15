@@ -1,3 +1,4 @@
+
 // Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -24,12 +25,34 @@ type ConnectorProvider string
 const (
 	ConnectorProviderSlack           ConnectorProvider = "SLACK"
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
+	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
+	ConnectorProviderFigma           ConnectorProvider = "FIGMA"
+	ConnectorProviderOnePassword     ConnectorProvider = "ONE_PASSWORD"
+	ConnectorProviderHubSpot         ConnectorProvider = "HUBSPOT"
+	ConnectorProviderDocuSign        ConnectorProvider = "DOCUSIGN"
+	ConnectorProviderNotion          ConnectorProvider = "NOTION"
+	ConnectorProviderBrex            ConnectorProvider = "BREX"
+	ConnectorProviderTally           ConnectorProvider = "TALLY"
+	ConnectorProviderCloudflare      ConnectorProvider = "CLOUDFLARE"
+	ConnectorProviderSentry          ConnectorProvider = "SENTRY"
+	ConnectorProviderOpenAI          ConnectorProvider = "OPENAI"
 )
 
 func ConnectorProviders() []ConnectorProvider {
 	return []ConnectorProvider{
 		ConnectorProviderSlack,
 		ConnectorProviderGoogleWorkspace,
+		ConnectorProviderLinear,
+		ConnectorProviderFigma,
+		ConnectorProviderOnePassword,
+		ConnectorProviderHubSpot,
+		ConnectorProviderDocuSign,
+		ConnectorProviderNotion,
+		ConnectorProviderBrex,
+		ConnectorProviderTally,
+		ConnectorProviderCloudflare,
+		ConnectorProviderSentry,
+		ConnectorProviderOpenAI,
 	}
 }
 
@@ -53,6 +76,28 @@ func (cp *ConnectorProvider) Scan(value any) error {
 		*cp = ConnectorProviderSlack
 	case "GOOGLE_WORKSPACE":
 		*cp = ConnectorProviderGoogleWorkspace
+	case "LINEAR":
+		*cp = ConnectorProviderLinear
+	case "FIGMA":
+		*cp = ConnectorProviderFigma
+	case "ONE_PASSWORD":
+		*cp = ConnectorProviderOnePassword
+	case "HUBSPOT":
+		*cp = ConnectorProviderHubSpot
+	case "DOCUSIGN":
+		*cp = ConnectorProviderDocuSign
+	case "NOTION":
+		*cp = ConnectorProviderNotion
+	case "BREX":
+		*cp = ConnectorProviderBrex
+	case "TALLY":
+		*cp = ConnectorProviderTally
+	case "CLOUDFLARE":
+		*cp = ConnectorProviderCloudflare
+	case "SENTRY":
+		*cp = ConnectorProviderSentry
+	case "OPENAI":
+		*cp = ConnectorProviderOpenAI
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,46 +19,50 @@ import (
 	"fmt"
 )
 
-type ConnectorProtocol string
+type MFAStatus string
 
 const (
-	ConnectorProtocolOAuth2 ConnectorProtocol = "OAUTH2"
-	ConnectorProtocolAPIKey ConnectorProtocol = "API_KEY"
+	MFAStatusEnabled  MFAStatus = "ENABLED"
+	MFAStatusDisabled MFAStatus = "DISABLED"
+	MFAStatusUnknown  MFAStatus = "UNKNOWN"
 )
 
-func ConnectorProtocols() []ConnectorProtocol {
-	return []ConnectorProtocol{
-		ConnectorProtocolOAuth2,
-		ConnectorProtocolAPIKey,
+func MFAStatuses() []MFAStatus {
+	return []MFAStatus{
+		MFAStatusEnabled,
+		MFAStatusDisabled,
+		MFAStatusUnknown,
 	}
 }
 
-func (cp ConnectorProtocol) String() string {
-	return string(cp)
+func (m MFAStatus) String() string {
+	return string(m)
 }
 
-func (cp *ConnectorProtocol) Scan(value any) error {
-	var s string
+func (m *MFAStatus) Scan(value any) error {
+	var str string
 	switch v := value.(type) {
 	case string:
-		s = v
+		str = v
 	case []byte:
-		s = string(v)
+		str = string(v)
 	default:
-		return fmt.Errorf("unsupported type for ConnectorProtocol: %T", value)
+		return fmt.Errorf("cannot scan MFAStatus: unsupported type %T", value)
 	}
 
-	switch s {
-	case "OAUTH2":
-		*cp = ConnectorProtocolOAuth2
-	case "API_KEY":
-		*cp = ConnectorProtocolAPIKey
+	switch str {
+	case "ENABLED":
+		*m = MFAStatusEnabled
+	case "DISABLED":
+		*m = MFAStatusDisabled
+	case "UNKNOWN":
+		*m = MFAStatusUnknown
 	default:
-		return fmt.Errorf("invalid ConnectorProtocol value: %q", s)
+		return fmt.Errorf("cannot parse MFAStatus: invalid value %q", str)
 	}
 	return nil
 }
 
-func (cp ConnectorProtocol) Value() (driver.Value, error) {
-	return cp.String(), nil
+func (m MFAStatus) Value() (driver.Value, error) {
+	return m.String(), nil
 }
