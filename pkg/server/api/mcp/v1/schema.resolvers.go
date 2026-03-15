@@ -3371,5 +3371,212 @@ func (r *Resolver) GetAuditLogEntryTool(ctx context.Context, req *mcp.CallToolRe
 
 	return nil, types.GetAuditLogEntryOutput{
 		AuditLogEntry: types.NewAuditLogEntry(entry),
+// ListAccessReviewCampaignsTool handles the listAccessReviewCampaigns tool
+// List access review campaigns for an organization
+func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessReviewCampaignsInput) (*mcp.CallToolResult, types.ListAccessReviewCampaignsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignList)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	review, err := prb.AccessReviews.GetByOrganizationID(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.ListAccessReviewCampaignsOutput{Campaigns: []*types.AccessReviewCampaign{}}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
+		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+	p, err := prb.AccessReviewCampaigns.ListForAccessReviewID(ctx, review.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
+	}
+
+	return nil, types.NewListAccessReviewCampaignsOutput(p), nil
+}
+
+// ListAccessEntriesTool handles the listAccessEntries tool
+// List access entries for a campaign with optional filters
+func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessEntriesInput) (*mcp.CallToolResult, types.ListAccessEntriesOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessEntryList)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	pageOrderBy := page.OrderBy[coredata.AccessEntryOrderField]{
+		Field:     coredata.AccessEntryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessEntryOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var filter *coredata.AccessEntryFilter
+	if input.Filter != nil {
+		filter = &coredata.AccessEntryFilter{
+			Decision:       input.Filter.Decision,
+			Flag:           input.Filter.Flag,
+			IncrementalTag: input.Filter.IncrementalTag,
+			IsAdmin:        input.Filter.IsAdmin,
+			AuthMethod:     input.Filter.AuthMethod,
+		}
+	}
+
+	var p *page.Page[*coredata.AccessEntry, coredata.AccessEntryOrderField]
+
+	if input.AccessSourceID != nil {
+		var err error
+		p, err = prb.AccessEntries.ListForCampaignIDAndSourceID(
+			ctx,
+			input.CampaignID,
+			*input.AccessSourceID,
+			cursor,
+			filter,
+		)
+		if err != nil {
+			panic(fmt.Errorf("cannot list access entries: %w", err))
+		}
+	} else {
+		var err error
+		p, err = prb.AccessEntries.ListForCampaignID(ctx, input.CampaignID, cursor, filter)
+		if err != nil {
+			panic(fmt.Errorf("cannot list access entries: %w", err))
+		}
+	}
+
+	return nil, types.NewListAccessEntriesOutput(p), nil
+}
+
+// GetAccessReviewCampaignStatisticsTool handles the getAccessReviewCampaignStatistics tool
+// Get statistics for an access review campaign
+func (r *Resolver) GetAccessReviewCampaignStatisticsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAccessReviewCampaignStatisticsInput) (*mcp.CallToolResult, types.GetAccessReviewCampaignStatisticsOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignGet)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	stats, err := prb.AccessEntries.Statistics(ctx, input.CampaignID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get campaign statistics: %w", err))
+	}
+
+	return nil, types.GetAccessReviewCampaignStatisticsOutput{
+		Statistics: types.NewAccessEntryStatistics(stats),
+	}, nil
+}
+
+// RecordAccessEntryDecisionTool handles the recordAccessEntryDecision tool
+// Record a decision on an access entry
+func (r *Resolver) RecordAccessEntryDecisionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RecordAccessEntryDecisionInput) (*mcp.CallToolResult, types.RecordAccessEntryDecisionOutput, error) {
+	r.MustAuthorize(ctx, input.AccessEntryID, probo.ActionAccessEntryDecide)
+
+	prb := r.ProboService(ctx, input.AccessEntryID)
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, types.RecordAccessEntryDecisionOutput{}, fmt.Errorf("no identity in context")
+	}
+
+	decisionReq := probo.RecordAccessEntryDecisionRequest{
+		EntryID:      input.AccessEntryID,
+		Decision:     input.Decision,
+		DecisionNote: input.DecisionNote,
+	}
+
+	organizationID, err := prb.AccessEntries.ResolveOrganizationID(ctx, input.AccessEntryID)
+	if err == nil {
+		profile, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
+		if err == nil {
+			decisionReq.DecidedByID = &profile.ID
+		}
+	}
+
+	entry, err := prb.AccessEntries.RecordDecision(ctx, decisionReq)
+	if err != nil {
+		return nil, types.RecordAccessEntryDecisionOutput{}, fmt.Errorf("cannot record decision: %w", err)
+	}
+
+	return nil, types.RecordAccessEntryDecisionOutput{
+		AccessEntry: types.NewAccessEntry(entry),
+	}, nil
+}
+
+// RecordAccessEntryDecisionsTool handles the recordAccessEntryDecisions tool
+// Record decisions on multiple access entries in a single batch
+func (r *Resolver) RecordAccessEntryDecisionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RecordAccessEntryDecisionsInput) (*mcp.CallToolResult, types.RecordAccessEntryDecisionsOutput, error) {
+	if len(input.Decisions) == 0 {
+		return nil, types.RecordAccessEntryDecisionsOutput{
+			AccessEntries: []*types.AccessEntry{},
+		}, nil
+	}
+
+	r.MustAuthorize(ctx, input.Decisions[0].AccessEntryID, probo.ActionAccessEntryDecide)
+
+	prb := r.ProboService(ctx, input.Decisions[0].AccessEntryID)
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, types.RecordAccessEntryDecisionsOutput{}, fmt.Errorf("no identity in context")
+	}
+
+	var decidedByID *gid.GID
+	organizationID, err := prb.AccessEntries.ResolveOrganizationID(ctx, input.Decisions[0].AccessEntryID)
+	if err == nil {
+		profile, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
+		if err == nil {
+			decidedByID = &profile.ID
+		}
+	}
+
+	decisions := make([]probo.RecordAccessEntryDecisionRequest, len(input.Decisions))
+	for i, d := range input.Decisions {
+		decisions[i] = probo.RecordAccessEntryDecisionRequest{
+			EntryID:      d.AccessEntryID,
+			Decision:     d.Decision,
+			DecisionNote: d.DecisionNote,
+			DecidedByID:  decidedByID,
+		}
+	}
+
+	entries, err := prb.AccessEntries.RecordDecisions(ctx, decisions)
+	if err != nil {
+		return nil, types.RecordAccessEntryDecisionsOutput{}, fmt.Errorf("cannot record decisions: %w", err)
+	}
+
+	accessEntries := make([]*types.AccessEntry, len(entries))
+	for i, e := range entries {
+		accessEntries[i] = types.NewAccessEntry(e)
+	}
+
+	return nil, types.RecordAccessEntryDecisionsOutput{
+		AccessEntries: accessEntries,
+	}, nil
+}
+
+// CloseAccessReviewCampaignTool handles the closeAccessReviewCampaign tool
+// Close an access review campaign
+func (r *Resolver) CloseAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloseAccessReviewCampaignInput) (*mcp.CallToolResult, types.CloseAccessReviewCampaignOutput, error) {
+	r.MustAuthorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignClose)
+
+	prb := r.ProboService(ctx, input.CampaignID)
+
+	campaign, err := prb.AccessReviewCampaigns.Close(ctx, input.CampaignID)
+	if err != nil {
+		return nil, types.CloseAccessReviewCampaignOutput{}, fmt.Errorf("cannot close campaign: %w", err)
+	}
+
+	return nil, types.CloseAccessReviewCampaignOutput{
+		Campaign: types.NewAccessReviewCampaign(campaign),
 	}, nil
 }
