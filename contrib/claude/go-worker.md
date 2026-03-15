@@ -4,7 +4,7 @@ Background workers follow a poll-based pattern with bounded concurrency. The str
 
 ## Run loop
 
-The `Run(ctx context.Context) error` method loops with a `select` on `ctx.Done()` and `time.After(interval)`. On each tick it recovers stale rows, then drains available work via `processNext`. Work items are claimed inside a transaction with `FOR UPDATE SKIP LOCKED`, marked as processing, then handled concurrently in goroutines bounded by a semaphore channel. Use `context.WithoutCancel` for work that must complete even after shutdown, and `sync.WaitGroup` with `defer wg.Wait()` to ensure in-flight goroutines finish before `Run` returns.
+The `Run(ctx context.Context) error` method uses a `time.Ticker` in a `for`/`select` loop. On each tick it recovers stale rows, then drains available work via `processNext`. Work items are claimed inside a transaction with `FOR UPDATE SKIP LOCKED`, marked as processing, then handled concurrently in goroutines bounded by a semaphore channel. Use `context.WithoutCancel` for work that must complete even after shutdown, and `sync.WaitGroup` with `defer wg.Wait()` to ensure in-flight goroutines finish before `Run` returns.
 
 ```go
 type (
@@ -39,27 +39,29 @@ func NewFooWorker(
 
 func (w *FooWorker) Run(ctx context.Context) error {
 	var (
-		wg  sync.WaitGroup
-		sem = make(chan struct{}, w.maxConcurrency)
+		wg     sync.WaitGroup
+		sem    = make(chan struct{}, w.maxConcurrency)
+		ticker = time.NewTicker(w.interval)
 	)
+	defer ticker.Stop()
 	defer wg.Wait()
 
-LOOP:
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(w.interval):
-		nonCancelableCtx := context.WithoutCancel(ctx)
-		w.recoverStaleRows(nonCancelableCtx)
-		for {
-			if err := w.processNext(ctx, sem, &wg); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					w.logger.ErrorCtx(nonCancelableCtx, "cannot claim item", log.Error(err))
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			nonCancelableCtx := context.WithoutCancel(ctx)
+			w.recoverStaleRows(nonCancelableCtx)
+			for {
+				if err := w.processNext(ctx, sem, &wg); err != nil {
+					if !errors.Is(err, coredata.ErrResourceNotFound) {
+						w.logger.ErrorCtx(nonCancelableCtx, "cannot claim item", log.Error(err))
+					}
+					break
 				}
-				break
 			}
 		}
-		goto LOOP
 	}
 }
 ```
