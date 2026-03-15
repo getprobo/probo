@@ -7,12 +7,14 @@ import type { RiskOverviewTabFragment$key } from "#/__generated__/core/RiskOverv
 
 const overviewFragment = graphql`
   fragment RiskOverviewTabFragment on Risk {
+    # eslint-disable-next-line relay/unused-fields
     inherentLikelihood
+    # eslint-disable-next-line relay/unused-fields
     inherentImpact
+    # eslint-disable-next-line relay/unused-fields
     residualLikelihood
+    # eslint-disable-next-line relay/unused-fields
     residualImpact
-    inherentRiskScore
-    residualRiskScore
   }
 `;
 

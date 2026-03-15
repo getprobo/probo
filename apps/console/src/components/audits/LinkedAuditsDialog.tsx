@@ -22,6 +22,7 @@ import type {
   LinkedAuditsDialogFragment$key,
 } from "#/__generated__/core/LinkedAuditsDialogFragment.graphql";
 import type { LinkedAuditsDialogQuery } from "#/__generated__/core/LinkedAuditsDialogQuery.graphql";
+import type { LinkedAuditsDialogQuery_fragment } from "#/__generated__/core/LinkedAuditsDialogQuery_fragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
 
@@ -58,8 +59,6 @@ const auditsFragment = graphql`
           id
           name
           state
-          validFrom
-          validUntil
           framework {
             id
             name
@@ -98,10 +97,11 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
   const query = useLazyLoadQuery<LinkedAuditsDialogQuery>(auditsQuery, {
     organizationId,
   });
-  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
-    auditsFragment,
-    query.organization as LinkedAuditsDialogFragment$key,
-  );
+  const { data, loadNext, hasNext, isLoadingNext }
+    = usePaginationFragment<LinkedAuditsDialogQuery_fragment, LinkedAuditsDialogFragment$key>(
+      auditsFragment,
+      query.organization as LinkedAuditsDialogFragment$key,
+    );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const audits = useMemo(

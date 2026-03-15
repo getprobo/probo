@@ -34,6 +34,7 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 
+import type { ContinualImprovementGraphDeleteMutation } from "#/__generated__/core/ContinualImprovementGraphDeleteMutation.graphql";
 import type { ContinualImprovementGraphListQuery } from "#/__generated__/core/ContinualImprovementGraphListQuery.graphql";
 import type {
   ContinualImprovementsPageFragment$data,
@@ -73,16 +74,12 @@ const continualImprovementsPageFragment = graphql`
         key: "ContinualImprovementsPage_continualImprovements"
         filters: ["filter"]
       ) {
-      __id
-      totalCount
       edges {
         node {
           id
           snapshotId
-          sourceId
           referenceId
           description
-          source
           targetDate
           status
           priority
@@ -90,8 +87,6 @@ const continualImprovementsPageFragment = graphql`
             id
             fullName
           }
-          createdAt
-          updatedAt
           canUpdate: permission(action: "core:continual-improvement:update")
           canDelete: permission(action: "core:continual-improvement:delete")
         }
@@ -226,7 +221,7 @@ function ImprovementRow({
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const [deleteImprovement] = useMutation(deleteContinualImprovementMutation);
+  const [deleteImprovement] = useMutation<ContinualImprovementGraphDeleteMutation>(deleteContinualImprovementMutation);
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
 

@@ -7,6 +7,7 @@ import type { VersionRowFragment$key } from "#/__generated__/core/VersionRowFrag
 
 const fragment = graphql`
   fragment VersionRowFragment on DocumentVersion {
+    # eslint-disable-next-line relay/unused-fields
     id
     version
     signed

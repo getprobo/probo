@@ -69,8 +69,6 @@ const serviceFragment = graphql`
     id
     name
     description
-    createdAt
-    updatedAt
     canUpdate: permission(action: "core:vendor-service:update")
     canDelete: permission(action: "core:vendor-service:delete")
   }

@@ -31,6 +31,7 @@ export const personalAPIKeyRowFragment = graphql`
     createdAt
     expiresAt
     lastUsedAt
+    # eslint-disable-next-line relay/unused-fields
     token @include(if: $includeToken)
   }
 `;

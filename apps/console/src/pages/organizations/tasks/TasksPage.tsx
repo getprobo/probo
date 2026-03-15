@@ -10,6 +10,7 @@ import { graphql } from "relay-runtime";
 
 import type { TaskGraphQuery } from "#/__generated__/core/TaskGraphQuery.graphql";
 import type { TasksPageFragment$key } from "#/__generated__/core/TasksPageFragment.graphql";
+import type { TasksPageFragment_query } from "#/__generated__/core/TasksPageFragment_query.graphql";
 import TaskFormDialog from "#/components/tasks/TaskFormDialog";
 import { TasksCard } from "#/components/tasks/TasksCard";
 import { tasksQuery } from "#/hooks/graph/TaskGraph";
@@ -34,8 +35,11 @@ const tasksFragment = graphql`
     ) @connection(key: "TasksPageFragment_tasks") @required(action: THROW) {
       __id
       edges @required(action: THROW) {
+        # eslint-disable-next-line relay/unused-fields
         node {
+          # eslint-disable-next-line relay/unused-fields
           id
+          # eslint-disable-next-line relay/unused-fields
           state
           ...TaskFormDialogFragment
           ...TasksCard_TaskRowFragment
@@ -52,7 +56,7 @@ interface Props {
 export default function TasksPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const query = usePreloadedQuery(tasksQuery, queryRef);
-  const [data] = useRefetchableFragment(
+  const [data] = useRefetchableFragment<TasksPageFragment_query, TasksPageFragment$key>(
     tasksFragment,
     query.organization as TasksPageFragment$key,
   );

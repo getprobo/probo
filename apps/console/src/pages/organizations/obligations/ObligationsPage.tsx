@@ -32,11 +32,13 @@ import {
 } from "react-relay";
 import { useParams } from "react-router";
 
+import type { ObligationGraphDeleteMutation } from "#/__generated__/core/ObligationGraphDeleteMutation.graphql";
 import type { ObligationGraphListQuery } from "#/__generated__/core/ObligationGraphListQuery.graphql";
 import type {
   ObligationsPageFragment$data,
   ObligationsPageFragment$key,
 } from "#/__generated__/core/ObligationsPageFragment.graphql";
+import type { ObligationsPageRefetchQuery } from "#/__generated__/core/ObligationsPageRefetchQuery.graphql";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -69,26 +71,18 @@ const obligationsPageFragment = graphql`
       filter: { snapshotId: $snapshotId }
     ) @connection(key: "ObligationsPage_obligations", filters: ["filter"]) {
       __id
-      totalCount
       edges {
         node {
           id
           snapshotId
-          sourceId
           area
           source
-          requirement
           status
-          lastReviewDate
           dueDate
-          actionsToBeImplemented
-          regulator
           owner {
             id
             fullName
           }
-          createdAt
-          updatedAt
           canUpdate: permission(action: "core:obligation:update")
           canDelete: permission(action: "core:obligation:delete")
         }
@@ -115,7 +109,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
     data: obligationsData,
     loadNext,
     hasNext,
-  } = usePaginationFragment(
+  } = usePaginationFragment<ObligationsPageRefetchQuery, ObligationsPageFragment$key>(
     obligationsPageFragment,
     organization.node as ObligationsPageFragment$key,
   );
@@ -216,7 +210,7 @@ function ObligationRow({
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const [deleteObligation] = useMutation(deleteObligationMutation);
+  const [deleteObligation] = useMutation<ObligationGraphDeleteMutation>(deleteObligationMutation);
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
 

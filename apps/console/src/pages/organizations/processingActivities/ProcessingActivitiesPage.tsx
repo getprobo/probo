@@ -52,6 +52,7 @@ import type {
   ProcessingActivitiesPageTIAFragment$data,
   ProcessingActivitiesPageTIAFragment$key,
 } from "#/__generated__/core/ProcessingActivitiesPageTIAFragment.graphql";
+import type { ProcessingActivityGraphDeleteMutation } from "#/__generated__/core/ProcessingActivityGraphDeleteMutation.graphql";
 import type { ProcessingActivityGraphListQuery } from "#/__generated__/core/ProcessingActivityGraphListQuery.graphql";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
@@ -92,22 +93,16 @@ const processingActivitiesPageFragment = graphql`
                 key: "ProcessingActivitiesPage_processingActivities"
                 filters: ["filter"]
             ) {
-            __id
-            totalCount
             edges {
                 node {
                     id
                     snapshotId
-                    sourceId
                     name
                     purpose
                     dataSubjectCategory
-                    personalDataCategory
                     lawfulBasis
                     location
                     internationalTransfers
-                    createdAt
-                    updatedAt
                     canUpdate: permission(
                         action: "core:processing-activity:update"
                     )
@@ -142,8 +137,6 @@ const dpiaListPageFragment = graphql`
                 key: "ProcessingActivitiesPage_dataProtectionImpactAssessments"
                 filters: ["filter"]
             ) {
-            __id
-            totalCount
             edges {
                 node {
                     id
@@ -154,8 +147,6 @@ const dpiaListPageFragment = graphql`
                         id
                         name
                     }
-                    createdAt
-                    updatedAt
                 }
             }
             pageInfo {
@@ -184,8 +175,6 @@ const tiaListPageFragment = graphql`
                 key: "ProcessingActivitiesPage_transferImpactAssessments"
                 filters: ["filter"]
             ) {
-            __id
-            totalCount
             edges {
                 node {
                     id
@@ -196,8 +185,6 @@ const tiaListPageFragment = graphql`
                         id
                         name
                     }
-                    createdAt
-                    updatedAt
                 }
             }
             pageInfo {
@@ -707,7 +694,7 @@ function ActivityRow({
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const [deleteActivity] = useMutation(deleteProcessingActivityMutation);
+  const [deleteActivity] = useMutation<ProcessingActivityGraphDeleteMutation>(deleteProcessingActivityMutation);
   const confirm = useConfirm();
 
   const handleDelete = () => {

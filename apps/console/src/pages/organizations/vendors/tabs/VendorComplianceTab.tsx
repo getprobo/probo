@@ -67,7 +67,6 @@ const complianceReportFragment = graphql`
     reportName
     file {
       fileName
-      mimeType
       size
       downloadUrl
     }

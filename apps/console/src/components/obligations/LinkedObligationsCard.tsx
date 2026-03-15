@@ -33,7 +33,6 @@ import { LinkedObligationDialog } from "./LinkedObligationsDialog";
 const linkedObligationFragment = graphql`
   fragment LinkedObligationsCardFragment on Obligation {
     id
-    requirement
     area
     source
     status

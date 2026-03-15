@@ -28,6 +28,7 @@ import type {
   VendorGraphPaginatedFragment$data,
   VendorGraphPaginatedFragment$key,
 } from "#/__generated__/core/VendorGraphPaginatedFragment.graphql";
+import type { VendorsListQuery } from "#/__generated__/core/VendorsListQuery.graphql";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import {
@@ -53,7 +54,7 @@ export default function VendorsPage(props: Props) {
   const isSnapshotMode = Boolean(snapshotId);
 
   const data = usePreloadedQuery(vendorsQuery, props.queryRef);
-  const pagination = usePaginationFragment(
+  const pagination = usePaginationFragment<VendorsListQuery, VendorGraphPaginatedFragment$key>(
     paginatedVendorsFragment,
     data.node as VendorGraphPaginatedFragment$key,
   );

@@ -34,6 +34,7 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 
+import type { RightsRequestGraphDeleteMutation } from "#/__generated__/core/RightsRequestGraphDeleteMutation.graphql";
 import type { RightsRequestGraphListQuery } from "#/__generated__/core/RightsRequestGraphListQuery.graphql";
 import type {
   RightsRequestsPageFragment$data,
@@ -64,8 +65,6 @@ const rightsRequestsPageFragment = graphql`
         id
         rightsRequests(first: $first, after: $after)
             @connection(key: "RightsRequestsPage_rightsRequests") {
-            __id
-            totalCount
             edges {
                 node {
                     id
@@ -73,11 +72,7 @@ const rightsRequestsPageFragment = graphql`
                     requestState
                     dataSubject
                     contact
-                    details
                     deadline
-                    actionTaken
-                    createdAt
-                    updatedAt
 
                     canDelete: permission(action: "core:rights-request:delete")
                     canUpdate: permission(action: "core:rights-request:update")
@@ -210,7 +205,7 @@ function RequestRow({
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const [deleteRequest] = useMutation(deleteRightsRequestMutation);
+  const [deleteRequest] = useMutation<RightsRequestGraphDeleteMutation>(deleteRightsRequestMutation);
   const confirm = useConfirm();
 
   const handleDelete = () => {

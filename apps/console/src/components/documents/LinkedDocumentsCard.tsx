@@ -30,7 +30,6 @@ const linkedDocumentFragment = graphql`
   fragment LinkedDocumentsCardFragment on Document {
     id
     title
-    createdAt
     documentType
     versions(first: 1) {
       edges {

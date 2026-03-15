@@ -15,6 +15,7 @@ const snapshotQuery = graphql`
   query SnapshotBannerQuery($snapshotId: ID!) {
     node(id: $snapshotId) {
       ... on Snapshot {
+        # eslint-disable-next-line relay/unused-fields
         id
         name
         type

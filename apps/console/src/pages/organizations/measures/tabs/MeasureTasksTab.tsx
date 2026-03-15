@@ -22,6 +22,7 @@ const tasksQuery = graphql`
           edges @required(action: THROW) {
             node {
               id
+              # eslint-disable-next-line relay/unused-fields
               state
               ...TaskFormDialogFragment
               ...TasksCard_TaskRowFragment

@@ -13,6 +13,7 @@ export const compliancePageAccessPageQuery = graphql`
       __typename
       ... on Organization {
         compliancePage: trustCenter @required(action: THROW) {
+          # eslint-disable-next-line relay/unused-fields
           id
           ...CompliancePageAccessListFragment
         }

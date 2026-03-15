@@ -34,6 +34,7 @@ const meetingFragment = graphql`
     id
     name
     date
+    # eslint-disable-next-line relay/unused-fields
     minutes
     canUpdate: permission(action: "core:meeting:update")
     canDelete: permission(action: "core:meeting:delete")

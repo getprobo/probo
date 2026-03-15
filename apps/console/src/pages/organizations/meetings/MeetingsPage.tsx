@@ -33,6 +33,7 @@ import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { MeetingGraphListQuery } from "#/__generated__/core/MeetingGraphListQuery.graphql";
+import type { MeetingsListQuery } from "#/__generated__/core/MeetingsListQuery.graphql";
 import type { MeetingsPage_UpdateSummaryMutation } from "#/__generated__/core/MeetingsPage_UpdateSummaryMutation.graphql";
 import type { MeetingsPageListFragment$key } from "#/__generated__/core/MeetingsPageListFragment.graphql";
 import type { MeetingsPageRowFragment$key } from "#/__generated__/core/MeetingsPageRowFragment.graphql";
@@ -91,7 +92,7 @@ export default function MeetingsPage(props: Props) {
     props.queryRef,
   ).organization;
 
-  const pagination = usePaginationFragment(
+  const pagination = usePaginationFragment<MeetingsListQuery, MeetingsPageListFragment$key>(
     meetingsFragment,
     organization as MeetingsPageListFragment$key,
   );

@@ -37,16 +37,16 @@ const frameworkDetailFragment = graphql`
     fragment FrameworkDetailPageFragment on Framework {
         id
         name
+        # eslint-disable-next-line relay/unused-fields
         description
+        # eslint-disable-next-line relay/unused-fields
         lightLogoURL
+        # eslint-disable-next-line relay/unused-fields
         darkLogoURL
         canExport: permission(action: "core:franework:export")
         canUpdate: permission(action: "core:framework:update")
         canDelete: permission(action: "core:framework:delete")
         canCreateControl: permission(action: "core:control:create")
-        organization {
-            name
-        }
         controls(
             first: 250
             orderBy: { field: SECTION_TITLE, direction: ASC }
@@ -57,7 +57,6 @@ const frameworkDetailFragment = graphql`
                     id
                     sectionTitle
                     name
-                    bestPractice
                 }
             }
         }

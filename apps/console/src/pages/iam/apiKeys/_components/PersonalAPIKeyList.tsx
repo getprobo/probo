@@ -40,8 +40,10 @@ const fragment = graphql`
       @required(action: THROW)
       @connection(key: "PersonalAPIKeyListFragment_personalAPIKeys") {
       edges @required(action: THROW) {
+        # eslint-disable-next-line relay/unused-fields
         node {
           id
+          # eslint-disable-next-line relay/must-colocate-fragment-spreads
           ...PersonalAPIKeyRowFragment
         }
       }

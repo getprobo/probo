@@ -42,10 +42,10 @@ const fragment = graphql`
         node {
           id
           title
+          # eslint-disable-next-line relay/unused-fields
           body
           status
           createdAt
-          updatedAt
         }
       }
     }

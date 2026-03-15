@@ -6,6 +6,7 @@ import type { FrameworkBadgeFragment$key } from "./__generated__/FrameworkBadgeF
 
 const frameworkFragment = graphql`
   fragment FrameworkBadgeFragment on Framework {
+    # eslint-disable-next-line relay/unused-fields
     id
     name
     lightLogoURL

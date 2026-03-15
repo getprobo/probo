@@ -24,6 +24,7 @@ import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
+import type { LinkedControlsDialogControlsQuery } from "#/__generated__/core/LinkedControlsDialogControlsQuery.graphql";
 import type {
   LinkedControlsDialogFragment$data,
   LinkedControlsDialogFragment$key,
@@ -125,10 +126,11 @@ function LinkedControlsDialogContent(props: Props & { ref: SearchRef }) {
   const mainData = useLazyLoadQuery<LinkedControlsDialogQuery>(query, {
     organizationId,
   });
-  const { data, loadNext, hasNext, isLoadingNext, refetch } = usePaginationFragment(
-    controlsFragment,
-    mainData.organization as LinkedControlsDialogFragment$key,
-  );
+  const { data, loadNext, hasNext, isLoadingNext, refetch }
+    = usePaginationFragment<LinkedControlsDialogControlsQuery, LinkedControlsDialogFragment$key>(
+      controlsFragment,
+      mainData.organization as LinkedControlsDialogFragment$key,
+    );
 
   const controls = data.controls?.edges?.map(edge => edge.node) ?? [];
   const controlIds = useMemo(() => {

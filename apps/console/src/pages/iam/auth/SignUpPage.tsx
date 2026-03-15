@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
+import type { SignUpPageMutation } from "#/__generated__/iam/SignUpPageMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const signUpMutation = graphql`
@@ -42,7 +43,7 @@ export default function SignUpPage() {
     },
   });
 
-  const [signUp] = useMutation(signUpMutation);
+  const [signUp] = useMutation<SignUpPageMutation>(signUpMutation);
 
   const onSubmit = (data: FormData) => {
     signUp({

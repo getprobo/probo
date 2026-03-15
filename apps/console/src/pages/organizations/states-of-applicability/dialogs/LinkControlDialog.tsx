@@ -20,6 +20,7 @@ import {
 import { forwardRef, Suspense, useImperativeHandle, useMemo, useState } from "react";
 import { graphql, useLazyLoadQuery } from "react-relay";
 
+import type { LinkControlDialogQuery } from "#/__generated__/core/LinkControlDialogQuery.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const linkControlQuery = graphql`
@@ -255,7 +256,7 @@ function LinkControlDialogContent({
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const [collapsedFrameworks, setCollapsedFrameworks] = useState<Set<string>>(new Set());
-  const data = useLazyLoadQuery(
+  const data = useLazyLoadQuery<LinkControlDialogQuery>(
     linkControlQuery,
     { stateOfApplicabilityId, organizationId },
     { fetchPolicy: "store-or-network" },

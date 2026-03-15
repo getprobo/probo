@@ -12,16 +12,22 @@ import { useFormWithSchema } from "../useFormWithSchema";
 const RiskFragment = graphql`
   fragment useRiskFormFragment on Risk {
     id
+    # eslint-disable-next-line relay/unused-fields
     name
+    # eslint-disable-next-line relay/unused-fields
     category
     description
+    # eslint-disable-next-line relay/unused-fields
     treatment
+    # eslint-disable-next-line relay/unused-fields
     inherentLikelihood
+    # eslint-disable-next-line relay/unused-fields
     inherentImpact
+    # eslint-disable-next-line relay/unused-fields
     residualLikelihood
+    # eslint-disable-next-line relay/unused-fields
     residualImpact
-    inherentRiskScore
-    residualRiskScore
+    # eslint-disable-next-line relay/unused-fields
     note
     owner {
       id

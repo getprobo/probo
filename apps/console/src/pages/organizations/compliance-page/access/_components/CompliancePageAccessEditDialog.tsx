@@ -42,24 +42,34 @@ const compliancePageAccessEditDialogQuery = graphql`
             node {
               id
               status
+              # eslint-disable-next-line relay/unused-fields
               document {
                 id
+                # eslint-disable-next-line relay/unused-fields
                 title
+                # eslint-disable-next-line relay/unused-fields
                 documentType
               }
+              # eslint-disable-next-line relay/unused-fields
               report {
                 id
+                # eslint-disable-next-line relay/unused-fields
                 filename
+                # eslint-disable-next-line relay/unused-fields
                 audit {
                   id
+                  # eslint-disable-next-line relay/unused-fields
                   framework {
                     name
                   }
                 }
               }
+              # eslint-disable-next-line relay/unused-fields
               trustCenterFile {
                 id
+                # eslint-disable-next-line relay/unused-fields
                 name
+                # eslint-disable-next-line relay/unused-fields
                 category
               }
             }

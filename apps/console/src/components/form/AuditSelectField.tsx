@@ -26,8 +26,6 @@ const auditsQuery = graphql`
                 name
               }
               state
-              validFrom
-              validUntil
             }
           }
         }

@@ -24,6 +24,7 @@ import { z } from "zod";
 
 import type { PeopleGraphPaginatedFragment$key } from "#/__generated__/core/PeopleGraphPaginatedFragment.graphql";
 import type { PeopleGraphPaginatedQuery } from "#/__generated__/core/PeopleGraphPaginatedQuery.graphql";
+import type { PeopleListQuery } from "#/__generated__/core/PeopleListQuery.graphql";
 import type { SignatureDocumentsDialogMutation } from "#/__generated__/core/SignatureDocumentsDialogMutation.graphql";
 import {
   paginatedPeopleFragment,
@@ -144,7 +145,7 @@ function PeopleList({
     hasNext,
     loadNext,
     isLoadingNext,
-  } = usePaginationFragment(
+  } = usePaginationFragment<PeopleListQuery, PeopleGraphPaginatedFragment$key>(
     paginatedPeopleFragment,
     data.organization as PeopleGraphPaginatedFragment$key,
   );

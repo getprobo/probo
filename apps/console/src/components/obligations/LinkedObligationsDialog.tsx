@@ -25,6 +25,7 @@ import type {
   LinkedObligationsDialogFragment$key,
 } from "#/__generated__/core/LinkedObligationsDialogFragment.graphql";
 import type { LinkedObligationsDialogQuery } from "#/__generated__/core/LinkedObligationsDialogQuery.graphql";
+import type { LinkedObligationsDialogQuery_fragment } from "#/__generated__/core/LinkedObligationsDialogQuery_fragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
 
@@ -59,7 +60,6 @@ const obligationsFragment = graphql`
       edges {
         node {
           id
-          requirement
           area
           source
           status
@@ -105,10 +105,11 @@ function LinkedObligationsDialogContent(props: Omit<Props, "children">) {
     },
     { fetchPolicy: "network-only" },
   );
-  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
-    obligationsFragment,
-    query.organization as LinkedObligationsDialogFragment$key,
-  );
+  const { data, loadNext, hasNext, isLoadingNext }
+    = usePaginationFragment<LinkedObligationsDialogQuery_fragment, LinkedObligationsDialogFragment$key>(
+      obligationsFragment,
+      query.organization as LinkedObligationsDialogFragment$key,
+    );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const obligations = useMemo(

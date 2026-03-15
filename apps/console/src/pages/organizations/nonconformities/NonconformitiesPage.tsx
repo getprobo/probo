@@ -38,6 +38,8 @@ import type {
   NonconformitiesPageFragment$data,
   NonconformitiesPageFragment$key,
 } from "#/__generated__/core/NonconformitiesPageFragment.graphql";
+import type { NonconformitiesPageRefetchQuery } from "#/__generated__/core/NonconformitiesPageRefetchQuery.graphql";
+import type { NonconformityGraphDeleteMutation } from "#/__generated__/core/NonconformityGraphDeleteMutation.graphql";
 import type { NonconformityGraphListQuery } from "#/__generated__/core/NonconformityGraphListQuery.graphql";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -75,8 +77,6 @@ const nonconformitiesPageFragment = graphql`
         key: "NonconformitiesPage_nonconformities"
         filters: ["filter"]
       ) {
-      __id
-      totalCount
       edges {
         node {
           id
@@ -84,11 +84,7 @@ const nonconformitiesPageFragment = graphql`
           snapshotId
           description
           status
-          dateIdentified
           dueDate
-          rootCause
-          correctiveAction
-          effectivenessCheck
           audit {
             id
             name
@@ -101,8 +97,6 @@ const nonconformitiesPageFragment = graphql`
             id
             fullName
           }
-          createdAt
-          updatedAt
           canUpdate: permission(action: "core:nonconformity:update")
           canDelete: permission(action: "core:nonconformity:delete")
         }
@@ -131,7 +125,7 @@ export default function NonconformitiesPage({
     data: nonconformitiesData,
     loadNext,
     hasNext,
-  } = usePaginationFragment(
+  } = usePaginationFragment<NonconformitiesPageRefetchQuery, NonconformitiesPageFragment$key>(
     nonconformitiesPageFragment,
     organization.node as NonconformitiesPageFragment$key,
   );
@@ -239,7 +233,7 @@ function NonconformityRow({
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const confirm = useConfirm();
-  const [deleteNonconformity] = useMutation(deleteNonconformityMutation);
+  const [deleteNonconformity] = useMutation<NonconformityGraphDeleteMutation>(deleteNonconformityMutation);
 
   const nonconformityDetailUrl = isSnapshotMode
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/nonconformities/${nonconformity.id}`

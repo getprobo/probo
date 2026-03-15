@@ -21,6 +21,7 @@ import type {
   LinkedDocumentsDialogFragment$key,
 } from "#/__generated__/core/LinkedDocumentsDialogFragment.graphql";
 import type { LinkedDocumentsDialogQuery } from "#/__generated__/core/LinkedDocumentsDialogQuery.graphql";
+import type { LinkedDocumentsDialogQuery_fragment } from "#/__generated__/core/LinkedDocumentsDialogQuery_fragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { NodeOf } from "#/types";
 
@@ -96,10 +97,11 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
     },
     { fetchPolicy: "network-only" },
   );
-  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
-    documentsFragment,
-    query.organization as LinkedDocumentsDialogFragment$key,
-  );
+  const { data, loadNext, hasNext, isLoadingNext }
+    = usePaginationFragment<LinkedDocumentsDialogQuery_fragment, LinkedDocumentsDialogFragment$key>(
+      documentsFragment,
+      query.organization as LinkedDocumentsDialogFragment$key,
+    );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const documents = useMemo(

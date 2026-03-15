@@ -32,8 +32,6 @@ const risksQuery = graphql`
               name
               category
               description
-              inherentRiskScore
-              residualRiskScore
             }
           }
         }

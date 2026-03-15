@@ -12,7 +12,6 @@ const fragment = graphql`
       id
       ndaFileName
       ndaFileUrl
-      canUpdate: permission(action: "core:trust-center:update")
       canUploadNDA: permission(action: "core:trust-center:upload-nda")
       canDeleteNDA: permission(action: "core:trust-center:delete-nda")
     }

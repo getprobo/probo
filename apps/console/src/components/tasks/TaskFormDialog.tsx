@@ -33,6 +33,7 @@ const taskFragment = graphql`
     id
     description
     name
+    # eslint-disable-next-line relay/unused-fields
     state
     timeEstimate
     deadline

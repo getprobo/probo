@@ -27,6 +27,7 @@ import {
 } from "react-relay";
 
 import type { AuditGraphListQuery } from "#/__generated__/core/AuditGraphListQuery.graphql";
+import type { AuditsListQuery } from "#/__generated__/core/AuditsListQuery.graphql";
 import type {
   AuditsPageFragment$data,
   AuditsPageFragment$key,
@@ -65,14 +66,12 @@ const paginatedAuditsFragment = graphql`
           validUntil
           report {
             id
-            filename
           }
           state
           framework {
             id
             name
           }
-          createdAt
           canUpdate: permission(action: "core:audit:update")
           canDelete: permission(action: "core:audit:delete")
         }
@@ -92,7 +91,7 @@ export default function AuditsPage(props: Props) {
   const organizationId = useOrganizationId();
 
   const data = usePreloadedQuery(auditsQuery, props.queryRef);
-  const pagination = usePaginationFragment(
+  const pagination = usePaginationFragment<AuditsListQuery, AuditsPageFragment$key>(
     paginatedAuditsFragment,
     data.node as AuditsPageFragment$key,
   );

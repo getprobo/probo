@@ -28,7 +28,9 @@ import { Link, useLocation, useParams } from "react-router";
 
 import type { MeasureTasksTabQuery$data } from "#/__generated__/core/MeasureTasksTabQuery.graphql";
 import type { TaskFormDialogFragment$key } from "#/__generated__/core/TaskFormDialogFragment.graphql";
+import type { TaskFormDialogUpdateMutation } from "#/__generated__/core/TaskFormDialogUpdateMutation.graphql";
 import type { TasksCard_TaskRowFragment$key } from "#/__generated__/core/TasksCard_TaskRowFragment.graphql";
+import type { TasksCardDeleteMutation } from "#/__generated__/core/TasksCardDeleteMutation.graphql";
 import type { TasksPageFragment$data } from "#/__generated__/core/TasksPageFragment.graphql";
 import TaskFormDialog, {
   taskUpdateMutation,
@@ -162,7 +164,7 @@ function TaskRow(props: TaskRowProps) {
   const dialogRef = useDialogRef();
   const { __ } = useTranslate();
   const confirm = useConfirm();
-  const [deleteTask] = useMutation(deleteMutation);
+  const [deleteTask] = useMutation<TasksCardDeleteMutation>(deleteMutation);
   const params = useParams<{ measureId?: string }>();
 
   const relayEnv = useRelayEnvironment();
@@ -171,7 +173,7 @@ function TaskRow(props: TaskRowProps) {
       fragment,
       props.fKey as TasksCard_TaskRowFragment$key,
     );
-  const [updateTask, isUpdating] = useMutation(taskUpdateMutation);
+  const [updateTask, isUpdating] = useMutation<TaskFormDialogUpdateMutation>(taskUpdateMutation);
 
   const onToggle = async () => {
     await promisifyMutation(updateTask)({

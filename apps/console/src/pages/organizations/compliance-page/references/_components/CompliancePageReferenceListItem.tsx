@@ -13,7 +13,6 @@ const fragment = graphql`
     logoUrl
     name
     description
-    rank
     websiteUrl
     canUpdate: permission(action: "core:trust-center-reference:update")
     canDelete: permission(action: "core:trust-center-reference:delete")

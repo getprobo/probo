@@ -76,7 +76,6 @@ const paginatedDataFragment = graphql`
               }
             }
           }
-          createdAt
           canUpdate: permission(action: "core:datum:update")
           canDelete: permission(action: "core:datum:delete")
         }

@@ -10,6 +10,7 @@ import {
 import { useParams } from "react-router";
 
 import type { AssetGraphListQuery } from "#/__generated__/core/AssetGraphListQuery.graphql";
+import type { AssetsListQuery } from "#/__generated__/core/AssetsListQuery.graphql";
 import type { AssetsPageFragment$key } from "#/__generated__/core/AssetsPageFragment.graphql";
 import { SnapshotBanner } from "#/components/SnapshotBanner";
 import { assetsQuery } from "#/hooks/graph/AssetGraph";
@@ -42,26 +43,36 @@ const paginatedAssetsFragment = graphql`
       __id
       edges {
         node {
+          # eslint-disable-next-line relay/unused-fields
           id
           snapshotId
+          # eslint-disable-next-line relay/unused-fields
           name
+          # eslint-disable-next-line relay/unused-fields
           amount
+          # eslint-disable-next-line relay/unused-fields
           assetType
+          # eslint-disable-next-line relay/unused-fields
           dataTypesStored
+          # eslint-disable-next-line relay/unused-fields
           owner {
             id
+            # eslint-disable-next-line relay/unused-fields
             fullName
           }
+          # eslint-disable-next-line relay/unused-fields
           vendors(first: 50) {
             edges {
               node {
+                # eslint-disable-next-line relay/unused-fields
                 id
+                # eslint-disable-next-line relay/unused-fields
                 name
+                # eslint-disable-next-line relay/unused-fields
                 websiteUrl
               }
             }
           }
-          createdAt
           canUpdate: permission(action: "core:asset:update")
           canDelete: permission(action: "core:asset:delete")
         }
@@ -84,7 +95,7 @@ export default function AssetsPage(props: Props) {
     assetsQuery,
     props.queryRef,
   );
-  const pagination = usePaginationFragment(
+  const pagination = usePaginationFragment<AssetsListQuery, AssetsPageFragment$key>(
     paginatedAssetsFragment,
     data.node as AssetsPageFragment$key,
   );

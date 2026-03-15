@@ -23,7 +23,6 @@ const compliancePageFragment = graphql`
     canUpdate: permission(action: "core:trust-center:update")
     complianceFrameworks(first: $first, after: $after, orderBy: $order)
     @connection(key: "CompliancePageFrameworkList_complianceFrameworks", filters: ["orderBy"]) {
-      __id
       edges {
         node {
           id

@@ -3,6 +3,7 @@ import { Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { graphql, useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
+import type { RiskControlsTabControlsQuery } from "#/__generated__/core/RiskControlsTabControlsQuery.graphql";
 import type { RiskControlsTabFragment$key } from "#/__generated__/core/RiskControlsTabFragment.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -46,7 +47,10 @@ export default function RiskControlsTab() {
     risk: RiskControlsTabFragment$key & { id: string };
   }>();
   const { __ } = useTranslate();
-  const [data, refetch] = useRefetchableFragment(controlsFragment, risk);
+  const [data, refetch] = useRefetchableFragment<
+    RiskControlsTabControlsQuery,
+    RiskControlsTabFragment$key
+  >(controlsFragment, risk);
   const controls = data.controls.edges.map(edge => edge.node);
   const organizationId = useOrganizationId();
 

@@ -13,6 +13,7 @@ import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ViewerDropdownFragment$key } from "#/__generated__/iam/ViewerDropdownFragment.graphql";
+import type { ViewerDropdownSignOutMutation } from "#/__generated__/iam/ViewerDropdownSignOutMutation.graphql";
 
 export const fragment = graphql`
   fragment ViewerDropdownFragment on Identity {
@@ -38,7 +39,7 @@ export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
 
   const { canListAPIKeys, email, fullName }
     = useFragment<ViewerDropdownFragment$key>(fragment, fKey);
-  const [signOut] = useMutation(signOutMutation);
+  const [signOut] = useMutation<ViewerDropdownSignOutMutation>(signOutMutation);
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
     e.preventDefault();

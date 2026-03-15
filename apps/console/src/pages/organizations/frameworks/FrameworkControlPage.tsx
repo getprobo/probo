@@ -19,6 +19,17 @@ import {
 import { useNavigate, useOutletContext } from "react-router";
 import { graphql, type MutationParameters } from "relay-runtime";
 
+import type { FrameworkControlPageAttachAuditMutation } from "#/__generated__/core/FrameworkControlPageAttachAuditMutation.graphql";
+import type { FrameworkControlPageAttachDocumentMutation } from "#/__generated__/core/FrameworkControlPageAttachDocumentMutation.graphql";
+import type { FrameworkControlPageAttachMutation } from "#/__generated__/core/FrameworkControlPageAttachMutation.graphql";
+import type { FrameworkControlPageAttachObligationMutation } from "#/__generated__/core/FrameworkControlPageAttachObligationMutation.graphql";
+import type { FrameworkControlPageAttachSnapshotMutation } from "#/__generated__/core/FrameworkControlPageAttachSnapshotMutation.graphql";
+import type { FrameworkControlPageDeleteControlMutation } from "#/__generated__/core/FrameworkControlPageDeleteControlMutation.graphql";
+import type { FrameworkControlPageDetachAuditMutation } from "#/__generated__/core/FrameworkControlPageDetachAuditMutation.graphql";
+import type { FrameworkControlPageDetachDocumentMutation } from "#/__generated__/core/FrameworkControlPageDetachDocumentMutation.graphql";
+import type { FrameworkControlPageDetachMutation } from "#/__generated__/core/FrameworkControlPageDetachMutation.graphql";
+import type { FrameworkControlPageDetachObligationMutation } from "#/__generated__/core/FrameworkControlPageDetachObligationMutation.graphql";
+import type { FrameworkControlPageDetachSnapshotMutation } from "#/__generated__/core/FrameworkControlPageDetachSnapshotMutation.graphql";
 import type { FrameworkDetailPageFragment$data } from "#/__generated__/core/FrameworkDetailPageFragment.graphql";
 import type { FrameworkGraphControlNodeQuery } from "#/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 import { LinkedAuditsCard } from "#/components/audits/LinkedAuditsCard";
@@ -195,32 +206,32 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
   const navigate = useNavigate();
-  const [detachMeasure, isDetachingMeasure] = useMutation(
+  const [detachMeasure, isDetachingMeasure] = useMutation<FrameworkControlPageDetachMutation>(
     detachMeasureMutation,
   );
-  const [attachMeasure, isAttachingMeasure] = useMutation(
+  const [attachMeasure, isAttachingMeasure] = useMutation<FrameworkControlPageAttachMutation>(
     attachMeasureMutation,
   );
-  const [detachDocument, isDetachingDocument] = useMutation(
+  const [detachDocument, isDetachingDocument] = useMutation<FrameworkControlPageDetachDocumentMutation>(
     detachDocumentMutation,
   );
-  const [attachDocument, isAttachingDocument] = useMutation(
+  const [attachDocument, isAttachingDocument] = useMutation<FrameworkControlPageAttachDocumentMutation>(
     attachDocumentMutation,
   );
-  const [detachAudit, isDetachingAudit] = useMutation(detachAuditMutation);
-  const [attachAudit, isAttachingAudit] = useMutation(attachAuditMutation);
-  const [detachSnapshot, isDetachingSnapshot] = useMutation(
+  const [detachAudit, isDetachingAudit] = useMutation<FrameworkControlPageDetachAuditMutation>(detachAuditMutation);
+  const [attachAudit, isAttachingAudit] = useMutation<FrameworkControlPageAttachAuditMutation>(attachAuditMutation);
+  const [detachSnapshot, isDetachingSnapshot] = useMutation<FrameworkControlPageDetachSnapshotMutation>(
     detachSnapshotMutation,
   );
-  const [attachSnapshot, isAttachingSnapshot] = useMutation(
+  const [attachSnapshot, isAttachingSnapshot] = useMutation<FrameworkControlPageAttachSnapshotMutation>(
     attachSnapshotMutation,
   );
-  const [deleteControl] = useMutation(deleteControlMutation);
+  const [deleteControl] = useMutation<FrameworkControlPageDeleteControlMutation>(deleteControlMutation);
 
-  const [attachObligation, isAttachingObligation] = useMutation(
+  const [attachObligation, isAttachingObligation] = useMutation<FrameworkControlPageAttachObligationMutation>(
     attachObligationMutation,
   );
-  const [detachObligation, isDetachingObligation] = useMutation(
+  const [detachObligation, isDetachingObligation] = useMutation<FrameworkControlPageDetachObligationMutation>(
     detachObligationMutation,
   );
 

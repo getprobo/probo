@@ -46,16 +46,12 @@ export const stateOfApplicabilityDetailPageQuery = graphql`
             ... on StateOfApplicability {
                 id
                 name
-                sourceId
                 snapshotId
                 createdAt
                 updatedAt
                 canUpdate: permission(action: "core:state-of-applicability:update")
                 canDelete: permission(action: "core:state-of-applicability:delete")
                 canExport: permission(action: "core:state-of-applicability:export")
-                organization {
-                    id
-                }
                 owner {
                     id
                     fullName

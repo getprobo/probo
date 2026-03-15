@@ -24,7 +24,8 @@ import type { NDAPageRefetchQuery } from "./__generated__/NDAPageRefetchQuery.gr
 export const ndaPageQuery = graphql`
   query NDAPageQuery {
     viewer {
-      fullName
+      # eslint-disable-next-line relay/unused-fields
+      id
     }
     currentTrustCenter @required(action: THROW) {
       organization {

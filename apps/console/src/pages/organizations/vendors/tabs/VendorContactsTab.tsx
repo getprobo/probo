@@ -71,8 +71,6 @@ const contactFragment = graphql`
     email
     phone
     role
-    createdAt
-    updatedAt
     canUpdate: permission(action: "core:vendor-contact:update")
     canDelete: permission(action: "core:vendor-contact:delete")
   }

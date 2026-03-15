@@ -29,10 +29,7 @@ const linkedAuditFragment = graphql`
   fragment LinkedAuditsCardFragment on Audit {
     id
     name
-    createdAt
     state
-    validFrom
-    validUntil
     framework {
       id
       name

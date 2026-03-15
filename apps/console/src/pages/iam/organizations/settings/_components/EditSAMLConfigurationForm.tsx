@@ -21,18 +21,26 @@ export const samlConfigurationFormQuery = graphql`
       __typename
       ... on SAMLConfiguration {
         id
+        # eslint-disable-next-line relay/unused-fields
         emailDomain
         enforcementPolicy
+        # eslint-disable-next-line relay/unused-fields
         domainVerificationToken
+        # eslint-disable-next-line relay/unused-fields
         domainVerifiedAt
+        # eslint-disable-next-line relay/unused-fields
         testLoginUrl
         idpEntityId
         idpSsoUrl
         idpCertificate
         attributeMappings {
+          # eslint-disable-next-line relay/unused-fields
           email
+          # eslint-disable-next-line relay/unused-fields
           firstName
+          # eslint-disable-next-line relay/unused-fields
           lastName
+          # eslint-disable-next-line relay/unused-fields
           role
         }
         autoSignupEnabled

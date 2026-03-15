@@ -21,7 +21,6 @@ const fragment = graphql`
       after: $after
       orderBy: $order
     ) @connection(key: "CompliancePageAccessList_accesses" filters: ["orderBy"]) {
-      __id
       pageInfo {
         hasNextPage
         hasPreviousPage
@@ -29,7 +28,6 @@ const fragment = graphql`
         endCursor
       }
       edges {
-        cursor
         node {
           id
           ...CompliancePageAccessListItemFragment

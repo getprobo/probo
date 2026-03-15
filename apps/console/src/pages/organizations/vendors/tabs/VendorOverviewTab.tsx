@@ -40,7 +40,6 @@ const vendorBusinessAssociateAgreementFragment = graphql`
       fileUrl
       validFrom
       validUntil
-      createdAt
       canUpdate: permission(
         action: "core:vendor-business-associate-agreement:update"
       )
@@ -59,7 +58,6 @@ const vendorDataPrivacyAgreementFragment = graphql`
       fileUrl
       validFrom
       validUntil
-      createdAt
       canUpdate: permission(action: "core:vendor-data-privacy-agreement:update")
       canDelete: permission(action: "core:vendor-data-privacy-agreement:delete")
     }

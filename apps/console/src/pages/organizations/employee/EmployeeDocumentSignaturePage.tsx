@@ -38,6 +38,7 @@ const documentFragment = graphql`
   fragment EmployeeDocumentSignaturePageDocumentFragment on SignableDocument {
     id
     title
+    # eslint-disable-next-line relay/unused-fields
     signed
     versions(first: 100, orderBy: { field: CREATED_AT, direction: DESC })
       @required(action: THROW) {
