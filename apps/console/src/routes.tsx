@@ -17,6 +17,7 @@ import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { CurrentUser } from "./providers/CurrentUser";
+import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
 import { contextRoutes } from "./routes/contextRoutes";
@@ -150,6 +151,26 @@ const routes = [
           },
         ],
       },
+      ...riskRoutes,
+      ...measureRoutes,
+      ...documentsRoutes,
+      ...peopleRoutes,
+      ...vendorRoutes,
+      ...frameworkRoutes,
+      ...taskRoutes,
+      ...assetRoutes,
+      ...dataRoutes,
+      ...auditRoutes,
+      ...meetingsRoutes,
+      ...nonconformityRoutes,
+      ...obligationRoutes,
+      ...continualImprovementRoutes,
+      ...rightsRequestRoutes,
+      ...processingActivityRoutes,
+      ...statesOfApplicabilityRoutes,
+      ...accessReviewRoutes,
+      ...compliancePageRoutes,
+      ...snapshotsRoutes,
       {
         Component: lazy(
           () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
