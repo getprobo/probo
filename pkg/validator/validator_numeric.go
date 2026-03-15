@@ -77,4 +77,3 @@ func Max(max int) ValidatorFunc {
 		return nil
 	}
 }
-

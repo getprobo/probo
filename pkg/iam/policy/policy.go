@@ -106,4 +106,3 @@ func NotEquals(key string, values ...string) Condition {
 		Values:   values,
 	}
 }
-

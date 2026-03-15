@@ -99,4 +99,3 @@ func UserAgent(component string) string {
 
 	return strings.Join(parts, " ")
 }
-

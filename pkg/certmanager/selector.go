@@ -159,4 +159,3 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 
 	return nil
 }
-

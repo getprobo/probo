@@ -25,4 +25,3 @@ type ModelSettings struct {
 	ToolChoice        *llm.ToolChoice
 	ParallelToolCalls *bool
 }
-

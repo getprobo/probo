@@ -37,7 +37,7 @@ type NoOpHooks struct{}
 
 var _ RunHooks = NoOpHooks{}
 
-func (NoOpHooks) OnRunStart(context.Context, *Agent, []llm.Message)                   {}
+func (NoOpHooks) OnRunStart(context.Context, *Agent, []llm.Message)                    {}
 func (NoOpHooks) OnRunEnd(context.Context, *Agent, *Result, error)                     {}
 func (NoOpHooks) OnLLMStart(context.Context, *Agent, []llm.Message)                    {}
 func (NoOpHooks) OnLLMEnd(context.Context, *Agent, *llm.ChatCompletionResponse, error) {}
@@ -63,10 +63,10 @@ type NoOpAgentHooks struct{}
 
 var _ AgentHooks = NoOpAgentHooks{}
 
-func (NoOpAgentHooks) OnStart(context.Context, *Agent)                                    {}
-func (NoOpAgentHooks) OnEnd(context.Context, *Agent, string)                              {}
-func (NoOpAgentHooks) OnHandoff(context.Context, *Agent, *Agent)                          {}
-func (NoOpAgentHooks) OnToolStart(context.Context, *Agent, Tool)                          {}
-func (NoOpAgentHooks) OnToolEnd(context.Context, *Agent, Tool, ToolResult)                {}
-func (NoOpAgentHooks) OnLLMStart(context.Context, *Agent, []llm.Message)                  {}
+func (NoOpAgentHooks) OnStart(context.Context, *Agent)                                      {}
+func (NoOpAgentHooks) OnEnd(context.Context, *Agent, string)                                {}
+func (NoOpAgentHooks) OnHandoff(context.Context, *Agent, *Agent)                            {}
+func (NoOpAgentHooks) OnToolStart(context.Context, *Agent, Tool)                            {}
+func (NoOpAgentHooks) OnToolEnd(context.Context, *Agent, Tool, ToolResult)                  {}
+func (NoOpAgentHooks) OnLLMStart(context.Context, *Agent, []llm.Message)                    {}
 func (NoOpAgentHooks) OnLLMEnd(context.Context, *Agent, *llm.ChatCompletionResponse, error) {}

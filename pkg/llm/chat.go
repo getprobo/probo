@@ -21,18 +21,18 @@ import (
 
 type (
 	ChatCompletionRequest struct {
-		Model              string
-		Messages           []Message
-		MaxTokens          *int
-		Temperature        *float64
-		TopP               *float64
-		FrequencyPenalty   *float64
-		PresencePenalty    *float64
-		StopSequences      []string
-		Tools              []Tool
-		ToolChoice         *ToolChoice
-		ParallelToolCalls  *bool
-		ResponseFormat     *ResponseFormat
+		Model             string
+		Messages          []Message
+		MaxTokens         *int
+		Temperature       *float64
+		TopP              *float64
+		FrequencyPenalty  *float64
+		PresencePenalty   *float64
+		StopSequences     []string
+		Tools             []Tool
+		ToolChoice        *ToolChoice
+		ParallelToolCalls *bool
+		ResponseFormat    *ResponseFormat
 	}
 
 	ToolChoiceType string
@@ -90,7 +90,7 @@ type (
 	}
 
 	ChatCompletionStreamEvent struct {
-		Model        string        // present on first event if provider supports it
+		Model        string // present on first event if provider supports it
 		Delta        MessageDelta
 		Usage        *Usage        // present on final event if provider supports it
 		FinishReason *FinishReason // present on final event

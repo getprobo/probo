@@ -69,4 +69,3 @@ func (sr *SafeRedirect) Redirect(w http.ResponseWriter, r *http.Request, redirec
 	safeURL := sr.GetSafeRedirectURL(redirectURL, fallbackURL)
 	http.Redirect(w, r, safeURL, statusCode)
 }
-

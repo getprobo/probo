@@ -385,7 +385,6 @@ WHERE
 	return nil
 }
 
-
 func (a *Audits) LoadByControlID(
 	ctx context.Context,
 	conn pg.Conn,

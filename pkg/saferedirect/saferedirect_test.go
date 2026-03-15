@@ -254,4 +254,3 @@ func TestSafeRedirect_Redirect(t *testing.T) {
 		})
 	}
 }
-

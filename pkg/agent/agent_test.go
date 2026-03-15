@@ -307,7 +307,6 @@ func toolCallResponse(toolCalls ...llm.ToolCall) *llm.ChatCompletionResponse {
 	}
 }
 
-
 func TestRun(t *testing.T) {
 	t.Parallel()
 

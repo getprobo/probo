@@ -140,4 +140,3 @@ func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Conn, domain *cored
 
 	return nil
 }
-
