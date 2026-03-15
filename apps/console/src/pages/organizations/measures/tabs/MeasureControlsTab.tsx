@@ -1,7 +1,6 @@
 import { graphql, useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 
-import type { MeasureControlsTabControlsQuery } from "#/__generated__/core/MeasureControlsTabControlsQuery.graphql";
 import type { MeasureControlsTabFragment$key } from "#/__generated__/core/MeasureControlsTabFragment.graphql";
 import { LinkedControlsCard } from "#/components/controls/LinkedControlsCard";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
@@ -74,10 +73,8 @@ export default function MeasureControlsTab() {
   const { measure } = useOutletContext<{
     measure: MeasureControlsTabFragment$key & { id: string };
   }>();
-  const [data, refetch] = useRefetchableFragment<
-    MeasureControlsTabControlsQuery,
-    MeasureControlsTabFragment$key
-  >(controlsFragment, measure);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [data, refetch] = useRefetchableFragment(controlsFragment, measure);
   const connectionId = data.controls.__id;
   const controls = data.controls?.edges?.map(edge => edge.node) ?? [];
 

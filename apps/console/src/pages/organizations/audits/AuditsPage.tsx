@@ -27,7 +27,6 @@ import {
 } from "react-relay";
 
 import type { AuditGraphListQuery } from "#/__generated__/core/AuditGraphListQuery.graphql";
-import type { AuditsListQuery } from "#/__generated__/core/AuditsListQuery.graphql";
 import type {
   AuditsPageFragment$data,
   AuditsPageFragment$key,
@@ -91,7 +90,8 @@ export default function AuditsPage(props: Props) {
   const organizationId = useOrganizationId();
 
   const data = usePreloadedQuery(auditsQuery, props.queryRef);
-  const pagination = usePaginationFragment<AuditsListQuery, AuditsPageFragment$key>(
+  // eslint-disable-next-line relay/generated-typescript-types
+  const pagination = usePaginationFragment(
     paginatedAuditsFragment,
     data.node as AuditsPageFragment$key,
   );

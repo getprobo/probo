@@ -4,9 +4,6 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { AssetGraphCreateMutation } from "#/__generated__/core/AssetGraphCreateMutation.graphql";
-import type { AssetGraphDeleteMutation } from "#/__generated__/core/AssetGraphDeleteMutation.graphql";
-
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
@@ -135,7 +132,8 @@ export const useDeleteAsset = (
   asset: { id?: string; name?: string },
   connectionId: string,
 ) => {
-  const [mutate] = useMutation<AssetGraphDeleteMutation>(deleteAssetMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(deleteAssetMutation);
   const confirm = useConfirm();
   const { __ } = useTranslate();
 
@@ -166,7 +164,8 @@ export const useDeleteAsset = (
 };
 
 export const useCreateAsset = (connectionId: string) => {
-  const [mutate, isMutating] = useMutation<AssetGraphCreateMutation>(createAssetMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate, isMutating] = useMutation(createAssetMutation);
   const { __ } = useTranslate();
 
   return [

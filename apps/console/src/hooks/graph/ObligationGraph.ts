@@ -4,9 +4,6 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ObligationGraphCreateMutation } from "#/__generated__/core/ObligationGraphCreateMutation.graphql";
-import type { ObligationGraphUpdateMutation } from "#/__generated__/core/ObligationGraphUpdateMutation.graphql";
-
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
@@ -155,7 +152,8 @@ export const useDeleteObligation = (
 };
 
 export const useCreateObligation = (connectionId: string) => {
-  const [mutate] = useMutation<ObligationGraphCreateMutation>(createObligationMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(createObligationMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -200,7 +198,8 @@ export const useCreateObligation = (connectionId: string) => {
 };
 
 export const useUpdateObligation = () => {
-  const [mutate] = useMutation<ObligationGraphUpdateMutation>(updateObligationMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(updateObligationMutation);
   const { __ } = useTranslate();
 
   return (input: {

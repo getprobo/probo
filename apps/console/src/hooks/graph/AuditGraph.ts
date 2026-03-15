@@ -4,9 +4,6 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { AuditGraphCreateMutation } from "#/__generated__/core/AuditGraphCreateMutation.graphql";
-import type { AuditGraphUpdateMutation } from "#/__generated__/core/AuditGraphUpdateMutation.graphql";
-
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
@@ -161,7 +158,8 @@ export const useDeleteAudit = (
 };
 
 export const useCreateAudit = (connectionId: string) => {
-  const [mutate] = useMutation<AuditGraphCreateMutation>(createAuditMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(createAuditMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -198,7 +196,8 @@ export const useCreateAudit = (connectionId: string) => {
 };
 
 export const useUpdateAudit = () => {
-  const [mutate] = useMutation<AuditGraphUpdateMutation>(updateAuditMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(updateAuditMutation);
   const { __ } = useTranslate();
 
   return (input: {

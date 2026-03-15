@@ -27,7 +27,6 @@ import { graphql } from "relay-runtime";
 
 import type { MeasureEvidencesTabFragment$key } from "#/__generated__/core/MeasureEvidencesTabFragment.graphql";
 import type { MeasureEvidencesTabFragment_evidence$key } from "#/__generated__/core/MeasureEvidencesTabFragment_evidence.graphql";
-import type { MeasureEvidencesTabQuery } from "#/__generated__/core/MeasureEvidencesTabQuery.graphql";
 import { SortableTable } from "#/components/SortableTable";
 import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
@@ -105,10 +104,8 @@ export default function MeasureEvidencesTab() {
     evidenceId: string;
     snapshotId?: string;
   }>();
-  const pagination = usePaginationFragment<
-    MeasureEvidencesTabQuery,
-    MeasureEvidencesTabFragment$key
-  >(evidencesFragment, measure);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const pagination = usePaginationFragment(evidencesFragment, measure);
   const connectionId = pagination.data.evidences.__id;
   const evidences
     = pagination.data.evidences?.edges?.map(edge => edge.node) ?? [];

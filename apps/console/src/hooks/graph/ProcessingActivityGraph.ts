@@ -4,13 +4,6 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ProcessingActivityGraphCreateDPIAMutation } from "#/__generated__/core/ProcessingActivityGraphCreateDPIAMutation.graphql";
-import type { ProcessingActivityGraphCreateMutation } from "#/__generated__/core/ProcessingActivityGraphCreateMutation.graphql";
-import type { ProcessingActivityGraphCreateTIAMutation } from "#/__generated__/core/ProcessingActivityGraphCreateTIAMutation.graphql";
-import type { ProcessingActivityGraphUpdateDPIAMutation } from "#/__generated__/core/ProcessingActivityGraphUpdateDPIAMutation.graphql";
-import type { ProcessingActivityGraphUpdateMutation } from "#/__generated__/core/ProcessingActivityGraphUpdateMutation.graphql";
-import type { ProcessingActivityGraphUpdateTIAMutation } from "#/__generated__/core/ProcessingActivityGraphUpdateTIAMutation.graphql";
-
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
@@ -276,7 +269,8 @@ export const useDeleteProcessingActivity = (
 };
 
 export const useCreateProcessingActivity = (connectionId?: string) => {
-  const [mutate] = useMutation<ProcessingActivityGraphCreateMutation>(createProcessingActivityMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(createProcessingActivityMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -346,7 +340,8 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
 };
 
 export const useUpdateProcessingActivity = () => {
-  const [mutate] = useMutation<ProcessingActivityGraphUpdateMutation>(updateProcessingActivityMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(updateProcessingActivityMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -458,7 +453,8 @@ export const deleteDataProtectionImpactAssessmentMutation = graphql`
 `;
 
 export const useCreateDataProtectionImpactAssessment = () => {
-  const [mutate] = useMutation<ProcessingActivityGraphCreateDPIAMutation>(createDataProtectionImpactAssessmentMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(createDataProtectionImpactAssessmentMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -484,7 +480,8 @@ export const useCreateDataProtectionImpactAssessment = () => {
 };
 
 export const useUpdateDataProtectionImpactAssessment = () => {
-  const [mutate] = useMutation<ProcessingActivityGraphUpdateDPIAMutation>(updateDataProtectionImpactAssessmentMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(updateDataProtectionImpactAssessmentMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -615,7 +612,8 @@ export const deleteTransferImpactAssessmentMutation = graphql`
 `;
 
 export const useCreateTransferImpactAssessment = () => {
-  const [mutate] = useMutation<ProcessingActivityGraphCreateTIAMutation>(createTransferImpactAssessmentMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(createTransferImpactAssessmentMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -641,7 +639,8 @@ export const useCreateTransferImpactAssessment = () => {
 };
 
 export const useUpdateTransferImpactAssessment = () => {
-  const [mutate] = useMutation<ProcessingActivityGraphUpdateTIAMutation>(updateTransferImpactAssessmentMutation);
+  // eslint-disable-next-line relay/generated-typescript-types
+  const [mutate] = useMutation(updateTransferImpactAssessmentMutation);
   const { __ } = useTranslate();
 
   return (input: {
