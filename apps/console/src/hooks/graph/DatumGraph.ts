@@ -4,6 +4,12 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { DatumGraphCreateMutation } from "#/__generated__/core/DatumGraphCreateMutation.graphql";
+import type { DatumGraphDeleteMutation } from "#/__generated__/core/DatumGraphDeleteMutation.graphql";
+import type { DatumGraphUpdateMutation } from "#/__generated__/core/DatumGraphUpdateMutation.graphql";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
 export const dataQuery = graphql`
   query DatumGraphListQuery($organizationId: ID!, $snapshotId: ID = null) {
     node(id: $organizationId) {
@@ -123,7 +129,7 @@ export const useDeleteDatum = (
   datum: { id?: string; name?: string },
   connectionId: string,
 ) => {
-  const [mutate] = useMutation(deleteDatumMutation);
+  const [mutate] = useMutation<DatumGraphDeleteMutation>(deleteDatumMutation);
   const confirm = useConfirm();
   const { __ } = useTranslate();
 
@@ -154,7 +160,7 @@ export const useDeleteDatum = (
 };
 
 export const useCreateDatum = (connectionId: string) => {
-  const [mutate] = useMutation(createDatumMutation);
+  const [mutate] = useMutation<DatumGraphCreateMutation>(createDatumMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -184,7 +190,7 @@ export const useCreateDatum = (connectionId: string) => {
 };
 
 export const useUpdateDatum = () => {
-  const [mutate] = useMutation(updateDatumMutation);
+  const [mutate] = useMutation<DatumGraphUpdateMutation>(updateDatumMutation);
   const { __ } = useTranslate();
 
   return (input: {

@@ -2,6 +2,9 @@ import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
 import type { usePaginatedMeasuresFragment$key } from "#/__generated__/core/usePaginatedMeasuresFragment.graphql";
 import type { usePaginatedMeasuresQuery } from "#/__generated__/core/usePaginatedMeasuresQuery.graphql";
+import type { usePaginatedMeasuresQuery_fragment } from "#/__generated__/core/usePaginatedMeasuresQuery_fragment.graphql";
+
+/* eslint-disable relay/unused-fields */
 
 const measuresQuery = graphql`
   query usePaginatedMeasuresQuery($organizationId: ID!) {
@@ -55,7 +58,7 @@ export function usePaginatedMeasures(organizationId: string) {
     },
     { fetchPolicy: "network-only" },
   );
-  return usePaginationFragment(
+  return usePaginationFragment<usePaginatedMeasuresQuery_fragment, usePaginatedMeasuresFragment$key>(
     measuresFragment,
     query.organization as usePaginatedMeasuresFragment$key,
   );

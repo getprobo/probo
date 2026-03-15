@@ -6,6 +6,8 @@ import { graphql } from "relay-runtime";
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
 export const connectionListKey = "FrameworksListQuery_frameworks";
 
 export const frameworksQuery = graphql`

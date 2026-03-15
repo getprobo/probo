@@ -5,6 +5,8 @@ import type { MeasureGraphDeleteMutation } from "#/__generated__/core/MeasureGra
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
 export const measuresQuery = graphql`
   query MeasureGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {

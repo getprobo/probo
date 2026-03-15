@@ -6,6 +6,8 @@ import type { MeetingGraphUpdateMutation } from "#/__generated__/core/MeetingGra
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
 export const meetingsQuery = graphql`
   query MeetingGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {

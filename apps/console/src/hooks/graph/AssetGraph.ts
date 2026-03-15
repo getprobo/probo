@@ -4,7 +4,12 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { AssetGraphCreateMutation } from "#/__generated__/core/AssetGraphCreateMutation.graphql";
+import type { AssetGraphDeleteMutation } from "#/__generated__/core/AssetGraphDeleteMutation.graphql";
+
 import { useMutationWithToasts } from "../useMutationWithToasts";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 export const assetsQuery = graphql`
   query AssetGraphListQuery($organizationId: ID!, $snapshotId: ID) {
@@ -130,7 +135,7 @@ export const useDeleteAsset = (
   asset: { id?: string; name?: string },
   connectionId: string,
 ) => {
-  const [mutate] = useMutation(deleteAssetMutation);
+  const [mutate] = useMutation<AssetGraphDeleteMutation>(deleteAssetMutation);
   const confirm = useConfirm();
   const { __ } = useTranslate();
 
@@ -161,7 +166,7 @@ export const useDeleteAsset = (
 };
 
 export const useCreateAsset = (connectionId: string) => {
-  const [mutate, isMutating] = useMutation(createAssetMutation);
+  const [mutate, isMutating] = useMutation<AssetGraphCreateMutation>(createAssetMutation);
   const { __ } = useTranslate();
 
   return [

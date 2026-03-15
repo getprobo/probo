@@ -4,7 +4,12 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { RightsRequestGraphCreateMutation } from "#/__generated__/core/RightsRequestGraphCreateMutation.graphql";
+import type { RightsRequestGraphUpdateMutation } from "#/__generated__/core/RightsRequestGraphUpdateMutation.graphql";
+
 import { useMutationWithToasts } from "../useMutationWithToasts";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 export const RightsRequestsConnectionKey = "RightsRequestsPage_rightsRequests";
 
@@ -134,7 +139,7 @@ export const useDeleteRightsRequest = (
 };
 
 export const useCreateRightsRequest = (connectionId: string) => {
-  const [mutate] = useMutation(createRightsRequestMutation);
+  const [mutate] = useMutation<RightsRequestGraphCreateMutation>(createRightsRequestMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -182,7 +187,7 @@ export const useCreateRightsRequest = (connectionId: string) => {
 };
 
 export const useUpdateRightsRequest = () => {
-  const [mutate] = useMutation(updateRightsRequestMutation);
+  const [mutate] = useMutation<RightsRequestGraphUpdateMutation>(updateRightsRequestMutation);
   const { __ } = useTranslate();
 
   return (input: {

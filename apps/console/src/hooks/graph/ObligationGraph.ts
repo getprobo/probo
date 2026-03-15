@@ -4,7 +4,12 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { ObligationGraphCreateMutation } from "#/__generated__/core/ObligationGraphCreateMutation.graphql";
+import type { ObligationGraphUpdateMutation } from "#/__generated__/core/ObligationGraphUpdateMutation.graphql";
+
 import { useMutationWithToasts } from "../useMutationWithToasts";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 export const ObligationsConnectionKey = "ObligationsPage_obligations";
 
@@ -150,7 +155,7 @@ export const useDeleteObligation = (
 };
 
 export const useCreateObligation = (connectionId: string) => {
-  const [mutate] = useMutation(createObligationMutation);
+  const [mutate] = useMutation<ObligationGraphCreateMutation>(createObligationMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -195,7 +200,7 @@ export const useCreateObligation = (connectionId: string) => {
 };
 
 export const useUpdateObligation = () => {
-  const [mutate] = useMutation(updateObligationMutation);
+  const [mutate] = useMutation<ObligationGraphUpdateMutation>(updateObligationMutation);
   const { __ } = useTranslate();
 
   return (input: {

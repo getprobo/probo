@@ -9,8 +9,11 @@ import { graphql } from "relay-runtime";
 import type { RiskGraphDeleteMutation } from "#/__generated__/core/RiskGraphDeleteMutation.graphql";
 import type { RiskGraphFragment$key } from "#/__generated__/core/RiskGraphFragment.graphql";
 import type { RiskGraphListQuery } from "#/__generated__/core/RiskGraphListQuery.graphql";
+import type { RisksListQuery } from "#/__generated__/core/RisksListQuery.graphql";
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 const deleteRiskMutation = graphql`
   mutation RiskGraphDeleteMutation(
@@ -95,7 +98,7 @@ export const RisksConnectionKey = "RisksListQuery_risks";
 
 export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>) {
   const data = usePreloadedQuery(risksQuery, queryRef);
-  const pagination = usePaginationFragment(
+  const pagination = usePaginationFragment<RisksListQuery, RiskGraphFragment$key>(
     risksFragment,
     data.organization as RiskGraphFragment$key,
   );

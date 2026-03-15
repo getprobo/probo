@@ -6,6 +6,8 @@ import { graphql } from "relay-runtime";
 
 import type { PeopleGraphQuery } from "#/__generated__/core/PeopleGraphQuery.graphql";
 
+/* eslint-disable relay/unused-fields */
+
 export const peopleQuery = graphql`
   query PeopleGraphQuery($organizationId: ID!, $filter: ProfileFilter) {
     organization: node(id: $organizationId) {

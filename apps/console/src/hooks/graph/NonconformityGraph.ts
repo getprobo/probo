@@ -4,7 +4,12 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { NonconformityGraphCreateMutation } from "#/__generated__/core/NonconformityGraphCreateMutation.graphql";
+import type { NonconformityGraphUpdateMutation } from "#/__generated__/core/NonconformityGraphUpdateMutation.graphql";
+
 import { useMutationWithToasts } from "../useMutationWithToasts";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 export const NonconformitiesConnectionKey
   = "NonconformitiesPage_nonconformities";
@@ -168,7 +173,7 @@ export const useDeleteNonconformity = (
 };
 
 export const useCreateNonconformity = (connectionId: string) => {
-  const [mutate] = useMutation(createNonconformityMutation);
+  const [mutate] = useMutation<NonconformityGraphCreateMutation>(createNonconformityMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -225,7 +230,7 @@ export const useCreateNonconformity = (connectionId: string) => {
 };
 
 export const useUpdateNonconformity = () => {
-  const [mutate] = useMutation(updateNonconformityMutation);
+  const [mutate] = useMutation<NonconformityGraphUpdateMutation>(updateNonconformityMutation);
   const { __ } = useTranslate();
 
   return (input: {

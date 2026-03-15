@@ -12,6 +12,7 @@ export type MutationFieldUpdate<T extends Record<string, unknown>, TKey extends 
 export function useMutateField<Input extends Record<string, unknown>>(
   mutation: GraphQLTaggedNode,
 ) {
+  // eslint-disable-next-line relay/generated-typescript-types
   const [mutate, isUpdating] = useMutation(mutation);
 
   return {

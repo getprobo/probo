@@ -1,5 +1,7 @@
 import { graphql } from "relay-runtime";
 
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
 // Queries for custom domain (subdomain) approach
 export const currentTrustGraphQuery = graphql`
   query TrustGraphCurrentQuery {

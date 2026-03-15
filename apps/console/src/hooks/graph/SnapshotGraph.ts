@@ -4,7 +4,11 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { SnapshotGraphCreateMutation } from "#/__generated__/core/SnapshotGraphCreateMutation.graphql";
+
 import { useMutationWithToasts } from "../useMutationWithToasts";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 export const SnapshotsConnectionKey = "SnapshotsPage_snapshots";
 
@@ -102,7 +106,7 @@ export const useDeleteSnapshot = (
 };
 
 export const useCreateSnapshot = (connectionId: string) => {
-  const [mutate] = useMutation(createSnapshotMutation);
+  const [mutate] = useMutation<SnapshotGraphCreateMutation>(createSnapshotMutation);
   const { __ } = useTranslate();
 
   return (input: {

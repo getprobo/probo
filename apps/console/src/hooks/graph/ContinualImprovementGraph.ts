@@ -4,7 +4,12 @@ import { useConfirm } from "@probo/ui";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { ContinualImprovementGraphCreateMutation } from "#/__generated__/core/ContinualImprovementGraphCreateMutation.graphql";
+import type { ContinualImprovementGraphUpdateMutation } from "#/__generated__/core/ContinualImprovementGraphUpdateMutation.graphql";
+
 import { useMutationWithToasts } from "../useMutationWithToasts";
+
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 export const ContinualImprovementsConnectionKey
   = "ContinualImprovementsPage_continualImprovements";
@@ -152,7 +157,7 @@ export const useDeleteContinualImprovement = (
 };
 
 export const useCreateContinualImprovement = (connectionId: string) => {
-  const [mutate] = useMutation(createContinualImprovementMutation);
+  const [mutate] = useMutation<ContinualImprovementGraphCreateMutation>(createContinualImprovementMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -200,7 +205,7 @@ export const useCreateContinualImprovement = (connectionId: string) => {
 };
 
 export const useUpdateContinualImprovement = () => {
-  const [mutate] = useMutation(updateContinualImprovementMutation);
+  const [mutate] = useMutation<ContinualImprovementGraphUpdateMutation>(updateContinualImprovementMutation);
   const { __ } = useTranslate();
 
   return (input: {

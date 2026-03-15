@@ -11,6 +11,8 @@ import type { VendorGraphSelectQuery } from "#/__generated__/core/VendorGraphSel
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
+/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+
 const createVendorMutation = graphql`
   mutation VendorGraphCreateMutation(
     $input: CreateVendorInput!
