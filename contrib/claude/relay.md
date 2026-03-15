@@ -1,101 +1,249 @@
-# Relay Cursor Pagination
+# Relay (Frontend GraphQL Client)
 
-This project implements [Relay-style cursor pagination](https://relay.dev/graphql/connections.htm) for all list fields across GraphQL APIs.
+The console app uses [Relay](https://relay.dev/) as its GraphQL client. All GraphQL operations are defined inline with the `graphql` template tag from `relay-runtime` — there are no separate `.graphql` files on the frontend.
 
-## Schema types
+## Environments
 
-Every paginated field uses the same set of types:
+Two Relay environments connect to two separate GraphQL APIs:
 
-```graphql
-type PageInfo {
-    hasNextPage: Boolean!
-    hasPreviousPage: Boolean!
-    startCursor: CursorKey
-    endCursor: CursorKey
+| Environment | Endpoint | Purpose |
+|-------------|----------|---------|
+| `coreEnvironment` | `/api/console/v1/graphql` | Main application data |
+| `iamEnvironment` | `/api/connect/v1/graphql` | Authentication / identity |
+
+Configured in `apps/console/src/environments.ts`. Each has its own store with 1-minute query cache expiration.
+
+## Relay compiler
+
+Config lives in `apps/console/relay.config.json` with two projects (`core`, `iam`) mapped to different source directories and schemas. Generated files go into `__generated__/` directories.
+
+```sh
+npm run relay          # clean + compile
+npm run relay-compile  # compile only
+```
+
+Custom scalar mappings: `Datetime → string`, `GID → string`, `CursorKey → string`, `Duration → string`, `BigInt → number`, `EmailAddr → string`.
+
+## Colocated queries
+
+Queries are defined inline in the file that uses them. Route-level queries are preloaded in the router loader before the component renders:
+
+```tsx
+// In route definition
+{
+  path: "vendors",
+  loader: loaderFromQueryLoader(({ organizationId }) =>
+    loadQuery<VendorGraphListQuery>(coreEnvironment, vendorsQuery, {
+      organizationId,
+      snapshotId: null,
+    }),
+  ),
+  Component: withQueryRef(
+    lazy(() => import("#/pages/organizations/vendors/VendorsPage")),
+  ),
 }
 
-enum OrderDirection {
-    ASC
-    DESC
+// In the component
+export default function VendorsPage(props: Props) {
+  const data = usePreloadedQuery(vendorsQuery, props.queryRef);
+  // ...
 }
 ```
 
-Each entity defines its own order field enum, order input, connection, and edge:
+- `loaderFromQueryLoader` — converts a query loader into a React Router loader, returns `{ queryRef, dispose }`
+- `withQueryRef` — extracts `queryRef` from loader data and handles cleanup on unmount
 
-```graphql
-enum VendorOrderField {
-    CREATED_AT
-    NAME
-}
+For queries that need to run after render (e.g. select dropdowns), use `useLazyLoadQuery` with `fetchPolicy: "network-only"`.
 
-input VendorOrder {
-    direction: OrderDirection!
-    field: VendorOrderField!
-}
+## Fragments
 
-type VendorConnection {
-    totalCount: Int!
-    edges: [VendorEdge!]!
-    pageInfo: PageInfo!
-}
+Fragments colocate data requirements with the component that reads them:
 
-type VendorEdge {
-    cursor: CursorKey!
-    node: Vendor!
-}
-```
+```tsx
+const contactFragment = graphql`
+  fragment VendorContactsTabFragment_contact on VendorContact {
+    id
+    fullName
+    email
+    phone
+    role
+    createdAt
+    updatedAt
+    canUpdate: permission(action: "core:vendor-contact:update")
+    canDelete: permission(action: "core:vendor-contact:delete")
+  }
+`;
 
-## Field arguments
-
-Connection fields on parent types always use the standard Relay arguments:
-
-```graphql
-type Organization {
-    vendors(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: VendorOrder
-        filter: VendorFilter
-    ): VendorConnection!
+function ContactRow(props: { contactKey: VendorContactsTabFragment_contact$key }) {
+  const contact = useFragment(contactFragment, props.contactKey);
+  // ...
 }
 ```
 
-- `first` / `after` — forward pagination (returns `Head` position)
-- `last` / `before` — backward pagination (returns `Tail` position)
-- `orderBy` — optional, defaults to `CREATED_AT` / `DESC`
-- `filter` — optional, entity-specific filtering
+### Refetchable fragments
 
-## Cursor format
+For lists that support sorting and pagination, use `@refetchable` with `@argumentDefinitions`:
 
-Cursors are opaque `CursorKey` scalars. Internally they encode as base64url(JSON):
+```tsx
+const vendorContactsFragment = graphql`
+  fragment VendorContactsTabFragment on Vendor
+  @refetchable(queryName: "VendorContactsListQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: { type: "VendorContactOrder", defaultValue: null }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    contacts(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "VendorContactsTabFragment_contacts") {
+      __id
+      edges {
+        node {
+          ...VendorContactsTabFragment_contact
+        }
+      }
+    }
+  }
+`;
+
+const [data, refetch] = useRefetchableFragment(vendorContactsFragment, vendor);
+const connectionId = data.contacts.__id;
+```
+
+## Pagination
+
+Use `usePaginationFragment` for cursor-based Relay pagination:
+
+```tsx
+const pagination = usePaginationFragment(paginatedVendorsFragment, data.node);
+const vendors = pagination.data.vendors?.edges.map(edge => edge.node);
+const connectionId = pagination.data.vendors.__id;
+```
+
+The `@connection(key: "...", filters: [...])` directive on the fragment tells Relay how to manage the paginated list in the store. The `filters` array controls which variables affect the connection identity.
+
+`SortableTable` is the standard component for rendering paginated, sortable lists — it receives `pagination` (with `loadNext`, `hasNext`, `isLoadingNext`) and a `refetch` callback for sorting.
+
+## Mutations
+
+### `useMutation`
+
+Direct Relay hook for simple cases:
+
+```tsx
+const [mutate] = useMutation<VendorGraphDeleteMutation>(deleteVendorMutation);
+```
+
+### `useMutationWithToasts`
+
+Custom wrapper that adds toast notifications on success/error:
+
+```tsx
+const [createContact, isLoading] = useMutationWithToasts(
+  createContactMutation,
+  {
+    successMessage: __("Contact created successfully."),
+    errorMessage: __("Failed to create contact"),
+  },
+);
+
+await createContact({
+  variables: {
+    input: { vendorId, ...cleanData },
+    connections: [connectionId],
+  },
+  onSuccess: () => {
+    dialogRef.current?.close();
+    reset();
+  },
+});
+```
+
+### Store update directives
+
+Relay directives handle connection updates automatically — no manual store manipulation needed:
+
+```tsx
+// Add new edge to the beginning of a connection
+const createMutation = graphql`
+  mutation CreateVendorMutation($input: CreateVendorInput!, $connections: [ID!]!) {
+    createVendor(input: $input) {
+      vendorEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+// Remove an edge from a connection
+const deleteMutation = graphql`
+  mutation DeleteVendorMutation($input: DeleteVendorInput!, $connections: [ID!]!) {
+    deleteVendor(input: $input) {
+      deletedVendorId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+// Update in-place via fragment spread (no directive needed)
+const updateMutation = graphql`
+  mutation UpdateContactMutation($input: UpdateVendorContactInput!) {
+    updateVendorContact(input: $input) {
+      vendorContact {
+        ...VendorContactsTabFragment_contact
+      }
+    }
+  }
+`;
+```
+
+The `connections` variable is obtained from the `__id` field on the connection in the parent query/fragment.
+
+### `useConfirm` for destructive actions
+
+Destructive mutations (delete) are wrapped with a confirmation dialog:
+
+```tsx
+const confirm = useConfirm();
+
+return () => {
+  confirm(
+    () =>
+      promisifyMutation(mutate)({
+        variables: {
+          input: { vendorId: vendor.id! },
+          connections: [connectionId],
+        },
+      }),
+    { message: "Confirm deletion..." },
+  );
+};
+```
+
+## File organization
+
+GraphQL operations are colocated with the components that use them:
 
 ```
-["<entity_global_id>", <sort_field_value>]
+pages/organizations/vendors/
+  VendorsPage.tsx                    # query + pagination fragment
+  tabs/
+    VendorContactsTab.tsx            # refetchable fragment + item fragment
+    VendorComplianceTab.tsx
+  dialogs/
+    CreateContactDialog.tsx          # create mutation
+    EditContactDialog.tsx            # update mutation
+
+hooks/graph/
+  VendorGraph.ts                     # shared queries, mutations, hooks
 ```
 
-For example, a cursor sorting by `created_at` encodes the entity ID and its `created_at` timestamp. This enables keyset pagination — the database uses the cursor values to seek directly to the right position instead of using OFFSET.
-
-## Keyset pagination
-
-The database query uses the cursor to build a WHERE clause that skips to the correct position:
-
-- For `DESC` ordering: rows where `(field <= cursor_value) AND NOT (field = cursor_value AND id > cursor_id)`
-- For `ASC` ordering: rows where `(field >= cursor_value) AND NOT (field = cursor_value AND id < cursor_id)`
-
-The query fetches `size + 1` (or `size + 2` when a cursor is provided) rows to detect whether more pages exist in either direction. `NewPage` trims the extra rows and sets `hasNextPage` / `hasPreviousPage` accordingly.
-
-For backward pagination (`last` / `before`), the SQL sort direction is reversed, and the result slice is reversed back to the correct order before building edges.
-
-## Default page size
-
-When neither `first` nor `last` is provided, the default page size is **25**.
-
-## Adding a new paginated field — checklist
-
-1. **Schema** — add `enum XxxOrderField`, `input XxxOrder`, `type XxxConnection`, `type XxxEdge`, and the connection field with Relay arguments on the parent type
-2. **Coredata** — add `*_order_field.go` (with `Column()`, `IsValid()`, marshaling), `CursorKey(field)` method on the entity, and the `LoadAllBy*` query using cursor SQL fragments + `page.NewPage()`
-3. **API types** — add `*_connection.go` with `OrderBy` alias, connection struct, `NewXxxConnection`, `NewXxxEdge`
-4. **Resolver** — implement the resolver (authorize, build order, build cursor, call service, build connection)
-5. **Codegen** — run `go generate` for the relevant API package
+Shared queries and mutation hooks (used by multiple components) live in `hooks/graph/*.ts`. Component-specific operations are defined inline in the component file.

@@ -26,8 +26,8 @@ GraphQL and MCP codegen is triggered by `go generate`:
 ## Reference Documentation
 
 Detailed guides for specific subsystems live in `contrib/claude/`:
-- [`contrib/claude/relay.md`](contrib/claude/relay.md) — Relay cursor pagination (cursor format, keyset pagination, schema types)
-- [`contrib/claude/graphql.md`](contrib/claude/graphql.md) — Frontend Relay client (queries, fragments, mutations, pagination)
+- [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
+- [`contrib/claude/graphql.md`](contrib/claude/graphql.md) — Go GraphQL backend (gqlgen, @goModel, connection types, cursor pagination)
 - [`contrib/claude/commit.md`](contrib/claude/commit.md) — Commit message conventions
 - [`contrib/claude/license.md`](contrib/claude/license.md) — ISC license header (all file types)
 - [`contrib/claude/go-testing.md`](contrib/claude/go-testing.md) — Go test conventions (parallel, require vs assert, naming)
