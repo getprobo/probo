@@ -368,7 +368,7 @@ function WebhookEventsDialog({
   useEffect(() => {
     void loadEvents();
     dialogRef.current?.open();
-  }, [loadEvents]);
+  }, [loadEvents, dialogRef]);
 
   return (
     <Dialog

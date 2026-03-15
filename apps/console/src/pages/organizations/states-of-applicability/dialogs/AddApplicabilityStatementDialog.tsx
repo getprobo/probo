@@ -465,7 +465,10 @@ type AddApplicabilityStatementDialogProps = {
   onClose?: () => void;
 };
 
-export const AddApplicabilityStatementDialog = forwardRef<AddApplicabilityStatementDialogRef, AddApplicabilityStatementDialogProps>(
+export const AddApplicabilityStatementDialog = forwardRef<
+  AddApplicabilityStatementDialogRef,
+  AddApplicabilityStatementDialogProps
+>(
   ({ onClose }, ref) => {
     const { __ } = useTranslate();
     const dialogRef = useDialogRef();

@@ -245,7 +245,10 @@ function ExternalUrlRow(props: {
   onDragEnd: () => void;
   onEdit: (node: UrlNode) => void;
 }) {
-  const { node, canEdit, connectionId, isDragging, isDropTarget, onDragStart, onDragOver, onDrop, onDragEnd, onEdit } = props;
+  const {
+    node, canEdit, connectionId, isDragging, isDropTarget,
+    onDragStart, onDragOver, onDrop, onDragEnd, onEdit,
+  } = props;
   const { __ } = useTranslate();
   const [isMouseDown, setIsMouseDown] = useState(false);
 
@@ -361,7 +364,14 @@ export function CompliancePageExternalUrlsSection(props: {
       const draggedId = draggedEdge.node.id;
 
       await updateRank({
-        variables: { input: { id: draggedId, name: draggedEdge.node.name, url: draggedEdge.node.url, rank: targetRank } },
+        variables: {
+          input: {
+            id: draggedId,
+            name: draggedEdge.node.name,
+            url: draggedEdge.node.url,
+            rank: targetRank,
+          },
+        },
         updater: (store) => {
           const connection = store.get(connectionId);
           if (!connection) return;

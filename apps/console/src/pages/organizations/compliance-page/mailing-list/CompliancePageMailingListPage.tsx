@@ -80,13 +80,14 @@ export function CompliancePageMailingListPage(props: {
 
   const [replyTo, setReplyTo] = useState(mailingList?.replyTo ?? "");
 
-  const [updateMailingList, isUpdating] = useMutationWithToasts<CompliancePageMailingListPage_updateMailingListMutation>(
-    updateMailingListMutation,
-    {
-      successMessage: __("Mailing list updated successfully"),
-      errorMessage: __("Failed to update mailing list"),
-    },
-  );
+  const [updateMailingList, isUpdating]
+    = useMutationWithToasts<CompliancePageMailingListPage_updateMailingListMutation>(
+      updateMailingListMutation,
+      {
+        successMessage: __("Mailing list updated successfully"),
+        errorMessage: __("Failed to update mailing list"),
+      },
+    );
 
   const handleSaveReplyTo = () => {
     if (!mailingListId) return;

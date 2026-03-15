@@ -111,7 +111,7 @@ export default function ActivateAccountPage() {
         });
       },
     });
-  }, [__, toast, activateAccount, navigate, safeContinueUrl, searchParams]);
+  }, [__, toast, activateAccount, navigate, safeContinueUrl]);
 
   useEffect(() => {
     const token = searchParams.get("token");

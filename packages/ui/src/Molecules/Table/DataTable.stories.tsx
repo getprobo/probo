@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { type FC, Fragment, useState } from "react";
-// eslint-disable-next-line import-x/no-unresolved -- storybook v10 subpath export
 import { fn } from "storybook/test";
 
 import { Badge } from "../../Atoms/Badge/Badge";
@@ -16,7 +15,7 @@ export default {
   title: "Atoms/DataTable/Cells",
   component: Fragment as Component,
   argTypes: {},
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- fn type unresolvable due to storybook/test subpath
+
   args: { onUpdate: fn() as (key: string, value: unknown) => void },
 } satisfies Meta<Component>;
 

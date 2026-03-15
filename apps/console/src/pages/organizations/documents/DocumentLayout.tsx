@@ -147,7 +147,11 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
               </Button>
             )}
             <DocumentVersionsDropdown />
-            <DocumentActionsDropdownn documentFragmentRef={document} versionFragmentRef={currentVersion} onRefetch={onRefetch} />
+            <DocumentActionsDropdownn
+              documentFragmentRef={document}
+              versionFragmentRef={currentVersion}
+              onRefetch={onRefetch}
+            />
           </div>
         </div>
 
