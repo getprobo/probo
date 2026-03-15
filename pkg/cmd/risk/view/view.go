@@ -27,6 +27,7 @@ import (
 const viewQuery = `
 query($id: ID!) {
   node(id: $id) {
+    __typename
     ... on Risk {
       id
       name
@@ -49,6 +50,7 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
+		Typename            string  `json:"__typename"`
 		ID                  string  `json:"id"`
 		Name                string  `json:"name"`
 		Description         *string `json:"description"`
@@ -110,6 +112,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if resp.Node == nil {
 				return fmt.Errorf("risk %s not found", args[0])
+			}
+
+			if resp.Node.Typename != "Risk" {
+				return fmt.Errorf("expected Risk node, got %s", resp.Node.Typename)
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {

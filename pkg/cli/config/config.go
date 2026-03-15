@@ -44,13 +44,15 @@ type (
 	}
 )
 
-var ValidKeys = []string{
-	"editor",
-	"browser",
-	"pager",
-	"prompt",
-	"http_timeout",
-}
+var (
+	ValidKeys = []string{
+		"editor",
+		"browser",
+		"pager",
+		"prompt",
+		"http_timeout",
+	}
+)
 
 func (c *Config) Get(key string) (string, error) {
 	switch key {
