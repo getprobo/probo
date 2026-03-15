@@ -1,0 +1,371 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package coredata
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"maps"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
+)
+
+type (
+	AccessSource struct {
+		ID             gid.GID              `db:"id"`
+		AccessReviewID gid.GID              `db:"access_review_id"`
+		ConnectorID    *gid.GID             `db:"connector_id"`
+		Name           string               `db:"name"`
+		Category       AccessSourceCategory `db:"category"`
+		CsvData        *string              `db:"csv_data"`
+		CreatedAt      time.Time            `db:"created_at"`
+		UpdatedAt      time.Time            `db:"updated_at"`
+	}
+
+	AccessSources []*AccessSource
+)
+
+func (as AccessSource) CursorKey(orderBy AccessSourceOrderField) page.CursorKey {
+	switch orderBy {
+	case AccessSourceOrderFieldCreatedAt:
+		return page.NewCursorKey(as.ID, as.CreatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (as *AccessSource) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `
+SELECT ar.organization_id
+FROM access_sources s
+JOIN access_reviews ar ON ar.id = s.access_review_id
+WHERE s.id = $1
+LIMIT 1;
+`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, as.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query access source authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
+}
+
+func (as *AccessSource) LoadByID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    access_review_id,
+    connector_id,
+    name,
+    category,
+    csv_data,
+    created_at,
+    updated_at
+FROM
+    access_sources
+WHERE
+    %s
+    AND id = @id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": id}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_sources: %w", err)
+	}
+
+	source, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AccessSource])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect access source: %w", err)
+	}
+
+	*as = source
+
+	return nil
+}
+
+func (as *AccessSource) Insert(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+INSERT INTO
+    access_sources (
+        id,
+        tenant_id,
+        access_review_id,
+        connector_id,
+        name,
+        category,
+        csv_data,
+        created_at,
+        updated_at
+    )
+VALUES (
+    @id,
+    @tenant_id,
+    @access_review_id,
+    @connector_id,
+    @name,
+    @category,
+    @csv_data,
+    @created_at,
+    @updated_at
+);
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":               as.ID,
+		"tenant_id":        scope.GetTenantID(),
+		"access_review_id": as.AccessReviewID,
+		"connector_id":     as.ConnectorID,
+		"name":             as.Name,
+		"category":         as.Category,
+		"csv_data":         as.CsvData,
+		"created_at":       as.CreatedAt,
+		"updated_at":       as.UpdatedAt,
+	}
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert access_source: %w", err)
+	}
+
+	return nil
+}
+
+func (as *AccessSource) Update(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+UPDATE access_sources
+SET
+    name = @name,
+    category = @category,
+    connector_id = @connector_id,
+    csv_data = @csv_data,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":           as.ID,
+		"name":         as.Name,
+		"category":     as.Category,
+		"connector_id": as.ConnectorID,
+		"csv_data":     as.CsvData,
+		"updated_at":   as.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update access_source: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+func (as *AccessSource) Delete(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+DELETE FROM access_sources
+WHERE %s AND id = @id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": as.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete access_source: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+func (sources *AccessSources) LoadByAccessReviewID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	accessReviewID gid.GID,
+	cursor *page.Cursor[AccessSourceOrderField],
+) error {
+	q := `
+SELECT
+    id,
+    access_review_id,
+    connector_id,
+    name,
+    category,
+    csv_data,
+    created_at,
+    updated_at
+FROM
+    access_sources
+WHERE
+    %s
+    AND access_review_id = @access_review_id
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"access_review_id": accessReviewID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_sources: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessSource])
+	if err != nil {
+		return fmt.Errorf("cannot collect access_sources: %w", err)
+	}
+
+	*sources = result
+
+	return nil
+}
+
+func (sources *AccessSources) CountByAccessReviewID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	accessReviewID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM access_sources
+WHERE
+    %s
+    AND access_review_id = @access_review_id;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"access_review_id": accessReviewID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count access_sources: %w", err)
+	}
+
+	return count, nil
+}
+
+// LoadScopeSourcesByCampaignID loads the campaign scope sources in deterministic
+// name order. When explicit scope rows exist, they are used. Otherwise all
+// sources for the campaign's access review are returned.
+func (sources *AccessSources) LoadScopeSourcesByCampaignID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	campaignID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    access_review_id,
+    connector_id,
+    name,
+    category,
+    csv_data,
+    created_at,
+    updated_at
+FROM
+    access_sources
+WHERE
+    %s
+    AND id IN (
+        SELECT scoped_source_id
+        FROM (
+            SELECT arcss.access_source_id AS scoped_source_id
+            FROM access_review_campaign_scope_systems arcss
+            WHERE arcss.access_review_campaign_id = @campaign_id
+
+            UNION
+
+            SELECT src.id AS scoped_source_id
+            FROM access_sources src
+            JOIN access_review_campaigns arc ON arc.access_review_id = src.access_review_id
+            WHERE arc.id = @campaign_id
+              AND NOT EXISTS (
+                SELECT 1
+                FROM access_review_campaign_scope_systems existing
+                WHERE existing.access_review_campaign_id = @campaign_id
+              )
+        ) scope_ids
+    )
+ORDER BY name ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"campaign_id": campaignID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query scope access_sources: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessSource])
+	if err != nil {
+		return fmt.Errorf("cannot collect scope access_sources: %w", err)
+	}
+
+	*sources = result
+
+	return nil
+}
