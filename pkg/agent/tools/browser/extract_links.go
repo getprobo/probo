@@ -59,7 +59,7 @@ func ExtractLinksTool(b *Browser) (agent.Tool, error) {
 				chromedp.Navigate(p.URL),
 				chromedp.WaitReady("body"),
 				chromedp.Evaluate(
-					`Array.from(document.querySelectorAll("a[href]")).slice(0, 500).map(a => ({
+					`Array.from(document.querySelectorAll("a[href]")).map(a => ({
 						href: a.href,
 						text: a.innerText.trim().substring(0, 200)
 					}))`,

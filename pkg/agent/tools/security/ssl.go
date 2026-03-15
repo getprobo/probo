@@ -17,6 +17,7 @@ package security
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -95,8 +96,25 @@ func CheckSSLCertificateTool() (agent.Tool, error) {
 			cert := state.PeerCertificates[0]
 			now := time.Now()
 
+			// Manually verify the certificate since we connected
+			// with InsecureSkipVerify to retrieve cert details
+			// even for expired/invalid certificates.
+			valid := now.Before(cert.NotAfter) && now.After(cert.NotBefore)
+			if valid {
+				opts := x509.VerifyOptions{
+					DNSName:       p.Domain,
+					Intermediates: x509.NewCertPool(),
+				}
+				for _, ic := range state.PeerCertificates[1:] {
+					opts.Intermediates.AddCert(ic)
+				}
+				if _, err := cert.Verify(opts); err != nil {
+					valid = false
+				}
+			}
+
 			result := sslResult{
-				Valid:     now.Before(cert.NotAfter) && now.After(cert.NotBefore),
+				Valid:     valid,
 				Issuer:    cert.Issuer.String(),
 				Subject:   cert.Subject.String(),
 				NotBefore: cert.NotBefore.Format(time.RFC3339),

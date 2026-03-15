@@ -37,7 +37,7 @@ type spfResult struct {
 }
 
 func parseSPFPolicy(record string) string {
-	for _, part := range strings.Fields(record) {
+	for _, part := range strings.Fields(strings.ToLower(record)) {
 		switch part {
 		case "-all":
 			return "fail"
