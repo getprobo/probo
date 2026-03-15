@@ -71,6 +71,9 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			delete(cfg.Hosts, flagHost)
+			if cfg.ActiveHost == flagHost {
+				cfg.ActiveHost = ""
+			}
 
 			if err := cfg.Save(); err != nil {
 				return err
