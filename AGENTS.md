@@ -23,6 +23,23 @@ GraphQL and MCP codegen is triggered by `go generate`:
 - `go generate ./pkg/server/api/trust/v1`
 - `go generate ./pkg/server/api/mcp/v1`
 
+## Reference Documentation
+
+Detailed guides for specific subsystems live in `contrib/claude/`:
+- [`contrib/claude/relay.md`](contrib/claude/relay.md) — Relay cursor pagination (cursor format, keyset pagination, schema types)
+- [`contrib/claude/graphql.md`](contrib/claude/graphql.md) — Frontend Relay client (queries, fragments, mutations, pagination)
+- [`contrib/claude/commit.md`](contrib/claude/commit.md) — Commit message conventions
+
+## API Surface Rules
+
+Every feature must be exposed through **all three interfaces**: GraphQL, MCP, and CLI. When adding a new endpoint or editing an existing type, keep all three in sync:
+
+- **GraphQL** — `pkg/server/api/console/v1/schema.graphql` (+ codegen)
+- **MCP** — `pkg/server/api/mcp/v1/` (+ codegen)
+- **CLI** — `cmd/`
+
+If you add a mutation in GraphQL, add the corresponding MCP tool and CLI command. If you rename or change a type, update it everywhere.
+
 ## Project
 
 - Module: `go.probo.inc/probo`
@@ -36,35 +53,6 @@ GraphQL and MCP codegen is triggered by `go generate`:
 - Pointers: `go.gearno.de/x/ref` for pointer helpers (`ref.UnrefOrZero`, etc.)
 - Tests: `github.com/stretchr/testify` (`require` for fatal, `assert` for non-fatal)
 - Go version: 1.26 — use `new(expr)` to create pointers to values (e.g. `new(1)`, `new("foo")`, `new(time.Now())`) instead of helper functions or temporary variables
-
-## Commit Messages
-
-Follow the [seven rules of a great Git commit message](https://cbea.ms/git-commit/):
-
-1. Separate subject from body with a blank line
-2. Limit the subject line to 50 characters
-3. Capitalize the subject line
-4. Do not end the subject line with a period
-5. Use the imperative mood in the subject line
-6. Wrap the body at 72 characters
-7. Use the body to explain *what* and *why* vs. *how*
-
-The subject line should complete the sentence: "If applied, this commit will *your subject line here*".
-
-```
-Add vendor assessment agent for third-party reviews
-
-The existing changelog generator only covers internal changes.
-This introduces a dedicated agent that evaluates third-party
-vendors against our compliance criteria, producing a structured
-risk report.
-```
-
-Not every commit needs a body -- a single line is fine when the change is self-explanatory:
-
-```
-Fix typo in vendor assessment prompt
-```
 
 ## Go Style
 
