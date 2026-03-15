@@ -29,7 +29,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/relay.md`](contrib/claude/relay.md) — Relay cursor pagination (cursor format, keyset pagination, schema types)
 - [`contrib/claude/graphql.md`](contrib/claude/graphql.md) — Frontend Relay client (queries, fragments, mutations, pagination)
 - [`contrib/claude/commit.md`](contrib/claude/commit.md) — Commit message conventions
-- [`contrib/claude/license.md`](contrib/claude/license.md) — ISC license header for Go files
+- [`contrib/claude/license.md`](contrib/claude/license.md) — ISC license header (all file types)
 
 ## API Surface Rules
 
