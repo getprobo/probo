@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4744f325593bfe652352407dd9ee6e5c>>
+ * @generated SignedSource<<dd811bca4630cf0deb46ca561fb253c5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -149,13 +149,6 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "requirement",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "area",
                     "storageKey": null
                   },
@@ -220,12 +213,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e5dce8dc0bc03faa0e4d42696c76b59d",
+    "cacheID": "846f67341abc63baebe66dc9a2f0b1cd",
     "id": null,
     "metadata": {},
     "name": "FrameworkControlPageAttachObligationMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkControlPageAttachObligationMutation(\n  $input: CreateControlObligationMappingInput!\n) {\n  createControlObligationMapping(input: $input) {\n    obligationEdge {\n      node {\n        id\n        ...LinkedObligationsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  requirement\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n"
+    "text": "mutation FrameworkControlPageAttachObligationMutation(\n  $input: CreateControlObligationMappingInput!\n) {\n  createControlObligationMapping(input: $input) {\n    obligationEdge {\n      node {\n        id\n        ...LinkedObligationsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n"
   }
 };
 })();

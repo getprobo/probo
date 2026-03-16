@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e4c451eec4363f38b74a938be21a9939>>
+ * @generated SignedSource<<55a5675db2c82dde34408e454aa05008>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -218,13 +218,6 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "kind": "ScalarField",
-                        "name": "cursor",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
                         "concreteType": "TrustCenterAccess",
                         "kind": "LinkedField",
                         "name": "node",
@@ -320,21 +313,16 @@ return {
                           (v7/*: any*/)
                         ],
                         "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
+                      },
                       {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
-                        "name": "__id",
+                        "name": "cursor",
                         "storageKey": null
                       }
-                    ]
+                    ],
+                    "storageKey": null
                   }
                 ],
                 "storageKey": null
@@ -360,16 +348,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "59b4c338efea592e4e15305f84158cce",
+    "cacheID": "6d600a693d55408b0121cca33c7bdaa6",
     "id": null,
     "metadata": {},
     "name": "CompliancePageAccessListQuery",
     "operationKind": "query",
-    "text": "query CompliancePageAccessListQuery(\n  $after: CursorKey = null\n  $first: Int = 10\n  $order: TrustCenterAccessOrder = {field: CREATED_AT, direction: DESC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageAccessListFragment_gOVF5\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment_gOVF5 on TrustCenter {\n  accesses(first: $first, after: $after, orderBy: $order) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  createdAt\n  profile {\n    fullName\n    emailAddress\n    state\n    id\n  }\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
+    "text": "query CompliancePageAccessListQuery(\n  $after: CursorKey = null\n  $first: Int = 10\n  $order: TrustCenterAccessOrder = {field: CREATED_AT, direction: DESC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageAccessListFragment_gOVF5\n    id\n  }\n}\n\nfragment CompliancePageAccessListFragment_gOVF5 on TrustCenter {\n  accesses(first: $first, after: $after, orderBy: $order) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      node {\n        id\n        ...CompliancePageAccessListItemFragment\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n\nfragment CompliancePageAccessListItemFragment on TrustCenterAccess {\n  id\n  createdAt\n  profile {\n    fullName\n    emailAddress\n    state\n    id\n  }\n  activeCount\n  pendingRequestCount\n  ndaSignature {\n    status\n    id\n  }\n  canUpdate: permission(action: \"core:trust-center-access:update\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "51879d3ed361c46e313f58abaaac04d9";
+(node as any).hash = "0a1b2761edd641e8eb52280cc48307b9";
 
 export default node;

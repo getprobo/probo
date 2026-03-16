@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1ddc7eb54e71de0d95fb5af865fc0348>>
+ * @generated SignedSource<<085b4e7d01bd398825ec9387c79ab79f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -285,13 +285,6 @@ return {
                                   },
                                   (v7/*: any*/),
                                   (v8/*: any*/),
-                                  {
-                                    "alias": null,
-                                    "args": null,
-                                    "kind": "ScalarField",
-                                    "name": "updatedAt",
-                                    "storageKey": null
-                                  },
                                   (v2/*: any*/)
                                 ],
                                 "storageKey": null
@@ -393,12 +386,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c8ba2eeecdfac4115f0ab1493ecf02ce",
+    "cacheID": "27f6d430c8dc7bec9a4b5ce29cc73d0d",
     "id": null,
     "metadata": {},
     "name": "CompliancePageMailingListPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageMailingListPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        mailingList {\n          id\n          replyTo\n          ...CompliancePageUpdatesListFragment\n        }\n        ...CompliancePageMailingListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageMailingListFragment on TrustCenter {\n  mailingList {\n    id\n    subscribers(first: 20) {\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n      edges {\n        node {\n          id\n          fullName\n          email\n          status\n          createdAt\n          __typename\n        }\n        cursor\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageUpdatesListFragment on MailingList {\n  updates(first: 20) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
+    "text": "query CompliancePageMailingListPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        id\n        mailingList {\n          id\n          replyTo\n          ...CompliancePageUpdatesListFragment\n        }\n        ...CompliancePageMailingListFragment\n      }\n    }\n    id\n  }\n}\n\nfragment CompliancePageMailingListFragment on TrustCenter {\n  mailingList {\n    id\n    subscribers(first: 20) {\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n      edges {\n        node {\n          id\n          fullName\n          email\n          status\n          createdAt\n          __typename\n        }\n        cursor\n      }\n    }\n  }\n  id\n}\n\nfragment CompliancePageUpdatesListFragment on MailingList {\n  updates(first: 20) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

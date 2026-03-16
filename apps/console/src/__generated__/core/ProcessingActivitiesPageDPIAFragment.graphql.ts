@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f671b035c79f039c03362a0e6b8d485b>>
+ * @generated SignedSource<<9d5a355f9cf2823a2fb57eff82ebb183>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,10 +13,8 @@ export type DataProtectionImpactAssessmentResidualRisk = "HIGH" | "LOW" | "MEDIU
 import { FragmentRefs } from "relay-runtime";
 export type ProcessingActivitiesPageDPIAFragment$data = {
   readonly dataProtectionImpactAssessments: {
-    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly potentialRisk: string | null | undefined;
@@ -25,14 +23,12 @@ export type ProcessingActivitiesPageDPIAFragment$data = {
           readonly name: string;
         };
         readonly residualRisk: DataProtectionImpactAssessmentResidualRisk | null | undefined;
-        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
       readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
-    readonly totalCount: number;
   };
   readonly id: string;
   readonly " $fragmentType": "ProcessingActivitiesPageDPIAFragment";
@@ -128,13 +124,6 @@ return {
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
           "concreteType": "DataProtectionImpactAssessmentEdge",
           "kind": "LinkedField",
           "name": "edges",
@@ -193,20 +182,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "updatedAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "__typename",
                   "storageKey": null
                 }
@@ -247,18 +222,6 @@ return {
             }
           ],
           "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "__id",
-              "storageKey": null
-            }
-          ]
         }
       ],
       "storageKey": null
@@ -269,6 +232,6 @@ return {
 };
 })();
 
-(node as any).hash = "67339e0fd7610409cba00791361c51a2";
+(node as any).hash = "8a22db18441552dab58f4f0defabca6a";
 
 export default node;

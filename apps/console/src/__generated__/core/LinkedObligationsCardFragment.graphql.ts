@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f5cbc176c2905c2eed828f946fc581c1>>
+ * @generated SignedSource<<9cd6e4f71ffa86acc1195f307912451d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,6 @@ export type LinkedObligationsCardFragment$data = {
   readonly owner: {
     readonly fullName: string;
   };
-  readonly requirement: string | null | undefined;
   readonly source: string | null | undefined;
   readonly status: ObligationStatus;
   readonly " $fragmentType": "LinkedObligationsCardFragment";
@@ -38,13 +37,6 @@ const node: ReaderFragment = {
       "args": null,
       "kind": "ScalarField",
       "name": "id",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "requirement",
       "storageKey": null
     },
     {
@@ -91,6 +83,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "67ae0e6b0df090bb5a708bf7e029f4c5";
+(node as any).hash = "48a0dbc9d3794cc3d8e7f108d6748c94";
 
 export default node;

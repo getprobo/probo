@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9fd60ce5ad80ada10eafed963ea0adb3>>
+ * @generated SignedSource<<305ae03cd5ebcd67ec61f910c26fbf76>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
 export type LinkedDocumentsCardFragment$data = {
-  readonly createdAt: string;
   readonly documentType: DocumentType;
   readonly id: string;
   readonly title: string;
@@ -52,13 +51,6 @@ return {
       "args": null,
       "kind": "ScalarField",
       "name": "title",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "createdAt",
       "storageKey": null
     },
     {
@@ -121,6 +113,6 @@ return {
 };
 })();
 
-(node as any).hash = "952e653849ce0b1b693de8d7e3086e3f";
+(node as any).hash = "9ec284ec5b5268f11515d94f3f5306d4";
 
 export default node;

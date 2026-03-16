@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<54426392a0a6256d11045404a602b5c3>>
+ * @generated SignedSource<<d5252a51dcb329c340ea21b700d8ca32>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -149,13 +149,6 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "requirement",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "area",
                     "storageKey": null
                   },
@@ -220,12 +213,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8681d141acf6036709241ba71bfeae4c",
+    "cacheID": "1791b6813fcc2b1e751a8791283b3f2c",
     "id": null,
     "metadata": {},
     "name": "RiskObligationsTabCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation RiskObligationsTabCreateMutation(\n  $input: CreateRiskObligationMappingInput!\n) {\n  createRiskObligationMapping(input: $input) {\n    obligationEdge {\n      node {\n        id\n        ...LinkedObligationsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  requirement\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n"
+    "text": "mutation RiskObligationsTabCreateMutation(\n  $input: CreateRiskObligationMappingInput!\n) {\n  createRiskObligationMapping(input: $input) {\n    obligationEdge {\n      node {\n        id\n        ...LinkedObligationsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n"
   }
 };
 })();

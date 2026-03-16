@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0a69c39376077a358486998d7be82316>>
+ * @generated SignedSource<<e0041fe053c98e1f91c694eff50d0bde>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,12 +14,10 @@ export type ContinualImprovementStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 import { FragmentRefs } from "relay-runtime";
 export type ContinualImprovementsPageFragment$data = {
   readonly continualImprovements: {
-    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly owner: {
@@ -29,18 +27,14 @@ export type ContinualImprovementsPageFragment$data = {
         readonly priority: ContinualImprovementPriority;
         readonly referenceId: string;
         readonly snapshotId: string | null | undefined;
-        readonly source: string | null | undefined;
-        readonly sourceId: string | null | undefined;
         readonly status: ContinualImprovementStatus;
         readonly targetDate: string | null | undefined;
-        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
       readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
-    readonly totalCount: number;
   };
   readonly id: string;
   readonly " $fragmentType": "ContinualImprovementsPageFragment";
@@ -136,13 +130,6 @@ return {
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
           "concreteType": "ContinualImprovementEdge",
           "kind": "LinkedField",
           "name": "edges",
@@ -168,13 +155,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "sourceId",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "referenceId",
                   "storageKey": null
                 },
@@ -183,13 +163,6 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "description",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "source",
                   "storageKey": null
                 },
                 {
@@ -230,20 +203,6 @@ return {
                       "storageKey": null
                     }
                   ],
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "updatedAt",
                   "storageKey": null
                 },
                 {
@@ -316,18 +275,6 @@ return {
             }
           ],
           "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "__id",
-              "storageKey": null
-            }
-          ]
         }
       ],
       "storageKey": null
@@ -338,6 +285,6 @@ return {
 };
 })();
 
-(node as any).hash = "ec045ffacd206a4854cb864eadf3ef50";
+(node as any).hash = "c2371c08dd0f581a9803ca118f3bd366";
 
 export default node;

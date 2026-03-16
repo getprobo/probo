@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e83a53e6de1bb7926c99b70425582ede>>
+ * @generated SignedSource<<858e7c26ec2dffad19b6d194cbc9eb06>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -129,20 +129,6 @@ return {
                 "storageKey": null
               },
               {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "createdAt",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "updatedAt",
-                "storageKey": null
-              },
-              {
                 "alias": "canUpdate",
                 "args": [
                   {
@@ -177,12 +163,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5944b8aa370dff2ef78b2690dd4b3f35",
+    "cacheID": "47b79dfb623481aba4ba9330ce4fb560",
     "id": null,
     "metadata": {},
     "name": "EditServiceDialogUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation EditServiceDialogUpdateMutation(\n  $input: UpdateVendorServiceInput!\n) {\n  updateVendorService(input: $input) {\n    vendorService {\n      ...VendorServicesTabFragment_service\n      id\n    }\n  }\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
+    "text": "mutation EditServiceDialogUpdateMutation(\n  $input: UpdateVendorServiceInput!\n) {\n  updateVendorService(input: $input) {\n    vendorService {\n      ...VendorServicesTabFragment_service\n      id\n    }\n  }\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
   }
 };
 })();

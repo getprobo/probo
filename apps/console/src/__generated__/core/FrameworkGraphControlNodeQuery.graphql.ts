@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<72da3c2c267ec4fd2da7aee87f38c51b>>
+ * @generated SignedSource<<e93ba286448172a25318dce56e88ddfe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -349,13 +349,6 @@ v23 = {
   "storageKey": null
 },
 v24 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
-  "storageKey": null
-},
-v25 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -749,7 +742,6 @@ return {
                             "name": "title",
                             "storageKey": null
                           },
-                          (v24/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -788,7 +780,7 @@ return {
                                     "plural": false,
                                     "selections": [
                                       (v2/*: any*/),
-                                      (v25/*: any*/)
+                                      (v24/*: any*/)
                                     ],
                                     "storageKey": null
                                   }
@@ -846,22 +838,7 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
-                          (v24/*: any*/),
                           (v23/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "validFrom",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "validUntil",
-                            "storageKey": null
-                          },
                           {
                             "alias": null,
                             "args": null,
@@ -926,13 +903,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "requirement",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "area",
                             "storageKey": null
                           },
@@ -943,7 +913,7 @@ return {
                             "name": "source",
                             "storageKey": null
                           },
-                          (v25/*: any*/),
+                          (v24/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -1019,7 +989,13 @@ return {
                             "name": "type",
                             "storageKey": null
                           },
-                          (v24/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "createdAt",
+                            "storageKey": null
+                          },
                           (v18/*: any*/)
                         ],
                         "storageKey": null
@@ -1052,7 +1028,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d177e11d82fa12c1622578238707b173",
+    "cacheID": "998df2157721c875b49d5b5b9c2b4155",
     "id": null,
     "metadata": {
       "connection": [
@@ -1105,7 +1081,7 @@ return {
     },
     "name": "FrameworkGraphControlNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphControlNodeQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      sectionTitle\n      description\n      canUpdate: permission(action: \"core:control:update\")\n      canDelete: permission(action: \"core:control:delete\")\n      canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n      canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n      canCreateDocumentMapping: permission(action: \"core:control:create-document-mapping\")\n      canDeleteDocumentMapping: permission(action: \"core:control:delete-document-mapping\")\n      canCreateAuditMapping: permission(action: \"core:control:create-audit-mapping\")\n      canDeleteAuditMapping: permission(action: \"core:control:delete-audit-mapping\")\n      canCreateSnapshotMapping: permission(action: \"core:control:create-snapshot-mapping\")\n      canDeleteSnapshotMapping: permission(action: \"core:control:delete-snapshot-mapping\")\n      canCreateObligationMapping: permission(action: \"core:control:create-obligation-mapping\")\n      canDeleteObligationMapping: permission(action: \"core:control:delete-obligation-mapping\")\n      ...FrameworkControlDialogFragment\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedMeasuresCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedDocumentsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedAuditsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      obligations(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedObligationsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      snapshots(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedSnapshotsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  bestPractice\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  createdAt\n  state\n  validFrom\n  validUntil\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  requirement\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n\nfragment LinkedSnapshotsCardFragment on Snapshot {\n  id\n  name\n  description\n  type\n  createdAt\n}\n"
+    "text": "query FrameworkGraphControlNodeQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      sectionTitle\n      description\n      canUpdate: permission(action: \"core:control:update\")\n      canDelete: permission(action: \"core:control:delete\")\n      canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n      canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n      canCreateDocumentMapping: permission(action: \"core:control:create-document-mapping\")\n      canDeleteDocumentMapping: permission(action: \"core:control:delete-document-mapping\")\n      canCreateAuditMapping: permission(action: \"core:control:create-audit-mapping\")\n      canDeleteAuditMapping: permission(action: \"core:control:delete-audit-mapping\")\n      canCreateSnapshotMapping: permission(action: \"core:control:create-snapshot-mapping\")\n      canDeleteSnapshotMapping: permission(action: \"core:control:delete-snapshot-mapping\")\n      canCreateObligationMapping: permission(action: \"core:control:create-obligation-mapping\")\n      canDeleteObligationMapping: permission(action: \"core:control:delete-obligation-mapping\")\n      ...FrameworkControlDialogFragment\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedMeasuresCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedDocumentsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedAuditsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      obligations(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedObligationsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      snapshots(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedSnapshotsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  bestPractice\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  state\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n\nfragment LinkedSnapshotsCardFragment on Snapshot {\n  id\n  name\n  description\n  type\n  createdAt\n}\n"
   }
 };
 })();

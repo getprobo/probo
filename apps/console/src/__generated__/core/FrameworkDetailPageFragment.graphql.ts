@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b78ad7244ad348d2622288743eff7a9b>>
+ * @generated SignedSource<<45d53306abdcc9df7a3a4aa3dbab97f7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,6 @@ export type FrameworkDetailPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly bestPractice: boolean;
         readonly id: string;
         readonly name: string;
         readonly sectionTitle: string;
@@ -31,9 +30,6 @@ export type FrameworkDetailPageFragment$data = {
   readonly id: string;
   readonly lightLogoURL: string | null | undefined;
   readonly name: string;
-  readonly organization: {
-    readonly name: string;
-  };
   readonly " $fragmentType": "FrameworkDetailPageFragment";
 };
 export type FrameworkDetailPageFragment$key = {
@@ -139,18 +135,6 @@ return {
     },
     {
       "alias": null,
-      "args": null,
-      "concreteType": "Organization",
-      "kind": "LinkedField",
-      "name": "organization",
-      "plural": false,
-      "selections": [
-        (v1/*: any*/)
-      ],
-      "storageKey": null
-    },
-    {
-      "alias": null,
       "args": [
         {
           "kind": "Literal",
@@ -195,14 +179,7 @@ return {
                   "name": "sectionTitle",
                   "storageKey": null
                 },
-                (v1/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "bestPractice",
-                  "storageKey": null
-                }
+                (v1/*: any*/)
               ],
               "storageKey": null
             }
@@ -230,6 +207,6 @@ return {
 };
 })();
 
-(node as any).hash = "f6eba8f00d1e491f79bc201851b8c69d";
+(node as any).hash = "760fb461ecc85b5c3b394f6c86327958";
 
 export default node;

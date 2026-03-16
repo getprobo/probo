@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0ba30b05b62bf6a4b76a17fb1a6db467>>
+ * @generated SignedSource<<dbe78cfeaca9f22e18fd7b218615349f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,8 +22,6 @@ export type LinkedAuditsDialogFragment$data = {
         readonly id: string;
         readonly name: string | null | undefined;
         readonly state: AuditState;
-        readonly validFrom: string | null | undefined;
-        readonly validUntil: string | null | undefined;
       };
     }>;
   };
@@ -159,20 +157,6 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "validFrom",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "validUntil",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
                   "concreteType": "Framework",
                   "kind": "LinkedField",
                   "name": "framework",
@@ -252,6 +236,6 @@ return {
 };
 })();
 
-(node as any).hash = "d58fca9b4fb36a24ded1858b632f5acf";
+(node as any).hash = "028ca07cee48d4b7487aa20f57f11062";
 
 export default node;

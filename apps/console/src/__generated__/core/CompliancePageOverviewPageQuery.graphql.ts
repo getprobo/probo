@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<18bb7ea1b507c374c33d9f4f7a56db2d>>
+ * @generated SignedSource<<fcaa53b431a42b5c88621f01ca1c2707>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -298,12 +298,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0041132d3ac46a3193d9acbd6f27bdf5",
+    "cacheID": "ec3cfcfb3511a97a119b9d08b6c1069f",
     "id": null,
     "metadata": {},
     "name": "CompliancePageOverviewPageQuery",
     "operationKind": "query",
-    "text": "query CompliancePageOverviewPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        canGetNDA: permission(action: \"core:trust-center:get-nda\")\n        id\n      }\n    }\n    ...CompliancePageStatusSectionFragment\n    ...CompliancePageNDASectionFragment\n    ...CompliancePageSlackSectionFragment\n    id\n  }\n}\n\nfragment CompliancePageNDASectionFragment on Organization {\n  compliancePage: trustCenter {\n    id\n    ndaFileName\n    ndaFileUrl\n    canUpdate: permission(action: \"core:trust-center:update\")\n    canUploadNDA: permission(action: \"core:trust-center:upload-nda\")\n    canDeleteNDA: permission(action: \"core:trust-center:delete-nda\")\n  }\n}\n\nfragment CompliancePageSlackSectionFragment on Organization {\n  compliancePage: trustCenter {\n    canUpdate: permission(action: \"core:trust-center:update\")\n    id\n  }\n  slackConnections(first: 100) {\n    edges {\n      node {\n        id\n        channel\n        createdAt\n      }\n    }\n  }\n}\n\nfragment CompliancePageStatusSectionFragment on Organization {\n  customDomain {\n    domain\n    id\n  }\n  compliancePage: trustCenter {\n    id\n    active\n    canUpdate: permission(action: \"core:trust-center:update\")\n  }\n}\n"
+    "text": "query CompliancePageOverviewPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      compliancePage: trustCenter {\n        canGetNDA: permission(action: \"core:trust-center:get-nda\")\n        id\n      }\n    }\n    ...CompliancePageStatusSectionFragment\n    ...CompliancePageNDASectionFragment\n    ...CompliancePageSlackSectionFragment\n    id\n  }\n}\n\nfragment CompliancePageNDASectionFragment on Organization {\n  compliancePage: trustCenter {\n    id\n    ndaFileName\n    ndaFileUrl\n    canUploadNDA: permission(action: \"core:trust-center:upload-nda\")\n    canDeleteNDA: permission(action: \"core:trust-center:delete-nda\")\n  }\n}\n\nfragment CompliancePageSlackSectionFragment on Organization {\n  compliancePage: trustCenter {\n    canUpdate: permission(action: \"core:trust-center:update\")\n    id\n  }\n  slackConnections(first: 100) {\n    edges {\n      node {\n        id\n        channel\n        createdAt\n      }\n    }\n  }\n}\n\nfragment CompliancePageStatusSectionFragment on Organization {\n  customDomain {\n    domain\n    id\n  }\n  compliancePage: trustCenter {\n    id\n    active\n    canUpdate: permission(action: \"core:trust-center:update\")\n  }\n}\n"
   }
 };
 })();

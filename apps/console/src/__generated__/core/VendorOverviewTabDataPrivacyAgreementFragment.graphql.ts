@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3cf0d5be883754321b4278ac59d77a54>>
+ * @generated SignedSource<<aceaac808ab90a1399f409fe939c3a3c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,6 @@ export type VendorOverviewTabDataPrivacyAgreementFragment$data = {
   readonly dataPrivacyAgreement: {
     readonly canDelete: boolean;
     readonly canUpdate: boolean;
-    readonly createdAt: string;
     readonly fileName: string;
     readonly fileUrl: string;
     readonly id: string;
@@ -78,13 +77,6 @@ const node: ReaderFragment = {
           "storageKey": null
         },
         {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "createdAt",
-          "storageKey": null
-        },
-        {
           "alias": "canUpdate",
           "args": [
             {
@@ -118,6 +110,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "c07606a63a9dc76f5cfad938c9d54268";
+(node as any).hash = "5cf69f31730f54b7a8cb97eb73308abb";
 
 export default node;

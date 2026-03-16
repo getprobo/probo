@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<adfc8b4c8d74772589ac7d365270a615>>
+ * @generated SignedSource<<c9b22b714fa8ce762e64cb7956330a4d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -216,13 +216,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "requirement",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "area",
                             "storageKey": null
                           },
@@ -336,16 +329,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a4640b163a373e0420a9fb1108ce7b3a",
+    "cacheID": "1d7c16a3d028e014310a7b94371eddb6",
     "id": null,
     "metadata": {},
     "name": "LinkedObligationsDialogQuery_fragment",
     "operationKind": "query",
-    "text": "query LinkedObligationsDialogQuery_fragment(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ObligationOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...LinkedObligationsDialogFragment_16fISc\n    id\n  }\n}\n\nfragment LinkedObligationsDialogFragment_16fISc on Organization {\n  obligations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        requirement\n        area\n        source\n        status\n        owner {\n          fullName\n          id\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query LinkedObligationsDialogQuery_fragment(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ObligationOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...LinkedObligationsDialogFragment_16fISc\n    id\n  }\n}\n\nfragment LinkedObligationsDialogFragment_16fISc on Organization {\n  obligations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        area\n        source\n        status\n        owner {\n          fullName\n          id\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6e686f2a4bce776146b1985df2863e73";
+(node as any).hash = "eca4553b6bec6e92ef7a6cdef86fcce3";
 
 export default node;

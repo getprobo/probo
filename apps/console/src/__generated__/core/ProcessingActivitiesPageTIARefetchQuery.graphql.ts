@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ee1abc6db9644da780dad4e73f52acf6>>
+ * @generated SignedSource<<8cbe753dc048cbf53d1b69741ab8d85c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -165,13 +165,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "TransferImpactAssessmentEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -226,20 +219,6 @@ return {
                             ],
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
-                            "storageKey": null
-                          },
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -278,18 +257,6 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "__id",
-                        "storageKey": null
-                      }
-                    ]
                   }
                 ],
                 "storageKey": null
@@ -315,16 +282,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2dfe163e2a769f6a428b3e259cd6dc39",
+    "cacheID": "20721d3fa6f5a726d7e9842798957a51",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivitiesPageTIARefetchQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivitiesPageTIARefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageTIAFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageTIAFragment_35e0S5 on Organization {\n  id\n  transferImpactAssessments(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        dataSubjects\n        transfer\n        localLawRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivitiesPageTIARefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageTIAFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageTIAFragment_35e0S5 on Organization {\n  id\n  transferImpactAssessments(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        dataSubjects\n        transfer\n        localLawRisk\n        processingActivity {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2c6575fe24698cc6b14d9d7a88cf434b";
+(node as any).hash = "dfda6e9061797741ea5ae080b7027ff3";
 
 export default node;

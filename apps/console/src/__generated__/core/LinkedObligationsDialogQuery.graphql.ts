@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f9c59bb5e4383c1d9bfa5854ee42004f>>
+ * @generated SignedSource<<793fb7cbbcba6ab5302591b6cd6c6b6e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -143,13 +143,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "requirement",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "area",
                             "storageKey": null
                           },
@@ -263,12 +256,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8d4a5e57f79ae207dd1e27c436e49bd5",
+    "cacheID": "0cf16ed27ea9e223c6ec271971c08326",
     "id": null,
     "metadata": {},
     "name": "LinkedObligationsDialogQuery",
     "operationKind": "query",
-    "text": "query LinkedObligationsDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...LinkedObligationsDialogFragment\n    }\n  }\n}\n\nfragment LinkedObligationsDialogFragment on Organization {\n  obligations(first: 20) {\n    edges {\n      node {\n        id\n        requirement\n        area\n        source\n        status\n        owner {\n          fullName\n          id\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query LinkedObligationsDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...LinkedObligationsDialogFragment\n    }\n  }\n}\n\nfragment LinkedObligationsDialogFragment on Organization {\n  obligations(first: 20) {\n    edges {\n      node {\n        id\n        area\n        source\n        status\n        owner {\n          fullName\n          id\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

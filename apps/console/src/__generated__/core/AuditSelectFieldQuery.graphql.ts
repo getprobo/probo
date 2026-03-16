@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b1303e995857ee0207b8a09f76e2ed2a>>
+ * @generated SignedSource<<ed887e02eec5486b08ff31f4956e11e0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,8 +25,6 @@ export type AuditSelectFieldQuery$data = {
           readonly id: string;
           readonly name: string | null | undefined;
           readonly state: AuditState;
-          readonly validFrom: string | null | undefined;
-          readonly validUntil: string | null | undefined;
         };
       }>;
     };
@@ -120,20 +118,6 @@ v4 = {
                   "kind": "ScalarField",
                   "name": "state",
                   "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "validFrom",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "validUntil",
-                  "storageKey": null
                 }
               ],
               "storageKey": null
@@ -200,16 +184,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "339c5438bb684c44887cc9cb53fb2c6a",
+    "cacheID": "aff4976e133c357e4923155693cf55a8",
     "id": null,
     "metadata": {},
     "name": "AuditSelectFieldQuery",
     "operationKind": "query",
-    "text": "query AuditSelectFieldQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            name\n            framework {\n              id\n              name\n            }\n            state\n            validFrom\n            validUntil\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query AuditSelectFieldQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            name\n            framework {\n              id\n              name\n            }\n            state\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2bde1a04326144fe1b133672870807eb";
+(node as any).hash = "ff187d65a29fe5676b2405cece34383a";
 
 export default node;

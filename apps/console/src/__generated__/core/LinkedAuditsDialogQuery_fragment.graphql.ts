@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<87ff7faae25faa23e9832a7457605a2e>>
+ * @generated SignedSource<<5551d4d153d23284c55acd9d37cee1e4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -230,20 +230,6 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "kind": "ScalarField",
-                            "name": "validFrom",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "validUntil",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
                             "concreteType": "Framework",
                             "kind": "LinkedField",
                             "name": "framework",
@@ -331,16 +317,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "26f1cad4cab5157a2d9e10d4b89114ec",
+    "cacheID": "218e27744e117a9a9417796d5e28ac00",
     "id": null,
     "metadata": {},
     "name": "LinkedAuditsDialogQuery_fragment",
     "operationKind": "query",
-    "text": "query LinkedAuditsDialogQuery_fragment(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...LinkedAuditsDialogFragment_16fISc\n    id\n  }\n}\n\nfragment LinkedAuditsDialogFragment_16fISc on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        name\n        state\n        validFrom\n        validUntil\n        framework {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query LinkedAuditsDialogQuery_fragment(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...LinkedAuditsDialogFragment_16fISc\n    id\n  }\n}\n\nfragment LinkedAuditsDialogFragment_16fISc on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        name\n        state\n        framework {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d58fca9b4fb36a24ded1858b632f5acf";
+(node as any).hash = "028ca07cee48d4b7487aa20f57f11062";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9c8e97bf0858bdac532273c8a3620731>>
+ * @generated SignedSource<<af8474eed98f58b7c1f877660e4f9545>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,6 @@ export type VendorComplianceTabFragment_report$data = {
   readonly file: {
     readonly downloadUrl: string;
     readonly fileName: string;
-    readonly mimeType: string;
     readonly size: number;
   } | null | undefined;
   readonly id: string;
@@ -82,13 +81,6 @@ const node: ReaderFragment = {
           "alias": null,
           "args": null,
           "kind": "ScalarField",
-          "name": "mimeType",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
           "name": "size",
           "storageKey": null
         },
@@ -120,6 +112,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "9d29871990edb54a36915fab64eaea3a";
+(node as any).hash = "cbf9fe2b6540de802f43eb7f840a24a7";
 
 export default node;

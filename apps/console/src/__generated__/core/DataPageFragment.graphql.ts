@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fcac33ad88cb95b744302e08e77075a3>>
+ * @generated SignedSource<<9f991efd41ace6fcb6cdd3234b9c50ee>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,6 @@ export type DataPageFragment$data = {
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: string;
         readonly dataClassification: DataClassification;
         readonly id: string;
         readonly name: string;
@@ -244,13 +243,6 @@ return {
                   "storageKey": "vendors(first:50)"
                 },
                 {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
                   "alias": "canUpdate",
                   "args": [
                     {
@@ -357,6 +349,6 @@ return {
 };
 })();
 
-(node as any).hash = "9a4453365a733d298ab9f5237fc4153b";
+(node as any).hash = "e51f5dfa7d9e2cdc10ed400da2c94055";
 
 export default node;

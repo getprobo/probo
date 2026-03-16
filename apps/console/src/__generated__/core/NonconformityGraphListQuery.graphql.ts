@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8c7e1d681649a3b5981a153314c2325a>>
+ * @generated SignedSource<<d5b939d79996b276611b4a8b1501f0a9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -164,13 +164,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "NonconformityEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -217,35 +210,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "dateIdentified",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "dueDate",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "rootCause",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "correctiveAction",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "effectivenessCheck",
                             "storageKey": null
                           },
                           {
@@ -291,20 +256,6 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -371,18 +322,6 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "__id",
-                        "storageKey": null
-                      }
-                    ]
                   }
                 ],
                 "storageKey": null
@@ -408,12 +347,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "96b967c48f7366ffeab39d39fa7221b2",
+    "cacheID": "ae2203e6e89bab79f1e9a38ab95f8576",
     "id": null,
     "metadata": {},
     "name": "NonconformityGraphListQuery",
     "operationKind": "query",
-    "text": "query NonconformityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateNonconformity: permission(action: \"core:nonconformity:create\")\n      ...NonconformitiesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_3iomuz on Organization {\n  id\n  nonconformities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateNonconformity: permission(action: \"core:nonconformity:create\")\n      ...NonconformitiesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_3iomuz on Organization {\n  id\n  nonconformities(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dueDate\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

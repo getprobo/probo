@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f6cb4225acc7d3809c516d6ed72417ac>>
+ * @generated SignedSource<<ddf07f0e75fd70831b9c02bc8a6966d3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -165,13 +165,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "ObligationEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -197,13 +190,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "sourceId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "area",
                             "storageKey": null
                           },
@@ -218,13 +204,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "requirement",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "status",
                             "storageKey": null
                           },
@@ -232,28 +211,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "lastReviewDate",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "dueDate",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "actionsToBeImplemented",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "regulator",
                             "storageKey": null
                           },
                           {
@@ -273,20 +231,6 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -390,16 +334,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "df1ca965ec380e12537f713ce9786930",
+    "cacheID": "eecd7c8215f1ef55517653b02ef8618f",
     "id": null,
     "metadata": {},
     "name": "ObligationsPageRefetchQuery",
     "operationKind": "query",
-    "text": "query ObligationsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ObligationsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ObligationsPageFragment_35e0S5 on Organization {\n  id\n  obligations(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:obligation:update\")\n        canDelete: permission(action: \"core:obligation:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ObligationsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ObligationsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ObligationsPageFragment_35e0S5 on Organization {\n  id\n  obligations(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        area\n        source\n        status\n        dueDate\n        owner {\n          id\n          fullName\n        }\n        canUpdate: permission(action: \"core:obligation:update\")\n        canDelete: permission(action: \"core:obligation:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b80f122b447b6a979b4774851ad11ee5";
+(node as any).hash = "2c1bd9bad38a69ae4fcfe5a3ceb90536";
 
 export default node;

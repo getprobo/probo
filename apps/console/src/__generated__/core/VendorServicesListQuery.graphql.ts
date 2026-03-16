@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5eb43de8b9e005e9d6a505932b1e2bfd>>
+ * @generated SignedSource<<cb1826366cfddee6311c8855521d41de>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -252,20 +252,6 @@ return {
                             "name": "description",
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
-                            "storageKey": null
-                          },
                           (v11/*: any*/)
                         ],
                         "storageKey": null
@@ -355,12 +341,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "94e552f4d7ee637234214d9277109b51",
+    "cacheID": "bed31ef58c544edb7f800be464058d1b",
     "id": null,
     "metadata": {},
     "name": "VendorServicesListQuery",
     "operationKind": "query",
-    "text": "query VendorServicesListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorServiceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorServicesTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorServicesTabFragment_16fISc on Vendor {\n  services(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-service:update\")\n        canDelete: permission(action: \"core:vendor-service:delete\")\n        ...VendorServicesTabFragment_service\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
+    "text": "query VendorServicesListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorServiceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorServicesTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorServicesTabFragment_16fISc on Vendor {\n  services(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-service:update\")\n        canDelete: permission(action: \"core:vendor-service:delete\")\n        ...VendorServicesTabFragment_service\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
   }
 };
 })();

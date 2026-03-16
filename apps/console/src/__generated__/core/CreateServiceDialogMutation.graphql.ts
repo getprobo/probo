@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<aacbb3c4646610f327cc7cea8f944158>>
+ * @generated SignedSource<<8c54b45b60522018bd293091420c10c9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -160,20 +160,6 @@ return {
                     "storageKey": null
                   },
                   {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "createdAt",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "updatedAt",
-                    "storageKey": null
-                  },
-                  {
                     "alias": "canUpdate",
                     "args": [
                       {
@@ -227,12 +213,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "05250ac44a987544335a9e97eed9d66b",
+    "cacheID": "88f721ba15877e193df05b117bc275e6",
     "id": null,
     "metadata": {},
     "name": "CreateServiceDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateServiceDialogMutation(\n  $input: CreateVendorServiceInput!\n) {\n  createVendorService(input: $input) {\n    vendorServiceEdge {\n      node {\n        ...VendorServicesTabFragment_service\n        id\n      }\n    }\n  }\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
+    "text": "mutation CreateServiceDialogMutation(\n  $input: CreateVendorServiceInput!\n) {\n  createVendorService(input: $input) {\n    vendorServiceEdge {\n      node {\n        ...VendorServicesTabFragment_service\n        id\n      }\n    }\n  }\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
   }
 };
 })();

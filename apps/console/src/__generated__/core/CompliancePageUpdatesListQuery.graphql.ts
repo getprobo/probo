@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dcc3921bab2d3c42dc01f71fbf1a4338>>
+ * @generated SignedSource<<bb3e317f2b5739ec17cab8d1887d6188>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -200,13 +200,6 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
-                            "storageKey": null
-                          },
                           (v3/*: any*/)
                         ],
                         "storageKey": null
@@ -255,16 +248,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e1a6160f157715c1c52adca86d02b9c6",
+    "cacheID": "03f1291dd1f69df4daf3378cda095f4d",
     "id": null,
     "metadata": {},
     "name": "CompliancePageUpdatesListQuery",
     "operationKind": "query",
-    "text": "query CompliancePageUpdatesListQuery(\n  $after: CursorKey = null\n  $first: Int = 20\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageUpdatesListFragment_2HEEH6\n    id\n  }\n}\n\nfragment CompliancePageUpdatesListFragment_2HEEH6 on MailingList {\n  updates(first: $first, after: $after) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
+    "text": "query CompliancePageUpdatesListQuery(\n  $after: CursorKey = null\n  $first: Int = 20\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageUpdatesListFragment_2HEEH6\n    id\n  }\n}\n\nfragment CompliancePageUpdatesListFragment_2HEEH6 on MailingList {\n  updates(first: $first, after: $after) {\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    edges {\n      node {\n        id\n        title\n        body\n        status\n        createdAt\n        __typename\n      }\n      cursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "97bcf2215cc4fa04d1d4b84b2da4c33a";
+(node as any).hash = "ec30cc8203e7247748a105b6740dcf1f";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<10a0ee1dfa19239c5c5820f3d58a1e19>>
+ * @generated SignedSource<<df6b24e4cabfa9f10e1fa41aaaf42b68>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -27,7 +27,7 @@ export type NDAPageQuery$data = {
     readonly " $fragmentSpreads": FragmentRefs<"NDAPageFragment">;
   };
   readonly viewer: {
-    readonly fullName: string;
+    readonly id: string;
   } | null | undefined;
 };
 export type NDAPageQuery = {
@@ -40,42 +40,47 @@ var v0 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "fullName",
+  "name": "id",
   "storageKey": null
 },
 v1 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
-  "name": "name",
+  "concreteType": "Identity",
+  "kind": "LinkedField",
+  "name": "viewer",
+  "plural": false,
+  "selections": [
+    (v0/*: any*/)
+  ],
   "storageKey": null
 },
 v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "fileName",
+  "name": "name",
   "storageKey": null
 },
 v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "fileUrl",
+  "name": "fileName",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "status",
+  "name": "fileUrl",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "id",
+  "name": "status",
   "storageKey": null
 };
 return {
@@ -85,18 +90,7 @@ return {
     "metadata": null,
     "name": "NDAPageQuery",
     "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "Identity",
-        "kind": "LinkedField",
-        "name": "viewer",
-        "plural": false,
-        "selections": [
-          (v0/*: any*/)
-        ],
-        "storageKey": null
-      },
+      (v1/*: any*/),
       {
         "kind": "RequiredField",
         "field": {
@@ -115,7 +109,7 @@ return {
               "name": "organization",
               "plural": false,
               "selections": [
-                (v1/*: any*/)
+                (v2/*: any*/)
               ],
               "storageKey": null
             },
@@ -127,8 +121,8 @@ return {
               "name": "nonDisclosureAgreement",
               "plural": false,
               "selections": [
-                (v2/*: any*/),
                 (v3/*: any*/),
+                (v4/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -137,7 +131,7 @@ return {
                   "name": "viewerSignature",
                   "plural": false,
                   "selections": [
-                    (v4/*: any*/)
+                    (v5/*: any*/)
                   ],
                   "storageKey": null
                 }
@@ -164,19 +158,7 @@ return {
     "kind": "Operation",
     "name": "NDAPageQuery",
     "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "Identity",
-        "kind": "LinkedField",
-        "name": "viewer",
-        "plural": false,
-        "selections": [
-          (v0/*: any*/),
-          (v5/*: any*/)
-        ],
-        "storageKey": null
-      },
+      (v1/*: any*/),
       {
         "alias": null,
         "args": null,
@@ -193,8 +175,8 @@ return {
             "name": "organization",
             "plural": false,
             "selections": [
-              (v1/*: any*/),
-              (v5/*: any*/)
+              (v2/*: any*/),
+              (v0/*: any*/)
             ],
             "storageKey": null
           },
@@ -206,8 +188,8 @@ return {
             "name": "nonDisclosureAgreement",
             "plural": false,
             "selections": [
-              (v2/*: any*/),
               (v3/*: any*/),
+              (v4/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -216,8 +198,8 @@ return {
                 "name": "viewerSignature",
                 "plural": false,
                 "selections": [
-                  (v4/*: any*/),
                   (v5/*: any*/),
+                  (v0/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -238,23 +220,23 @@ return {
             ],
             "storageKey": null
           },
-          (v5/*: any*/)
+          (v0/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "e1ab3a5206a4ea200ebdb991023a0e99",
+    "cacheID": "3fd076a45e4a2eae4a56fc34aeafa815",
     "id": null,
     "metadata": {},
     "name": "NDAPageQuery",
     "operationKind": "query",
-    "text": "query NDAPageQuery {\n  viewer {\n    fullName\n    id\n  }\n  currentTrustCenter {\n    organization {\n      name\n      id\n    }\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    ...NDAPageFragment\n    id\n  }\n}\n\nfragment NDAPageFragment on TrustCenter {\n  nonDisclosureAgreement {\n    viewerSignature {\n      id\n      status\n      consentText\n      lastError\n    }\n  }\n  id\n}\n"
+    "text": "query NDAPageQuery {\n  viewer {\n    id\n  }\n  currentTrustCenter {\n    organization {\n      name\n      id\n    }\n    nonDisclosureAgreement {\n      fileName\n      fileUrl\n      viewerSignature {\n        status\n        id\n      }\n    }\n    ...NDAPageFragment\n    id\n  }\n}\n\nfragment NDAPageFragment on TrustCenter {\n  nonDisclosureAgreement {\n    viewerSignature {\n      id\n      status\n      consentText\n      lastError\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4f0f0dd672862fb6c3fb5ef2eff80cd9";
+(node as any).hash = "048b0469d90d78f35ce7ed1bfe7edbde";
 
 export default node;

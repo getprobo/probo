@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a866ac360421f2cca952ab1305c3de0b>>
+ * @generated SignedSource<<f77cd899e1310cc9073b412f9033e321>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -183,14 +183,7 @@ return {
                             "name": "report",
                             "plural": false,
                             "selections": [
-                              (v4/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "filename",
-                                "storageKey": null
-                              }
+                              (v4/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -212,13 +205,6 @@ return {
                               (v4/*: any*/),
                               (v6/*: any*/)
                             ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
                             "storageKey": null
                           },
                           {
@@ -336,12 +322,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "441524ada7aa614fb611f3d64812314f",
+    "cacheID": "947a80a492551d8082ac7f43d88a1692",
     "id": null,
     "metadata": {},
     "name": "AuditGraphListQuery",
     "operationKind": "query",
-    "text": "query AuditGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateAudit: permission(action: \"core:audit:create\")\n      ...AuditsPageFragment\n    }\n    id\n  }\n}\n\nfragment AuditsPageFragment on Organization {\n  audits(first: 10) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AuditGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateAudit: permission(action: \"core:audit:create\")\n      ...AuditsPageFragment\n    }\n    id\n  }\n}\n\nfragment AuditsPageFragment on Organization {\n  audits(first: 10) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n        }\n        state\n        framework {\n          id\n          name\n        }\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a3db1c53e5570210d73e3fdc1b930767>>
+ * @generated SignedSource<<b78ec228df3e04b8d524705a6e6e775c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,6 @@ export type AssetsPageFragment$data = {
         readonly assetType: AssetType;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: string;
         readonly dataTypesStored: string;
         readonly id: string;
         readonly name: string;
@@ -270,13 +269,6 @@ return {
                   "storageKey": "vendors(first:50)"
                 },
                 {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
                   "alias": "canUpdate",
                   "args": [
                     {
@@ -383,6 +375,6 @@ return {
 };
 })();
 
-(node as any).hash = "4e870b93c801e9f0b6e26ab6069863fe";
+(node as any).hash = "8c67b88d7d88fa017e97b19790271a4c";
 
 export default node;

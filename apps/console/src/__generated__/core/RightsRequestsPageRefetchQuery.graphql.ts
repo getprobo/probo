@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e8285c8dc81c3789af43fe68e8ef4c98>>
+ * @generated SignedSource<<471db3fa5ea0c9ee5847f89d574248ea>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -133,13 +133,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "RightsRequestEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -186,35 +179,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "details",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "deadline",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "actionTaken",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -281,18 +246,6 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "__id",
-                        "storageKey": null
-                      }
-                    ]
                   }
                 ],
                 "storageKey": null
@@ -316,16 +269,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a63c4d960c8f375acceeedd2f1b9a188",
+    "cacheID": "04eaecdba489d9ac60b6e0863d1ddf62",
     "id": null,
     "metadata": {},
     "name": "RightsRequestsPageRefetchQuery",
     "operationKind": "query",
-    "text": "query RightsRequestsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RightsRequestsPageFragment_2HEEH6\n    id\n  }\n}\n\nfragment RightsRequestsPageFragment_2HEEH6 on Organization {\n  id\n  rightsRequests(first: $first, after: $after) {\n    totalCount\n    edges {\n      node {\n        id\n        requestType\n        requestState\n        dataSubject\n        contact\n        details\n        deadline\n        actionTaken\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:rights-request:delete\")\n        canUpdate: permission(action: \"core:rights-request:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query RightsRequestsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RightsRequestsPageFragment_2HEEH6\n    id\n  }\n}\n\nfragment RightsRequestsPageFragment_2HEEH6 on Organization {\n  id\n  rightsRequests(first: $first, after: $after) {\n    edges {\n      node {\n        id\n        requestType\n        requestState\n        dataSubject\n        contact\n        deadline\n        canDelete: permission(action: \"core:rights-request:delete\")\n        canUpdate: permission(action: \"core:rights-request:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "cfb8b464e37afac281c1722b9daf1783";
+(node as any).hash = "4cf7e71a943108ff633fa8a91f301bb0";
 
 export default node;

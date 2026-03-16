@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4716483592ffb7c9bb7d96ea56503734>>
+ * @generated SignedSource<<28e7d6bf94f2233025c7cfcb9d6e52bc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -191,19 +191,6 @@ return {
               },
               {
                 "alias": null,
-                "args": null,
-                "concreteType": "Organization",
-                "kind": "LinkedField",
-                "name": "organization",
-                "plural": false,
-                "selections": [
-                  (v3/*: any*/),
-                  (v2/*: any*/)
-                ],
-                "storageKey": null
-              },
-              {
-                "alias": null,
                 "args": [
                   {
                     "kind": "Literal",
@@ -248,14 +235,7 @@ return {
                             "name": "sectionTitle",
                             "storageKey": null
                           },
-                          (v3/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "bestPractice",
-                            "storageKey": null
-                          }
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -287,12 +267,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9cb1289702b4dd6c83330a0ef84297d6",
+    "cacheID": "b81384926dda85938c39f810f7d10309",
     "id": null,
     "metadata": {},
     "name": "FrameworkGraphNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  canExport: permission(action: \"core:franework:export\")\n  canUpdate: permission(action: \"core:framework:update\")\n  canDelete: permission(action: \"core:framework:delete\")\n  canCreateControl: permission(action: \"core:control:create\")\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        bestPractice\n      }\n    }\n  }\n}\n"
+    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  canExport: permission(action: \"core:franework:export\")\n  canUpdate: permission(action: \"core:framework:update\")\n  canDelete: permission(action: \"core:framework:delete\")\n  canCreateControl: permission(action: \"core:control:create\")\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n      }\n    }\n  }\n}\n"
   }
 };
 })();

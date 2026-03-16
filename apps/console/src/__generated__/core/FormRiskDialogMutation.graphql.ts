@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<645072360dd4172625d01052118e7f8f>>
+ * @generated SignedSource<<ed737df9d60b1e47be455f7f66124af8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -213,20 +213,6 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "inherentRiskScore",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "residualRiskScore",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "note",
                     "storageKey": null
                   },
@@ -270,12 +256,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a6ca4767b2443f6b4d02d6fdd1358600",
+    "cacheID": "e2131409b62d6cd6bd8a6d008f2ac1f5",
     "id": null,
     "metadata": {},
     "name": "FormRiskDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation FormRiskDialogMutation(\n  $input: CreateRiskInput!\n) {\n  createRisk(input: $input) {\n    riskEdge {\n      node {\n        ...useRiskFormFragment\n        id\n      }\n    }\n  }\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "mutation FormRiskDialogMutation(\n  $input: CreateRiskInput!\n) {\n  createRisk(input: $input) {\n    riskEdge {\n      node {\n        ...useRiskFormFragment\n        id\n      }\n    }\n  }\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4cd493e5c45c274b8d7aabdac8c62f95>>
+ * @generated SignedSource<<22dfddc4b5d6d6bbe1e7069f40316151>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -228,14 +228,7 @@ return {
                             "name": "report",
                             "plural": false,
                             "selections": [
-                              (v9/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "filename",
-                                "storageKey": null
-                              }
+                              (v9/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -257,13 +250,6 @@ return {
                               (v9/*: any*/),
                               (v10/*: any*/)
                             ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
                             "storageKey": null
                           },
                           {
@@ -381,16 +367,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7804de168f5c2484d6beb2f4d19287b0",
+    "cacheID": "01f7bbcd6bbb76d61268e40c7917bc56",
     "id": null,
     "metadata": {},
     "name": "AuditsListQuery",
     "operationKind": "query",
-    "text": "query AuditsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AuditsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AuditsPageFragment_sdb03 on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AuditsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AuditsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AuditsPageFragment_sdb03 on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n        }\n        state\n        framework {\n          id\n          name\n        }\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4013ec4e657ef7fb9d13afbd572ea9e5";
+(node as any).hash = "1ad982515cedfc459612981eda49e1b5";
 
 export default node;

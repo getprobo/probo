@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f8640f48ff7cc9e6d9431195f6aec66b>>
+ * @generated SignedSource<<1de5190bc3c47ab15138ab0ae27029db>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,11 +13,9 @@ import { FragmentRefs } from "relay-runtime";
 export type VendorServicesTabFragment_service$data = {
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
-  readonly createdAt: string;
   readonly description: string | null | undefined;
   readonly id: string;
   readonly name: string;
-  readonly updatedAt: string;
   readonly " $fragmentType": "VendorServicesTabFragment_service";
 };
 export type VendorServicesTabFragment_service$key = {
@@ -53,20 +51,6 @@ const node: ReaderFragment = {
       "storageKey": null
     },
     {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "createdAt",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "updatedAt",
-      "storageKey": null
-    },
-    {
       "alias": "canUpdate",
       "args": [
         {
@@ -97,6 +81,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "6371ec5f43c5d090c72fa50ca7ec1686";
+(node as any).hash = "08f4f2317c7031ffca54a21505a4a9d7";
 
 export default node;

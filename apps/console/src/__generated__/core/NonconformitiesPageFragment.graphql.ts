@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9820e4e8cd9f971dfd45dbd61643ac41>>
+ * @generated SignedSource<<23e288c247b9f73855e4f8b0c75ec1b1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,6 @@ import { FragmentRefs } from "relay-runtime";
 export type NonconformitiesPageFragment$data = {
   readonly id: string;
   readonly nonconformities: {
-    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly audit: {
@@ -27,29 +26,22 @@ export type NonconformitiesPageFragment$data = {
         } | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly correctiveAction: string | null | undefined;
-        readonly createdAt: string;
-        readonly dateIdentified: string | null | undefined;
         readonly description: string | null | undefined;
         readonly dueDate: string | null | undefined;
-        readonly effectivenessCheck: string | null | undefined;
         readonly id: string;
         readonly owner: {
           readonly fullName: string;
           readonly id: string;
         };
         readonly referenceId: string;
-        readonly rootCause: string;
         readonly snapshotId: string | null | undefined;
         readonly status: NonconformityStatus;
-        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
       readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
-    readonly totalCount: number;
   };
   readonly " $fragmentType": "NonconformitiesPageFragment";
 };
@@ -151,13 +143,6 @@ return {
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
           "concreteType": "NonconformityEdge",
           "kind": "LinkedField",
           "name": "edges",
@@ -204,35 +189,7 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "dateIdentified",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "dueDate",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "rootCause",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "correctiveAction",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "effectivenessCheck",
                   "storageKey": null
                 },
                 {
@@ -278,20 +235,6 @@ return {
                       "storageKey": null
                     }
                   ],
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "updatedAt",
                   "storageKey": null
                 },
                 {
@@ -364,18 +307,6 @@ return {
             }
           ],
           "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "__id",
-              "storageKey": null
-            }
-          ]
         }
       ],
       "storageKey": null
@@ -386,6 +317,6 @@ return {
 };
 })();
 
-(node as any).hash = "57f7e0fb2efff357af936edf90e14876";
+(node as any).hash = "c0f4da1e4b02d401b1db7f8a595d3c49";
 
 export default node;

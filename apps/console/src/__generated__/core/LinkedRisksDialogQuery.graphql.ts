@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b39754dc6d5d5f02e4310f0db334add3>>
+ * @generated SignedSource<<a81700555a90c6f43ebf286e90acee2b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,9 +21,7 @@ export type LinkedRisksDialogQuery$data = {
           readonly category: string;
           readonly description: string | null | undefined;
           readonly id: string;
-          readonly inherentRiskScore: number;
           readonly name: string;
-          readonly residualRiskScore: number;
         };
       }>;
     };
@@ -110,20 +108,6 @@ v3 = {
                   "kind": "ScalarField",
                   "name": "description",
                   "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "inherentRiskScore",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "residualRiskScore",
-                  "storageKey": null
                 }
               ],
               "storageKey": null
@@ -191,16 +175,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ccac9f72628186de135aeb2ee176207d",
+    "cacheID": "7079c690d46e271892f6ed9d8e1f2605",
     "id": null,
     "metadata": {},
     "name": "LinkedRisksDialogQuery",
     "operationKind": "query",
-    "text": "query LinkedRisksDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      risks(first: 100) {\n        edges {\n          node {\n            id\n            name\n            category\n            description\n            inherentRiskScore\n            residualRiskScore\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query LinkedRisksDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      risks(first: 100) {\n        edges {\n          node {\n            id\n            name\n            category\n            description\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a0a7e39135cc4c1a4a74c4728902f944";
+(node as any).hash = "ac354cb9ccbba3ab141268b978026aea";
 
 export default node;

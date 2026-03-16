@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eb5012ba560d977fd2d9c44a5e567c7c>>
+ * @generated SignedSource<<f6bb4004554d42b43901f9d7e22eb305>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,6 @@ export type AuditsPageFragment$data = {
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: string;
         readonly framework: {
           readonly id: string;
           readonly name: string;
@@ -26,7 +25,6 @@ export type AuditsPageFragment$data = {
         readonly id: string;
         readonly name: string | null | undefined;
         readonly report: {
-          readonly filename: string;
           readonly id: string;
         } | null | undefined;
         readonly state: AuditState;
@@ -179,14 +177,7 @@ return {
                   "name": "report",
                   "plural": false,
                   "selections": [
-                    (v1/*: any*/),
-                    {
-                      "alias": null,
-                      "args": null,
-                      "kind": "ScalarField",
-                      "name": "filename",
-                      "storageKey": null
-                    }
+                    (v1/*: any*/)
                   ],
                   "storageKey": null
                 },
@@ -208,13 +199,6 @@ return {
                     (v1/*: any*/),
                     (v2/*: any*/)
                   ],
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
                   "storageKey": null
                 },
                 {
@@ -324,6 +308,6 @@ return {
 };
 })();
 
-(node as any).hash = "4013ec4e657ef7fb9d13afbd572ea9e5";
+(node as any).hash = "1ad982515cedfc459612981eda49e1b5";
 
 export default node;

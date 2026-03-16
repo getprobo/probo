@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<af44da038138042816e5c6b5c02d99b1>>
+ * @generated SignedSource<<589e60013c6742892983123821a83a79>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -275,13 +275,6 @@ return {
                             "storageKey": "vendors(first:50)"
                           },
                           {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
                             "alias": "canUpdate",
                             "args": [
                               {
@@ -396,12 +389,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e55d3b21b1689a03329569da5669d216",
+    "cacheID": "d8a4a67f62424bd305fddf0a54599a9a",
     "id": null,
     "metadata": {},
     "name": "AssetGraphListQuery",
     "operationKind": "query",
-    "text": "query AssetGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateAsset: permission(action: \"core:asset:create\")\n      ...AssetsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment AssetsPageFragment_3iomuz on Organization {\n  assets(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:asset:update\")\n        canDelete: permission(action: \"core:asset:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AssetGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateAsset: permission(action: \"core:asset:create\")\n      ...AssetsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment AssetsPageFragment_3iomuz on Organization {\n  assets(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        canUpdate: permission(action: \"core:asset:update\")\n        canDelete: permission(action: \"core:asset:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

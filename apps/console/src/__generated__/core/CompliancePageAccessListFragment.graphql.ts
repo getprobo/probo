@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b6be9a950f88b30b167bada9075ece11>>
+ * @generated SignedSource<<82376847028f43013ad4fe0fd7ceaf0d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,9 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type CompliancePageAccessListFragment$data = {
   readonly accesses: {
-    readonly __id: string;
     readonly edges: ReadonlyArray<{
-      readonly cursor: string;
       readonly node: {
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"CompliancePageAccessListItemFragment">;
@@ -164,13 +162,6 @@ return {
             {
               "alias": null,
               "args": null,
-              "kind": "ScalarField",
-              "name": "cursor",
-              "storageKey": null
-            },
-            {
-              "alias": null,
-              "args": null,
               "concreteType": "TrustCenterAccess",
               "kind": "LinkedField",
               "name": "node",
@@ -191,21 +182,16 @@ return {
                 }
               ],
               "storageKey": null
-            }
-          ],
-          "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
+            },
             {
               "alias": null,
               "args": null,
               "kind": "ScalarField",
-              "name": "__id",
+              "name": "cursor",
               "storageKey": null
             }
-          ]
+          ],
+          "storageKey": null
         }
       ],
       "storageKey": null
@@ -217,6 +203,6 @@ return {
 };
 })();
 
-(node as any).hash = "51879d3ed361c46e313f58abaaac04d9";
+(node as any).hash = "0a1b2761edd641e8eb52280cc48307b9";
 
 export default node;

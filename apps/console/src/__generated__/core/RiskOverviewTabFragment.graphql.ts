@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2b276a39b8020e7be036acb6fe4ca077>>
+ * @generated SignedSource<<365bac44d5935d4e373f6f126266584c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,10 +13,8 @@ import { FragmentRefs } from "relay-runtime";
 export type RiskOverviewTabFragment$data = {
   readonly inherentImpact: number;
   readonly inherentLikelihood: number;
-  readonly inherentRiskScore: number;
   readonly residualImpact: number;
   readonly residualLikelihood: number;
-  readonly residualRiskScore: number;
   readonly " $fragmentType": "RiskOverviewTabFragment";
 };
 export type RiskOverviewTabFragment$key = {
@@ -57,26 +55,12 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "residualImpact",
       "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "inherentRiskScore",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "residualRiskScore",
-      "storageKey": null
     }
   ],
   "type": "Risk",
   "abstractKey": null
 };
 
-(node as any).hash = "ba472e37a44c06c48847501204080fb6";
+(node as any).hash = "1268614eb62d89df8b8b7153d9c72082";
 
 export default node;

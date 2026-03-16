@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4611e8aacfc076bb2acc228152317ba8>>
+ * @generated SignedSource<<f078364daaa305266f30986444edbdfd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,32 +17,24 @@ export type ObligationsPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly actionsToBeImplemented: string | null | undefined;
         readonly area: string | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: string;
         readonly dueDate: string | null | undefined;
         readonly id: string;
-        readonly lastReviewDate: string | null | undefined;
         readonly owner: {
           readonly fullName: string;
           readonly id: string;
         };
-        readonly regulator: string | null | undefined;
-        readonly requirement: string | null | undefined;
         readonly snapshotId: string | null | undefined;
         readonly source: string | null | undefined;
-        readonly sourceId: string | null | undefined;
         readonly status: ObligationStatus;
-        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
       readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
-    readonly totalCount: number;
   };
   readonly " $fragmentType": "ObligationsPageFragment";
 };
@@ -137,13 +129,6 @@ return {
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
           "concreteType": "ObligationEdge",
           "kind": "LinkedField",
           "name": "edges",
@@ -169,13 +154,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "sourceId",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "area",
                   "storageKey": null
                 },
@@ -190,13 +168,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "requirement",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "status",
                   "storageKey": null
                 },
@@ -204,28 +175,7 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "lastReviewDate",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "dueDate",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "actionsToBeImplemented",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "regulator",
                   "storageKey": null
                 },
                 {
@@ -245,20 +195,6 @@ return {
                       "storageKey": null
                     }
                   ],
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "updatedAt",
                   "storageKey": null
                 },
                 {
@@ -353,6 +289,6 @@ return {
 };
 })();
 
-(node as any).hash = "b80f122b447b6a979b4774851ad11ee5";
+(node as any).hash = "2c1bd9bad38a69ae4fcfe5a3ceb90536";
 
 export default node;

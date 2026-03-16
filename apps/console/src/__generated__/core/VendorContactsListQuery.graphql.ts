@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<72e8dfdd3ad86ac69f4e631191d994ad>>
+ * @generated SignedSource<<c80197ee78c5c904bc49c6695bc8e42c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -266,20 +266,6 @@ return {
                             "name": "role",
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
-                            "storageKey": null
-                          },
                           (v11/*: any*/)
                         ],
                         "storageKey": null
@@ -369,12 +355,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "99175ca46dc5865d6d7a5f6c55fd8c8d",
+    "cacheID": "64be5a0aaa71bccff8ee7eb1a9202fb1",
     "id": null,
     "metadata": {},
     "name": "VendorContactsListQuery",
     "operationKind": "query",
-    "text": "query VendorContactsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorContactOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorContactsTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorContactsTabFragment_16fISc on Vendor {\n  contacts(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-contact:update\")\n        canDelete: permission(action: \"core:vendor-contact:delete\")\n        ...VendorContactsTabFragment_contact\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n"
+    "text": "query VendorContactsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorContactOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorContactsTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorContactsTabFragment_16fISc on Vendor {\n  contacts(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-contact:update\")\n        canDelete: permission(action: \"core:vendor-contact:delete\")\n        ...VendorContactsTabFragment_contact\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7cb2759bd509c11cb25bb1af2a6105cd>>
+ * @generated SignedSource<<96b5ca0110cd9c2f5c35130fbd641e57>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,30 +14,24 @@ import { FragmentRefs } from "relay-runtime";
 export type ProcessingActivitiesPageFragment$data = {
   readonly id: string;
   readonly processingActivities: {
-    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: string;
         readonly dataSubjectCategory: string | null | undefined;
         readonly id: string;
         readonly internationalTransfers: boolean;
         readonly lawfulBasis: ProcessingActivityLawfulBasis;
         readonly location: string | null | undefined;
         readonly name: string;
-        readonly personalDataCategory: string | null | undefined;
         readonly purpose: string | null | undefined;
         readonly snapshotId: string | null | undefined;
-        readonly sourceId: string | null | undefined;
-        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
       readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
-    readonly totalCount: number;
   };
   readonly " $fragmentType": "ProcessingActivitiesPageFragment";
 };
@@ -132,13 +126,6 @@ return {
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
           "concreteType": "ProcessingActivityEdge",
           "kind": "LinkedField",
           "name": "edges",
@@ -158,13 +145,6 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "snapshotId",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "sourceId",
                   "storageKey": null
                 },
                 {
@@ -192,13 +172,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "personalDataCategory",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "lawfulBasis",
                   "storageKey": null
                 },
@@ -214,20 +187,6 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "internationalTransfers",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "updatedAt",
                   "storageKey": null
                 },
                 {
@@ -300,18 +259,6 @@ return {
             }
           ],
           "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "__id",
-              "storageKey": null
-            }
-          ]
         }
       ],
       "storageKey": null
@@ -322,6 +269,6 @@ return {
 };
 })();
 
-(node as any).hash = "df348ac63bc56da06da97e484fb2c0e5";
+(node as any).hash = "192fe63a62e7a47908cdf677c8ee829d";
 
 export default node;

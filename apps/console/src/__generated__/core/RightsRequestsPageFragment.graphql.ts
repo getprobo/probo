@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<109da5292cbd22b553279fefd5c41c03>>
+ * @generated SignedSource<<41b64f82e663e7ae42728a557da07ab5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,28 +15,22 @@ import { FragmentRefs } from "relay-runtime";
 export type RightsRequestsPageFragment$data = {
   readonly id: string;
   readonly rightsRequests: {
-    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly actionTaken: string | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
         readonly contact: string | null | undefined;
-        readonly createdAt: string;
         readonly dataSubject: string | null | undefined;
         readonly deadline: string | null | undefined;
-        readonly details: string | null | undefined;
         readonly id: string;
         readonly requestState: RightsRequestState;
         readonly requestType: RightsRequestType;
-        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
       readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
-    readonly totalCount: number;
   };
   readonly " $fragmentType": "RightsRequestsPageFragment";
 };
@@ -114,13 +108,6 @@ return {
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
           "concreteType": "RightsRequestEdge",
           "kind": "LinkedField",
           "name": "edges",
@@ -167,35 +154,7 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "details",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "deadline",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "actionTaken",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "updatedAt",
                   "storageKey": null
                 },
                 {
@@ -268,18 +227,6 @@ return {
             }
           ],
           "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "__id",
-              "storageKey": null
-            }
-          ]
         }
       ],
       "storageKey": null
@@ -290,6 +237,6 @@ return {
 };
 })();
 
-(node as any).hash = "cfb8b464e37afac281c1722b9daf1783";
+(node as any).hash = "4cf7e71a943108ff633fa8a91f301bb0";
 
 export default node;

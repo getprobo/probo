@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8626547ee7655aabebf153f2429023d7>>
+ * @generated SignedSource<<f73f6da9282db845b9a9b03738304b8b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,6 @@ import { FragmentRefs } from "relay-runtime";
 export type CompliancePageFrameworkList_compliancePageFragment$data = {
   readonly canUpdate: boolean;
   readonly complianceFrameworks: {
-    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly framework: {
@@ -238,18 +237,6 @@ return {
             }
           ],
           "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "__id",
-              "storageKey": null
-            }
-          ]
         }
       ],
       "storageKey": null
@@ -260,6 +247,6 @@ return {
 };
 })();
 
-(node as any).hash = "981aff9d27dc71027541f7c3ed6984a9";
+(node as any).hash = "b67fb402ac09aee269e109129ad129a2";
 
 export default node;

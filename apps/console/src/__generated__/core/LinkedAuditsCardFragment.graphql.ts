@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<903698144cc9c26d698f573b64544e17>>
+ * @generated SignedSource<<bb740374a6287bb7152c60a80b4a3567>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,6 @@ import { ReaderFragment } from 'relay-runtime';
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
 import { FragmentRefs } from "relay-runtime";
 export type LinkedAuditsCardFragment$data = {
-  readonly createdAt: string;
   readonly framework: {
     readonly id: string;
     readonly name: string;
@@ -20,8 +19,6 @@ export type LinkedAuditsCardFragment$data = {
   readonly id: string;
   readonly name: string | null | undefined;
   readonly state: AuditState;
-  readonly validFrom: string | null | undefined;
-  readonly validUntil: string | null | undefined;
   readonly " $fragmentType": "LinkedAuditsCardFragment";
 };
 export type LinkedAuditsCardFragment$key = {
@@ -56,28 +53,7 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "createdAt",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "state",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "validFrom",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "validUntil",
       "storageKey": null
     },
     {
@@ -99,6 +75,6 @@ return {
 };
 })();
 
-(node as any).hash = "9ff9367a1f0668a8537bdd5bf5c7233d";
+(node as any).hash = "8a8cefa204a3afde548d70c072bd3b57";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<504b0d0e997eb43eb8d370a21cb3e0fb>>
+ * @generated SignedSource<<d4e662d68edc52551618e022e24fbef7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -165,13 +165,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "ProcessingActivityEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -191,13 +184,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "snapshotId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "sourceId",
                             "storageKey": null
                           },
                           {
@@ -225,13 +211,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "personalDataCategory",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "lawfulBasis",
                             "storageKey": null
                           },
@@ -247,20 +226,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "internationalTransfers",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -327,18 +292,6 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "__id",
-                        "storageKey": null
-                      }
-                    ]
                   }
                 ],
                 "storageKey": null
@@ -364,16 +317,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "71c255d719fe0ffafda13169e925b4b8",
+    "cacheID": "048074c4fea9a7e036ff0b62b32ae245",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivitiesPageRefetchQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_35e0S5 on Organization {\n  id\n  processingActivities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:processing-activity:update\")\n        canDelete: permission(action: \"core:processing-activity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_35e0S5 on Organization {\n  id\n  processingActivities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        purpose\n        dataSubjectCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        canUpdate: permission(action: \"core:processing-activity:update\")\n        canDelete: permission(action: \"core:processing-activity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "df348ac63bc56da06da97e484fb2c0e5";
+(node as any).hash = "192fe63a62e7a47908cdf677c8ee829d";
 
 export default node;

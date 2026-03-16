@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ab083cd47dc11eb4e2960a244cd4a9b4>>
+ * @generated SignedSource<<5416dd6f3fc2f674eb34b5b1519b0528>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -204,20 +204,6 @@ return {
                     "kind": "ScalarField",
                     "name": "role",
                     "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "createdAt",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "updatedAt",
-                    "storageKey": null
                   }
                 ],
                 "storageKey": null
@@ -247,12 +233,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ec71338bbc4d5591606e752bdcc0eeaf",
+    "cacheID": "083a8b4d83cdf2fc64f1edba3204c647",
     "id": null,
     "metadata": {},
     "name": "CreateContactDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateContactDialogMutation(\n  $input: CreateVendorContactInput!\n) {\n  createVendorContact(input: $input) {\n    vendorContactEdge {\n      node {\n        canUpdate: permission(action: \"core:vendor-contact:update\")\n        canDelete: permission(action: \"core:vendor-contact:delete\")\n        ...VendorContactsTabFragment_contact\n        id\n      }\n    }\n  }\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n"
+    "text": "mutation CreateContactDialogMutation(\n  $input: CreateVendorContactInput!\n) {\n  createVendorContact(input: $input) {\n    vendorContactEdge {\n      node {\n        canUpdate: permission(action: \"core:vendor-contact:update\")\n        canDelete: permission(action: \"core:vendor-contact:delete\")\n        ...VendorContactsTabFragment_contact\n        id\n      }\n    }\n  }\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n"
   }
 };
 })();

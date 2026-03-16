@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<da2705a13a054ce24ef85a49e734c2f9>>
+ * @generated SignedSource<<c4681d28f1b7212e2c889c003c50bda9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -316,13 +316,6 @@ return {
                             "storageKey": "vendors(first:50)"
                           },
                           {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
                             "alias": "canUpdate",
                             "args": [
                               {
@@ -437,16 +430,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c022cb17d3ede74899755b606ce95ba9",
+    "cacheID": "3033a11e399a226e54bba9ecfeb452bf",
     "id": null,
     "metadata": {},
     "name": "DataListQuery",
     "operationKind": "query",
-    "text": "query DataListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $order: DatumOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DataPageFragment_25MC8O\n    id\n  }\n}\n\nfragment DataPageFragment_25MC8O on Organization {\n  data(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:datum:update\")\n        canDelete: permission(action: \"core:datum:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query DataListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $order: DatumOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DataPageFragment_25MC8O\n    id\n  }\n}\n\nfragment DataPageFragment_25MC8O on Organization {\n  data(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        canUpdate: permission(action: \"core:datum:update\")\n        canDelete: permission(action: \"core:datum:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9a4453365a733d298ab9f5237fc4153b";
+(node as any).hash = "e51f5dfa7d9e2cdc10ed400da2c94055";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<06d20e72b67288c86573caa22b15adff>>
+ * @generated SignedSource<<4158635c34bcd324a1cf177d1df621a2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,15 +21,11 @@ export type StateOfApplicabilityDetailPageQuery$data = {
     readonly createdAt?: string;
     readonly id?: string;
     readonly name?: string;
-    readonly organization?: {
-      readonly id: string;
-    } | null | undefined;
     readonly owner?: {
       readonly fullName: string;
       readonly id: string;
     };
     readonly snapshotId?: string | null | undefined;
-    readonly sourceId?: string | null | undefined;
     readonly updatedAt?: string;
     readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityControlsTabFragment">;
   };
@@ -72,31 +68,24 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "sourceId",
+  "name": "snapshotId",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "snapshotId",
+  "name": "createdAt",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "createdAt",
-  "storageKey": null
-},
-v7 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
 },
-v8 = {
+v7 = {
   "alias": "canUpdate",
   "args": [
     {
@@ -109,7 +98,7 @@ v8 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:state-of-applicability:update\")"
 },
-v9 = {
+v8 = {
   "alias": "canDelete",
   "args": [
     {
@@ -122,7 +111,7 @@ v9 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
 },
-v10 = {
+v9 = {
   "alias": "canExport",
   "args": [
     {
@@ -135,19 +124,7 @@ v10 = {
   "name": "permission",
   "storageKey": "permission(action:\"core:state-of-applicability:export\")"
 },
-v11 = {
-  "alias": null,
-  "args": null,
-  "concreteType": "Organization",
-  "kind": "LinkedField",
-  "name": "organization",
-  "plural": false,
-  "selections": [
-    (v2/*: any*/)
-  ],
-  "storageKey": null
-},
-v12 = {
+v10 = {
   "alias": null,
   "args": null,
   "concreteType": "Profile",
@@ -166,14 +143,26 @@ v12 = {
   ],
   "storageKey": null
 },
-v13 = {
+v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v14 = [
+v12 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "Organization",
+  "kind": "LinkedField",
+  "name": "organization",
+  "plural": false,
+  "selections": [
+    (v2/*: any*/)
+  ],
+  "storageKey": null
+},
+v13 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -215,8 +204,6 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v11/*: any*/),
-              (v12/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -247,7 +234,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v13/*: any*/),
+          (v11/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
@@ -260,7 +247,6 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v11/*: any*/),
               (v12/*: any*/),
               {
                 "alias": "canCreateApplicabilityStatement",
@@ -303,7 +289,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v13/*: any*/),
                 "concreteType": "ApplicabilityStatementConnection",
                 "kind": "LinkedField",
                 "name": "applicabilityStatements",
@@ -398,11 +384,11 @@ return {
                                 ],
                                 "storageKey": null
                               },
-                              (v11/*: any*/)
+                              (v12/*: any*/)
                             ],
                             "storageKey": null
                           },
-                          (v13/*: any*/)
+                          (v11/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -458,7 +444,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v13/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -477,16 +463,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dceee9f818236953e28441fb1bbde7aa",
+    "cacheID": "5246dad7efe3eceb0aba4ad7731a49e6",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityDetailPageQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityDetailPageQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      sourceId\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      canExport: permission(action: \"core:state-of-applicability:export\")\n      organization {\n        id\n      }\n      owner {\n        id\n        fullName\n      }\n      ...StateOfApplicabilityControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  organization {\n    id\n  }\n  canCreateApplicabilityStatement: permission(action: \"core:applicability-statement:create\")\n  canUpdateApplicabilityStatement: permission(action: \"core:applicability-statement:update\")\n  canDeleteApplicabilityStatement: permission(action: \"core:applicability-statement:delete\")\n  applicabilityStatements(first: 1000, orderBy: {direction: ASC, field: CONTROL_SECTION_TITLE}) {\n    edges {\n      node {\n        id\n        applicability\n        justification\n        control {\n          id\n          sectionTitle\n          name\n          bestPractice\n          regulatory\n          contractual\n          riskAssessment\n          framework {\n            id\n            name\n          }\n          organization {\n            id\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query StateOfApplicabilityDetailPageQuery(\n  $stateOfApplicabilityId: ID!\n) {\n  node(id: $stateOfApplicabilityId) {\n    __typename\n    ... on StateOfApplicability {\n      id\n      name\n      snapshotId\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:state-of-applicability:update\")\n      canDelete: permission(action: \"core:state-of-applicability:delete\")\n      canExport: permission(action: \"core:state-of-applicability:export\")\n      owner {\n        id\n        fullName\n      }\n      ...StateOfApplicabilityControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  organization {\n    id\n  }\n  canCreateApplicabilityStatement: permission(action: \"core:applicability-statement:create\")\n  canUpdateApplicabilityStatement: permission(action: \"core:applicability-statement:update\")\n  canDeleteApplicabilityStatement: permission(action: \"core:applicability-statement:delete\")\n  applicabilityStatements(first: 1000, orderBy: {direction: ASC, field: CONTROL_SECTION_TITLE}) {\n    edges {\n      node {\n        id\n        applicability\n        justification\n        control {\n          id\n          sectionTitle\n          name\n          bestPractice\n          regulatory\n          contractual\n          riskAssessment\n          framework {\n            id\n            name\n          }\n          organization {\n            id\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c5fc32cde9c8e0ce3b8a77c96e0bb7cd";
+(node as any).hash = "b5e212f940b788cc7a7f1647ed95c785";
 
 export default node;

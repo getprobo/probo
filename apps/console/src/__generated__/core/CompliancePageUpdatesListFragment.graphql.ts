@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d32034602cfb0c3128ebdfaa7e26af40>>
+ * @generated SignedSource<<761e66cf5fc7ceb254cd657949fd857f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,7 +22,6 @@ export type CompliancePageUpdatesListFragment$data = {
         readonly id: string;
         readonly status: MailingListUpdateStatus;
         readonly title: string;
-        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
@@ -176,13 +175,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "updatedAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "__typename",
                   "storageKey": null
                 }
@@ -221,6 +213,6 @@ return {
 };
 })();
 
-(node as any).hash = "97bcf2215cc4fa04d1d4b84b2da4c33a";
+(node as any).hash = "ec30cc8203e7247748a105b6740dcf1f";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2e0270bf6c8a8f1849c2e05463ece19b>>
+ * @generated SignedSource<<3ada4a1d28f4a4b9849a4a5a7d47443a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,13 +13,11 @@ import { FragmentRefs } from "relay-runtime";
 export type VendorContactsTabFragment_contact$data = {
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
-  readonly createdAt: string;
   readonly email: string | null | undefined;
   readonly fullName: string | null | undefined;
   readonly id: string;
   readonly phone: string | null | undefined;
   readonly role: string | null | undefined;
-  readonly updatedAt: string;
   readonly " $fragmentType": "VendorContactsTabFragment_contact";
 };
 export type VendorContactsTabFragment_contact$key = {
@@ -69,20 +67,6 @@ const node: ReaderFragment = {
       "storageKey": null
     },
     {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "createdAt",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "updatedAt",
-      "storageKey": null
-    },
-    {
       "alias": "canUpdate",
       "args": [
         {
@@ -113,6 +97,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "fbcc45db4e2f857e3208ed8dc35e912d";
+(node as any).hash = "60130c05b2e55237b385e97e51543d6b";
 
 export default node;

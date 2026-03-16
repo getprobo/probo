@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ed59b8ffef8d42b667d2073df8ab1557>>
+ * @generated SignedSource<<ae0997196fab9bdf29d06851f8b9b0d3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,6 @@ export type LinkedObligationsDialogFragment$data = {
         readonly owner: {
           readonly fullName: string;
         };
-        readonly requirement: string | null | undefined;
         readonly source: string | null | undefined;
         readonly status: ObligationStatus;
       };
@@ -144,13 +143,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "requirement",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "area",
                   "storageKey": null
                 },
@@ -255,6 +247,6 @@ return {
 };
 })();
 
-(node as any).hash = "6e686f2a4bce776146b1985df2863e73";
+(node as any).hash = "eca4553b6bec6e92ef7a6cdef86fcce3";
 
 export default node;

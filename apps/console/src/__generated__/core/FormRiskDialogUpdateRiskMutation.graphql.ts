@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c7153d76054821957556ac597dd4b7b9>>
+ * @generated SignedSource<<869dffd68397003d545ac294239152eb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -182,20 +182,6 @@ return {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "inherentRiskScore",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "residualRiskScore",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
                 "name": "note",
                 "storageKey": null
               },
@@ -220,12 +206,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "59f586a59973ca023df027fdfb0d4bed",
+    "cacheID": "546b1e60a2e87bf71a1851ca76485767",
     "id": null,
     "metadata": {},
     "name": "FormRiskDialogUpdateRiskMutation",
     "operationKind": "mutation",
-    "text": "mutation FormRiskDialogUpdateRiskMutation(\n  $input: UpdateRiskInput!\n) {\n  updateRisk(input: $input) {\n    risk {\n      ...useRiskFormFragment\n      id\n    }\n  }\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "mutation FormRiskDialogUpdateRiskMutation(\n  $input: UpdateRiskInput!\n) {\n  updateRisk(input: $input) {\n    risk {\n      ...useRiskFormFragment\n      id\n    }\n  }\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();

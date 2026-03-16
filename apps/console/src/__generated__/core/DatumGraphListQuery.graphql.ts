@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5e92ff2e3743b8ef52f11fd34b76e2d5>>
+ * @generated SignedSource<<54893ee38ce1b4e4e8dd6908cf58780e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -254,13 +254,6 @@ return {
                             "storageKey": "vendors(first:50)"
                           },
                           {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
                             "alias": "canUpdate",
                             "args": [
                               {
@@ -375,12 +368,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "203f6661d76c730336cffaa96b631ab8",
+    "cacheID": "d1266769fa7348dfe7ab2725db8eb072",
     "id": null,
     "metadata": {},
     "name": "DatumGraphListQuery",
     "operationKind": "query",
-    "text": "query DatumGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID = null\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateDatum: permission(action: \"core:datum:create\")\n      ...DataPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment DataPageFragment_3iomuz on Organization {\n  data(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:datum:update\")\n        canDelete: permission(action: \"core:datum:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query DatumGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID = null\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateDatum: permission(action: \"core:datum:create\")\n      ...DataPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment DataPageFragment_3iomuz on Organization {\n  data(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        canUpdate: permission(action: \"core:datum:update\")\n        canDelete: permission(action: \"core:datum:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

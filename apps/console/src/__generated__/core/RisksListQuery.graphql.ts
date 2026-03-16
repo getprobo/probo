@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<abfb45e0b7963a895b6f0d8094d202cb>>
+ * @generated SignedSource<<9e0dbdc51e36a1a2a35b9db4653c0302>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -467,12 +467,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "92be64a69721c7097dcc87a525d7d706",
+    "cacheID": "16d76019c4b6adc33d6f3ddae18feb38",
     "id": null,
     "metadata": {},
     "name": "RisksListQuery",
     "operationKind": "query",
-    "text": "query RisksListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: RiskOrder = {direction: DESC, field: CREATED_AT}\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RiskGraphFragment_25MC8O\n    id\n  }\n}\n\nfragment RiskGraphFragment_25MC8O on Organization {\n  canCreateRisk: permission(action: \"core:risk:create\")\n  risks(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        owner {\n          id\n          fullName\n        }\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        canUpdate: permission(action: \"core:risk:update\")\n        canDelete: permission(action: \"core:risk:delete\")\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RisksListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: RiskOrder = {direction: DESC, field: CREATED_AT}\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RiskGraphFragment_25MC8O\n    id\n  }\n}\n\nfragment RiskGraphFragment_25MC8O on Organization {\n  canCreateRisk: permission(action: \"core:risk:create\")\n  risks(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        owner {\n          id\n          fullName\n        }\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        canUpdate: permission(action: \"core:risk:update\")\n        canDelete: permission(action: \"core:risk:delete\")\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();

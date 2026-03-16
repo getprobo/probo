@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<92455d5992a9e72cb7d395f570ad308c>>
+ * @generated SignedSource<<610480232ccc19f23fdf466a7de2ee90>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,6 @@ export type VendorOverviewTabBusinessAssociateAgreementFragment$data = {
   readonly businessAssociateAgreement: {
     readonly canDelete: boolean;
     readonly canUpdate: boolean;
-    readonly createdAt: string;
     readonly fileName: string;
     readonly fileUrl: string;
     readonly id: string;
@@ -78,13 +77,6 @@ const node: ReaderFragment = {
           "storageKey": null
         },
         {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "createdAt",
-          "storageKey": null
-        },
-        {
           "alias": "canUpdate",
           "args": [
             {
@@ -118,6 +110,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "3c3bb156f86684d1834ec63cf43dc99f";
+(node as any).hash = "0de4641522a506ca9924cb616e2bbad7";
 
 export default node;

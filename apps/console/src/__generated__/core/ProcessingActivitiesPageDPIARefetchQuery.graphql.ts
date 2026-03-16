@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f0bac674d8b20eb24762feabbfb4dc2e>>
+ * @generated SignedSource<<b44bd149f9b0bb3250bcb89ffe6467b1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -165,13 +165,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "DataProtectionImpactAssessmentEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -226,20 +219,6 @@ return {
                             ],
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
-                            "storageKey": null
-                          },
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -278,18 +257,6 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "__id",
-                        "storageKey": null
-                      }
-                    ]
                   }
                 ],
                 "storageKey": null
@@ -315,16 +282,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c1f38ecede914f3c444f313e593baac9",
+    "cacheID": "16493e9fec1c43f1a1ea2023dd5a19b6",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivitiesPageDPIARefetchQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivitiesPageDPIARefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageDPIAFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_35e0S5 on Organization {\n  id\n  dataProtectionImpactAssessments(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivitiesPageDPIARefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageDPIAFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_35e0S5 on Organization {\n  id\n  dataProtectionImpactAssessments(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "67339e0fd7610409cba00791361c51a2";
+(node as any).hash = "8a22db18441552dab58f4f0defabca6a";
 
 export default node;

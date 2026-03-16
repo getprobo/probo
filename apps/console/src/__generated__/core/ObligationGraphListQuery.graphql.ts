@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6354faea87e32321c5dcef5b680368cb>>
+ * @generated SignedSource<<3780718a9da1bdb1cf27000070c5543e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -157,13 +157,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "ObligationEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -189,13 +182,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "sourceId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "area",
                             "storageKey": null
                           },
@@ -210,13 +196,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "requirement",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "status",
                             "storageKey": null
                           },
@@ -224,28 +203,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "lastReviewDate",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "dueDate",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "actionsToBeImplemented",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "regulator",
                             "storageKey": null
                           },
                           {
@@ -265,20 +223,6 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -382,12 +326,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "09f360edd84c4db5cf2bc3d01b207d46",
+    "cacheID": "4dc8e19697e49e3ee90b5c8c987db739",
     "id": null,
     "metadata": {},
     "name": "ObligationGraphListQuery",
     "operationKind": "query",
-    "text": "query ObligationGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateObligation: permission(action: \"core:obligation:create\")\n      ...ObligationsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ObligationsPageFragment_3iomuz on Organization {\n  id\n  obligations(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:obligation:update\")\n        canDelete: permission(action: \"core:obligation:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ObligationGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateObligation: permission(action: \"core:obligation:create\")\n      ...ObligationsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ObligationsPageFragment_3iomuz on Organization {\n  id\n  obligations(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        area\n        source\n        status\n        dueDate\n        owner {\n          id\n          fullName\n        }\n        canUpdate: permission(action: \"core:obligation:update\")\n        canDelete: permission(action: \"core:obligation:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

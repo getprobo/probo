@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6562480e22245dec8b85b0ac79dd5a98>>
+ * @generated SignedSource<<395e923c618fc03eecc9f83e5d2ce8d8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -165,13 +165,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "ContinualImprovementEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -197,13 +190,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "sourceId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "referenceId",
                             "storageKey": null
                           },
@@ -212,13 +198,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "description",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "source",
                             "storageKey": null
                           },
                           {
@@ -259,20 +238,6 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -339,18 +304,6 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "__id",
-                        "storageKey": null
-                      }
-                    ]
                   }
                 ],
                 "storageKey": null
@@ -376,16 +329,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a0a9ad9d08da13436195a49ac3fce89c",
+    "cacheID": "cd8b3a661ee9da3f24d85b1e1bc8fac4",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementsPageRefetchQuery",
     "operationKind": "query",
-    "text": "query ContinualImprovementsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ContinualImprovementsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ContinualImprovementsPageFragment_35e0S5 on Organization {\n  id\n  continualImprovements(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:continual-improvement:update\")\n        canDelete: permission(action: \"core:continual-improvement:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ContinualImprovementsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ContinualImprovementsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ContinualImprovementsPageFragment_35e0S5 on Organization {\n  id\n  continualImprovements(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        referenceId\n        description\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        canUpdate: permission(action: \"core:continual-improvement:update\")\n        canDelete: permission(action: \"core:continual-improvement:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ec045ffacd206a4854cb864eadf3ef50";
+(node as any).hash = "c2371c08dd0f581a9803ca118f3bd366";
 
 export default node;

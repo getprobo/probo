@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c1f987833f73f19a66f044b28688f1dd>>
+ * @generated SignedSource<<f48f75c4662bbcd1da3059bf8e4f679b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -157,28 +157,7 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "createdAt",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "state",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "validFrom",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "validUntil",
                     "storageKey": null
                   },
                   {
@@ -222,12 +201,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "23afa68a91d9ae6630123a4ff693a0ec",
+    "cacheID": "458e59fda450fe6d728544e82d229399",
     "id": null,
     "metadata": {},
     "name": "FrameworkControlPageAttachAuditMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkControlPageAttachAuditMutation(\n  $input: CreateControlAuditMappingInput!\n) {\n  createControlAuditMapping(input: $input) {\n    auditEdge {\n      node {\n        id\n        ...LinkedAuditsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  createdAt\n  state\n  validFrom\n  validUntil\n  framework {\n    id\n    name\n  }\n}\n"
+    "text": "mutation FrameworkControlPageAttachAuditMutation(\n  $input: CreateControlAuditMappingInput!\n) {\n  createControlAuditMapping(input: $input) {\n    auditEdge {\n      node {\n        id\n        ...LinkedAuditsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  state\n  framework {\n    id\n    name\n  }\n}\n"
   }
 };
 })();

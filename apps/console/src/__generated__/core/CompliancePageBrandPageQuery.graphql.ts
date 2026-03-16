@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bd3459ba12fdc1d268c2287e61b17190>>
+ * @generated SignedSource<<5e625eeec03803e3e72c6dd998bed003>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -151,19 +151,7 @@ v11 = {
   ],
   "storageKey": null
 },
-v12 = {
-  "kind": "ClientExtension",
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "__id",
-      "storageKey": null
-    }
-  ]
-},
-v13 = [
+v12 = [
   "orderBy"
 ];
 return {
@@ -323,15 +311,14 @@ return {
                         ],
                         "storageKey": null
                       },
-                      (v11/*: any*/),
-                      (v12/*: any*/)
+                      (v11/*: any*/)
                     ],
                     "storageKey": "complianceFrameworks(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"RANK\"})"
                   },
                   {
                     "alias": null,
                     "args": (v7/*: any*/),
-                    "filters": (v13/*: any*/),
+                    "filters": (v12/*: any*/),
                     "handle": "connection",
                     "key": "CompliancePageFrameworkList_complianceFrameworks",
                     "kind": "LinkedHandle",
@@ -380,14 +367,25 @@ return {
                         "storageKey": null
                       },
                       (v11/*: any*/),
-                      (v12/*: any*/)
+                      {
+                        "kind": "ClientExtension",
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "__id",
+                            "storageKey": null
+                          }
+                        ]
+                      }
                     ],
                     "storageKey": "externalUrls(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"RANK\"})"
                   },
                   {
                     "alias": null,
                     "args": (v7/*: any*/),
-                    "filters": (v13/*: any*/),
+                    "filters": (v12/*: any*/),
                     "handle": "connection",
                     "key": "CompliancePageExternalUrlsSection_externalUrls",
                     "kind": "LinkedHandle",

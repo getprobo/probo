@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<460e6a454050ccc3c06a50b1c3cd95d4>>
+ * @generated SignedSource<<388d0c9151e7eafaac39b71bf93133a2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -143,20 +143,6 @@ return {
                 "storageKey": null
               },
               {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "createdAt",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "updatedAt",
-                "storageKey": null
-              },
-              {
                 "alias": "canUpdate",
                 "args": [
                   {
@@ -191,12 +177,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c07a9743c2296880b73a838d774b4bbd",
+    "cacheID": "b5bcb3884fa972284be60164760a2ad1",
     "id": null,
     "metadata": {},
     "name": "EditContactDialogUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation EditContactDialogUpdateMutation(\n  $input: UpdateVendorContactInput!\n) {\n  updateVendorContact(input: $input) {\n    vendorContact {\n      ...VendorContactsTabFragment_contact\n      id\n    }\n  }\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n"
+    "text": "mutation EditContactDialogUpdateMutation(\n  $input: UpdateVendorContactInput!\n) {\n  updateVendorContact(input: $input) {\n    vendorContact {\n      ...VendorContactsTabFragment_contact\n      id\n    }\n  }\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n"
   }
 };
 })();

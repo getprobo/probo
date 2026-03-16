@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<40b7d19556f7d3d0a1e9afe937273625>>
+ * @generated SignedSource<<09e2281e7a872004c8bf0d9eb565f85b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -316,24 +316,10 @@ v30 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "createdAt",
-  "storageKey": null
-},
-v31 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "updatedAt",
-  "storageKey": null
-},
-v32 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "fileUrl",
   "storageKey": null
 },
-v33 = {
+v31 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -620,13 +606,6 @@ return {
                                 "alias": null,
                                 "args": null,
                                 "kind": "ScalarField",
-                                "name": "mimeType",
-                                "storageKey": null
-                              },
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
                                 "name": "size",
                                 "storageKey": null
                               },
@@ -742,8 +721,6 @@ return {
                             "name": "role",
                             "storageKey": null
                           },
-                          (v30/*: any*/),
-                          (v31/*: any*/),
                           (v17/*: any*/)
                         ],
                         "storageKey": null
@@ -819,8 +796,6 @@ return {
                           },
                           (v4/*: any*/),
                           (v18/*: any*/),
-                          (v30/*: any*/),
-                          (v31/*: any*/),
                           (v17/*: any*/)
                         ],
                         "storageKey": null
@@ -868,7 +843,13 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
-                          (v30/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "createdAt",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -943,10 +924,9 @@ return {
                 "selections": [
                   (v2/*: any*/),
                   (v21/*: any*/),
-                  (v32/*: any*/),
-                  (v33/*: any*/),
-                  (v20/*: any*/),
                   (v30/*: any*/),
+                  (v31/*: any*/),
+                  (v20/*: any*/),
                   {
                     "alias": "canUpdate",
                     "args": [
@@ -986,10 +966,9 @@ return {
                 "selections": [
                   (v2/*: any*/),
                   (v21/*: any*/),
-                  (v32/*: any*/),
-                  (v33/*: any*/),
-                  (v20/*: any*/),
                   (v30/*: any*/),
+                  (v31/*: any*/),
+                  (v20/*: any*/),
                   {
                     "alias": "canUpdate",
                     "args": [
@@ -1030,12 +1009,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2479b0f9eeb44a3a540cb155212eff24",
+    "cacheID": "1ff67d5ac55faf87a216d244277b0fdc",
     "id": null,
     "metadata": {},
     "name": "VendorGraphNodeQuery",
     "operationKind": "query",
-    "text": "query VendorGraphNodeQuery(\n  $vendorId: ID!\n) {\n  node(id: $vendorId) {\n    __typename\n    id\n    ... on Vendor {\n      snapshotId\n      name\n      websiteUrl\n      canAssess: permission(action: \"core:vendor:assess\")\n      canUpdate: permission(action: \"core:vendor:update\")\n      canDelete: permission(action: \"core:vendor:delete\")\n      canUploadComplianceReport: permission(action: \"core:vendor-compliance-report:upload\")\n      canCreateRiskAssessment: permission(action: \"core:vendor-risk-assessment:create\")\n      canCreateContact: permission(action: \"core:vendor-contact:create\")\n      canCreateService: permission(action: \"core:vendor-service:create\")\n      canUploadBAA: permission(action: \"core:vendor-business-associate-agreement:upload\")\n      canUploadDPA: permission(action: \"core:vendor-data-privacy-agreement:upload\")\n      ...useVendorFormFragment\n      ...VendorComplianceTabFragment\n      ...VendorContactsTabFragment\n      ...VendorServicesTabFragment\n      ...VendorRiskAssessmentTabFragment\n      ...VendorOverviewTabBusinessAssociateAgreementFragment\n      ...VendorOverviewTabDataPrivacyAgreementFragment\n    }\n  }\n  viewer {\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment on Vendor {\n  complianceReports(first: 50) {\n    edges {\n      node {\n        id\n        canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    downloadUrl\n    id\n  }\n  canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n}\n\nfragment VendorContactsTabFragment on Vendor {\n  contacts(first: 50) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-contact:update\")\n        canDelete: permission(action: \"core:vendor-contact:delete\")\n        ...VendorContactsTabFragment_contact\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n\nfragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {\n  businessAssociateAgreement {\n    id\n    fileName\n    fileUrl\n    validFrom\n    validUntil\n    createdAt\n    canUpdate: permission(action: \"core:vendor-business-associate-agreement:update\")\n    canDelete: permission(action: \"core:vendor-business-associate-agreement:delete\")\n  }\n}\n\nfragment VendorOverviewTabDataPrivacyAgreementFragment on Vendor {\n  dataPrivacyAgreement {\n    id\n    fileName\n    fileUrl\n    validFrom\n    validUntil\n    createdAt\n    canUpdate: permission(action: \"core:vendor-data-privacy-agreement:update\")\n    canDelete: permission(action: \"core:vendor-data-privacy-agreement:delete\")\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment on Vendor {\n  id\n  riskAssessments(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorRiskAssessmentTabFragment_assessment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {\n  id\n  createdAt\n  expiresAt\n  dataSensitivity\n  businessImpact\n  notes\n}\n\nfragment VendorServicesTabFragment on Vendor {\n  services(first: 50) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-service:update\")\n        canDelete: permission(action: \"core:vendor-service:delete\")\n        ...VendorServicesTabFragment_service\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n\nfragment useVendorFormFragment on Vendor {\n  id\n  name\n  description\n  category\n  statusPageUrl\n  termsOfServiceUrl\n  privacyPolicyUrl\n  serviceLevelAgreementUrl\n  dataProcessingAgreementUrl\n  websiteUrl\n  legalName\n  headquarterAddress\n  certifications\n  countries\n  securityPageUrl\n  trustPageUrl\n  businessOwner {\n    id\n  }\n  securityOwner {\n    id\n  }\n}\n"
+    "text": "query VendorGraphNodeQuery(\n  $vendorId: ID!\n) {\n  node(id: $vendorId) {\n    __typename\n    id\n    ... on Vendor {\n      snapshotId\n      name\n      websiteUrl\n      canAssess: permission(action: \"core:vendor:assess\")\n      canUpdate: permission(action: \"core:vendor:update\")\n      canDelete: permission(action: \"core:vendor:delete\")\n      canUploadComplianceReport: permission(action: \"core:vendor-compliance-report:upload\")\n      canCreateRiskAssessment: permission(action: \"core:vendor-risk-assessment:create\")\n      canCreateContact: permission(action: \"core:vendor-contact:create\")\n      canCreateService: permission(action: \"core:vendor-service:create\")\n      canUploadBAA: permission(action: \"core:vendor-business-associate-agreement:upload\")\n      canUploadDPA: permission(action: \"core:vendor-data-privacy-agreement:upload\")\n      ...useVendorFormFragment\n      ...VendorComplianceTabFragment\n      ...VendorContactsTabFragment\n      ...VendorServicesTabFragment\n      ...VendorRiskAssessmentTabFragment\n      ...VendorOverviewTabBusinessAssociateAgreementFragment\n      ...VendorOverviewTabDataPrivacyAgreementFragment\n    }\n  }\n  viewer {\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment on Vendor {\n  complianceReports(first: 50) {\n    edges {\n      node {\n        id\n        canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    size\n    downloadUrl\n    id\n  }\n  canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n}\n\nfragment VendorContactsTabFragment on Vendor {\n  contacts(first: 50) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-contact:update\")\n        canDelete: permission(action: \"core:vendor-contact:delete\")\n        ...VendorContactsTabFragment_contact\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n\nfragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {\n  businessAssociateAgreement {\n    id\n    fileName\n    fileUrl\n    validFrom\n    validUntil\n    canUpdate: permission(action: \"core:vendor-business-associate-agreement:update\")\n    canDelete: permission(action: \"core:vendor-business-associate-agreement:delete\")\n  }\n}\n\nfragment VendorOverviewTabDataPrivacyAgreementFragment on Vendor {\n  dataPrivacyAgreement {\n    id\n    fileName\n    fileUrl\n    validFrom\n    validUntil\n    canUpdate: permission(action: \"core:vendor-data-privacy-agreement:update\")\n    canDelete: permission(action: \"core:vendor-data-privacy-agreement:delete\")\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment on Vendor {\n  id\n  riskAssessments(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorRiskAssessmentTabFragment_assessment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {\n  id\n  createdAt\n  expiresAt\n  dataSensitivity\n  businessImpact\n  notes\n}\n\nfragment VendorServicesTabFragment on Vendor {\n  services(first: 50) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-service:update\")\n        canDelete: permission(action: \"core:vendor-service:delete\")\n        ...VendorServicesTabFragment_service\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n\nfragment useVendorFormFragment on Vendor {\n  id\n  name\n  description\n  category\n  statusPageUrl\n  termsOfServiceUrl\n  privacyPolicyUrl\n  serviceLevelAgreementUrl\n  dataProcessingAgreementUrl\n  websiteUrl\n  legalName\n  headquarterAddress\n  certifications\n  countries\n  securityPageUrl\n  trustPageUrl\n  businessOwner {\n    id\n  }\n  securityOwner {\n    id\n  }\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5c57612f8793f7b056bf0046febe42ca>>
+ * @generated SignedSource<<cca9311ec7034d06be004a0949648b77>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -137,38 +137,17 @@ v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "totalCount",
+  "name": "name",
   "storageKey": null
 },
 v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v12 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
-  "storageKey": null
-},
-v13 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "updatedAt",
-  "storageKey": null
-},
-v14 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v15 = {
+v12 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -193,22 +172,10 @@ v15 = {
   ],
   "storageKey": null
 },
-v16 = {
-  "kind": "ClientExtension",
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "__id",
-      "storageKey": null
-    }
-  ]
-},
-v17 = [
+v13 = [
   "filter"
 ],
-v18 = {
+v14 = {
   "alias": null,
   "args": null,
   "concreteType": "ProcessingActivity",
@@ -217,7 +184,7 @@ v18 = {
   "plural": false,
   "selections": [
     (v8/*: any*/),
-    (v11/*: any*/)
+    (v10/*: any*/)
   ],
   "storageKey": null
 };
@@ -300,7 +267,6 @@ return {
                 "name": "processingActivities",
                 "plural": false,
                 "selections": [
-                  (v10/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -325,14 +291,7 @@ return {
                             "name": "snapshotId",
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "sourceId",
-                            "storageKey": null
-                          },
-                          (v11/*: any*/),
+                          (v10/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -345,13 +304,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "dataSubjectCategory",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "personalDataCategory",
                             "storageKey": null
                           },
                           {
@@ -375,8 +327,6 @@ return {
                             "name": "internationalTransfers",
                             "storageKey": null
                           },
-                          (v12/*: any*/),
-                          (v13/*: any*/),
                           {
                             "alias": "canUpdate",
                             "args": [
@@ -407,19 +357,18 @@ return {
                         ],
                         "storageKey": null
                       },
-                      (v14/*: any*/)
+                      (v11/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v15/*: any*/),
-                  (v16/*: any*/)
+                  (v12/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
                 "args": (v9/*: any*/),
-                "filters": (v17/*: any*/),
+                "filters": (v13/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_processingActivities",
                 "kind": "LinkedHandle",
@@ -433,7 +382,6 @@ return {
                 "name": "dataProtectionImpactAssessments",
                 "plural": false,
                 "selections": [
-                  (v10/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -472,26 +420,23 @@ return {
                             "name": "residualRisk",
                             "storageKey": null
                           },
-                          (v18/*: any*/),
-                          (v12/*: any*/),
-                          (v13/*: any*/),
+                          (v14/*: any*/),
                           (v7/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v14/*: any*/)
+                      (v11/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v15/*: any*/),
-                  (v16/*: any*/)
+                  (v12/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
                 "args": (v9/*: any*/),
-                "filters": (v17/*: any*/),
+                "filters": (v13/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_dataProtectionImpactAssessments",
                 "kind": "LinkedHandle",
@@ -505,7 +450,6 @@ return {
                 "name": "transferImpactAssessments",
                 "plural": false,
                 "selections": [
-                  (v10/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -544,26 +488,23 @@ return {
                             "name": "localLawRisk",
                             "storageKey": null
                           },
-                          (v18/*: any*/),
-                          (v12/*: any*/),
-                          (v13/*: any*/),
+                          (v14/*: any*/),
                           (v7/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v14/*: any*/)
+                      (v11/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v15/*: any*/),
-                  (v16/*: any*/)
+                  (v12/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
                 "args": (v9/*: any*/),
-                "filters": (v17/*: any*/),
+                "filters": (v13/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_transferImpactAssessments",
                 "kind": "LinkedHandle",
@@ -579,12 +520,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "84a26e65e3de62f76f034786cf174f80",
+    "cacheID": "0c7314b83ab21c0560e9421c4ac009f4",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphListQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateProcessingActivity: permission(action: \"core:processing-activity:create\")\n      canExportProcessingActivities: permission(action: \"core:processing-activity:export\")\n      canExportDataProtectionImpactAssessments: permission(action: \"core:data-protection-impact-assessment:export\")\n      canExportTransferImpactAssessments: permission(action: \"core:transfer-impact-assessment:export\")\n      ...ProcessingActivitiesPageFragment_3iomuz\n      ...ProcessingActivitiesPageDPIAFragment_3iomuz\n      ...ProcessingActivitiesPageTIAFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_3iomuz on Organization {\n  id\n  dataProtectionImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_3iomuz on Organization {\n  id\n  processingActivities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:processing-activity:update\")\n        canDelete: permission(action: \"core:processing-activity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageTIAFragment_3iomuz on Organization {\n  id\n  transferImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        dataSubjects\n        transfer\n        localLawRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateProcessingActivity: permission(action: \"core:processing-activity:create\")\n      canExportProcessingActivities: permission(action: \"core:processing-activity:export\")\n      canExportDataProtectionImpactAssessments: permission(action: \"core:data-protection-impact-assessment:export\")\n      canExportTransferImpactAssessments: permission(action: \"core:transfer-impact-assessment:export\")\n      ...ProcessingActivitiesPageFragment_3iomuz\n      ...ProcessingActivitiesPageDPIAFragment_3iomuz\n      ...ProcessingActivitiesPageTIAFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_3iomuz on Organization {\n  id\n  dataProtectionImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_3iomuz on Organization {\n  id\n  processingActivities(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        purpose\n        dataSubjectCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        canUpdate: permission(action: \"core:processing-activity:update\")\n        canDelete: permission(action: \"core:processing-activity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageTIAFragment_3iomuz on Organization {\n  id\n  transferImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        dataSubjects\n        transfer\n        localLawRisk\n        processingActivity {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

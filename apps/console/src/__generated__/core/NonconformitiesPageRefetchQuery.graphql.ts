@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<387d8e19371a771747334f0c6499ea76>>
+ * @generated SignedSource<<9c59d2a09bb917fed2b6d8f452abbc02>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -172,13 +172,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "NonconformityEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -225,35 +218,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "dateIdentified",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "dueDate",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "rootCause",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "correctiveAction",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "effectivenessCheck",
                             "storageKey": null
                           },
                           {
@@ -299,20 +264,6 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -379,18 +330,6 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "__id",
-                        "storageKey": null
-                      }
-                    ]
                   }
                 ],
                 "storageKey": null
@@ -416,16 +355,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3876389521eec8e9737e5939cff3d95a",
+    "cacheID": "3c586c2b8fe556de552db1ef3f073193",
     "id": null,
     "metadata": {},
     "name": "NonconformitiesPageRefetchQuery",
     "operationKind": "query",
-    "text": "query NonconformitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NonconformitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_35e0S5 on Organization {\n  id\n  nonconformities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NonconformitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_35e0S5 on Organization {\n  id\n  nonconformities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dueDate\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "57f7e0fb2efff357af936edf90e14876";
+(node as any).hash = "c0f4da1e4b02d401b1db7f8a595d3c49";
 
 export default node;

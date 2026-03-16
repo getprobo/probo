@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<13d2dd64b5963f27b35077c80106abfb>>
+ * @generated SignedSource<<c0bcdd9053fc329451661917707cf8df>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -334,13 +334,6 @@ return {
                             "storageKey": "vendors(first:50)"
                           },
                           {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
                             "alias": "canUpdate",
                             "args": [
                               {
@@ -455,16 +448,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "350938b31ac1c7f7a28849123995da3a",
+    "cacheID": "c0346ed84057ddaf9686c96a9dac21f2",
     "id": null,
     "metadata": {},
     "name": "AssetsListQuery",
     "operationKind": "query",
-    "text": "query AssetsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AssetOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AssetsPageFragment_38J9tm\n    id\n  }\n}\n\nfragment AssetsPageFragment_38J9tm on Organization {\n  assets(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:asset:update\")\n        canDelete: permission(action: \"core:asset:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AssetsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AssetOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AssetsPageFragment_38J9tm\n    id\n  }\n}\n\nfragment AssetsPageFragment_38J9tm on Organization {\n  assets(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        canUpdate: permission(action: \"core:asset:update\")\n        canDelete: permission(action: \"core:asset:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4e870b93c801e9f0b6e26ab6069863fe";
+(node as any).hash = "8c67b88d7d88fa017e97b19790271a4c";
 
 export default node;

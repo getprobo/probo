@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1f9d92c4803d49c216fef6447a59c779>>
+ * @generated SignedSource<<a4838e46d77c4b9402d7cd31ed75babe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -157,20 +157,6 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "kind": "ScalarField",
-                            "name": "validFrom",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "validUntil",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
                             "concreteType": "Framework",
                             "kind": "LinkedField",
                             "name": "framework",
@@ -258,12 +244,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0daa6dc9bebd2677cc0c36e819631f9c",
+    "cacheID": "24a2aafd0b99755c64d7c0315ae1dad1",
     "id": null,
     "metadata": {},
     "name": "LinkedAuditsDialogQuery",
     "operationKind": "query",
-    "text": "query LinkedAuditsDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...LinkedAuditsDialogFragment\n    }\n  }\n}\n\nfragment LinkedAuditsDialogFragment on Organization {\n  audits(first: 20) {\n    edges {\n      node {\n        id\n        name\n        state\n        validFrom\n        validUntil\n        framework {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query LinkedAuditsDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...LinkedAuditsDialogFragment\n    }\n  }\n}\n\nfragment LinkedAuditsDialogFragment on Organization {\n  audits(first: 20) {\n    edges {\n      node {\n        id\n        name\n        state\n        framework {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

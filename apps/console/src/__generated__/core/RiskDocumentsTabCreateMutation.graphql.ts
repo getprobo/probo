@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<81e7ff7299c6b5f9e46fa08ee731be12>>
+ * @generated SignedSource<<45e1f70df17f1c5bb1bc89c0332e37ff>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -156,13 +156,6 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "createdAt",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "documentType",
                     "storageKey": null
                   },
@@ -241,12 +234,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e2844d2884a2d7d2c648fea4888fbfc5",
+    "cacheID": "933b0c7093f98de227585b3234890b6e",
     "id": null,
     "metadata": {},
     "name": "RiskDocumentsTabCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation RiskDocumentsTabCreateMutation(\n  $input: CreateRiskDocumentMappingInput!\n) {\n  createRiskDocumentMapping(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "mutation RiskDocumentsTabCreateMutation(\n  $input: CreateRiskDocumentMappingInput!\n) {\n  createRiskDocumentMapping(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<49e756ac3a9fccad3bf6ab987a2bc3f0>>
+ * @generated SignedSource<<885968e1b7f56dd56709777e9f05d1ea>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -157,13 +157,6 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
                     "concreteType": "ContinualImprovementEdge",
                     "kind": "LinkedField",
                     "name": "edges",
@@ -189,13 +182,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "sourceId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "referenceId",
                             "storageKey": null
                           },
@@ -204,13 +190,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "description",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "source",
                             "storageKey": null
                           },
                           {
@@ -251,20 +230,6 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
                             "storageKey": null
                           },
                           {
@@ -331,18 +296,6 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "__id",
-                        "storageKey": null
-                      }
-                    ]
                   }
                 ],
                 "storageKey": null
@@ -368,12 +321,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5f5124da6649b145ef6fddcf1009e95c",
+    "cacheID": "1684b6fb8eba4ff807d268879e9f4958",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementGraphListQuery",
     "operationKind": "query",
-    "text": "query ContinualImprovementGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateContinualImprovement: permission(action: \"core:continual-improvement:create\")\n      ...ContinualImprovementsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ContinualImprovementsPageFragment_3iomuz on Organization {\n  id\n  continualImprovements(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:continual-improvement:update\")\n        canDelete: permission(action: \"core:continual-improvement:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ContinualImprovementGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateContinualImprovement: permission(action: \"core:continual-improvement:create\")\n      ...ContinualImprovementsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ContinualImprovementsPageFragment_3iomuz on Organization {\n  id\n  continualImprovements(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        referenceId\n        description\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        canUpdate: permission(action: \"core:continual-improvement:update\")\n        canDelete: permission(action: \"core:continual-improvement:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f34032526d9b51e3b675aad1041d3796>>
+ * @generated SignedSource<<7f02840c4c00cf39638d75212db9c27f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ import { FragmentRefs } from "relay-runtime";
 export type CompliancePageNDASectionFragment$data = {
   readonly compliancePage: {
     readonly canDeleteNDA: boolean;
-    readonly canUpdate: boolean;
     readonly canUploadNDA: boolean;
     readonly id: string;
     readonly ndaFileName: string | null | undefined;
@@ -62,19 +61,6 @@ const node: ReaderFragment = {
           "storageKey": null
         },
         {
-          "alias": "canUpdate",
-          "args": [
-            {
-              "kind": "Literal",
-              "name": "action",
-              "value": "core:trust-center:update"
-            }
-          ],
-          "kind": "ScalarField",
-          "name": "permission",
-          "storageKey": "permission(action:\"core:trust-center:update\")"
-        },
-        {
           "alias": "canUploadNDA",
           "args": [
             {
@@ -108,6 +94,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "3a55696877cb2d258edf0b9ed615de91";
+(node as any).hash = "a4da57d370ca8b19342af873efac95f7";
 
 export default node;
