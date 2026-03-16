@@ -136,8 +136,6 @@ type RowProps = {
     name: string;
     category: string;
     id: string;
-    inherentRiskScore: number;
-    residualRiskScore: number;
   };
   linkedRisks: Set<string>;
   disabled?: boolean;

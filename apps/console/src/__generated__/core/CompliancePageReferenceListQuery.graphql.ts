@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<707f102180f699e4ee0e5de326b183e9>>
+ * @generated SignedSource<<bc97d6c97c801919cf4df08176a7ae44>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -321,12 +321,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "981bb4ba6335a100a8079ee0e6687277",
+    "cacheID": "0d132045fe4d5dbaa3f5e86c43f07938",
     "id": null,
     "metadata": {},
     "name": "CompliancePageReferenceListQuery",
     "operationKind": "query",
-    "text": "query CompliancePageReferenceListQuery(\n  $after: CursorKey = null\n  $first: Int = 100\n  $order: TrustCenterReferenceOrder = {field: RANK, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageReferenceListFragment_gOVF5\n    id\n  }\n}\n\nfragment CompliancePageReferenceListFragment_gOVF5 on TrustCenter {\n  references(first: $first, after: $after, orderBy: $order) {\n    edges {\n      node {\n        id\n        rank\n        ...CompliancePageReferenceListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  id\n}\n\nfragment CompliancePageReferenceListItemFragment on TrustCenterReference {\n  id\n  logoUrl\n  name\n  description\n  websiteUrl\n  canUpdate: permission(action: \"core:trust-center-reference:update\")\n  canDelete: permission(action: \"core:trust-center-reference:delete\")\n}\n"
+    "text": "query CompliancePageReferenceListQuery(\n  $after: CursorKey = null\n  $first: Int = 100\n  $order: TrustCenterReferenceOrder = {field: RANK, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...CompliancePageReferenceListFragment_gOVF5\n    id\n  }\n}\n\nfragment CompliancePageReferenceListFragment_gOVF5 on TrustCenter {\n  references(first: $first, after: $after, orderBy: $order) {\n    edges {\n      node {\n        id\n        rank\n        ...CompliancePageReferenceListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  id\n}\n\nfragment CompliancePageReferenceListItemFragment on TrustCenterReference {\n  id\n  logoUrl\n  name\n  description\n  websiteUrl\n  rank\n  canUpdate: permission(action: \"core:trust-center-reference:update\")\n  canDelete: permission(action: \"core:trust-center-reference:delete\")\n}\n"
   }
 };
 })();

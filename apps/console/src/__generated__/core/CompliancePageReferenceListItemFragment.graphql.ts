@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<64544e53949f3d4eb3ad7ac4c301ba7f>>
+ * @generated SignedSource<<e765fe663fce16d50260a876b9ab0752>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type CompliancePageReferenceListItemFragment$data = {
   readonly id: string;
   readonly logoUrl: string;
   readonly name: string;
+  readonly rank: number;
   readonly websiteUrl: string;
   readonly " $fragmentType": "CompliancePageReferenceListItemFragment";
 };
@@ -67,6 +68,13 @@ const node: ReaderFragment = {
       "storageKey": null
     },
     {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "rank",
+      "storageKey": null
+    },
+    {
       "alias": "canUpdate",
       "args": [
         {
@@ -97,6 +105,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "104abbc059f2362bc53b5f05c30f98a9";
+(node as any).hash = "c7b132a9fea8a7c8cbf1a29af14dbb76";
 
 export default node;

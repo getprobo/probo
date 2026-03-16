@@ -14,6 +14,7 @@ const fragment = graphql`
     name
     description
     websiteUrl
+    rank
     canUpdate: permission(action: "core:trust-center-reference:update")
     canDelete: permission(action: "core:trust-center-reference:delete")
   }
