@@ -1,11 +1,14 @@
 type Translator = (s: string) => string;
 
-export type RegistryStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
+export type RegistryStatus = "CLOSED" | "FALSE_POSITIVE" | "IN_PROGRESS" | "MITIGATED" | "OPEN" | "RISK_ACCEPTED";
 
 export const registryStatuses = [
   "OPEN",
   "IN_PROGRESS",
   "CLOSED",
+  "RISK_ACCEPTED",
+  "MITIGATED",
+  "FALSE_POSITIVE",
 ] as const;
 
 export const getStatusVariant = (status: RegistryStatus) => {
@@ -16,6 +19,12 @@ export const getStatusVariant = (status: RegistryStatus) => {
       return "warning" as const;
     case "CLOSED":
       return "success" as const;
+    case "MITIGATED":
+      return "success" as const;
+    case "RISK_ACCEPTED":
+      return "neutral" as const;
+    case "FALSE_POSITIVE":
+      return "neutral" as const;
     default:
       return "neutral" as const;
   }
@@ -29,6 +38,12 @@ export const getStatusLabel = (status: RegistryStatus) => {
       return "In Progress";
     case "CLOSED":
       return "Closed";
+    case "RISK_ACCEPTED":
+      return "Risk Accepted";
+    case "MITIGATED":
+      return "Mitigated";
+    case "FALSE_POSITIVE":
+      return "False Positive";
     default:
       return status;
   }
@@ -41,6 +56,9 @@ export function getStatusOptions(__: Translator) {
       "OPEN": "Open",
       "IN_PROGRESS": "In Progress",
       "CLOSED": "Closed",
+      "RISK_ACCEPTED": "Risk Accepted",
+      "MITIGATED": "Mitigated",
+      "FALSE_POSITIVE": "False Positive",
     }[status]),
   }));
 }

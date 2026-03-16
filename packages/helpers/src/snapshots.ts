@@ -5,9 +5,8 @@ export const snapshotTypes = [
   "VENDORS",
   "ASSETS",
   "DATA",
-  "NONCONFORMITIES",
+  "FINDINGS",
   "OBLIGATIONS",
-  "CONTINUAL_IMPROVEMENTS",
   "PROCESSING_ACTIVITIES",
   "STATES_OF_APPLICABILITY",
 ] as const;
@@ -26,12 +25,12 @@ export function getSnapshotTypeLabel(__: Translator, type: string | null | undef
       return __("Assets");
     case "DATA":
       return __("Data");
+    case "FINDINGS":
     case "NONCONFORMITIES":
-      return __("Nonconformities");
+    case "CONTINUAL_IMPROVEMENTS":
+      return __("Findings");
     case "OBLIGATIONS":
       return __("Obligations");
-    case "CONTINUAL_IMPROVEMENTS":
-      return __("Continual Improvements");
     case "PROCESSING_ACTIVITIES":
       return __("Processing Activities");
     case "STATES_OF_APPLICABILITY":
@@ -51,12 +50,12 @@ export function getSnapshotTypeUrlPath(type?: string): string {
       return "/assets";
     case "DATA":
       return "/data";
+    case "FINDINGS":
     case "NONCONFORMITIES":
-      return "/nonconformities";
+    case "CONTINUAL_IMPROVEMENTS":
+      return "/findings";
     case "OBLIGATIONS":
       return "/obligations";
-    case "CONTINUAL_IMPROVEMENTS":
-      return "/continual-improvements";
     case "PROCESSING_ACTIVITIES":
       return "/processing-activities";
     case "STATES_OF_APPLICABILITY":
