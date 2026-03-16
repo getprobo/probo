@@ -1,0 +1,33 @@
+# Copyright (c) 2025, 2026 Probo Inc.
+# SPDX-License-Identifier: ISC
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+vmType: vz
+vmOpts:
+  vz:
+    rosetta:
+      enabled: true
+      binfmt: true
+
+cpus: 4
+memory: 8GiB
+disk: 50GiB
+
+networks:
+  - vzNAT: true
+
+mounts: []
+
+ssh:
+  forwardAgent: true
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      /workspace/contrib/lima/provision.sh
