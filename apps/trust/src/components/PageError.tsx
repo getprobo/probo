@@ -32,7 +32,7 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     }
   }, [location, resetErrorBoundary]);
 
-  if (!error || (error instanceof Error && error.message.includes("PAGE_NOT_FOUND"))) {
+  if (!error) {
     return (
       <div className={classNames.wrapper}>
         <h1 className={classNames.title}>

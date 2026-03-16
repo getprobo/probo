@@ -3,6 +3,16 @@
 
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function () {
+      var m = location.pathname.match(/^\/trust\/[^/]+/);
+      if (m) {
+        var b = document.createElement("base");
+        b.href = m[0] + "/";
+        document.head.appendChild(b);
+      }
+    })();
+  </script>
 
   <!-- <link rel="apple-touch-icon-precomposed" sizes="57x57" href="/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/favicons/apple-touch-icon-114x114.png" />

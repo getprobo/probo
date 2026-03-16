@@ -90,6 +90,7 @@ func (s *DocumentService) ExportPDFWithoutWatermark(
 
 func (s DocumentService) Get(
 	ctx context.Context,
+	organizationID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
@@ -108,6 +109,14 @@ func (s DocumentService) Get(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if document.OrganizationID != organizationID {
+		return nil, ErrDocumentNotFound
+	}
+
+	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+		return nil, ErrDocumentNotVisible
 	}
 
 	return document, nil

@@ -1,23 +1,20 @@
-import { downloadFile, formatError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { UnAuthenticatedError } from "@probo/relay";
 import {
   Button,
-  IconArrowInbox,
+  IconArrowLink,
   IconLock,
   IconPageTextLine,
-  Spinner,
   useToast,
 } from "@probo/ui";
 import { useFragment, useMutation } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { DocumentRow_requestAccessMutation } from "./__generated__/DocumentRow_requestAccessMutation.graphql";
-import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";
 import type { DocumentRowFragment$key } from "./__generated__/DocumentRowFragment.graphql";
 
 const requestAccessMutation = graphql`
@@ -31,14 +28,6 @@ const requestAccessMutation = graphql`
           status
         }
       }
-    }
-  }
-`;
-
-const downloadMutation = graphql`
-  mutation DocumentRowDownloadMutation($input: ExportDocumentPDFInput!) {
-    exportDocumentPDF(input: $input) {
-      data
     }
   }
 `;
@@ -67,8 +56,6 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
 
   const [requestAccess, isRequestingAccess]
     = useMutation<DocumentRow_requestAccessMutation>(requestAccessMutation);
-  const [commitDownload, downloading]
-    = useMutationWithToasts<DocumentRowDownloadMutation>(downloadMutation);
 
   const handleRequestAccess = () => {
     requestAccess({
@@ -114,19 +101,6 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
     });
   };
 
-  const handleDownload = async () => {
-    await commitDownload({
-      variables: {
-        input: {
-          documentId: document.id,
-        },
-      },
-      onSuccess(response) {
-        downloadFile(response.exportDocumentPDF.data, document.title);
-      },
-    });
-  };
-
   return (
     <div className="text-sm border border-border-solid -mt-px flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
@@ -138,11 +112,10 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
             <Button
               className="w-full md:w-max"
               variant="secondary"
-              disabled={downloading}
-              icon={downloading ? Spinner : IconArrowInbox}
-              onClick={() => void handleDownload()}
+              icon={IconArrowLink}
+              onClick={() => void navigate(`/documents/${document.id}`)}
             >
-              {downloading ? __("Downloading") : __("Download")}
+              {__("View")}
             </Button>
           )
         : (

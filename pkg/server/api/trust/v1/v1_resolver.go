@@ -64,7 +64,9 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 		return nil, nil
 	}
 
-	report, err := trustService.Reports.Get(ctx, *audit.ReportID)
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+	report, err := trustService.Reports.Get(ctx, trustCenter.OrganizationID, *audit.ReportID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -91,7 +93,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	document, err := trustService.Documents.Get(ctx, obj.ID)
+	document, err := trustService.Documents.Get(ctx, trustCenter.OrganizationID, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 		return false, gqlutils.Internal(ctx)
@@ -355,7 +357,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	trustService := r.TrustService(ctx, input.DocumentID.TenantID())
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	document, err := trustService.Documents.Get(ctx, input.DocumentID)
+	document, err := trustService.Documents.Get(ctx, trustCenter.OrganizationID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -462,8 +464,11 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
-	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
+	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, trustCenter.OrganizationID, input.TrustCenterFileID)
 	if err != nil {
+		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
+			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
+		}
 		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -514,7 +519,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
-	document, err := trustService.Documents.Get(ctx, input.DocumentID)
+	document, err := trustService.Documents.Get(ctx, trustCenter.OrganizationID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -597,8 +602,11 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
-	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
+	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, trustCenter.OrganizationID, input.TrustCenterFileID)
 	if err != nil {
+		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
+			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
+		}
 		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -852,8 +860,13 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		return types.NewOrganization(organization), nil
 
 	case coredata.DocumentEntityType:
-		document, err := trustService.Documents.Get(ctx, id)
+		trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+		document, err := trustService.Documents.Get(ctx, trustCenter.OrganizationID, id)
 		if err != nil {
+			if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
 			r.logger.ErrorCtx(ctx, "cannot get document", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
@@ -868,8 +881,13 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		return types.NewFramework(framework), nil
 
 	case coredata.ReportEntityType:
-		report, err := trustService.Reports.Get(ctx, id)
+		trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+		report, err := trustService.Reports.Get(ctx, trustCenter.OrganizationID, id)
 		if err != nil {
+			if errors.Is(err, trust.ErrReportNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
 			r.logger.ErrorCtx(ctx, "cannot get report", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
@@ -906,6 +924,20 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return nil, gqlutils.Internal(ctx)
 		}
 		return types.NewTrustCenterReference(reference), nil
+
+	case coredata.TrustCenterFileEntityType:
+		trustCenter := compliancepage.CompliancePageFromContext(ctx)
+
+		trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, trustCenter.OrganizationID, id)
+		if err != nil {
+			if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+			r.logger.ErrorCtx(ctx, "cannot get trust center file", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return types.NewTrustCenterFile(trustCenterFile), nil
 
 	default:
 		return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
@@ -1251,8 +1283,11 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, obj.ID)
+	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, trustCenter.OrganizationID, obj.ID)
 	if err != nil {
+		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
+			return false, gqlutils.NotFoundf(ctx, "trust center file %q not found", obj.ID)
+		}
 		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
 		return false, gqlutils.Internal(ctx)
 	}
