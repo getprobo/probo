@@ -26,7 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
-	"go.probo.inc/probo/pkg/validator"
 )
 
 // StateOfApplicability is the resolver for the stateOfApplicability field.
@@ -2073,18 +2072,8 @@ func (r *mutationResolver) CreateMailingListUpdate(ctx context.Context, input ty
 		return nil, err
 	}
 
-	mlu, err := r.mailman.CreateMailingListUpdate(
-		ctx,
-		&mailman.CreateMailingListUpdateRequest{
-			MailingListID: input.MailingListID,
-			Title:         input.Title,
-			Body:          input.Body,
-		},
-	)
+	mlu, err := r.mailman.CreateMailingListUpdate(ctx, input.MailingListID, input.Title, input.Body)
 	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-		}
 		r.logger.ErrorCtx(ctx, "cannot create mailing list update", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -2100,18 +2089,8 @@ func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input ty
 		return nil, err
 	}
 
-	mlu, err := r.mailman.UpdateMailingListUpdate(
-		ctx,
-		&mailman.UpdateMailingListUpdateRequest{
-			ID:    input.ID,
-			Title: input.Title,
-			Body:  input.Body,
-		},
-	)
+	mlu, err := r.mailman.UpdateMailingListUpdate(ctx, input.ID, input.Title, input.Body)
 	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-		}
 		if errors.Is(err, mailman.ErrMailingListUpdateAlreadySent) {
 			return nil, gqlutils.Conflictf(ctx, "mailing list update can only be edited when in draft")
 		}
@@ -2194,16 +2173,11 @@ func (r *mutationResolver) CreateMailingListSubscriber(ctx context.Context, inpu
 
 	subscriber, err := r.mailman.CreateSubscriber(
 		ctx,
-		&mailman.CreateSubscriberRequest{
-			MailingListID: input.MailingListID,
-			Email:         input.Email,
-			FullName:      input.FullName,
-		},
+		input.MailingListID,
+		input.Email,
+		input.FullName,
 	)
 	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-		}
 		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
 			return nil, gqlutils.Conflictf(ctx, "subscriber already exists in this mailing list")
 		}

@@ -5,7 +5,7 @@ project_name: probod
 
 before:
   hooks:
-    - make @probo/emails @probo/console @probo/trust
+    - make generate @probo/emails @probo/console @probo/trust
 
 builds:
   - id: probod

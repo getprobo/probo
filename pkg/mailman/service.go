@@ -30,13 +30,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/validator"
-)
-
-const (
-	updateTitleMaxLength        = 200
-	updateBodyMaxLength         = 50000
-	subscriberFullNameMaxLength = 200
 )
 
 const (
@@ -56,56 +49,6 @@ type Service struct {
 
 func NewService(pgClient *pg.Client, fm *filemanager.Service, tokenSecret string, apiBaseURL *baseurl.BaseURL, bucket string, encryptionKey cipher.EncryptionKey, logger *log.Logger) *Service {
 	return &Service{pg: pgClient, fm: fm, tokenSecret: tokenSecret, apiBaseURL: apiBaseURL, bucket: bucket, encryptionKey: encryptionKey, logger: logger}
-}
-
-type (
-	CreateMailingListUpdateRequest struct {
-		MailingListID gid.GID
-		Title         string
-		Body          string
-	}
-
-	UpdateMailingListUpdateRequest struct {
-		ID    gid.GID
-		Title *string
-		Body  *string
-	}
-
-	CreateSubscriberRequest struct {
-		MailingListID gid.GID
-		Email         mail.Addr
-		FullName      string
-	}
-)
-
-func (r *CreateMailingListUpdateRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(r.MailingListID, "mailing_list_id", validator.Required(), validator.GID(coredata.MailingListEntityType))
-	v.Check(r.Title, "title", validator.Required(), validator.SafeText(updateTitleMaxLength))
-	v.Check(r.Body, "body", validator.Required(), validator.SafeText(updateBodyMaxLength))
-
-	return v.Error()
-}
-
-func (r *UpdateMailingListUpdateRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.MailingListUpdateEntityType))
-	v.Check(r.Title, "title", validator.SafeText(updateTitleMaxLength))
-	v.Check(r.Body, "body", validator.SafeText(updateBodyMaxLength))
-
-	return v.Error()
-}
-
-func (r *CreateSubscriberRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(r.MailingListID, "mailing_list_id", validator.Required(), validator.GID(coredata.MailingListEntityType))
-	v.Check(r.Email, "email", validator.Required(), validator.NotEmpty())
-	v.Check(r.FullName, "full_name", validator.Required(), validator.SafeText(subscriberFullNameMaxLength))
-
-	return v.Error()
 }
 
 func (s *Service) UpdateMailingList(
@@ -173,16 +116,10 @@ func (s *Service) GetSubscriber(
 
 func (s *Service) CreateSubscriber(
 	ctx context.Context,
-	req *CreateSubscriberRequest,
+	mailingListID gid.GID,
+	email mail.Addr,
+	fullName string,
 ) (*coredata.MailingListSubscriber, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	mailingListID := req.MailingListID
-	email := req.Email
-	fullName := req.FullName
-
 	scope := coredata.NewScopeFromObjectID(mailingListID)
 	emailRecord, err := s.buildConfirmationMail(ctx, mailingListID, email, fullName)
 	if err != nil {
@@ -397,21 +334,18 @@ func (s *Service) ListSubscribers(
 
 func (s *Service) CreateMailingListUpdate(
 	ctx context.Context,
-	req *CreateMailingListUpdateRequest,
+	mailingListID gid.GID,
+	title string,
+	body string,
 ) (*coredata.MailingListUpdate, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	mailingListID := req.MailingListID
 	scope := coredata.NewScopeFromObjectID(mailingListID)
 	now := time.Now()
 
 	mlu := &coredata.MailingListUpdate{
 		ID:            gid.New(scope.GetTenantID(), coredata.MailingListUpdateEntityType),
 		MailingListID: mailingListID,
-		Title:         req.Title,
-		Body:          req.Body,
+		Title:         title,
+		Body:          body,
 		Status:        coredata.MailingListUpdateStatusDraft,
 		CreatedAt:     now,
 		UpdatedAt:     now,
@@ -472,19 +406,17 @@ func (s *Service) GetMailingListUpdate(
 
 func (s *Service) UpdateMailingListUpdate(
 	ctx context.Context,
-	req *UpdateMailingListUpdateRequest,
+	id gid.GID,
+	title string,
+	body string,
 ) (*coredata.MailingListUpdate, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	scope := coredata.NewScopeFromObjectID(req.ID)
+	scope := coredata.NewScopeFromObjectID(id)
 	var mlu coredata.MailingListUpdate
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := mlu.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListUpdateNotFound
 				}
@@ -495,12 +427,8 @@ func (s *Service) UpdateMailingListUpdate(
 				return ErrMailingListUpdateAlreadySent
 			}
 
-			if req.Title != nil {
-				mlu.Title = *req.Title
-			}
-			if req.Body != nil {
-				mlu.Body = *req.Body
-			}
+			mlu.Title = title
+			mlu.Body = body
 			mlu.UpdatedAt = time.Now()
 
 			if err := mlu.Update(ctx, conn, scope); err != nil {

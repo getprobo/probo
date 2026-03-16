@@ -152,6 +152,7 @@ jobs:
         with:
           name: "build-artifacts"
       - run: "chmod +x bin/probod"
+      - run: "make generate"
       - name: "Run go vet"
         run: "go vet ./..."
       - name: "Run golangci-lint"
@@ -196,6 +197,7 @@ jobs:
         with:
           name: "build-artifacts"
       - run: "chmod +x bin/probod"
+      - run: "make generate"
       - run: "make test"
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"

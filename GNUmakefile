@@ -62,7 +62,7 @@ all: build
 lint: vet go-lint npm-lint
 
 .PHONY: vet
-vet: @probo/emails
+vet: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/emails
 	$(GO_VET) ./...
 
 .PHONY: npm-lint
@@ -70,10 +70,11 @@ npm-lint:
 	$(NPM) run lint
 
 .PHONY: go-lint
-go-lint:
+go-lint: generate
 	$(GOLINTCMD) run ./...
 
 .PHONY: test
+test: generate
 test: CGO_ENABLED=1
 test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module])
 	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list ./... | grep -v /e2e/))
@@ -190,14 +191,28 @@ bin/prb:
 .PHONY: @probo/console
 @probo/console: NODE_ENV=production
 @probo/console:
+	$(NPM) --workspace $@ run relay
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 
 .PHONY: @probo/trust
 @probo/trust: NODE_ENV=production
 @probo/trust:
+	$(NPM) --workspace $@ run relay
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
+
+.PHONY: generate
+generate: pkg/server/api/connect/v1/schema/schema.go \
+	pkg/server/api/connect/v1/types/types.go \
+	pkg/server/api/console/v1/schema/schema.go \
+	pkg/server/api/console/v1/types/types.go \
+	pkg/server/api/trust/v1/schema/schema.go \
+	pkg/server/api/trust/v1/types/types.go \
+	pkg/server/api/mcp/v1/server/server.go \
+	pkg/server/api/mcp/v1/types/types.go
+	$(NPM) --workspace @probo/console run relay
+	$(NPM) --workspace @probo/trust run relay
 
 pkg/server/api/connect/v1/schema/schema.go \
 pkg/server/api/connect/v1/types/types.go \
@@ -243,6 +258,11 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.html coverage-combined.out coverage-combined.html
 	$(RM) -rf coverage/
 	$(RM) -rf compose/keycloak/certs/cert.pem compose/keycloak/certs/private-key.pem compose/keycloak/probo-realm.json
+	$(RM) -f pkg/server/api/connect/v1/schema/schema.go pkg/server/api/connect/v1/types/types.go
+	$(RM) -f pkg/server/api/console/v1/schema/schema.go pkg/server/api/console/v1/types/types.go
+	$(RM) -f pkg/server/api/trust/v1/schema/schema.go pkg/server/api/trust/v1/types/types.go
+	$(RM) -f pkg/server/api/mcp/v1/server/server.go pkg/server/api/mcp/v1/types/types.go
+	find apps -type d -name __generated__ -exec $(RM) -rf {} +
 
 .PHONY: stack-up
 stack-up: compose/pebble/certs/rootCA.pem compose/keycloak/probo-realm.json ## Start the docker stack as a deamon

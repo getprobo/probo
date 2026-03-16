@@ -13,3 +13,7 @@ sbom-docker.json
 *.crt
 *.key
 compose/keycloak/probo-realm.json
+
+# Generated files (codegen)
+__generated__/
+pkg/server/api/*/v1/types/types.go
