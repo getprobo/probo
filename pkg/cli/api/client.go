@@ -98,7 +98,12 @@ func (c *Client) DoRaw(
 		return nil, fmt.Errorf("cannot marshal GraphQL request: %w", err)
 	}
 
-	url := fmt.Sprintf("https://%s%s", c.host, c.endpoint)
+	host := c.host
+	if !strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
+		host = "https://" + host
+	}
+
+	url := fmt.Sprintf("%s%s", host, c.endpoint)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create HTTP request: %w", err)
