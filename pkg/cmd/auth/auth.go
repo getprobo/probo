@@ -25,7 +25,7 @@ import (
 func NewCmdAuth(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth <command>",
-		Short: "Authenticate proboctl with Probo",
+		Short: "Authenticate prb with Probo",
 	}
 
 	cmd.AddCommand(login.NewCmdLogin(f))

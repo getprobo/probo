@@ -83,10 +83,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new risk",
 		Example: `  # Create a risk interactively
-  proboctl risk create --inherent-likelihood 3 --inherent-impact 4
+  prb risk create --inherent-likelihood 3 --inherent-impact 4
 
   # Create a risk non-interactively
-  proboctl risk create --name "Data breach" --category "Security" --treatment MITIGATED --inherent-likelihood 3 --inherent-impact 4`,
+  prb risk create --name "Data breach" --category "Security" --treatment MITIGATED --inherent-likelihood 3 --inherent-impact 4`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -110,7 +110,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'proboctl auth login'")
+				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
 
 			if f.IOStreams.IsInteractive() {

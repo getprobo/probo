@@ -25,32 +25,32 @@ func NewCmdCompletion(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "completion <shell>",
 		Short: "Generate shell completion scripts",
-		Long: `Generate shell completion scripts for proboctl.
+		Long: `Generate shell completion scripts for prb.
 
 To load completions:
 
 Bash:
-  $ source <(proboctl completion bash)
+  $ source <(prb completion bash)
   # To load completions for each session, execute once:
   # Linux:
-  $ proboctl completion bash > /etc/bash_completion.d/proboctl
+  $ prb completion bash > /etc/bash_completion.d/prb
   # macOS:
-  $ proboctl completion bash > $(brew --prefix)/etc/bash_completion.d/proboctl
+  $ prb completion bash > $(brew --prefix)/etc/bash_completion.d/prb
 
 Zsh:
-  $ source <(proboctl completion zsh)
+  $ source <(prb completion zsh)
   # To load completions for each session, execute once:
-  $ proboctl completion zsh > "${fpath[1]}/_proboctl"
+  $ prb completion zsh > "${fpath[1]}/_prb"
 
 Fish:
-  $ proboctl completion fish | source
+  $ prb completion fish | source
   # To load completions for each session, execute once:
-  $ proboctl completion fish > ~/.config/fish/completions/proboctl.fish
+  $ prb completion fish > ~/.config/fish/completions/prb.fish
 
 PowerShell:
-  PS> proboctl completion powershell | Out-String | Invoke-Expression
+  PS> prb completion powershell | Out-String | Invoke-Expression
   # To load completions for each session, execute once:
-  PS> proboctl completion powershell > proboctl.ps1`,
+  PS> prb completion powershell > prb.ps1`,
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 		Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		DisableFlagsInUseLine: true,

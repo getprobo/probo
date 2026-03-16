@@ -35,13 +35,13 @@ func NewCmdBrowse(f *cmdutil.Factory) *cobra.Command {
 		Long:    "Open the Probo console in the default web browser.",
 		Aliases: []string{"open"},
 		Example: `  # Open the Probo console in the browser
-  proboctl browse
+  prb browse
 
   # Print the URL without opening the browser
-  proboctl browse --no-browser
+  prb browse --no-browser
 
   # Open a specific organization
-  proboctl browse --org <org-id>`,
+  prb browse --org <org-id>`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

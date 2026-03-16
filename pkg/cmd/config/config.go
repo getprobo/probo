@@ -25,7 +25,7 @@ import (
 func NewCmdConfig(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config <command>",
-		Short: "Manage configuration for proboctl",
+		Short: "Manage configuration for prb",
 	}
 
 	cmd.AddCommand(configget.NewCmdConfigGet(f))

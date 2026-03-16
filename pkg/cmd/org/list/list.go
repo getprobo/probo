@@ -79,10 +79,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Short:   "List organizations you have access to",
 		Aliases: []string{"ls"},
 		Example: `  # List all organizations
-  proboctl org list
+  prb org list
 
   # Output as JSON
-  proboctl org ls --json`,
+  prb org ls --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {

@@ -34,9 +34,9 @@ import (
 
 func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           "proboctl <command> [flags]",
+		Use:           "prb <command> [flags]",
 		Short:         "Probo CLI",
-		Long:          "proboctl is a command-line tool for interacting with the Probo platform.",
+		Long:          "prb is a command-line tool for interacting with the Probo platform.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {

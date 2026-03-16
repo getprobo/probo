@@ -60,7 +60,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new statement of applicability",
 		Example: `  # Create a statement of applicability
-  proboctl soa create --name "ISO 27001 SoA" --owner PROFILE_ID`,
+  prb soa create --name "ISO 27001 SoA" --owner PROFILE_ID`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -85,7 +85,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'proboctl auth login'")
+				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
 
 			input := map[string]any{

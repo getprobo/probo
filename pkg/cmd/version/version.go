@@ -25,7 +25,7 @@ import (
 func NewCmdVersion(f *cmdutil.Factory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
-		Short: "Print the version of proboctl",
+		Short: "Print the version of prb",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			info := version.GetBuildInfo()
 
@@ -36,7 +36,7 @@ func NewCmdVersion(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"proboctl version %s (commit: %s, built: %s, go: %s)\n",
+				"prb version %s (commit: %s, built: %s, go: %s)\n",
 				v,
 				info.Commit,
 				info.BuildDate,

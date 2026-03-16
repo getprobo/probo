@@ -27,13 +27,13 @@ func NewCmdConfigSet(f *cmdutil.Factory) *cobra.Command {
 		Short: "Update configuration with a value for the given key",
 		Long:  "Update configuration with a value for the given key.\n\nAvailable keys: editor, browser, pager, prompt, http_timeout",
 		Example: `  # Set the default editor
-  proboctl config set editor vim
+  prb config set editor vim
 
   # Set the HTTP timeout to 60 seconds
-  proboctl config set http_timeout 60s
+  prb config set http_timeout 60s
 
   # Disable interactive prompts
-  proboctl config set prompt disabled`,
+  prb config set prompt disabled`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()

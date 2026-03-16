@@ -1,14 +1,14 @@
-# AGENTS.md — proboctl CLI
+# AGENTS.md — prb CLI
 
 ## Overview
 
-`proboctl` is the Probo CLI built with [cobra](https://github.com/spf13/cobra). Entry point: `cmd/proboctl/main.go`.
+`prb` is the Probo CLI built with [cobra](https://github.com/spf13/cobra). Entry point: `cmd/prb/main.go`.
 
 ## Package layout
 
 | Package | Purpose |
 |---|---|
-| `cmd/proboctl` | Binary entry point — creates `Factory`, root command, and runs it |
+| `cmd/prb` | Binary entry point — creates `Factory`, root command, and runs it |
 | `pkg/cmd/root` | Root command — registers all top-level subcommands |
 | `pkg/cmd/<resource>` | Command group (e.g. `risk`, `framework`, `webhook`) — wires subcommands |
 | `pkg/cmd/<resource>/<verb>` | Leaf command (e.g. `risk/create`, `risk/list`) — owns the `RunE` |
@@ -41,7 +41,7 @@ func NewCmd<Verb>(f *cmdutil.Factory) *cobra.Command {
         Use:     "<verb>",
         Short:   "One-line description",
         Aliases: []string{"..."},   // optional, e.g. "ls" for list
-        Example: `  proboctl <resource> <verb> ...`,
+        Example: `  prb <resource> <verb> ...`,
         RunE: func(cmd *cobra.Command, args []string) error {
             // 1. Validate output flags (for list commands)
             // 2. Load config, get host + token
@@ -64,7 +64,7 @@ func NewCmd<Verb>(f *cmdutil.Factory) *cobra.Command {
 
 - **GraphQL queries/mutations** are `const` strings declared at package level in the leaf command file.
 - **Response types** are unexported structs in the leaf command file, shaped to match the GraphQL response.
-- **Organization resolution**: every command that needs an org checks `--org` flag first, then falls back to `hc.Organization` from config. If both are empty, return an error telling the user to pass `--org` or run `proboctl auth login`.
+- **Organization resolution**: every command that needs an org checks `--org` flag first, then falls back to `hc.Organization` from config. If both are empty, return an error telling the user to pass `--org` or run `prb auth login`.
 - **Interactive prompts** use `github.com/charmbracelet/huh`. Gate them behind `f.IOStreams.IsInteractive()`. Always support full non-interactive use via flags.
 - **Output format**: list commands support `--output json|table` via `cmdutil.AddOutputFlag` / `cmdutil.ValidateOutputFlag`. Default is table.
 - **Pagination**: list commands use `api.Paginate[T]` with a `--limit` / `-L` flag (default 30). Show "Showing X of Y" on stderr when results are truncated.

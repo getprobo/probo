@@ -27,7 +27,7 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 		Use:   "status",
 		Short: "View authentication status",
 		Example: `  # Show all configured hosts and their authentication status
-  proboctl auth status`,
+  prb auth status`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
