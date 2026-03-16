@@ -120,7 +120,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				func(data json.RawMessage) (*api.Connection[applicabilityStatement], error) {
 					var resp struct {
 						Node *struct {
-							Typename                string                                     `json:"__typename"`
+							Typename                string                                 `json:"__typename"`
 							ApplicabilityStatements api.Connection[applicabilityStatement] `json:"applicabilityStatements"`
 						} `json:"node"`
 					}

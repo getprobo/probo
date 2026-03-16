@@ -21,6 +21,6 @@ import (
 
 type Factory struct {
 	IOStreams *iostreams.IOStreams
-	Version  string
-	Config   func() (*config.Config, error)
+	Version   string
+	Config    func() (*config.Config, error)
 }

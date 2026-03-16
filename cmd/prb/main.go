@@ -40,7 +40,7 @@ func main() {
 
 	f := &cmdutil.Factory{
 		IOStreams: ios,
-		Version:  version,
+		Version:   version,
 		Config: func() (*config.Config, error) {
 			return config.Load()
 		},

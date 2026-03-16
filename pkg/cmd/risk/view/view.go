@@ -50,21 +50,21 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename            string  `json:"__typename"`
-		ID                  string  `json:"id"`
-		Name                string  `json:"name"`
-		Description         *string `json:"description"`
-		Category            string  `json:"category"`
-		Treatment           string  `json:"treatment"`
-		Note                string  `json:"note"`
-		InherentLikelihood  int     `json:"inherentLikelihood"`
-		InherentImpact      int     `json:"inherentImpact"`
-		InherentRiskScore   int     `json:"inherentRiskScore"`
-		ResidualLikelihood  int     `json:"residualLikelihood"`
-		ResidualImpact      int     `json:"residualImpact"`
-		ResidualRiskScore   int     `json:"residualRiskScore"`
-		CreatedAt           string  `json:"createdAt"`
-		UpdatedAt           string  `json:"updatedAt"`
+		Typename           string  `json:"__typename"`
+		ID                 string  `json:"id"`
+		Name               string  `json:"name"`
+		Description        *string `json:"description"`
+		Category           string  `json:"category"`
+		Treatment          string  `json:"treatment"`
+		Note               string  `json:"note"`
+		InherentLikelihood int     `json:"inherentLikelihood"`
+		InherentImpact     int     `json:"inherentImpact"`
+		InherentRiskScore  int     `json:"inherentRiskScore"`
+		ResidualLikelihood int     `json:"residualLikelihood"`
+		ResidualImpact     int     `json:"residualImpact"`
+		ResidualRiskScore  int     `json:"residualRiskScore"`
+		CreatedAt          string  `json:"createdAt"`
+		UpdatedAt          string  `json:"updatedAt"`
 	} `json:"node"`
 }
 

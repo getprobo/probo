@@ -140,7 +140,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				func(data json.RawMessage) (*api.Connection[risk], error) {
 					var resp struct {
 						Node *struct {
-							Typename string                `json:"__typename"`
+							Typename string               `json:"__typename"`
 							Risks    api.Connection[risk] `json:"risks"`
 						} `json:"node"`
 					}

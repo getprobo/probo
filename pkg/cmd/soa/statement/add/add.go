@@ -131,8 +131,8 @@ func NewCmdAdd(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"stateOfApplicabilityId": flagSoA,
-				"controlId":             flagControl,
-				"applicability":         flagApplicable,
+				"controlId":              flagControl,
+				"applicability":          flagApplicable,
 			}
 
 			if flagJustification != "" {

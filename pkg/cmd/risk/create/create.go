@@ -49,16 +49,16 @@ type createResponse struct {
 	CreateRisk struct {
 		RiskEdge struct {
 			Node struct {
-				ID                  string `json:"id"`
-				Name                string `json:"name"`
-				Category            string `json:"category"`
-				Treatment           string `json:"treatment"`
-				InherentLikelihood  int    `json:"inherentLikelihood"`
-				InherentImpact      int    `json:"inherentImpact"`
-				InherentRiskScore   int    `json:"inherentRiskScore"`
-				ResidualLikelihood  int    `json:"residualLikelihood"`
-				ResidualImpact      int    `json:"residualImpact"`
-				ResidualRiskScore   int    `json:"residualRiskScore"`
+				ID                 string `json:"id"`
+				Name               string `json:"name"`
+				Category           string `json:"category"`
+				Treatment          string `json:"treatment"`
+				InherentLikelihood int    `json:"inherentLikelihood"`
+				InherentImpact     int    `json:"inherentImpact"`
+				InherentRiskScore  int    `json:"inherentRiskScore"`
+				ResidualLikelihood int    `json:"residualLikelihood"`
+				ResidualImpact     int    `json:"residualImpact"`
+				ResidualRiskScore  int    `json:"residualRiskScore"`
 			} `json:"node"`
 		} `json:"riskEdge"`
 	} `json:"createRisk"`
