@@ -6,3 +6,7 @@ licenses:
   - id: "SEE LICENSE IN LICENSE.md"
     paths:
       - "package-lock.json"
+  # @probo/vendors - internal package, CC-BY-SA-4.0 license is acceptable
+  - id: "CC-BY-SA-4.0"
+    paths:
+      - "package-lock.json"
