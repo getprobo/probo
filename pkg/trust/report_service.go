@@ -34,6 +34,23 @@ type ReportService struct {
 
 func (s ReportService) Get(
 	ctx context.Context,
+	organizationID gid.GID,
+	reportID gid.GID,
+) (*coredata.Report, error) {
+	report, err := s.loadByID(ctx, reportID)
+	if err != nil {
+		return nil, err
+	}
+
+	if report.OrganizationID != organizationID {
+		return nil, ErrReportNotFound
+	}
+
+	return report, nil
+}
+
+func (s ReportService) loadByID(
+	ctx context.Context,
 	reportID gid.GID,
 ) (*coredata.Report, error) {
 	report := &coredata.Report{}
@@ -62,7 +79,7 @@ func (s ReportService) GenerateDownloadURL(
 	reportID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
-	report, err := s.Get(ctx, reportID)
+	report, err := s.loadByID(ctx, reportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get report: %w", err)
 	}
@@ -114,7 +131,7 @@ func (s ReportService) exportPDFData(
 	ctx context.Context,
 	reportID gid.GID,
 ) ([]byte, error) {
-	report, err := s.Get(ctx, reportID)
+	report, err := s.loadByID(ctx, reportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get report: %w", err)
 	}

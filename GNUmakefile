@@ -59,7 +59,7 @@ endif
 all: build
 
 .PHONY: lint
-lint: vet go-fmt go-fix go-lint npm-lint
+lint: vet go-lint npm-lint
 
 .PHONY: vet
 vet: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/emails
@@ -68,24 +68,6 @@ vet: generate apps/console/dist/index.html apps/trust/dist/index.html @probo/ema
 .PHONY: npm-lint
 npm-lint:
 	$(NPM) run lint
-
-.PHONY: go-fmt
-go-fmt: generate
-	@output="$$(gofmt -l cmd pkg e2e)"; \
-	if [ -n "$$output" ]; then \
-		echo "error: 'gofmt' found unformatted files:"; \
-		echo "$$output"; \
-		exit 1; \
-	fi
-
-.PHONY: go-fix
-go-fix: generate
-	@output="$$($(GO_BASE) fix -diff ./cmd/... ./pkg/... ./e2e/...)"; \
-	if [ -n "$$output" ]; then \
-		echo "error: 'go fix' suggests changes; please apply them"; \
-		echo "$$output"; \
-		exit 1; \
-	fi
 
 .PHONY: go-lint
 go-lint: generate

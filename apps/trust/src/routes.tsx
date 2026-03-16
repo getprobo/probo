@@ -20,6 +20,7 @@ import {
   currentTrustVendorsQuery,
 } from "#/queries/TrustGraph";
 
+import { DocumentPageErrorBoundary } from "./components/DocumentPageErrorBoundary";
 import { PageError } from "./components/PageError";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton";
@@ -74,6 +75,11 @@ const routes = [
         Component: OverviewPage,
       },
     ],
+  },
+  {
+    path: "/documents/:documentId",
+    Component: lazy(() => import("#/pages/DocumentPageLoader")),
+    ErrorBoundary: DocumentPageErrorBoundary,
   },
   {
     path: "/documents",

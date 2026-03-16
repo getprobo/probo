@@ -34,6 +34,7 @@ type TrustCenterFileService struct {
 
 func (s *TrustCenterFileService) Get(
 	ctx context.Context,
+	organizationID gid.GID,
 	trustCenterFileID gid.GID,
 ) (*coredata.TrustCenterFile, error) {
 	trustCenterFile := &coredata.TrustCenterFile{}
@@ -52,6 +53,14 @@ func (s *TrustCenterFileService) Get(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if trustCenterFile.OrganizationID != organizationID {
+		return nil, ErrTrustCenterFileNotFound
+	}
+
+	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
+		return nil, ErrTrustCenterFileNotVisible
 	}
 
 	return trustCenterFile, nil

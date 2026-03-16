@@ -874,7 +874,7 @@ type RecordSigningEventPayload {
 
 type Query {
   viewer: Identity
-  node(id: ID!): Node!
+  node(id: ID!): Node
   currentTrustCenter: TrustCenter
 }
 

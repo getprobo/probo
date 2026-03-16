@@ -1,4 +1,4 @@
-import { downloadFile, formatError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { UnAuthenticatedError } from "@probo/relay";
 import {
@@ -7,10 +7,9 @@ import {
   Dialog,
   DialogContent,
   FrameworkLogo,
-  IconArrowInbox,
+  IconArrowLink,
   IconLock,
   IconMedal,
-  Spinner,
   Table,
   useToast,
 } from "@probo/ui";
@@ -19,11 +18,9 @@ import { useFragment, useMutation } from "react-relay";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
-import { useMutationWithToasts } from "#/hooks/useMutationWithToast";
 import { getPathPrefix } from "#/utils/pathPrefix";
 
 import type { AuditRow_requestAccessMutation } from "./__generated__/AuditRow_requestAccessMutation.graphql";
-import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadMutation.graphql";
 import type { AuditRowFragment$key } from "./__generated__/AuditRowFragment.graphql";
 
 const requestAccessMutation = graphql`
@@ -41,20 +38,11 @@ const requestAccessMutation = graphql`
   }
 `;
 
-const downloadMutation = graphql`
-  mutation AuditRowDownloadMutation($input: ExportReportPDFInput!) {
-    exportReportPDF(input: $input) {
-      data
-    }
-  }
-`;
-
 const auditRowFragment = graphql`
   fragment AuditRowFragment on Audit {
     name
     report {
       id
-      filename
       isUserAuthorized
       access {
         id
@@ -82,8 +70,6 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
 
   const [requestAccess, isRequestingAccess]
     = useMutation<AuditRow_requestAccessMutation>(requestAccessMutation);
-  const [commitDownload, downloading]
-    = useMutationWithToasts<AuditRowDownloadMutation>(downloadMutation);
 
   const handleRequestAccess = () => {
     requestAccess({
@@ -129,22 +115,6 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
     });
   };
 
-  const handleDownload = async () => {
-    if (!audit.report?.id) {
-      return;
-    }
-    await commitDownload({
-      variables: {
-        input: {
-          reportId: audit.report.id,
-        },
-      },
-      onSuccess(response) {
-        downloadFile(response.exportReportPDF.data, audit.report!.filename);
-      },
-    });
-  };
-
   return (
     <div className="text-sm border border-border-solid -mt-px flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
@@ -156,11 +126,10 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
             <Button
               className="w-full md:w-max"
               variant="secondary"
-              disabled={downloading}
-              icon={downloading ? Spinner : IconArrowInbox}
-              onClick={() => void handleDownload()}
+              icon={IconArrowLink}
+              to={`/documents/${audit.report.id}`}
             >
-              {downloading ? __("Downloading") : __("Download")}
+              {__("View")}
             </Button>
           )
         : (
