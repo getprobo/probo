@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.143.0] - 2026-03-16
+
+### Added
+
+- Add CLI
+- Add validation to mailman service
+
 ### Fixed
 
 - SCIM provisioning failure when enrolling existing manual users due to stale external_id conflicts
