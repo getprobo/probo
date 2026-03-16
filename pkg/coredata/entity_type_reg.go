@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -51,11 +51,11 @@ const (
 	FileEntityType                             uint16 = 25
 	VendorContactEntityType                    uint16 = 26
 	VendorDataPrivacyAgreementEntityType       uint16 = 27
-	NonconformityEntityType                    uint16 = 28
+	_                                          uint16 = 28 // NonconformityEntityType - removed
 	ObligationEntityType                       uint16 = 29
 	VendorServiceEntityType                    uint16 = 30
 	SnapshotEntityType                         uint16 = 31
-	ContinualImprovementEntityType             uint16 = 32
+	_                                          uint16 = 32 // ContinualImprovementEntityType - removed
 	ProcessingActivityEntityType               uint16 = 33
 	ExportJobEntityType                        uint16 = 34
 	TrustCenterReferenceEntityType             uint16 = 35
@@ -90,6 +90,7 @@ const (
 	MailingListEntityType                      uint16 = 64
 	MailingListSubscriberEntityType            uint16 = 65
 	MailingListUpdateEntityType                uint16 = 66
+	FindingEntityType                          uint16 = 67
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -148,16 +149,14 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &VendorContact{ID: id}, true
 	case VendorDataPrivacyAgreementEntityType:
 		return &VendorDataPrivacyAgreement{ID: id}, true
-	case NonconformityEntityType:
-		return &Nonconformity{ID: id}, true
+	case FindingEntityType:
+		return &Finding{ID: id}, true
 	case ObligationEntityType:
 		return &Obligation{ID: id}, true
 	case VendorServiceEntityType:
 		return &VendorService{ID: id}, true
 	case SnapshotEntityType:
 		return &Snapshot{ID: id}, true
-	case ContinualImprovementEntityType:
-		return &ContinualImprovement{ID: id}, true
 	case ProcessingActivityEntityType:
 		return &ProcessingActivity{ID: id}, true
 	case ExportJobEntityType:

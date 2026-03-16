@@ -452,6 +452,157 @@ WHERE %s
 	return nil
 }
 
+func (a *Audits) LoadByFindingID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	findingID gid.GID,
+	cursor *page.Cursor[AuditOrderField],
+) error {
+	q := `
+WITH audits_by_finding AS (
+	SELECT
+		a.id,
+		a.tenant_id,
+		a.name,
+		a.organization_id,
+		a.framework_id,
+		a.report_id,
+		a.valid_from,
+		a.valid_until,
+		a.state,
+		a.trust_center_visibility,
+		a.created_at,
+		a.updated_at
+	FROM
+		audits a
+	INNER JOIN
+		findings_audits fa ON a.id = fa.audit_id
+	WHERE
+		fa.finding_id = @finding_id
+)
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	report_id,
+	valid_from,
+	valid_until,
+	state,
+	trust_center_visibility,
+	created_at,
+	updated_at
+FROM
+	audits_by_finding
+WHERE %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"finding_id": findingID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audits: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audits: %w", err)
+	}
+
+	*a = audits
+
+	return nil
+}
+
+func (a *Audits) CountByControlID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	controlID gid.GID,
+) (int, error) {
+	q := `
+WITH audits_by_control AS (
+	SELECT
+		a.id,
+		a.tenant_id
+	FROM
+		audits a
+	INNER JOIN
+		controls_audits ca ON a.id = ca.audit_id
+	WHERE
+		ca.control_id = @control_id
+)
+SELECT
+	COUNT(id)
+FROM
+	audits_by_control
+WHERE
+	%s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"control_id": controlID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count audits: %w", err)
+	}
+
+	return count, nil
+}
+
+func (a *Audits) CountByFindingID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	findingID gid.GID,
+) (int, error) {
+	q := `
+WITH audits_by_finding AS (
+	SELECT
+		a.id,
+		a.tenant_id
+	FROM
+		audits a
+	INNER JOIN
+		findings_audits fa ON a.id = fa.audit_id
+	WHERE
+		fa.finding_id = @finding_id
+)
+SELECT
+	COUNT(id)
+FROM
+	audits_by_finding
+WHERE
+	%s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"finding_id": findingID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count audits: %w", err)
+	}
+
+	return count, nil
+}
+
 func (a *Audit) LoadByReportID(
 	ctx context.Context,
 	conn pg.Conn,

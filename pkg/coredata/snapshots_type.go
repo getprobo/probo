@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,9 +28,8 @@ const (
 	SnapshotsTypeVendors               SnapshotsType = "VENDORS"
 	SnapshotsTypeAssets                SnapshotsType = "ASSETS"
 	SnapshotsTypeData                  SnapshotsType = "DATA"
-	SnapshotsTypeNonconformities       SnapshotsType = "NONCONFORMITIES"
+	SnapshotsTypeFindings              SnapshotsType = "FINDINGS"
 	SnapshotsTypeObligations           SnapshotsType = "OBLIGATIONS"
-	SnapshotsTypeContinualImprovements SnapshotsType = "CONTINUAL_IMPROVEMENTS"
 	SnapshotsTypeProcessingActivities  SnapshotsType = "PROCESSING_ACTIVITIES"
 	SnapshotsTypeStatesOfApplicability SnapshotsType = "STATES_OF_APPLICABILITY"
 )
@@ -41,9 +40,8 @@ func SnapshotsTypes() []SnapshotsType {
 		SnapshotsTypeVendors,
 		SnapshotsTypeAssets,
 		SnapshotsTypeData,
-		SnapshotsTypeNonconformities,
+		SnapshotsTypeFindings,
 		SnapshotsTypeObligations,
-		SnapshotsTypeContinualImprovements,
 		SnapshotsTypeProcessingActivities,
 		SnapshotsTypeStatesOfApplicability,
 	}
@@ -73,12 +71,10 @@ func (st *SnapshotsType) Scan(value any) error {
 		*st = SnapshotsTypeAssets
 	case SnapshotsTypeData.String():
 		*st = SnapshotsTypeData
-	case SnapshotsTypeNonconformities.String():
-		*st = SnapshotsTypeNonconformities
+	case SnapshotsTypeFindings.String(), "NONCONFORMITIES", "CONTINUAL_IMPROVEMENTS":
+		*st = SnapshotsTypeFindings
 	case SnapshotsTypeObligations.String():
 		*st = SnapshotsTypeObligations
-	case SnapshotsTypeContinualImprovements.String():
-		*st = SnapshotsTypeContinualImprovements
 	case SnapshotsTypeProcessingActivities.String():
 		*st = SnapshotsTypeProcessingActivities
 	case SnapshotsTypeStatesOfApplicability.String():

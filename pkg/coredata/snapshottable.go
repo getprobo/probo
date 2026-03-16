@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,12 +34,10 @@ func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
 		return Risks{}, nil
 	case SnapshotsTypeData:
 		return Data{}, nil
-	case SnapshotsTypeNonconformities:
-		return Nonconformities{}, nil
+	case SnapshotsTypeFindings:
+		return Findings{}, nil
 	case SnapshotsTypeObligations:
 		return Obligations{}, nil
-	case SnapshotsTypeContinualImprovements:
-		return ContinualImprovements{}, nil
 	case SnapshotsTypeProcessingActivities:
 		return ProcessingActivities{}, nil
 	case SnapshotsTypeVendors:

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,27 +19,27 @@ import (
 	"fmt"
 )
 
-type NonconformityStatus string
+type FindingPriority string
 
 const (
-	NonconformityStatusOpen       NonconformityStatus = "OPEN"
-	NonconformityStatusInProgress NonconformityStatus = "IN_PROGRESS"
-	NonconformityStatusClosed     NonconformityStatus = "CLOSED"
+	FindingPriorityLow    FindingPriority = "LOW"
+	FindingPriorityMedium FindingPriority = "MEDIUM"
+	FindingPriorityHigh   FindingPriority = "HIGH"
 )
 
-func NonconformityStatuses() []NonconformityStatus {
-	return []NonconformityStatus{
-		NonconformityStatusOpen,
-		NonconformityStatusInProgress,
-		NonconformityStatusClosed,
+func FindingPriorities() []FindingPriority {
+	return []FindingPriority{
+		FindingPriorityLow,
+		FindingPriorityMedium,
+		FindingPriorityHigh,
 	}
 }
 
-func (ncs NonconformityStatus) String() string {
-	return string(ncs)
+func (fp FindingPriority) String() string {
+	return string(fp)
 }
 
-func (ncs *NonconformityStatus) Scan(value any) error {
+func (fp *FindingPriority) Scan(value any) error {
 	var s string
 	switch v := value.(type) {
 	case string:
@@ -47,22 +47,22 @@ func (ncs *NonconformityStatus) Scan(value any) error {
 	case []byte:
 		s = string(v)
 	default:
-		return fmt.Errorf("unsupported type for NonconformityStatus: %T", value)
+		return fmt.Errorf("unsupported type for FindingPriority: %T", value)
 	}
 
 	switch s {
-	case "OPEN":
-		*ncs = NonconformityStatusOpen
-	case "IN_PROGRESS":
-		*ncs = NonconformityStatusInProgress
-	case "CLOSED":
-		*ncs = NonconformityStatusClosed
+	case "LOW":
+		*fp = FindingPriorityLow
+	case "MEDIUM":
+		*fp = FindingPriorityMedium
+	case "HIGH":
+		*fp = FindingPriorityHigh
 	default:
-		return fmt.Errorf("invalid NonconformityStatus value: %q", s)
+		return fmt.Errorf("invalid FindingPriority value: %q", s)
 	}
 	return nil
 }
 
-func (ncs NonconformityStatus) Value() (driver.Value, error) {
-	return ncs.String(), nil
+func (fp FindingPriority) Value() (driver.Value, error) {
+	return fp.String(), nil
 }
