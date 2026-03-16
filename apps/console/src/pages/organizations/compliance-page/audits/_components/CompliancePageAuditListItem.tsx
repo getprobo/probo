@@ -88,7 +88,7 @@ export function CompliancePageAuditListItem(props: {
   return (
     <Tr to={`/organizations/${organizationId}/audits/${audit.id}`}>
       <Td>
-        <div className="flex gap-4 items-center">{audit.framework.name}</div>
+        <div className="flex gap-4 items-center">{audit.framework?.name}</div>
       </Td>
       <Td>{audit.name || __("Untitled")}</Td>
       <Td>{validUntilFormatted}</Td>

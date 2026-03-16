@@ -105,8 +105,8 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
               <div className="flex items-center justify-between w-full">
                 <span>
                   {audit.name
-                    ? `${audit.framework.name} - ${audit.name}`
-                    : audit.framework.name}
+                    ? `${audit.framework?.name} - ${audit.name}`
+                    : audit.framework?.name}
                 </span>
                 <div className="ml-3">
                   <Badge variant={getAuditStateVariant(audit.state)}>

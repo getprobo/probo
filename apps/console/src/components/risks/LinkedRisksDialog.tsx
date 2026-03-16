@@ -136,6 +136,7 @@ type RowProps = {
     name: string;
     category: string;
     id: string;
+    description?: string | null;
   };
   linkedRisks: Set<string>;
   disabled?: boolean;

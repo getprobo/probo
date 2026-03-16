@@ -6,16 +6,15 @@ import {
   IconCalendar1,
   IconCircleProgress,
   IconClock,
-  IconCrossLargeX,
   IconFire3,
   IconGroup1,
   IconInboxEmpty,
   IconListStack,
   IconLock,
+  IconMagnifyingGlass,
   IconMedal,
   IconPageCheck,
   IconPageTextLine,
-  IconRotateCw,
   IconSettingsGear2,
   IconShield,
   IconStore,
@@ -41,11 +40,8 @@ const fragment = graphql`
         canListAssets: permission(action: "core:asset:list")
         canListData: permission(action: "core:datum:list")
         canListAudits: permission(action: "core:audit:list")
-        canListNonconformities: permission(action: "core:nonconformity:list")
+        canListFindings: permission(action: "core:finding:list")
         canListObligations: permission(action: "core:obligation:list")
-        canListContinualImprovements: permission(
-            action: "core:continual-improvement:list"
-        )
         canListProcessingActivities: permission(
             action: "core:processing-activity:list"
         )
@@ -148,11 +144,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/audits`}
         />
       )}
-      {organization.canListNonconformities && (
+      {organization.canListFindings && (
         <SidebarItem
-          label={__("Nonconformities")}
-          icon={IconCrossLargeX}
-          to={`${prefix}/nonconformities`}
+          label={__("Findings")}
+          icon={IconMagnifyingGlass}
+          to={`${prefix}/findings`}
         />
       )}
       {organization.canListObligations && (
@@ -160,13 +156,6 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Obligations")}
           icon={IconBook}
           to={`${prefix}/obligations`}
-        />
-      )}
-      {organization.canListContinualImprovements && (
-        <SidebarItem
-          label={__("Continual Improvements")}
-          icon={IconRotateCw}
-          to={`${prefix}/continual-improvements`}
         />
       )}
       {organization.canListProcessingActivities && (

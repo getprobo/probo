@@ -121,7 +121,7 @@ export const deleteAuditMutation = graphql`
 `;
 
 export const useDeleteAudit = (
-  audit: { id: string; framework: { name: string } },
+  audit: { id: string; framework?: { name: string } | null },
   connectionId: string,
   onSuccess?: () => void,
 ) => {
@@ -150,7 +150,7 @@ export const useDeleteAudit = (
           __(
             "This will permanently delete the audit for %s. This action cannot be undone.",
           ),
-          audit.framework.name,
+          audit.framework?.name ?? "",
         ),
       },
     );
