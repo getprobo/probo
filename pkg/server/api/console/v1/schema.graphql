@@ -163,19 +163,63 @@ enum TrustCenterDocumentAccessStatus
         )
 }
 
-enum NonconformityStatus
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.NonconformityStatus") {
+enum FindingKind
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingKind") {
+    NONCONFORMITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindNonconformity"
+        )
+    OBSERVATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindObservation"
+        )
+    EXCEPTION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingKindException"
+        )
+}
+
+enum FindingStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingStatus") {
     OPEN
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusOpen"
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusOpen"
         )
     IN_PROGRESS
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusInProgress"
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusInProgress"
         )
     CLOSED
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusClosed"
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusClosed"
+        )
+    RISK_ACCEPTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusRiskAccepted"
+        )
+    MITIGATED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusMitigated"
+        )
+    FALSE_POSITIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingStatusFalsePositive"
+        )
+}
+
+enum FindingPriority
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingPriority") {
+    LOW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPriorityLow"
+        )
+    MEDIUM
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPriorityMedium"
+        )
+    HIGH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPriorityHigh"
         )
 }
 
@@ -201,42 +245,6 @@ enum ObligationType
     CONTRACTUAL
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ObligationTypeContractual"
-        )
-}
-
-enum ContinualImprovementStatus
-    @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatus"
-    ) {
-    OPEN
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatusOpen"
-        )
-    IN_PROGRESS
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatusInProgress"
-        )
-    CLOSED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatusClosed"
-        )
-}
-
-enum ContinualImprovementPriority
-    @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriority"
-    ) {
-    LOW
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriorityLow"
-        )
-    MEDIUM
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriorityMedium"
-        )
-    HIGH
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriorityHigh"
         )
 }
 
@@ -1050,27 +1058,35 @@ enum AuditOrderField
     STATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldState")
 }
 
-enum NonconformityOrderField
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.NonconformityOrderField") {
+enum FindingOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingOrderField") {
     CREATED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldCreatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldCreatedAt"
         )
     REFERENCE_ID
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldReferenceId"
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldReferenceId"
         )
-    DATE_IDENTIFIED
+    IDENTIFIED_ON
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldDateIdentified"
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldIdentifiedOn"
         )
     DUE_DATE
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldDueDate"
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldDueDate"
         )
     STATUS
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldStatus"
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldStatus"
+        )
+    PRIORITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldPriority"
+        )
+    KIND
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingOrderFieldKind"
         )
 }
 
@@ -1091,32 +1107,6 @@ enum ObligationOrderField
     STATUS
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldStatus"
-        )
-}
-
-enum ContinualImprovementOrderField
-    @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderField"
-    ) {
-    CREATED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldCreatedAt"
-        )
-    REFERENCE_ID
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldReferenceId"
-        )
-    TARGET_DATE
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldTargetDate"
-        )
-    STATUS
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldStatus"
-        )
-    PRIORITY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldPriority"
         )
 }
 
@@ -1297,17 +1287,13 @@ enum SnapshotsType
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeVendors")
     ASSETS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeAssets")
     DATA @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeData")
-    NONCONFORMITIES
+    FINDINGS
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeNonconformities"
+            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeFindings"
         )
     OBLIGATIONS
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeObligations"
-        )
-    CONTINUAL_IMPROVEMENTS
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeContinualImprovements"
         )
     PROCESSING_ACTIVITIES
         @goEnum(
@@ -1420,12 +1406,9 @@ input AuditOrder
     field: AuditOrderField!
 }
 
-input NonconformityOrder
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.NonconformityOrderBy"
-    ) {
+input FindingOrder {
+    field: FindingOrderField!
     direction: OrderDirection!
-    field: NonconformityOrderField!
 }
 
 input ObligationOrder
@@ -1436,13 +1419,6 @@ input ObligationOrder
     field: ObligationOrderField!
 }
 
-input ContinualImprovementOrder
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ContinualImprovementOrderBy"
-    ) {
-    direction: OrderDirection!
-    field: ContinualImprovementOrderField!
-}
 
 input RightsRequestOrder
     @goModel(
@@ -1615,17 +1591,18 @@ input StateOfApplicabilityFilter {
     snapshotId: ID
 }
 
-input NonconformityFilter {
+input FindingFilter {
     snapshotId: ID
+    kind: FindingKind
+    status: FindingStatus
+    priority: FindingPriority
+    ownerId: ID
 }
 
 input ObligationFilter {
     snapshotId: ID
 }
 
-input ContinualImprovementFilter {
-    snapshotId: ID
-}
 
 input ProcessingActivityFilter {
     snapshotId: ID
@@ -1932,14 +1909,14 @@ type Organization implements Node {
         orderBy: AuditOrder
     ): AuditConnection! @goField(forceResolver: true)
 
-    nonconformities(
+    findings(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: NonconformityOrder
-        filter: NonconformityFilter = { snapshotId: null }
-    ): NonconformityConnection! @goField(forceResolver: true)
+        orderBy: FindingOrder
+        filter: FindingFilter = { snapshotId: null }
+    ): FindingConnection @goField(forceResolver: true)
 
     obligations(
         first: Int
@@ -1949,15 +1926,6 @@ type Organization implements Node {
         orderBy: ObligationOrder
         filter: ObligationFilter = { snapshotId: null }
     ): ObligationConnection! @goField(forceResolver: true)
-
-    continualImprovements(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: ContinualImprovementOrder
-        filter: ContinualImprovementFilter = { snapshotId: null }
-    ): ContinualImprovementConnection! @goField(forceResolver: true)
 
     rightsRequests(
         first: Int
@@ -2683,8 +2651,8 @@ type Risk implements Node {
 type Audit implements Node {
     id: ID!
     name: String
-    organization: Organization! @goField(forceResolver: true)
-    framework: Framework! @goField(forceResolver: true)
+    organization: Organization @goField(forceResolver: true)
+    framework: Framework @goField(forceResolver: true)
     validFrom: Datetime
     validUntil: Datetime
     report: Report @goField(forceResolver: true)
@@ -2698,7 +2666,16 @@ type Audit implements Node {
         before: CursorKey
         orderBy: ControlOrder
         filter: ControlFilter
-    ): ControlConnection! @goField(forceResolver: true)
+    ): ControlConnection @goField(forceResolver: true)
+
+    findings(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FindingOrder
+        filter: FindingFilter = { snapshotId: null }
+    ): FindingConnection @goField(forceResolver: true)
 
     trustCenterVisibility: TrustCenterVisibility!
     createdAt: Datetime!
@@ -2707,23 +2684,32 @@ type Audit implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type Nonconformity implements Node {
+type Finding implements Node {
     id: ID!
     snapshotId: ID
-    organization: Organization! @goField(forceResolver: true)
+    organization: Organization @goField(forceResolver: true)
+    kind: FindingKind!
     referenceId: String!
     description: String
-    audit: Audit @goField(forceResolver: true)
-    dateIdentified: Datetime
-    rootCause: String!
+    source: String
+    audits(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditOrder
+    ): AuditConnection @goField(forceResolver: true)
+    identifiedOn: Datetime
+    rootCause: String
     correctiveAction: String
-    owner: Profile! @goField(forceResolver: true)
+    owner: Profile @goField(forceResolver: true)
     dueDate: Datetime
-    status: NonconformityStatus!
+    status: FindingStatus!
+    priority: FindingPriority!
+    risk: Risk @goField(forceResolver: true)
     effectivenessCheck: String
     createdAt: Datetime!
     updatedAt: Datetime!
-
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
@@ -2748,23 +2734,6 @@ type Obligation implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type ContinualImprovement implements Node {
-    id: ID!
-    snapshotId: ID
-    sourceId: ID
-    organization: Organization! @goField(forceResolver: true)
-    referenceId: String!
-    description: String
-    source: String
-    owner: Profile! @goField(forceResolver: true)
-    targetDate: Datetime
-    status: ContinualImprovementStatus!
-    priority: ContinualImprovementPriority!
-    createdAt: Datetime!
-    updatedAt: Datetime!
-
-    permission(action: String!): Boolean! @goField(forceResolver: true)
-}
 
 type RightsRequest implements Node {
     id: ID!
@@ -3327,18 +3296,21 @@ type AuditEdge {
     node: Audit!
 }
 
-type NonconformityConnection
+type FindingConnection
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.NonconformityConnection"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.FindingConnection"
     ) {
     totalCount: Int! @goField(forceResolver: true)
-    edges: [NonconformityEdge!]!
+    edges: [FindingEdge!]!
     pageInfo: PageInfo!
 }
 
-type NonconformityEdge {
+type FindingEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.FindingEdge"
+    ) {
     cursor: CursorKey!
-    node: Nonconformity!
+    node: Finding!
 }
 type ObligationConnection
     @goModel(
@@ -3354,19 +3326,6 @@ type ObligationEdge {
     node: Obligation!
 }
 
-type ContinualImprovementConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ContinualImprovementConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [ContinualImprovementEdge!]!
-    pageInfo: PageInfo!
-}
-
-type ContinualImprovementEdge {
-    cursor: CursorKey!
-    node: ContinualImprovement!
-}
 
 type RightsRequestConnection
     @goModel(
@@ -3605,10 +3564,10 @@ type Mutation {
     ): DeleteApplicabilityStatementPayload!
     createControlAuditMapping(
         input: CreateControlAuditMappingInput!
-    ): CreateControlAuditMappingPayload!
+    ): CreateControlAuditMappingPayload
     deleteControlAuditMapping(
         input: DeleteControlAuditMappingInput!
-    ): DeleteControlAuditMappingPayload!
+    ): DeleteControlAuditMappingPayload
     createControlObligationMapping(
         input: CreateControlObligationMappingInput!
     ): CreateControlObligationMappingPayload!
@@ -3771,36 +3730,25 @@ type Mutation {
     createDatum(input: CreateDatumInput!): CreateDatumPayload!
     updateDatum(input: UpdateDatumInput!): UpdateDatumPayload!
     deleteDatum(input: DeleteDatumInput!): DeleteDatumPayload!
-    createAudit(input: CreateAuditInput!): CreateAuditPayload!
-    updateAudit(input: UpdateAuditInput!): UpdateAuditPayload!
-    deleteAudit(input: DeleteAuditInput!): DeleteAuditPayload!
-    uploadAuditReport(input: UploadAuditReportInput!): UploadAuditReportPayload!
-    deleteAuditReport(input: DeleteAuditReportInput!): DeleteAuditReportPayload!
-    # Nonconformity mutations
-    createNonconformity(
-        input: CreateNonconformityInput!
-    ): CreateNonconformityPayload!
-    updateNonconformity(
-        input: UpdateNonconformityInput!
-    ): UpdateNonconformityPayload!
-    deleteNonconformity(
-        input: DeleteNonconformityInput!
-    ): DeleteNonconformityPayload!
+    createAudit(input: CreateAuditInput!): CreateAuditPayload
+    updateAudit(input: UpdateAuditInput!): UpdateAuditPayload
+    deleteAudit(input: DeleteAuditInput!): DeleteAuditPayload
+    uploadAuditReport(input: UploadAuditReportInput!): UploadAuditReportPayload
+    deleteAuditReport(input: DeleteAuditReportInput!): DeleteAuditReportPayload
+    # Finding mutations
+    createFinding(input: CreateFindingInput!): CreateFindingPayload
+    updateFinding(input: UpdateFindingInput!): UpdateFindingPayload
+    deleteFinding(input: DeleteFindingInput!): DeleteFindingPayload
+    createFindingAuditMapping(
+        input: CreateFindingAuditMappingInput!
+    ): CreateFindingAuditMappingPayload
+    deleteFindingAuditMapping(
+        input: DeleteFindingAuditMappingInput!
+    ): DeleteFindingAuditMappingPayload
     # Obligation mutations
     createObligation(input: CreateObligationInput!): CreateObligationPayload!
     updateObligation(input: UpdateObligationInput!): UpdateObligationPayload!
     deleteObligation(input: DeleteObligationInput!): DeleteObligationPayload!
-    # Continual Improvement mutations
-    createContinualImprovement(
-        input: CreateContinualImprovementInput!
-    ): CreateContinualImprovementPayload!
-    updateContinualImprovement(
-        input: UpdateContinualImprovementInput!
-    ): UpdateContinualImprovementPayload!
-    deleteContinualImprovement(
-        input: DeleteContinualImprovementInput!
-    ): DeleteContinualImprovementPayload!
-
     # Rights Request mutations
     createRightsRequest(
         input: CreateRightsRequestInput!
@@ -4535,37 +4483,51 @@ input DeleteAuditReportInput {
     auditId: ID!
 }
 
-# Nonconformity input types
-input CreateNonconformityInput {
+# Finding input types
+input CreateFindingInput {
     organizationId: ID!
-    referenceId: String!
+    kind: FindingKind!
     description: String
-    auditId: ID
-    dateIdentified: Datetime
-    rootCause: String!
+    source: String
+    identifiedOn: Datetime
+    rootCause: String
     correctiveAction: String
-    ownerId: ID!
+    ownerId: ID
     dueDate: Datetime
-    status: NonconformityStatus!
+    status: FindingStatus!
+    priority: FindingPriority!
+    riskId: ID
     effectivenessCheck: String
 }
 
-input UpdateNonconformityInput {
+input UpdateFindingInput {
     id: ID!
-    referenceId: String
     description: String @goField(omittable: true)
-    dateIdentified: Datetime @goField(omittable: true)
-    rootCause: String
+    source: String @goField(omittable: true)
+    identifiedOn: Datetime @goField(omittable: true)
+    rootCause: String @goField(omittable: true)
     correctiveAction: String @goField(omittable: true)
     ownerId: ID
-    auditId: ID @goField(omittable: true)
     dueDate: Datetime @goField(omittable: true)
-    status: NonconformityStatus
+    status: FindingStatus
+    priority: FindingPriority
+    riskId: ID @goField(omittable: true)
     effectivenessCheck: String @goField(omittable: true)
 }
 
-input DeleteNonconformityInput {
-    nonconformityId: ID!
+input DeleteFindingInput {
+    findingId: ID!
+}
+
+input CreateFindingAuditMappingInput {
+    findingId: ID!
+    auditId: ID!
+    referenceId: String!
+}
+
+input DeleteFindingAuditMappingInput {
+    findingId: ID!
+    auditId: ID!
 }
 
 input CreateObligationInput {
@@ -4600,31 +4562,6 @@ input DeleteObligationInput {
     obligationId: ID!
 }
 
-input CreateContinualImprovementInput {
-    organizationId: ID!
-    referenceId: String!
-    description: String
-    source: String
-    ownerId: ID!
-    targetDate: Datetime
-    status: ContinualImprovementStatus!
-    priority: ContinualImprovementPriority!
-}
-
-input UpdateContinualImprovementInput {
-    id: ID!
-    referenceId: String
-    description: String @goField(omittable: true)
-    source: String @goField(omittable: true)
-    ownerId: ID
-    targetDate: Datetime @goField(omittable: true)
-    status: ContinualImprovementStatus
-    priority: ContinualImprovementPriority
-}
-
-input DeleteContinualImprovementInput {
-    continualImprovementId: ID!
-}
 
 input CreateRightsRequestInput {
     organizationId: ID!
@@ -4996,13 +4933,13 @@ type DeleteApplicabilityStatementPayload {
 }
 
 type CreateControlAuditMappingPayload {
-    controlEdge: ControlEdge!
-    auditEdge: AuditEdge!
+    controlEdge: ControlEdge
+    auditEdge: AuditEdge
 }
 
 type DeleteControlAuditMappingPayload {
-    deletedControlId: ID!
-    deletedAuditId: ID!
+    deletedControlId: ID
+    deletedAuditId: ID
 }
 
 type CreateControlObligationMappingPayload {
@@ -5616,36 +5553,46 @@ type DeleteDatumPayload {
 }
 
 type CreateAuditPayload {
-    auditEdge: AuditEdge!
+    auditEdge: AuditEdge
 }
 
 type UpdateAuditPayload {
-    audit: Audit!
+    audit: Audit
 }
 
 type DeleteAuditPayload {
-    deletedAuditId: ID!
+    deletedAuditId: ID
 }
 
 type UploadAuditReportPayload {
-    audit: Audit!
+    audit: Audit
 }
 
 type DeleteAuditReportPayload {
-    audit: Audit!
+    audit: Audit
 }
 
-# Nonconformity payload types
-type CreateNonconformityPayload {
-    nonconformityEdge: NonconformityEdge!
+# Finding payload types
+type CreateFindingPayload {
+    findingEdge: FindingEdge
 }
 
-type UpdateNonconformityPayload {
-    nonconformity: Nonconformity!
+type UpdateFindingPayload {
+    finding: Finding
 }
 
-type DeleteNonconformityPayload {
-    deletedNonconformityId: ID!
+type DeleteFindingPayload {
+    deletedFindingId: ID
+}
+
+type CreateFindingAuditMappingPayload {
+    findingEdge: FindingEdge
+    auditEdge: AuditEdge
+}
+
+type DeleteFindingAuditMappingPayload {
+    deletedFindingId: ID
+    deletedAuditId: ID
 }
 
 type CreateObligationPayload {
@@ -5660,17 +5607,6 @@ type DeleteObligationPayload {
     deletedObligationId: ID!
 }
 
-type CreateContinualImprovementPayload {
-    continualImprovementEdge: ContinualImprovementEdge!
-}
-
-type UpdateContinualImprovementPayload {
-    continualImprovement: ContinualImprovement!
-}
-
-type DeleteContinualImprovementPayload {
-    deletedContinualImprovementId: ID!
-}
 
 type CreateRightsRequestPayload {
     rightsRequestEdge: RightsRequestEdge!

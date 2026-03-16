@@ -304,6 +304,54 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
+// Findings is the resolver for the findings field.
+func (r *auditResolver) Findings(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FindingOrder, filter *types.FindingFilter) (*types.FindingConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionFindingList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
+		Field:     coredata.FindingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.FindingOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var (
+		kind     *coredata.FindingKind
+		status   *coredata.FindingStatus
+		priority *coredata.FindingPriority
+		ownerID  *gid.GID
+	)
+	if filter != nil {
+		kind = filter.Kind
+		status = filter.Status
+		priority = filter.Priority
+		ownerID = filter.OwnerID
+	}
+
+	findingFilter := coredata.NewFindingFilter(nil, kind, status, priority, ownerID)
+	if filter != nil {
+		findingFilter = coredata.NewFindingFilter(&filter.SnapshotID, kind, status, priority, ownerID)
+	}
+
+	p, err := prb.Findings.ListForAuditID(ctx, obj.ID, cursor, findingFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list audit findings", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFindingConnection(p, r, obj.ID, filter), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *auditResolver) Permission(ctx context.Context, obj *types.Audit, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -315,15 +363,34 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 		return 0, err
 	}
 
-	// TODO missing switch case
-
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
-	count, err := prb.Audits.CountForOrganizationID(ctx, obj.ParentID)
-	if err != nil {
-		panic(fmt.Errorf("cannot count audits: %w", err))
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.Audits.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	case *findingResolver:
+		count, err := prb.Audits.CountForFindingID(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	case *controlResolver:
+		count, err := prb.Audits.CountForControlID(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	default:
+		r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+		return 0, gqlutils.Internal(ctx)
 	}
-	return count, nil
 }
 
 // Permission is the resolver for the permission field.
@@ -346,75 +413,6 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	}
 
 	return types.NewFramework(framework), nil
-}
-
-// Organization is the resolver for the organization field.
-func (r *continualImprovementResolver) Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		panic(fmt.Errorf("cannot get continual improvement organization: %w", err))
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
-// Owner is the resolver for the owner field.
-func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.ContinualImprovement) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		panic(fmt.Errorf("cannot get continual improvement owner: %w", err))
-	}
-
-	return types.NewProfile(owner), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *continualImprovementResolver) Permission(ctx context.Context, obj *types.ContinualImprovement, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *continualImprovementConnectionResolver) TotalCount(ctx context.Context, obj *types.ContinualImprovementConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionContinualImprovementList); err != nil {
-		return 0, err
-	}
-
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-	switch obj.Resolver.(type) {
-	case *organizationResolver:
-		continualImprovementFilter := coredata.NewContinualImprovementFilter(nil)
-		if obj.Filter != nil {
-			continualImprovementFilter = coredata.NewContinualImprovementFilter(&obj.Filter.SnapshotID)
-		}
-
-		count, err := prb.ContinualImprovements.CountByOrganizationID(ctx, obj.ParentID, continualImprovementFilter)
-		if err != nil {
-			panic(fmt.Errorf("cannot count continual improvements: %w", err))
-		}
-		return count, nil
-	}
-
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // Organization is the resolver for the organization field.
@@ -1419,6 +1417,157 @@ func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string
 
 	// TODO no panic use gqlutils.InternalError
 	return downloadUrl, nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *findingResolver) Organization(ctx context.Context, obj *types.Finding) (*types.Organization, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get finding organization", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Audits is the resolver for the audits field.
+func (r *findingResolver) Audits(ctx context.Context, obj *types.Finding, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.Audits.ListForFindingID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list finding audits", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditConnection(p, r, obj.ID), nil
+}
+
+// Owner is the resolver for the owner field.
+func (r *findingResolver) Owner(ctx context.Context, obj *types.Finding) (*types.Profile, error) {
+	if obj.Owner == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
+	}
+
+	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get finding owner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfile(owner), nil
+}
+
+// Risk is the resolver for the risk field.
+func (r *findingResolver) Risk(ctx context.Context, obj *types.Finding) (*types.Risk, error) {
+	if obj.Risk == nil {
+		return nil, nil
+	}
+
+	if err := r.authorize(ctx, obj.ID, probo.ActionRiskGet); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	risk, err := prb.Risks.Get(ctx, obj.Risk.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get finding risk", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRisk(risk), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *findingResolver) Permission(ctx context.Context, obj *types.Finding, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.FindingConnection) (int, error) {
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionFindingList); err != nil {
+		return 0, err
+	}
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	var (
+		kind     *coredata.FindingKind
+		status   *coredata.FindingStatus
+		priority *coredata.FindingPriority
+		ownerID  *gid.GID
+	)
+	if obj.Filter != nil {
+		kind = obj.Filter.Kind
+		status = obj.Filter.Status
+		priority = obj.Filter.Priority
+		ownerID = obj.Filter.OwnerID
+	}
+
+	findingFilter := coredata.NewFindingFilter(nil, kind, status, priority, ownerID)
+	if obj.Filter != nil {
+		findingFilter = coredata.NewFindingFilter(&obj.Filter.SnapshotID, kind, status, priority, ownerID)
+	}
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.Findings.CountForOrganizationID(ctx, obj.ParentID, findingFilter)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count findings", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	case *auditResolver:
+		count, err := prb.Findings.CountForAuditID(ctx, obj.ParentID, findingFilter)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count findings", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+		return count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return 0, gqlutils.Internal(ctx)
 }
 
 // Organization is the resolver for the organization field.
@@ -3302,8 +3451,8 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 	}
 
 	return &types.DeleteControlAuditMappingPayload{
-		DeletedControlID: control.ID,
-		DeletedAuditID:   audit.ID,
+		DeletedControlID: &control.ID,
+		DeletedAuditID:   &audit.ID,
 	}, nil
 }
 
@@ -5027,7 +5176,7 @@ func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAu
 	}
 
 	return &types.DeleteAuditPayload{
-		DeletedAuditID: input.AuditID,
+		DeletedAuditID: &input.AuditID,
 	}, nil
 }
 
@@ -5079,88 +5228,131 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 	}, nil
 }
 
-// CreateNonconformity is the resolver for the createNonconformity field.
-func (r *mutationResolver) CreateNonconformity(ctx context.Context, input types.CreateNonconformityInput) (*types.CreateNonconformityPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionNonconformityCreate); err != nil {
+// CreateFinding is the resolver for the createFinding field.
+func (r *mutationResolver) CreateFinding(ctx context.Context, input types.CreateFindingInput) (*types.CreateFindingPayload, error) {
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFindingCreate); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	req := probo.CreateNonconformityRequest{
+	req := probo.CreateFindingRequest{
 		OrganizationID:     input.OrganizationID,
-		ReferenceID:        input.ReferenceID,
+		Kind:               input.Kind,
 		Description:        input.Description,
-		AuditID:            input.AuditID,
-		DateIdentified:     input.DateIdentified,
+		Source:             input.Source,
+		IdentifiedOn:       input.IdentifiedOn,
 		RootCause:          input.RootCause,
 		CorrectiveAction:   input.CorrectiveAction,
 		OwnerID:            input.OwnerID,
 		DueDate:            input.DueDate,
 		Status:             &input.Status,
+		Priority:           &input.Priority,
+		RiskID:             input.RiskID,
 		EffectivenessCheck: input.EffectivenessCheck,
 	}
 
-	nonconformity, err := prb.Nonconformities.Create(ctx, &req)
+	finding, err := prb.Findings.Create(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create nonconformity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create finding", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.CreateNonconformityPayload{
-		NonconformityEdge: types.NewNonconformityEdge(nonconformity, coredata.NonconformityOrderFieldCreatedAt),
+	return &types.CreateFindingPayload{
+		FindingEdge: types.NewFindingEdge(finding, coredata.FindingOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateNonconformity is the resolver for the updateNonconformity field.
-func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.UpdateNonconformityInput) (*types.UpdateNonconformityPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionNonconformityUpdate); err != nil {
+// UpdateFinding is the resolver for the updateFinding field.
+func (r *mutationResolver) UpdateFinding(ctx context.Context, input types.UpdateFindingInput) (*types.UpdateFindingPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionFindingUpdate); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	req := probo.UpdateNonconformityRequest{
+	req := probo.UpdateFindingRequest{
 		ID:                 input.ID,
-		ReferenceID:        input.ReferenceID,
 		Description:        gqlutils.UnwrapOmittable(input.Description),
-		DateIdentified:     gqlutils.UnwrapOmittable(input.DateIdentified),
-		RootCause:          input.RootCause,
+		Source:             gqlutils.UnwrapOmittable(input.Source),
+		IdentifiedOn:       gqlutils.UnwrapOmittable(input.IdentifiedOn),
+		RootCause:          gqlutils.UnwrapOmittable(input.RootCause),
 		CorrectiveAction:   gqlutils.UnwrapOmittable(input.CorrectiveAction),
 		OwnerID:            input.OwnerID,
-		AuditID:            gqlutils.UnwrapOmittable(input.AuditID),
 		DueDate:            gqlutils.UnwrapOmittable(input.DueDate),
 		Status:             input.Status,
+		Priority:           input.Priority,
+		RiskID:             gqlutils.UnwrapOmittable(input.RiskID),
 		EffectivenessCheck: gqlutils.UnwrapOmittable(input.EffectivenessCheck),
 	}
 
-	nonconformity, err := prb.Nonconformities.Update(ctx, &req)
+	finding, err := prb.Findings.Update(ctx, &req)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update nonconformity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update finding", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.UpdateNonconformityPayload{
-		Nonconformity: types.NewNonconformity(nonconformity),
+	return &types.UpdateFindingPayload{
+		Finding: types.NewFinding(finding),
 	}, nil
 }
 
-// DeleteNonconformity is the resolver for the deleteNonconformity field.
-func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.DeleteNonconformityInput) (*types.DeleteNonconformityPayload, error) {
-	if err := r.authorize(ctx, input.NonconformityID, probo.ActionNonconformityDelete); err != nil {
+// DeleteFinding is the resolver for the deleteFinding field.
+func (r *mutationResolver) DeleteFinding(ctx context.Context, input types.DeleteFindingInput) (*types.DeleteFindingPayload, error) {
+	if err := r.authorize(ctx, input.FindingID, probo.ActionFindingDelete); err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.NonconformityID.TenantID())
+	prb := r.ProboService(ctx, input.FindingID.TenantID())
 
-	err := prb.Nonconformities.Delete(ctx, input.NonconformityID)
+	err := prb.Findings.Delete(ctx, input.FindingID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete nonconformity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete finding", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.DeleteNonconformityPayload{
-		DeletedNonconformityID: input.NonconformityID,
+	return &types.DeleteFindingPayload{
+		DeletedFindingID: &input.FindingID,
+	}, nil
+}
+
+// CreateFindingAuditMapping is the resolver for the createFindingAuditMapping field.
+func (r *mutationResolver) CreateFindingAuditMapping(ctx context.Context, input types.CreateFindingAuditMappingInput) (*types.CreateFindingAuditMappingPayload, error) {
+	if err := r.authorize(ctx, input.FindingID, probo.ActionFindingAuditMappingCreate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.FindingID.TenantID())
+
+	finding, audit, err := prb.Findings.CreateAuditMapping(ctx, input.FindingID, input.AuditID, input.ReferenceID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create finding audit mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateFindingAuditMappingPayload{
+		FindingEdge: types.NewFindingEdge(finding, coredata.FindingOrderFieldCreatedAt),
+		AuditEdge:   types.NewAuditEdge(audit, coredata.AuditOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteFindingAuditMapping is the resolver for the deleteFindingAuditMapping field.
+func (r *mutationResolver) DeleteFindingAuditMapping(ctx context.Context, input types.DeleteFindingAuditMappingInput) (*types.DeleteFindingAuditMappingPayload, error) {
+	if err := r.authorize(ctx, input.FindingID, probo.ActionFindingAuditMappingDelete); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.FindingID.TenantID())
+
+	finding, audit, err := prb.Findings.DeleteAuditMapping(ctx, input.FindingID, input.AuditID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete finding audit mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteFindingAuditMappingPayload{
+		DeletedFindingID: &finding.ID,
+		DeletedAuditID:   &audit.ID,
 	}, nil
 }
 
@@ -5246,85 +5438,6 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 
 	return &types.DeleteObligationPayload{
 		DeletedObligationID: input.ObligationID,
-	}, nil
-}
-
-// CreateContinualImprovement is the resolver for the createContinualImprovement field.
-func (r *mutationResolver) CreateContinualImprovement(ctx context.Context, input types.CreateContinualImprovementInput) (*types.CreateContinualImprovementPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionContinualImprovementCreate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
-
-	req := probo.CreateContinualImprovementRequest{
-		OrganizationID: input.OrganizationID,
-		ReferenceID:    input.ReferenceID,
-		Description:    input.Description,
-		Source:         input.Source,
-		OwnerID:        input.OwnerID,
-		TargetDate:     input.TargetDate,
-		Status:         &input.Status,
-		Priority:       &input.Priority,
-	}
-
-	continualImprovement, err := prb.ContinualImprovements.Create(ctx, &req)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create continual improvement: %w", err))
-	}
-
-	return &types.CreateContinualImprovementPayload{
-		ContinualImprovementEdge: types.NewContinualImprovementEdge(continualImprovement, coredata.ContinualImprovementOrderFieldCreatedAt),
-	}, nil
-}
-
-// UpdateContinualImprovement is the resolver for the updateContinualImprovement field.
-func (r *mutationResolver) UpdateContinualImprovement(ctx context.Context, input types.UpdateContinualImprovementInput) (*types.UpdateContinualImprovementPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionContinualImprovementUpdate); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.ID.TenantID())
-
-	req := probo.UpdateContinualImprovementRequest{
-		ID:          input.ID,
-		ReferenceID: input.ReferenceID,
-		Description: gqlutils.UnwrapOmittable(input.Description),
-		Source:      gqlutils.UnwrapOmittable(input.Source),
-		OwnerID:     input.OwnerID,
-		TargetDate:  gqlutils.UnwrapOmittable(input.TargetDate),
-		Status:      input.Status,
-		Priority:    input.Priority,
-	}
-
-	continualImprovement, err := prb.ContinualImprovements.Update(ctx, &req)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot update continual improvement: %w", err))
-	}
-
-	return &types.UpdateContinualImprovementPayload{
-		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
-	}, nil
-}
-
-// DeleteContinualImprovement is the resolver for the deleteContinualImprovement field.
-func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input types.DeleteContinualImprovementInput) (*types.DeleteContinualImprovementPayload, error) {
-	if err := r.authorize(ctx, input.ContinualImprovementID, probo.ActionContinualImprovementDelete); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, input.ContinualImprovementID.TenantID())
-
-	err := prb.ContinualImprovements.Delete(ctx, input.ContinualImprovementID)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot delete continual improvement: %w", err))
-	}
-
-	return &types.DeleteContinualImprovementPayload{
-		DeletedContinualImprovementID: input.ContinualImprovementID,
 	}, nil
 }
 
@@ -5761,102 +5874,6 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	return &types.DeleteCustomDomainPayload{
 		DeletedCustomDomainID: deletedDomainID,
 	}, nil
-}
-
-// Organization is the resolver for the organization field.
-func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get nonconformity organization: %w", err))
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
-// Audit is the resolver for the audit field.
-func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconformity) (*types.Audit, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditGet); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	if obj.Audit == nil {
-		return nil, nil
-	}
-
-	audit, err := prb.Audits.Get(ctx, obj.Audit.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get nonconformity audit: %w", err))
-	}
-
-	return types.NewAudit(audit), nil
-}
-
-// Owner is the resolver for the owner field.
-func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconformity) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	owner, err := r.iam.OrganizationService.GetProfile(ctx, obj.Owner.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get nonconformity owner: %w", err))
-	}
-
-	return types.NewProfile(owner), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *nonconformityResolver) Permission(ctx context.Context, obj *types.Nonconformity, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *types.NonconformityConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionNonconformityList); err != nil {
-		return 0, err
-	}
-
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-	switch obj.Resolver.(type) {
-	case *organizationResolver:
-		nonconformityFilter := coredata.NewNonconformityFilter(nil)
-		if obj.Filter != nil {
-			nonconformityFilter = coredata.NewNonconformityFilter(&obj.Filter.SnapshotID)
-		}
-
-		count, err := prb.Nonconformities.CountForOrganizationID(ctx, obj.ParentID, nonconformityFilter)
-		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot count nonconformities: %w", err))
-		}
-		return count, nil
-	}
-
-	// TODO no panic use gqlutils.InternalError
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // Organization is the resolver for the organization field.
@@ -6458,21 +6475,21 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 	return types.NewAuditConnection(page, r, obj.ID), nil
 }
 
-// Nonconformities is the resolver for the nonconformities field.
-func (r *organizationResolver) Nonconformities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) (*types.NonconformityConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionNonconformityList); err != nil {
+// Findings is the resolver for the findings field.
+func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FindingOrder, filter *types.FindingFilter) (*types.FindingConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionFindingList); err != nil {
 		return nil, err
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.NonconformityOrderField]{
-		Field:     coredata.NonconformityOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
+		Field:     coredata.FindingOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.NonconformityOrderField]{
+		pageOrderBy = page.OrderBy[coredata.FindingOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -6480,18 +6497,31 @@ func (r *organizationResolver) Nonconformities(ctx context.Context, obj *types.O
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	nonconformityFilter := coredata.NewNonconformityFilter(nil)
+	var (
+		kind     *coredata.FindingKind
+		status   *coredata.FindingStatus
+		priority *coredata.FindingPriority
+		ownerID  *gid.GID
+	)
 	if filter != nil {
-		nonconformityFilter = coredata.NewNonconformityFilter(&filter.SnapshotID)
+		kind = filter.Kind
+		status = filter.Status
+		priority = filter.Priority
+		ownerID = filter.OwnerID
 	}
 
-	page, err := prb.Nonconformities.ListForOrganizationID(ctx, obj.ID, cursor, nonconformityFilter)
+	findingFilter := coredata.NewFindingFilter(nil, kind, status, priority, ownerID)
+	if filter != nil {
+		findingFilter = coredata.NewFindingFilter(&filter.SnapshotID, kind, status, priority, ownerID)
+	}
+
+	page, err := prb.Findings.ListForOrganizationID(ctx, obj.ID, cursor, findingFilter)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization nonconformities: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list organization findings", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewNonconformityConnection(page, r, obj.ID, filter), nil
+	return types.NewFindingConnection(page, r, obj.ID, filter), nil
 }
 
 // Obligations is the resolver for the obligations field.
@@ -6528,42 +6558,6 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 	}
 
 	return types.NewObligationConnection(page, r, obj.ID, filter), nil
-}
-
-// ContinualImprovements is the resolver for the continualImprovements field.
-func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) (*types.ContinualImprovementConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionContinualImprovementList); err != nil {
-		return nil, err
-	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.ContinualImprovementOrderField]{
-		Field:     coredata.ContinualImprovementOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ContinualImprovementOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	continualImprovementFilter := coredata.NewContinualImprovementFilter(nil)
-	if filter != nil {
-		continualImprovementFilter = coredata.NewContinualImprovementFilter(&filter.SnapshotID)
-	}
-
-	page, err := prb.ContinualImprovements.ListForOrganizationID(ctx, obj.ID, cursor, continualImprovementFilter)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot list organization continual improvements: %w", err))
-	}
-
-	return types.NewContinualImprovementConnection(page, r, obj.ID, filter), nil
 }
 
 // RightsRequests is the resolver for the rightsRequests field.
@@ -7173,14 +7167,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewAudit(audit), nil
 		}
-	case coredata.NonconformityEntityType:
-		action = probo.ActionNonconformityList
+	case coredata.FindingEntityType:
+		action = probo.ActionFindingList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			nonconformity, err := prb.Nonconformities.Get(ctx, id)
+			finding, err := prb.Findings.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewNonconformity(nonconformity), nil
+			return types.NewFinding(finding), nil
 		}
 	case coredata.ObligationEntityType:
 		action = probo.ActionObligationList
@@ -7190,15 +7184,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 			return types.NewObligation(obligation), nil
-		}
-	case coredata.ContinualImprovementEntityType:
-		action = probo.ActionContinualImprovementList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			continualImprovement, err := prb.ContinualImprovements.Get(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-			return types.NewContinualImprovement(continualImprovement), nil
 		}
 	case coredata.ReportEntityType:
 		action = probo.ActionReportGet
@@ -9266,16 +9251,6 @@ func (r *Resolver) ComplianceFramework() schema.ComplianceFrameworkResolver {
 	return &complianceFrameworkResolver{r}
 }
 
-// ContinualImprovement returns schema.ContinualImprovementResolver implementation.
-func (r *Resolver) ContinualImprovement() schema.ContinualImprovementResolver {
-	return &continualImprovementResolver{r}
-}
-
-// ContinualImprovementConnection returns schema.ContinualImprovementConnectionResolver implementation.
-func (r *Resolver) ContinualImprovementConnection() schema.ContinualImprovementConnectionResolver {
-	return &continualImprovementConnectionResolver{r}
-}
-
 // Control returns schema.ControlResolver implementation.
 func (r *Resolver) Control() schema.ControlResolver { return &controlResolver{r} }
 
@@ -9349,6 +9324,14 @@ func (r *Resolver) EvidenceConnection() schema.EvidenceConnectionResolver {
 // File returns schema.FileResolver implementation.
 func (r *Resolver) File() schema.FileResolver { return &fileResolver{r} }
 
+// Finding returns schema.FindingResolver implementation.
+func (r *Resolver) Finding() schema.FindingResolver { return &findingResolver{r} }
+
+// FindingConnection returns schema.FindingConnectionResolver implementation.
+func (r *Resolver) FindingConnection() schema.FindingConnectionResolver {
+	return &findingConnectionResolver{r}
+}
+
 // Framework returns schema.FrameworkResolver implementation.
 func (r *Resolver) Framework() schema.FrameworkResolver { return &frameworkResolver{r} }
 
@@ -9388,14 +9371,6 @@ func (r *Resolver) MeetingConnection() schema.MeetingConnectionResolver {
 
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
-
-// Nonconformity returns schema.NonconformityResolver implementation.
-func (r *Resolver) Nonconformity() schema.NonconformityResolver { return &nonconformityResolver{r} }
-
-// NonconformityConnection returns schema.NonconformityConnectionResolver implementation.
-func (r *Resolver) NonconformityConnection() schema.NonconformityConnectionResolver {
-	return &nonconformityConnectionResolver{r}
-}
 
 // Obligation returns schema.ObligationResolver implementation.
 func (r *Resolver) Obligation() schema.ObligationResolver { return &obligationResolver{r} }
@@ -9583,8 +9558,6 @@ type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
 type complianceExternalURLResolver struct{ *Resolver }
 type complianceFrameworkResolver struct{ *Resolver }
-type continualImprovementResolver struct{ *Resolver }
-type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
 type controlConnectionResolver struct{ *Resolver }
 type customDomainResolver struct{ *Resolver }
@@ -9602,6 +9575,8 @@ type electronicSignatureResolver struct{ *Resolver }
 type evidenceResolver struct{ *Resolver }
 type evidenceConnectionResolver struct{ *Resolver }
 type fileResolver struct{ *Resolver }
+type findingResolver struct{ *Resolver }
+type findingConnectionResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type frameworkConnectionResolver struct{ *Resolver }
 type mailingListResolver struct{ *Resolver }
@@ -9612,8 +9587,6 @@ type measureConnectionResolver struct{ *Resolver }
 type meetingResolver struct{ *Resolver }
 type meetingConnectionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
-type nonconformityResolver struct{ *Resolver }
-type nonconformityConnectionResolver struct{ *Resolver }
 type obligationResolver struct{ *Resolver }
 type obligationConnectionResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
