@@ -17,6 +17,7 @@ package create
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -69,13 +70,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, e := range flagEvents {
-				valid := false
-				for _, v := range shared.ValidEvents {
-					if e == v {
-						valid = true
-						break
-					}
-				}
+				valid := slices.Contains(shared.ValidEvents, e)
 				if !valid {
 					return fmt.Errorf("invalid --event value %q: valid values are %s", e, strings.Join(shared.ValidEvents, ", "))
 				}

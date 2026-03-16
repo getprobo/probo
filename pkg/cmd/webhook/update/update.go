@@ -17,6 +17,7 @@ package update
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -68,13 +69,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			if cmd.Flags().Changed("event") {
 				for _, e := range flagEvents {
-					valid := false
-					for _, v := range shared.ValidEvents {
-						if e == v {
-							valid = true
-							break
-						}
-					}
+					valid := slices.Contains(shared.ValidEvents, e)
 					if !valid {
 						return fmt.Errorf("invalid --event value %q: valid values are %s", e, strings.Join(shared.ValidEvents, ", "))
 					}

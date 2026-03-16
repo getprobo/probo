@@ -16,6 +16,7 @@ package cmdutil
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -61,10 +62,8 @@ func ValidateOutputFlag(value *string) error {
 // ValidateEnum checks that value is one of the allowed values. It returns a
 // user-friendly error mentioning the flag name and the valid choices.
 func ValidateEnum(flag string, value string, allowed []string) error {
-	for _, v := range allowed {
-		if value == v {
-			return nil
-		}
+	if slices.Contains(allowed, value) {
+		return nil
 	}
 	return fmt.Errorf(
 		"invalid --%s value %q: valid values are %s",

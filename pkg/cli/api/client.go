@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/version"
@@ -72,11 +73,12 @@ func (c *Client) Do(
 	}
 
 	if len(resp.Errors) > 0 {
-		msg := resp.Errors[0].Message
+		var msg strings.Builder
+		msg.WriteString(resp.Errors[0].Message)
 		for _, e := range resp.Errors[1:] {
-			msg += "; " + e.Message
+			msg.WriteString("; " + e.Message)
 		}
-		return nil, fmt.Errorf("GraphQL error: %s", msg)
+		return nil, fmt.Errorf("GraphQL error: %s", msg.String())
 	}
 
 	return resp.Data, nil
