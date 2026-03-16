@@ -1,5 +1,6 @@
 # Stage 1: Build frontend assets
 FROM node:24-alpine AS frontend
+RUN apk add --no-cache findutils
 WORKDIR /app
 COPY package.json package-lock.json turbo.json ./
 COPY apps/ apps/
@@ -9,8 +10,8 @@ COPY pkg/server/api/connect/v1/schema.graphql pkg/server/api/connect/v1/schema.g
 COPY pkg/server/api/console/v1/schema.graphql pkg/server/api/console/v1/schema.graphql
 COPY pkg/server/api/trust/v1/schema.graphql pkg/server/api/trust/v1/schema.graphql
 RUN npm ci
-# Run Relay compiler before build (generates TypeScript types from GraphQL schemas)
-RUN npx turbo run relay || true
+# Run Relay compiler to generate TypeScript types from GraphQL schemas
+RUN npx turbo run relay
 RUN npx turbo run build
 
 # Stage 2: Build Go binary
