@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Markdown } from "@probo/ui";
+import { RichEditor } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -54,12 +54,13 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
     throw new Error("invalid type for node");
   }
 
-  const lastVersion = document.lastVersion?.edges[0].node;
-  const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
+  // const lastVersion = document.lastVersion?.edges[0].node;
+  // const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
 
   return (
     <div>
-      <Markdown content={currentVersion.content} />
+      <RichEditor />
+      {/* <Markdown content={currentVersion.content} /> */}
     </div>
   );
 }
