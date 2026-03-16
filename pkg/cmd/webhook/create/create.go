@@ -62,10 +62,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a webhook subscription",
 		Example: `  # Create a webhook for all meeting events
-  proboctl webhook create --url https://example.com/webhook --event MEETING_CREATED --event MEETING_UPDATED
+  prb webhook create --url https://example.com/webhook --event MEETING_CREATED --event MEETING_UPDATED
 
   # Create a webhook for all supported events
-  proboctl webhook create --url https://example.com/webhook --event MEETING_CREATED --event MEETING_UPDATED --event MEETING_DELETED --event VENDOR_CREATED --event VENDOR_UPDATED --event VENDOR_DELETED`,
+  prb webhook create --url https://example.com/webhook --event MEETING_CREATED --event MEETING_UPDATED --event MEETING_DELETED --event VENDOR_CREATED --event VENDOR_UPDATED --event VENDOR_DELETED`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, e := range flagEvents {
@@ -103,7 +103,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'proboctl auth login'")
+				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
 
 			input := map[string]any{

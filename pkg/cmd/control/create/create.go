@@ -66,7 +66,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new control",
 		Example: `  # Create a control
-  proboctl control create --framework FW_ID --section-title "A.5" --name "Information security policies"`,
+  prb control create --framework FW_ID --section-title "A.5" --name "Information security policies"`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()

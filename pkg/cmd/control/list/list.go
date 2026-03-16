@@ -72,10 +72,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Short:   "List controls in a framework",
 		Aliases: []string{"ls"},
 		Example: `  # List controls in a framework
-  proboctl control list --framework <framework-id>
+  prb control list --framework <framework-id>
 
   # Filter and output as JSON
-  proboctl control ls --framework <framework-id> --filter "access" --json`,
+  prb control ls --framework <framework-id> --filter "access" --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {

@@ -46,9 +46,9 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
-  - id: proboctl
-    main: ./cmd/proboctl/main.go
-    binary: proboctl
+  - id: prb
+    main: ./cmd/prb/main.go
+    binary: prb
     ldflags:
       - -s -w
       - -X 'main.version={{.Version}}'
@@ -96,9 +96,9 @@ builds:
     goarch:
       - amd64
       - arm64
-  - id: proboctl-docker
-    main: ./cmd/proboctl/main.go
-    binary: proboctl
+  - id: prb-docker
+    main: ./cmd/prb/main.go
+    binary: prb
     ldflags:
       - -s -w
       - -X 'main.version={{.Version}}'
@@ -116,7 +116,7 @@ archives:
   - builds:
       - probod
       - probod-bootstrap
-      - proboctl
+      - prb
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_

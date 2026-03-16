@@ -74,10 +74,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Short:   "List users in an organization",
 		Aliases: []string{"ls"},
 		Example: `  # List users in the default organization
-  proboctl user list
+  prb user list
 
   # List only active users as JSON
-  proboctl user ls --active --json`,
+  prb user ls --active --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -106,7 +106,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'proboctl auth login'")
+				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
 
 			variables := map[string]any{

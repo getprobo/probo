@@ -73,10 +73,10 @@ func NewCmdAdd(f *cmdutil.Factory) *cobra.Command {
 		Use:   "add",
 		Short: "Add an applicability statement to a SoA",
 		Example: `  # Add a control as applicable
-  proboctl soa statement add --soa SOA_ID --control CTRL_ID --applicable
+  prb soa statement add --soa SOA_ID --control CTRL_ID --applicable
 
   # Add a control as not applicable with justification
-  proboctl soa statement add --soa SOA_ID --control CTRL_ID --not-applicable --justification "Not in scope"`,
+  prb soa statement add --soa SOA_ID --control CTRL_ID --not-applicable --justification "Not in scope"`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if flagApplicable && flagNotApplicable {

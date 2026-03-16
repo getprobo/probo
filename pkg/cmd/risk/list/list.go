@@ -74,13 +74,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Short:   "List risks in an organization",
 		Aliases: []string{"ls"},
 		Example: `  # List risks in the default organization
-  proboctl risk list
+  prb risk list
 
   # Filter risks by name
-  proboctl risk list --filter "data breach"
+  prb risk list --filter "data breach"
 
   # List risks sorted by inherent score
-  proboctl risk ls --order-by INHERENT_RISK_SCORE --json`,
+  prb risk ls --order-by INHERENT_RISK_SCORE --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -109,7 +109,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'proboctl auth login'")
+				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
 
 			variables := map[string]any{

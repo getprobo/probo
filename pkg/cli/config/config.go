@@ -113,7 +113,7 @@ func configDir() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot determine config directory: %w", err)
 	}
-	return filepath.Join(dir, "proboctl"), nil
+	return filepath.Join(dir, "prb"), nil
 }
 
 func configPath() (string, error) {
@@ -188,7 +188,7 @@ func (c *Config) DefaultHost() (string, *HostConfig, error) {
 
 	if token := os.Getenv("PROBO_TOKEN"); token != "" {
 		if len(hosts) == 0 {
-			return "", nil, fmt.Errorf("PROBO_TOKEN is set but no host configured; run 'proboctl auth login' first")
+			return "", nil, fmt.Errorf("PROBO_TOKEN is set but no host configured; run 'prb auth login' first")
 		}
 
 		host := hosts[0]
@@ -215,5 +215,5 @@ func (c *Config) DefaultHost() (string, *HostConfig, error) {
 		return host, c.Hosts[host], nil
 	}
 
-	return "", nil, fmt.Errorf("not logged in; run 'proboctl auth login' first")
+	return "", nil, fmt.Errorf("not logged in; run 'prb auth login' first")
 }

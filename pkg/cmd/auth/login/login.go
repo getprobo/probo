@@ -34,10 +34,10 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 		Use:   "login",
 		Short: "Authenticate with a Probo host",
 		Example: `  # Interactive login (prompts for hostname, token, and org)
-  proboctl auth login
+  prb auth login
 
   # Non-interactive login
-  proboctl auth login --hostname app.getprobo.com --token <token> --org <org-id>`,
+  prb auth login --hostname app.getprobo.com --token <token> --org <org-id>`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if f.IOStreams.IsInteractive() {
 				if flagHost == "" {

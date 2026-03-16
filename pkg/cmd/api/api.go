@@ -44,17 +44,17 @@ func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
 		Short: "Make an authenticated GraphQL request",
 		Long:  "Send a GraphQL query or mutation to the Probo API and print the response.",
 		Example: `  # Run a query against the console schema (default)
-  proboctl api 'query { viewer { id email } }'
+  prb api 'query { viewer { id email } }'
 
   # Run a mutation with variables
-  proboctl api 'mutation($input: CreateRiskInput!) { createRisk(input: $input) { riskEdge { node { id } } } }' \
+  prb api 'mutation($input: CreateRiskInput!) { createRisk(input: $input) { riskEdge { node { id } } } }' \
     -f input='{"organizationId":"...","name":"Test","category":"Operational","treatment":"ACCEPTED","inherentLikelihood":3,"inherentImpact":3}'
 
   # Query the connect schema
-  proboctl api --schema connect 'query { viewer { id email } }'
+  prb api --schema connect 'query { viewer { id email } }'
 
   # Read query from stdin
-  echo '{ viewer { id } }' | proboctl api -`,
+  echo '{ viewer { id } }' | prb api -`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			endpoint, ok := schemaEndpoints[flagSchema]

@@ -31,10 +31,10 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 		Use:   "logout",
 		Short: "Log out of a Probo host",
 		Example: `  # Log out of the active host
-  proboctl auth logout
+  prb auth logout
 
   # Log out of a specific host
-  proboctl auth logout --hostname app.getprobo.com`,
+  prb auth logout --hostname app.getprobo.com`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

@@ -27,10 +27,10 @@ func NewCmdConfigGet(f *cmdutil.Factory) *cobra.Command {
 		Short: "Print the value of a given configuration key",
 		Long:  "Print the value of a given configuration key.\n\nAvailable keys: editor, browser, pager, prompt, http_timeout",
 		Example: `  # Get the configured editor
-  proboctl config get editor
+  prb config get editor
 
   # Get the HTTP timeout
-  proboctl config get http_timeout`,
+  prb config get http_timeout`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()

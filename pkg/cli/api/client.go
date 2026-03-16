@@ -104,7 +104,7 @@ func (c *Client) DoRaw(
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
-	req.Header.Set("User-Agent", version.UserAgent("proboctl"))
+	req.Header.Set("User-Agent", version.UserAgent("prb"))
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -120,7 +120,7 @@ func (c *Client) DoRaw(
 	if resp.StatusCode != http.StatusOK {
 		switch resp.StatusCode {
 		case http.StatusUnauthorized:
-			return nil, fmt.Errorf("authentication failed (HTTP 401): token may be invalid or expired, try 'proboctl auth login'")
+			return nil, fmt.Errorf("authentication failed (HTTP 401): token may be invalid or expired, try 'prb auth login'")
 		case http.StatusForbidden:
 			return nil, fmt.Errorf("access denied (HTTP 403): you do not have permission to perform this action")
 		default:
