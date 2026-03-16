@@ -12,15 +12,29 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package cmdutil
+package finding
 
 import (
-	"go.probo.inc/probo/pkg/cli/config"
-	"go.probo.inc/probo/pkg/cmd/iostreams"
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/finding/create"
+	"go.probo.inc/probo/pkg/cmd/finding/delete"
+	"go.probo.inc/probo/pkg/cmd/finding/list"
+	"go.probo.inc/probo/pkg/cmd/finding/update"
+	"go.probo.inc/probo/pkg/cmd/finding/view"
 )
 
-type Factory struct {
-	IOStreams *iostreams.IOStreams
-	Version  string
-	Config   func() (*config.Config, error)
+func NewCmdFinding(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "finding <command>",
+		Short: "Manage findings",
+	}
+
+	cmd.AddCommand(list.NewCmdList(f))
+	cmd.AddCommand(create.NewCmdCreate(f))
+	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(update.NewCmdUpdate(f))
+	cmd.AddCommand(delete.NewCmdDelete(f))
+
+	return cmd
 }

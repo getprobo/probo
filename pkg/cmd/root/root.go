@@ -23,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/completion"
 	cmdconfig "go.probo.inc/probo/pkg/cmd/config"
 	"go.probo.inc/probo/pkg/cmd/control"
+	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
 	"go.probo.inc/probo/pkg/cmd/org"
 	"go.probo.inc/probo/pkg/cmd/risk"
@@ -68,6 +69,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(completion.NewCmdCompletion(f))
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
 	cmd.AddCommand(control.NewCmdControl(f))
+	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))
 	cmd.AddCommand(org.NewCmdOrg(f))
 	cmd.AddCommand(risk.NewCmdRisk(f))
