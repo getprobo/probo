@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -66,9 +66,8 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionDatumGet, ActionDatumList,
 		ActionAuditGet, ActionAuditList,
 		ActionReportGet, ActionReportGetReportUrl, ActionReportDownloadUrlGet,
-		ActionNonconformityGet, ActionNonconformityList,
+		ActionFindingGet, ActionFindingList,
 		ActionObligationGet, ActionObligationList,
-		ActionContinualImprovementGet, ActionContinualImprovementList,
 		ActionProcessingActivityGet, ActionProcessingActivityList,
 		ActionDataProtectionImpactAssessmentGet, ActionDataProtectionImpactAssessmentList,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,
@@ -134,9 +133,8 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionDatumGet, ActionDatumList,
 		ActionAuditGet, ActionAuditList,
 		ActionReportGet, ActionReportGetReportUrl, ActionReportDownloadUrlGet,
-		ActionNonconformityGet, ActionNonconformityList,
+		ActionFindingGet, ActionFindingList,
 		ActionObligationGet, ActionObligationList,
-		ActionContinualImprovementGet, ActionContinualImprovementList,
 		ActionProcessingActivityGet, ActionProcessingActivityList,
 		ActionDataProtectionImpactAssessmentGet,
 		ActionTransferImpactAssessmentGet, ActionTransferImpactAssessmentList,

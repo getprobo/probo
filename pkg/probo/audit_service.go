@@ -485,3 +485,86 @@ func (s AuditService) ListForControlID(
 
 	return page.NewPage(audits, cursor), nil
 }
+
+func (s AuditService) CountForControlID(
+	ctx context.Context,
+	controlID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			audits := coredata.Audits{}
+			count, err = audits.CountByControlID(ctx, conn, s.svc.scope, controlID)
+			if err != nil {
+				return fmt.Errorf("cannot count audits: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s AuditService) CountForFindingID(
+	ctx context.Context,
+	findingID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			audits := coredata.Audits{}
+			count, err = audits.CountByFindingID(ctx, conn, s.svc.scope, findingID)
+			if err != nil {
+				return fmt.Errorf("cannot count audits: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s AuditService) ListForFindingID(
+	ctx context.Context,
+	findingID gid.GID,
+	cursor *page.Cursor[coredata.AuditOrderField],
+) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
+	var audits coredata.Audits
+	finding := &coredata.Finding{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := finding.LoadByID(ctx, conn, s.svc.scope, findingID); err != nil {
+				return fmt.Errorf("cannot load finding: %w", err)
+			}
+
+			err := audits.LoadByFindingID(ctx, conn, s.svc.scope, finding.ID, cursor)
+			if err != nil {
+				return fmt.Errorf("cannot load audits: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(audits, cursor), nil
+}

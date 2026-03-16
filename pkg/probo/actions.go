@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -242,12 +242,14 @@ const (
 	ActionReportGetReportUrl   = "core:report:get-report-url"
 	ActionReportDownloadUrlGet = "core:report:get-download-url"
 
-	// Nonconformity actions
-	ActionNonconformityGet    = "core:nonconformity:get"
-	ActionNonconformityList   = "core:nonconformity:list"
-	ActionNonconformityCreate = "core:nonconformity:create"
-	ActionNonconformityUpdate = "core:nonconformity:update"
-	ActionNonconformityDelete = "core:nonconformity:delete"
+	// Finding actions
+	ActionFindingGet                = "core:finding:get"
+	ActionFindingList               = "core:finding:list"
+	ActionFindingCreate             = "core:finding:create"
+	ActionFindingUpdate             = "core:finding:update"
+	ActionFindingDelete             = "core:finding:delete"
+	ActionFindingAuditMappingCreate = "core:finding:create-audit-mapping"
+	ActionFindingAuditMappingDelete = "core:finding:delete-audit-mapping"
 
 	// Obligation actions
 	ActionObligationGet    = "core:obligation:get"
@@ -255,13 +257,6 @@ const (
 	ActionObligationCreate = "core:obligation:create"
 	ActionObligationUpdate = "core:obligation:update"
 	ActionObligationDelete = "core:obligation:delete"
-
-	// ContinualImprovement actions
-	ActionContinualImprovementGet    = "core:continual-improvement:get"
-	ActionContinualImprovementList   = "core:continual-improvement:list"
-	ActionContinualImprovementCreate = "core:continual-improvement:create"
-	ActionContinualImprovementUpdate = "core:continual-improvement:update"
-	ActionContinualImprovementDelete = "core:continual-improvement:delete"
 
 	// ProcessingActivity actions
 	ActionProcessingActivityList   = "core:processing-activity:list"

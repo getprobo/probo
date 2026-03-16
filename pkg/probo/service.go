@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -107,10 +107,9 @@ type (
 		TrustCenterFiles                  *TrustCenterFileService
 		ComplianceFrameworks              *ComplianceFrameworkService
 		ComplianceExternalURLs            *ComplianceExternalURLService
-		Nonconformities                   *NonconformityService
+		Findings                          *FindingService
 		Obligations                       *ObligationService
 		Snapshots                         *SnapshotService
-		ContinualImprovements             *ContinualImprovementService
 		RightsRequests                    *RightsRequestService
 		ProcessingActivities              *ProcessingActivityService
 		DataProtectionImpactAssessments   *DataProtectionImpactAssessmentService
@@ -257,10 +256,9 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 			filevalidation.WithMaxFileSize(10*1024*1024), // 10MB
 		),
 	}
-	tenantService.Nonconformities = &NonconformityService{svc: tenantService}
+	tenantService.Findings = &FindingService{svc: tenantService}
 	tenantService.Obligations = &ObligationService{svc: tenantService}
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
-	tenantService.ContinualImprovements = &ContinualImprovementService{svc: tenantService}
 	tenantService.RightsRequests = &RightsRequestService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{
 		svc:               tenantService,
