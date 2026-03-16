@@ -72,7 +72,7 @@ export function getTrustCenterDocumentAccessInfo(
       name: docAccess.report.filename,
       type: "report",
       typeLabel: __("Report"),
-      category: docAccess.report.audit?.framework.name ?? "",
+      category: docAccess.report.audit?.framework?.name ?? "",
       id: docAccess.report.id,
       status: docAccess.status,
     };

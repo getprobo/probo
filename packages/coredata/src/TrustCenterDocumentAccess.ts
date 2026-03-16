@@ -20,9 +20,9 @@ export type TrustCenterDocumentAccess = {
     filename: string;
     audit?: {
       id: string;
-      framework: {
+      framework?: {
         name: string;
-      };
+      } | null;
     } | null;
   } | null;
   trustCenterFile?: {
