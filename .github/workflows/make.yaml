@@ -25,6 +25,7 @@ jobs:
         with:
           go-version: "1.26.1"
           cache: true
+      - run: "go mod download"
       - uses: "actions/setup-node@v6"
         with:
           node-version-file: ".nvmrc"
@@ -102,6 +103,7 @@ jobs:
         with:
           go-version: "1.26.1"
           cache: true
+      - run: "go mod download"
       - uses: "actions/setup-node@v6"
         with:
           node-version-file: ".nvmrc"
@@ -135,6 +137,7 @@ jobs:
         with:
           go-version: "1.26.1"
           cache: true
+      - run: "go mod download"
       - uses: "actions/setup-node@v6"
         with:
           node-version-file: ".nvmrc"
@@ -188,6 +191,7 @@ jobs:
         with:
           go-version: "1.26.1"
           cache: true
+      - run: "go mod download"
       - uses: "actions/download-artifact@v6"
         with:
           name: "build-artifacts"
@@ -233,6 +237,7 @@ jobs:
         with:
           go-version: "1.26.1"
           cache: true
+      - run: "go mod download"
       - uses: "actions/setup-node@v6"
         with:
           node-version-file: ".nvmrc"
