@@ -127,6 +127,20 @@ enum TrustCenterVisibility
         )
 }
 
+enum ControlImplementationState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ControlImplementationState"
+    ) {
+    IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlImplementationStateImplemented"
+        )
+    NOT_IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ControlImplementationStateNotImplemented"
+        )
+}
+
 enum TrustCenterDocumentAccessStatus
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatus"
@@ -2221,6 +2235,8 @@ type Control implements Node {
     name: String!
     description: String
     bestPractice: Boolean!
+    implemented: ControlImplementationState!
+    notImplementedJustification: String
     regulatory: Boolean! @goField(forceResolver: true)
     contractual: Boolean! @goField(forceResolver: true)
     riskAssessment: Boolean! @goField(forceResolver: true)
@@ -4468,6 +4484,8 @@ input CreateControlInput {
     name: String!
     description: String
     bestPractice: Boolean!
+    implemented: ControlImplementationState!
+    notImplementedJustification: String
 }
 
 input UpdateControlInput {
@@ -4476,6 +4494,8 @@ input UpdateControlInput {
     name: String
     description: String @goField(omittable: true)
     bestPractice: Boolean
+    implemented: ControlImplementationState
+    notImplementedJustification: String @goField(omittable: true)
 }
 
 input DeleteControlInput {

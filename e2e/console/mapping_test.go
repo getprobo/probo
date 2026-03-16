@@ -83,6 +83,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 			"description":  "Test control for mapping",
 			"sectionTitle": "Section 1",
 			"bestPractice": true,
+			"implemented":  "IMPLEMENTED",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -362,6 +363,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
 			"bestPractice": true,
+			"implemented":  "IMPLEMENTED",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -503,6 +505,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
 			"bestPractice": true,
+			"implemented":  "IMPLEMENTED",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -640,6 +643,7 @@ func TestControlSnapshotMapping_CreateDelete(t *testing.T) {
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
 			"bestPractice": true,
+			"implemented":  "IMPLEMENTED",
 		},
 	}, &createControlResult)
 	require.NoError(t, err)

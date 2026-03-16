@@ -20,14 +20,17 @@ import (
 
 func NewControl(c *coredata.Control) *Control {
 	return &Control{
-		ID:             c.ID,
-		OrganizationID: c.OrganizationID,
-		SectionTitle:   c.SectionTitle,
-		FrameworkID:    c.FrameworkID,
-		Name:           c.Name,
-		Description:    c.Description,
-		CreatedAt:      c.CreatedAt,
-		UpdatedAt:      c.UpdatedAt,
+		ID:                          c.ID,
+		OrganizationID:              c.OrganizationID,
+		SectionTitle:                c.SectionTitle,
+		FrameworkID:                 c.FrameworkID,
+		Name:                        c.Name,
+		Description:                 c.Description,
+		BestPractice:                c.BestPractice,
+		Implemented:                 ControlImplemented(c.Implemented),
+		NotImplementedJustification: c.NotImplementedJustification,
+		CreatedAt:                   c.CreatedAt,
+		UpdatedAt:                   c.UpdatedAt,
 	}
 }
 

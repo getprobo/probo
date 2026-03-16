@@ -252,6 +252,11 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 		"description":  a.getString("description", "Test control description"),
 		"sectionTitle": a.getString("sectionTitle", fmt.Sprintf("Section %s", gofakeit.LetterN(3))),
 		"bestPractice": a.getBool("bestPractice", true),
+		"implemented":  a.getString("implemented", "IMPLEMENTED"),
+	}
+
+	if justification := a.getStringPtr("notImplementedJustification"); justification != nil {
+		input["notImplementedJustification"] = *justification
 	}
 
 	var result struct {
@@ -492,6 +497,16 @@ func (b *ControlBuilder) WithStatus(status string) *ControlBuilder {
 
 func (b *ControlBuilder) WithBestPractice(bestPractice bool) *ControlBuilder {
 	b.attrs["bestPractice"] = bestPractice
+	return b
+}
+
+func (b *ControlBuilder) WithImplemented(implemented string) *ControlBuilder {
+	b.attrs["implemented"] = implemented
+	return b
+}
+
+func (b *ControlBuilder) WithNotImplementedJustification(justification string) *ControlBuilder {
+	b.attrs["notImplementedJustification"] = justification
 	return b
 }
 

@@ -34,6 +34,8 @@ const controlFragment = graphql`
         description
         sectionTitle
         bestPractice
+        implemented
+        notImplementedJustification
     }
 `;
 
@@ -67,6 +69,8 @@ const schema = z.object({
   description: z.string().optional().nullable(),
   sectionTitle: z.string(),
   bestPractice: z.boolean(),
+  implemented: z.enum(["IMPLEMENTED", "NOT_IMPLEMENTED"]),
+  notImplementedJustification: z.string().optional().nullable(),
 });
 
 export function FrameworkControlDialog(props: Props) {
@@ -91,6 +95,8 @@ export function FrameworkControlDialog(props: Props) {
       description: frameworkControl?.description ?? "",
       sectionTitle: frameworkControl?.sectionTitle ?? "",
       bestPractice: frameworkControl?.bestPractice ?? true,
+      implemented: frameworkControl?.implemented ?? "IMPLEMENTED",
+      notImplementedJustification: frameworkControl?.notImplementedJustification ?? "",
     }),
     [frameworkControl],
   );
@@ -105,10 +111,10 @@ export function FrameworkControlDialog(props: Props) {
   }, [defaultValues, reset]);
 
   const bestPracticeValue = watch("bestPractice");
+  const implementedValue = watch("implemented");
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
     if (frameworkControl) {
-      // Update the control
       await mutate({
         variables: {
           input: {
@@ -117,11 +123,12 @@ export function FrameworkControlDialog(props: Props) {
             description: data.description || null,
             sectionTitle: data.sectionTitle,
             bestPractice: data.bestPractice,
+            implemented: data.implemented,
+            notImplementedJustification: data.implemented === "IMPLEMENTED" ? null : (data.notImplementedJustification || null),
           },
         },
       });
     } else {
-      // Create a new control
       await mutate({
         variables: {
           input: {
@@ -130,6 +137,8 @@ export function FrameworkControlDialog(props: Props) {
             description: data.description || null,
             sectionTitle: data.sectionTitle,
             bestPractice: data.bestPractice ?? true,
+            implemented: data.implemented ?? "IMPLEMENTED",
+            notImplementedJustification: data.implemented === "IMPLEMENTED" ? null : (data.notImplementedJustification || null),
           },
           connections: [props.connectionId!],
         },
@@ -167,7 +176,7 @@ export function FrameworkControlDialog(props: Props) {
             id="title"
             required
             variant="title"
-            placeholder={__("Document title")}
+            placeholder={__("Control name")}
             {...register("name")}
           />
           <Textarea
@@ -177,14 +186,33 @@ export function FrameworkControlDialog(props: Props) {
             placeholder={__("Add description")}
             {...register("description")}
           />
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox
-              checked={bestPracticeValue}
-              onChange={checked =>
-                setValue("bestPractice", checked)}
-            />
-            <span className="text-sm">{__("Best Practice")}</span>
-          </label>
+          <div className="border border-border-low rounded-xl p-3 space-y-3 mt-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={bestPracticeValue}
+                onChange={checked =>
+                  setValue("bestPractice", checked)}
+              />
+              <span className="text-sm">{__("Best Practice")}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={implementedValue === "IMPLEMENTED"}
+                onChange={checked =>
+                  setValue("implemented", checked ? "IMPLEMENTED" : "NOT_IMPLEMENTED")}
+              />
+              <span className="text-sm">{__("Implemented")}</span>
+            </label>
+            {implementedValue === "NOT_IMPLEMENTED" && (
+              <Textarea
+                id="notImplementedJustification"
+                variant="ghost"
+                autogrow
+                placeholder={__("Justification for non-implementation")}
+                {...register("notImplementedJustification")}
+              />
+            )}
+          </div>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isMutating}>

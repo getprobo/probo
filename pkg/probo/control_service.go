@@ -32,20 +32,24 @@ type (
 	}
 
 	CreateControlRequest struct {
-		ID           gid.GID
-		FrameworkID  gid.GID
-		Name         string
-		Description  *string
-		SectionTitle string
-		BestPractice bool
+		ID                          gid.GID
+		FrameworkID                 gid.GID
+		Name                        string
+		Description                 *string
+		SectionTitle                string
+		BestPractice                bool
+		Implemented                 coredata.ControlImplementationState
+		NotImplementedJustification *string
 	}
 
 	UpdateControlRequest struct {
-		ID           gid.GID
-		Name         *string
-		Description  **string
-		SectionTitle *string
-		BestPractice *bool
+		ID                          gid.GID
+		Name                        *string
+		Description                 **string
+		SectionTitle                *string
+		BestPractice                *bool
+		Implemented                 *coredata.ControlImplementationState
+		NotImplementedJustification **string
 	}
 )
 
@@ -56,6 +60,17 @@ func (ccr *CreateControlRequest) Validate() error {
 	v.Check(ccr.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ccr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
 	v.Check(ccr.SectionTitle, "section_title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(ccr.NotImplementedJustification, "not_implemented_justification", validator.SafeText(ContentMaxLength))
+
+	v.Check(
+		ccr.Implemented,
+		"implemented",
+		validator.Required(),
+		validator.OneOfSlice([]string{
+			string(coredata.ControlImplementationStateImplemented),
+			string(coredata.ControlImplementationStateNotImplemented),
+		}),
+	)
 
 	return v.Error()
 }
@@ -67,6 +82,15 @@ func (ucr *UpdateControlRequest) Validate() error {
 	v.Check(ucr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ucr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ucr.SectionTitle, "section_title", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(ucr.NotImplementedJustification, "not_implemented_justification", validator.SafeText(ContentMaxLength))
+	v.Check(
+		ucr.Implemented,
+		"implemented",
+		validator.OneOfSlice([]string{
+			string(coredata.ControlImplementationStateImplemented),
+			string(coredata.ControlImplementationStateNotImplemented),
+		}),
+	)
 
 	return v.Error()
 }
@@ -830,15 +854,22 @@ func (s ControlService) Create(
 	now := time.Now()
 	framework := &coredata.Framework{}
 
+	notImplementedJustification := req.NotImplementedJustification
+	if req.Implemented == coredata.ControlImplementationStateImplemented {
+		notImplementedJustification = nil
+	}
+
 	control := &coredata.Control{
-		ID:           gid.New(s.svc.scope.GetTenantID(), coredata.ControlEntityType),
-		FrameworkID:  req.FrameworkID,
-		Name:         req.Name,
-		Description:  req.Description,
-		SectionTitle: req.SectionTitle,
-		BestPractice: req.BestPractice,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:                          gid.New(s.svc.scope.GetTenantID(), coredata.ControlEntityType),
+		FrameworkID:                 req.FrameworkID,
+		Name:                        req.Name,
+		Description:                 req.Description,
+		SectionTitle:                req.SectionTitle,
+		BestPractice:                req.BestPractice,
+		Implemented:                 req.Implemented,
+		NotImplementedJustification: notImplementedJustification,
+		CreatedAt:                   now,
+		UpdatedAt:                   now,
 	}
 
 	err := s.svc.pg.WithTx(
@@ -913,6 +944,17 @@ func (s ControlService) Update(
 
 			if req.BestPractice != nil {
 				control.BestPractice = *req.BestPractice
+			}
+
+			if req.Implemented != nil {
+				control.Implemented = *req.Implemented
+				if *req.Implemented == coredata.ControlImplementationStateImplemented {
+					control.NotImplementedJustification = nil
+				}
+			}
+
+			if req.NotImplementedJustification != nil && control.Implemented == coredata.ControlImplementationStateNotImplemented {
+				control.NotImplementedJustification = *req.NotImplementedJustification
 			}
 
 			control.UpdatedAt = time.Now()

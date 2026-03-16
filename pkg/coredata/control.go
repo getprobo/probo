@@ -30,15 +30,17 @@ import (
 
 type (
 	Control struct {
-		ID             gid.GID   `db:"id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		SectionTitle   string    `db:"section_title"`
-		FrameworkID    gid.GID   `db:"framework_id"`
-		Name           string    `db:"name"`
-		Description    *string   `db:"description"`
-		BestPractice   bool      `db:"best_practice"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID                          gid.GID                    `db:"id"`
+		OrganizationID              gid.GID                    `db:"organization_id"`
+		SectionTitle                string                     `db:"section_title"`
+		FrameworkID                 gid.GID                    `db:"framework_id"`
+		Name                        string                     `db:"name"`
+		Description                 *string                    `db:"description"`
+		BestPractice                bool                       `db:"best_practice"`
+		Implemented                 ControlImplementationState `db:"implemented"`
+		NotImplementedJustification *string                    `db:"not_implemented_justification"`
+		CreatedAt                   time.Time                  `db:"created_at"`
+		UpdatedAt                   time.Time                  `db:"updated_at"`
 	}
 
 	Controls []*Control
@@ -131,6 +133,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
+		c.implemented,
+		c.not_implemented_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -149,6 +153,8 @@ SELECT
 	name,
 	description,
 	best_practice,
+	implemented,
+	not_implemented_justification,
 	created_at,
 	updated_at
 FROM
@@ -240,6 +246,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
+		c.implemented,
+		c.not_implemented_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -258,6 +266,8 @@ SELECT
 	name,
 	description,
 	best_practice,
+	implemented,
+	not_implemented_justification,
 	created_at,
 	updated_at
 FROM
@@ -355,6 +365,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
+		c.implemented,
+		c.not_implemented_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -379,6 +391,8 @@ SELECT
 	name,
 	description,
 	best_practice,
+	implemented,
+	not_implemented_justification,
 	created_at,
 	updated_at
 FROM
@@ -458,6 +472,8 @@ SELECT
     name,
     description,
 	best_practice,
+	implemented,
+	not_implemented_justification,
     created_at,
     updated_at
 FROM
@@ -552,6 +568,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
+		c.implemented,
+		c.not_implemented_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -570,6 +588,8 @@ SELECT
 	name,
 	description,
 	best_practice,
+	implemented,
+	not_implemented_justification,
 	created_at,
 	updated_at
 FROM
@@ -616,6 +636,8 @@ SELECT
     name,
     description,
     best_practice,
+    implemented,
+    not_implemented_justification,
     created_at,
     updated_at
 FROM
@@ -664,6 +686,8 @@ SELECT
     name,
     description,
     best_practice,
+    implemented,
+    not_implemented_justification,
     created_at,
     updated_at
 FROM
@@ -712,6 +736,8 @@ INSERT INTO
         name,
         description,
         best_practice,
+        implemented,
+        not_implemented_justification,
         created_at,
         updated_at
     )
@@ -724,22 +750,26 @@ VALUES (
     @name,
     @description,
 	@best_practice,
+	@implemented,
+	@not_implemented_justification,
     @created_at,
     @updated_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"control_id":      c.ID,
-		"organization_id": c.OrganizationID,
-		"framework_id":    c.FrameworkID,
-		"section_title":   c.SectionTitle,
-		"name":            c.Name,
-		"description":     c.Description,
-		"best_practice":   c.BestPractice,
-		"created_at":      c.CreatedAt,
-		"updated_at":      c.UpdatedAt,
+		"tenant_id":                     scope.GetTenantID(),
+		"control_id":                    c.ID,
+		"organization_id":               c.OrganizationID,
+		"framework_id":                  c.FrameworkID,
+		"section_title":                 c.SectionTitle,
+		"name":                          c.Name,
+		"description":                   c.Description,
+		"best_practice":                 c.BestPractice,
+		"implemented":                   c.Implemented,
+		"not_implemented_justification": c.NotImplementedJustification,
+		"created_at":                    c.CreatedAt,
+		"updated_at":                    c.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 
@@ -789,6 +819,8 @@ UPDATE controls SET
     description = @description,
     section_title = @section_title,
 	best_practice = @best_practice,
+	implemented = @implemented,
+	not_implemented_justification = @not_implemented_justification,
     updated_at = @updated_at
 WHERE %s
     AND id = @control_id
@@ -796,12 +828,14 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"control_id":    c.ID,
-		"name":          c.Name,
-		"description":   c.Description,
-		"section_title": c.SectionTitle,
-		"best_practice": c.BestPractice,
-		"updated_at":    c.UpdatedAt,
+		"control_id":                    c.ID,
+		"name":                          c.Name,
+		"description":                   c.Description,
+		"section_title":                 c.SectionTitle,
+		"best_practice":                 c.BestPractice,
+		"implemented":                   c.Implemented,
+		"not_implemented_justification": c.NotImplementedJustification,
+		"updated_at":                    c.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -839,6 +873,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
+		c.implemented,
+		c.not_implemented_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -857,6 +893,8 @@ SELECT
 	name,
 	description,
 	best_practice,
+	implemented,
+	not_implemented_justification,
 	created_at,
 	updated_at
 FROM
@@ -906,6 +944,8 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.best_practice,
+		c.implemented,
+		c.not_implemented_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -924,6 +964,8 @@ SELECT
 	name,
 	description,
 	best_practice,
+	implemented,
+	not_implemented_justification,
 	created_at,
 	updated_at
 FROM

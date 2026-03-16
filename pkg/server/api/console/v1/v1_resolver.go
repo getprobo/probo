@@ -2945,11 +2945,13 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 	control, err := prb.Controls.Create(
 		ctx,
 		probo.CreateControlRequest{
-			FrameworkID:  input.FrameworkID,
-			Name:         input.Name,
-			Description:  input.Description,
-			SectionTitle: input.SectionTitle,
-			BestPractice: input.BestPractice,
+			FrameworkID:                 input.FrameworkID,
+			Name:                        input.Name,
+			Description:                 input.Description,
+			SectionTitle:                input.SectionTitle,
+			BestPractice:                input.BestPractice,
+			Implemented:                 input.Implemented,
+			NotImplementedJustification: input.NotImplementedJustification,
 		},
 	)
 	if err != nil {
@@ -2977,11 +2979,13 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 	control, err := prb.Controls.Update(
 		ctx,
 		probo.UpdateControlRequest{
-			ID:           input.ID,
-			Name:         input.Name,
-			Description:  gqlutils.UnwrapOmittable(input.Description),
-			SectionTitle: input.SectionTitle,
-			BestPractice: input.BestPractice,
+			ID:                          input.ID,
+			Name:                        input.Name,
+			Description:                 gqlutils.UnwrapOmittable(input.Description),
+			SectionTitle:                input.SectionTitle,
+			BestPractice:                input.BestPractice,
+			Implemented:                 input.Implemented,
+			NotImplementedJustification: gqlutils.UnwrapOmittable(input.NotImplementedJustification),
 		},
 	)
 

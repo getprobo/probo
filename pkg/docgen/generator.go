@@ -65,6 +65,12 @@ var (
 			}
 			return "no"
 		},
+		"derefString": func(s *string) string {
+			if s == nil {
+				return ""
+			}
+			return *s
+		},
 		"boolToYesNoDash": func(b *bool) string {
 			if b == nil {
 				return "-"
@@ -312,15 +318,17 @@ type (
 	}
 
 	ControlData struct {
-		FrameworkName  string
-		SectionTitle   string
-		Name           string
-		Applicability  *bool
-		Justification  *string
-		BestPractice   *bool
-		Regulatory     *bool
-		Contractual    *bool
-		RiskAssessment *bool
+		FrameworkName               string
+		SectionTitle                string
+		Name                        string
+		Applicability               *bool
+		Justification               *string
+		BestPractice                *bool
+		Implemented                 *string
+		NotImplementedJustification *string
+		Regulatory                  *bool
+		Contractual                 *bool
+		RiskAssessment              *bool
 	}
 )
 

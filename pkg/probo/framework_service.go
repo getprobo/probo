@@ -68,10 +68,12 @@ type (
 				Dark  string `json:"dark"`
 			} `json:"logo,omitempty"`
 			Controls []struct {
-				ID           string `json:"id"`
-				Name         string `json:"name"`
-				Description  string `json:"description"`
-				BestPractice *bool  `json:"best_practice,omitempty"`
+				ID                          string  `json:"id"`
+				Name                        string  `json:"name"`
+				Description                 string  `json:"description"`
+				BestPractice                *bool   `json:"best_practice,omitempty"`
+				Implemented                 string  `json:"implemented,omitempty"`
+				NotImplementedJustification *string `json:"not_implemented_justification,omitempty"`
 			} `json:"controls"`
 		}
 	}
@@ -573,16 +575,26 @@ func (s FrameworkService) Import(
 			if control.BestPractice != nil {
 				bestPractice = *control.BestPractice
 			}
+			implemented := coredata.ControlImplementationState(control.Implemented)
+			if !implemented.IsValid() {
+				implemented = coredata.ControlImplementationStateImplemented
+			}
+			var notImplementedJustification *string
+			if implemented == coredata.ControlImplementationStateNotImplemented {
+				notImplementedJustification = control.NotImplementedJustification
+			}
 			control := &coredata.Control{
-				ID:             controlID,
-				FrameworkID:    frameworkID,
-				OrganizationID: organization.ID,
-				SectionTitle:   control.ID,
-				Name:           control.Name,
-				Description:    &description,
-				BestPractice:   bestPractice,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:                          controlID,
+				FrameworkID:                 frameworkID,
+				OrganizationID:              organization.ID,
+				SectionTitle:                control.ID,
+				Name:                        control.Name,
+				Description:                 &description,
+				BestPractice:                bestPractice,
+				Implemented:                 implemented,
+				NotImplementedJustification: notImplementedJustification,
+				CreatedAt:                   now,
+				UpdatedAt:                   now,
 			}
 
 			if err := control.Insert(ctx, tx, s.svc.scope); err != nil {

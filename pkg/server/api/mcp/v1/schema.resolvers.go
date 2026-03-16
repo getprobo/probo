@@ -1550,10 +1550,13 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 	control, err := svc.Controls.Create(
 		ctx,
 		probo.CreateControlRequest{
-			FrameworkID:  input.FrameworkID,
-			Name:         input.Name,
-			Description:  input.Description,
-			SectionTitle: input.SectionTitle,
+			FrameworkID:                 input.FrameworkID,
+			Name:                        input.Name,
+			Description:                 input.Description,
+			SectionTitle:                input.SectionTitle,
+			BestPractice:                input.BestPractice,
+			Implemented:                 coredata.ControlImplementationState(input.Implemented),
+			NotImplementedJustification: input.NotImplementedJustification,
 		},
 	)
 	if err != nil {
@@ -1570,13 +1573,22 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 
 	svc := r.ProboService(ctx, input.ID)
 
+	var implemented *coredata.ControlImplementationState
+	if input.Implemented != nil {
+		v := coredata.ControlImplementationState(*input.Implemented)
+		implemented = &v
+	}
+
 	control, err := svc.Controls.Update(
 		ctx,
 		probo.UpdateControlRequest{
-			ID:           input.ID,
-			Name:         input.Name,
-			Description:  UnwrapOmittable(input.Description),
-			SectionTitle: input.SectionTitle,
+			ID:                          input.ID,
+			Name:                        input.Name,
+			Description:                 UnwrapOmittable(input.Description),
+			SectionTitle:                input.SectionTitle,
+			BestPractice:                input.BestPractice,
+			Implemented:                 implemented,
+			NotImplementedJustification: UnwrapOmittable(input.NotImplementedJustification),
 		},
 	)
 	if err != nil {

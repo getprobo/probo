@@ -33,6 +33,8 @@ mutation($input: CreateControlInput!) {
         name
         description
         bestPractice
+        implemented
+        notImplementedJustification
       }
     }
   }
@@ -43,11 +45,13 @@ type createResponse struct {
 	CreateControl struct {
 		ControlEdge struct {
 			Node struct {
-				ID           string  `json:"id"`
-				SectionTitle string  `json:"sectionTitle"`
-				Name         string  `json:"name"`
-				Description  *string `json:"description"`
-				BestPractice bool    `json:"bestPractice"`
+				ID                          string  `json:"id"`
+				SectionTitle                string  `json:"sectionTitle"`
+				Name                        string  `json:"name"`
+				Description                 *string `json:"description"`
+				BestPractice                bool    `json:"bestPractice"`
+				Implemented                 string  `json:"implemented"`
+				NotImplementedJustification *string `json:"notImplementedJustification"`
 			} `json:"node"`
 		} `json:"controlEdge"`
 	} `json:"createControl"`
@@ -55,11 +59,13 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagFramework    string
-		flagSectionTitle string
-		flagName         string
-		flagDescription  string
-		flagBestPractice bool
+		flagFramework                   string
+		flagSectionTitle                string
+		flagName                        string
+		flagDescription                 string
+		flagBestPractice                bool
+		flagNotImplemented              bool
+		flagNotImplementedJustification string
 	)
 
 	cmd := &cobra.Command{
@@ -86,15 +92,25 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cfg.HTTPTimeoutDuration(),
 			)
 
+			implemented := "IMPLEMENTED"
+			if flagNotImplemented {
+				implemented = "NOT_IMPLEMENTED"
+			}
+
 			input := map[string]any{
 				"frameworkId":  flagFramework,
 				"sectionTitle": flagSectionTitle,
 				"name":         flagName,
 				"bestPractice": flagBestPractice,
+				"implemented":  implemented,
 			}
 
 			if flagDescription != "" {
 				input["description"] = flagDescription
+			}
+
+			if flagNotImplemented && flagNotImplementedJustification != "" {
+				input["notImplementedJustification"] = flagNotImplementedJustification
 			}
 
 			data, err := client.Do(
@@ -127,6 +143,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Control name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Control description")
 	cmd.Flags().BoolVar(&flagBestPractice, "best-practice", false, "Mark as best practice")
+	cmd.Flags().BoolVar(&flagNotImplemented, "not-implemented", false, "Mark as not implemented")
+	cmd.Flags().StringVar(&flagNotImplementedJustification, "not-implemented-justification", "", "Justification for non-implementation")
 
 	_ = cmd.MarkFlagRequired("framework")
 	_ = cmd.MarkFlagRequired("section-title")

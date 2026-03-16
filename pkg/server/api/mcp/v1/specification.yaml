@@ -4219,6 +4219,8 @@ components:
         - framework_id
         - section_title
         - name
+        - best_practice
+        - implemented
         - created_at
         - updated_at
       properties:
@@ -4242,6 +4244,19 @@ components:
             - string
             - "null"
           description: Control description
+        best_practice:
+          type: boolean
+          description: Whether control is a best practice
+        implemented:
+          type: string
+          enum: [IMPLEMENTED, NOT_IMPLEMENTED]
+          description: Control implementation state
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlImplementationState
+        not_implemented_justification:
+          type:
+            - string
+            - "null"
+          description: Justification for non-implementation
         created_at:
           type: string
           format: date-time
@@ -4315,6 +4330,8 @@ components:
         - framework_id
         - section_title
         - name
+        - best_practice
+        - implemented
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -4331,6 +4348,19 @@ components:
         description:
           type: string
           description: Control description
+        best_practice:
+          type: boolean
+          description: Whether control is a best practice
+        implemented:
+          type: string
+          enum: [IMPLEMENTED, NOT_IMPLEMENTED]
+          description: Control implementation state
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlImplementationState
+        not_implemented_justification:
+          type:
+            - string
+            - "null"
+          description: Justification for non-implementation
 
     AddControlOutput:
       type: object
@@ -4357,6 +4387,18 @@ components:
         description:
           type: ["string", "null"]
           description: Control description
+          go.probo.inc/mcpgen/omittable: true
+        best_practice:
+          type: boolean
+          description: Whether control is a best practice
+        implemented:
+          type: string
+          enum: [IMPLEMENTED, NOT_IMPLEMENTED]
+          description: Control implementation state
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlImplementationState
+        not_implemented_justification:
+          type: ["string", "null"]
+          description: Justification for non-implementation
           go.probo.inc/mcpgen/omittable: true
 
     UpdateControlOutput:

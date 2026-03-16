@@ -71,6 +71,8 @@ export const controlsFragment = graphql`
                         sectionTitle
                         name
                         bestPractice
+                        implemented
+                        notImplementedJustification
                         regulatory
                         contractual
                         riskAssessment
@@ -135,6 +137,8 @@ export default function StateOfApplicabilityControlsTab({
     applicability: edge.node.applicability,
     justification: edge.node.justification,
     bestPractice: edge.node.control.bestPractice,
+    implemented: edge.node.control.implemented,
+    notImplementedJustification: edge.node.control.notImplementedJustification,
     regulatory: edge.node.control.regulatory,
     contractual: edge.node.control.contractual,
     riskAssessment: edge.node.control.riskAssessment,
@@ -204,29 +208,19 @@ export default function StateOfApplicabilityControlsTab({
           </div>
         )}
 
-        <Table>
+        <Table className="table-fixed w-full">
           <Thead>
             <Tr>
-              <Th className="w-32">{__("Framework")}</Th>
-              <Th>{__("Control")}</Th>
-              <Th className="w-28 text-center">
-                {__("Applicability")}
-              </Th>
-              <Th className="min-w-48">{__("Justification")}</Th>
-              <Th className="w-24 text-center">
-                {__("Regulatory")}
-              </Th>
-              <Th className="w-24 text-center">
-                {__("Contractual")}
-              </Th>
-              <Th className="w-32 text-center">
-                {__("Best Practice")}
-              </Th>
-              <Th className="w-36 text-center">
-                {__("Risk Assessment")}
-              </Th>
+              <Th className="w-[10%]">{__("Framework")}</Th>
+              <Th className="w-[20%]">{__("Control")}</Th>
+              <Th className="w-[15%]">{__("Applicability")}</Th>
+              <Th className="w-[15%]">{__("Implemented")}</Th>
+              <Th className="w-[8%]">{__("Regulatory")}</Th>
+              <Th className="w-[8%]">{__("Contractual")}</Th>
+              <Th className="w-[8%]">{__("Best Practice")}</Th>
+              <Th className="w-[8%]">{__("Risk Assessment")}</Th>
               {(canUpdate || canDelete) && (
-                <Th className="w-12"></Th>
+                <Th className="w-[4%]"></Th>
               )}
             </Tr>
           </Thead>
@@ -250,103 +244,82 @@ export default function StateOfApplicabilityControlsTab({
                   {control.frameworkName}
                 </Td>
                 <Td>
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium text-txt-tertiary">
+                  <div className="space-y-0.5">
+                    <div className="text-xs text-txt-tertiary">
                       {control.sectionTitle}
                     </div>
-                    <div className="text-sm">
+                    <div className="text-xs">
                       {control.name}
                     </div>
                   </div>
                 </Td>
                 <Td>
-                  <div className="flex justify-center">
+                  <div className="space-y-1">
                     {control.applicability !== null
                       ? (
                           <Badge
-                            variant={
-                              control.applicability
-                                ? "success"
-                                : "danger"
-                            }
+                            variant={control.applicability ? "success" : "danger"}
                             size="sm"
                           >
-                            {control.applicability
-                              ? __("Yes")
-                              : __("No")}
+                            {control.applicability ? __("Yes") : __("No")}
                           </Badge>
                         )
                       : (
-                          <span className="text-txt-tertiary">
-                            -
-                          </span>
+                          <span className="text-txt-tertiary">-</span>
                         )}
-                  </div>
-                </Td>
-                <Td>
-                  <div className="text-sm text-txt-secondary line-clamp-2">
-                    {control.justification || (
-                      <span className="text-txt-tertiary italic">
-                        -
-                      </span>
+                    {control.justification && (
+                      <p className="text-xs text-txt-secondary break-words">
+                        {control.justification}
+                      </p>
                     )}
                   </div>
                 </Td>
                 <Td>
-                  <div className="flex justify-center">
-                    {control.applicability === false
-                      ? <span className="text-txt-tertiary">-</span>
-                      : (
+                  {control.applicability === false
+                    ? <span className="text-txt-tertiary">-</span>
+                    : (
+                        <div className="space-y-1">
                           <Badge
-                            variant={control.regulatory ? "success" : "danger"}
+                            variant={control.implemented === "IMPLEMENTED" ? "success" : "danger"}
                             size="sm"
                           >
-                            {control.regulatory ? __("Yes") : __("No")}
+                            {control.implemented === "IMPLEMENTED" ? __("Yes") : __("No")}
                           </Badge>
-                        )}
-                  </div>
+                          {control.implemented === "NOT_IMPLEMENTED" && control.notImplementedJustification && (
+                            <p className="text-xs text-txt-secondary break-words">
+                              {control.notImplementedJustification}
+                            </p>
+                          )}
+                        </div>
+                      )}
                 </Td>
                 <Td>
-                  <div className="flex justify-center">
-                    {control.applicability === false
-                      ? <span className="text-txt-tertiary">-</span>
-                      : (
-                          <Badge
-                            variant={control.contractual ? "success" : "danger"}
-                            size="sm"
-                          >
-                            {control.contractual ? __("Yes") : __("No")}
-                          </Badge>
-                        )}
-                  </div>
+                  {control.applicability === false
+                    ? <span className="text-txt-tertiary">-</span>
+                    : control.regulatory
+                      ? <Badge variant="success" size="sm">{__("Yes")}</Badge>
+                      : <Badge variant="danger" size="sm">{__("No")}</Badge>}
                 </Td>
                 <Td>
-                  <div className="flex justify-center">
-                    {control.applicability === false
-                      ? <span className="text-txt-tertiary">-</span>
-                      : (
-                          <Badge
-                            variant={control.bestPractice ? "success" : "danger"}
-                            size="sm"
-                          >
-                            {control.bestPractice ? __("Yes") : __("No")}
-                          </Badge>
-                        )}
-                  </div>
+                  {control.applicability === false
+                    ? <span className="text-txt-tertiary">-</span>
+                    : control.contractual
+                      ? <Badge variant="success" size="sm">{__("Yes")}</Badge>
+                      : <Badge variant="danger" size="sm">{__("No")}</Badge>}
                 </Td>
                 <Td>
-                  <div className="flex justify-center">
-                    {control.applicability === false
-                      ? <span className="text-txt-tertiary">-</span>
-                      : (
-                          <Badge
-                            variant={control.riskAssessment ? "success" : "danger"}
-                            size="sm"
-                          >
-                            {control.riskAssessment ? __("Yes") : __("No")}
-                          </Badge>
-                        )}
-                  </div>
+                  {control.applicability === false
+                    ? <span className="text-txt-tertiary">-</span>
+                    : control.bestPractice
+                      ? <Badge variant="success" size="sm">{__("Yes")}</Badge>
+                      : <Badge variant="danger" size="sm">{__("No")}</Badge>}
+                </Td>
+                <Td>
+                  {control.applicability === false
+                    ? <span className="text-txt-tertiary">-</span>
+                    : control.riskAssessment
+                      ? <Badge variant="success" size="sm">{__("Yes")}</Badge>
+                      : <Badge variant="danger" size="sm">{__("No")}</Badge>}
                 </Td>
                 {(canUpdate || canDelete) && (
                   <Td noLink className="text-end">

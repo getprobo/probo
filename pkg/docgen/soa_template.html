@@ -297,15 +297,17 @@
                 <tr>
                     <th rowspan="2" style="width: 12%;">Framework</th>
                     <th rowspan="2" style="width: 24%;">Control</th>
-                    <th rowspan="2" style="width: 9%;">Applicability</th>
-                    <th rowspan="2" style="width: 17%;">Justification</th>
-                    <th colspan="4" style="width: 38%; text-align: center;">Justification for inclusion</th>
+                    <th rowspan="2" style="width: 8%;">Applicability</th>
+                    <th rowspan="2" style="width: 14%;">Justification for non-applicability</th>
+                    <th rowspan="2" style="width: 8%;">Implemented</th>
+                    <th rowspan="2" style="width: 10%;">Justification for non-implementation</th>
+                    <th colspan="4" style="width: 24%; text-align: center;">Justification for inclusion</th>
                 </tr>
                 <tr>
-                    <th style="width: 8%;">Regulatory</th>
-                    <th style="width: 8%;">Contractual</th>
-                    <th style="width: 10%;">Best Practice</th>
-                    <th style="width: 12%;">Risk Assessment</th>
+                    <th style="width: 6%;">Regulatory</th>
+                    <th style="width: 6%;">Contractual</th>
+                    <th style="width: 6%;">Best Practice</th>
+                    <th style="width: 6%;">Risk Assessment</th>
                 </tr>
             </thead>
             <tbody>
@@ -325,8 +327,33 @@
                             {{- end}}
                         </td>
                         <td>
-                            {{- if .Justification}}
+                            {{- $appStateJ := boolToYesNo .Applicability}}
+                            {{- if and (eq $appStateJ "no") .Justification}}
                             {{.Justification}}
+                            {{- else}}
+                            -
+                            {{- end}}
+                        </td>
+                        <td>
+                            {{- $appState := boolToYesNo .Applicability}}
+                            {{- if eq $appState "no"}}
+                            <span class="state-tag">-</span>
+                            {{- else if .Implemented}}
+                            {{- if eq (derefString .Implemented) "IMPLEMENTED"}}
+                            <span class="state-tag state-tag-success">Yes</span>
+                            {{- else}}
+                            <span class="state-tag state-tag-danger">No</span>
+                            {{- end}}
+                            {{- else}}
+                            <span class="state-tag">-</span>
+                            {{- end}}
+                        </td>
+                        <td>
+                            {{- $appState2 := boolToYesNo .Applicability}}
+                            {{- if eq $appState2 "no"}}
+                            -
+                            {{- else if and .Implemented (eq (derefString .Implemented) "NOT_IMPLEMENTED") .NotImplementedJustification}}
+                            {{.NotImplementedJustification}}
                             {{- else}}
                             -
                             {{- end}}
@@ -383,10 +410,37 @@
         </div>
 
         <div class="annex-section">
-            <div class="annex-subsection-title">Justification</div>
+            <div class="annex-subsection-title">Justification for non-applicability</div>
             <ul class="annex-enum-list">
                 <li class="annex-enum-item">
                     <span class="annex-enum-description">Provides the rationale when a control is not applicable. This field is empty for applicable controls.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Implemented</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Yes:</span>
+                    <span class="annex-enum-description">The control has been implemented by the organization.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">No:</span>
+                    <span class="annex-enum-description">The control has not been implemented (with justification provided).</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">-:</span>
+                    <span class="annex-enum-description">Not applicable (control is not applicable).</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Justification for non-implementation</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-description">Provides the rationale when a control is not implemented. This field is empty for implemented controls or when the control is not applicable.</span>
                 </li>
             </ul>
         </div>

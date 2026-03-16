@@ -64,6 +64,7 @@ func TestControl_Create(t *testing.T) {
 				"name":         "Information Security Policies",
 				"description":  "Policies for information security",
 				"bestPractice": true,
+				"implemented":  "IMPLEMENTED",
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -269,6 +270,7 @@ func TestControl_RequiredFields(t *testing.T) {
 					"description":  "Test",
 					"sectionTitle": "Section 1",
 					"bestPractice": true,
+					"implemented":  "IMPLEMENTED",
 				},
 			},
 			wantError: true,
@@ -281,6 +283,7 @@ func TestControl_RequiredFields(t *testing.T) {
 					"description":  "Test",
 					"sectionTitle": "Section 1",
 					"bestPractice": true,
+					"implemented":  "IMPLEMENTED",
 				},
 			},
 			wantError: true,
@@ -293,6 +296,7 @@ func TestControl_RequiredFields(t *testing.T) {
 					"name":         "Test Control",
 					"description":  "Test",
 					"bestPractice": true,
+					"implemented":  "IMPLEMENTED",
 				},
 			},
 			wantError: true,
@@ -305,6 +309,7 @@ func TestControl_RequiredFields(t *testing.T) {
 					"name":         "Test Control",
 					"sectionTitle": "Section 1",
 					"bestPractice": true,
+					"implemented":  "IMPLEMENTED",
 				},
 			},
 			wantError: true,
@@ -317,6 +322,20 @@ func TestControl_RequiredFields(t *testing.T) {
 					"name":         "Test Control",
 					"description":  "Test",
 					"sectionTitle": "Section 1",
+					"implemented":  "IMPLEMENTED",
+				},
+			},
+			wantError: true,
+		},
+		{
+			name: "Missing implemented should fail",
+			variables: map[string]any{
+				"input": map[string]any{
+					"frameworkId":  frameworkID,
+					"name":         "Test Control",
+					"description":  "Test",
+					"sectionTitle": "Section 1",
+					"bestPractice": true,
 				},
 			},
 			wantError: true,
@@ -404,6 +423,7 @@ func TestControl_OmittableDescription(t *testing.T) {
 			"description":  "Initial description",
 			"sectionTitle": "Section 1",
 			"bestPractice": true,
+			"implemented":  "IMPLEMENTED",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -568,6 +588,7 @@ func TestControl_SubResolvers(t *testing.T) {
 			"description":  "Test description",
 			"sectionTitle": "Section 1",
 			"bestPractice": true,
+			"implemented":  "IMPLEMENTED",
 		},
 	}, &controlResult)
 	require.NoError(t, err)

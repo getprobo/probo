@@ -569,15 +569,23 @@ func (s StateOfApplicabilityService) ExportPDF(
 
 				applicability := stmt.Applicability
 
+				implemented := control.Implemented.String()
 				frameworkControlsMap[framework.Name] = append(
 					frameworkControlsMap[framework.Name],
 					docgen.ControlData{
-						FrameworkName:  framework.Name,
-						SectionTitle:   control.SectionTitle,
-						Name:           control.Name,
-						Applicability:  &applicability,
-						Justification:  stmt.Justification,
-						BestPractice:   bestPractice,
+						FrameworkName: framework.Name,
+						SectionTitle:  control.SectionTitle,
+						Name:          control.Name,
+						Applicability: &applicability,
+						Justification: stmt.Justification,
+						BestPractice:  bestPractice,
+						Implemented:   &implemented,
+						NotImplementedJustification: func() *string {
+							if control.Implemented == coredata.ControlImplementationStateImplemented {
+								return nil
+							}
+							return control.NotImplementedJustification
+						}(),
 						Regulatory:     regulatory,
 						Contractual:    contractual,
 						RiskAssessment: riskAssessment,
