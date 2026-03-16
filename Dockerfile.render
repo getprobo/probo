@@ -1,0 +1,51 @@
+# Stage 1: Build frontend assets
+FROM node:24-alpine AS frontend
+WORKDIR /app
+COPY package.json package-lock.json turbo.json ./
+COPY apps/ apps/
+COPY packages/ packages/
+# Relay compiler needs GraphQL schemas from the Go API
+COPY pkg/server/api/connect/v1/schema.graphql pkg/server/api/connect/v1/schema.graphql
+COPY pkg/server/api/console/v1/schema.graphql pkg/server/api/console/v1/schema.graphql
+COPY pkg/server/api/trust/v1/schema.graphql pkg/server/api/trust/v1/schema.graphql
+RUN npm ci
+# Run Relay compiler before build (generates TypeScript types from GraphQL schemas)
+RUN npx turbo run relay || true
+RUN npx turbo run build
+
+# Stage 2: Build Go binary
+FROM golang:1.25-alpine AS backend
+WORKDIR /app
+RUN apk add --no-cache git
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+# Copy built frontend assets from stage 1
+COPY --from=frontend /app/apps/console/dist apps/console/dist
+COPY --from=frontend /app/apps/trust/dist apps/trust/dist
+COPY --from=frontend /app/packages/emails/dist packages/emails/dist
+# Generate GraphQL code and build
+RUN go generate ./pkg/server/api/connect/v1 \
+    && go generate ./pkg/server/api/console/v1 \
+    && go generate ./pkg/server/api/trust/v1 \
+    && go generate ./pkg/server/api/mcp/v1
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags "-X 'main.version=dev' -X 'main.env=prod'" \
+    -o /probod ./cmd/probod
+
+# Stage 3: Final minimal image
+FROM ubuntu:24.04
+RUN useradd -m probo && \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y ca-certificates libcap2-bin openssl && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=backend /probod /usr/local/bin/probod
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/probod && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod && \
+    mkdir -p /etc/probod && \
+    chown probo:probo /etc/probod
+USER probo
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
