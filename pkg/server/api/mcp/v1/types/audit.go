@@ -69,3 +69,21 @@ func NewListAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrd
 		Audits:     audits,
 	}
 }
+
+func NewListFindingAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrderField]) ListFindingAuditsOutput {
+	audits := make([]*Audit, 0, len(auditPage.Data))
+	for _, v := range auditPage.Data {
+		audits = append(audits, NewAudit(v))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(auditPage.Data) > 0 {
+		cursorKey := auditPage.Data[len(auditPage.Data)-1].CursorKey(auditPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListFindingAuditsOutput{
+		NextCursor: nextCursor,
+		Audits:     audits,
+	}
+}

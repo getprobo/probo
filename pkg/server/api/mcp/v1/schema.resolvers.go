@@ -734,17 +734,17 @@ func (r *Resolver) UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest
 	}, nil
 }
 
-func (r *Resolver) ListNonconformitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListNonconformitiesInput) (*mcp.CallToolResult, types.ListNonconformitiesOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionNonconformityList)
+func (r *Resolver) ListFindingsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFindingsInput) (*mcp.CallToolResult, types.ListFindingsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionFindingList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
-	pageOrderBy := page.OrderBy[coredata.NonconformityOrderField]{
-		Field:     coredata.NonconformityOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
+		Field:     coredata.FindingOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.NonconformityOrderField]{
+		pageOrderBy = page.OrderBy[coredata.FindingOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -753,91 +753,100 @@ func (r *Resolver) ListNonconformitiesTool(ctx context.Context, req *mcp.CallToo
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
 	noSnapshot := (*gid.GID)(nil)
-	nonconformityFilter := coredata.NewNonconformityFilter(&noSnapshot)
+	findingFilter := coredata.NewFindingFilter(&noSnapshot, nil, nil, nil, nil)
 	if input.Filter != nil {
-		nonconformityFilter = coredata.NewNonconformityFilter(&input.Filter.SnapshotID)
+		findingFilter = coredata.NewFindingFilter(
+			&input.Filter.SnapshotID,
+			input.Filter.Kind,
+			input.Filter.Status,
+			input.Filter.Priority,
+			input.Filter.OwnerID,
+		)
 	}
 
-	page, err := prb.Nonconformities.ListForOrganizationID(ctx, input.OrganizationID, cursor, nonconformityFilter)
+	page, err := prb.Findings.ListForOrganizationID(ctx, input.OrganizationID, cursor, findingFilter)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization nonconformities: %w", err))
+		panic(fmt.Errorf("cannot list organization findings: %w", err))
 	}
 
-	return nil, types.NewListNonconformitiesOutput(page), nil
+	return nil, types.NewListFindingsOutput(page), nil
 }
 
-func (r *Resolver) GetNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetNonconformityInput) (*mcp.CallToolResult, types.GetNonconformityOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionNonconformityGet)
+func (r *Resolver) GetFindingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetFindingInput) (*mcp.CallToolResult, types.GetFindingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionFindingGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
-	nonconformity, err := prb.Nonconformities.Get(ctx, input.ID)
+	finding, err := prb.Findings.Get(ctx, input.ID)
 	if err != nil {
-		return nil, types.GetNonconformityOutput{}, fmt.Errorf("failed to get nonconformity: %w", err)
+		return nil, types.GetFindingOutput{}, fmt.Errorf("cannot get finding: %w", err)
 	}
 
-	return nil, types.GetNonconformityOutput{
-		Nonconformity: types.NewNonconformity(nonconformity),
+	return nil, types.GetFindingOutput{
+		Finding: types.NewFinding(finding),
 	}, nil
 }
 
-func (r *Resolver) AddNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddNonconformityInput) (*mcp.CallToolResult, types.AddNonconformityOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionNonconformityCreate)
+func (r *Resolver) AddFindingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddFindingInput) (*mcp.CallToolResult, types.AddFindingOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionFindingCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
-	nonconformity, err := svc.Nonconformities.Create(
+	finding, err := svc.Findings.Create(
 		ctx,
-		&probo.CreateNonconformityRequest{
+		&probo.CreateFindingRequest{
 			OrganizationID:     input.OrganizationID,
-			ReferenceID:        input.ReferenceID,
+			Kind:               input.Kind,
 			Description:        input.Description,
-			AuditID:            input.AuditID,
-			DateIdentified:     input.DateIdentified,
+			Source:             input.Source,
+			IdentifiedOn:     input.IdentifiedOn,
 			RootCause:          input.RootCause,
 			CorrectiveAction:   input.CorrectiveAction,
 			OwnerID:            input.OwnerID,
 			DueDate:            input.DueDate,
 			Status:             input.Status,
+			Priority:           input.Priority,
+			RiskID:             input.RiskID,
 			EffectivenessCheck: input.EffectivenessCheck,
 		},
 	)
 	if err != nil {
-		return nil, types.AddNonconformityOutput{}, fmt.Errorf("failed to create nonconformity: %w", err)
+		return nil, types.AddFindingOutput{}, fmt.Errorf("failed to create finding: %w", err)
 	}
 
-	return nil, types.AddNonconformityOutput{
-		Nonconformity: types.NewNonconformity(nonconformity),
+	return nil, types.AddFindingOutput{
+		Finding: types.NewFinding(finding),
 	}, nil
 }
 
-func (r *Resolver) UpdateNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateNonconformityInput) (*mcp.CallToolResult, types.UpdateNonconformityOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionNonconformityUpdate)
+func (r *Resolver) UpdateFindingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateFindingInput) (*mcp.CallToolResult, types.UpdateFindingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionFindingUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
-	nonconformity, err := svc.Nonconformities.Update(
+	finding, err := svc.Findings.Update(
 		ctx,
-		&probo.UpdateNonconformityRequest{
+		&probo.UpdateFindingRequest{
 			ID:                 input.ID,
-			ReferenceID:        input.ReferenceID,
 			Description:        UnwrapOmittable(input.Description),
-			DateIdentified:     UnwrapOmittable(input.DateIdentified),
-			RootCause:          input.RootCause,
+			Source:             UnwrapOmittable(input.Source),
+			IdentifiedOn:     UnwrapOmittable(input.IdentifiedOn),
+			RootCause:          UnwrapOmittable(input.RootCause),
 			CorrectiveAction:   UnwrapOmittable(input.CorrectiveAction),
 			OwnerID:            input.OwnerID,
-			AuditID:            UnwrapOmittable(input.AuditID),
 			DueDate:            UnwrapOmittable(input.DueDate),
 			Status:             input.Status,
+			Priority:           input.Priority,
+			RiskID:             UnwrapOmittable(input.RiskID),
 			EffectivenessCheck: UnwrapOmittable(input.EffectivenessCheck),
 		},
 	)
 	if err != nil {
-		return nil, types.UpdateNonconformityOutput{}, fmt.Errorf("failed to update nonconformity: %w", err)
+		return nil, types.UpdateFindingOutput{}, fmt.Errorf("failed to update finding: %w", err)
 	}
 
-	return nil, types.UpdateNonconformityOutput{
-		Nonconformity: types.NewNonconformity(nonconformity),
+	return nil, types.UpdateFindingOutput{
+		Finding: types.NewFinding(finding),
 	}, nil
 }
 
@@ -1301,107 +1310,6 @@ func (r *Resolver) DeleteTransferImpactAssessmentTool(ctx context.Context, req *
 
 	return nil, types.DeleteTransferImpactAssessmentOutput{
 		DeletedTransferImpactAssessmentID: input.ID,
-	}, nil
-}
-
-func (r *Resolver) ListContinualImprovementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListContinualImprovementsInput) (*mcp.CallToolResult, types.ListContinualImprovementsOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionContinualImprovementList)
-
-	prb := r.ProboService(ctx, input.OrganizationID)
-
-	pageOrderBy := page.OrderBy[coredata.ContinualImprovementOrderField]{
-		Field:     coredata.ContinualImprovementOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ContinualImprovementOrderField]{
-			Field:     input.OrderBy.Field,
-			Direction: input.OrderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-
-	noSnapshot := (*gid.GID)(nil)
-	continualImprovementFilter := coredata.NewContinualImprovementFilter(&noSnapshot)
-	if input.Filter != nil {
-		continualImprovementFilter = coredata.NewContinualImprovementFilter(&input.Filter.SnapshotID)
-	}
-
-	page, err := prb.ContinualImprovements.ListForOrganizationID(ctx, input.OrganizationID, cursor, continualImprovementFilter)
-	if err != nil {
-		panic(fmt.Errorf("cannot list organization continual improvements: %w", err))
-	}
-
-	return nil, types.NewListContinualImprovementsOutput(page), nil
-}
-
-func (r *Resolver) GetContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetContinualImprovementInput) (*mcp.CallToolResult, types.GetContinualImprovementOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionContinualImprovementGet)
-
-	prb := r.ProboService(ctx, input.ID)
-
-	continualImprovement, err := prb.ContinualImprovements.Get(ctx, input.ID)
-	if err != nil {
-		return nil, types.GetContinualImprovementOutput{}, fmt.Errorf("failed to get continual improvement: %w", err)
-	}
-
-	return nil, types.GetContinualImprovementOutput{
-		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
-	}, nil
-}
-
-func (r *Resolver) AddContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddContinualImprovementInput) (*mcp.CallToolResult, types.AddContinualImprovementOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionContinualImprovementCreate)
-
-	svc := r.ProboService(ctx, input.OrganizationID)
-
-	continualImprovement, err := svc.ContinualImprovements.Create(
-		ctx,
-		&probo.CreateContinualImprovementRequest{
-			OrganizationID: input.OrganizationID,
-			ReferenceID:    input.ReferenceID,
-			Description:    input.Description,
-			Source:         input.Source,
-			OwnerID:        input.OwnerID,
-			TargetDate:     input.TargetDate,
-			Status:         input.Status,
-			Priority:       input.Priority,
-		},
-	)
-	if err != nil {
-		return nil, types.AddContinualImprovementOutput{}, fmt.Errorf("failed to create continual improvement: %w", err)
-	}
-
-	return nil, types.AddContinualImprovementOutput{
-		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
-	}, nil
-}
-
-func (r *Resolver) UpdateContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateContinualImprovementInput) (*mcp.CallToolResult, types.UpdateContinualImprovementOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionContinualImprovementUpdate)
-
-	svc := r.ProboService(ctx, input.ID)
-
-	continualImprovement, err := svc.ContinualImprovements.Update(
-		ctx,
-		&probo.UpdateContinualImprovementRequest{
-			ID:          input.ID,
-			ReferenceID: input.ReferenceID,
-			Description: UnwrapOmittable(input.Description),
-			Source:      UnwrapOmittable(input.Source),
-			OwnerID:     input.OwnerID,
-			TargetDate:  UnwrapOmittable(input.TargetDate),
-			Status:      input.Status,
-			Priority:    input.Priority,
-		},
-	)
-	if err != nil {
-		return nil, types.UpdateContinualImprovementOutput{}, fmt.Errorf("failed to update continual improvement: %w", err)
-	}
-
-	return nil, types.UpdateContinualImprovementOutput{
-		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
 	}, nil
 }
 
@@ -3218,4 +3126,77 @@ func (r *Resolver) DeleteVendorTool(ctx context.Context, req *mcp.CallToolReques
 	return nil, types.DeleteVendorOutput{
 		DeletedVendorID: input.ID,
 	}, nil
+}
+
+func (r *Resolver) DeleteFindingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteFindingInput) (*mcp.CallToolResult, types.DeleteFindingOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionFindingDelete)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	err := svc.Findings.Delete(ctx, input.ID)
+	if err != nil {
+		return nil, types.DeleteFindingOutput{}, fmt.Errorf("cannot delete finding: %w", err)
+	}
+
+	return nil, types.DeleteFindingOutput{
+		DeletedFindingID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) LinkFindingAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkFindingAuditInput) (*mcp.CallToolResult, types.LinkFindingAuditOutput, error) {
+	r.MustAuthorize(ctx, input.FindingID, probo.ActionFindingAuditMappingCreate)
+
+	svc := r.ProboService(ctx, input.FindingID)
+
+	finding, audit, err := svc.Findings.CreateAuditMapping(ctx, input.FindingID, input.AuditID, input.ReferenceID)
+	if err != nil {
+		return nil, types.LinkFindingAuditOutput{}, fmt.Errorf("cannot link finding to audit: %w", err)
+	}
+
+	return nil, types.LinkFindingAuditOutput{
+		Finding: types.NewFinding(finding),
+		Audit:   types.NewAudit(audit),
+	}, nil
+}
+
+func (r *Resolver) UnlinkFindingAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkFindingAuditInput) (*mcp.CallToolResult, types.UnlinkFindingAuditOutput, error) {
+	r.MustAuthorize(ctx, input.FindingID, probo.ActionFindingAuditMappingDelete)
+
+	svc := r.ProboService(ctx, input.FindingID)
+
+	finding, audit, err := svc.Findings.DeleteAuditMapping(ctx, input.FindingID, input.AuditID)
+	if err != nil {
+		return nil, types.UnlinkFindingAuditOutput{}, fmt.Errorf("cannot unlink finding from audit: %w", err)
+	}
+
+	return nil, types.UnlinkFindingAuditOutput{
+		DeletedFindingID: finding.ID,
+		DeletedAuditID:   audit.ID,
+	}, nil
+}
+
+func (r *Resolver) ListFindingAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFindingAuditsInput) (*mcp.CallToolResult, types.ListFindingAuditsOutput, error) {
+	r.MustAuthorize(ctx, input.FindingID, probo.ActionFindingGet)
+
+	prb := r.ProboService(ctx, input.FindingID)
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	auditPage, err := prb.Audits.ListForFindingID(ctx, input.FindingID, cursor)
+	if err != nil {
+		return nil, types.ListFindingAuditsOutput{}, fmt.Errorf("cannot list finding audits: %w", err)
+	}
+
+	return nil, types.NewListFindingAuditsOutput(auditPage), nil
 }

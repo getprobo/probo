@@ -2306,15 +2306,34 @@ components:
         datum:
           $ref: "#/components/schemas/Datum"
 
-    NonconformityStatus:
+    FindingKind:
+      type: string
+      enum:
+        - NONCONFORMITY
+        - OBSERVATION
+        - EXCEPTION
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.FindingKind
+
+    FindingStatus:
       type: string
       enum:
         - OPEN
         - IN_PROGRESS
         - CLOSED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.NonconformityStatus
+        - RISK_ACCEPTED
+        - MITIGATED
+        - FALSE_POSITIVE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.FindingStatus
 
-    NonconformityOrderField:
+    FindingPriority:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.FindingPriority
+
+    FindingOrderField:
       type: string
       enum:
         - CREATED_AT
@@ -2322,36 +2341,38 @@ components:
         - DATE_IDENTIFIED
         - DUE_DATE
         - STATUS
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.NonconformityOrderField
+        - PRIORITY
+        - KIND
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.FindingOrderField
 
-    NonconformityOrderBy:
+    FindingOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/NonconformityOrderField"
-          description: Nonconformity order field
+          $ref: "#/components/schemas/FindingOrderField"
+          description: Finding order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Nonconformity order direction
+          description: Finding order direction
 
-    Nonconformity:
+    Finding:
       type: object
       required:
         - id
         - organization_id
+        - kind
         - reference_id
-        - root_cause
-        - owner_id
         - status
+        - priority
         - created_at
         - updated_at
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Nonconformity ID
+          description: Finding ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
@@ -2362,6 +2383,14 @@ components:
             - type: "null"
               description: No snapshot
           description: Snapshot ID
+        source_id:
+          type:
+            - string
+            - "null"
+          description: Source ID
+        kind:
+          $ref: "#/components/schemas/FindingKind"
+          description: Finding kind
         reference_id:
           type: string
           description: Reference ID
@@ -2370,21 +2399,21 @@ components:
             - string
             - "null"
           description: Description
-        audit_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Audit ID
-            - type: "null"
-              description: No audit
-          description: Audit ID
-        date_identified:
+        source:
+          type:
+            - string
+            - "null"
+          description: Source
+        identified_on:
           type:
             - string
             - "null"
           format: date-time
-          description: Date identified
+          description: Identified on
         root_cause:
-          type: string
+          type:
+            - string
+            - "null"
           description: Root cause
         corrective_action:
           type:
@@ -2392,7 +2421,9 @@ components:
             - "null"
           description: Corrective action
         owner_id:
-          $ref: "#/components/schemas/GID"
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
           description: Owner ID
         due_date:
           type:
@@ -2401,8 +2432,18 @@ components:
           format: date-time
           description: Due date
         status:
-          $ref: "#/components/schemas/NonconformityStatus"
+          $ref: "#/components/schemas/FindingStatus"
           description: Status
+        priority:
+          $ref: "#/components/schemas/FindingPriority"
+          description: Priority
+        risk_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Risk ID
+            - type: "null"
+              description: No risk
+          description: Risk ID
         effectiveness_check:
           type:
             - string
@@ -2417,7 +2458,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListNonconformitiesInput:
+    ListFindingsInput:
       type: object
       required:
         - organization_id
@@ -2426,8 +2467,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/NonconformityOrderBy"
-          description: Nonconformity order by
+          $ref: "#/components/schemas/FindingOrderBy"
+          description: Finding order by
         size:
           type: integer
           description: Page size
@@ -2441,68 +2482,81 @@ components:
               anyOf:
                 - $ref: "#/components/schemas/GID"
                 - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only nonconformities with no snapshot (current live data). Pass a specific snapshot ID to retrieve nonconformities as they were at that snapshot.
+              description: Filter by snapshot ID. Defaults to null, which returns only findings with no snapshot (current live data). Pass a specific snapshot ID to retrieve findings as they were at that snapshot.
               default: null
+            kind:
+              anyOf:
+                - $ref: "#/components/schemas/FindingKind"
+                - type: "null"
+              description: Filter by finding kind (NONCONFORMITY, OBSERVATION, EXCEPTION). Defaults to null which returns all kinds.
+            status:
+              anyOf:
+                - $ref: "#/components/schemas/FindingStatus"
+                - type: "null"
+              description: Filter by finding status (OPEN, IN_PROGRESS, CLOSED, RISK_ACCEPTED, MITIGATED, FALSE_POSITIVE). Defaults to null which returns all statuses.
+            priority:
+              anyOf:
+                - $ref: "#/components/schemas/FindingPriority"
+                - type: "null"
+              description: Filter by finding priority (LOW, MEDIUM, HIGH). Defaults to null which returns all priorities.
+            owner_id:
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Filter by owner profile ID. Defaults to null which returns all owners.
 
-    ListNonconformitiesOutput:
+    ListFindingsOutput:
       type: object
       required:
-        - nonconformities
+        - findings
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        nonconformities:
+        findings:
           type: array
           items:
-            $ref: "#/components/schemas/Nonconformity"
+            $ref: "#/components/schemas/Finding"
 
-    GetNonconformityInput:
+    GetFindingInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Nonconformity ID
+          description: Finding ID
 
-    GetNonconformityOutput:
+    GetFindingOutput:
       type: object
       required:
-        - nonconformity
+        - finding
       properties:
-        nonconformity:
-          $ref: "#/components/schemas/Nonconformity"
+        finding:
+          $ref: "#/components/schemas/Finding"
 
-    AddNonconformityInput:
+    AddFindingInput:
       type: object
       required:
         - organization_id
-        - reference_id
-        - root_cause
-        - owner_id
-        - status
+        - kind
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        reference_id:
-          type: string
-          description: Reference ID
+        kind:
+          $ref: "#/components/schemas/FindingKind"
+          description: Finding kind
         description:
           type: string
           description: Description
-        audit_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Audit ID
-            - type: "null"
-              description: No audit
-          description: Audit ID
-        date_identified:
+        source:
+          type: string
+          description: Source
+        identified_on:
           type: string
           format: date-time
-          description: Date identified
+          description: Identified on
         root_cause:
           type: string
           description: Root cause
@@ -2510,7 +2564,9 @@ components:
           type: string
           description: Corrective action
         owner_id:
-          $ref: "#/components/schemas/GID"
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
           description: Owner ID
         due_date:
           type: string
@@ -2518,46 +2574,62 @@ components:
           description: Due date
         status:
           anyOf:
-            - $ref: "#/components/schemas/NonconformityStatus"
-              description: Nonconformity status
+            - $ref: "#/components/schemas/FindingStatus"
+              description: Finding status
             - type: "null"
               description: No status
           description: Status
+        priority:
+          anyOf:
+            - $ref: "#/components/schemas/FindingPriority"
+              description: Finding priority
+            - type: "null"
+              description: No priority
+          description: Priority
+        risk_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Risk ID
+            - type: "null"
+              description: No risk
+          description: Risk ID
         effectiveness_check:
           type: string
           description: Effectiveness check
 
-    AddNonconformityOutput:
+    AddFindingOutput:
       type: object
       required:
-        - nonconformity
+        - finding
       properties:
-        nonconformity:
-          $ref: "#/components/schemas/Nonconformity"
+        finding:
+          $ref: "#/components/schemas/Finding"
 
-    UpdateNonconformityInput:
+    UpdateFindingInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Nonconformity ID
-        reference_id:
-          type: string
-          description: Reference ID
+          description: Finding ID
         description:
           type: ["string", "null"]
           description: Description
           go.probo.inc/mcpgen/omittable: true
-        date_identified:
+        source:
+          type: ["string", "null"]
+          description: Source
+          go.probo.inc/mcpgen/omittable: true
+        identified_on:
           type: ["string", "null"]
           format: date-time
-          description: Date identified
+          description: Identified on
           go.probo.inc/mcpgen/omittable: true
         root_cause:
-          type: string
+          type: ["string", "null"]
           description: Root cause
+          go.probo.inc/mcpgen/omittable: true
         corrective_action:
           type: ["string", "null"]
           description: Corrective action
@@ -2568,33 +2640,139 @@ components:
               $ref: "#/components/schemas/GID"
             - type: "null"
           description: Owner ID
-        audit_id:
-          anyOf:
-            - type: string
-              $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Audit ID
-          go.probo.inc/mcpgen/omittable: true
         due_date:
           type: ["string", "null"]
           format: date-time
           description: Due date
           go.probo.inc/mcpgen/omittable: true
         status:
-          $ref: "#/components/schemas/NonconformityStatus"
+          $ref: "#/components/schemas/FindingStatus"
           description: Status
+        priority:
+          $ref: "#/components/schemas/FindingPriority"
+          description: Priority
+        risk_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Risk ID
+          go.probo.inc/mcpgen/omittable: true
         effectiveness_check:
           type: ["string", "null"]
           description: Effectiveness check
           go.probo.inc/mcpgen/omittable: true
 
-    UpdateNonconformityOutput:
+    UpdateFindingOutput:
       type: object
       required:
-        - nonconformity
+        - finding
       properties:
-        nonconformity:
-          $ref: "#/components/schemas/Nonconformity"
+        finding:
+          $ref: "#/components/schemas/Finding"
+
+    DeleteFindingInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+
+    DeleteFindingOutput:
+      type: object
+      required:
+        - deleted_finding_id
+      properties:
+        deleted_finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted finding ID
+
+    LinkFindingAuditInput:
+      type: object
+      required:
+        - finding_id
+        - audit_id
+        - reference_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        reference_id:
+          type: string
+          description: Reference ID for the finding within this audit
+
+    LinkFindingAuditOutput:
+      type: object
+      required:
+        - finding
+        - audit
+      properties:
+        finding:
+          $ref: "#/components/schemas/Finding"
+        audit:
+          $ref: "#/components/schemas/Audit"
+
+    UnlinkFindingAuditInput:
+      type: object
+      required:
+        - finding_id
+        - audit_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+
+    UnlinkFindingAuditOutput:
+      type: object
+      required:
+        - deleted_finding_id
+        - deleted_audit_id
+      properties:
+        deleted_finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted finding ID
+        deleted_audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted audit ID
+
+    ListFindingAuditsInput:
+      type: object
+      required:
+        - finding_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/AuditOrderBy"
+          description: Audit order by
+
+    ListFindingAuditsOutput:
+      type: object
+      required:
+        - audits
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        audits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Audit"
 
     ObligationStatus:
       type: string
@@ -3704,270 +3882,6 @@ components:
         deleted_transfer_impact_assessment_id:
           $ref: "#/components/schemas/GID"
 
-    ContinualImprovementStatus:
-      type: string
-      enum:
-        - OPEN
-        - IN_PROGRESS
-        - CLOSED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ContinualImprovementStatus
-
-    ContinualImprovementPriority:
-      type: string
-      enum:
-        - LOW
-        - MEDIUM
-        - HIGH
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ContinualImprovementPriority
-
-    ContinualImprovementOrderField:
-      type: string
-      enum:
-        - CREATED_AT
-        - REFERENCE_ID
-        - TARGET_DATE
-        - STATUS
-        - PRIORITY
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderField
-
-    ContinualImprovementOrderBy:
-      type: object
-      required:
-        - field
-        - direction
-      properties:
-        field:
-          $ref: "#/components/schemas/ContinualImprovementOrderField"
-          description: Continual improvement order field
-        direction:
-          $ref: "#/components/schemas/OrderDirection"
-          description: Continual improvement order direction
-
-    ContinualImprovement:
-      type: object
-      required:
-        - id
-        - organization_id
-        - reference_id
-        - owner_id
-        - status
-        - priority
-        - created_at
-        - updated_at
-      properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Continual improvement ID
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        snapshot_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Snapshot ID
-            - type: "null"
-              description: No snapshot
-          description: Snapshot ID
-        source_id:
-          type:
-            - string
-            - "null"
-          description: Source ID
-        reference_id:
-          type: string
-          description: Reference ID
-        description:
-          type:
-            - string
-            - "null"
-          description: Description
-        source:
-          type:
-            - string
-            - "null"
-          description: Source
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
-        target_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Target date
-        status:
-          $ref: "#/components/schemas/ContinualImprovementStatus"
-          description: Status
-        priority:
-          $ref: "#/components/schemas/ContinualImprovementPriority"
-          description: Priority
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-        updated_at:
-          type: string
-          format: date-time
-          description: Update timestamp
-
-    ListContinualImprovementsInput:
-      type: object
-      required:
-        - organization_id
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        order_by:
-          $ref: "#/components/schemas/ContinualImprovementOrderBy"
-          description: Continual improvement order by
-        size:
-          type: integer
-          description: Page size
-        cursor:
-          $ref: "#/components/schemas/CursorKey"
-          description: Page cursor
-        filter:
-          type: object
-          properties:
-            snapshot_id:
-              anyOf:
-                - $ref: "#/components/schemas/GID"
-                - type: "null"
-              description: Filter by snapshot ID. Defaults to null, which returns only continual improvements with no snapshot (current live data). Pass a specific snapshot ID to retrieve continual improvements as they were at that snapshot.
-              default: null
-
-    ListContinualImprovementsOutput:
-      type: object
-      required:
-        - continual_improvements
-      properties:
-        next_cursor:
-          $ref: "#/components/schemas/CursorKey"
-          description: Next cursor
-        continual_improvements:
-          type: array
-          items:
-            $ref: "#/components/schemas/ContinualImprovement"
-
-    GetContinualImprovementInput:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Continual improvement ID
-
-    GetContinualImprovementOutput:
-      type: object
-      required:
-        - continual_improvement
-      properties:
-        continual_improvement:
-          $ref: "#/components/schemas/ContinualImprovement"
-
-    AddContinualImprovementInput:
-      type: object
-      required:
-        - organization_id
-        - reference_id
-        - owner_id
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        reference_id:
-          type: string
-          description: Reference ID
-        description:
-          type: string
-          description: Description
-        source:
-          type: string
-          description: Source
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
-        target_date:
-          type: string
-          format: date-time
-          description: Target date
-        status:
-          anyOf:
-            - $ref: "#/components/schemas/ContinualImprovementStatus"
-              description: Continual improvement status
-            - type: "null"
-              description: No status
-          description: Status
-        priority:
-          anyOf:
-            - $ref: "#/components/schemas/ContinualImprovementPriority"
-              description: Continual improvement priority
-            - type: "null"
-              description: No priority
-          description: Priority
-
-    AddContinualImprovementOutput:
-      type: object
-      required:
-        - continual_improvement
-      properties:
-        continual_improvement:
-          $ref: "#/components/schemas/ContinualImprovement"
-
-    UpdateContinualImprovementInput:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Continual improvement ID
-        reference_id:
-          type: string
-          description: Reference ID
-        description:
-          type: ["string", "null"]
-          description: Description
-          go.probo.inc/mcpgen/omittable: true
-        source:
-          type: ["string", "null"]
-          description: Source
-          go.probo.inc/mcpgen/omittable: true
-        owner_id:
-          anyOf:
-            - type: string
-              $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Owner ID
-        target_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Target date
-          go.probo.inc/mcpgen/omittable: true
-        status:
-          anyOf:
-            - $ref: "#/components/schemas/ContinualImprovementStatus"
-              description: Continual improvement status
-            - type: "null"
-              description: No status
-          description: Status
-        priority:
-          anyOf:
-            - $ref: "#/components/schemas/ContinualImprovementPriority"
-              description: Continual improvement priority
-            - type: "null"
-              description: No priority
-          description: Priority
-
-    UpdateContinualImprovementOutput:
-      type: object
-      required:
-        - continual_improvement
-      properties:
-        continual_improvement:
-          $ref: "#/components/schemas/ContinualImprovement"
 
     AuditState:
       type: string
@@ -6703,40 +6617,75 @@ tools:
       $ref: "#/components/schemas/UpdateDatumInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDatumOutput"
-  - name: listNonconformities
-    description: List all nonconformities for the organization
+  - name: listFindings
+    description: List all findings (nonconformities, observations, exceptions) for the organization
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListNonconformitiesInput"
+      $ref: "#/components/schemas/ListFindingsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListNonconformitiesOutput"
-  - name: getNonconformity
-    description: Get a nonconformity by ID
+      $ref: "#/components/schemas/ListFindingsOutput"
+  - name: getFinding
+    description: Get a finding by ID
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/GetNonconformityInput"
+      $ref: "#/components/schemas/GetFindingInput"
     outputSchema:
-      $ref: "#/components/schemas/GetNonconformityOutput"
-  - name: addNonconformity
-    description: Add a new nonconformity to the organization
+      $ref: "#/components/schemas/GetFindingOutput"
+  - name: addFinding
+    description: Add a new finding (nonconformity, observation, or exception) to the organization
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddNonconformityInput"
+      $ref: "#/components/schemas/AddFindingInput"
     outputSchema:
-      $ref: "#/components/schemas/AddNonconformityOutput"
-  - name: updateNonconformity
-    description: Update an existing nonconformity
+      $ref: "#/components/schemas/AddFindingOutput"
+  - name: updateFinding
+    description: Update an existing finding
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateNonconformityInput"
+      $ref: "#/components/schemas/UpdateFindingInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateNonconformityOutput"
+      $ref: "#/components/schemas/UpdateFindingOutput"
+  - name: deleteFinding
+    description: Delete a finding
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteFindingInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteFindingOutput"
+  - name: linkFindingAudit
+    description: Link a finding to an audit with a reference ID
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkFindingAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkFindingAuditOutput"
+  - name: unlinkFindingAudit
+    description: Unlink a finding from an audit
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkFindingAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkFindingAuditOutput"
+  - name: listFindingAudits
+    description: List audits linked to a finding
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListFindingAuditsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListFindingAuditsOutput"
   - name: listObligations
     description: List all obligations for the organization
     hints:
@@ -6897,40 +6846,6 @@ tools:
       $ref: "#/components/schemas/DeleteTransferImpactAssessmentInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTransferImpactAssessmentOutput"
-  - name: listContinualImprovements
-    description: List all continual improvements for the organization
-    hints:
-      readonly: true
-      idempotent: true
-    inputSchema:
-      $ref: "#/components/schemas/ListContinualImprovementsInput"
-    outputSchema:
-      $ref: "#/components/schemas/ListContinualImprovementsOutput"
-  - name: getContinualImprovement
-    description: Get a continual improvement by ID
-    hints:
-      readonly: true
-      idempotent: true
-    inputSchema:
-      $ref: "#/components/schemas/GetContinualImprovementInput"
-    outputSchema:
-      $ref: "#/components/schemas/GetContinualImprovementOutput"
-  - name: addContinualImprovement
-    description: Add a new continual improvement to the organization
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/AddContinualImprovementInput"
-    outputSchema:
-      $ref: "#/components/schemas/AddContinualImprovementOutput"
-  - name: updateContinualImprovement
-    description: Update an existing continual improvement
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/UpdateContinualImprovementInput"
-    outputSchema:
-      $ref: "#/components/schemas/UpdateContinualImprovementOutput"
   - name: listAudits
     description: List all audits for the organization
     hints:
@@ -7163,7 +7078,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/GetSnapshotOutput"
   - name: takeSnapshot
-    description: Take a snapshot of a collection of objects (risks, vendors, assets, data, nonconformities, obligations, continual improvements, or processing activities)
+    description: Take a snapshot of a collection of objects (risks, vendors, assets, data, findings, obligations, or processing activities)
     hints:
       readonly: false
     inputSchema:
