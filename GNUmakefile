@@ -311,6 +311,30 @@ apps/console/dist/index.html apps/trust/dist/index.html:
 	$(ECHO) dev-server > $@
 
 
+.PHONY: sandbox-create
+sandbox-create: ## Create a Lima sandbox VM for this worktree
+	./contrib/lima/sandbox.sh create
+
+.PHONY: sandbox-start
+sandbox-start: ## Start the Lima sandbox VM
+	./contrib/lima/sandbox.sh start
+
+.PHONY: sandbox-stop
+sandbox-stop: ## Stop (hibernate) the Lima sandbox VM
+	./contrib/lima/sandbox.sh stop
+
+.PHONY: sandbox-delete
+sandbox-delete: ## Delete the Lima sandbox VM
+	./contrib/lima/sandbox.sh delete
+
+.PHONY: sandbox-ssh
+sandbox-ssh: ## Open a shell in the Lima sandbox VM
+	./contrib/lima/sandbox.sh ssh
+
+.PHONY: sandbox-status
+sandbox-status: ## Show Lima sandbox VM status and IP
+	./contrib/lima/sandbox.sh status
+
 .PHONY: deadcode
 deadcode:
 	$(GO_TOOL) deadcode ./... | grep -v "With" | grep -v "UnmarshalBigIntScalar" | grep -v "^e2e/"
