@@ -216,15 +216,20 @@ jobs:
             coverage.out
             coverage.html
           retention-days: 30
-      # Trivy ignore does not work for license scanning in Github action
-      # - uses: "aquasecurity/trivy-action@0.33.1"
-      #   with:
-      #     scan-type: "fs"
-      #     scanners: "license"
-      #     severity: "UNKNOWN,HIGH,CRITICAL"
-      #     exit-code: 1
-      #     trivyignores: ".trivyignore.yaml"
-      #     trivy-config: "trivy.yaml"
+      - name: "Install Trivy"
+        run: |
+          sudo apt-get install -y wget apt-transport-https gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+      - name: "Scan licenses"
+        run: |
+          trivy fs . \
+            --scanners license \
+            --severity UNKNOWN,HIGH,CRITICAL \
+            --exit-code 1 \
+            --ignorefile .trivyignore.yaml
 
   test-e2e:
     name: "test-e2e"
