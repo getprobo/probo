@@ -153,6 +153,7 @@ jobs:
           name: "build-artifacts"
       - run: "chmod +x bin/probod"
       - run: "make generate"
+      - run: "make go-fmt go-fix"
       - name: "Run go vet"
         run: "go vet ./..."
       - name: "Run golangci-lint"
