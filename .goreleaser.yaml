@@ -22,6 +22,8 @@ builds:
     goos:
       - windows
       - darwin
+      - freebsd
+      - openbsd
     goarch:
       - amd64
       - arm64
@@ -40,6 +42,8 @@ builds:
     goos:
       - windows
       - darwin
+      - freebsd
+      - openbsd
     goarch:
       - amd64
       - arm64
@@ -59,6 +63,8 @@ builds:
     goos:
       - windows
       - darwin
+      - freebsd
+      - openbsd
     goarch:
       - amd64
       - arm64
