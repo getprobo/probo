@@ -121,28 +121,30 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.name ?? audit.framework.name}
       </div>
-      {audit.report && audit.report.isUserAuthorized
-        ? (
-            <Button
-              className="w-full md:w-max"
-              variant="secondary"
-              icon={IconArrowLink}
-              to={`/documents/${audit.report.id}`}
-            >
-              {__("View")}
-            </Button>
-          )
-        : (
-            <Button
-              disabled={hasRequested || isRequestingAccess}
-              className="w-full md:w-max"
-              variant="secondary"
-              icon={IconLock}
-              onClick={handleRequestAccess}
-            >
-              {hasRequested ? __("Access requested") : __("Request access")}
-            </Button>
-          )}
+      {audit.report && (
+        audit.report.isUserAuthorized
+          ? (
+              <Button
+                className="w-full md:w-max"
+                variant="secondary"
+                icon={IconArrowLink}
+                to={`/documents/${audit.report.id}`}
+              >
+                {__("View")}
+              </Button>
+            )
+          : (
+              <Button
+                disabled={hasRequested || isRequestingAccess}
+                className="w-full md:w-max"
+                variant="secondary"
+                icon={IconLock}
+                onClick={handleRequestAccess}
+              >
+                {hasRequested ? __("Access requested") : __("Request access")}
+              </Button>
+            )
+      )}
     </div>
   );
 }
