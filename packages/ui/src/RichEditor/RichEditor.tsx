@@ -79,13 +79,15 @@ function MenuButton({ label, active, onClick }: MenuButtonProps) {
 
 interface RichEditorProps {
   content: string;
+  disabled?: boolean;
   onChange: (content: string) => void;
 }
 
 export function RichEditor(props: RichEditorProps) {
-  const { content, onChange } = props;
+  const { content, disabled = false, onChange } = props;
 
   const editor = useEditor({
+    editable: !disabled,
     extensions,
     content: (content ? JSON.parse(content) : "") as Content,
   });
