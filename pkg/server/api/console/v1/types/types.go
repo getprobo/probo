@@ -406,7 +406,6 @@ type CreateDatumPayload struct {
 type CreateDocumentInput struct {
 	OrganizationID        gid.GID                         `json:"organizationId"`
 	Title                 string                          `json:"title"`
-	Content               string                          `json:"content"`
 	ApproverIds           []gid.GID                       `json:"approverIds"`
 	DocumentType          coredata.DocumentType           `json:"documentType"`
 	Classification        coredata.DocumentClassification `json:"classification"`
@@ -2195,6 +2194,15 @@ type UpdateDocumentInput struct {
 
 type UpdateDocumentPayload struct {
 	Document *Document `json:"document"`
+}
+
+type UpdateDocumentVersionContentInput struct {
+	ID      gid.GID `json:"id"`
+	Content string  `json:"content"`
+}
+
+type UpdateDocumentVersionContentPayload struct {
+	Content string `json:"content"`
 }
 
 type UpdateDocumentVersionInput struct {

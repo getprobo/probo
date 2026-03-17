@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a96a88e4c176f254788930b251e7108e>>
+ * @generated SignedSource<<557cc4e5cba8666ce2b98c16b1f8e1cd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,6 @@ export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type CreateDocumentInput = {
   approverIds: ReadonlyArray<string>;
   classification: DocumentClassification;
-  content: string;
   documentType: DocumentType;
   organizationId: string;
   title: string;

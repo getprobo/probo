@@ -102,7 +102,7 @@ func (cdr *CreateDocumentRequest) Validate() error {
 
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(cdr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
+	v.Check(cdr.Content, "content", validator.MaxLen(documentMaxLength))
 	v.Check(cdr.ApproverIDs, "approver_ids", validator.Required(), validator.NotEmpty())
 	for _, id := range cdr.ApproverIDs {
 		v.Check(id, "approver_ids", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
@@ -1609,6 +1609,45 @@ func (s *DocumentService) Update(
 	}
 
 	return document, nil
+}
+
+func (s *DocumentService) UpdateDocumentVersionContent(
+	ctx context.Context,
+	req UpdateDocumentVersionRequest,
+) (string, error) {
+	documentVersion := &coredata.DocumentVersion{}
+
+	if err := req.Validate(); err != nil {
+		return "", err
+	}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load document version %q: %w", req.ID, err)
+			}
+
+			if documentVersion.Status != coredata.DocumentStatusDraft {
+				return &ErrDocumentVersionNotDraft{}
+			}
+
+			documentVersion.Content = req.Content
+			documentVersion.UpdatedAt = time.Now()
+
+			if err := documentVersion.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update document version: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return documentVersion.Content, nil
 }
 
 func (s *DocumentService) CancelSignatureRequest(

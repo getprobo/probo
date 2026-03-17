@@ -1187,6 +1187,7 @@ type ComplexityRoot struct {
 		UpdateDatum                              func(childComplexity int, input types.UpdateDatumInput) int
 		UpdateDocument                           func(childComplexity int, input types.UpdateDocumentInput) int
 		UpdateDocumentVersion                    func(childComplexity int, input types.UpdateDocumentVersionInput) int
+		UpdateDocumentVersionContent             func(childComplexity int, input types.UpdateDocumentVersionContentInput) int
 		UpdateFramework                          func(childComplexity int, input types.UpdateFrameworkInput) int
 		UpdateMailingList                        func(childComplexity int, input types.UpdateMailingListInput) int
 		UpdateMailingListUpdate                  func(childComplexity int, input types.UpdateMailingListUpdateInput) int
@@ -1799,6 +1800,10 @@ type ComplexityRoot struct {
 		Document func(childComplexity int) int
 	}
 
+	UpdateDocumentVersionContentPayload struct {
+		Content func(childComplexity int) int
+	}
+
 	UpdateDocumentVersionPayload struct {
 		DocumentVersion func(childComplexity int) int
 	}
@@ -2402,6 +2407,7 @@ type MutationResolver interface {
 	DeleteVendorDataPrivacyAgreement(ctx context.Context, input types.DeleteVendorDataPrivacyAgreementInput) (*types.DeleteVendorDataPrivacyAgreementPayload, error)
 	CreateDocument(ctx context.Context, input types.CreateDocumentInput) (*types.CreateDocumentPayload, error)
 	UpdateDocument(ctx context.Context, input types.UpdateDocumentInput) (*types.UpdateDocumentPayload, error)
+	UpdateDocumentVersionContent(ctx context.Context, input types.UpdateDocumentVersionContentInput) (*types.UpdateDocumentVersionContentPayload, error)
 	DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error)
 	CreateMeeting(ctx context.Context, input types.CreateMeetingInput) (*types.CreateMeetingPayload, error)
 	UpdateMeeting(ctx context.Context, input types.UpdateMeetingInput) (*types.UpdateMeetingPayload, error)
@@ -7112,6 +7118,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateDocumentVersion(childComplexity, args["input"].(types.UpdateDocumentVersionInput)), true
+	case "Mutation.updateDocumentVersionContent":
+		if e.ComplexityRoot.Mutation.UpdateDocumentVersionContent == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDocumentVersionContent_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateDocumentVersionContent(childComplexity, args["input"].(types.UpdateDocumentVersionContentInput)), true
 	case "Mutation.updateFramework":
 		if e.ComplexityRoot.Mutation.UpdateFramework == nil {
 			break
@@ -9996,6 +10013,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.UpdateDocumentPayload.Document(childComplexity), true
 
+	case "UpdateDocumentVersionContentPayload.content":
+		if e.ComplexityRoot.UpdateDocumentVersionContentPayload.Content == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UpdateDocumentVersionContentPayload.Content(childComplexity), true
+
 	case "UpdateDocumentVersionPayload.documentVersion":
 		if e.ComplexityRoot.UpdateDocumentVersionPayload.DocumentVersion == nil {
 			break
@@ -11299,6 +11323,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateDataProtectionImpactAssessmentInput,
 		ec.unmarshalInputUpdateDatumInput,
 		ec.unmarshalInputUpdateDocumentInput,
+		ec.unmarshalInputUpdateDocumentVersionContentInput,
 		ec.unmarshalInputUpdateDocumentVersionInput,
 		ec.unmarshalInputUpdateFrameworkInput,
 		ec.unmarshalInputUpdateMailingListInput,
@@ -15082,6 +15107,7 @@ type Mutation {
     # Document mutations
     createDocument(input: CreateDocumentInput!): CreateDocumentPayload!
     updateDocument(input: UpdateDocumentInput!): UpdateDocumentPayload!
+    updateDocumentVersionContent(input: UpdateDocumentVersionContentInput!): UpdateDocumentVersionContentPayload!
     deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
     # Meeting mutations
     createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
@@ -15760,7 +15786,6 @@ input DeleteVendorDataPrivacyAgreementInput {
 input CreateDocumentInput {
     organizationId: ID!
     title: String!
-    content: String!
     approverIds: [ID!]!
     documentType: DocumentType!
     classification: DocumentClassification!
@@ -15775,6 +15800,11 @@ input UpdateDocumentInput {
     documentType: DocumentType
     classification: DocumentClassification
     trustCenterVisibility: TrustCenterVisibility
+}
+
+input UpdateDocumentVersionContentInput {
+    id: ID!
+    content: String!
 }
 
 input ExportDocumentVersionPDFInput {
@@ -16526,6 +16556,10 @@ type ExportTransferImpactAssessmentsPDFPayload {
 
 type UpdateDocumentPayload {
     document: Document!
+}
+
+type UpdateDocumentVersionContentPayload {
+    content: String!
 }
 
 type DeleteDocumentPayload {
@@ -19481,6 +19515,17 @@ func (ec *executionContext) field_Mutation_updateDatum_args(ctx context.Context,
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateDatumInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDatumInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateDocumentVersionContent_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateDocumentVersionContentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionContentInput)
 	if err != nil {
 		return nil, err
 	}
@@ -41609,6 +41654,51 @@ func (ec *executionContext) fieldContext_Mutation_updateDocument(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateDocumentVersionContent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateDocumentVersionContent,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateDocumentVersionContent(ctx, fc.Args["input"].(types.UpdateDocumentVersionContentInput))
+		},
+		nil,
+		ec.marshalNUpdateDocumentVersionContentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionContentPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateDocumentVersionContent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "content":
+				return ec.fieldContext_UpdateDocumentVersionContentPayload_content(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateDocumentVersionContentPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateDocumentVersionContent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_deleteDocument(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -58792,6 +58882,35 @@ func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateDocumentVersionContentPayload_content(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentVersionContentPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateDocumentVersionContentPayload_content,
+		func(ctx context.Context) (any, error) {
+			return obj.Content, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateDocumentVersionContentPayload_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateDocumentVersionContentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateDocumentVersionPayload_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentVersionPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -68310,7 +68429,7 @@ func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "title", "content", "approverIds", "documentType", "classification", "trustCenterVisibility"}
+	fieldsInOrder := [...]string{"organizationId", "title", "approverIds", "documentType", "classification", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -68331,13 +68450,6 @@ func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.Title = data
-		case "content":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Content = data
 		case "approverIds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("approverIds"))
 			data, err := ec.unmarshalNID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
@@ -73402,6 +73514,39 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.TrustCenterVisibility = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateDocumentVersionContentInput(ctx context.Context, obj any) (types.UpdateDocumentVersionContentInput, error) {
+	var it types.UpdateDocumentVersionContentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "content"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
 		}
 	}
 	return it, nil
@@ -86979,6 +87124,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateDocumentVersionContent":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateDocumentVersionContent(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "deleteDocument":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteDocument(ctx, field)
@@ -94894,6 +95046,45 @@ func (ec *executionContext) _UpdateDocumentPayload(ctx context.Context, sel ast.
 			out.Values[i] = graphql.MarshalString("UpdateDocumentPayload")
 		case "document":
 			out.Values[i] = ec._UpdateDocumentPayload_document(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateDocumentVersionContentPayloadImplementors = []string{"UpdateDocumentVersionContentPayload"}
+
+func (ec *executionContext) _UpdateDocumentVersionContentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDocumentVersionContentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateDocumentVersionContentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateDocumentVersionContentPayload")
+		case "content":
+			out.Values[i] = ec._UpdateDocumentVersionContentPayload_content(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -105974,6 +106165,25 @@ func (ec *executionContext) marshalNUpdateDocumentPayload2ᚖgoᚗproboᚗincᚋ
 		return graphql.Null
 	}
 	return ec._UpdateDocumentPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateDocumentVersionContentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionContentInput(ctx context.Context, v any) (types.UpdateDocumentVersionContentInput, error) {
+	res, err := ec.unmarshalInputUpdateDocumentVersionContentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateDocumentVersionContentPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionContentPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateDocumentVersionContentPayload) graphql.Marshaler {
+	return ec._UpdateDocumentVersionContentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateDocumentVersionContentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionContentPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateDocumentVersionContentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateDocumentVersionContentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateDocumentVersionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionInput(ctx context.Context, v any) (types.UpdateDocumentVersionInput, error) {

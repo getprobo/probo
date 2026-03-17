@@ -3907,7 +3907,6 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			DocumentType:          input.DocumentType,
 			Title:                 input.Title,
 			ApproverIDs:           input.ApproverIds,
-			Content:               input.Content,
 			Classification:        input.Classification,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 		},
@@ -3954,6 +3953,32 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 
 	return &types.UpdateDocumentPayload{
 		Document: types.NewDocument(document),
+	}, nil
+}
+
+// UpdateDocumentVersionContent is the resolver for the updateDocumentVersionContent field.
+func (r *mutationResolver) UpdateDocumentVersionContent(ctx context.Context, input types.UpdateDocumentVersionContentInput) (*types.UpdateDocumentVersionContentPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionDocumentUpdate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	content, err := prb.Documents.UpdateDocumentVersionContent(
+		ctx,
+		probo.UpdateDocumentVersionRequest{
+			ID:      input.ID,
+			Content: input.Content,
+		},
+	)
+
+	if err != nil {
+		// TODO no panic use gqlutils.InternalError
+		panic(fmt.Errorf("cannot update document: %w", err))
+	}
+
+	return &types.UpdateDocumentVersionContentPayload{
+		Content: content,
 	}, nil
 }
 
