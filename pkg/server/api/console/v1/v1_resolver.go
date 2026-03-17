@@ -6766,16 +6766,16 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
 	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot get trust center: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	var file *coredata.File
 	if trustCenter.NonDisclosureAgreementFileID != nil {
 		file, err = prb.Files.Get(ctx, *trustCenter.NonDisclosureAgreementFileID)
 		if err != nil {
-			// TODO no panic use gqlutils.InternalError
-			panic(fmt.Errorf("cannot get NDA file: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot get NDA file", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
 		}
 	}
 
