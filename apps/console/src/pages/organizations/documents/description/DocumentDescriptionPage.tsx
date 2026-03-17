@@ -17,6 +17,7 @@ export const documentDescriptionPageQuery = graphql`
       ... on DocumentVersion {
         id
         content
+        status
       }
     }
     document: node(id: $documentId) {
@@ -28,6 +29,7 @@ export const documentDescriptionPageQuery = graphql`
             node {
               id
               content
+              status
             }
           }
         }
@@ -104,6 +106,7 @@ export function DocumentDescriptionPage(props: { queryRef: PreloadedQuery<Docume
     <div>
       <RichEditor
         content={currentVersion.content}
+        disabled={currentVersion.status !== "DRAFT"}
         onChange={handleUpdate}
       />
       {/* <Markdown content={currentVersion.content} /> */}
