@@ -4274,7 +4274,6 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			DocumentType:          input.DocumentType,
 			Title:                 input.Title,
 			ApproverIDs:           input.ApproverIds,
-			Content:               input.Content,
 			Classification:        input.Classification,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 		},
@@ -4374,6 +4373,36 @@ func (r *mutationResolver) UnarchiveDocument(ctx context.Context, input types.Un
 
 	return &types.UnarchiveDocumentPayload{
 		Document: types.NewDocument(document),
+	}, nil
+}
+
+// UpdateDocumentVersionContent is the resolver for the updateDocumentVersionContent field.
+func (r *mutationResolver) UpdateDocumentVersionContent(ctx context.Context, input types.UpdateDocumentVersionContentInput) (*types.UpdateDocumentVersionContentPayload, error) {
+	if err := r.authorize(ctx, input.ID, probo.ActionDocumentUpdate); err != nil {
+		return nil, err
+	}
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	content, err := prb.Documents.UpdateDocumentVersionContent(
+		ctx,
+		probo.UpdateDocumentVersionRequest{
+			ID:      input.ID,
+			Content: input.Content,
+		},
+	)
+
+	if err != nil {
+		if _, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update document version content", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateDocumentVersionContentPayload{
+		Content: content,
 	}, nil
 }
 

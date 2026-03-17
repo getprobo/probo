@@ -9,19 +9,18 @@ import {
   Input,
   Label,
   PropertyRow,
-  Textarea,
   useDialogRef,
 } from "@probo/ui";
 import { type ReactNode } from "react";
 import { graphql } from "relay-runtime";
-import type { z } from "zod";
+import { z } from "zod";
 
 import type { CreateDocumentDialogMutation } from "#/__generated__/core/CreateDocumentDialogMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { DocumentClassificationOptions } from "#/components/form/DocumentClassificationOptions";
 import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { documentSchema, useDocumentForm } from "#/hooks/forms/useDocumentForm";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -52,6 +51,13 @@ const createDocumentMutation = graphql`
   }
 `;
 
+const documentSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  approverIds: z.array(z.string()).min(1, "At least one approver is required"),
+  documentType: z.enum(["OTHER", "ISMS", "POLICY", "PROCEDURE"]),
+  classification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
+});
+
 /**
  * Dialog to create or update a document
  */
@@ -59,8 +65,15 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const { control, handleSubmit, register, formState, reset }
-    = useDocumentForm();
+  const { control, handleSubmit, register, formState, reset } = useFormWithSchema(
+    documentSchema,
+    {
+      defaultValues: {
+        documentType: "POLICY",
+        classification: "INTERNAL",
+      },
+    },
+  );
   const errors = formState.errors ?? {};
   const [createDocument, isLoading]
     = useMutationWithToasts<CreateDocumentDialogMutation>(createDocumentMutation);
@@ -101,14 +114,6 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
               variant="title"
               placeholder={__("Document title")}
               {...register("title")}
-            />
-            <Textarea
-              id="content"
-              variant="ghost"
-              autogrow
-              placeholder={__("Add content")}
-              aria-label={__("Content")}
-              {...register("content")}
             />
           </div>
           {/* Properties form */}
