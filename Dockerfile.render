@@ -15,6 +15,7 @@ RUN npx turbo run build
 
 # Stage 2: Build Go binary
 FROM golang:1.25-alpine AS backend
+RUN apk add --no-cache git
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
@@ -23,23 +24,20 @@ COPY . .
 COPY --from=frontend /app/apps/console/dist apps/console/dist
 COPY --from=frontend /app/apps/trust/dist apps/trust/dist
 COPY --from=frontend /app/packages/emails/dist packages/emails/dist
-# Generated Go files (gqlgen, etc.) are already committed — no go generate needed
-RUN CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags "-X 'main.version=dev' -X 'main.env=prod'" \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s -X 'main.version=dev' -X 'main.env=prod'" \
     -o /probod ./cmd/probod
 
-# Stage 3: Final minimal image
-FROM ubuntu:24.04
-RUN useradd -m probo && \
-    apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y ca-certificates openssl && \
-    rm -rf /var/lib/apt/lists/*
-COPY --from=backend /probod /usr/local/bin/probod
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/probod && \
-    chmod +x /usr/local/bin/entrypoint.sh && \
+# Stage 3: Runtime (Alpine — matches working Render pattern)
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates openssl bash && \
+    addgroup -g 1000 probo && \
+    adduser -D -u 1000 -G probo probo && \
     mkdir -p /etc/probod && \
     chown probo:probo /etc/probod
+WORKDIR /app
+COPY --from=backend --chown=probo:probo /probod ./probod
+COPY --chown=probo:probo entrypoint.sh ./entrypoint.sh
 USER probo
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+EXPOSE 8080
+CMD ["bash", "./entrypoint.sh"]
