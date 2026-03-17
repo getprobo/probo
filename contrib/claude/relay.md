@@ -137,33 +137,46 @@ The `@connection(key: "...", filters: [...])` directive on the fragment tells Re
 Direct Relay hook for simple cases:
 
 ```tsx
-const [mutate] = useMutation<VendorGraphDeleteMutation>(deleteVendorMutation);
+const [deleteVendor] = useMutation<VendorGraphDeleteMutation>(deleteVendorMutation);
 ```
 
-### `useMutationWithToasts`
-
-Custom wrapper that adds toast notifications on success/error:
+For mutations with user feedback, combine with `useToast` and use `onCompleted`/`onError` callbacks:
 
 ```tsx
-const [createContact, isLoading] = useMutationWithToasts(
-  createContactMutation,
-  {
-    successMessage: __("Contact created successfully."),
-    errorMessage: __("Failed to create contact"),
-  },
-);
+const { toast } = useToast();
+const [createObligation, isCreating] = useMutation<CreateObligationMutation>(createObligationMutation);
 
-await createContact({
-  variables: {
-    input: { vendorId, ...cleanData },
-    connections: [connectionId],
-  },
-  onSuccess: () => {
-    dialogRef.current?.close();
-    reset();
-  },
-});
+const onSubmit = (formData: FormData) => {
+  createObligation({
+    variables: {
+      input: { ...formData },
+      connections: [connectionId],
+    },
+    onCompleted() {
+      toast({
+        title: __("Success"),
+        description: __("Obligation created successfully"),
+        variant: "success",
+      });
+    },
+    onError(error) {
+      toast({
+        title: __("Error"),
+        description: formatError(__("Failed to create obligation"), error as GraphQLError),
+        variant: "error",
+      });
+    },
+  });
+};
 ```
+
+### `useMutationWithToasts` (deprecated)
+
+**Do not use.** Use `useMutation` combined with `useToast` instead.
+
+### `promisifyMutation` (deprecated)
+
+**Do not use.** Use `useMutation` with `onCompleted`/`onError` callbacks instead of wrapping in a promise.
 
 ### Store update directives
 
@@ -213,15 +226,24 @@ Destructive mutations (delete) are wrapped with a confirmation dialog:
 
 ```tsx
 const confirm = useConfirm();
+const [deleteVendor] = useMutation<DeleteVendorMutation>(deleteVendorMutation);
 
 return () => {
   confirm(
     () =>
-      promisifyMutation(mutate)({
-        variables: {
-          input: { vendorId: vendor.id! },
-          connections: [connectionId],
-        },
+      new Promise<void>((resolve) => {
+        deleteVendor({
+          variables: {
+            input: { vendorId: vendor.id! },
+            connections: [connectionId],
+          },
+          onCompleted() {
+            resolve();
+          },
+          onError() {
+            resolve();
+          },
+        });
       }),
     { message: "Confirm deletion..." },
   );
