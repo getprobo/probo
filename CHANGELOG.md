@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.144.0] - 2026-03-17
+
+### Added
+
+- Add implemented state and justification to controls
+- Add release guide documentation
+- Add Lima sandbox environment for parallel feature testing
+
 ## [0.143.0] - 2026-03-16
 
 ### Added
